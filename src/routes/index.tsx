@@ -53,12 +53,13 @@ const BLACK_RATIO = 0.55;
 // décalages réels des touches noires (en largeur de touche blanche),
 // mesurés depuis la séparation entre les deux blanches voisines
 const BLACK_OFFSET: Record<number, number> = {
-  1: -0.05, // do#
-  3: 0.05, // ré#
-  6: -0.1, // fa#
+  1: 0, // do#
+  3: 0, // ré#
+  6: 0, // fa#
   8: 0, // sol#
-  10: 0.1, // la#
+  10: 0, // la#
 };
+
 
 const pitchClass = (key: number) => (key + 20) % 12;
 
