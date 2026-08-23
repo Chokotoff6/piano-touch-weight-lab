@@ -194,12 +194,12 @@
   }
 
   .key-number {
-    height: 1.4rem;
+    height: 1.05rem;
     overflow: visible;
     text-align: center;
     font-size: clamp(0.4rem, 0.72vw, 0.7rem);
     font-weight: 500;
-    line-height: 1.4rem;
+    line-height: 1.05rem;
   }
 
   .key-number.is-c-key {
@@ -208,7 +208,7 @@
 
   .key-body {
     position: relative;
-    height: 15.4rem;
+    height: 11.55rem;
     border-top: 1px solid var(--piano-line);
     border-bottom: 1px solid var(--piano-line);
   }
