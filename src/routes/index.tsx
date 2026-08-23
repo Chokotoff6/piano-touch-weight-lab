@@ -174,24 +174,27 @@ function Index() {
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
 
-  const averages = useMemo(() => {
-    const valid = rows.filter((r) => {
-      const wa = parseFloat(r.wa);
-      const wd = parseFloat(r.wd);
-      return !Number.isNaN(wa) && !Number.isNaN(wd);
-    });
-    if (valid.length === 0) {
-      return { wa: "—", wd: "—", friction: "—", balance: "—", count: 0 };
-    }
-    const avgWa = valid.reduce((s, r) => s + parseFloat(r.wa), 0) / valid.length;
-    const avgWd = valid.reduce((s, r) => s + parseFloat(r.wd), 0) / valid.length;
-    return {
-      wa: avgWa.toFixed(1),
-      wd: avgWd.toFixed(1),
-      friction: ((avgWd - avgWa) / 2).toFixed(1),
-      balance: ((avgWd + avgWa) / 2).toFixed(1),
-      count: valid.length,
+  const sectionAverages = useMemo(() => {
+    const calc = (slice: Row[]) => {
+      const valid = slice.filter((r) => {
+        const wa = parseFloat(r.wa);
+        const wd = parseFloat(r.wd);
+        return !Number.isNaN(wa) && !Number.isNaN(wd);
+      });
+      if (valid.length === 0) {
+        return { wa: "—", wd: "—", friction: "—", balance: "—", count: 0 };
+      }
+      const avgWa = valid.reduce((s, r) => s + parseFloat(r.wa), 0) / valid.length;
+      const avgWd = valid.reduce((s, r) => s + parseFloat(r.wd), 0) / valid.length;
+      return {
+        wa: avgWa.toFixed(1),
+        wd: avgWd.toFixed(1),
+        friction: ((avgWd - avgWa) / 2).toFixed(1),
+        balance: ((avgWd + avgWa) / 2).toFixed(1),
+        count: valid.length,
+      };
     };
+    return { first: calc(rows.slice(0, 44)), second: calc(rows.slice(44, 88)) };
   }, [rows]);
 
   const focusCell = (index: number, field: "wa" | "wd") => {
@@ -364,27 +367,30 @@ function Index() {
           ))}
         </div>
         <div className="mt-4 border-t border-border pt-3">
-          <p className="text-xs font-medium text-muted-foreground">
-            Moyennes ({averages.count} touche{averages.count > 1 ? "s" : ""} mesurée
-            {averages.count > 1 ? "s" : ""})
-          </p>
+          <p className="text-xs font-medium text-muted-foreground">Moyennes</p>
           <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded bg-muted px-2 py-1.5 text-center">
-              <div className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">Wa</div>
-              <div className="text-sm font-semibold tabular-nums">{averages.wa}</div>
-            </div>
-            <div className="rounded bg-muted px-2 py-1.5 text-center">
-              <div className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">Wd</div>
-              <div className="text-sm font-semibold tabular-nums">{averages.wd}</div>
-            </div>
-            <div className="rounded bg-muted px-2 py-1.5 text-center">
-              <div className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">Friction</div>
-              <div className="text-sm font-semibold tabular-nums">{averages.friction}</div>
-            </div>
-            <div className="rounded bg-muted px-2 py-1.5 text-center">
-              <div className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">Balance</div>
-              <div className="text-sm font-semibold tabular-nums">{averages.balance}</div>
-            </div>
+            {([
+              { key: "wa", label: "Wa" },
+              { key: "wd", label: "Wd" },
+              { key: "friction", label: "Friction" },
+              { key: "balance", label: "Balance" },
+            ] as const).map(({ key, label }) => (
+              <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
+                <div className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+                  {label}
+                </div>
+                <div className="mt-1 flex justify-center gap-2 text-sm font-semibold tabular-nums">
+                  <span>{sectionAverages.first[key]}</span>
+                  <span className="text-muted-foreground">/</span>
+                  <span>{sectionAverages.second[key]}</span>
+                </div>
+                <div className="mt-0.5 flex justify-center gap-2 text-[0.6rem] text-muted-foreground tabular-nums">
+                  <span>1-44</span>
+                  <span className="invisible">/</span>
+                  <span>45-88</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
