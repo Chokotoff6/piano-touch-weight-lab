@@ -60,6 +60,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-piano-black: var(--piano-black);
+  --color-technical-border: var(--technical-border);
 }
 
 :root {
@@ -97,6 +98,7 @@
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
   --piano-black: oklch(0.744 0 0);
+  --technical-border: oklch(0.845 0 0);
 }
 
 .dark {
@@ -133,6 +135,7 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
   --piano-black: oklch(0.744 0 0);
+  --technical-border: oklch(0.845 0 0);
 }
 
 @layer base {
