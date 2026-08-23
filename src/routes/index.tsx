@@ -23,13 +23,10 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-// A0 = touche 1. Motif chromatique des noires.
-const BLACK_IN_OCTAVE = new Set([1, 4, 6, 9, 11]); // demi-tons depuis Do
-function isBlack(keyIndex: number) {
-  // A0 correspond au demi-ton 9 (La)
-  const semitone = (9 + (keyIndex - 1)) % 12;
-  return BLACK_IN_OCTAVE.has(semitone);
-}
+const BLACK_KEYS = new Set([
+  2, 5, 7, 10, 12, 14, 17, 19, 22, 24, 26, 29, 31, 34, 36, 38, 41, 43, 46,
+  48, 50, 53, 55, 58, 60, 62, 65, 67, 70, 72, 74, 77, 79, 82, 84, 86,
+]);
 
 type Row = { wa: string; wd: string };
 
@@ -80,67 +77,64 @@ function Index() {
   const renderSection = (from: number, to: number, title: string) => (
     <section className="mt-8">
       <h2 className="mb-2 text-sm font-medium text-muted-foreground">{title}</h2>
-      <div className="w-full overflow-hidden rounded-md border border-border bg-card p-2 sm:p-3">
-        <div className="flex w-full items-start">
-          <div className="w-14 shrink-0 border-r border-border pr-2 text-right text-[9px] font-medium text-muted-foreground sm:w-20 sm:text-[11px]">
-            <div className="h-4 leading-4">Touche</div>
-            <div className="mt-1 h-7 leading-7">Wa (gr)</div>
-            <div className="mt-1 h-7 leading-7">Wd (gr)</div>
-            <div className="mt-1 h-5 leading-5">Friction</div>
-            <div className="mt-1 h-5 leading-5">Balance</div>
+      <div className="flex w-full overflow-hidden border border-border bg-background">
+          <div className="w-12 shrink-0 border-r border-border text-right text-[8px] font-medium text-muted-foreground sm:w-20 sm:text-[11px]">
+            <div className="h-5 border-b border-border pr-1 leading-5 sm:pr-2">Touche</div>
+            <div className="h-7 border-b border-border pr-1 leading-7 sm:pr-2">Wa (gr)</div>
+            <div className="h-7 border-b border-border pr-1 leading-7 sm:pr-2">Wd (gr)</div>
+            <div className="h-5 border-b border-border pr-1 leading-5 sm:pr-2">Friction</div>
+            <div className="h-5 pr-1 leading-5 sm:pr-2">Balance</div>
           </div>
-          <div className="flex min-w-0 flex-1">
+          <div
+            className="grid min-w-0 flex-1"
+            style={{ gridTemplateColumns: `repeat(${to - from + 1}, minmax(0, 1fr))` }}
+          >
           {rows.slice(from - 1, to).map((row, offset) => {
             const index = from - 1 + offset;
-            const black = isBlack(index + 1);
+            const black = BLACK_KEYS.has(index + 1);
             const { friction, balance } = compute(row);
             return (
               <div
                 key={index}
-                className="flex min-w-0 flex-1 flex-col items-center"
+                className="min-w-0 border-r border-border last:border-r-0"
               >
-                <div className="h-4 w-full overflow-hidden text-center text-[8px] leading-4 tabular-nums text-muted-foreground sm:text-[10px]">
+                <div className="h-5 w-full overflow-hidden border-b border-border text-center text-[5px] leading-5 tabular-nums text-foreground sm:text-[9px]">
                   {index + 1}
                 </div>
-                <input
-                  ref={(el) => {
-                    inputs.current[`${index}-wa`] = el;
-                  }}
-                  value={row.wa}
-                  onChange={(e) => setValue(index, "wa", e.target.value)}
-                  onKeyDown={(e) => onKeyDown(e, index, "wa")}
-                  inputMode="decimal"
-                  aria-label={`Wa touche ${index + 1}`}
-                  className="mt-1 h-7 w-full min-w-0 rounded-sm border border-input bg-background p-0 text-center text-[8px] tabular-nums outline-none focus:relative focus:z-20 focus:border-ring focus:ring-1 focus:ring-ring sm:text-[10px]"
-                />
-                <input
-                  ref={(el) => {
-                    inputs.current[`${index}-wd`] = el;
-                  }}
-                  value={row.wd}
-                  onChange={(e) => setValue(index, "wd", e.target.value)}
-                  onKeyDown={(e) => onKeyDown(e, index, "wd")}
-                  inputMode="decimal"
-                  aria-label={`Wd touche ${index + 1}`}
-                  className="mt-1 h-7 w-full min-w-0 rounded-sm border border-input bg-background p-0 text-center text-[8px] tabular-nums outline-none focus:relative focus:z-20 focus:border-ring focus:ring-1 focus:ring-ring sm:text-[10px]"
-                />
-                <div className="mt-1 h-5 w-full overflow-hidden rounded-sm bg-muted text-center text-[8px] leading-5 tabular-nums text-muted-foreground sm:text-[10px]">
+                <div className={black ? "bg-piano-black" : "bg-background"}>
+                  <input
+                    ref={(el) => {
+                      inputs.current[`${index}-wa`] = el;
+                    }}
+                    value={row.wa}
+                    onChange={(e) => setValue(index, "wa", e.target.value)}
+                    onKeyDown={(e) => onKeyDown(e, index, "wa")}
+                    inputMode="decimal"
+                    aria-label={`Wa touche ${index + 1}`}
+                    className="block h-7 w-full min-w-0 border-0 border-b border-border bg-transparent p-0 text-center text-[5px] tabular-nums text-foreground outline-none focus:relative focus:z-20 focus:ring-1 focus:ring-inset focus:ring-ring sm:text-[9px]"
+                  />
+                  <input
+                    ref={(el) => {
+                      inputs.current[`${index}-wd`] = el;
+                    }}
+                    value={row.wd}
+                    onChange={(e) => setValue(index, "wd", e.target.value)}
+                    onKeyDown={(e) => onKeyDown(e, index, "wd")}
+                    inputMode="decimal"
+                    aria-label={`Wd touche ${index + 1}`}
+                    className="block h-7 w-full min-w-0 border-0 border-b border-border bg-transparent p-0 text-center text-[5px] tabular-nums text-foreground outline-none focus:relative focus:z-20 focus:ring-1 focus:ring-inset focus:ring-ring sm:text-[9px]"
+                  />
+                </div>
+                <div className="h-5 w-full overflow-hidden border-b border-border bg-background text-center text-[5px] leading-5 tabular-nums text-foreground sm:text-[9px]">
                   {friction}
                 </div>
-                <div className="mt-1 h-5 w-full overflow-hidden rounded-sm bg-muted text-center text-[8px] leading-5 tabular-nums text-muted-foreground sm:text-[10px]">
+                <div className="h-5 w-full overflow-hidden bg-background text-center text-[5px] leading-5 tabular-nums text-foreground sm:text-[9px]">
                   {balance}
-                </div>
-                <div className="relative mt-2 h-[clamp(72px,12vw,120px)] w-full">
-                  <div className="absolute inset-0 rounded-b-sm border border-border bg-background" />
-                  {black && (
-                    <div className="absolute left-[-35%] top-0 z-10 h-2/3 w-[70%] rounded-b-sm bg-foreground" />
-                  )}
                 </div>
               </div>
             );
           })}
           </div>
-        </div>
       </div>
     </section>
   );
