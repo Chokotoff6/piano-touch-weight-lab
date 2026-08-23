@@ -166,19 +166,19 @@
 
   .label-key { top: 0.315rem; }
   .label-wa {
-    top: 5.1975rem;
+    top: 4.98rem;
     transform: translateY(-100%);
   }
   .label-wd {
-    top: calc(6.15rem + 1px);
+    top: calc(6.13rem + 1px);
     transform: translateY(-100%);
   }
   .label-wa-white {
-    top: 9.35625rem;
+    top: 9.16rem;
     transform: translateY(-100%);
   }
   .label-wd-white {
-    top: 10.40625rem;
+    top: 10.21rem;
     transform: translateY(-100%);
   }
 
