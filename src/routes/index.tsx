@@ -84,7 +84,7 @@ function useSnappedGrid(from: number, to: number) {
           return width;
         });
         node.style.gridTemplateColumns = cols.map((w) => `${w}px`).join(" ");
-        node.style.setProperty("--piano-black", `${b}px`);
+        node.style.setProperty("--black-col", `${b}px`);
         node.style.setProperty("--hairline", `${1 / dpr}px`);
       };
       snap();

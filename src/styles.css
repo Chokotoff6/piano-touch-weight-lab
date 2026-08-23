@@ -243,11 +243,11 @@
   }
 
   .is-white.shift-right .weight-fields {
-    transform: translateX(25%);
+    transform: translateX(calc(var(--black-col, 0px) / 4));
   }
 
   .is-white.shift-left .weight-fields {
-    transform: translateX(-25%);
+    transform: translateX(calc(-1 * var(--black-col, 0px) / 4));
   }
 
   .is-white .weight-input {
