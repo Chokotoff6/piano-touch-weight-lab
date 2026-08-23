@@ -188,6 +188,7 @@
 
   .piano-grid::after {
     position: absolute;
+    z-index: 1;
     top: 1.05rem;
     right: 0;
     bottom: 0;
@@ -250,10 +251,14 @@
   }
 
 
+  .piano-measure-column.is-black {
+    z-index: 2;
+  }
+
   .is-black .weight-fields {
     top: 0;
     height: 7.275rem;
-    border-bottom: var(--hairline, 1px) solid var(--piano-line);
+    border: var(--hairline, 1px) solid var(--piano-line);
     background: var(--piano-black);
   }
 
