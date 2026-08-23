@@ -48,30 +48,52 @@ const INFO_FIELDS = [
   { key: "remarques", label: "Remarques" },
 ] as const;
 
-function useSnappedGrid() {
-  return useCallback((node: HTMLDivElement | null) => {
-    if (!node) return;
-    const snap = () => {
-      const parent = node.parentElement;
-      if (!parent) return;
-      const avail = parent.getBoundingClientRect().width - (parent.firstElementChild?.getBoundingClientRect().width ?? 0);
-      const dpr = window.devicePixelRatio || 1;
-      const col = Math.floor((avail * dpr) / 44) / dpr;
-      node.style.setProperty("--piano-col", `${col}px`);
-      node.style.setProperty("--hairline", `${1 / dpr}px`);
+const BLACK_RATIO = 0.55;
 
-    };
-    snap();
-    const ro = new ResizeObserver(snap);
-    ro.observe(node.parentElement ?? node);
-  }, []);
+function useSnappedGrid(from: number, to: number) {
+  return useCallback(
+    (node: HTMLDivElement | null) => {
+      if (!node) return;
+      const keys = Array.from({ length: to - from + 1 }, (_, i) => from + i);
+      const snap = () => {
+        const parent = node.parentElement;
+        if (!parent) return;
+        const avail =
+          parent.getBoundingClientRect().width -
+          (parent.firstElementChild?.getBoundingClientRect().width ?? 0);
+        const dpr = window.devicePixelRatio || 1;
+        const whites = keys.filter((k) => !BLACK_KEYS.has(k)).length;
+        // exact device-pixel white width, identical for every white key
+        const v = Math.floor((avail * dpr) / whites) / dpr;
+        // even number of device pixels so half a black column stays exact
+        const b = (2 * Math.round((v * BLACK_RATIO * dpr) / 2)) / dpr;
+        const cols = keys.map((k) => {
+          if (BLACK_KEYS.has(k)) return b;
+          const n =
+            (BLACK_KEYS.has(k - 1) && k - 1 >= from ? 1 : 0) +
+            (BLACK_KEYS.has(k + 1) && k + 1 <= to ? 1 : 0);
+          return v - (n * b) / 2;
+        });
+        node.style.gridTemplateColumns = cols.map((w) => `${w}px`).join(" ");
+        node.style.setProperty("--black-col", `${b}px`);
+        node.style.setProperty("--hairline", `${1 / dpr}px`);
+
+      };
+      snap();
+      const ro = new ResizeObserver(snap);
+      ro.observe(node.parentElement ?? node);
+    },
+    [from, to],
+  );
 }
+
 
 function Index() {
   const [rows, setRows] = useState<Row[]>(EMPTY);
   const [info, setInfo] = useState<Record<string, string>>({});
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
-  const gridRef = useSnappedGrid();
+  const gridRef1 = useSnappedGrid(1, 44);
+  const gridRef2 = useSnappedGrid(45, 88);
 
   const focusCell = (index: number, field: "wa" | "wd") => {
     inputs.current[`${index}-${field}`]?.focus();
@@ -112,7 +134,7 @@ function Index() {
     );
   };
 
-  const renderSection = (from: number, to: number) => (
+  const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
     <section className="mt-8" aria-label={`Touches ${from} à ${to}`}>
       <div className="technical-sheet">
         <div className="technical-labels" aria-hidden="true">
@@ -233,8 +255,8 @@ function Index() {
         <span>Balance = (Wd + Wa) / 2</span>
       </div>
 
-      {renderSection(1, 44)}
-      {renderSection(45, 88)}
+      {renderSection(1, 44, gridRef1)}
+      {renderSection(45, 88, gridRef2)}
     </main>
   );
 }
