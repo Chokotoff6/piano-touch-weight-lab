@@ -380,8 +380,11 @@
   }
 
   .result-strip {
+    display: flex;
     box-sizing: border-box;
-    height: 0.85rem;
+    align-items: center;
+    justify-content: center;
+    height: 1rem;
     overflow: hidden;
     border-bottom: var(--hairline, 1px) solid var(--piano-line);
     background: var(--background);
@@ -391,7 +394,6 @@
     font-size: clamp(0.34rem, 0.64vw, 0.6rem);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
-    line-height: 0.85rem;
   }
 
   .result-col.is-black .result-strip {
