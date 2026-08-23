@@ -100,7 +100,8 @@ function Index() {
   const [rows, setRows] = useState<Row[]>(EMPTY);
   const [info, setInfo] = useState<Record<string, string>>({});
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
-  const gridRef = useSnappedGrid();
+  const gridRef1 = useSnappedGrid(1, 44);
+  const gridRef2 = useSnappedGrid(45, 88);
 
   const focusCell = (index: number, field: "wa" | "wd") => {
     inputs.current[`${index}-${field}`]?.focus();
@@ -141,7 +142,7 @@ function Index() {
     );
   };
 
-  const renderSection = (from: number, to: number) => (
+  const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
     <section className="mt-8" aria-label={`Touches ${from} à ${to}`}>
       <div className="technical-sheet">
         <div className="technical-labels" aria-hidden="true">
@@ -262,8 +263,8 @@ function Index() {
         <span>Balance = (Wd + Wa) / 2</span>
       </div>
 
-      {renderSection(1, 44)}
-      {renderSection(45, 88)}
+      {renderSection(1, 44, gridRef1)}
+      {renderSection(45, 88, gridRef2)}
     </main>
   );
 }
