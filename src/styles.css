@@ -181,30 +181,9 @@
     position: relative;
     display: grid;
     grid-template-columns: repeat(44, minmax(0, 1fr));
-    grid-template-columns: repeat(44, var(--piano-col, calc(100% / 44)));
     min-width: 0;
     height: 15rem;
   }
-
-  .piano-grid::after {
-    position: absolute;
-    z-index: 1;
-    top: 1.05rem;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    background: repeating-linear-gradient(
-      to right,
-      var(--piano-line) 0 var(--hairline, 1px),
-      transparent var(--hairline, 1px) var(--piano-col, calc(100% / 44))
-    );
-    content: "";
-    pointer-events: none;
-  }
-
-
-
-
 
   .piano-measure-column {
     position: relative;
@@ -214,6 +193,19 @@
     color: var(--foreground);
     font-family: "JetBrains Mono", monospace;
   }
+
+  .piano-measure-column::before {
+    position: absolute;
+    z-index: 1;
+    top: 1.05rem;
+    bottom: 0;
+    left: 0;
+    width: var(--hairline, 1px);
+    background: var(--piano-line);
+    content: "";
+    pointer-events: none;
+  }
+
 
   .key-number {
     height: 1.05rem;
