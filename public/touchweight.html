@@ -57,7 +57,18 @@ h1 { font-size: 1.25rem; font-weight: 600; margin: 0; }
   outline: none; font-family: inherit;
 }
 .info-grid input:focus { border-color: var(--ring); box-shadow: 0 0 0 1px var(--ring); }
+.avg-wrap { margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 0.75rem; }
+.avg-title { font-size: 0.75rem; font-weight: 500; color: var(--muted-foreground); }
+.avg-grid { margin-top: 0.5rem; display: grid; gap: 0.75rem; grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 640px) { .avg-grid { grid-template-columns: repeat(4, 1fr); } }
+.avg-cell { border-radius: 0.25rem; background: oklch(0.968 0.007 247.896); padding: 0.375rem 0.5rem; text-align: center; }
+.avg-cell .k { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-foreground); }
+.avg-cell .v { margin-top: 0.25rem; display: flex; justify-content: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.avg-cell .v .sep { color: var(--muted-foreground); font-weight: 400; }
+.avg-cell .r { margin-top: 0.125rem; display: flex; justify-content: center; gap: 0.5rem; font-size: 0.6rem; color: var(--muted-foreground); }
+.avg-cell .r .sep { visibility: hidden; }
 .formulas { margin-top: 1.5rem; display: flex; gap: 1rem; font-size: 0.75rem; color: var(--muted-foreground); }
+
 section.keys { margin-top: 2rem; }
 
   .technical-sheet {
@@ -418,7 +429,12 @@ section.keys { margin-top: 2rem; }
       <button type="button" class="btn-reset" id="reset">RESET</button>
     </div>
     <div class="info-grid" id="info-grid"></div>
+    <div class="avg-wrap">
+      <p class="avg-title">Moyennes</p>
+      <div class="avg-grid" id="avg-grid"></div>
+    </div>
   </section>
+
 
   <div class="formulas">
     <span>Friction = (Wd &minus; Wa) / 2</span>
@@ -455,6 +471,40 @@ INFO_FIELDS.forEach(([key, label]) => {
   infoGrid.appendChild(l);
 });
 
+
+/* ---- Moyennes ---- */
+const AVG_KEYS = [["wa","Wa"],["wd","Wd"],["friction","Friction"],["balance","Balance"]];
+const avgGrid = document.getElementById("avg-grid");
+AVG_KEYS.forEach(([key, label]) => {
+  const cell = document.createElement("div");
+  cell.className = "avg-cell";
+  cell.innerHTML = '<div class="k">' + label + '</div>' +
+    '<div class="v"><span data-avg="' + key + '-1">\u2014</span><span class="sep">/</span><span data-avg="' + key + '-2">\u2014</span></div>' +
+    '<div class="r"><span>1-44</span><span class="sep">/</span><span>45-88</span></div>';
+  avgGrid.appendChild(cell);
+});
+
+function sectionAverage(slice) {
+  const valid = slice.filter((r) => !Number.isNaN(parseFloat(r.wa)) && !Number.isNaN(parseFloat(r.wd)));
+  if (valid.length === 0) return { wa: "\u2014", wd: "\u2014", friction: "\u2014", balance: "\u2014" };
+  const avgWa = valid.reduce((s, r) => s + parseFloat(r.wa), 0) / valid.length;
+  const avgWd = valid.reduce((s, r) => s + parseFloat(r.wd), 0) / valid.length;
+  return {
+    wa: avgWa.toFixed(1), wd: avgWd.toFixed(1),
+    friction: ((avgWd - avgWa) / 2).toFixed(1),
+    balance: ((avgWd + avgWa) / 2).toFixed(1),
+  };
+}
+
+function refreshAverages() {
+  const a = sectionAverage(rows.slice(0, 44));
+  const b = sectionAverage(rows.slice(44, 88));
+  AVG_KEYS.forEach(([key]) => {
+    document.querySelector('[data-avg="' + key + '-1"]').textContent = a[key];
+    document.querySelector('[data-avg="' + key + '-2"]').textContent = b[key];
+  });
+}
+
 /* ---- Calculs ---- */
 function compute(row) {
   const wa = parseFloat(row.wa);
@@ -475,6 +525,7 @@ function refresh(index) {
   const b = document.querySelector('[data-res="balance-' + index + '"]');
   if (f) f.innerHTML = formatResult(friction);
   if (b) b.innerHTML = formatResult(balance);
+  refreshAverages();
 }
 
 function focusCell(index, field) {
@@ -653,6 +704,7 @@ function snap(node, from, to) {
   new ResizeObserver(run).observe(node.parentElement || node);
 }
 
+refreshAverages();
 renderSection(1, 44);
 renderSection(45, 88);
 
