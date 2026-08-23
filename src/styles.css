@@ -364,10 +364,6 @@
     opacity: 1;
   }
 
-  .is-black .weight-fields {
-    padding-top: 3.1875rem;
-  }
-
   .weight-input:focus {
     box-shadow: inset 0 0 0 1px var(--ring);
   }
