@@ -372,6 +372,8 @@
     grid-template-columns: repeat(44, minmax(0, 1fr));
     min-width: 0;
     height: 100%;
+    border-top: var(--hairline, 1px) solid var(--piano-line);
+    border-bottom: var(--hairline, 1px) solid var(--piano-line);
     border-left: var(--hairline, 1px) solid var(--piano-line);
   }
 
@@ -434,6 +436,10 @@
 
   .result-col.is-black .result-value::before {
     left: var(--line-x, 0px);
+  }
+
+  .result-col:first-child .result-value::before {
+    display: none;
   }
 
 
