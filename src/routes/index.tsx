@@ -269,9 +269,10 @@ function Index() {
               const value = compute(row)[kind];
               return (
                 <div key={index} className={`result-col ${black ? "is-black" : "is-white"}`}>
-                  <div className="result-strip" />
-                  <div className="result-value">{formatResult(value)}</div>
+                  <div className="result-strip">{black ? formatResult(value) : null}</div>
+                  <div className="result-value">{black ? null : formatResult(value)}</div>
                 </div>
+
               );
             })}
           </div>
