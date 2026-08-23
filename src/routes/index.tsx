@@ -108,33 +108,44 @@ function useSnappedGrid(from: number, to: number) {
 
         const template = cols.map((c) => `${c.end - c.start}px`).join(" ");
         node.style.gridTemplateColumns = template;
+        node.style.setProperty("--black-col", `${b}px`);
+        node.style.setProperty("--white-col", `${v}px`);
+        node.style.setProperty("--hairline", `${1 / dpr}px`);
+
+        const applyVars = (container: HTMLElement) => {
+          Array.from(container.children).forEach((child, i) => {
+            const el = child as HTMLElement;
+            const m = meta[i];
+            const c = cols[i];
+            if (!m || !c) return;
+            if (m.black) {
+              el.style.setProperty("--line-x", `${px(m.boundary - c.start)}px`);
+              el.style.removeProperty("--shift");
+              el.style.removeProperty("--wstart");
+            } else {
+              el.style.setProperty(
+                "--shift",
+                `${px((m.start + m.end) / 2 - (c.start + c.end) / 2)}px`,
+              );
+              el.style.setProperty("--wstart", `${px(m.start - c.start)}px`);
+              el.style.removeProperty("--line-x");
+            }
+          });
+        };
+
         node
           .closest("section")
           ?.querySelectorAll<HTMLElement>(".result-grid")
           .forEach((g) => {
             g.style.gridTemplateColumns = template;
             g.style.setProperty("--hairline", `${1 / dpr}px`);
+            g.style.setProperty("--white-col", `${v}px`);
+            g.style.setProperty("--black-col", `${b}px`);
+            applyVars(g);
           });
-        node.style.setProperty("--black-col", `${b}px`);
-        node.style.setProperty("--white-col", `${v}px`);
-        node.style.setProperty("--hairline", `${1 / dpr}px`);
 
-        Array.from(node.children).forEach((child, i) => {
-          const el = child as HTMLElement;
-          const m = meta[i];
-          const c = cols[i];
-          if (!m || !c) return;
-          if (m.black) {
-            el.style.setProperty("--line-x", `${px(m.boundary - c.start)}px`);
-            el.style.removeProperty("--shift");
-          } else {
-            el.style.setProperty(
-              "--shift",
-              `${px((m.start + m.end) / 2 - (c.start + c.end) / 2)}px`,
-            );
-            el.style.removeProperty("--line-x");
-          }
-        });
+        applyVars(node);
+
       };
       snap();
       const ro = new ResizeObserver(snap);
@@ -258,9 +269,10 @@ function Index() {
               const value = compute(row)[kind];
               return (
                 <div key={index} className={`result-col ${black ? "is-black" : "is-white"}`}>
-                  <div className="result-strip" />
-                  <div className="result-value">{formatResult(value)}</div>
+                  <div className="result-strip">{black ? formatResult(value) : null}</div>
+                  <div className="result-value">{black ? null : formatResult(value)}</div>
                 </div>
+
               );
             })}
           </div>
