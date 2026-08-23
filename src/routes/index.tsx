@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -86,20 +87,19 @@ function Index() {
   };
 
   const renderSection = (from: number, to: number, title: string) => (
-    <section className="mt-8">
-      <h2 className="mb-2 text-sm font-medium text-muted-foreground">{title}</h2>
-      <div className="flex w-full overflow-hidden bg-background">
-          <div className="w-12 shrink-0 border border-technical-border text-right text-[8px] font-medium text-muted-foreground sm:w-20 sm:text-[11px]">
-            <div className="h-5 pr-1 leading-5 sm:pr-2">Touche</div>
-            <div className="h-7 pr-1 leading-7 sm:pr-2">Wa (gr)</div>
-            <div className="h-7 pr-1 leading-7 sm:pr-2">Wd (gr)</div>
-            <div className="h-5 pr-1 leading-5 sm:pr-2">Friction</div>
-            <div className="h-5 pr-1 leading-5 sm:pr-2">Balance</div>
-          </div>
-          <div
-            className="grid min-w-0 flex-1"
-            style={{ gridTemplateColumns: "repeat(51, minmax(0, 1fr))" }}
-          >
+    <section className="mt-8" aria-labelledby={`section-${from}`}>
+      <h2 id={`section-${from}`} className="mb-2 text-sm font-medium text-muted-foreground">
+        {title}
+      </h2>
+      <div className="technical-sheet">
+        <div className="technical-labels" aria-hidden="true">
+          <div className="label-key">Touche</div>
+          <div className="label-wa">Wa (gr)</div>
+          <div className="label-wd">Wd (gr)</div>
+          <div className="label-friction">Friction</div>
+          <div className="label-balance">Balance</div>
+        </div>
+        <div className="piano-grid">
           {rows.slice(from - 1, to).map((row, offset) => {
             const index = from - 1 + offset;
             const black = BLACK_KEYS.has(index + 1);
@@ -107,12 +107,13 @@ function Index() {
             return (
               <div
                 key={index}
-                className={`min-w-0 ${black ? "piano-column-black" : "piano-column-white"}`}
+                className={`piano-measure-column ${black ? "is-black" : "is-white"}`}
               >
-                <div className="h-5 w-full overflow-hidden text-center text-[5px] leading-5 tabular-nums text-foreground sm:text-[9px]">
+                <div className="key-number">
                   {index + 1}
                 </div>
-                <div className={black ? "bg-piano-black" : "bg-background"}>
+                <div className="key-body">
+                  <div className="weight-fields">
                   <input
                     ref={(el) => {
                       inputs.current[`${index}-wa`] = el;
@@ -122,7 +123,7 @@ function Index() {
                     onKeyDown={(e) => onKeyDown(e, index, "wa")}
                     inputMode="decimal"
                     aria-label={`Wa touche ${index + 1}`}
-                    className="block h-7 w-full min-w-0 border-0 bg-transparent p-0 text-center text-[5px] tabular-nums text-foreground outline-none focus:relative focus:z-20 focus:ring-1 focus:ring-inset focus:ring-ring sm:text-[9px]"
+                    className="weight-input"
                   />
                   <input
                     ref={(el) => {
@@ -133,19 +134,20 @@ function Index() {
                     onKeyDown={(e) => onKeyDown(e, index, "wd")}
                     inputMode="decimal"
                     aria-label={`Wd touche ${index + 1}`}
-                    className="block h-7 w-full min-w-0 border-0 bg-transparent p-0 text-center text-[5px] tabular-nums text-foreground outline-none focus:relative focus:z-20 focus:ring-1 focus:ring-inset focus:ring-ring sm:text-[9px]"
+                    className="weight-input"
                   />
+                  </div>
                 </div>
-                <div className="piano-result-row h-5 w-full overflow-hidden bg-background text-center text-[5px] leading-5 tabular-nums text-foreground sm:text-[9px]">
+                <div className="result-cell result-friction">
                   {formatResult(friction)}
                 </div>
-                <div className="h-5 w-full overflow-hidden bg-background text-center text-[5px] leading-5 tabular-nums text-foreground sm:text-[9px]">
+                <div className="result-cell result-balance">
                   {formatResult(balance)}
                 </div>
               </div>
             );
           })}
-          </div>
+        </div>
       </div>
     </section>
   );
@@ -176,12 +178,15 @@ function Index() {
       <section className="mt-8 rounded-md border border-border bg-card p-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-medium">Informations générales</h2>
-          <button
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
             onClick={() => setRows(EMPTY)}
-            className="rounded-md border border-input px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
+            className="text-xs"
           >
             RESET
-          </button>
+          </Button>
         </div>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {INFO_FIELDS.map((f) => (
