@@ -107,7 +107,7 @@ function Index() {
             return (
               <div
                 key={index}
-                className="min-w-0 border border-technical-border"
+                className={`min-w-0 ${black ? "piano-column-black" : "piano-column-white"}`}
               >
                 <div className="h-5 w-full overflow-hidden text-center text-[5px] leading-5 tabular-nums text-foreground sm:text-[9px]">
                   {index + 1}
@@ -136,7 +136,7 @@ function Index() {
                     className="block h-7 w-full min-w-0 border-0 bg-transparent p-0 text-center text-[5px] tabular-nums text-foreground outline-none focus:relative focus:z-20 focus:ring-1 focus:ring-inset focus:ring-ring sm:text-[9px]"
                   />
                 </div>
-                <div className="h-5 w-full overflow-hidden bg-background text-center text-[5px] leading-5 tabular-nums text-foreground sm:text-[9px]">
+                <div className="piano-result-row h-5 w-full overflow-hidden bg-background text-center text-[5px] leading-5 tabular-nums text-foreground sm:text-[9px]">
                   {formatResult(friction)}
                 </div>
                 <div className="h-5 w-full overflow-hidden bg-background text-center text-[5px] leading-5 tabular-nums text-foreground sm:text-[9px]">
