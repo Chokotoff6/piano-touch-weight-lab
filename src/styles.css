@@ -379,8 +379,16 @@
   .result-strip {
     box-sizing: border-box;
     height: 0.85rem;
+    overflow: hidden;
     border-bottom: var(--hairline, 1px) solid var(--piano-line);
     background: var(--background);
+    color: var(--foreground);
+    text-align: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: clamp(0.34rem, 0.64vw, 0.6rem);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 0.85rem;
   }
 
   .result-col.is-black .result-strip {
@@ -390,10 +398,10 @@
   }
 
   .result-value {
+    position: relative;
     box-sizing: border-box;
     height: 1.15rem;
     overflow: hidden;
-    border-left: var(--hairline, 1px) solid var(--piano-line);
     color: var(--foreground);
     text-align: center;
     font-family: "JetBrains Mono", monospace;
@@ -401,7 +409,18 @@
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     line-height: 1.15rem;
+    transform: translateX(var(--shift, 0px));
   }
+
+  .result-col.is-white .result-value::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--wstart, 0px) - var(--shift, 0px));
+    border-left: var(--hairline, 1px) solid var(--piano-line);
+    content: "";
+  }
+
 }
 
 @layer base {
