@@ -260,8 +260,10 @@
   }
 
   .is-white .weight-fields {
+    z-index: 3;
     top: 9rem;
   }
+
 
   .is-black .weight-fields {
     top: 0;
