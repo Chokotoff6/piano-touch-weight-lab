@@ -167,11 +167,11 @@
 
   .label-key { top: 0.42rem; }
   .label-wa {
-    top: 12.95rem;
+    top: 6.93rem;
     transform: translateY(-100%);
   }
   .label-wd {
-    top: calc(15.5rem + 1px);
+    top: calc(8.2rem + 1px);
     transform: translateY(-100%);
   }
   .label-friction { top: 17.35rem; }
@@ -179,7 +179,7 @@
 
   .piano-grid {
     display: grid;
-    grid-template-columns: repeat(51, minmax(0, 1fr));
+    grid-template-columns: repeat(44, minmax(0, 1fr));
     min-width: 0;
     height: 20rem;
   }
@@ -215,6 +215,10 @@
   .is-white .key-body {
     border-right: 1px solid var(--technical-border);
     background: var(--background);
+  }
+
+  .is-white:has(+ .is-black) .key-body {
+    border-right-color: transparent;
   }
 
   .piano-measure-column.natural-key-break::after {
@@ -262,7 +266,7 @@
     display: block;
     width: calc(100% - 2px);
     min-width: 0;
-    height: 2.55rem;
+    height: 1.275rem;
     margin-inline: 1px;
     border: 1px solid var(--technical-border);
     background: var(--background);
@@ -285,7 +289,7 @@
     font-size: clamp(0.24rem, 0.32vw, 0.3rem);
     font-style: normal;
     font-weight: 600;
-    line-height: 2.55rem;
+    line-height: 1.275rem;
     opacity: 1;
   }
 
