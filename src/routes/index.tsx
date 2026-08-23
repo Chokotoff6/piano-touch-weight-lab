@@ -50,6 +50,18 @@ const INFO_FIELDS = [
 
 const BLACK_RATIO = 0.55;
 
+// décalages réels des touches noires (en largeur de touche blanche),
+// mesurés depuis la séparation entre les deux blanches voisines
+const BLACK_OFFSET: Record<number, number> = {
+  1: -0.05, // do#
+  3: 0.05, // ré#
+  6: -0.1, // fa#
+  8: 0, // sol#
+  10: 0.1, // la#
+};
+
+const pitchClass = (key: number) => (key + 20) % 12;
+
 function useSnappedGrid(from: number, to: number) {
   return useCallback(
     (node: HTMLDivElement | null) => {
@@ -62,22 +74,55 @@ function useSnappedGrid(from: number, to: number) {
           parent.getBoundingClientRect().width -
           (parent.firstElementChild?.getBoundingClientRect().width ?? 0);
         const dpr = window.devicePixelRatio || 1;
+        const px = (n: number) => Math.round(n * dpr) / dpr;
         const whites = keys.filter((k) => !BLACK_KEYS.has(k)).length;
-        // exact device-pixel white width, identical for every white key
+        // largeur blanche visible identique pour toutes les touches
         const v = Math.floor((avail * dpr) / whites) / dpr;
-        // even number of device pixels so half a black column stays exact
         const b = (2 * Math.round((v * BLACK_RATIO * dpr) / 2)) / dpr;
-        const cols = keys.map((k) => {
-          if (BLACK_KEYS.has(k)) return b;
-          const n =
-            (BLACK_KEYS.has(k - 1) && k - 1 >= from ? 1 : 0) +
-            (BLACK_KEYS.has(k + 1) && k + 1 <= to ? 1 : 0);
-          return v - (n * b) / 2;
+
+        // bornes visibles des blanches + centres décalés des noires
+        let whiteIdx = 0;
+        const meta = keys.map((k) => {
+          if (BLACK_KEYS.has(k)) {
+            const boundary = whiteIdx * v;
+            const center = boundary + (BLACK_OFFSET[pitchClass(k)] ?? 0) * v;
+            return { black: true, boundary, start: px(center - b / 2), end: px(center + b / 2) };
+          }
+          const i = whiteIdx++;
+          return { black: false, boundary: 0, start: px(i * v), end: px((i + 1) * v) };
         });
-        node.style.gridTemplateColumns = cols.map((w) => `${w}px`).join(" ");
+
+        // colonnes : les blanches absorbent la place prise par les noires
+        const cols = meta.map((m, i) => {
+          if (m.black) return { start: m.start, end: m.end };
+          const prev = meta[i - 1];
+          const next = meta[i + 1];
+          return {
+            start: prev?.black ? prev.end : m.start,
+            end: next?.black ? next.start : m.end,
+          };
+        });
+
+        node.style.gridTemplateColumns = cols.map((c) => `${c.end - c.start}px`).join(" ");
         node.style.setProperty("--black-col", `${b}px`);
         node.style.setProperty("--hairline", `${1 / dpr}px`);
 
+        Array.from(node.children).forEach((child, i) => {
+          const el = child as HTMLElement;
+          const m = meta[i];
+          const c = cols[i];
+          if (!m || !c) return;
+          if (m.black) {
+            el.style.setProperty("--line-x", `${px(m.boundary - c.start)}px`);
+            el.style.removeProperty("--shift");
+          } else {
+            el.style.setProperty(
+              "--shift",
+              `${px((m.start + m.end) / 2 - (c.start + c.end) / 2)}px`,
+            );
+            el.style.removeProperty("--line-x");
+          }
+        });
       };
       snap();
       const ro = new ResizeObserver(snap);
@@ -86,6 +131,7 @@ function useSnappedGrid(from: number, to: number) {
     [from, to],
   );
 }
+
 
 
 function Index() {
