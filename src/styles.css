@@ -207,9 +207,9 @@
     background: var(--background);
   }
 
-  .natural-key-break .key-body,
-  .natural-key-break .result-cell {
-    border-right-color: var(--piano-line);
+  .piano-measure-column.natural-key-break .key-body,
+  .piano-measure-column.natural-key-break .result-cell {
+    border-right: 1px solid var(--piano-line);
   }
 
   .weight-fields {
