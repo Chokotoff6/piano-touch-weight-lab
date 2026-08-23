@@ -250,6 +250,14 @@
     top: 9rem;
   }
 
+  .is-white.shift-right .weight-fields {
+    transform: translateX(25%);
+  }
+
+  .is-white.shift-left .weight-fields {
+    transform: translateX(-25%);
+  }
+
   .is-white .weight-input {
     width: 72%;
     margin-right: auto;
