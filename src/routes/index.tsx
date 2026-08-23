@@ -126,11 +126,14 @@ function Index() {
           {rows.slice(from - 1, to).map((row, offset) => {
             const index = from - 1 + offset;
             const black = BLACK_KEYS.has(index + 1);
+            const leftBlack = !black && BLACK_KEYS.has(index);
+            const rightBlack = !black && BLACK_KEYS.has(index + 2);
+            const shift = leftBlack === rightBlack ? "" : leftBlack ? "shift-left" : "shift-right";
             const { friction, balance } = compute(row);
             return (
               <div
                 key={index}
-                className={`piano-measure-column ${black ? "is-black" : "is-white"} ${NATURAL_KEY_BREAKS.has(index + 1) ? "natural-key-break" : ""}`}
+                className={`piano-measure-column ${black ? "is-black" : "is-white"} ${shift} ${NATURAL_KEY_BREAKS.has(index + 1) ? "natural-key-break" : ""}`}
               >
                 <div className={`key-number ${C_KEYS.has(index + 1) ? "is-c-key" : ""}`}>
                   {index + 1}
