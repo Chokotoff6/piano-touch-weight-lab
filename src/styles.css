@@ -157,7 +157,7 @@
     height: 20rem;
     border-right: 1px solid var(--piano-line);
     color: var(--muted-foreground);
-    font: 500 clamp(0.45rem, 0.8vw, 0.68rem) / 1 "Work Sans", sans-serif;
+    font: 700 clamp(0.45rem, 0.8vw, 0.68rem) / 1 "Work Sans", sans-serif;
   }
 
   .technical-labels > div {
@@ -205,6 +205,18 @@
   .is-white .key-body {
     border-right: 1px solid var(--technical-border);
     background: var(--background);
+  }
+
+  .piano-measure-column.natural-key-break::after {
+    position: absolute;
+    top: 1.4rem;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    width: 1px;
+    background: var(--piano-line);
+    content: "";
+    pointer-events: none;
   }
 
   .weight-fields {
@@ -274,10 +286,6 @@
     line-height: 1.6rem;
   }
 
-  .is-black .result-cell {
-    background: var(--piano-black);
-  }
-
   .result-friction {
     border-top: 1px solid var(--piano-line);
   }
@@ -292,4 +300,9 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
+}
+
+.piano-measure-column.natural-key-break .key-body,
+.piano-measure-column.natural-key-break .result-cell {
+  border-right-color: var(--piano-line);
 }

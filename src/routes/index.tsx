@@ -29,6 +29,10 @@ const BLACK_KEYS = new Set([
   48, 50, 53, 55, 58, 60, 62, 65, 67, 70, 72, 74, 77, 79, 82, 84, 86,
 ]);
 
+const NATURAL_KEY_BREAKS = new Set([
+  3, 10, 15, 22, 27, 34, 39, 46, 51, 58, 63, 70, 75, 82, 87,
+]);
+
 type Row = { wa: string; wd: string };
 
 const EMPTY: Row[] = Array.from({ length: 88 }, () => ({ wa: "", wd: "" }));
@@ -81,7 +85,7 @@ function Index() {
     return (
       <span className="whitespace-nowrap">
         {integer}
-        <span className="text-[0.5em]">.{decimal}</span>
+        <span className="text-[0.68em]">.{decimal}</span>
       </span>
     );
   };
@@ -107,7 +111,7 @@ function Index() {
             return (
               <div
                 key={index}
-                className={`piano-measure-column ${black ? "is-black" : "is-white"}`}
+                className={`piano-measure-column ${black ? "is-black" : "is-white"} ${NATURAL_KEY_BREAKS.has(index + 1) ? "natural-key-break" : ""}`}
               >
                 <div className="key-number">
                   {index + 1}
