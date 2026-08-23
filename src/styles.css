@@ -248,10 +248,11 @@
 
 
   .is-white .weight-input {
-    width: 72%;
+    width: calc(var(--white-col, 100%) * 0.72);
     margin-right: auto;
     margin-left: auto;
   }
+
 
 
   .piano-measure-column.is-black {
