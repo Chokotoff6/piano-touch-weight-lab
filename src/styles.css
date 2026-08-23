@@ -195,6 +195,10 @@
     line-height: 1.4rem;
   }
 
+  .key-number.is-c-key {
+    font-weight: 900;
+  }
+
   .key-body {
     position: relative;
     height: 15.4rem;
@@ -211,7 +215,7 @@
     position: absolute;
     top: 1.4rem;
     right: 0;
-    bottom: 0;
+    height: 15.4rem;
     z-index: 2;
     width: 1px;
     background: var(--piano-line);
@@ -251,18 +255,33 @@
 
   .weight-input {
     display: block;
-    width: 100%;
+    width: calc(100% - 2px);
     min-width: 0;
     height: 2.55rem;
-    border: 0;
-    background: transparent;
-    padding: 0;
+    margin-inline: 1px;
+    border: 1px solid var(--technical-border);
+    background: var(--background);
+    padding: 0 1px;
     color: var(--foreground);
     text-align: center;
     font-size: clamp(0.42rem, 0.9vw, 0.83rem);
     font-style: italic;
     font-variant-numeric: tabular-nums;
     outline: none;
+  }
+
+  .weight-input + .weight-input {
+    margin-top: 1px;
+  }
+
+  .weight-input::placeholder {
+    color: var(--muted-foreground);
+    font-family: "Work Sans", sans-serif;
+    font-size: clamp(0.28rem, 0.48vw, 0.5rem);
+    font-style: normal;
+    font-weight: 600;
+    line-height: 2.55rem;
+    opacity: 1;
   }
 
   .is-black .weight-fields {
@@ -288,6 +307,10 @@
 
   .result-friction {
     border-top: 1px solid var(--piano-line);
+  }
+
+  .is-black .result-cell {
+    background: var(--background);
   }
 }
 
