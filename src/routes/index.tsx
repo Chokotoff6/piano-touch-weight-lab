@@ -239,29 +239,31 @@ function Index() {
                   {index + 1}
                 </div>
                 <div className="key-body">
-                  <div className="weight-fields">
-                  <input
-                    ref={(el) => {
-                      inputs.current[`${index}-wa`] = el;
-                    }}
-                    value={row.wa}
-                    onChange={(e) => setValue(index, "wa", e.target.value)}
-                    onKeyDown={(e) => onKeyDown(e, index, "wa")}
-                    inputMode="decimal"
-                    aria-label={`Wa touche ${index + 1}`}
-                    className="weight-input"
-                  />
-                  <input
-                    ref={(el) => {
-                      inputs.current[`${index}-wd`] = el;
-                    }}
-                    value={row.wd}
-                    onChange={(e) => setValue(index, "wd", e.target.value)}
-                    onKeyDown={(e) => onKeyDown(e, index, "wd")}
-                    inputMode="decimal"
-                    aria-label={`Wd touche ${index + 1}`}
-                    className="weight-input"
-                  />
+                  <div className="weight-fields weight-fields-wa">
+                    <input
+                      ref={(el) => {
+                        inputs.current[`${index}-wa`] = el;
+                      }}
+                      value={row.wa}
+                      onChange={(e) => setValue(index, "wa", e.target.value)}
+                      onKeyDown={(e) => onKeyDown(e, index, "wa")}
+                      inputMode="decimal"
+                      aria-label={`Wa touche ${index + 1}`}
+                      className="weight-input"
+                    />
+                  </div>
+                  <div className="weight-fields weight-fields-wd">
+                    <input
+                      ref={(el) => {
+                        inputs.current[`${index}-wd`] = el;
+                      }}
+                      value={row.wd}
+                      onChange={(e) => setValue(index, "wd", e.target.value)}
+                      onKeyDown={(e) => onKeyDown(e, index, "wd")}
+                      inputMode="decimal"
+                      aria-label={`Wd touche ${index + 1}`}
+                      className="weight-input"
+                    />
                   </div>
                 </div>
               </div>

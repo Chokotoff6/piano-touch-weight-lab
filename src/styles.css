@@ -174,11 +174,11 @@
     transform: translateY(-100%);
   }
   .label-wa-white {
-    top: calc(10.05rem + 0.765rem);
+    top: 9.35625rem;
     transform: translateY(-100%);
   }
   .label-wd-white {
-    top: calc(11.0075rem + 0.765rem);
+    top: 10.40625rem;
     transform: translateY(-100%);
   }
 
@@ -261,13 +261,16 @@
 
   .is-white .weight-fields {
     z-index: 3;
-    top: 8.80875rem;
-  }
-
-  .is-white .weight-fields {
     transform: translateX(var(--shift, 0px));
   }
 
+  .is-white .weight-fields-wa {
+    top: 8.4rem;
+  }
+
+  .is-white .weight-fields-wd {
+    top: 9.45rem;
+  }
 
   .is-white .weight-input {
     width: calc(var(--black-col, calc(var(--white-col, 100%) * 0.72)) - 2px);
