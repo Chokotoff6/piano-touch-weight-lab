@@ -167,11 +167,11 @@
 
   .label-key { top: 0.42rem; }
   .label-wa {
-    top: 9.16rem;
+    top: 12.95rem;
     transform: translateY(-100%);
   }
   .label-wd {
-    top: 11.77rem;
+    top: calc(15.5rem + 1px);
     transform: translateY(-100%);
   }
   .label-friction { top: 17.35rem; }
