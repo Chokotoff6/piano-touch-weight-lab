@@ -61,6 +61,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-piano-black: var(--piano-black);
   --color-technical-border: var(--technical-border);
+  --color-piano-line: var(--piano-line);
 }
 
 :root {
@@ -99,6 +100,7 @@
   --sidebar-ring: oklch(0.704 0.04 256.788);
   --piano-black: oklch(0.744 0 0);
   --technical-border: oklch(0.845 0 0);
+  --piano-line: oklch(0 0 0);
 }
 
 .dark {
@@ -136,6 +138,36 @@
   --sidebar-ring: oklch(0.551 0.027 264.364);
   --piano-black: oklch(0.744 0 0);
   --technical-border: oklch(0.845 0 0);
+  --piano-line: oklch(0 0 0);
+}
+
+@layer components {
+  .piano-column-white {
+    border-right: 1px solid var(--technical-border);
+  }
+
+  .piano-column-black {
+    position: relative;
+  }
+
+  .piano-column-black::after {
+    position: absolute;
+    top: 4.75rem;
+    bottom: 0;
+    left: 52.5%;
+    width: 1px;
+    background: var(--piano-line);
+    content: "";
+    pointer-events: none;
+  }
+
+  .piano-result-row {
+    border-top: 1px solid var(--piano-line);
+  }
+
+  .piano-result-row + div {
+    border-top: 0;
+  }
 }
 
 @layer base {
