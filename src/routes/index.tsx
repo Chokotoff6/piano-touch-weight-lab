@@ -48,10 +48,29 @@ const INFO_FIELDS = [
   { key: "remarques", label: "Remarques" },
 ] as const;
 
+function useSnappedGrid() {
+  return useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
+    const snap = () => {
+      const parent = node.parentElement;
+      if (!parent) return;
+      const avail = parent.getBoundingClientRect().width - (parent.firstElementChild?.getBoundingClientRect().width ?? 0);
+      const dpr = window.devicePixelRatio || 1;
+      const col = Math.floor((avail * dpr) / 44) / dpr;
+      node.style.setProperty("--piano-col", `${col}px`);
+      node.style.setProperty("--hairline", `${1 / dpr}px`);
+    };
+    snap();
+    const ro = new ResizeObserver(snap);
+    ro.observe(node.parentElement ?? node);
+  }, []);
+}
+
 function Index() {
   const [rows, setRows] = useState<Row[]>(EMPTY);
   const [info, setInfo] = useState<Record<string, string>>({});
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
+  const gridRef = useSnappedGrid();
 
   const focusCell = (index: number, field: "wa" | "wd") => {
     inputs.current[`${index}-${field}`]?.focus();
@@ -102,7 +121,7 @@ function Index() {
           <div className="label-friction">Friction</div>
           <div className="label-balance">Balance</div>
         </div>
-        <div className="piano-grid">
+        <div className="piano-grid" ref={gridRef}>
           {rows.slice(from - 1, to).map((row, offset) => {
             const index = from - 1 + offset;
             const black = BLACK_KEYS.has(index + 1);
