@@ -63,29 +63,21 @@ function useSnappedGrid(from: number, to: number) {
           (parent.firstElementChild?.getBoundingClientRect().width ?? 0);
         const dpr = window.devicePixelRatio || 1;
         const whites = keys.filter((k) => !BLACK_KEYS.has(k)).length;
-        const v = avail / whites;
-        const b = Math.round(v * BLACK_RATIO * dpr) / dpr;
-        // widths so that every white key reads the same visible width v
-        const raw = keys.map((k) => {
+        // exact device-pixel white width, identical for every white key
+        const v = Math.floor((avail * dpr) / whites) / dpr;
+        // even number of device pixels so half a black column stays exact
+        const b = (2 * Math.round((v * BLACK_RATIO * dpr) / 2)) / dpr;
+        const cols = keys.map((k) => {
           if (BLACK_KEYS.has(k)) return b;
           const n =
-            (BLACK_KEYS.has(k - 1) && keys.includes(k - 1) ? 1 : 0) +
-            (BLACK_KEYS.has(k + 1) && keys.includes(k + 1) ? 1 : 0);
+            (BLACK_KEYS.has(k - 1) && k - 1 >= from ? 1 : 0) +
+            (BLACK_KEYS.has(k + 1) && k + 1 <= to ? 1 : 0);
           return v - (n * b) / 2;
-        });
-        // snap cumulative edges to device pixels so all hairlines stay 1px
-        let cum = 0;
-        let prev = 0;
-        const cols = raw.map((w) => {
-          cum += w;
-          const edge = Math.round(cum * dpr) / dpr;
-          const width = edge - prev;
-          prev = edge;
-          return width;
         });
         node.style.gridTemplateColumns = cols.map((w) => `${w}px`).join(" ");
         node.style.setProperty("--black-col", `${b}px`);
         node.style.setProperty("--hairline", `${1 / dpr}px`);
+
       };
       snap();
       const ro = new ResizeObserver(snap);
