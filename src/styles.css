@@ -206,6 +206,18 @@
     pointer-events: none;
   }
 
+  .piano-measure-column.is-last-key::after {
+    position: absolute;
+    z-index: 1;
+    top: 1.05rem;
+    right: 0;
+    bottom: 0;
+    width: var(--hairline, 1px);
+    background: var(--piano-line);
+    content: "";
+    pointer-events: none;
+  }
+
 
   .key-number {
     height: 1.05rem;
