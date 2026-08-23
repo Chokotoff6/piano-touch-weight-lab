@@ -412,14 +412,19 @@
     transform: translateX(var(--shift, 0px));
   }
 
-  .result-col.is-white .result-value::before {
+  .result-col .result-value::before {
     position: absolute;
     top: 0;
     bottom: 0;
-    left: calc(var(--wstart, 0px) - var(--shift, 0px));
-    border-left: var(--hairline, 1px) solid var(--piano-line);
+    left: max(0px, calc(var(--wstart, 0px) - var(--shift, 0px)));
+    border-left: var(--sep, var(--hairline, 1px)) solid var(--piano-line);
     content: "";
   }
+
+  .result-col.is-black .result-value::before {
+    left: var(--line-x, 0px);
+  }
+
 
 }
 
