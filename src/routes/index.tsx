@@ -80,8 +80,16 @@ function Index() {
   const renderSection = (from: number, to: number, title: string) => (
     <section className="mt-8">
       <h2 className="mb-2 text-sm font-medium text-muted-foreground">{title}</h2>
-      <div className="overflow-x-auto rounded-md border border-border bg-card p-3">
-        <div className="flex">
+      <div className="w-full overflow-hidden rounded-md border border-border bg-card p-2 sm:p-3">
+        <div className="flex w-full items-start">
+          <div className="w-14 shrink-0 border-r border-border pr-2 text-right text-[9px] font-medium text-muted-foreground sm:w-20 sm:text-[11px]">
+            <div className="h-4 leading-4">Touche</div>
+            <div className="mt-1 h-7 leading-7">Wa (gr)</div>
+            <div className="mt-1 h-7 leading-7">Wd (gr)</div>
+            <div className="mt-1 h-5 leading-5">Friction</div>
+            <div className="mt-1 h-5 leading-5">Balance</div>
+          </div>
+          <div className="flex min-w-0 flex-1">
           {rows.slice(from - 1, to).map((row, offset) => {
             const index = from - 1 + offset;
             const black = isBlack(index + 1);
@@ -89,10 +97,11 @@ function Index() {
             return (
               <div
                 key={index}
-                className="flex shrink-0 flex-col items-center"
-                style={{ width: 40 }}
+                className="flex min-w-0 flex-1 flex-col items-center"
               >
-                <div className="text-[11px] tabular-nums text-muted-foreground">{index + 1}</div>
+                <div className="h-4 w-full overflow-hidden text-center text-[8px] leading-4 tabular-nums text-muted-foreground sm:text-[10px]">
+                  {index + 1}
+                </div>
                 <input
                   ref={(el) => {
                     inputs.current[`${index}-wa`] = el;
@@ -102,7 +111,7 @@ function Index() {
                   onKeyDown={(e) => onKeyDown(e, index, "wa")}
                   inputMode="decimal"
                   aria-label={`Wa touche ${index + 1}`}
-                  className="mt-1 h-7 w-9 rounded border border-input bg-background text-center text-[11px] tabular-nums outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+                  className="mt-1 h-7 w-full min-w-0 rounded-sm border border-input bg-background p-0 text-center text-[8px] tabular-nums outline-none focus:relative focus:z-20 focus:border-ring focus:ring-1 focus:ring-ring sm:text-[10px]"
                 />
                 <input
                   ref={(el) => {
@@ -113,36 +122,24 @@ function Index() {
                   onKeyDown={(e) => onKeyDown(e, index, "wd")}
                   inputMode="decimal"
                   aria-label={`Wd touche ${index + 1}`}
-                  className="mt-1 h-7 w-9 rounded border border-input bg-background text-center text-[11px] tabular-nums outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+                  className="mt-1 h-7 w-full min-w-0 rounded-sm border border-input bg-background p-0 text-center text-[8px] tabular-nums outline-none focus:relative focus:z-20 focus:border-ring focus:ring-1 focus:ring-ring sm:text-[10px]"
                 />
-                <div className="mt-1 h-5 w-9 rounded bg-muted text-center text-[11px] leading-5 tabular-nums text-muted-foreground">
+                <div className="mt-1 h-5 w-full overflow-hidden rounded-sm bg-muted text-center text-[8px] leading-5 tabular-nums text-muted-foreground sm:text-[10px]">
                   {friction}
                 </div>
-                <div className="mt-1 h-5 w-9 rounded bg-muted text-center text-[11px] leading-5 tabular-nums text-muted-foreground">
+                <div className="mt-1 h-5 w-full overflow-hidden rounded-sm bg-muted text-center text-[8px] leading-5 tabular-nums text-muted-foreground sm:text-[10px]">
                   {balance}
                 </div>
-                <div className="relative mt-2" style={{ width: 40, height: 120 }}>
-                  <div
-                    className="absolute inset-0 rounded-b-sm border border-border"
-                    style={{ background: "oklch(1 0 0)" }}
-                  />
+                <div className="relative mt-2 h-[clamp(72px,12vw,120px)] w-full">
+                  <div className="absolute inset-0 rounded-b-sm border border-border bg-background" />
                   {black && (
-                    <div
-                      className="absolute rounded-b-sm"
-                      style={{
-                        width: 24,
-                        height: 80,
-                        left: -12,
-                        top: 0,
-                        zIndex: 10,
-                        background: "oklch(0.15 0 0)",
-                      }}
-                    />
+                    <div className="absolute left-[-35%] top-0 z-10 h-2/3 w-[70%] rounded-b-sm bg-foreground" />
                   )}
                 </div>
               </div>
             );
           })}
+          </div>
         </div>
       </div>
     </section>
