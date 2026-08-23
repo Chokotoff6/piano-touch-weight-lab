@@ -108,7 +108,8 @@ function useSnappedGrid(from: number, to: number) {
 
         // bord droit de la dernière touche blanche visible
         const lastWhiteIdx = meta.reduce((last, m, i) => (m.black ? last : i), -1);
-        const resultRight = lastWhiteIdx >= 0 ? cols[lastWhiteIdx].end : cols[cols.length - 1].end;
+        const lastCol = cols[lastWhiteIdx >= 0 ? lastWhiteIdx : cols.length - 1];
+        const resultRight = lastCol?.end ?? cols[cols.length - 1]!.end;
 
         const template = cols.map((c) => `${c.end - c.start}px`).join(" ");
         node.style.gridTemplateColumns = template;
