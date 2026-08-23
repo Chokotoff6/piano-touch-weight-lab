@@ -471,6 +471,40 @@ INFO_FIELDS.forEach(([key, label]) => {
   infoGrid.appendChild(l);
 });
 
+
+/* ---- Moyennes ---- */
+const AVG_KEYS = [["wa","Wa"],["wd","Wd"],["friction","Friction"],["balance","Balance"]];
+const avgGrid = document.getElementById("avg-grid");
+AVG_KEYS.forEach(([key, label]) => {
+  const cell = document.createElement("div");
+  cell.className = "avg-cell";
+  cell.innerHTML = '<div class="k">' + label + '</div>' +
+    '<div class="v"><span data-avg="' + key + '-1">\u2014</span><span class="sep">/</span><span data-avg="' + key + '-2">\u2014</span></div>' +
+    '<div class="r"><span>1-44</span><span class="sep">/</span><span>45-88</span></div>';
+  avgGrid.appendChild(cell);
+});
+
+function sectionAverage(slice) {
+  const valid = slice.filter((r) => !Number.isNaN(parseFloat(r.wa)) && !Number.isNaN(parseFloat(r.wd)));
+  if (valid.length === 0) return { wa: "\u2014", wd: "\u2014", friction: "\u2014", balance: "\u2014" };
+  const avgWa = valid.reduce((s, r) => s + parseFloat(r.wa), 0) / valid.length;
+  const avgWd = valid.reduce((s, r) => s + parseFloat(r.wd), 0) / valid.length;
+  return {
+    wa: avgWa.toFixed(1), wd: avgWd.toFixed(1),
+    friction: ((avgWd - avgWa) / 2).toFixed(1),
+    balance: ((avgWd + avgWa) / 2).toFixed(1),
+  };
+}
+
+function refreshAverages() {
+  const a = sectionAverage(rows.slice(0, 44));
+  const b = sectionAverage(rows.slice(44, 88));
+  AVG_KEYS.forEach(([key]) => {
+    document.querySelector('[data-avg="' + key + '-1"]').textContent = a[key];
+    document.querySelector('[data-avg="' + key + '-2"]').textContent = b[key];
+  });
+}
+
 /* ---- Calculs ---- */
 function compute(row) {
   const wa = parseFloat(row.wa);
@@ -491,6 +525,7 @@ function refresh(index) {
   const b = document.querySelector('[data-res="balance-' + index + '"]');
   if (f) f.innerHTML = formatResult(friction);
   if (b) b.innerHTML = formatResult(balance);
+  refreshAverages();
 }
 
 function focusCell(index, field) {
@@ -669,6 +704,7 @@ function snap(node, from, to) {
   new ResizeObserver(run).observe(node.parentElement || node);
 }
 
+refreshAverages();
 renderSection(1, 44);
 renderSection(45, 88);
 
