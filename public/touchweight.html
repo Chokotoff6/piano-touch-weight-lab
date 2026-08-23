@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Touchweight statique piano &mdash; Wa / Wd, friction, balance</title>
+<meta name="description" content="Outil de relevé du touchweight statique : saisie des poids ascendant et descendant des 88 touches, calcul automatique de la friction et de la balance." />
+<meta property="og:title" content="Touchweight statique piano" />
+<meta property="og:description" content="Consignez Wa et Wd sur 88 touches et obtenez friction et balance instantanément." />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Work+Sans:wght@400;500;600;700;900&display=swap" />
+<style>
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.129 0.042 264.695);
+  --card: oklch(1 0 0);
+  --muted-foreground: oklch(0.554 0.046 257.417);
+  --border: oklch(0.929 0.013 255.508);
+  --input: oklch(0.929 0.013 255.508);
+  --ring: oklch(0.704 0.04 256.788);
+  --piano-black: oklch(0.744 0 0);
+  --piano-line: oklch(0 0 0);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Work Sans", sans-serif;
+}
+main { max-width: 1400px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0; }
+.intro { margin-top: 1rem; max-width: 48rem; font-size: 0.875rem; line-height: 1.6; color: var(--muted-foreground); }
+.intro p { margin: 0 0 0.75rem; }
+.intro p.strong { font-weight: 500; color: var(--foreground); }
+.intro ol { margin: 0; padding-left: 1.25rem; }
+.intro li { margin-bottom: 0.25rem; }
+.info-card { margin-top: 2rem; border: 1px solid var(--border); border-radius: 0.375rem; background: var(--card); padding: 1rem; }
+.info-head { display: flex; align-items: center; justify-content: space-between; }
+.info-head h2 { font-size: 0.875rem; font-weight: 500; margin: 0; }
+.btn-reset {
+  border: 1px solid var(--border); background: var(--background); color: var(--foreground);
+  border-radius: 0.375rem; padding: 0.35rem 0.75rem; font-size: 0.75rem; cursor: pointer;
+  font-family: inherit;
+}
+.btn-reset:hover { background: oklch(0.968 0.007 247.896); }
+.info-grid { margin-top: 0.75rem; display: grid; gap: 0.75rem; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .info-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { .info-grid { grid-template-columns: repeat(3, 1fr); } }
+.info-grid label { font-size: 0.75rem; color: var(--muted-foreground); }
+.info-grid input {
+  margin-top: 0.25rem; height: 2rem; width: 100%; border: 1px solid var(--input); border-radius: 0.25rem;
+  background: var(--background); padding: 0 0.5rem; font-size: 0.875rem; color: var(--foreground);
+  outline: none; font-family: inherit;
+}
+.info-grid input:focus { border-color: var(--ring); box-shadow: 0 0 0 1px var(--ring); }
+.formulas { margin-top: 1.5rem; display: flex; gap: 1rem; font-size: 0.75rem; color: var(--muted-foreground); }
+section.keys { margin-top: 2rem; }
+
+  .technical-sheet {
+    display: grid;
+    grid-template-columns: clamp(3.5rem, 7vw, 5rem) minmax(0, 1fr);
+    width: 100%;
+    overflow: hidden;
+    background: var(--background);
+  }
+
+  .technical-labels {
+    position: relative;
+    height: 12.6rem;
+    color: var(--muted-foreground);
+    font: 700 clamp(0.45rem, 0.8vw, 0.68rem) / 1 "Work Sans", sans-serif;
+  }
+
+  .technical-labels > div {
+    position: absolute;
+    right: 0.45rem;
+  }
+
+  .label-key { top: 0.315rem; }
+  .label-wa {
+    top: 5.81rem;
+    transform: translateY(-50%);
+  }
+  .label-wd {
+    top: 6.96rem;
+    transform: translateY(-50%);
+  }
+  .label-wa-white {
+    top: 9.99rem;
+    transform: translateY(-50%);
+  }
+  .label-wd-white {
+    top: 11.04rem;
+    transform: translateY(-50%);
+  }
+
+  .piano-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(44, minmax(0, 1fr));
+    min-width: 0;
+    height: 12.6rem;
+  }
+
+  .piano-measure-column {
+    position: relative;
+    box-sizing: border-box;
+    min-width: 0;
+    height: 12.6rem;
+    color: var(--foreground);
+    font-family: "JetBrains Mono", monospace;
+  }
+
+  .piano-measure-column::before {
+    position: absolute;
+    z-index: 1;
+    top: 1.05rem;
+    bottom: 0;
+    left: 0;
+    width: var(--hairline, 1px);
+    background: var(--piano-line);
+    content: "";
+    pointer-events: none;
+  }
+
+  .piano-measure-column.is-last-key::after {
+    position: absolute;
+    z-index: 1;
+    top: 1.05rem;
+    right: 0;
+    bottom: 0;
+    width: var(--hairline, 1px);
+    background: var(--piano-line);
+    content: "";
+    pointer-events: none;
+  }
+
+
+  .key-number {
+    height: 1.05rem;
+    overflow: visible;
+    text-align: center;
+    font-size: clamp(0.4rem, 0.72vw, 0.7rem);
+    font-weight: 500;
+    line-height: 1.05rem;
+  }
+
+  .key-number.is-c-key {
+    font-weight: 900;
+    font-size: clamp(0.48rem, 0.864vw, 0.84rem);
+  }
+
+  .key-body {
+    position: relative;
+    height: 11.55rem;
+    border-top: var(--hairline, 1px) solid var(--piano-line);
+    border-bottom: var(--hairline, 1px) solid var(--piano-line);
+  }
+
+  .is-white .key-body {
+    background: var(--background);
+  }
+
+  .is-black .key-body::before {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    right: calc(-1 * var(--hairline, 1px));
+    left: calc(-1 * var(--hairline, 1px));
+    height: 7.275rem;
+    border: var(--hairline, 1px) solid var(--piano-line);
+    background: var(--piano-black);
+    content: "";
+    pointer-events: none;
+  }
+
+  .weight-fields {
+    position: absolute;
+    left: 0;
+    width: 100%;
+  }
+
+  .is-white .weight-fields {
+    z-index: 3;
+    transform: translateX(var(--shift, 0px));
+  }
+
+  .is-white .weight-fields-wa {
+    top: 8.4rem;
+  }
+
+  .is-white .weight-fields-wd {
+    top: 9.45rem;
+  }
+
+  .is-white .weight-input {
+    width: calc(var(--black-col, calc(var(--white-col, 100%) * 0.72)) - 2px);
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+
+
+  .piano-measure-column.is-black {
+    z-index: 2;
+  }
+
+  .is-black .weight-fields {
+    z-index: 3;
+  }
+
+  .is-black .weight-fields-wa {
+    top: 4.22rem;
+    height: 0.95625rem;
+  }
+
+  .is-black .weight-fields-wd {
+    top: 5.37rem;
+    height: 0.95625rem;
+  }
+
+  .is-black .key-body::after {
+    position: absolute;
+    z-index: 2;
+    top: 7.275rem;
+    right: calc(-1 * var(--hairline, 1px));
+    bottom: 0;
+    left: calc(-1 * var(--hairline, 1px));
+    background:
+      linear-gradient(var(--piano-line), var(--piano-line)) no-repeat
+      calc(var(--line-x, 50%) + var(--hairline, 1px)) 0 / var(--hairline, 1px) 100%,
+      var(--background);
+
+    content: "";
+    pointer-events: none;
+  }
+
+
+  .weight-input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 0.95625rem;
+    border: none;
+    background: oklch(0.95 0 0);
+    padding: 0 1px;
+    color: var(--foreground);
+    text-align: center;
+    font-size: clamp(0.42rem, 0.9vw, 0.83rem);
+    font-style: italic;
+    font-variant-numeric: tabular-nums;
+    outline: none;
+  }
+
+  .is-black .weight-input {
+    background: oklch(0.82 0 0);
+  }
+
+  .weight-input + .weight-input {
+    margin-top: 1px;
+  }
+
+  .weight-input::placeholder {
+    color: var(--muted-foreground);
+    font-family: "Work Sans", sans-serif;
+    font-size: clamp(0.24rem, 0.32vw, 0.3rem);
+    font-style: normal;
+    font-weight: 600;
+    line-height: 0.95625rem;
+    opacity: 1;
+  }
+
+  .weight-input:focus {
+    box-shadow: inset 0 0 0 1px var(--ring);
+  }
+
+  .result-sheet {
+    display: grid;
+    grid-template-columns: clamp(3.5rem, 7vw, 5rem) minmax(0, 1fr);
+    box-sizing: border-box;
+    width: 100%;
+    height: 2rem;
+    margin-top: 0.75rem;
+  }
+
+  .result-label {
+    display: flex;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 0.3rem;
+    color: var(--foreground);
+    font: 400 clamp(0.45rem, 0.8vw, 0.68rem) / 1 "Work Sans", sans-serif;
+  }
+
+  .result-grid {
+    position: relative;
+    display: grid;
+    box-sizing: border-box;
+    grid-template-columns: repeat(44, minmax(0, 1fr));
+    min-width: 0;
+    height: 100%;
+  }
+
+  .result-grid::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 5;
+    width: var(--result-right, 100%);
+    height: 100%;
+    border-top: var(--hairline, 1px) solid var(--piano-line);
+    border-right: var(--hairline, 1px) solid var(--piano-line);
+    border-bottom: var(--hairline, 1px) solid var(--piano-line);
+    border-left: var(--hairline, 1px) solid var(--piano-line);
+    box-sizing: border-box;
+    content: "";
+    pointer-events: none;
+  }
+
+  .result-grid::after {
+    position: absolute;
+    top: 1rem;
+    left: 0;
+    z-index: 5;
+    width: var(--result-right, 100%);
+    height: var(--hairline, 1px);
+    background: var(--piano-line);
+    content: "";
+    pointer-events: none;
+  }
+
+  .result-col {
+    box-sizing: border-box;
+    min-width: 0;
+  }
+
+  .result-strip {
+    display: flex;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+    height: 1rem;
+    overflow: hidden;
+    background: var(--background);
+    color: var(--foreground);
+    text-align: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: clamp(0.34rem, 0.64vw, 0.6rem);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .result-col.is-black .result-strip {
+    border-right: var(--hairline, 1px) solid var(--piano-line);
+    border-left: var(--hairline, 1px) solid var(--piano-line);
+    background: oklch(0.87 0 0);
+  }
+
+  .result-value {
+    position: relative;
+    display: flex;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+    height: 1rem;
+    overflow: hidden;
+    color: var(--foreground);
+    text-align: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: clamp(0.38rem, 0.72vw, 0.68rem);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .result-value .rv-text {
+    transform: translateX(var(--shift, 0px));
+  }
+
+  .result-col .result-value::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--wstart, 0px);
+    border-left: var(--sep, var(--hairline, 1px)) solid var(--piano-line);
+    content: "";
+  }
+
+  .result-col.is-black .result-value::before {
+    left: var(--line-x, 0px);
+  }
+
+  .result-col:first-child .result-value::before {
+    display: none;
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>&Eacute;valuation du touchweight statique pour piano</h1>
+  <div class="intro">
+    <p>Bienvenue sur l'outil d'évaluation du touchweight statique pour piano. Cet outil permet de consigner les mesures de poids ascendant (Wa) et descendant (Wd) afin de calculer la friction et la balance mécanique de chaque touche.</p>
+    <p class="strong">Mode d'emploi :</p>
+    <ol>
+      <li>Placez le curseur sur la case &laquo;&nbsp;Wa&nbsp;&raquo; de la première touche.</li>
+      <li>Saisissez la valeur en grammes, puis appuyez sur &laquo;&nbsp;Entrée&nbsp;&raquo; : le curseur descend sur la case &laquo;&nbsp;Wd&nbsp;&raquo; de la même touche.</li>
+      <li>Saisissez la valeur &laquo;&nbsp;Wd&nbsp;&raquo;, puis appuyez sur &laquo;&nbsp;Entrée&nbsp;&raquo; : le curseur se déplace sur la case &laquo;&nbsp;Wa&nbsp;&raquo; de la touche suivante.</li>
+    </ol>
+  </div>
+
+  <section class="info-card">
+    <div class="info-head">
+      <h2>Informations générales</h2>
+      <button type="button" class="btn-reset" id="reset">RESET</button>
+    </div>
+    <div class="info-grid" id="info-grid"></div>
+  </section>
+
+  <div class="formulas">
+    <span>Friction = (Wd &minus; Wa) / 2</span>
+    <span>Balance = (Wd + Wa) / 2</span>
+  </div>
+
+  <div id="sections"></div>
+</main>
+
+<script>
+const BLACK_KEYS = new Set([2,5,7,10,12,14,17,19,22,24,26,29,31,34,36,38,41,43,46,48,50,53,55,58,60,62,65,67,70,72,74,77,79,82,84,86]);
+const NATURAL_KEY_BREAKS = new Set([3,10,15,22,27,34,39,46,51,58,63,70,75,82,87]);
+const C_KEYS = new Set([4,16,28,40,52,64,76,88]);
+const BLACK_RATIO = 0.605;
+const BLACK_OFFSET = { 1: 0, 3: 0, 6: 0, 8: 0, 10: 0 };
+const pitchClass = (key) => (key + 20) % 12;
+
+const INFO_FIELDS = [
+  ["date", "Date"], ["marque", "Marque"], ["modele", "Mod\u00e8le"],
+  ["sn", "Num\u00e9ro de s\u00e9rie (SN)"], ["fabrication", "Date de fabrication"], ["remarques", "Remarques"],
+];
+
+const rows = Array.from({ length: 88 }, () => ({ wa: "", wd: "" }));
+const inputs = {};
+
+/* ---- Informations g\u00e9n\u00e9rales ---- */
+const infoGrid = document.getElementById("info-grid");
+INFO_FIELDS.forEach(([key, label]) => {
+  const l = document.createElement("label");
+  l.textContent = label;
+  const i = document.createElement("input");
+  i.name = key;
+  l.appendChild(i);
+  infoGrid.appendChild(l);
+});
+
+/* ---- Calculs ---- */
+function compute(row) {
+  const wa = parseFloat(row.wa);
+  const wd = parseFloat(row.wd);
+  if (Number.isNaN(wa) || Number.isNaN(wd)) return { friction: "", balance: "" };
+  return { friction: ((wd - wa) / 2).toFixed(1), balance: ((wd + wa) / 2).toFixed(1) };
+}
+
+function formatResult(value) {
+  if (!value) return "";
+  const [integer, decimal] = value.split(".");
+  return integer + '<span style="font-size:0.82em">.' + decimal + "</span>";
+}
+
+function refresh(index) {
+  const { friction, balance } = compute(rows[index]);
+  const f = document.querySelector('[data-res="friction-' + index + '"]');
+  const b = document.querySelector('[data-res="balance-' + index + '"]');
+  if (f) f.innerHTML = formatResult(friction);
+  if (b) b.innerHTML = formatResult(balance);
+}
+
+function focusCell(index, field) {
+  const el = inputs[index + "-" + field];
+  if (el) { el.focus(); el.select(); }
+}
+
+/* ---- Rendu d'une section ---- */
+function renderSection(from, to) {
+  const section = document.createElement("section");
+  section.className = "keys";
+  section.setAttribute("aria-label", "Touches " + from + " \u00e0 " + to);
+
+  const sheet = document.createElement("div");
+  sheet.className = "technical-sheet";
+  sheet.innerHTML =
+    '<div class="technical-labels" aria-hidden="true">' +
+      '<div class="label-key"></div>' +
+      '<div class="label-wa">Wa (gr)</div>' +
+      '<div class="label-wd">Wd (gr)</div>' +
+      '<div class="label-wa-white">Wa (gr)</div>' +
+      '<div class="label-wd-white">Wd (gr)</div>' +
+    "</div>";
+
+  const grid = document.createElement("div");
+  grid.className = "piano-grid";
+
+  for (let key = from; key <= to; key++) {
+    const index = key - 1;
+    const black = BLACK_KEYS.has(key);
+    const leftBlack = !black && BLACK_KEYS.has(key - 1);
+    const rightBlack = !black && BLACK_KEYS.has(key + 1);
+    const shift = leftBlack === rightBlack ? "" : leftBlack ? "shift-left" : "shift-right";
+
+    const col = document.createElement("div");
+    col.className = "piano-measure-column " + (black ? "is-black" : "is-white") + " " + shift +
+      (NATURAL_KEY_BREAKS.has(key) ? " natural-key-break" : "") + (key === to ? " is-last-key" : "");
+
+    col.innerHTML =
+      '<div class="key-number' + (C_KEYS.has(key) ? " is-c-key" : "") + '">' + key + "</div>" +
+      '<div class="key-body">' +
+        '<div class="weight-fields weight-fields-wa">' +
+          '<input class="weight-input" inputmode="decimal" aria-label="Wa touche ' + key + '" data-i="' + index + '" data-f="wa" />' +
+        "</div>" +
+        '<div class="weight-fields weight-fields-wd">' +
+          '<input class="weight-input" inputmode="decimal" aria-label="Wd touche ' + key + '" data-i="' + index + '" data-f="wd" />' +
+        "</div>" +
+      "</div>";
+
+    col.querySelectorAll("input").forEach((input) => {
+      const i = Number(input.dataset.i);
+      const f = input.dataset.f;
+      inputs[i + "-" + f] = input;
+      input.addEventListener("input", () => { rows[i][f] = input.value; refresh(i); });
+      input.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        if (f === "wa") focusCell(i, "wd");
+        else if (i < 87) focusCell(i + 1, "wa");
+      });
+    });
+
+    grid.appendChild(col);
+  }
+
+  sheet.appendChild(grid);
+  section.appendChild(sheet);
+
+  ["friction", "balance"].forEach((kind) => {
+    const sheetR = document.createElement("div");
+    sheetR.className = "result-sheet";
+    const label = document.createElement("div");
+    label.className = "result-label";
+    label.textContent = kind === "friction" ? "Friction" : "Balance";
+    const rgrid = document.createElement("div");
+    rgrid.className = "result-grid";
+    for (let key = from; key <= to; key++) {
+      const index = key - 1;
+      const black = BLACK_KEYS.has(key);
+      const c = document.createElement("div");
+      c.className = "result-col " + (black ? "is-black" : "is-white");
+      c.innerHTML =
+        '<div class="result-strip">' + (black ? '<span data-res="' + kind + "-" + index + '"></span>' : "") + "</div>" +
+        '<div class="result-value"><span class="rv-text">' + (black ? "" : '<span data-res="' + kind + "-" + index + '"></span>') + "</span></div>";
+      rgrid.appendChild(c);
+    }
+    sheetR.appendChild(label);
+    sheetR.appendChild(rgrid);
+    section.appendChild(sheetR);
+  });
+
+  document.getElementById("sections").appendChild(section);
+  snap(grid, from, to);
+}
+
+/* ---- Alignement pixel des colonnes (\u00e9quivalent de useSnappedGrid) ---- */
+function snap(node, from, to) {
+  const keys = Array.from({ length: to - from + 1 }, (_, i) => from + i);
+  const run = () => {
+    const parent = node.parentElement;
+    if (!parent) return;
+    const avail = parent.getBoundingClientRect().width -
+      (parent.firstElementChild ? parent.firstElementChild.getBoundingClientRect().width : 0);
+    const dpr = window.devicePixelRatio || 1;
+    const px = (n) => Math.round(n * dpr) / dpr;
+    const whites = keys.filter((k) => !BLACK_KEYS.has(k)).length;
+    const v = Math.floor((avail * dpr) / whites) / dpr;
+    const b = (2 * Math.round((v * BLACK_RATIO * dpr) / 2)) / dpr;
+
+    let whiteIdx = 0;
+    const meta = keys.map((k) => {
+      if (BLACK_KEYS.has(k)) {
+        const boundary = px(whiteIdx * v);
+        const center = boundary + (BLACK_OFFSET[pitchClass(k)] || 0) * v;
+        const start = px(center - b / 2);
+        return { black: true, boundary, start, end: start + b };
+      }
+      const i = whiteIdx++;
+      return { black: false, boundary: 0, start: px(i * v), end: px((i + 1) * v) };
+    });
+
+    const cols = meta.map((m, i) => {
+      if (m.black) return { start: m.start, end: m.end };
+      const prev = meta[i - 1];
+      const next = meta[i + 1];
+      return {
+        start: prev && prev.black ? prev.end : m.start,
+        end: next && next.black ? next.start : m.end,
+      };
+    });
+
+    const lastWhiteIdx = meta.reduce((last, m, i) => (m.black ? last : i), -1);
+    const lastCol = cols[lastWhiteIdx >= 0 ? lastWhiteIdx : cols.length - 1];
+    const resultRight = lastCol ? lastCol.end : cols[cols.length - 1].end;
+
+    const template = cols.map((c) => (c.end - c.start) + "px").join(" ");
+    node.style.gridTemplateColumns = template;
+    node.style.setProperty("--black-col", b + "px");
+    node.style.setProperty("--white-col", v + "px");
+    node.style.setProperty("--hairline", (1 / dpr) + "px");
+    node.style.setProperty("--result-right", px(resultRight) + "px");
+
+    const applyVars = (container) => {
+      Array.from(container.children).forEach((el, i) => {
+        const m = meta[i];
+        const c = cols[i];
+        if (!m || !c) return;
+        if (m.black) {
+          el.style.setProperty("--line-x", px(m.boundary - c.start) + "px");
+          el.style.removeProperty("--shift");
+          el.style.removeProperty("--wstart");
+        } else {
+          el.style.setProperty("--shift", px((m.start + m.end) / 2 - (c.start + c.end) / 2) + "px");
+          const ws = px(m.start - c.start);
+          el.style.setProperty("--wstart", ws + "px");
+          el.style.setProperty("--sep", ws < 0 ? "0px" : "var(--hairline, 1px)");
+          el.style.removeProperty("--line-x");
+        }
+      });
+    };
+
+    const sec = node.closest("section");
+    if (sec) {
+      sec.querySelectorAll(".result-grid").forEach((g) => {
+        g.style.gridTemplateColumns = template;
+        g.style.setProperty("--hairline", (1 / dpr) + "px");
+        g.style.setProperty("--white-col", v + "px");
+        g.style.setProperty("--black-col", b + "px");
+        g.style.setProperty("--result-right", px(resultRight) + "px");
+        applyVars(g);
+      });
+    }
+    applyVars(node);
+  };
+  run();
+  new ResizeObserver(run).observe(node.parentElement || node);
+}
+
+renderSection(1, 44);
+renderSection(45, 88);
+
+document.getElementById("reset").addEventListener("click", () => {
+  rows.forEach((r, i) => { r.wa = ""; r.wd = ""; refresh(i); });
+  Object.values(inputs).forEach((el) => { el.value = ""; });
+});
+</script>
+</body>
+</html>
