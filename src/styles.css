@@ -301,3 +301,8 @@
     color: var(--color-foreground);
   }
 }
+
+.piano-measure-column.natural-key-break .key-body,
+.piano-measure-column.natural-key-break .result-cell {
+  border-right-color: var(--piano-line);
+}
