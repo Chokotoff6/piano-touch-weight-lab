@@ -367,27 +367,30 @@ function Index() {
           ))}
         </div>
         <div className="mt-4 border-t border-border pt-3">
-          <p className="text-xs font-medium text-muted-foreground">
-            Moyennes ({averages.count} touche{averages.count > 1 ? "s" : ""} mesurée
-            {averages.count > 1 ? "s" : ""})
-          </p>
+          <p className="text-xs font-medium text-muted-foreground">Moyennes</p>
           <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded bg-muted px-2 py-1.5 text-center">
-              <div className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">Wa</div>
-              <div className="text-sm font-semibold tabular-nums">{averages.wa}</div>
-            </div>
-            <div className="rounded bg-muted px-2 py-1.5 text-center">
-              <div className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">Wd</div>
-              <div className="text-sm font-semibold tabular-nums">{averages.wd}</div>
-            </div>
-            <div className="rounded bg-muted px-2 py-1.5 text-center">
-              <div className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">Friction</div>
-              <div className="text-sm font-semibold tabular-nums">{averages.friction}</div>
-            </div>
-            <div className="rounded bg-muted px-2 py-1.5 text-center">
-              <div className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">Balance</div>
-              <div className="text-sm font-semibold tabular-nums">{averages.balance}</div>
-            </div>
+            {([
+              { key: "wa", label: "Wa" },
+              { key: "wd", label: "Wd" },
+              { key: "friction", label: "Friction" },
+              { key: "balance", label: "Balance" },
+            ] as const).map(({ key, label }) => (
+              <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
+                <div className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+                  {label}
+                </div>
+                <div className="mt-1 flex justify-center gap-2 text-sm font-semibold tabular-nums">
+                  <span>{sectionAverages.first[key]}</span>
+                  <span className="text-muted-foreground">/</span>
+                  <span>{sectionAverages.second[key]}</span>
+                </div>
+                <div className="mt-0.5 flex justify-center gap-2 text-[0.6rem] text-muted-foreground tabular-nums">
+                  <span>1-44</span>
+                  <span className="invisible">/</span>
+                  <span>45-88</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
