@@ -181,13 +181,14 @@
     display: grid;
     grid-template-columns: repeat(44, minmax(0, 1fr));
     min-width: 0;
-    height: 20rem;
+    height: 15rem;
   }
 
   .piano-measure-column {
     position: relative;
+    box-sizing: border-box;
     min-width: 0;
-    height: 20rem;
+    height: 15rem;
     color: var(--foreground);
     font-family: "JetBrains Mono", monospace;
   }
