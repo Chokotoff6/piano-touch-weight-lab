@@ -174,11 +174,11 @@
     transform: translateY(-100%);
   }
   .label-wa-white {
-    top: calc(10.05rem + 0.95625rem);
+    top: calc(10.05rem + 0.765rem);
     transform: translateY(-100%);
   }
   .label-wd-white {
-    top: calc(11.0075rem + 0.95625rem);
+    top: calc(11.0075rem + 0.765rem);
     transform: translateY(-100%);
   }
 
@@ -261,7 +261,7 @@
 
   .is-white .weight-fields {
     z-index: 3;
-    top: 9rem;
+    top: 8.80875rem;
   }
 
   .is-white .weight-fields {
