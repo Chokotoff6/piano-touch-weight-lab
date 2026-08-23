@@ -106,11 +106,17 @@ function useSnappedGrid(from: number, to: number) {
           };
         });
 
+        // bord droit de la dernière touche blanche visible
+        const lastWhiteIdx = meta.reduce((last, m, i) => (m.black ? last : i), -1);
+        const lastCol = cols[lastWhiteIdx >= 0 ? lastWhiteIdx : cols.length - 1];
+        const resultRight = lastCol?.end ?? cols[cols.length - 1]!.end;
+
         const template = cols.map((c) => `${c.end - c.start}px`).join(" ");
         node.style.gridTemplateColumns = template;
         node.style.setProperty("--black-col", `${b}px`);
         node.style.setProperty("--white-col", `${v}px`);
         node.style.setProperty("--hairline", `${1 / dpr}px`);
+        node.style.setProperty("--result-right", `${px(resultRight)}px`);
 
         const applyVars = (container: HTMLElement) => {
           Array.from(container.children).forEach((child, i) => {
@@ -144,6 +150,7 @@ function useSnappedGrid(from: number, to: number) {
             g.style.setProperty("--hairline", `${1 / dpr}px`);
             g.style.setProperty("--white-col", `${v}px`);
             g.style.setProperty("--black-col", `${b}px`);
+            g.style.setProperty("--result-right", `${px(resultRight)}px`);
             applyVars(g);
           });
 
