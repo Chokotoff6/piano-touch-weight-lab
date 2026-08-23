@@ -360,7 +360,7 @@
     justify-content: flex-end;
     padding-right: 0.3rem;
     color: var(--foreground);
-    font: 700 clamp(0.45rem, 0.8vw, 0.68rem) / 1 "Work Sans", sans-serif;
+    font: 400 clamp(0.45rem, 0.8vw, 0.68rem) / 1 "Work Sans", sans-serif;
   }
 
   .result-grid {
