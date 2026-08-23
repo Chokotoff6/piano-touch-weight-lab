@@ -188,6 +188,8 @@ function Index() {
           <div className="label-key" />
           <div className="label-wa">Wa (gr)</div>
           <div className="label-wd">Wd (gr)</div>
+          <div className="label-wa-white">Wa (gr)</div>
+          <div className="label-wd-white">Wd (gr)</div>
           <div className="label-friction">Friction</div>
           <div className="label-balance">Balance</div>
         </div>
