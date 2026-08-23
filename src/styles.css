@@ -273,9 +273,10 @@
     bottom: 0;
     left: calc(-1 * var(--hairline, 1px));
     background:
-      linear-gradient(var(--piano-line), var(--piano-line)) no-repeat 50% 0 /
-      var(--hairline, 1px) 100%,
+      linear-gradient(var(--piano-line), var(--piano-line)) no-repeat
+      calc(var(--line-x, 50%) + var(--hairline, 1px)) 0 / var(--hairline, 1px) 100%,
       var(--background);
+
     content: "";
     pointer-events: none;
   }
