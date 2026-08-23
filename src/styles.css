@@ -261,7 +261,7 @@
 
 
   .is-white .weight-input {
-    width: var(--black-col, calc(var(--white-col, 100%) * 0.72));
+    width: calc(var(--black-col, calc(var(--white-col, 100%) * 0.72)) - 2px);
     margin-right: auto;
     margin-left: auto;
   }
