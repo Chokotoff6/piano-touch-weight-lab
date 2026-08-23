@@ -154,7 +154,7 @@
 
   .technical-labels {
     position: relative;
-    height: 20rem;
+    height: 15rem;
     border-right: 1px solid var(--piano-line);
     color: var(--muted-foreground);
     font: 700 clamp(0.45rem, 0.8vw, 0.68rem) / 1 "Work Sans", sans-serif;
@@ -165,40 +165,41 @@
     right: 0.45rem;
   }
 
-  .label-key { top: 0.42rem; }
+  .label-key { top: 0.315rem; }
   .label-wa {
-    top: 6.93rem;
+    top: 5.1975rem;
     transform: translateY(-100%);
   }
   .label-wd {
-    top: calc(8.2rem + 1px);
+    top: calc(6.15rem + 1px);
     transform: translateY(-100%);
   }
-  .label-friction { top: 17.35rem; }
-  .label-balance { top: 19rem; }
+  .label-friction { top: 13.0125rem; }
+  .label-balance { top: 14.25rem; }
 
   .piano-grid {
     display: grid;
     grid-template-columns: repeat(44, minmax(0, 1fr));
     min-width: 0;
-    height: 20rem;
+    height: 15rem;
   }
 
   .piano-measure-column {
     position: relative;
+    box-sizing: border-box;
     min-width: 0;
-    height: 20rem;
+    height: 15rem;
     color: var(--foreground);
     font-family: "JetBrains Mono", monospace;
   }
 
   .key-number {
-    height: 1.4rem;
+    height: 1.05rem;
     overflow: visible;
     text-align: center;
     font-size: clamp(0.4rem, 0.72vw, 0.7rem);
     font-weight: 500;
-    line-height: 1.4rem;
+    line-height: 1.05rem;
   }
 
   .key-number.is-c-key {
@@ -207,7 +208,7 @@
 
   .key-body {
     position: relative;
-    height: 15.4rem;
+    height: 11.55rem;
     border-top: 1px solid var(--piano-line);
     border-bottom: 1px solid var(--piano-line);
   }
@@ -217,22 +218,6 @@
     background: var(--background);
   }
 
-  .is-white:has(+ .is-black) .key-body {
-    border-right-color: transparent;
-  }
-
-  .piano-measure-column.natural-key-break::after {
-    position: absolute;
-    top: 1.4rem;
-    right: 0;
-    height: 15.4rem;
-    z-index: 2;
-    width: 1px;
-    background: var(--piano-line);
-    content: "";
-    pointer-events: none;
-  }
-
   .weight-fields {
     position: absolute;
     left: 0;
@@ -240,12 +225,12 @@
   }
 
   .is-white .weight-fields {
-    top: 12rem;
+    top: 9rem;
   }
 
   .is-black .weight-fields {
     top: 0;
-    height: 9.7rem;
+    height: 7.275rem;
     border-right: 1px solid var(--piano-line);
     border-bottom: 1px solid var(--piano-line);
     background: var(--piano-black);
@@ -253,7 +238,7 @@
 
   .is-black .key-body::after {
     position: absolute;
-    top: 9.7rem;
+    top: 7.275rem;
     right: 47.5%;
     bottom: 0;
     width: 1px;
@@ -266,7 +251,7 @@
     display: block;
     width: 100%;
     min-width: 0;
-    height: 1.275rem;
+    height: 0.95625rem;
     border: none;
     background: oklch(0.95 0 0);
     padding: 0 1px;
@@ -288,12 +273,12 @@
     font-size: clamp(0.24rem, 0.32vw, 0.3rem);
     font-style: normal;
     font-weight: 600;
-    line-height: 1.275rem;
+    line-height: 0.95625rem;
     opacity: 1;
   }
 
   .is-black .weight-fields {
-    padding-top: 4.25rem;
+    padding-top: 3.1875rem;
   }
 
   .weight-input:focus {
@@ -301,7 +286,7 @@
   }
 
   .result-cell {
-    height: 1.6rem;
+    height: 1.2rem;
     overflow: hidden;
     border-right: 1px solid var(--technical-border);
     border-bottom: 1px solid var(--piano-line);
@@ -310,11 +295,7 @@
     font-size: clamp(0.38rem, 0.72vw, 0.68rem);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
-    line-height: 1.6rem;
-  }
-
-  .result-friction {
-    border-top: 1px solid var(--piano-line);
+    line-height: 1.2rem;
   }
 
   .is-black .result-cell {
@@ -333,7 +314,3 @@
   }
 }
 
-.piano-measure-column.natural-key-break .key-body,
-.piano-measure-column.natural-key-break .result-cell {
-  border-right-color: var(--piano-line);
-}
