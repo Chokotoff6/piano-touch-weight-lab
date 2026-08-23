@@ -248,7 +248,7 @@
 
 
   .is-white .weight-input {
-    width: calc(var(--white-col, 100%) * 0.72);
+    width: var(--black-col, calc(var(--white-col, 100%) * 0.72));
     margin-right: auto;
     margin-left: auto;
   }
@@ -297,6 +297,10 @@
     font-style: italic;
     font-variant-numeric: tabular-nums;
     outline: none;
+  }
+
+  .is-black .weight-input {
+    background: oklch(0.82 0 0);
   }
 
   .weight-input + .weight-input {
