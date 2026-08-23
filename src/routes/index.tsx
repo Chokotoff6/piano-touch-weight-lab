@@ -273,7 +273,9 @@ function Index() {
               return (
                 <div key={index} className={`result-col ${black ? "is-black" : "is-white"}`}>
                   <div className="result-strip">{black ? formatResult(value) : null}</div>
-                  <div className="result-value">{black ? null : formatResult(value)}</div>
+                  <div className="result-value">
+                    <span className="rv-text">{black ? null : formatResult(value)}</span>
+                  </div>
                 </div>
 
               );

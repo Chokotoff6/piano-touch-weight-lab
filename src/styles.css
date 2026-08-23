@@ -409,6 +409,10 @@
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     line-height: 1.15rem;
+  }
+
+  .result-value .rv-text {
+    display: block;
     transform: translateX(var(--shift, 0px));
   }
 
@@ -416,7 +420,7 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    left: max(0px, calc(var(--wstart, 0px) - var(--shift, 0px)));
+    left: var(--wstart, 0px);
     border-left: var(--sep, var(--hairline, 1px)) solid var(--piano-line);
     content: "";
   }
