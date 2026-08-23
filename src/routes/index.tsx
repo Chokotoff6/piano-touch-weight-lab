@@ -85,10 +85,12 @@ function useSnappedGrid(from: number, to: number) {
         let whiteIdx = 0;
         const meta = keys.map((k) => {
           if (BLACK_KEYS.has(k)) {
-            const boundary = whiteIdx * v;
+            const boundary = px(whiteIdx * v);
             const center = boundary + (BLACK_OFFSET[pitchClass(k)] ?? 0) * v;
-            return { black: true, boundary, start: px(center - b / 2), end: px(center + b / 2) };
+            const start = px(center - b / 2);
+            return { black: true, boundary, start, end: start + b };
           }
+
           const i = whiteIdx++;
           return { black: false, boundary: 0, start: px(i * v), end: px((i + 1) * v) };
         });
