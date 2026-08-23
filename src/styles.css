@@ -250,6 +250,12 @@
     top: 9rem;
   }
 
+  .is-white .weight-input {
+    width: 72%;
+    margin-right: auto;
+    margin-left: auto;
+  }
+
 
   .piano-measure-column.is-black {
     z-index: 2;
