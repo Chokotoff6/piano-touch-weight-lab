@@ -211,6 +211,10 @@
     pointer-events: none;
   }
 
+  .piano-measure-column:first-child::before {
+    top: 0;
+  }
+
   .piano-measure-column.is-last-key::after {
     position: absolute;
     z-index: 1;
