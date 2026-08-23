@@ -105,6 +105,7 @@ function useSnappedGrid(from: number, to: number) {
 
         node.style.gridTemplateColumns = cols.map((c) => `${c.end - c.start}px`).join(" ");
         node.style.setProperty("--black-col", `${b}px`);
+        node.style.setProperty("--white-col", `${v}px`);
         node.style.setProperty("--hairline", `${1 / dpr}px`);
 
         Array.from(node.children).forEach((child, i) => {
