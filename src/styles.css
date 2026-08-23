@@ -155,7 +155,7 @@
   .technical-labels {
     position: relative;
     height: 15rem;
-    border-right: 1px solid var(--piano-line);
+    border-right: var(--hairline, 1px) solid var(--piano-line);
     color: var(--muted-foreground);
     font: 700 clamp(0.45rem, 0.8vw, 0.68rem) / 1 "Work Sans", sans-serif;
   }
@@ -178,11 +178,27 @@
   .label-balance { top: 14.25rem; }
 
   .piano-grid {
+    position: relative;
     display: grid;
     grid-template-columns: repeat(44, minmax(0, 1fr));
-    grid-template-columns: repeat(44, round(down, calc(100% / 44), 1px));
+    grid-template-columns: repeat(44, var(--piano-col, calc(100% / 44)));
     min-width: 0;
     height: 15rem;
+  }
+
+  .piano-grid::after {
+    position: absolute;
+    top: 1.05rem;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: repeating-linear-gradient(
+      to right,
+      var(--piano-line) 0 var(--hairline, 1px),
+      transparent var(--hairline, 1px) var(--piano-col, calc(100% / 44))
+    );
+    content: "";
+    pointer-events: none;
   }
 
   .piano-measure-column {
@@ -210,12 +226,11 @@
   .key-body {
     position: relative;
     height: 11.55rem;
-    border-top: 1px solid var(--piano-line);
-    border-bottom: 1px solid var(--piano-line);
+    border-top: var(--hairline, 1px) solid var(--piano-line);
+    border-bottom: var(--hairline, 1px) solid var(--piano-line);
   }
 
   .is-white .key-body {
-    border-right: 1px solid var(--technical-border);
     background: var(--background);
   }
 
@@ -232,20 +247,14 @@
   .is-black .weight-fields {
     top: 0;
     height: 7.275rem;
-    border-right: 1px solid var(--piano-line);
-    border-bottom: 1px solid var(--piano-line);
+    border-bottom: var(--hairline, 1px) solid var(--piano-line);
     background: var(--piano-black);
   }
 
-  .is-black .key-body::after {
-    position: absolute;
-    top: 7.275rem;
-    right: 47.5%;
-    bottom: 0;
-    width: 1px;
-    background: var(--piano-line);
-    content: "";
-    pointer-events: none;
+  .is-black .key-body {
+    background:
+      linear-gradient(var(--piano-line), var(--piano-line)) no-repeat 50% 100% /
+      var(--hairline, 1px) calc(100% - 7.275rem);
   }
 
   .weight-input {
@@ -289,8 +298,7 @@
   .result-cell {
     height: 1.2rem;
     overflow: hidden;
-    border-right: 1px solid var(--technical-border);
-    border-bottom: 1px solid var(--piano-line);
+    border-bottom: var(--hairline, 1px) solid var(--piano-line);
     background: var(--background);
     text-align: center;
     font-size: clamp(0.38rem, 0.72vw, 0.68rem);
