@@ -240,7 +240,7 @@
   }
 
   .is-white .weight-fields {
-    top: 9rem;
+    top: 12rem;
   }
 
   .is-black .weight-fields {
@@ -264,12 +264,11 @@
 
   .weight-input {
     display: block;
-    width: calc(100% - 2px);
+    width: 100%;
     min-width: 0;
     height: 1.275rem;
-    margin-inline: 1px;
-    border: 1px solid var(--technical-border);
-    background: var(--background);
+    border: none;
+    background: oklch(0.95 0 0);
     padding: 0 1px;
     color: var(--foreground);
     text-align: center;
