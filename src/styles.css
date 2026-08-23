@@ -180,6 +180,7 @@
   .piano-grid {
     display: grid;
     grid-template-columns: repeat(44, minmax(0, 1fr));
+    grid-template-columns: repeat(44, round(down, calc(100% / 44), 1px));
     min-width: 0;
     height: 15rem;
   }
