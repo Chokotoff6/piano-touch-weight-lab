@@ -404,8 +404,11 @@
 
   .result-value {
     position: relative;
+    display: flex;
     box-sizing: border-box;
-    height: calc(100% - 0.85rem);
+    align-items: center;
+    justify-content: center;
+    height: 1rem;
     overflow: hidden;
     color: var(--foreground);
     text-align: center;
@@ -413,11 +416,9 @@
     font-size: clamp(0.38rem, 0.72vw, 0.68rem);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
-    line-height: calc(100% - 0.85rem);
   }
 
   .result-value .rv-text {
-    display: block;
     transform: translateX(var(--shift, 0px));
   }
 
