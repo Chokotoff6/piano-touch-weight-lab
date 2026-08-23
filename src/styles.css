@@ -251,7 +251,7 @@
     display: block;
     width: 100%;
     min-width: 0;
-    height: 1.275rem;
+    height: 0.95625rem;
     border: none;
     background: oklch(0.95 0 0);
     padding: 0 1px;
@@ -273,7 +273,7 @@
     font-size: clamp(0.24rem, 0.32vw, 0.3rem);
     font-style: normal;
     font-weight: 600;
-    line-height: 1.275rem;
+    line-height: 0.95625rem;
     opacity: 1;
   }
 
