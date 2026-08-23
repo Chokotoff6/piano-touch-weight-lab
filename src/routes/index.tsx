@@ -33,6 +33,8 @@ const NATURAL_KEY_BREAKS = new Set([
   3, 10, 15, 22, 27, 34, 39, 46, 51, 58, 63, 70, 75, 82, 87,
 ]);
 
+const C_KEYS = new Set([4, 16, 28, 40, 52, 64, 76, 88]);
+
 type Row = { wa: string; wd: string };
 
 const EMPTY: Row[] = Array.from({ length: 88 }, () => ({ wa: "", wd: "" }));
@@ -97,7 +99,7 @@ function Index() {
       </h2>
       <div className="technical-sheet">
         <div className="technical-labels" aria-hidden="true">
-          <div className="label-key">Touche</div>
+          <div className="label-key" />
           <div className="label-wa">Wa (gr)</div>
           <div className="label-wd">Wd (gr)</div>
           <div className="label-friction">Friction</div>
@@ -113,7 +115,7 @@ function Index() {
                 key={index}
                 className={`piano-measure-column ${black ? "is-black" : "is-white"} ${NATURAL_KEY_BREAKS.has(index + 1) ? "natural-key-break" : ""}`}
               >
-                <div className="key-number">
+                <div className={`key-number ${C_KEYS.has(index + 1) ? "is-c-key" : ""}`}>
                   {index + 1}
                 </div>
                 <div className="key-body">
@@ -126,6 +128,7 @@ function Index() {
                     onChange={(e) => setValue(index, "wa", e.target.value)}
                     onKeyDown={(e) => onKeyDown(e, index, "wa")}
                     inputMode="decimal"
+                    placeholder="Wa (gr)"
                     aria-label={`Wa touche ${index + 1}`}
                     className="weight-input"
                   />
@@ -137,6 +140,7 @@ function Index() {
                     onChange={(e) => setValue(index, "wd", e.target.value)}
                     onKeyDown={(e) => onKeyDown(e, index, "wd")}
                     inputMode="decimal"
+                    placeholder="Wd (gr)"
                     aria-label={`Wd touche ${index + 1}`}
                     className="weight-input"
                   />
