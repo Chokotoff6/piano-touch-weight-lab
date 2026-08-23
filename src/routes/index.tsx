@@ -127,7 +127,10 @@ function useSnappedGrid(from: number, to: number) {
                 "--shift",
                 `${px((m.start + m.end) / 2 - (c.start + c.end) / 2)}px`,
               );
-              el.style.setProperty("--wstart", `${px(m.start - c.start)}px`);
+              const ws = px(m.start - c.start);
+              el.style.setProperty("--wstart", `${ws}px`);
+              el.style.setProperty("--sep", ws < 0 ? "0px" : "var(--hairline, 1px)");
+
               el.style.removeProperty("--line-x");
             }
           });
