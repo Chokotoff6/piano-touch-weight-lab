@@ -302,15 +302,13 @@
   }
 
   .is-black .weight-fields-wa {
-    top: 0;
-    height: 3.6375rem;
-    padding-top: 1.2rem;
+    top: 2.15625rem;
+    height: 0.95625rem;
   }
 
   .is-black .weight-fields-wd {
-    top: 3.6375rem;
-    height: 3.6375rem;
-    padding-top: 0.8rem;
+    top: 4.1625rem;
+    height: 0.95625rem;
   }
 
   .is-black .key-body::after {
