@@ -208,7 +208,7 @@ function Index() {
     return (
       <span className="whitespace-nowrap">
         {integer}
-        <span className="text-[0.68em]">.{decimal}</span>
+        <span className="text-[0.82em]">.{decimal}</span>
       </span>
     );
   };
