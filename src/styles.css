@@ -403,7 +403,7 @@
   .result-value {
     position: relative;
     box-sizing: border-box;
-    height: 1.15rem;
+    height: calc(100% - 0.85rem);
     overflow: hidden;
     color: var(--foreground);
     text-align: center;
@@ -411,7 +411,7 @@
     font-size: clamp(0.38rem, 0.72vw, 0.68rem);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
-    line-height: 1.15rem;
+    line-height: calc(100% - 0.85rem);
   }
 
   .result-value .rv-text {
