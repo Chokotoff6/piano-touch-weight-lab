@@ -74,20 +74,31 @@ function Index() {
     };
   };
 
+  const formatResult = (value: string) => {
+    if (!value) return null;
+    const [integer, decimal] = value.split(".");
+    return (
+      <span className="whitespace-nowrap">
+        {integer}
+        <span className="text-[0.5em]">.{decimal}</span>
+      </span>
+    );
+  };
+
   const renderSection = (from: number, to: number, title: string) => (
     <section className="mt-8">
       <h2 className="mb-2 text-sm font-medium text-muted-foreground">{title}</h2>
-      <div className="flex w-full overflow-hidden border border-border bg-background">
-          <div className="w-12 shrink-0 border-r border-border text-right text-[8px] font-medium text-muted-foreground sm:w-20 sm:text-[11px]">
-            <div className="h-5 border-b border-border pr-1 leading-5 sm:pr-2">Touche</div>
-            <div className="h-7 border-b border-border pr-1 leading-7 sm:pr-2">Wa (gr)</div>
-            <div className="h-7 border-b border-border pr-1 leading-7 sm:pr-2">Wd (gr)</div>
-            <div className="h-5 border-b border-border pr-1 leading-5 sm:pr-2">Friction</div>
+      <div className="flex w-full overflow-hidden bg-background">
+          <div className="w-12 shrink-0 border border-technical-border text-right text-[8px] font-medium text-muted-foreground sm:w-20 sm:text-[11px]">
+            <div className="h-5 pr-1 leading-5 sm:pr-2">Touche</div>
+            <div className="h-7 pr-1 leading-7 sm:pr-2">Wa (gr)</div>
+            <div className="h-7 pr-1 leading-7 sm:pr-2">Wd (gr)</div>
+            <div className="h-5 pr-1 leading-5 sm:pr-2">Friction</div>
             <div className="h-5 pr-1 leading-5 sm:pr-2">Balance</div>
           </div>
           <div
             className="grid min-w-0 flex-1"
-            style={{ gridTemplateColumns: `repeat(${to - from + 1}, minmax(0, 1fr))` }}
+            style={{ gridTemplateColumns: "repeat(51, minmax(0, 1fr))" }}
           >
           {rows.slice(from - 1, to).map((row, offset) => {
             const index = from - 1 + offset;
@@ -96,9 +107,9 @@ function Index() {
             return (
               <div
                 key={index}
-                className="min-w-0 border-r border-border last:border-r-0"
+                className="min-w-0 border border-technical-border"
               >
-                <div className="h-5 w-full overflow-hidden border-b border-border text-center text-[5px] leading-5 tabular-nums text-foreground sm:text-[9px]">
+                <div className="h-5 w-full overflow-hidden text-center text-[5px] leading-5 tabular-nums text-foreground sm:text-[9px]">
                   {index + 1}
                 </div>
                 <div className={black ? "bg-piano-black" : "bg-background"}>
@@ -111,7 +122,7 @@ function Index() {
                     onKeyDown={(e) => onKeyDown(e, index, "wa")}
                     inputMode="decimal"
                     aria-label={`Wa touche ${index + 1}`}
-                    className="block h-7 w-full min-w-0 border-0 border-b border-border bg-transparent p-0 text-center text-[5px] tabular-nums text-foreground outline-none focus:relative focus:z-20 focus:ring-1 focus:ring-inset focus:ring-ring sm:text-[9px]"
+                    className="block h-7 w-full min-w-0 border-0 bg-transparent p-0 text-center text-[5px] tabular-nums text-foreground outline-none focus:relative focus:z-20 focus:ring-1 focus:ring-inset focus:ring-ring sm:text-[9px]"
                   />
                   <input
                     ref={(el) => {
@@ -122,14 +133,14 @@ function Index() {
                     onKeyDown={(e) => onKeyDown(e, index, "wd")}
                     inputMode="decimal"
                     aria-label={`Wd touche ${index + 1}`}
-                    className="block h-7 w-full min-w-0 border-0 border-b border-border bg-transparent p-0 text-center text-[5px] tabular-nums text-foreground outline-none focus:relative focus:z-20 focus:ring-1 focus:ring-inset focus:ring-ring sm:text-[9px]"
+                    className="block h-7 w-full min-w-0 border-0 bg-transparent p-0 text-center text-[5px] tabular-nums text-foreground outline-none focus:relative focus:z-20 focus:ring-1 focus:ring-inset focus:ring-ring sm:text-[9px]"
                   />
                 </div>
-                <div className="h-5 w-full overflow-hidden border-b border-border bg-background text-center text-[5px] leading-5 tabular-nums text-foreground sm:text-[9px]">
-                  {friction}
+                <div className="h-5 w-full overflow-hidden bg-background text-center text-[5px] leading-5 tabular-nums text-foreground sm:text-[9px]">
+                  {formatResult(friction)}
                 </div>
                 <div className="h-5 w-full overflow-hidden bg-background text-center text-[5px] leading-5 tabular-nums text-foreground sm:text-[9px]">
-                  {balance}
+                  {formatResult(balance)}
                 </div>
               </div>
             );
