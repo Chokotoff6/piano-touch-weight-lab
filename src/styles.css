@@ -277,7 +277,7 @@
   .weight-input::placeholder {
     color: var(--muted-foreground);
     font-family: "Work Sans", sans-serif;
-    font-size: clamp(0.28rem, 0.48vw, 0.5rem);
+    font-size: clamp(0.24rem, 0.32vw, 0.3rem);
     font-style: normal;
     font-weight: 600;
     line-height: 2.55rem;
