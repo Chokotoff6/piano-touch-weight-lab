@@ -106,7 +106,15 @@ function useSnappedGrid(from: number, to: number) {
           };
         });
 
-        node.style.gridTemplateColumns = cols.map((c) => `${c.end - c.start}px`).join(" ");
+        const template = cols.map((c) => `${c.end - c.start}px`).join(" ");
+        node.style.gridTemplateColumns = template;
+        node
+          .closest("section")
+          ?.querySelectorAll<HTMLElement>(".result-grid")
+          .forEach((g) => {
+            g.style.gridTemplateColumns = template;
+            g.style.setProperty("--hairline", `${1 / dpr}px`);
+          });
         node.style.setProperty("--black-col", `${b}px`);
         node.style.setProperty("--white-col", `${v}px`);
         node.style.setProperty("--hairline", `${1 / dpr}px`);
@@ -193,8 +201,6 @@ function Index() {
           <div className="label-wd">Wd (gr)</div>
           <div className="label-wa-white">Wa (gr)</div>
           <div className="label-wd-white">Wd (gr)</div>
-          <div className="label-friction">Friction</div>
-          <div className="label-balance">Balance</div>
         </div>
         <div className="piano-grid" ref={gridRef}>
           {rows.slice(from - 1, to).map((row, offset) => {
@@ -203,7 +209,6 @@ function Index() {
             const leftBlack = !black && BLACK_KEYS.has(index);
             const rightBlack = !black && BLACK_KEYS.has(index + 2);
             const shift = leftBlack === rightBlack ? "" : leftBlack ? "shift-left" : "shift-right";
-            const { friction, balance } = compute(row);
             return (
               <div
                 key={index}
@@ -238,17 +243,29 @@ function Index() {
                   />
                   </div>
                 </div>
-                <div className="result-cell result-friction">
-                  {formatResult(friction)}
-                </div>
-                <div className="result-cell result-balance">
-                  {formatResult(balance)}
-                </div>
               </div>
             );
           })}
         </div>
       </div>
+      {(["friction", "balance"] as const).map((kind) => (
+        <div className="result-sheet" key={kind}>
+          <div className="result-label">{kind === "friction" ? "Friction" : "Balance"}</div>
+          <div className="result-grid">
+            {rows.slice(from - 1, to).map((row, offset) => {
+              const index = from - 1 + offset;
+              const black = BLACK_KEYS.has(index + 1);
+              const value = compute(row)[kind];
+              return (
+                <div key={index} className={`result-col ${black ? "is-black" : "is-white"}`}>
+                  <div className="result-strip" />
+                  <div className="result-value">{formatResult(value)}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </section>
   );
 
