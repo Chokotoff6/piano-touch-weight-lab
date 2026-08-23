@@ -186,11 +186,6 @@
     font-family: "JetBrains Mono", monospace;
   }
 
-  .natural-key-break .key-body,
-  .natural-key-break .result-cell {
-    border-right-color: var(--piano-line);
-  }
-
   .key-number {
     height: 1.4rem;
     overflow: visible;
@@ -210,6 +205,11 @@
   .is-white .key-body {
     border-right: 1px solid var(--technical-border);
     background: var(--background);
+  }
+
+  .natural-key-break .key-body,
+  .natural-key-break .result-cell {
+    border-right-color: var(--piano-line);
   }
 
   .weight-fields {
