@@ -278,7 +278,7 @@
   }
 
   .is-black .weight-fields {
-    padding-top: 4.25rem;
+    padding-top: 3.1875rem;
   }
 
   .weight-input:focus {
@@ -286,7 +286,7 @@
   }
 
   .result-cell {
-    height: 1.6rem;
+    height: 1.2rem;
     overflow: hidden;
     border-right: 1px solid var(--technical-border);
     border-bottom: 1px solid var(--piano-line);
@@ -295,7 +295,7 @@
     font-size: clamp(0.38rem, 0.72vw, 0.68rem);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
-    line-height: 1.6rem;
+    line-height: 1.2rem;
   }
 
   .result-friction {
