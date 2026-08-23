@@ -48,24 +48,53 @@ const INFO_FIELDS = [
   { key: "remarques", label: "Remarques" },
 ] as const;
 
-function useSnappedGrid() {
-  return useCallback((node: HTMLDivElement | null) => {
-    if (!node) return;
-    const snap = () => {
-      const parent = node.parentElement;
-      if (!parent) return;
-      const avail = parent.getBoundingClientRect().width - (parent.firstElementChild?.getBoundingClientRect().width ?? 0);
-      const dpr = window.devicePixelRatio || 1;
-      const col = Math.floor((avail * dpr) / 44) / dpr;
-      node.style.setProperty("--piano-col", `${col}px`);
-      node.style.setProperty("--hairline", `${1 / dpr}px`);
+const BLACK_RATIO = 0.55;
 
-    };
-    snap();
-    const ro = new ResizeObserver(snap);
-    ro.observe(node.parentElement ?? node);
-  }, []);
+function useSnappedGrid(from: number, to: number) {
+  return useCallback(
+    (node: HTMLDivElement | null) => {
+      if (!node) return;
+      const keys = Array.from({ length: to - from + 1 }, (_, i) => from + i);
+      const snap = () => {
+        const parent = node.parentElement;
+        if (!parent) return;
+        const avail =
+          parent.getBoundingClientRect().width -
+          (parent.firstElementChild?.getBoundingClientRect().width ?? 0);
+        const dpr = window.devicePixelRatio || 1;
+        const whites = keys.filter((k) => !BLACK_KEYS.has(k)).length;
+        const v = avail / whites;
+        const b = Math.round(v * BLACK_RATIO * dpr) / dpr;
+        // widths so that every white key reads the same visible width v
+        const raw = keys.map((k) => {
+          if (BLACK_KEYS.has(k)) return b;
+          const n =
+            (BLACK_KEYS.has(k - 1) && keys.includes(k - 1) ? 1 : 0) +
+            (BLACK_KEYS.has(k + 1) && keys.includes(k + 1) ? 1 : 0);
+          return v - (n * b) / 2;
+        });
+        // snap cumulative edges to device pixels so all hairlines stay 1px
+        let cum = 0;
+        let prev = 0;
+        const cols = raw.map((w) => {
+          cum += w;
+          const edge = Math.round(cum * dpr) / dpr;
+          const width = edge - prev;
+          prev = edge;
+          return width;
+        });
+        node.style.gridTemplateColumns = cols.map((w) => `${w}px`).join(" ");
+        node.style.setProperty("--piano-black", `${b}px`);
+        node.style.setProperty("--hairline", `${1 / dpr}px`);
+      };
+      snap();
+      const ro = new ResizeObserver(snap);
+      ro.observe(node.parentElement ?? node);
+    },
+    [from, to],
+  );
 }
+
 
 function Index() {
   const [rows, setRows] = useState<Row[]>(EMPTY);
