@@ -188,6 +188,7 @@
 
   .piano-grid::after {
     position: absolute;
+    z-index: 1;
     top: 1.05rem;
     right: 0;
     bottom: 0;
@@ -201,23 +202,8 @@
     pointer-events: none;
   }
 
-  /* Bande des touches blanches : 26 blanches de largeur strictement identique */
-  .piano-grid::before {
-    position: absolute;
-    z-index: 1;
-    top: 8.325rem;
-    left: 0;
-    width: 100%;
-    height: 4.275rem;
-    background-color: var(--background);
-    background-image: repeating-linear-gradient(
-      to right,
-      var(--piano-line) 0 var(--hairline, 1px),
-      transparent var(--hairline, 1px) var(--white-col, calc(100% / 26))
-    );
-    content: "";
-    pointer-events: none;
-  }
+
+
 
 
   .piano-measure-column {
@@ -265,21 +251,28 @@
   }
 
 
+  .piano-measure-column.is-black {
+    z-index: 2;
+  }
+
   .is-black .weight-fields {
     top: 0;
     height: 7.275rem;
-    border-bottom: var(--hairline, 1px) solid var(--piano-line);
+    border: var(--hairline, 1px) solid var(--piano-line);
     background: var(--piano-black);
   }
 
   .is-black .key-body::after {
     position: absolute;
-    z-index: 0;
+    z-index: 2;
     top: 7.275rem;
     right: calc(-1 * var(--hairline, 1px));
     bottom: 0;
     left: calc(-1 * var(--hairline, 1px));
-    background: var(--background);
+    background:
+      linear-gradient(var(--piano-line), var(--piano-line)) no-repeat 50% 0 /
+      var(--hairline, 1px) 100%,
+      var(--background);
     content: "";
     pointer-events: none;
   }
