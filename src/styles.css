@@ -404,6 +404,7 @@
     border-top: var(--hairline, 1px) solid var(--piano-line);
     border-right: var(--hairline, 1px) solid var(--piano-line);
     border-bottom: var(--hairline, 1px) solid var(--piano-line);
+    border-left: var(--hairline, 1px) solid var(--piano-line);
     box-sizing: border-box;
     content: "";
     pointer-events: none;
