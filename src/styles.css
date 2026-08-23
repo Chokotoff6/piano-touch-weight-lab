@@ -242,13 +242,10 @@
     top: 9rem;
   }
 
-  .is-white.shift-right .weight-fields {
-    transform: translateX(calc(var(--black-col, 0px) / 4));
+  .is-white .weight-fields {
+    transform: translateX(var(--shift, 0px));
   }
 
-  .is-white.shift-left .weight-fields {
-    transform: translateX(calc(-1 * var(--black-col, 0px) / 4));
-  }
 
   .is-white .weight-input {
     width: 72%;
