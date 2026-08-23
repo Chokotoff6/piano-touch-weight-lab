@@ -210,8 +210,8 @@ function Index() {
         <span>Balance = (Wd + Wa) / 2</span>
       </div>
 
-      {renderSection(1, 51)}
-      {renderSection(52, 88)}
+      {renderSection(1, 44)}
+      {renderSection(45, 88)}
     </main>
   );
 }
