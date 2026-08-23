@@ -261,13 +261,16 @@
 
   .is-white .weight-fields {
     z-index: 3;
-    top: 8.80875rem;
-  }
-
-  .is-white .weight-fields {
     transform: translateX(var(--shift, 0px));
   }
 
+  .is-white .weight-fields-wa {
+    top: 8.4rem;
+  }
+
+  .is-white .weight-fields-wd {
+    top: 9.45rem;
+  }
 
   .is-white .weight-input {
     width: calc(var(--black-col, calc(var(--white-col, 100%) * 0.72)) - 2px);
