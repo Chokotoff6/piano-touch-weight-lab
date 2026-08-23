@@ -92,11 +92,8 @@ function Index() {
     );
   };
 
-  const renderSection = (from: number, to: number, title: string) => (
-    <section className="mt-8" aria-labelledby={`section-${from}`}>
-      <h2 id={`section-${from}`} className="mb-2 text-sm font-medium text-muted-foreground">
-        {title}
-      </h2>
+  const renderSection = (from: number, to: number) => (
+    <section className="mt-8" aria-label={`Touches ${from} à ${to}`}>
       <div className="technical-sheet">
         <div className="technical-labels" aria-hidden="true">
           <div className="label-key" />
@@ -128,7 +125,6 @@ function Index() {
                     onChange={(e) => setValue(index, "wa", e.target.value)}
                     onKeyDown={(e) => onKeyDown(e, index, "wa")}
                     inputMode="decimal"
-                    placeholder="Wa (gr)"
                     aria-label={`Wa touche ${index + 1}`}
                     className="weight-input"
                   />
@@ -140,7 +136,6 @@ function Index() {
                     onChange={(e) => setValue(index, "wd", e.target.value)}
                     onKeyDown={(e) => onKeyDown(e, index, "wd")}
                     inputMode="decimal"
-                    placeholder="Wd (gr)"
                     aria-label={`Wd touche ${index + 1}`}
                     className="weight-input"
                   />
@@ -215,8 +210,8 @@ function Index() {
         <span>Balance = (Wd + Wa) / 2</span>
       </div>
 
-      {renderSection(1, 51, "Section 1 — touches 1 à 51")}
-      {renderSection(52, 88, "Section 2 — touches 52 à 88")}
+      {renderSection(1, 51)}
+      {renderSection(52, 88)}
     </main>
   );
 }
