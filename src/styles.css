@@ -230,6 +230,7 @@
 
   .key-number.is-c-key {
     font-weight: 900;
+    font-size: clamp(0.48rem, 0.864vw, 0.84rem);
   }
 
   .key-body {
