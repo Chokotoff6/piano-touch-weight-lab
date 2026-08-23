@@ -253,6 +253,19 @@
     background: var(--background);
   }
 
+  .is-black .key-body::before {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    right: calc(-1 * var(--hairline, 1px));
+    left: calc(-1 * var(--hairline, 1px));
+    height: 7.275rem;
+    border: var(--hairline, 1px) solid var(--piano-line);
+    background: var(--piano-black);
+    content: "";
+    pointer-events: none;
+  }
+
   .weight-fields {
     position: absolute;
     left: 0;
@@ -285,10 +298,19 @@
   }
 
   .is-black .weight-fields {
+    z-index: 3;
+  }
+
+  .is-black .weight-fields-wa {
     top: 0;
-    height: 7.275rem;
-    border: var(--hairline, 1px) solid var(--piano-line);
-    background: var(--piano-black);
+    height: 3.6375rem;
+    padding-top: 1.2rem;
+  }
+
+  .is-black .weight-fields-wd {
+    top: 3.6375rem;
+    height: 3.6375rem;
+    padding-top: 0.8rem;
   }
 
   .is-black .key-body::after {
