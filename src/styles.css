@@ -401,9 +401,8 @@
     z-index: 5;
     width: var(--result-right, 100%);
     height: 100%;
-    border-top: var(--hairline, 1px) solid var(--piano-line);
+    border: var(--hairline, 1px) solid var(--piano-line);
     border-right: var(--hairline, 1px) solid var(--piano-line);
-    border-bottom: var(--hairline, 1px) solid var(--piano-line);
     box-sizing: border-box;
     content: "";
     pointer-events: none;
