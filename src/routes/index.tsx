@@ -48,7 +48,7 @@ const INFO_FIELDS = [
   { key: "remarques", label: "Remarques" },
 ] as const;
 
-const BLACK_RATIO = 0.55;
+const BLACK_RATIO = 0.605;
 
 // décalages réels des touches noires (en largeur de touche blanche),
 // mesurés depuis la séparation entre les deux blanches voisines
