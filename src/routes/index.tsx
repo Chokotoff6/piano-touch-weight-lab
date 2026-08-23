@@ -174,24 +174,27 @@ function Index() {
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
 
-  const averages = useMemo(() => {
-    const valid = rows.filter((r) => {
-      const wa = parseFloat(r.wa);
-      const wd = parseFloat(r.wd);
-      return !Number.isNaN(wa) && !Number.isNaN(wd);
-    });
-    if (valid.length === 0) {
-      return { wa: "—", wd: "—", friction: "—", balance: "—", count: 0 };
-    }
-    const avgWa = valid.reduce((s, r) => s + parseFloat(r.wa), 0) / valid.length;
-    const avgWd = valid.reduce((s, r) => s + parseFloat(r.wd), 0) / valid.length;
-    return {
-      wa: avgWa.toFixed(1),
-      wd: avgWd.toFixed(1),
-      friction: ((avgWd - avgWa) / 2).toFixed(1),
-      balance: ((avgWd + avgWa) / 2).toFixed(1),
-      count: valid.length,
+  const sectionAverages = useMemo(() => {
+    const calc = (slice: Row[]) => {
+      const valid = slice.filter((r) => {
+        const wa = parseFloat(r.wa);
+        const wd = parseFloat(r.wd);
+        return !Number.isNaN(wa) && !Number.isNaN(wd);
+      });
+      if (valid.length === 0) {
+        return { wa: "—", wd: "—", friction: "—", balance: "—", count: 0 };
+      }
+      const avgWa = valid.reduce((s, r) => s + parseFloat(r.wa), 0) / valid.length;
+      const avgWd = valid.reduce((s, r) => s + parseFloat(r.wd), 0) / valid.length;
+      return {
+        wa: avgWa.toFixed(1),
+        wd: avgWd.toFixed(1),
+        friction: ((avgWd - avgWa) / 2).toFixed(1),
+        balance: ((avgWd + avgWa) / 2).toFixed(1),
+        count: valid.length,
+      };
     };
+    return { first: calc(rows.slice(0, 44)), second: calc(rows.slice(44, 88)) };
   }, [rows]);
 
   const focusCell = (index: number, field: "wa" | "wd") => {
