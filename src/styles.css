@@ -253,18 +253,16 @@
 
   .is-black .key-body::after {
     position: absolute;
-    z-index: 2;
+    z-index: 0;
     top: 7.275rem;
     right: calc(-1 * var(--hairline, 1px));
     bottom: 0;
     left: calc(-1 * var(--hairline, 1px));
-    background:
-      linear-gradient(var(--piano-line), var(--piano-line)) no-repeat 50% 0 /
-      var(--hairline, 1px) 100%,
-      var(--background);
+    background: var(--background);
     content: "";
     pointer-events: none;
   }
+
 
   .weight-input {
     display: block;
