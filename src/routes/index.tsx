@@ -58,7 +58,9 @@ function useSnappedGrid() {
       const dpr = window.devicePixelRatio || 1;
       const col = Math.floor((avail * dpr) / 44) / dpr;
       node.style.setProperty("--piano-col", `${col}px`);
+      node.style.setProperty("--white-col", `${Math.floor((col * 44 * dpr) / 26) / dpr}px`);
       node.style.setProperty("--hairline", `${1 / dpr}px`);
+
     };
     snap();
     const ro = new ResizeObserver(snap);
