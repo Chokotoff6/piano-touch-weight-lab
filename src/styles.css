@@ -369,6 +369,7 @@
     box-sizing: border-box;
     grid-template-columns: repeat(44, minmax(0, 1fr));
     min-width: 0;
+    height: 100%;
     border: var(--hairline, 1px) solid var(--piano-line);
     border-left: none;
   }
