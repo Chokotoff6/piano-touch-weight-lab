@@ -370,7 +370,6 @@
     min-width: 0;
     height: 100%;
     border: var(--hairline, 1px) solid var(--piano-line);
-    border-left: none;
   }
 
   .result-col {
