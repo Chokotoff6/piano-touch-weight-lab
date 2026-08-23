@@ -218,22 +218,6 @@
     background: var(--background);
   }
 
-  .is-white:has(+ .is-black) .key-body {
-    border-right-color: transparent;
-  }
-
-  .piano-measure-column.natural-key-break::after {
-    position: absolute;
-    top: 1.4rem;
-    right: 0;
-    height: 15.4rem;
-    z-index: 2;
-    width: 1px;
-    background: var(--piano-line);
-    content: "";
-    pointer-events: none;
-  }
-
   .weight-fields {
     position: absolute;
     left: 0;
