@@ -317,7 +317,7 @@ function Index() {
 
   return (
     <main className="mx-auto max-w-[1400px] px-6 py-10">
-      <h1 className="text-xl font-semibold">Évaluation du touchweight statique pour piano</h1>
+      <h1 className="text-xl font-semibold">Instrument details</h1>
       <div className="mt-4 max-w-3xl space-y-3 text-sm leading-relaxed text-muted-foreground">
         <p>
           Bienvenue sur l'outil d'évaluation du touchweight statique pour piano. Cet outil permet de
@@ -338,7 +338,7 @@ function Index() {
         </ol>
       </div>
 
-      <section className="mt-8 rounded-md border border-border bg-card p-4">
+      <section className="mt-8 rounded-md border-2 border-foreground bg-card p-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-medium">Informations générales</h2>
           <Button
@@ -362,6 +362,30 @@ function Index() {
               />
             </label>
           ))}
+        </div>
+        <div className="mt-4 border-t border-border pt-3">
+          <p className="text-xs font-medium text-muted-foreground">
+            Moyennes ({averages.count} touche{averages.count > 1 ? "s" : ""} mesurée
+            {averages.count > 1 ? "s" : ""})
+          </p>
+          <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded bg-muted px-2 py-1.5 text-center">
+              <div className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">Wa</div>
+              <div className="text-sm font-semibold tabular-nums">{averages.wa}</div>
+            </div>
+            <div className="rounded bg-muted px-2 py-1.5 text-center">
+              <div className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">Wd</div>
+              <div className="text-sm font-semibold tabular-nums">{averages.wd}</div>
+            </div>
+            <div className="rounded bg-muted px-2 py-1.5 text-center">
+              <div className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">Friction</div>
+              <div className="text-sm font-semibold tabular-nums">{averages.friction}</div>
+            </div>
+            <div className="rounded bg-muted px-2 py-1.5 text-center">
+              <div className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">Balance</div>
+              <div className="text-sm font-semibold tabular-nums">{averages.balance}</div>
+            </div>
+          </div>
         </div>
       </section>
 
