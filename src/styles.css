@@ -155,7 +155,6 @@
   .technical-labels {
     position: relative;
     height: 12.6rem;
-    border-right: var(--hairline, 1px) solid var(--piano-line);
     color: var(--muted-foreground);
     font: 700 clamp(0.45rem, 0.8vw, 0.68rem) / 1 "Work Sans", sans-serif;
   }
