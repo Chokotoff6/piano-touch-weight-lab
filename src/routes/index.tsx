@@ -386,6 +386,56 @@ function Index() {
         </div>
       </section>
 
+      <section className="mt-4 rounded-md border-2 border-foreground bg-card p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setRows(EMPTY)}
+            className="text-xs"
+          >
+            Reset
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            disabled
+          >
+            PDF
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            disabled
+          >
+            Compare
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            disabled
+          >
+            Save
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            disabled
+          >
+            Load
+          </Button>
+        </div>
+      </section>
+
       <div className="mt-6 flex gap-4 text-xs text-muted-foreground">
         <span>Friction = (Wd − Wa) / 2</span>
         <span>Balance = (Wd + Wa) / 2</span>
