@@ -589,10 +589,10 @@ function renderSection(from, to) {
       '<div class="key-number' + (C_KEYS.has(key) ? " is-c-key" : "") + '">' + key + "</div>" +
       '<div class="key-body">' +
         '<div class="weight-fields weight-fields-wa">' +
-          '<input class="weight-input" inputmode="decimal" aria-label="Wa touche ' + key + '" data-i="' + index + '" data-f="wa" />' +
+          '<input class="weight-input" type="number" inputmode="decimal" min="30" max="99" step="0.1" aria-label="Wa touche ' + key + '" data-i="' + index + '" data-f="wa" />' +
         "</div>" +
         '<div class="weight-fields weight-fields-wd">' +
-          '<input class="weight-input" inputmode="decimal" aria-label="Wd touche ' + key + '" data-i="' + index + '" data-f="wd" />' +
+          '<input class="weight-input" type="number" inputmode="decimal" min="30" max="99" step="0.1" aria-label="Wd touche ' + key + '" data-i="' + index + '" data-f="wd" />' +
         "</div>" +
       "</div>";
 
@@ -600,10 +600,21 @@ function renderSection(from, to) {
       const i = Number(input.dataset.i);
       const f = input.dataset.f;
       inputs[i + "-" + f] = input;
-      input.addEventListener("input", () => { rows[i][f] = input.value; refresh(i); });
+      input.addEventListener("input", () => {
+        input.value = cleanWeight(input.value);
+        rows[i][f] = input.value;
+        refresh(i);
+      });
+      input.addEventListener("blur", () => {
+        const num = parseWeight(input.value);
+        input.value = num === null ? "" : num.toFixed(1);
+        rows[i][f] = input.value;
+        refresh(i);
+      });
       input.addEventListener("keydown", (e) => {
         if (e.key !== "Enter") return;
         e.preventDefault();
+        input.blur();
         if (f === "wa") focusCell(i, "wd");
         else if (i < 87) focusCell(i + 1, "wa");
       });
