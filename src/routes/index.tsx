@@ -216,8 +216,26 @@ function Index() {
     [],
   );
 
-  const setValue = (index: number, field: "wa" | "wd", value: string) =>
-    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
+  const cleanWeight = (value: string) =>
+    value.replace(/,/g, ".").replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+
+  const parseWeight = (value: string): number | null => {
+    const num = parseFloat(cleanWeight(value));
+    if (Number.isNaN(num) || num < 30 || num > 99) return null;
+    return num;
+  };
+
+  const setValue = (index: number, field: "wa" | "wd", value: string) => {
+    const cleaned = cleanWeight(value);
+    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: cleaned } : r)));
+  };
+
+  const handleBlur = (index: number, field: "wa" | "wd", value: string) => {
+    const num = parseWeight(value);
+    setRows((prev) =>
+      prev.map((r, i) => (i === index ? { ...r, [field]: num === null ? "" : num.toFixed(1) } : r)),
+    );
+  };
 
   const compute = (r: Row) => {
     const wa = parseFloat(r.wa);
