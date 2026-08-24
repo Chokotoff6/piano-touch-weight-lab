@@ -506,9 +506,11 @@ function sectionAverage(slice) {
 }
 
 function refreshAverages() {
+  const g = sectionAverage(rows);
   const a = sectionAverage(rows.slice(0, 44));
   const b = sectionAverage(rows.slice(44, 88));
   AVG_KEYS.forEach(([key]) => {
+    document.querySelector('[data-avg="' + key + '-global"]').textContent = g[key];
     document.querySelector('[data-avg="' + key + '-1"]').textContent = a[key];
     document.querySelector('[data-avg="' + key + '-2"]').textContent = b[key];
   });
