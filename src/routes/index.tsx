@@ -194,7 +194,11 @@ function Index() {
         count: valid.length,
       };
     };
-    return { first: calc(rows.slice(0, 44)), second: calc(rows.slice(44, 88)) };
+    return {
+      global: calc(rows),
+      first: calc(rows.slice(0, 44)),
+      second: calc(rows.slice(44, 88)),
+    };
   }, [rows]);
 
   const focusCell = (index: number, field: "wa" | "wd") => {
@@ -212,8 +216,26 @@ function Index() {
     [],
   );
 
-  const setValue = (index: number, field: "wa" | "wd", value: string) =>
-    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
+  const cleanWeight = (value: string) =>
+    value.replace(/,/g, ".").replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+
+  const parseWeight = (value: string): number | null => {
+    const num = parseFloat(cleanWeight(value));
+    if (Number.isNaN(num) || num < 30 || num > 99) return null;
+    return num;
+  };
+
+  const setValue = (index: number, field: "wa" | "wd", value: string) => {
+    const cleaned = cleanWeight(value);
+    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: cleaned } : r)));
+  };
+
+  const handleBlur = (index: number, field: "wa" | "wd", value: string) => {
+    const num = parseWeight(value);
+    setRows((prev) =>
+      prev.map((r, i) => (i === index ? { ...r, [field]: num === null ? "" : num.toFixed(1) } : r)),
+    );
+  };
 
   const compute = (r: Row) => {
     const wa = parseFloat(r.wa);
@@ -269,8 +291,12 @@ function Index() {
                       }}
                       value={row.wa}
                       onChange={(e) => setValue(index, "wa", e.target.value)}
+                      onBlur={(e) => handleBlur(index, "wa", e.target.value)}
                       onKeyDown={(e) => onKeyDown(e, index, "wa")}
                       inputMode="decimal"
+                      min={30}
+                      max={99}
+                      step={0.1}
                       aria-label={`Wa touche ${index + 1}`}
                       className="weight-input"
                     />
@@ -282,8 +308,12 @@ function Index() {
                       }}
                       value={row.wd}
                       onChange={(e) => setValue(index, "wd", e.target.value)}
+                      onBlur={(e) => handleBlur(index, "wd", e.target.value)}
                       onKeyDown={(e) => onKeyDown(e, index, "wd")}
                       inputMode="decimal"
+                      min={30}
+                      max={99}
+                      step={0.1}
                       aria-label={`Wd touche ${index + 1}`}
                       className="weight-input"
                     />
@@ -367,12 +397,15 @@ function Index() {
                 <div className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
                   {label}
                 </div>
-                <div className="mt-1 flex justify-center gap-2 text-sm font-semibold tabular-nums">
+                <div className="mt-1 text-base font-semibold tabular-nums">
+                  {sectionAverages.global[key]}
+                </div>
+                <div className="mt-0.5 flex justify-center gap-2 text-[0.65rem] text-muted-foreground tabular-nums">
                   <span>{sectionAverages.first[key]}</span>
                   <span className="text-muted-foreground">/</span>
                   <span>{sectionAverages.second[key]}</span>
                 </div>
-                <div className="mt-0.5 flex justify-center gap-2 text-[0.6rem] text-muted-foreground tabular-nums">
+                <div className="flex justify-center gap-2 text-[0.55rem] text-muted-foreground tabular-nums">
                   <span>1-44</span>
                   <span className="invisible">/</span>
                   <span>45-88</span>
