@@ -517,6 +517,16 @@ function refreshAverages() {
 }
 
 /* ---- Calculs ---- */
+function cleanWeight(value) {
+  return value.replace(/,/g, ".").replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+}
+
+function parseWeight(value) {
+  const num = parseFloat(cleanWeight(value));
+  if (Number.isNaN(num) || num < 30 || num > 99) return null;
+  return num;
+}
+
 function compute(row) {
   const wa = parseFloat(row.wa);
   const wd = parseFloat(row.wd);
