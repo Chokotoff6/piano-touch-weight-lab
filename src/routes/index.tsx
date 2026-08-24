@@ -291,8 +291,12 @@ function Index() {
                       }}
                       value={row.wa}
                       onChange={(e) => setValue(index, "wa", e.target.value)}
+                      onBlur={(e) => handleBlur(index, "wa", e.target.value)}
                       onKeyDown={(e) => onKeyDown(e, index, "wa")}
                       inputMode="decimal"
+                      min={30}
+                      max={99}
+                      step={0.1}
                       aria-label={`Wa touche ${index + 1}`}
                       className="weight-input"
                     />
@@ -304,8 +308,12 @@ function Index() {
                       }}
                       value={row.wd}
                       onChange={(e) => setValue(index, "wd", e.target.value)}
+                      onBlur={(e) => handleBlur(index, "wd", e.target.value)}
                       onKeyDown={(e) => onKeyDown(e, index, "wd")}
                       inputMode="decimal"
+                      min={30}
+                      max={99}
+                      step={0.1}
                       aria-label={`Wd touche ${index + 1}`}
                       className="weight-input"
                     />
