@@ -342,10 +342,7 @@ function Index() {
       </div>
 
       <section className="mt-8 rounded-md border-2 border-foreground bg-card p-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-medium">Informations générales</h2>
-        </div>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-0 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {INFO_FIELDS.map((f) => (
             <label key={f.key} className="text-xs text-muted-foreground">
               {f.label}
