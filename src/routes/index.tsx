@@ -344,15 +344,6 @@ function Index() {
       <section className="mt-8 rounded-md border-2 border-foreground bg-card p-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-medium">Informations générales</h2>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setRows(EMPTY)}
-            className="text-xs"
-          >
-            RESET
-          </Button>
         </div>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {INFO_FIELDS.map((f) => (
@@ -392,6 +383,56 @@ function Index() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="mt-4 rounded-md border-2 border-foreground bg-card p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setRows(EMPTY)}
+            className="text-xs"
+          >
+            Reset
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            disabled
+          >
+            PDF
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            disabled
+          >
+            Compare
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            disabled
+          >
+            Save
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            disabled
+          >
+            Load
+          </Button>
         </div>
       </section>
 
