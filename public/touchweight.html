@@ -487,7 +487,8 @@ AVG_KEYS.forEach(([key, label]) => {
   const cell = document.createElement("div");
   cell.className = "avg-cell";
   cell.innerHTML = '<div class="k">' + label + '</div>' +
-    '<div class="v"><span data-avg="' + key + '-1">\u2014</span><span class="sep">/</span><span data-avg="' + key + '-2">\u2014</span></div>' +
+    '<div class="v" data-avg="' + key + '-global">\u2014</div>' +
+    '<div class="r"><span data-avg="' + key + '-1">\u2014</span><span class="sep">/</span><span data-avg="' + key + '-2">\u2014</span></div>' +
     '<div class="r"><span>1-44</span><span class="sep">/</span><span>45-88</span></div>';
   avgGrid.appendChild(cell);
 });
