@@ -194,7 +194,11 @@ function Index() {
         count: valid.length,
       };
     };
-    return { first: calc(rows.slice(0, 44)), second: calc(rows.slice(44, 88)) };
+    return {
+      global: calc(rows),
+      first: calc(rows.slice(0, 44)),
+      second: calc(rows.slice(44, 88)),
+    };
   }, [rows]);
 
   const focusCell = (index: number, field: "wa" | "wd") => {
