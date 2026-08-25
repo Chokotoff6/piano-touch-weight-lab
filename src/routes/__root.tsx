@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -118,13 +119,50 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+const LEGAL_TEXT =
+  "Conditions d'utilisation et clause de non-garantie Service en l'état : Ce site est un outil expérimental collaboratif mis à disposition gratuitement. L'éditeur ne fournit aucune garantie quant à la disponibilité du service, l'exactitude des calculs ou la conservation des données. L'éditeur se réserve le droit de modifier, restreindre ou fermer l'accès, ainsi que de supprimer l'historique des saisies à tout moment, sans préavis ni indemnité. L'éditeur reste libre d'introduire des fonctionnalités payantes. Sauf fermeture définitive du service, les numéros de série enregistrés durant la phase gratuite conserveront un accès préférentiel gratuit aux fonctionnalités de base existantes, sans que cela ne constitue un droit opposable.";
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  const linkClass = "text-sm text-muted-foreground hover:text-foreground";
 
   return (
     <QueryClientProvider client={queryClient}>
+      <nav className="border-b border-border">
+        <div className="mx-auto flex max-w-[1400px] gap-6 px-6 py-3">
+          <Link to="/" className={linkClass} activeOptions={{ exact: true }} activeProps={{ className: "text-sm font-semibold text-foreground" }}>
+            Accueil
+          </Link>
+          <Link to="/saisie" className={linkClass} activeProps={{ className: "text-sm font-semibold text-foreground" }}>
+            Saisie
+          </Link>
+          <Link to="/resultats" className={linkClass} activeProps={{ className: "text-sm font-semibold text-foreground" }}>
+            Résultats
+          </Link>
+        </div>
+      </nav>
+
+      <a
+        href="https://buymeacoffee.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
+        aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
+        className="fixed right-8 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-md border border-input bg-background text-base hover:bg-accent"
+      >
+        ☕
+      </a>
+
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+
+      {pathname === "/" && (
+        <footer className="mx-auto max-w-[1400px] px-6 py-10">
+          <p className="text-[0.65rem] leading-relaxed text-muted-foreground">{LEGAL_TEXT}</p>
+        </footer>
+      )}
     </QueryClientProvider>
   );
 }
