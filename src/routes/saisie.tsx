@@ -265,33 +265,56 @@ function Index() {
     [],
   );
 
-  const cleanWeight = (value: string) =>
-    value.replace(/,/g, ".").replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+  const cleanWeight = (value: string) => value.replace(/[^0-9]/g, "");
 
   const parseWeight = (value: string): number | null => {
-    const num = parseFloat(cleanWeight(value));
-    if (Number.isNaN(num) || num < 30 || num > 99) return null;
+    const cleaned = cleanWeight(value);
+    if (cleaned === "") return null;
+    const num = parseInt(cleaned, 10);
+    if (Number.isNaN(num) || !Number.isInteger(num) || num < 5 || num > 99) return null;
     return num;
   };
 
   const setValue = (index: number, field: "wa" | "wd", value: string) => {
     const cleaned = cleanWeight(value);
     markDirty();
-
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[`${index}-${field}`];
+      return next;
+    });
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: cleaned } : r)));
   };
 
   const handleBlur = (index: number, field: "wa" | "wd", value: string) => {
+    const cleaned = cleanWeight(value);
+    const key = `${index}-${field}`;
+    if (cleaned === "") {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+      setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: "" } : r)));
+      return;
+    }
     const num = parseWeight(value);
-    setRows((prev) =>
-      prev.map((r, i) => (i === index ? { ...r, [field]: num === null ? "" : num.toFixed(1) } : r)),
-    );
+    if (num === null) {
+      setErrors((prev) => ({ ...prev, [key]: "Valeur invalide (5-99, nombre entier)" }));
+      return;
+    }
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: num.toString() } : r)));
   };
 
   const compute = (r: Row) => {
-    const wa = parseFloat(r.wa);
-    const wd = parseFloat(r.wd);
-    if (Number.isNaN(wa) || Number.isNaN(wd)) return { friction: "", balance: "" };
+    const wa = parseWeight(r.wa);
+    const wd = parseWeight(r.wd);
+    if (wa === null || wd === null) return { friction: "", balance: "" };
     return {
       friction: ((wd - wa) / 2).toFixed(1),
       balance: ((wd + wa) / 2).toFixed(1),
