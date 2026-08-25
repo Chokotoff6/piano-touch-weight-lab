@@ -527,7 +527,7 @@ function Index() {
         data-saved-at={savedAt ?? ""}
       >
         <h2 className="text-sm font-semibold">Informations</h2>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="text-xs text-muted-foreground">
             Marque
             <input
@@ -546,7 +546,7 @@ function Index() {
             />
           </label>
 
-          <fieldset className="text-xs text-muted-foreground">
+          <fieldset className="text-xs text-muted-foreground lg:col-span-2">
             <legend>Type de piano</legend>
             <div className="mt-1 flex h-8 items-center gap-4">
               {["Piano Droit", "Piano à Queue"].map((t) => (
@@ -564,7 +564,7 @@ function Index() {
             </div>
           </fieldset>
 
-          <div className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-2">
+          <div className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-3">
             Numéro de série
             <div className="mt-1 flex h-8 w-full max-w-xl items-stretch overflow-hidden rounded border border-input bg-background focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
               <input
@@ -630,7 +630,7 @@ function Index() {
             />
           </label>
 
-          <fieldset className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-3">
+          <fieldset className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-4">
             <legend>Type d'entretien</legend>
             <div className="mt-1 flex flex-wrap items-center gap-4">
               {MAINTENANCE_OPTIONS.map((t) => (
@@ -649,7 +649,7 @@ function Index() {
             </div>
           </fieldset>
 
-          <label className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-3">
+          <label className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-4">
             Remarques
             <input
               value={info["remarques"] ?? ""}
