@@ -698,10 +698,9 @@ function Index() {
         </div>
       </section>
 
-      {!canEnterWeights && (
+      {blockMessage && (
         <div className="mt-6 rounded-md border border-amber-500/50 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
-          {blockMessage ??
-            "Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de saisir les mesures."}
+          {blockMessage}
         </div>
       )}
 
