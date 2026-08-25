@@ -180,9 +180,30 @@ function useSnappedGrid(from: number, to: number) {
 function Index() {
   const [rows, setRows] = useState<Row[]>(EMPTY);
   const [info, setInfo] = useState<Record<string, string>>({});
+  const [isDirty, setIsDirty] = useState(false);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
+  const snRef = useRef<Record<string, HTMLInputElement | null>>({});
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
+
+  const rule = BRAND_RULES[(info["marque"] ?? "").trim().toUpperCase()] ?? DEFAULT_RULE;
+
+  const markDirty = () => {
+    setIsDirty(true);
+    setSavedAt(new Date().toISOString());
+  };
+
+  const updateInfo = (key: string, value: string) => {
+    setInfo((p) => ({ ...p, [key]: value }));
+    markDirty();
+  };
+
+  const onPrefixChange = (value: string) => {
+    updateInfo("sn_prefix", value.toUpperCase().slice(0, 3));
+    if (rule.autoPrefix && value.length >= 1) snRef.current["sn_num"]?.focus();
+  };
+
 
   const sectionAverages = useMemo(() => {
     const calc = (slice: Row[]) => {
