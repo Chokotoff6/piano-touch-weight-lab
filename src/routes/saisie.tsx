@@ -39,14 +39,24 @@ type Row = { wa: string; wd: string };
 
 const EMPTY: Row[] = Array.from({ length: 88 }, () => ({ wa: "", wd: "" }));
 
-const INFO_FIELDS = [
-  { key: "date", label: "Date" },
-  { key: "marque", label: "Marque" },
-  { key: "modele", label: "Modèle" },
-  { key: "sn", label: "Numéro de série (SN)" },
-  { key: "fabrication", label: "Date de fabrication" },
-  { key: "remarques", label: "Remarques" },
+type SerialRule = { prefix: boolean; suffix: boolean; autoPrefix?: string };
+
+const BRAND_RULES: Record<string, SerialRule> = {
+  YAMAHA: { prefix: true, suffix: false, autoPrefix: "J" },
+  KAWAI: { prefix: true, suffix: true, autoPrefix: "F" },
+  STEINWAY: { prefix: false, suffix: false },
+  BECHSTEIN: { prefix: false, suffix: false },
+  PLEYEL: { prefix: false, suffix: false },
+};
+
+const DEFAULT_RULE: SerialRule = { prefix: true, suffix: true };
+
+const MAINTENANCE_OPTIONS = [
+  "Entretien usuel uniquement",
+  "Réglages personnalisés",
+  "Modifications importantes",
 ] as const;
+
 
 const BLACK_RATIO = 0.605;
 
@@ -170,9 +180,30 @@ function useSnappedGrid(from: number, to: number) {
 function Index() {
   const [rows, setRows] = useState<Row[]>(EMPTY);
   const [info, setInfo] = useState<Record<string, string>>({});
+  const [isDirty, setIsDirty] = useState(false);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
+  const snRef = useRef<Record<string, HTMLInputElement | null>>({});
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
+
+  const rule = BRAND_RULES[(info["marque"] ?? "").trim().toUpperCase()] ?? DEFAULT_RULE;
+
+  const markDirty = () => {
+    setIsDirty(true);
+    setSavedAt(new Date().toISOString());
+  };
+
+  const updateInfo = (key: string, value: string) => {
+    setInfo((p) => ({ ...p, [key]: value }));
+    markDirty();
+  };
+
+  const onPrefixChange = (value: string) => {
+    updateInfo("sn_prefix", value.toUpperCase().slice(0, 3));
+    if (rule.autoPrefix && value.length >= 1) snRef.current["sn_num"]?.focus();
+  };
+
 
   const sectionAverages = useMemo(() => {
     const calc = (slice: Row[]) => {
@@ -227,6 +258,8 @@ function Index() {
 
   const setValue = (index: number, field: "wa" | "wd", value: string) => {
     const cleaned = cleanWeight(value);
+    markDirty();
+
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: cleaned } : r)));
   };
 
@@ -263,10 +296,25 @@ function Index() {
       <div className="technical-sheet">
         <div className="technical-labels" aria-hidden="true">
           <div className="label-key" />
-          <div className="label-wa">Wa (gr)</div>
-          <div className="label-wd">Wd (gr)</div>
-          <div className="label-wa-white">Wa (gr)</div>
-          <div className="label-wd-white">Wd (gr)</div>
+          <div className="label-wa" title="The minimum weight required to make the key move down.">
+            Down Weight (Wa)
+          </div>
+          <div className="label-wd" title="The maximum weight the key can lift when returning up.">
+            Up Weight (Wd)
+          </div>
+          <div
+            className="label-wa-white"
+            title="The minimum weight required to make the key move down."
+          >
+            Down Weight (Wa)
+          </div>
+          <div
+            className="label-wd-white"
+            title="The maximum weight the key can lift when returning up."
+          >
+            Up Weight (Wd)
+          </div>
+
         </div>
         <div className="piano-grid" ref={gridRef}>
           {rows.slice(from - 1, to).map((row, offset) => {
@@ -371,19 +419,144 @@ function Index() {
         </ol>
       </div>
 
-      <section className="mt-8 rounded-md border-2 border-foreground bg-card p-4">
-        <div className="mt-0 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {INFO_FIELDS.map((f) => (
-            <label key={f.key} className="text-xs text-muted-foreground">
-              {f.label}
+      <section
+        className="mt-8 rounded-md border-2 border-foreground bg-card p-4"
+        data-dirty={isDirty}
+        data-saved-at={savedAt ?? ""}
+      >
+        <h2 className="text-sm font-semibold">Informations</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <label className="text-xs text-muted-foreground">
+            Marque
+            <input
+              value={info["marque"] ?? ""}
+              onChange={(e) => updateInfo("marque", e.target.value)}
+              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+            />
+          </label>
+
+          <fieldset className="text-xs text-muted-foreground">
+            <legend>Type de piano</legend>
+            <div className="mt-1 flex h-8 items-center gap-4">
+              {["Piano Droit", "Piano à Queue"].map((t) => (
+                <label key={t} className="flex items-center gap-1 text-sm text-foreground">
+                  <input
+                    type="radio"
+                    name="type_piano"
+                    value={t}
+                    checked={info["type_piano"] === t}
+                    onChange={() => updateInfo("type_piano", t)}
+                  />
+                  {t}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <label className="text-xs text-muted-foreground">
+            Modèle
+            <input
+              value={info["modele"] ?? ""}
+              onChange={(e) => updateInfo("modele", e.target.value)}
+              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+            />
+          </label>
+
+          <div className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-3">
+            Numéro de série
+            <div className="mt-1 flex h-8 w-full max-w-xl items-stretch overflow-hidden rounded border border-input bg-background focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
               <input
-                value={info[f.key] ?? ""}
-                onChange={(e) => setInfo((p) => ({ ...p, [f.key]: e.target.value }))}
-                className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+                ref={(el) => {
+                  snRef.current["sn_prefix"] = el;
+                }}
+                value={info["sn_prefix"] ?? ""}
+                onChange={(e) => onPrefixChange(e.target.value)}
+                disabled={!rule.prefix}
+                placeholder="Lettres (ex: J, F)"
+                className="w-28 bg-transparent px-2 text-sm text-foreground outline-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
               />
-            </label>
-          ))}
+              <input
+                ref={(el) => {
+                  snRef.current["sn_num"] = el;
+                }}
+                value={info["sn_num"] ?? ""}
+                onChange={(e) => updateInfo("sn_num", e.target.value.replace(/[^0-9]/g, ""))}
+                required
+                inputMode="numeric"
+                placeholder="N° de série (chiffres)"
+                className="flex-1 border-x border-input bg-transparent px-2 text-sm text-foreground outline-none"
+              />
+              <input
+                value={info["sn_suffix"] ?? ""}
+                onChange={(e) => updateInfo("sn_suffix", e.target.value.toUpperCase().slice(0, 3))}
+                disabled={!rule.suffix}
+                placeholder="Lettre fin (ex: A, B)"
+                className="w-28 bg-transparent px-2 text-sm text-foreground outline-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+              />
+            </div>
+            <p className="mt-1 text-[0.7rem] leading-snug text-muted-foreground">
+              ⚠️ Important : Veuillez vérifier sur la plaque signalétique de l'appareil si des
+              lettres apparaissent avant ou après le numéro de série, et complétez les cases
+              correspondantes.
+            </p>
+          </div>
+
+          <label className="text-xs text-muted-foreground">
+            Date de fabrication
+            <input
+              value={info["fabrication"] ?? ""}
+              onChange={(e) => updateInfo("fabrication", e.target.value)}
+              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+            />
+          </label>
+
+          <label className="text-xs text-muted-foreground">
+            Pays
+            <input
+              value={info["pays"] ?? ""}
+              onChange={(e) => updateInfo("pays", e.target.value)}
+              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+            />
+          </label>
+
+          <label className="text-xs text-muted-foreground">
+            Ville
+            <input
+              value={info["ville"] ?? ""}
+              onChange={(e) => updateInfo("ville", e.target.value)}
+              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+            />
+          </label>
+
+          <fieldset className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-3">
+            <legend>Type d'entretien</legend>
+            <div className="mt-1 flex flex-wrap items-center gap-4">
+              {MAINTENANCE_OPTIONS.map((t) => (
+                <label key={t} className="flex items-center gap-1 text-sm text-foreground">
+                  <input
+                    type="radio"
+                    name="entretien"
+                    value={t}
+                    required
+                    checked={info["entretien"] === t}
+                    onChange={() => updateInfo("entretien", t)}
+                  />
+                  {t}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <label className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-3">
+            Remarques
+            <input
+              value={info["remarques"] ?? ""}
+              onChange={(e) => updateInfo("remarques", e.target.value)}
+              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+            />
+          </label>
         </div>
+
         <div className="mt-4 border-t border-border pt-3">
           <p className="text-xs font-medium text-muted-foreground">Moyennes</p>
           <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
