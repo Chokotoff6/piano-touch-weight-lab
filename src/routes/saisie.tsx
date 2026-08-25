@@ -742,6 +742,37 @@ function Index() {
 
       <p className="mt-6 text-sm font-medium text-foreground">{REQUIRED_KEYS_NOTICE}</p>
 
+      <section className="mt-4 rounded-md border-2 border-foreground bg-card p-4">
+        <p className="text-xs font-medium text-muted-foreground">Moyennes</p>
+        <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {([
+            { key: "wa", label: "Wa" },
+            { key: "wd", label: "Wd" },
+            { key: "friction", label: "Friction" },
+            { key: "balance", label: "Balance" },
+          ] as const).map(({ key, label }) => (
+            <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
+              <div className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+                {label}
+              </div>
+              <div className="mt-1 text-base font-semibold tabular-nums">
+                {sectionAverages.global[key]}
+              </div>
+              <div className="mt-0.5 flex justify-center gap-2 text-[0.65rem] text-muted-foreground tabular-nums">
+                <span>{sectionAverages.first[key]}</span>
+                <span className="text-muted-foreground">/</span>
+                <span>{sectionAverages.second[key]}</span>
+              </div>
+              <div className="flex justify-center gap-2 text-[0.55rem] text-muted-foreground tabular-nums">
+                <span>1-44</span>
+                <span className="invisible">/</span>
+                <span>45-88</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {renderSection(1, 44, gridRef1)}
       {renderSection(45, 88, gridRef2)}
     </main>
