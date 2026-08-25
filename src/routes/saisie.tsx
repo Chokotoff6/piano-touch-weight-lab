@@ -202,6 +202,10 @@ function Index() {
     );
   }, [info]);
 
+  useEffect(() => {
+    if (canEnterWeights) setBlockMessage(null);
+  }, [canEnterWeights]);
+
   const markDirty = () => {
     setIsDirty(true);
     setSavedAt(new Date().toISOString());
