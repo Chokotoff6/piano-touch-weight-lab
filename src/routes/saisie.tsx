@@ -346,16 +346,47 @@ function Index() {
     );
   };
 
-  const showBlockMessage = () => {
+  const showMessage = (text: string) => {
     if (blockTimeout.current) clearTimeout(blockTimeout.current);
-    setBlockMessage(
-      "Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de saisir les mesures.",
-    );
+    setBlockMessage(text);
     blockTimeout.current = setTimeout(() => {
       setBlockMessage(null);
       blockTimeout.current = null;
     }, 5000);
   };
+
+  const showBlockMessage = () => {
+    showMessage(
+      "Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de saisir les mesures.",
+    );
+  };
+
+  const missingRequired = useMemo(() => missingRequiredKeys(rows), [rows]);
+
+  useEffect(() => {
+    requiredKeysGate.getMissing = () => missingRequiredKeys(rows);
+    return () => {
+      requiredKeysGate.getMissing = null;
+    };
+  }, [rows]);
+
+  useEffect(() => {
+    const onBlocked = (e: Event) => {
+      const detail = (e as CustomEvent<{ message: string }>).detail;
+      if (detail?.message) showMessage(detail.message);
+    };
+    window.addEventListener("required-keys-blocked", onBlocked);
+    return () => window.removeEventListener("required-keys-blocked", onBlocked);
+  }, []);
+
+  const guardExport = () => {
+    if (missingRequired.length > 0) {
+      showMessage(missingRequiredMessage(missingRequired));
+      return false;
+    }
+    return true;
+  };
+
 
   const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
     <section className="mt-8" aria-label={`Touches ${from} à ${to}`}>
