@@ -330,7 +330,7 @@
     min-width: 0;
     height: 0.95625rem;
     border: none;
-    background: oklch(0.95 0 0);
+    background: oklch(0.93 0 0);
     padding: 0 1px;
     color: var(--foreground);
     text-align: center;
@@ -341,7 +341,7 @@
   }
 
   .is-black .weight-input {
-    background: oklch(0.82 0 0);
+    background: oklch(0.78 0 0);
   }
 
   .weight-input + .weight-input {
