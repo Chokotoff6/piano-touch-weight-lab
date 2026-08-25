@@ -537,6 +537,15 @@ function Index() {
             />
           </label>
 
+          <label className="text-xs text-muted-foreground">
+            Modèle
+            <input
+              value={info["modele"] ?? ""}
+              onChange={(e) => updateInfo("modele", e.target.value)}
+              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+            />
+          </label>
+
           <fieldset className="text-xs text-muted-foreground">
             <legend>Type de piano</legend>
             <div className="mt-1 flex h-8 items-center gap-4">
@@ -555,16 +564,7 @@ function Index() {
             </div>
           </fieldset>
 
-          <label className="text-xs text-muted-foreground">
-            Modèle
-            <input
-              value={info["modele"] ?? ""}
-              onChange={(e) => updateInfo("modele", e.target.value)}
-              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
-            />
-          </label>
-
-          <div className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-3">
+          <div className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-2">
             Numéro de série
             <div className="mt-1 flex h-8 w-full max-w-xl items-stretch overflow-hidden rounded border border-input bg-background focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
               <input
