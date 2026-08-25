@@ -182,12 +182,25 @@ function Index() {
   const [info, setInfo] = useState<Record<string, string>>({});
   const [isDirty, setIsDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [blockMessage, setBlockMessage] = useState<string | null>(null);
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
 
   const rule = BRAND_RULES[(info["marque"] ?? "").trim().toUpperCase()] ?? DEFAULT_RULE;
+
+  const canEnterWeights = useMemo(() => {
+    return Boolean(
+      info["marque"]?.trim() &&
+        info["modele"]?.trim() &&
+        info["sn_num"]?.trim() &&
+        info["type_piano"] &&
+        info["pays"]?.trim() &&
+        info["ville"]?.trim() &&
+        info["entretien"],
+    );
+  }, [info]);
 
   const markDirty = () => {
     setIsDirty(true);
