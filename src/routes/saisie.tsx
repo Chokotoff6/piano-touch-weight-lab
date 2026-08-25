@@ -183,6 +183,7 @@ function Index() {
   const [isDirty, setIsDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [blockMessage, setBlockMessage] = useState<string | null>(null);
+  const blockTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
@@ -204,8 +205,18 @@ function Index() {
   }, [info]);
 
   useEffect(() => {
-    if (canEnterWeights) setBlockMessage(null);
+    if (canEnterWeights) {
+      if (blockTimeout.current) clearTimeout(blockTimeout.current);
+      blockTimeout.current = null;
+      setBlockMessage(null);
+    }
   }, [canEnterWeights]);
+
+  useEffect(() => {
+    return () => {
+      if (blockTimeout.current) clearTimeout(blockTimeout.current);
+    };
+  }, []);
 
   const markDirty = () => {
     setIsDirty(true);
@@ -328,9 +339,14 @@ function Index() {
   };
 
   const showBlockMessage = () => {
+    if (blockTimeout.current) clearTimeout(blockTimeout.current);
     setBlockMessage(
       "Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de saisir les mesures.",
     );
+    blockTimeout.current = setTimeout(() => {
+      setBlockMessage(null);
+      blockTimeout.current = null;
+    }, 5000);
   };
 
   const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
