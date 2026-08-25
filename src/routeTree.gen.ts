@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ResultatsRouteImport } from './routes/resultats'
 import { Route as SaisieRouteImport } from './routes/saisie'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResultatsRoute = ResultatsRouteImport.update({
+  id: '/resultats',
+  path: '/resultats',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SaisieRoute = SaisieRouteImport.update({
@@ -25,27 +31,31 @@ const SaisieRoute = SaisieRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/resultats': typeof ResultatsRoute
   '/saisie': typeof SaisieRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/resultats': typeof ResultatsRoute
   '/saisie': typeof SaisieRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/resultats': typeof ResultatsRoute
   '/saisie': typeof SaisieRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/saisie'
+  fullPaths: '/' | '/resultats' | '/saisie'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/saisie'
-  id: '__root__' | '/' | '/saisie'
+  to: '/' | '/resultats' | '/saisie'
+  id: '__root__' | '/' | '/resultats' | '/saisie'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ResultatsRoute: typeof ResultatsRoute
   SaisieRoute: typeof SaisieRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/resultats': {
+      id: '/resultats'
+      path: '/resultats'
+      fullPath: '/resultats'
+      preLoaderRoute: typeof ResultatsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/saisie': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ResultatsRoute: ResultatsRoute,
   SaisieRoute: SaisieRoute,
 }
 export const routeTree = rootRouteImport
