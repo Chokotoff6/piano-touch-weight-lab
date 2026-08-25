@@ -744,7 +744,7 @@ function Index() {
 
       <section className="mt-4 rounded-md border-2 border-foreground bg-card p-4">
         <p className="text-xs font-medium text-muted-foreground">Moyennes</p>
-        <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mt-2 grid grid-cols-4 gap-3">
           {([
             { key: "wa", label: "Wa" },
             { key: "wd", label: "Wd" },
