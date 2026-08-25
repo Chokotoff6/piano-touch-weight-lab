@@ -205,7 +205,11 @@ function Index() {
   }, [info]);
 
   useEffect(() => {
-    if (canEnterWeights) setBlockMessage(null);
+    if (canEnterWeights) {
+      if (blockTimeout.current) clearTimeout(blockTimeout.current);
+      blockTimeout.current = null;
+      setBlockMessage(null);
+    }
   }, [canEnterWeights]);
 
   const markDirty = () => {
