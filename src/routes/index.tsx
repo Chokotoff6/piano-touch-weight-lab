@@ -1,5 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -99,6 +106,60 @@ function Accueil() {
           Start your diagnosis
         </Link>
       </div>
+
+      <section className="mt-10 max-w-3xl">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          FAQ
+        </h2>
+        <Accordion type="single" collapsible className="mt-4 w-full">
+          <AccordionItem value="q1">
+            <AccordionTrigger>
+              What is the difference between static and dynamic touch weight?
+            </AccordionTrigger>
+            <AccordionContent>
+              Static weight (measured here) is the physical force needed to move
+              a key at rest. Dynamic weight is the actual feeling of the key when
+              playing, which depends on friction, key geometry, felt density,
+              and hammer inertia.
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="q2">
+            <AccordionTrigger>
+              Why are Down Weight (Wa) and Up Weight (Wd) both necessary?
+            </AccordionTrigger>
+            <AccordionContent>
+              Measuring both allows the tool to isolate friction from the actual
+              balance of the key. Down weight is the minimum weight to push the
+              key down. Up weight is the maximum weight the key can lift back
+              up.
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="q3">
+            <AccordionTrigger>
+              How does the app calculate Friction and Balance?
+            </AccordionTrigger>
+            <AccordionContent>
+              The app uses standard piano technology formulas: Friction = (Wd -
+              Wa) / 2 and Balance = (Wd + Wa) / 2. High friction usually means
+              swollen felts or tight center pins.
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="q4">
+            <AccordionTrigger>
+              What if my piano has no letters in its serial number?
+            </AccordionTrigger>
+            <AccordionContent>
+              Many high-end European and Japanese models use purely numerical
+              serial numbers. The app will automatically cross-reference your
+              brand and location to apply the correct original factory
+              standards.
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </section>
     </main>
   );
 }
