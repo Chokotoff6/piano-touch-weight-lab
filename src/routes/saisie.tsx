@@ -225,16 +225,12 @@ function Index() {
 
   const sectionAverages = useMemo(() => {
     const calc = (slice: Row[]) => {
-      const valid = slice.filter((r) => {
-        const wa = parseFloat(r.wa);
-        const wd = parseFloat(r.wd);
-        return !Number.isNaN(wa) && !Number.isNaN(wd);
-      });
+      const valid = slice.filter((r) => parseWeight(r.wa) !== null && parseWeight(r.wd) !== null);
       if (valid.length === 0) {
         return { wa: "—", wd: "—", friction: "—", balance: "—", count: 0 };
       }
-      const avgWa = valid.reduce((s, r) => s + parseFloat(r.wa), 0) / valid.length;
-      const avgWd = valid.reduce((s, r) => s + parseFloat(r.wd), 0) / valid.length;
+      const avgWa = valid.reduce((s, r) => s + parseWeight(r.wa)!, 0) / valid.length;
+      const avgWd = valid.reduce((s, r) => s + parseWeight(r.wd)!, 0) / valid.length;
       return {
         wa: avgWa.toFixed(1),
         wd: avgWd.toFixed(1),
