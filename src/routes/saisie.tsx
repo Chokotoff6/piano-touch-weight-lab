@@ -304,6 +304,12 @@ function Index() {
     );
   };
 
+  const showBlockMessage = () => {
+    setBlockMessage(
+      "Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de saisir les mesures.",
+    );
+  };
+
   const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
     <section className="mt-8" aria-label={`Touches ${from} à ${to}`}>
       <div className="technical-sheet">
@@ -345,7 +351,15 @@ function Index() {
                   {index + 1}
                 </div>
                 <div className="key-body">
-                  <div className="weight-fields weight-fields-wa">
+                  <div
+                    className={`weight-fields weight-fields-wa ${!canEnterWeights ? "pointer-events-none opacity-40" : ""}`}
+                    onClick={(e) => {
+                      if (!canEnterWeights) {
+                        e.stopPropagation();
+                        showBlockMessage();
+                      }
+                    }}
+                  >
                     <input
                       ref={(el) => {
                         inputs.current[`${index}-wa`] = el;
@@ -358,11 +372,20 @@ function Index() {
                       min={30}
                       max={99}
                       step={0.1}
+                      disabled={!canEnterWeights}
                       aria-label={`Wa touche ${index + 1}`}
                       className="weight-input"
                     />
                   </div>
-                  <div className="weight-fields weight-fields-wd">
+                  <div
+                    className={`weight-fields weight-fields-wd ${!canEnterWeights ? "pointer-events-none opacity-40" : ""}`}
+                    onClick={(e) => {
+                      if (!canEnterWeights) {
+                        e.stopPropagation();
+                        showBlockMessage();
+                      }
+                    }}
+                  >
                     <input
                       ref={(el) => {
                         inputs.current[`${index}-wd`] = el;
@@ -375,6 +398,7 @@ function Index() {
                       min={30}
                       max={99}
                       step={0.1}
+                      disabled={!canEnterWeights}
                       aria-label={`Wd touche ${index + 1}`}
                       className="weight-input"
                     />
