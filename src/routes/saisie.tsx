@@ -1,6 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  REQUIRED_KEYS_NOTICE,
+  REQUIRED_KEY_SET,
+  missingRequiredKeys,
+  missingRequiredMessage,
+  requiredKeysGate,
+} from "@/lib/required-keys";
+
 
 export const Route = createFileRoute("/saisie")({
   head: () => ({
@@ -338,16 +346,47 @@ function Index() {
     );
   };
 
-  const showBlockMessage = () => {
+  const showMessage = (text: string) => {
     if (blockTimeout.current) clearTimeout(blockTimeout.current);
-    setBlockMessage(
-      "Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de saisir les mesures.",
-    );
+    setBlockMessage(text);
     blockTimeout.current = setTimeout(() => {
       setBlockMessage(null);
       blockTimeout.current = null;
     }, 5000);
   };
+
+  const showBlockMessage = () => {
+    showMessage(
+      "Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de saisir les mesures.",
+    );
+  };
+
+  const missingRequired = useMemo(() => missingRequiredKeys(rows), [rows]);
+
+  useEffect(() => {
+    requiredKeysGate.getMissing = () => missingRequiredKeys(rows);
+    return () => {
+      requiredKeysGate.getMissing = null;
+    };
+  }, [rows]);
+
+  useEffect(() => {
+    const onBlocked = (e: Event) => {
+      const detail = (e as CustomEvent<{ message: string }>).detail;
+      if (detail?.message) showMessage(detail.message);
+    };
+    window.addEventListener("required-keys-blocked", onBlocked);
+    return () => window.removeEventListener("required-keys-blocked", onBlocked);
+  }, []);
+
+  const guardExport = () => {
+    if (missingRequired.length > 0) {
+      showMessage(missingRequiredMessage(missingRequired));
+      return false;
+    }
+    return true;
+  };
+
 
   const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
     <section className="mt-8" aria-label={`Touches ${from} à ${to}`}>
@@ -426,7 +465,7 @@ function Index() {
                       step={1}
                       aria-label={`Wa touche ${index + 1}`}
                       title={errors[`${index}-wa`] ?? undefined}
-                      className={`weight-input ${errors[`${index}-wa`] ? "error" : ""}`}
+                      className={`weight-input ${REQUIRED_KEY_SET.has(index + 1) ? "is-required" : ""} ${errors[`${index}-wa`] ? "error" : ""}`}
                     />
                   </div>
                   <div
@@ -465,7 +504,7 @@ function Index() {
                       step={1}
                       aria-label={`Wd touche ${index + 1}`}
                       title={errors[`${index}-wd`] ?? undefined}
-                      className={`weight-input ${errors[`${index}-wd`] ? "error" : ""}`}
+                      className={`weight-input ${REQUIRED_KEY_SET.has(index + 1) ? "is-required" : ""} ${errors[`${index}-wd`] ? "error" : ""}`}
                     />
                   </div>
                 </div>
@@ -707,6 +746,7 @@ function Index() {
             variant="outline"
             size="sm"
             className="text-xs"
+            onClick={guardExport}
             disabled
           >
             PDF
@@ -751,6 +791,8 @@ function Index() {
         <span>Friction = (Wd − Wa) / 2</span>
         <span>Balance = (Wd + Wa) / 2</span>
       </div>
+
+      <p className="mt-6 text-sm font-medium text-foreground">{REQUIRED_KEYS_NOTICE}</p>
 
       {renderSection(1, 44, gridRef1)}
       {renderSection(45, 88, gridRef2)}

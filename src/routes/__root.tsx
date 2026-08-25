@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { missingRequiredMessage, requiredKeysGate } from "@/lib/required-keys";
 import {
   Outlet,
   Link,
@@ -138,7 +139,22 @@ function RootComponent() {
           <Link to="/saisie" className={linkClass} activeProps={{ className: "text-sm font-semibold text-foreground" }}>
             Saisie
           </Link>
-          <Link to="/resultats" className={linkClass} activeProps={{ className: "text-sm font-semibold text-foreground" }}>
+          <Link
+            to="/resultats"
+            className={linkClass}
+            activeProps={{ className: "text-sm font-semibold text-foreground" }}
+            onClick={(e) => {
+              const missing = requiredKeysGate.getMissing?.() ?? [];
+              if (missing.length > 0) {
+                e.preventDefault();
+                window.dispatchEvent(
+                  new CustomEvent("required-keys-blocked", {
+                    detail: { message: missingRequiredMessage(missing) },
+                  }),
+                );
+              }
+            }}
+          >
             Résultats
           </Link>
         </div>
