@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/saisie")({
   head: () => ({
     meta: [
-      { title: "Touchweight statique piano — Wa / Wd, friction, balance" },
+      { title: "Saisie des mesures — Touchweight statique piano" },
       {
         name: "description",
         content:
-          "Outil de relevé du touchweight statique : saisie des poids ascendant et descendant des 88 touches, calcul automatique de la friction et de la balance.",
+          "Saisie des poids ascendant (Wa) et descendant (Wd) des 88 touches, avec calcul automatique de la friction et de la balance.",
       },
-      { property: "og:title", content: "Touchweight statique piano" },
+      { property: "og:title", content: "Saisie des mesures — Touchweight piano" },
       {
         property: "og:description",
         content:
