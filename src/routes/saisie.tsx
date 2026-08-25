@@ -296,10 +296,25 @@ function Index() {
       <div className="technical-sheet">
         <div className="technical-labels" aria-hidden="true">
           <div className="label-key" />
-          <div className="label-wa">Wa (gr)</div>
-          <div className="label-wd">Wd (gr)</div>
-          <div className="label-wa-white">Wa (gr)</div>
-          <div className="label-wd-white">Wd (gr)</div>
+          <div className="label-wa" title="The minimum weight required to make the key move down.">
+            Down Weight (Wa)
+          </div>
+          <div className="label-wd" title="The maximum weight the key can lift when returning up.">
+            Up Weight (Wd)
+          </div>
+          <div
+            className="label-wa-white"
+            title="The minimum weight required to make the key move down."
+          >
+            Down Weight (Wa)
+          </div>
+          <div
+            className="label-wd-white"
+            title="The maximum weight the key can lift when returning up."
+          >
+            Up Weight (Wd)
+          </div>
+
         </div>
         <div className="piano-grid" ref={gridRef}>
           {rows.slice(from - 1, to).map((row, offset) => {
