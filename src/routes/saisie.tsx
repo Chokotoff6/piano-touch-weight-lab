@@ -356,12 +356,9 @@ function Index() {
                 </div>
                 <div className="key-body">
                   <div
-                    className={`weight-fields weight-fields-wa ${!canEnterWeights ? "pointer-events-none opacity-40" : ""}`}
-                    onClick={(e) => {
-                      if (!canEnterWeights) {
-                        e.stopPropagation();
-                        showBlockMessage();
-                      }
+                    className={`weight-fields weight-fields-wa ${!canEnterWeights ? "opacity-40" : ""}`}
+                    onClick={() => {
+                      if (!canEnterWeights) showBlockMessage();
                     }}
                   >
                     <input
@@ -369,25 +366,34 @@ function Index() {
                         inputs.current[`${index}-wa`] = el;
                       }}
                       value={row.wa}
-                      onChange={(e) => setValue(index, "wa", e.target.value)}
-                      onBlur={(e) => handleBlur(index, "wa", e.target.value)}
-                      onKeyDown={(e) => onKeyDown(e, index, "wa")}
+                      onChange={(e) => canEnterWeights && setValue(index, "wa", e.target.value)}
+                      onBlur={(e) => canEnterWeights && handleBlur(index, "wa", e.target.value)}
+                      onKeyDown={(e) => {
+                        if (!canEnterWeights) {
+                          e.preventDefault();
+                          showBlockMessage();
+                          return;
+                        }
+                        onKeyDown(e, index, "wa");
+                      }}
+                      onBeforeInput={(e) => {
+                        if (!canEnterWeights) {
+                          e.preventDefault();
+                          showBlockMessage();
+                        }
+                      }}
                       inputMode="decimal"
                       min={30}
                       max={99}
                       step={0.1}
-                      disabled={!canEnterWeights}
                       aria-label={`Wa touche ${index + 1}`}
                       className="weight-input"
                     />
                   </div>
                   <div
-                    className={`weight-fields weight-fields-wd ${!canEnterWeights ? "pointer-events-none opacity-40" : ""}`}
-                    onClick={(e) => {
-                      if (!canEnterWeights) {
-                        e.stopPropagation();
-                        showBlockMessage();
-                      }
+                    className={`weight-fields weight-fields-wd ${!canEnterWeights ? "opacity-40" : ""}`}
+                    onClick={() => {
+                      if (!canEnterWeights) showBlockMessage();
                     }}
                   >
                     <input
@@ -395,14 +401,26 @@ function Index() {
                         inputs.current[`${index}-wd`] = el;
                       }}
                       value={row.wd}
-                      onChange={(e) => setValue(index, "wd", e.target.value)}
-                      onBlur={(e) => handleBlur(index, "wd", e.target.value)}
-                      onKeyDown={(e) => onKeyDown(e, index, "wd")}
+                      onChange={(e) => canEnterWeights && setValue(index, "wd", e.target.value)}
+                      onBlur={(e) => canEnterWeights && handleBlur(index, "wd", e.target.value)}
+                      onKeyDown={(e) => {
+                        if (!canEnterWeights) {
+                          e.preventDefault();
+                          showBlockMessage();
+                          return;
+                        }
+                        onKeyDown(e, index, "wd");
+                      }}
+                      onBeforeInput={(e) => {
+                        if (!canEnterWeights) {
+                          e.preventDefault();
+                          showBlockMessage();
+                        }
+                      }}
                       inputMode="decimal"
                       min={30}
                       max={99}
                       step={0.1}
-                      disabled={!canEnterWeights}
                       aria-label={`Wd touche ${index + 1}`}
                       className="weight-input"
                     />
