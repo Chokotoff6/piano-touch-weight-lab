@@ -212,6 +212,12 @@ function Index() {
     }
   }, [canEnterWeights]);
 
+  useEffect(() => {
+    return () => {
+      if (blockTimeout.current) clearTimeout(blockTimeout.current);
+    };
+  }, []);
+
   const markDirty = () => {
     setIsDirty(true);
     setSavedAt(new Date().toISOString());
