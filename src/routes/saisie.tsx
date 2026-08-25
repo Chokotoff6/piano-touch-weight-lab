@@ -1,6 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  REQUIRED_KEYS_NOTICE,
+  REQUIRED_KEY_SET,
+  missingRequiredKeys,
+  missingRequiredMessage,
+  requiredKeysGate,
+} from "@/lib/required-keys";
+
 
 export const Route = createFileRoute("/saisie")({
   head: () => ({
