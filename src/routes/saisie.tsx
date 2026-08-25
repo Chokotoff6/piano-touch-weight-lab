@@ -39,14 +39,24 @@ type Row = { wa: string; wd: string };
 
 const EMPTY: Row[] = Array.from({ length: 88 }, () => ({ wa: "", wd: "" }));
 
-const INFO_FIELDS = [
-  { key: "date", label: "Date" },
-  { key: "marque", label: "Marque" },
-  { key: "modele", label: "Modèle" },
-  { key: "sn", label: "Numéro de série (SN)" },
-  { key: "fabrication", label: "Date de fabrication" },
-  { key: "remarques", label: "Remarques" },
+type SerialRule = { prefix: boolean; suffix: boolean; autoPrefix?: string };
+
+const BRAND_RULES: Record<string, SerialRule> = {
+  YAMAHA: { prefix: true, suffix: false, autoPrefix: "J" },
+  KAWAI: { prefix: true, suffix: true, autoPrefix: "F" },
+  STEINWAY: { prefix: false, suffix: false },
+  BECHSTEIN: { prefix: false, suffix: false },
+  PLEYEL: { prefix: false, suffix: false },
+};
+
+const DEFAULT_RULE: SerialRule = { prefix: true, suffix: true };
+
+const MAINTENANCE_OPTIONS = [
+  "Entretien usuel uniquement",
+  "Réglages personnalisés",
+  "Modifications importantes",
 ] as const;
+
 
 const BLACK_RATIO = 0.605;
 
