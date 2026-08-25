@@ -183,6 +183,7 @@ function Index() {
   const [isDirty, setIsDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [blockMessage, setBlockMessage] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
   const gridRef1 = useSnappedGrid(1, 44);
@@ -224,16 +225,12 @@ function Index() {
 
   const sectionAverages = useMemo(() => {
     const calc = (slice: Row[]) => {
-      const valid = slice.filter((r) => {
-        const wa = parseFloat(r.wa);
-        const wd = parseFloat(r.wd);
-        return !Number.isNaN(wa) && !Number.isNaN(wd);
-      });
+      const valid = slice.filter((r) => parseWeight(r.wa) !== null && parseWeight(r.wd) !== null);
       if (valid.length === 0) {
         return { wa: "—", wd: "—", friction: "—", balance: "—", count: 0 };
       }
-      const avgWa = valid.reduce((s, r) => s + parseFloat(r.wa), 0) / valid.length;
-      const avgWd = valid.reduce((s, r) => s + parseFloat(r.wd), 0) / valid.length;
+      const avgWa = valid.reduce((s, r) => s + parseWeight(r.wa)!, 0) / valid.length;
+      const avgWd = valid.reduce((s, r) => s + parseWeight(r.wd)!, 0) / valid.length;
       return {
         wa: avgWa.toFixed(1),
         wd: avgWd.toFixed(1),
@@ -264,33 +261,56 @@ function Index() {
     [],
   );
 
-  const cleanWeight = (value: string) =>
-    value.replace(/,/g, ".").replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+  const cleanWeight = (value: string) => value.replace(/[^0-9]/g, "");
 
   const parseWeight = (value: string): number | null => {
-    const num = parseFloat(cleanWeight(value));
-    if (Number.isNaN(num) || num < 30 || num > 99) return null;
+    const cleaned = cleanWeight(value);
+    if (cleaned === "") return null;
+    const num = parseInt(cleaned, 10);
+    if (Number.isNaN(num) || !Number.isInteger(num) || num < 5 || num > 99) return null;
     return num;
   };
 
   const setValue = (index: number, field: "wa" | "wd", value: string) => {
     const cleaned = cleanWeight(value);
     markDirty();
-
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[`${index}-${field}`];
+      return next;
+    });
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: cleaned } : r)));
   };
 
   const handleBlur = (index: number, field: "wa" | "wd", value: string) => {
+    const cleaned = cleanWeight(value);
+    const key = `${index}-${field}`;
+    if (cleaned === "") {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+      setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: "" } : r)));
+      return;
+    }
     const num = parseWeight(value);
-    setRows((prev) =>
-      prev.map((r, i) => (i === index ? { ...r, [field]: num === null ? "" : num.toFixed(1) } : r)),
-    );
+    if (num === null) {
+      setErrors((prev) => ({ ...prev, [key]: "Valeur invalide (5-99, nombre entier)" }));
+      return;
+    }
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: num.toString() } : r)));
   };
 
   const compute = (r: Row) => {
-    const wa = parseFloat(r.wa);
-    const wd = parseFloat(r.wd);
-    if (Number.isNaN(wa) || Number.isNaN(wd)) return { friction: "", balance: "" };
+    const wa = parseWeight(r.wa);
+    const wd = parseWeight(r.wd);
+    if (wa === null || wd === null) return { friction: "", balance: "" };
     return {
       friction: ((wd - wa) / 2).toFixed(1),
       balance: ((wd + wa) / 2).toFixed(1),
@@ -374,6 +394,9 @@ function Index() {
                           showBlockMessage();
                           return;
                         }
+                        if (e.key === "Enter") {
+                          handleBlur(index, "wa", e.currentTarget.value);
+                        }
                         onKeyDown(e, index, "wa");
                       }}
                       onBeforeInput={(e) => {
@@ -382,12 +405,13 @@ function Index() {
                           showBlockMessage();
                         }
                       }}
-                      inputMode="decimal"
-                      min={30}
+                      inputMode="numeric"
+                      min={5}
                       max={99}
-                      step={0.1}
+                      step={1}
                       aria-label={`Wa touche ${index + 1}`}
-                      className="weight-input"
+                      title={errors[`${index}-wa`] ?? undefined}
+                      className={`weight-input ${errors[`${index}-wa`] ? "error" : ""}`}
                     />
                   </div>
                   <div
@@ -409,6 +433,9 @@ function Index() {
                           showBlockMessage();
                           return;
                         }
+                        if (e.key === "Enter") {
+                          handleBlur(index, "wd", e.currentTarget.value);
+                        }
                         onKeyDown(e, index, "wd");
                       }}
                       onBeforeInput={(e) => {
@@ -417,12 +444,13 @@ function Index() {
                           showBlockMessage();
                         }
                       }}
-                      inputMode="decimal"
-                      min={30}
+                      inputMode="numeric"
+                      min={5}
                       max={99}
-                      step={0.1}
+                      step={1}
                       aria-label={`Wd touche ${index + 1}`}
-                      className="weight-input"
+                      title={errors[`${index}-wd`] ?? undefined}
+                      className={`weight-input ${errors[`${index}-wd`] ? "error" : ""}`}
                     />
                   </div>
                 </div>
