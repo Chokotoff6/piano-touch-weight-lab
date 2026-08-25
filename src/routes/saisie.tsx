@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/saisie")({
   head: () => ({
     meta: [
       { title: "Touchweight statique piano — Wa / Wd, friction, balance" },
