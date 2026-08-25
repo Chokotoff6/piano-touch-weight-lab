@@ -258,6 +258,8 @@ function Index() {
 
   const setValue = (index: number, field: "wa" | "wd", value: string) => {
     const cleaned = cleanWeight(value);
+    markDirty();
+
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: cleaned } : r)));
   };
 
