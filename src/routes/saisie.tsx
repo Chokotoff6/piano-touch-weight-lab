@@ -419,19 +419,144 @@ function Index() {
         </ol>
       </div>
 
-      <section className="mt-8 rounded-md border-2 border-foreground bg-card p-4">
-        <div className="mt-0 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {INFO_FIELDS.map((f) => (
-            <label key={f.key} className="text-xs text-muted-foreground">
-              {f.label}
+      <section
+        className="mt-8 rounded-md border-2 border-foreground bg-card p-4"
+        data-dirty={isDirty}
+        data-saved-at={savedAt ?? ""}
+      >
+        <h2 className="text-sm font-semibold">Informations</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <label className="text-xs text-muted-foreground">
+            Marque
+            <input
+              value={info["marque"] ?? ""}
+              onChange={(e) => updateInfo("marque", e.target.value)}
+              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+            />
+          </label>
+
+          <fieldset className="text-xs text-muted-foreground">
+            <legend>Type de piano</legend>
+            <div className="mt-1 flex h-8 items-center gap-4">
+              {["Piano Droit", "Piano à Queue"].map((t) => (
+                <label key={t} className="flex items-center gap-1 text-sm text-foreground">
+                  <input
+                    type="radio"
+                    name="type_piano"
+                    value={t}
+                    checked={info["type_piano"] === t}
+                    onChange={() => updateInfo("type_piano", t)}
+                  />
+                  {t}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <label className="text-xs text-muted-foreground">
+            Modèle
+            <input
+              value={info["modele"] ?? ""}
+              onChange={(e) => updateInfo("modele", e.target.value)}
+              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+            />
+          </label>
+
+          <div className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-3">
+            Numéro de série
+            <div className="mt-1 flex h-8 w-full max-w-xl items-stretch overflow-hidden rounded border border-input bg-background focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
               <input
-                value={info[f.key] ?? ""}
-                onChange={(e) => setInfo((p) => ({ ...p, [f.key]: e.target.value }))}
-                className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+                ref={(el) => {
+                  snRef.current["sn_prefix"] = el;
+                }}
+                value={info["sn_prefix"] ?? ""}
+                onChange={(e) => onPrefixChange(e.target.value)}
+                disabled={!rule.prefix}
+                placeholder="Lettres (ex: J, F)"
+                className="w-28 bg-transparent px-2 text-sm text-foreground outline-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
               />
-            </label>
-          ))}
+              <input
+                ref={(el) => {
+                  snRef.current["sn_num"] = el;
+                }}
+                value={info["sn_num"] ?? ""}
+                onChange={(e) => updateInfo("sn_num", e.target.value.replace(/[^0-9]/g, ""))}
+                required
+                inputMode="numeric"
+                placeholder="N° de série (chiffres)"
+                className="flex-1 border-x border-input bg-transparent px-2 text-sm text-foreground outline-none"
+              />
+              <input
+                value={info["sn_suffix"] ?? ""}
+                onChange={(e) => updateInfo("sn_suffix", e.target.value.toUpperCase().slice(0, 3))}
+                disabled={!rule.suffix}
+                placeholder="Lettre fin (ex: A, B)"
+                className="w-28 bg-transparent px-2 text-sm text-foreground outline-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+              />
+            </div>
+            <p className="mt-1 text-[0.7rem] leading-snug text-muted-foreground">
+              ⚠️ Important : Veuillez vérifier sur la plaque signalétique de l'appareil si des
+              lettres apparaissent avant ou après le numéro de série, et complétez les cases
+              correspondantes.
+            </p>
+          </div>
+
+          <label className="text-xs text-muted-foreground">
+            Date de fabrication
+            <input
+              value={info["fabrication"] ?? ""}
+              onChange={(e) => updateInfo("fabrication", e.target.value)}
+              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+            />
+          </label>
+
+          <label className="text-xs text-muted-foreground">
+            Pays
+            <input
+              value={info["pays"] ?? ""}
+              onChange={(e) => updateInfo("pays", e.target.value)}
+              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+            />
+          </label>
+
+          <label className="text-xs text-muted-foreground">
+            Ville
+            <input
+              value={info["ville"] ?? ""}
+              onChange={(e) => updateInfo("ville", e.target.value)}
+              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+            />
+          </label>
+
+          <fieldset className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-3">
+            <legend>Type d'entretien</legend>
+            <div className="mt-1 flex flex-wrap items-center gap-4">
+              {MAINTENANCE_OPTIONS.map((t) => (
+                <label key={t} className="flex items-center gap-1 text-sm text-foreground">
+                  <input
+                    type="radio"
+                    name="entretien"
+                    value={t}
+                    required
+                    checked={info["entretien"] === t}
+                    onChange={() => updateInfo("entretien", t)}
+                  />
+                  {t}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <label className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-3">
+            Remarques
+            <input
+              value={info["remarques"] ?? ""}
+              onChange={(e) => updateInfo("remarques", e.target.value)}
+              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+            />
+          </label>
         </div>
+
         <div className="mt-4 border-t border-border pt-3">
           <p className="text-xs font-medium text-muted-foreground">Moyennes</p>
           <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
