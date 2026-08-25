@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/saisie")({
@@ -182,12 +182,29 @@ function Index() {
   const [info, setInfo] = useState<Record<string, string>>({});
   const [isDirty, setIsDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [blockMessage, setBlockMessage] = useState<string | null>(null);
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
 
   const rule = BRAND_RULES[(info["marque"] ?? "").trim().toUpperCase()] ?? DEFAULT_RULE;
+
+  const canEnterWeights = useMemo(() => {
+    return Boolean(
+      info["marque"]?.trim() &&
+        info["modele"]?.trim() &&
+        info["sn_num"]?.trim() &&
+        info["type_piano"] &&
+        info["pays"]?.trim() &&
+        info["ville"]?.trim() &&
+        info["entretien"],
+    );
+  }, [info]);
+
+  useEffect(() => {
+    if (canEnterWeights) setBlockMessage(null);
+  }, [canEnterWeights]);
 
   const markDirty = () => {
     setIsDirty(true);
@@ -291,6 +308,12 @@ function Index() {
     );
   };
 
+  const showBlockMessage = () => {
+    setBlockMessage(
+      "Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de saisir les mesures.",
+    );
+  };
+
   const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
     <section className="mt-8" aria-label={`Touches ${from} à ${to}`}>
       <div className="technical-sheet">
@@ -332,7 +355,15 @@ function Index() {
                   {index + 1}
                 </div>
                 <div className="key-body">
-                  <div className="weight-fields weight-fields-wa">
+                  <div
+                    className={`weight-fields weight-fields-wa ${!canEnterWeights ? "pointer-events-none opacity-40" : ""}`}
+                    onClick={(e) => {
+                      if (!canEnterWeights) {
+                        e.stopPropagation();
+                        showBlockMessage();
+                      }
+                    }}
+                  >
                     <input
                       ref={(el) => {
                         inputs.current[`${index}-wa`] = el;
@@ -345,11 +376,20 @@ function Index() {
                       min={30}
                       max={99}
                       step={0.1}
+                      disabled={!canEnterWeights}
                       aria-label={`Wa touche ${index + 1}`}
                       className="weight-input"
                     />
                   </div>
-                  <div className="weight-fields weight-fields-wd">
+                  <div
+                    className={`weight-fields weight-fields-wd ${!canEnterWeights ? "pointer-events-none opacity-40" : ""}`}
+                    onClick={(e) => {
+                      if (!canEnterWeights) {
+                        e.stopPropagation();
+                        showBlockMessage();
+                      }
+                    }}
+                  >
                     <input
                       ref={(el) => {
                         inputs.current[`${index}-wd`] = el;
@@ -362,6 +402,7 @@ function Index() {
                       min={30}
                       max={99}
                       step={0.1}
+                      disabled={!canEnterWeights}
                       aria-label={`Wd touche ${index + 1}`}
                       className="weight-input"
                     />
@@ -638,6 +679,13 @@ function Index() {
           </Button>
         </div>
       </section>
+
+      {!canEnterWeights && (
+        <div className="mt-6 rounded-md border border-amber-500/50 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+          {blockMessage ??
+            "Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de saisir les mesures."}
+        </div>
+      )}
 
       <div className="mt-6 flex gap-4 text-xs text-muted-foreground">
         <span>Friction = (Wd − Wa) / 2</span>
