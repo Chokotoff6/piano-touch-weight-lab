@@ -333,9 +333,14 @@ function Index() {
   };
 
   const showBlockMessage = () => {
+    if (blockTimeout.current) clearTimeout(blockTimeout.current);
     setBlockMessage(
       "Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de saisir les mesures.",
     );
+    blockTimeout.current = setTimeout(() => {
+      setBlockMessage(null);
+      blockTimeout.current = null;
+    }, 5000);
   };
 
   const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
