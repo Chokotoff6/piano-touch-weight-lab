@@ -465,7 +465,7 @@ function Index() {
                       step={1}
                       aria-label={`Wa touche ${index + 1}`}
                       title={errors[`${index}-wa`] ?? undefined}
-                      className={`weight-input ${errors[`${index}-wa`] ? "error" : ""}`}
+                      className={`weight-input ${REQUIRED_KEY_SET.has(index + 1) ? "is-required" : ""} ${errors[`${index}-wa`] ? "error" : ""}`}
                     />
                   </div>
                   <div
@@ -504,7 +504,7 @@ function Index() {
                       step={1}
                       aria-label={`Wd touche ${index + 1}`}
                       title={errors[`${index}-wd`] ?? undefined}
-                      className={`weight-input ${errors[`${index}-wd`] ? "error" : ""}`}
+                      className={`weight-input ${REQUIRED_KEY_SET.has(index + 1) ? "is-required" : ""} ${errors[`${index}-wd`] ? "error" : ""}`}
                     />
                   </div>
                 </div>
@@ -746,6 +746,7 @@ function Index() {
             variant="outline"
             size="sm"
             className="text-xs"
+            onClick={guardExport}
             disabled
           >
             PDF
@@ -790,6 +791,8 @@ function Index() {
         <span>Friction = (Wd − Wa) / 2</span>
         <span>Balance = (Wd + Wa) / 2</span>
       </div>
+
+      <p className="mt-6 text-sm font-medium text-foreground">{REQUIRED_KEYS_NOTICE}</p>
 
       {renderSection(1, 44, gridRef1)}
       {renderSection(45, 88, gridRef2)}
