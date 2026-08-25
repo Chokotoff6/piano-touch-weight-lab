@@ -222,6 +222,15 @@ function Index() {
     if (rule.autoPrefix && value.length >= 1) snRef.current["sn_num"]?.focus();
   };
 
+  const cleanWeight = (value: string) => value.replace(/[^0-9]/g, "");
+
+  const parseWeight = (value: string): number | null => {
+    const cleaned = cleanWeight(value);
+    if (cleaned === "") return null;
+    const num = parseInt(cleaned, 10);
+    if (Number.isNaN(num) || !Number.isInteger(num) || num < 5 || num > 99) return null;
+    return num;
+  };
 
   const sectionAverages = useMemo(() => {
     const calc = (slice: Row[]) => {
@@ -260,16 +269,6 @@ function Index() {
     },
     [],
   );
-
-  const cleanWeight = (value: string) => value.replace(/[^0-9]/g, "");
-
-  const parseWeight = (value: string): number | null => {
-    const cleaned = cleanWeight(value);
-    if (cleaned === "") return null;
-    const num = parseInt(cleaned, 10);
-    if (Number.isNaN(num) || !Number.isInteger(num) || num < 5 || num > 99) return null;
-    return num;
-  };
 
   const setValue = (index: number, field: "wa" | "wd", value: string) => {
     const cleaned = cleanWeight(value);
