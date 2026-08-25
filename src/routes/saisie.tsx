@@ -394,6 +394,9 @@ function Index() {
                           showBlockMessage();
                           return;
                         }
+                        if (e.key === "Enter") {
+                          handleBlur(index, "wa", e.currentTarget.value);
+                        }
                         onKeyDown(e, index, "wa");
                       }}
                       onBeforeInput={(e) => {
@@ -402,12 +405,13 @@ function Index() {
                           showBlockMessage();
                         }
                       }}
-                      inputMode="decimal"
-                      min={30}
+                      inputMode="numeric"
+                      min={5}
                       max={99}
-                      step={0.1}
+                      step={1}
                       aria-label={`Wa touche ${index + 1}`}
-                      className="weight-input"
+                      title={errors[`${index}-wa`] ?? undefined}
+                      className={`weight-input ${errors[`${index}-wa`] ? "error" : ""}`}
                     />
                   </div>
                   <div
