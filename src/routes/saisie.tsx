@@ -539,27 +539,6 @@ function Index() {
 
   return (
     <main className="mx-auto max-w-[1400px] px-6 py-10">
-      <h1 className="text-xl font-semibold">Instrument details</h1>
-      <div className="mt-4 max-w-3xl space-y-3 text-sm leading-relaxed text-muted-foreground">
-        <p>
-          Bienvenue sur l'outil d'évaluation du touchweight statique pour piano. Cet outil permet de
-          consigner les mesures de poids ascendant (Wa) et descendant (Wd) afin de calculer la
-          friction et la balance mécanique de chaque touche.
-        </p>
-        <p className="font-medium text-foreground">Mode d'emploi :</p>
-        <ol className="list-decimal space-y-1 pl-5">
-          <li>Placez le curseur sur la case « Wa » de la première touche.</li>
-          <li>
-            Saisissez la valeur en grammes, puis appuyez sur « Entrée » : le curseur descend sur la
-            case « Wd » de la même touche.
-          </li>
-          <li>
-            Saisissez la valeur « Wd », puis appuyez sur « Entrée » : le curseur se déplace sur la
-            case « Wa » de la touche suivante.
-          </li>
-        </ol>
-      </div>
-
       <section
         className="mt-8 rounded-md border-2 border-foreground bg-card p-4"
         data-dirty={isDirty}
