@@ -65,10 +65,16 @@ export function SmartCombobox({
         value={draft}
         disabled={disabled}
         placeholder={placeholder}
+        onFocus={() => {
+          if (!disabled && openOnFocus) {
+            setOpen(true);
+            setTyped(false);
+          }
+        }}
         onChange={(e) => {
           setDraft(e.target.value);
           setTyped(e.target.value.length > 0);
-          setOpen(e.target.value.length > 0);
+          setOpen(true);
         }}
         onBlur={() => commit(draft)}
         onKeyDown={(e) => {
