@@ -10,7 +10,8 @@ import {
 } from "@/lib/required-keys";
 import { SmartCombobox } from "@/components/SmartCombobox";
 import {
-  BRAND_MODELS_SUGGESTIONS,
+  modelsFor,
+  modelGroupsFor,
   BRAND_SUGGESTIONS,
   FREQUENT_COUNTRIES,
   SUGGESTED_COUNTRIES,
