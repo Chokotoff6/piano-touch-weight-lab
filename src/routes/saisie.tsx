@@ -429,7 +429,10 @@ function Index() {
     );
   };
 
+  const [honeypot, setHoneypot] = useState("");
+
   const missingRequired = useMemo(() => missingRequiredKeys(rows), [rows]);
+
 
   useEffect(() => {
     requiredKeysGate.getMissing = () => missingRequiredKeys(rows);
