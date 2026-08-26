@@ -447,12 +447,15 @@ function Index() {
   }, []);
 
   const guardExport = () => {
+    // Contrôle anti-robot : échec silencieux, aucun message affiché.
+    if (!passesBotChecks(honeypot)) return false;
     if (missingRequired.length > 0) {
       showMessage(missingRequiredMessage(missingRequired));
       return false;
     }
     return true;
   };
+
 
 
   const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
