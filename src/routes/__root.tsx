@@ -129,36 +129,39 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  const linkClass = "text-sm text-muted-foreground hover:text-foreground";
+const linkClass = "rounded-md px-4 py-2 text-base font-medium text-muted-foreground transition-colors hover:bg-background hover:text-foreground";
+const activeLinkClass = "rounded-md bg-background px-4 py-2 text-base font-medium text-foreground shadow-sm";
 
   return (
     <QueryClientProvider client={queryClient}>
-      <nav className="border-b border-border">
-        <div className="mx-auto flex max-w-[1400px] gap-6 px-6 py-3">
-          <Link to="/" className={linkClass} activeOptions={{ exact: true }} activeProps={{ className: "text-sm font-semibold text-foreground" }}>
-            Accueil
-          </Link>
-          <Link to="/saisie" className={linkClass} activeProps={{ className: "text-sm font-semibold text-foreground" }}>
-            Saisie
-          </Link>
-          <Link
-            to="/resultats"
-            className={linkClass}
-            activeProps={{ className: "text-sm font-semibold text-foreground" }}
-            onClick={(e) => {
-              const missing = requiredKeysGate.getMissing?.() ?? [];
-              if (missing.length > 0) {
-                e.preventDefault();
-                window.dispatchEvent(
-                  new CustomEvent("required-keys-blocked", {
-                    detail: { message: missingRequiredMessage(missing) },
-                  }),
-                );
-              }
-            }}
-          >
-            Résultats
-          </Link>
+      <nav className="border-b border-border bg-background">
+        <div className="mx-auto flex max-w-[1400px] items-center px-6 py-2">
+          <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
+            <Link to="/" className={linkClass} activeOptions={{ exact: true }} activeProps={{ className: activeLinkClass }}>
+              Accueil
+            </Link>
+            <Link to="/saisie" className={linkClass} activeProps={{ className: activeLinkClass }}>
+              Saisie
+            </Link>
+            <Link
+              to="/resultats"
+              className={linkClass}
+              activeProps={{ className: activeLinkClass }}
+              onClick={(e) => {
+                const missing = requiredKeysGate.getMissing?.() ?? [];
+                if (missing.length > 0) {
+                  e.preventDefault();
+                  window.dispatchEvent(
+                    new CustomEvent("required-keys-blocked", {
+                      detail: { message: missingRequiredMessage(missing) },
+                    }),
+                  );
+                }
+              }}
+            >
+              Résultats
+            </Link>
+          </div>
         </div>
       </nav>
 
@@ -168,7 +171,7 @@ function RootComponent() {
         rel="noopener noreferrer"
         title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
         aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
-        className="fixed right-8 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-md border border-input bg-background text-base hover:bg-accent"
+        className="fixed right-8 top-16 z-50 flex h-9 w-9 items-center justify-center rounded-md border border-input bg-background text-base hover:bg-accent"
       >
         ☕
       </a>

@@ -5,8 +5,6 @@ export const REQUIRED_KEYS: number[] = [
 
 export const REQUIRED_KEY_SET = new Set(REQUIRED_KEYS);
 
-export const REQUIRED_KEYS_NOTICE =
-  "Merci d'encoder au minimum toutes les touches Do et Do# (15 touches) pour obtenir une courbe représentative.";
 
 export function missingRequiredKeys(rows: { wa: string; wd: string }[]): number[] {
   return REQUIRED_KEYS.filter((key) => {
