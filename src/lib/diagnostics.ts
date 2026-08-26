@@ -27,7 +27,7 @@ const args = (p: DiagnosticPayload) => ({
   _prefixe_lettre: p.prefixe_lettre,
   _numero_central: p.numero_central,
   _suffixe_lettre: p.suffixe_lettre,
-  _annee_fabrication: p.annee_fabrication,
+  _annee_fabrication: p.annee_fabrication as number,
   _pays: p.pays,
   _ville: p.ville,
   _zone_climatique: p.zone_climatique,
