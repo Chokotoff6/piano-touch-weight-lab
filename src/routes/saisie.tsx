@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
 import {
   REQUIRED_KEY_SET,
   missingRequiredKeys,
@@ -28,6 +27,7 @@ import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
 import { buildCsv, downloadCsv } from "@/lib/export-csv";
 import { getFingerprint } from "@/lib/fingerprint";
 import { insertDiagnostic, updateDiagnostic, type DiagnosticPayload } from "@/lib/diagnostics";
+import { setTopbarState } from "@/lib/topbar-store";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -470,6 +470,7 @@ function Index() {
     return () => window.removeEventListener("required-keys-blocked", onBlocked);
   }, []);
 
+
   const guardExport = () => {
     // Contrôle anti-robot : échec silencieux, aucun message affiché.
     if (!passesBotChecks(honeypot)) return false;
@@ -553,19 +554,42 @@ function Index() {
       setIsExporting(false);
     }
   };
+  useEffect(() => {
+    setTopbarState({ exportReady, isExporting });
+    return () => {
+      setTopbarState({ exportReady: false, isExporting: false });
+    };
+  }, [exportReady, isExporting]);
 
-  const handleExport = () => {
-    if (!guardExport()) return;
-    exportCsvFile();
-    if (currentDbId && isDirty) {
-      setAskUpdate(true);
-      return;
-    }
-    void syncAndFinish(currentDbId ? "update" : "insert");
-  };
+  useEffect(() => {
+    const exportCsvOnly = () => {
+      if (!guardExport()) return;
+      exportCsvFile();
+    };
+    const saveCloudOnly = () => {
+      if (!guardExport()) return;
+      if (currentDbId && isDirty) {
+        setAskUpdate(true);
+        return;
+      }
+      void syncAndFinish(currentDbId ? "update" : "insert");
+    };
+    const onExport = () => {
+      exportCsvOnly();
+      saveCloudOnly();
+    };
+    const onReset = () => setRows(EMPTY);
 
+    const handlers: Record<string, EventListener> = {
+      "piano-export": onExport as EventListener,
+      "piano-export-csv": exportCsvOnly as EventListener,
+      "piano-export-cloud": saveCloudOnly as EventListener,
+      "piano-reset": onReset as EventListener,
+    };
 
-
+    Object.entries(handlers).forEach(([type, fn]) => window.addEventListener(type, fn));
+    return () => Object.entries(handlers).forEach(([type, fn]) => window.removeEventListener(type, fn));
+  }, [rows, info, currentDbId, isDirty, honeypot, climateZone, profile]);
 
 
   const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
@@ -920,72 +944,6 @@ function Index() {
           />
 
         </div>
-      </section>
-
-      <section className="mt-4 rounded-md border-2 border-foreground bg-card p-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <Button
-            type="button"
-            size="sm"
-            className="text-xs"
-            onClick={handleExport}
-            disabled={isExporting || !exportReady}
-          >
-            Exporter les mesures
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setRows(EMPTY)}
-            className="text-xs"
-          >
-            Reset
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="text-xs"
-            onClick={guardExport}
-            disabled
-          >
-            PDF
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="text-xs"
-            disabled
-          >
-            Compare
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="text-xs"
-            disabled
-          >
-            Save
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="text-xs"
-            disabled
-          >
-            Load
-          </Button>
-        </div>
-        {!exportReady && (
-          <p className="mt-3 text-xs text-destructive">
-            ⚠️ Veuillez renseigner au moins une marque et un numéro de série pour pouvoir
-            exporter et sauvegarder votre diagnostic.
-          </p>
-        )}
       </section>
 
       {blockMessage && (
