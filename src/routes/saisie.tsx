@@ -25,7 +25,21 @@ import {
   isSerialFormatValid,
   SERIAL_FORMAT_ERROR,
 } from "@/lib/serial-dating";
-import { HONEYPOT_NAME, passesBotChecks } from "@/lib/anti-bot";
+import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
+import { buildCsv, downloadCsv } from "@/lib/export-csv";
+import { getFingerprint } from "@/lib/fingerprint";
+import { insertDiagnostic, updateDiagnostic, type DiagnosticPayload } from "@/lib/diagnostics";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const ALL_COUNTRIES = Array.from(new Set([...FREQUENT_COUNTRIES, ...SUGGESTED_COUNTRIES]));
 
@@ -460,6 +474,84 @@ function Index() {
     return true;
   };
 
+  const [currentDbId, setCurrentDbId] = useState<string | null>(null);
+  const [askUpdate, setAskUpdate] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const buildPayload = (): DiagnosticPayload => {
+    const year = Number((info["fabrication"] ?? "").match(/\d{4}/)?.[0]);
+    return {
+      user_fingerprint: getFingerprint(),
+      marque: info["marque"] ?? "",
+      type_piano: info["type_piano"] ?? "",
+      modele: info["modele"] ?? "",
+      prefixe_lettre: info["sn_prefix"] ?? "",
+      numero_central: info["sn_num"] ?? "",
+      suffixe_lettre: info["sn_suffix"] ?? "",
+      annee_fabrication: Number.isFinite(year) ? year : null,
+      pays: info["pays"] ?? "",
+      ville: info["ville"] ?? "",
+      zone_climatique: climateZone !== null ? String(climateZone) : "",
+      type_entretien: info["entretien"] ?? "",
+      remarques: info["remarques"] ?? "",
+      mesures_wa: rows.map((r) => r.wa),
+      mesures_wd: rows.map((r) => r.wd),
+    };
+  };
+
+  const exportCsvFile = () => {
+    const meta: Record<string, string> = {
+      Marque: info["marque"] ?? "",
+      "Type de piano": info["type_piano"] ?? "",
+      Modèle: info["modele"] ?? "",
+      "Préfixe lettre": info["sn_prefix"] ?? "",
+      "Numéro de série": info["sn_num"] ?? "",
+      "Suffixe lettre": info["sn_suffix"] ?? "",
+      "Date de fabrication": info["fabrication"] ?? "",
+      Pays: info["pays"] ?? "",
+      Ville: info["ville"] ?? "",
+      "Zone climatique": climateZone !== null ? String(climateZone) : "",
+      "Profil d'usine": profile.label,
+      "Type d'entretien": info["entretien"] ?? "",
+      Remarques: info["remarques"] ?? "",
+      "Date et heure de saisie": new Date().toISOString(),
+    };
+    const sn = (info["sn_num"] ?? "piano").replace(/[^\w-]/g, "");
+    downloadCsv(`touchweight_${sn}_${Date.now()}.csv`, buildCsv(meta, rows));
+  };
+
+  const syncAndFinish = async (mode: "insert" | "update") => {
+    setIsExporting(true);
+    try {
+      const payload = buildPayload();
+      if (mode === "update" && currentDbId) {
+        await updateDiagnostic(currentDbId, payload);
+      } else {
+        const id = await insertDiagnostic(payload);
+        setCurrentDbId(id);
+      }
+      markSubmission();
+      setIsDirty(false);
+      toast.success("Fichier CSV généré et diagnostic synchronisé avec succès");
+    } catch {
+      showMessage("La synchronisation cloud a échoué. Le fichier CSV a été généré localement.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExport = () => {
+    if (!guardExport()) return;
+    exportCsvFile();
+    if (currentDbId && isDirty) {
+      setAskUpdate(true);
+      return;
+    }
+    void syncAndFinish(currentDbId ? "update" : "insert");
+  };
+
+
+
 
 
   const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
@@ -813,6 +905,15 @@ function Index() {
         <div className="flex flex-wrap items-center gap-3">
           <Button
             type="button"
+            size="sm"
+            className="text-xs"
+            onClick={handleExport}
+            disabled={isExporting}
+          >
+            Exporter les mesures
+          </Button>
+          <Button
+            type="button"
             variant="outline"
             size="sm"
             onClick={() => setRows(EMPTY)}
@@ -906,6 +1007,32 @@ function Index() {
 
       {renderSection(1, 44, gridRef1)}
       {renderSection(45, 88, gridRef2)}
+
+      <AlertDialog open={askUpdate} onOpenChange={setAskUpdate}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Un diagnostic existe déjà pour cette session</AlertDialogTitle>
+            <AlertDialogDescription>
+              Souhaitez-vous corriger le diagnostic enregistré ou créer un nouveau point
+              d'historique ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void syncAndFinish("update")}>
+              Mettre à jour le diagnostic existant
+            </AlertDialogAction>
+            <AlertDialogAction
+              onClick={() => {
+                setCurrentDbId(null);
+                void syncAndFinish("insert");
+              }}
+            >
+              Créer un nouveau point d'historique (Nouvelle pesée)
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
