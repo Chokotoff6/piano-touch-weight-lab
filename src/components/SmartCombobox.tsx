@@ -22,6 +22,7 @@ export function SmartCombobox({
 }: Props) {
   const [draft, setDraft] = useState(value);
   const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState(false);
   const wrap = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => setDraft(value), [value]);
@@ -37,12 +38,14 @@ export function SmartCombobox({
     const next = resolveEntry(raw, options);
     setDraft(next);
     setOpen(false);
+    setTyped(false);
     if (next !== value) onCommit(next);
   };
 
   const pick = (option: string) => {
     setDraft(option);
     setOpen(false);
+    setTyped(false);
     if (option !== value) onCommit(option);
   };
 
@@ -62,9 +65,9 @@ export function SmartCombobox({
         placeholder={placeholder}
         onChange={(e) => {
           setDraft(e.target.value);
-          setOpen(true);
+          setTyped(e.target.value.length > 0);
+          setOpen(e.target.value.length > 0);
         }}
-        onFocus={() => setOpen(true)}
         onBlur={() => commit(draft)}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
@@ -74,12 +77,26 @@ export function SmartCombobox({
             commit(draft);
           } else if (e.key === "Escape") {
             setOpen(false);
+            setTyped(false);
           }
         }}
         className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
       />
-      {open && !disabled && filtered.length > 0 && (
+      {open && typed && !disabled && (
         <ul className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded border border-input bg-popover py-1 text-sm shadow-md">
+          {normalizeEntry(draft) &&
+            !options.some((o) => o === normalizeEntry(draft)) && (
+              <li>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => pick(normalizeEntry(draft))}
+                  className="block w-full px-2 py-1 text-left font-medium text-foreground hover:bg-accent"
+                >
+                  ✨ Utiliser « {normalizeEntry(draft)} » (Saisie libre)
+                </button>
+              </li>
+            )}
           {filtered.map((g) => (
             <li key={g.label || "all"}>
               {g.label && (
@@ -103,19 +120,6 @@ export function SmartCombobox({
               </ul>
             </li>
           ))}
-          {normalizeEntry(draft) &&
-            !options.some((o) => o === normalizeEntry(draft)) && (
-              <li>
-                <button
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => pick(normalizeEntry(draft))}
-                  className="block w-full px-2 py-1 text-left text-muted-foreground hover:bg-accent"
-                >
-                  Utiliser « {normalizeEntry(draft)} »
-                </button>
-              </li>
-            )}
         </ul>
       )}
     </div>

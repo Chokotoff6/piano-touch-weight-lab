@@ -87,6 +87,71 @@ export const BRAND_MODELS_BY_TYPE: Record<string, { droit: string[]; queue: stri
       "290 Imperial (97 touches)",
     ],
   },
+  PLEYEL: {
+    droit: ["P116", "P124", "P131", "Marigny", "Vendôme"],
+    queue: ["Modèle 3", "Modèle F", "Modèle P", "Modèle 1"],
+  },
+  SCHIMMEL: {
+    droit: ["C116", "C120", "C121", "C126", "C130", "K122", "K125", "K132", "112", "114", "116"],
+    queue: ["K169", "K175", "K195", "K213", "K230", "K256", "K280"],
+  },
+  PETROF: {
+    droit: ["P118", "P122", "P125", "P131", "P135"],
+    queue: [
+      "Bora", "Puccini", "P159 Bora", "P173 Breeze", "P194 Storm",
+      "P210 Pasat", "P237 Monsoon", "P284 Mistral",
+    ],
+  },
+  BLÜTHNER: {
+    droit: ["Modèle A", "Modèle B", "Modèle C", "Modèle S"],
+    queue: ["Modèle 1", "Modèle 2", "Modèle 4", "Modèle 6", "Modèle 10", "Modèle 11"],
+  },
+  FAZIOLI: {
+    droit: [],
+    queue: ["F156", "F183", "F212", "F228", "F278", "F308"],
+  },
+  SAUTER: {
+    droit: [
+      "Nova 116", "Vision 116", "Cura 122", "Master Class 122", "Master Class 130", "Concent 130",
+    ],
+    queue: ["Alpha 160", "Delta 185", "Omega 220", "Concert 275"],
+  },
+  "GROTRIAN-STEINWEG": {
+    droit: ["G-114", "G-118", "G-124", "Classic 124", "Concertino 132"],
+    queue: ["Cabinet 192", "Charis 208", "Concert 225", "Concert 277"],
+  },
+  "STEINGRAEBER & SÖHNE": {
+    droit: ["122", "130", "138"],
+    queue: ["A-170", "B-192", "C-212", "D-232", "E-272"],
+  },
+  FEURICH: {
+    droit: ["115 Premiere", "122 Universal", "125 Design", "133 Concert"],
+    queue: ["162 Dynamic I", "179 Dynamic II", "218 Concert"],
+  },
+  SEILER: {
+    droit: ["116 Primus", "122 Ritmo", "132 Konzert", "Eduard 126"],
+    queue: ["168 Virtuoso", "186 Maestro", "208 Professional", "242 Konzert"],
+  },
+  "W. HOFFMANN": {
+    droit: ["V112", "V120", "T122", "T128", "P120", "P126"],
+    queue: ["V158", "V177", "T161", "T177", "T186", "P161", "P188", "P206"],
+  },
+  ZIMMERMANN: {
+    droit: ["HZ120", "HZ126", "Studio S2", "Studio S6"],
+    queue: ["HZ160", "HZ175", "Studio S160", "Studio S175"],
+  },
+  BOSTON: {
+    droit: ["UP-118", "UP-126", "UP-132"],
+    queue: ["GP-156", "GP-163", "GP-178", "GP-193", "GP-215"],
+  },
+  ESSEX: {
+    droit: ["EUP-111", "EUP-116", "EUP-123"],
+    queue: ["EGP-155", "EGP-173"],
+  },
+  SAMICK: {
+    droit: ["JS-115", "JS-121", "JS-131"],
+    queue: ["SIG-50", "SIG-54", "SIG-57", "NSG-175", "NSG-186"],
+  },
 };
 
 export const BRAND_MODELS_SUGGESTIONS: Record<string, string[]> = Object.fromEntries(
