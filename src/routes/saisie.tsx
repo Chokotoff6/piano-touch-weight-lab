@@ -1007,6 +1007,32 @@ function Index() {
 
       {renderSection(1, 44, gridRef1)}
       {renderSection(45, 88, gridRef2)}
+
+      <AlertDialog open={askUpdate} onOpenChange={setAskUpdate}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Un diagnostic existe déjà pour cette session</AlertDialogTitle>
+            <AlertDialogDescription>
+              Souhaitez-vous corriger le diagnostic enregistré ou créer un nouveau point
+              d'historique ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void syncAndFinish("update")}>
+              Mettre à jour le diagnostic existant
+            </AlertDialogAction>
+            <AlertDialogAction
+              onClick={() => {
+                setCurrentDbId(null);
+                void syncAndFinish("insert");
+              }}
+            >
+              Créer un nouveau point d'historique (Nouvelle pesée)
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
