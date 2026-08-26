@@ -589,11 +589,13 @@ function Index() {
             Modèle
             <SmartCombobox
               value={info["modele"] ?? ""}
-              options={BRAND_MODELS_SUGGESTIONS[(info["marque"] ?? "").toUpperCase()] ?? []}
+              options={modelsFor(info["marque"] ?? "", info["type_piano"])}
+              groups={modelGroupsFor(info["marque"] ?? "", info["type_piano"])}
               disabled={!info["marque"]?.trim()}
               onCommit={(v) => updateInfo("modele", v)}
             />
           </label>
+
 
 
           <fieldset className="text-xs text-muted-foreground md:col-span-2">
