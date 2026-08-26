@@ -253,6 +253,10 @@ function Index() {
     );
   }, [info]);
 
+  const exportReady = useMemo(() => {
+    return Boolean(info["marque"]?.trim() && info["sn_num"]?.trim());
+  }, [info]);
+
   useEffect(() => {
     if (canEnterWeights) {
       if (blockTimeout.current) clearTimeout(blockTimeout.current);
@@ -470,6 +474,13 @@ function Index() {
   const guardExport = () => {
     // Contrôle anti-robot : échec silencieux, aucun message affiché.
     if (!passesBotChecks(honeypot)) return false;
+    // Vérification minimale : une marque et un numéro de série sont requis pour exporter.
+    if (!exportReady) {
+      showMessage(
+        "⚠️ Veuillez renseigner au moins une marque et un numéro de série pour pouvoir exporter et sauvegarder votre diagnostic.",
+      );
+      return false;
+    }
     // Validation Do/Do# temporairement désactivée via BYPASS_REQUIRED_KEYS_VALIDATION.
     if (!BYPASS_REQUIRED_KEYS_VALIDATION && missingRequired.length > 0) {
       showMessage(missingRequiredMessage(missingRequired));
@@ -912,7 +923,7 @@ function Index() {
             size="sm"
             className="text-xs"
             onClick={handleExport}
-            disabled={isExporting}
+            disabled={isExporting || !exportReady}
           >
             Exporter les mesures
           </Button>
@@ -963,6 +974,12 @@ function Index() {
             Load
           </Button>
         </div>
+        {!exportReady && (
+          <p className="mt-3 text-xs text-destructive">
+            ⚠️ Veuillez renseigner au moins une marque et un numéro de série pour pouvoir
+            exporter et sauvegarder votre diagnostic.
+          </p>
+        )}
       </section>
 
       {blockMessage && (
