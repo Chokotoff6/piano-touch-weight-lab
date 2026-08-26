@@ -3,36 +3,60 @@ export type PianoType = "Piano Droit" | "Piano à Queue";
 export const BRAND_MODELS_BY_TYPE: Record<string, { droit: string[]; queue: string[] }> = {
   YAMAHA: {
     droit: [
-      "U1", "U1A", "U1B", "U1C", "U1H", "U10A", "U10BL", "U100",
-      "U3", "U3H", "U3M", "U3A", "U30BL",
-      "B1", "B2", "B3", "P116", "P121", "YUS1", "YUS3", "YUS5",
+      "U1", "U1A", "U1B", "U1C", "U1H", "U1M", "U1G", "U1E", "U10A", "U10BL", "U100",
+      "U3", "U3H", "U3M", "U3A", "U3G", "U30BL", "U300",
+      "UX", "UX-1", "UX-3", "UX-5", "UX10BL", "UX30BL",
+      "YU1", "YU3", "YU5", "YU11", "YU33",
+      "B1", "B2", "B3", "P116", "P121", "P124",
+      "YUS1", "YUS3", "YUS5", "SU118", "SU7", "SE122", "SE132",
     ],
-    queue: ["G1", "G2", "G3", "C1", "C2", "C3", "C3X", "C5", "C7", "CFX"],
+    queue: [
+      "G1", "G2", "G3", "G5",
+      "C1", "C2", "C3", "C5", "C7", "C1X", "C2X", "C3X", "C5X", "C6X", "C7X",
+      "S4", "S6", "S3X", "S5X", "S7X",
+      "CF4", "CF6", "CFX",
+    ],
   },
   KAWAI: {
     droit: [
       "K-15", "K-200", "K-300", "K-500", "K-600", "K-800",
-      "BL-31", "BL-51", "BL-61", "BL-71", "KS-2F", "KS-3F",
+      "K-2", "K-3", "K-5", "K-6", "K-8",
+      "UST-9",
+      "BL-12", "BL-31", "BL-51", "BL-61", "BL-71",
+      "KS-1F", "KS-2F", "KS-3F", "KS-5F",
+      "NS-10", "NS-15", "NS-25", "NS-35",
+      "XO-1", "XO-2", "XO-3", "XO-8",
+      "ND-21",
     ],
     queue: [
-      "KG-1", "KG-2", "KG-3", "GE-30", "GX-1", "GX-2", "GX-3",
-      "GL-10", "GL-30", "SK-2", "SK-3", "SK-5",
+      "KG-1", "KG-2", "KG-3", "KG-5", "KG-6",
+      "GE-20", "GE-30",
+      "RX-1", "RX-2", "RX-3", "RX-5", "RX-6", "RX-7",
+      "GX-1", "GX-2", "GX-3", "GX-5", "GX-6", "GX-7",
+      "GL-10", "GL-20", "GL-30", "GL-40", "GL-50",
+      "GS-30", "GS-40", "GS-50",
+      "Shigeru Kawai", "SK-2", "SK-3", "SK-5", "SK-6", "SK-7", "SK-EX",
     ],
   },
   "STEINWAY & SONS": {
-    droit: ["V-125", "K-132"],
-    queue: ["S-155", "M-170", "O-180", "A-188", "B-211", "C-227", "D-274"],
+    droit: ["V-125", "K-132", "Z-114", "F-105", "4510"],
+    queue: ["S-155", "M-170", "O-180", "L-179", "A-188", "A3-194", "B-211", "C-227", "D-274"],
   },
-  BECHSTEIN: {
-    droit: ["ACADEMY A1", "ACADEMY A2", "CONCERT 8"],
+  "C. BECHSTEIN": {
+    droit: [
+      "Academy A1", "A124", "A114",
+      "Academy A2", "A120", "A116",
+      "Concert 8", "Model 6", "Model 7", "Model 8", "Model 9", "Model 11",
+      "Elegance 124", "Classic 118", "Contur 118",
+    ],
     queue: [
-      "ACADEMY A160", "ACADEMY A175", "ACADEMY A190",
-      "CONCERT B212", "CONCERT C234", "CONCERT D282",
+      "Academy A160", "Academy A175", "Academy A190", "Academy A208", "Academy A228",
+      "Concert L167", "Concert M/P192", "Concert B212", "Concert C234", "Concert D282",
     ],
   },
   BÖSENDORFER: {
-    droit: ["116SP", "120CL", "130CL"],
-    queue: ["170VC", "185VC", "200", "214VC", "225", "280VC", "290 IMPERIAL"],
+    droit: ["116SP", "120CL", "130CL", "Grand Upright 120", "Grand Upright 130"],
+    queue: ["155", "170", "170VC", "185", "185VC", "200", "214", "214VC", "225", "275", "280", "280VC", "290 Imperial"],
   },
 };
 
