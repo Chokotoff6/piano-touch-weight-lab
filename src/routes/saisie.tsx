@@ -12,6 +12,7 @@ import { SmartCombobox } from "@/components/SmartCombobox";
 import {
   modelsFor,
   modelGroupsFor,
+  inferTypeFromModel,
   BRAND_SUGGESTIONS,
   FREQUENT_COUNTRIES,
   SUGGESTED_COUNTRIES,
