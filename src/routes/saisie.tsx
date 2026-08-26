@@ -923,7 +923,7 @@ function Index() {
             size="sm"
             className="text-xs"
             onClick={handleExport}
-            disabled={isExporting}
+            disabled={isExporting || !exportReady}
           >
             Exporter les mesures
           </Button>
@@ -974,6 +974,12 @@ function Index() {
             Load
           </Button>
         </div>
+        {!exportReady && (
+          <p className="mt-3 text-xs text-destructive">
+            ⚠️ Veuillez renseigner au moins une marque et un numéro de série pour pouvoir
+            exporter et sauvegarder votre diagnostic.
+          </p>
+        )}
       </section>
 
       {blockMessage && (
