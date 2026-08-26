@@ -8,6 +8,17 @@ import {
   missingRequiredMessage,
   requiredKeysGate,
 } from "@/lib/required-keys";
+import { SmartCombobox } from "@/components/SmartCombobox";
+import {
+  BRAND_MODELS_SUGGESTIONS,
+  BRAND_SUGGESTIONS,
+  FREQUENT_COUNTRIES,
+  SUGGESTED_COUNTRIES,
+  type ClimateZone,
+} from "@/lib/piano-constants";
+import { fallbackZone, resolveClimateZone } from "@/lib/climate";
+
+const ALL_COUNTRIES = Array.from(new Set([...FREQUENT_COUNTRIES, ...SUGGESTED_COUNTRIES]));
 
 
 export const Route = createFileRoute("/saisie")({
@@ -197,6 +208,8 @@ function Index() {
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [climateZone, setClimateZone] = useState<ClimateZone | null>(null);
 
   const rule = BRAND_RULES[(info["marque"] ?? "").trim().toUpperCase()] ?? DEFAULT_RULE;
 
@@ -235,6 +248,19 @@ function Index() {
     setInfo((p) => ({ ...p, [key]: value }));
     markDirty();
   };
+
+  const resolveCity = (raw: string) => {
+    const city = raw.trim();
+    const country = (info["pays"] ?? "").trim();
+    if (!city || !country) return;
+    setIsGeocoding(true);
+    resolveClimateZone(city, country)
+      .then((zone) => setClimateZone(zone))
+      .catch(() => setClimateZone(fallbackZone(country)))
+      .finally(() => setIsGeocoding(false));
+  };
+
+
 
   const onPrefixChange = (value: string) => {
     updateInfo("sn_prefix", value.toUpperCase().slice(0, 3));
@@ -543,26 +569,32 @@ function Index() {
         className="mt-8 rounded-md border-2 border-foreground bg-card p-4"
         data-dirty={isDirty}
         data-saved-at={savedAt ?? ""}
+        data-climate-zone={climateZone ?? ""}
       >
         <h2 className="text-sm font-semibold">Informations</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
           <label className="text-xs text-muted-foreground">
             Marque
-            <input
+            <SmartCombobox
               value={info["marque"] ?? ""}
-              onChange={(e) => updateInfo("marque", e.target.value)}
-              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+              options={BRAND_SUGGESTIONS}
+              onCommit={(v) => {
+                updateInfo("marque", v);
+                if ((info["modele"] ?? "") !== "") updateInfo("modele", "");
+              }}
             />
           </label>
 
           <label className="text-xs text-muted-foreground">
             Modèle
-            <input
+            <SmartCombobox
               value={info["modele"] ?? ""}
-              onChange={(e) => updateInfo("modele", e.target.value)}
-              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+              options={BRAND_MODELS_SUGGESTIONS[(info["marque"] ?? "").toUpperCase()] ?? []}
+              disabled={!info["marque"]?.trim()}
+              onCommit={(v) => updateInfo("modele", v)}
             />
           </label>
+
 
           <fieldset className="text-xs text-muted-foreground md:col-span-2">
             <legend>Type de piano</legend>
@@ -632,21 +664,37 @@ function Index() {
 
           <label className="text-xs text-muted-foreground">
             Pays
-            <input
+            <SmartCombobox
               value={info["pays"] ?? ""}
-              onChange={(e) => updateInfo("pays", e.target.value)}
-              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+              options={ALL_COUNTRIES}
+              groups={[
+                { label: "Suggestions fréquentes", options: FREQUENT_COUNTRIES },
+                { label: "Tous les pays", options: SUGGESTED_COUNTRIES },
+              ]}
+              onCommit={(v) => updateInfo("pays", v)}
             />
           </label>
 
           <label className="text-xs text-muted-foreground">
-            Ville
+            <span className="flex items-center gap-2">
+              Ville
+              {isGeocoding && <span className="text-[0.65rem] italic">Vérification…</span>}
+            </span>
             <input
               value={info["ville"] ?? ""}
+              disabled={!info["pays"]?.trim()}
               onChange={(e) => updateInfo("ville", e.target.value)}
-              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+              onBlur={(e) => resolveCity(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  resolveCity((e.target as HTMLInputElement).value);
+                }
+              }}
+              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             />
           </label>
+
 
           <fieldset className="text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
             <legend>Type d'entretien</legend>
