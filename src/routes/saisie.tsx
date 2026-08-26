@@ -554,10 +554,42 @@ function Index() {
       setIsExporting(false);
     }
   };
+  useEffect(() => {
+    setTopbarState({ exportReady, isExporting });
+    return () => {
+      setTopbarState({ exportReady: false, isExporting: false });
+    };
+  }, [exportReady, isExporting]);
 
+  useEffect(() => {
+    const exportCsvOnly = () => {
+      if (!guardExport()) return;
+      exportCsvFile();
+    };
+    const saveCloudOnly = () => {
+      if (!guardExport()) return;
+      if (currentDbId && isDirty) {
+        setAskUpdate(true);
+        return;
+      }
+      void syncAndFinish(currentDbId ? "update" : "insert");
+    };
+    const onExport = () => {
+      exportCsvOnly();
+      saveCloudOnly();
+    };
+    const onReset = () => setRows(EMPTY);
 
+    const handlers: Record<string, EventListener> = {
+      "piano-export": onExport as EventListener,
+      "piano-export-csv": exportCsvOnly as EventListener,
+      "piano-export-cloud": saveCloudOnly as EventListener,
+      "piano-reset": onReset as EventListener,
+    };
 
-
+    Object.entries(handlers).forEach(([type, fn]) => window.addEventListener(type, fn));
+    return () => Object.entries(handlers).forEach(([type, fn]) => window.removeEventListener(type, fn));
+  }, [rows, info, currentDbId, isDirty, honeypot, climateZone, profile]);
 
 
   const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
