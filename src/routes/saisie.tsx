@@ -609,7 +609,13 @@ function Index() {
                     name="type_piano"
                     value={t}
                     checked={info["type_piano"] === t}
-                    onChange={() => updateInfo("type_piano", t)}
+                    onChange={() => {
+                      updateInfo("type_piano", t);
+                      const m = info["modele"] ?? "";
+                      if (m && !modelsFor(info["marque"] ?? "", t).includes(m)) {
+                        updateInfo("modele", "");
+                      }
+                    }}
                   />
                   {t}
                 </label>
