@@ -262,6 +262,35 @@ function Index() {
       .finally(() => setIsGeocoding(false));
   };
 
+  const serialFormatValid = useMemo(
+    () =>
+      isSerialFormatValid(
+        info["marque"] ?? "",
+        info["sn_prefix"] ?? "",
+        info["sn_num"] ?? "",
+        info["sn_suffix"] ?? "",
+      ),
+    [info],
+  );
+
+  const profile = useMemo(
+    () =>
+      factoryProfile(
+        info["marque"] ?? "",
+        info["sn_prefix"] ?? "",
+        climateZone,
+        info["type_piano"],
+      ),
+    [info, climateZone],
+  );
+
+  // Pré-remplissage de la date de fabrication (reste modifiable manuellement).
+  useEffect(() => {
+    if (fabricationTouched.current) return;
+    const year = datePiano(info["marque"] ?? "", info["sn_prefix"] ?? "", info["sn_num"] ?? "");
+    const value = year === null ? "" : String(year);
+    setInfo((p) => (p["fabrication"] === value ? p : { ...p, fabrication: value }));
+  }, [info["marque"], info["sn_prefix"], info["sn_num"]]);
 
 
   const onPrefixChange = (value: string) => {
