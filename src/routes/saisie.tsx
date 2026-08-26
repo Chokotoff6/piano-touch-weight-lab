@@ -905,6 +905,15 @@ function Index() {
         <div className="flex flex-wrap items-center gap-3">
           <Button
             type="button"
+            size="sm"
+            className="text-xs"
+            onClick={handleExport}
+            disabled={isExporting}
+          >
+            Exporter les mesures
+          </Button>
+          <Button
+            type="button"
             variant="outline"
             size="sm"
             onClick={() => setRows(EMPTY)}
