@@ -637,21 +637,37 @@ function Index() {
 
           <label className="text-xs text-muted-foreground">
             Pays
-            <input
+            <SmartCombobox
               value={info["pays"] ?? ""}
-              onChange={(e) => updateInfo("pays", e.target.value)}
-              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+              options={ALL_COUNTRIES}
+              groups={[
+                { label: "Suggestions fréquentes", options: FREQUENT_COUNTRIES },
+                { label: "Tous les pays", options: SUGGESTED_COUNTRIES },
+              ]}
+              onCommit={(v) => updateInfo("pays", v)}
             />
           </label>
 
           <label className="text-xs text-muted-foreground">
-            Ville
+            <span className="flex items-center gap-2">
+              Ville
+              {isGeocoding && <span className="text-[0.65rem] italic">Vérification…</span>}
+            </span>
             <input
               value={info["ville"] ?? ""}
+              disabled={!info["pays"]?.trim()}
               onChange={(e) => updateInfo("ville", e.target.value)}
-              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+              onBlur={(e) => resolveCity(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  resolveCity((e.target as HTMLInputElement).value);
+                }
+              }}
+              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             />
           </label>
+
 
           <fieldset className="text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
             <legend>Type d'entretien</legend>
