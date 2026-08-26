@@ -574,22 +574,22 @@ function Index() {
         <div className="technical-labels" aria-hidden="true">
           <div className="label-key" />
           <div className="label-wa" title="The minimum weight required to make the key move down.">
-            Down Weight (Wa)
+            Downweight (Wa)
           </div>
           <div className="label-wd" title="The maximum weight the key can lift when returning up.">
-            Up Weight (Wd)
+            Upweight (Wd)
           </div>
           <div
             className="label-wa-white"
             title="The minimum weight required to make the key move down."
           >
-            Down Weight (Wa)
+            Downweight (Wa)
           </div>
           <div
             className="label-wd-white"
             title="The maximum weight the key can lift when returning up."
           >
-            Up Weight (Wd)
+            Upweight (Wd)
           </div>
 
         </div>
@@ -720,12 +720,12 @@ function Index() {
   return (
     <main className="mx-auto max-w-[1400px] px-6 py-10">
       <section
-        className="mt-8 rounded-md border-2 border-foreground bg-card p-4"
+        className="mt-8 rounded-md border-2 border-foreground bg-card p-4 [&_input]:border-foreground/30"
         data-dirty={isDirty}
         data-saved-at={savedAt ?? ""}
         data-climate-zone={climateZone ?? ""}
       >
-        <h2 className="text-sm font-semibold">Informations</h2>
+        <h2 className="text-sm font-bold">Informations piano</h2>
         <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-4">
           <label className="text-xs text-muted-foreground">
             Marque
@@ -835,7 +835,7 @@ function Index() {
                 updateInfo("fabrication", e.target.value);
               }}
 
-              className="mt-1 h-8 w-1/2 rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+              className="mt-1 h-8 w-24 rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
             />
           </label>
 
@@ -987,27 +987,20 @@ function Index() {
         </div>
       )}
 
-      <div className="mt-6 flex gap-4 text-xs text-muted-foreground">
-        <span>Friction = (Wd − Wa) / 2</span>
-        <span>Balance = (Wd + Wa) / 2</span>
-      </div>
-
-      <p className="mt-6 text-sm font-medium text-foreground">{REQUIRED_KEYS_NOTICE}</p>
-
       <section className="mt-4 rounded-md border-2 border-foreground bg-card p-4">
-        <p className="text-xs font-medium text-muted-foreground">Moyennes</p>
+        <h2 className="text-sm font-bold">Moyennes mesurées</h2>
         <div className="mt-2 grid grid-cols-4 gap-3">
           {([
-            { key: "wa", label: "Wa" },
-            { key: "wd", label: "Wd" },
+            { key: "wa", label: "Downweight (Wa)" },
+            { key: "wd", label: "Upweight (Wd)" },
             { key: "friction", label: "Friction" },
             { key: "balance", label: "Balance" },
           ] as const).map(({ key, label }) => (
             <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
-              <div className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+              <div className="text-[0.8125rem] font-bold uppercase tracking-wide text-muted-foreground">
                 {label}
               </div>
-              <div className="mt-1 text-base font-semibold tabular-nums">
+              <div className="mt-1 text-lg font-semibold tabular-nums">
                 {sectionAverages.global[key]}
               </div>
               <div className="mt-0.5 flex justify-center gap-2 text-[0.65rem] text-muted-foreground tabular-nums">
