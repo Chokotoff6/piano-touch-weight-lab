@@ -548,21 +548,26 @@ function Index() {
         <div className="mt-3 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
           <label className="text-xs text-muted-foreground">
             Marque
-            <input
+            <SmartCombobox
               value={info["marque"] ?? ""}
-              onChange={(e) => updateInfo("marque", e.target.value)}
-              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+              options={BRAND_SUGGESTIONS}
+              onCommit={(v) => {
+                updateInfo("marque", v);
+                if ((info["modele"] ?? "") !== "") updateInfo("modele", "");
+              }}
             />
           </label>
 
           <label className="text-xs text-muted-foreground">
             Modèle
-            <input
+            <SmartCombobox
               value={info["modele"] ?? ""}
-              onChange={(e) => updateInfo("modele", e.target.value)}
-              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+              options={BRAND_MODELS_SUGGESTIONS[(info["marque"] ?? "").toUpperCase()] ?? []}
+              disabled={!info["marque"]?.trim()}
+              onCommit={(v) => updateInfo("modele", v)}
             />
           </label>
+
 
           <fieldset className="text-xs text-muted-foreground md:col-span-2">
             <legend>Type de piano</legend>
