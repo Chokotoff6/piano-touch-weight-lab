@@ -137,21 +137,27 @@ export function isSerialFormatValid(
 
 export type FactoryProfile = { label: string; frictionTarget: number | null };
 
-/** Profil d'usine : origine de fabrication déduite du préfixe ou de la zone climatique. */
+/** Profil d'usine : origine de fabrication déduite du préfixe, du numéro ou de la zone climatique. */
 export function factoryProfile(
   brand: string,
   prefix: string,
   zone: ClimateZone | null,
   typePiano: string | undefined,
+  num?: string,
 ): FactoryProfile {
   const key = brandKey(brand);
   if (key === "YAMAHA" || key === "KAWAI") {
     if (clean(prefix) !== "") return { label: "Europe/Climats Humides", frictionTarget: 13 };
+    const n = parseInt(clean(num), 10);
+    // Règle synchrone : gros numéros sans préfixe = production Europe, sans attendre la météo.
+    if (Number.isFinite(n) && n >= 2000000)
+      return { label: "Europe/Climats Humides", frictionTarget: 13 };
     if (zone === 3 || zone === 5) return { label: "Japon/Climat Sec", frictionTarget: 11 };
     if (zone === 1 || zone === 2 || zone === 4)
       return { label: "Europe/Climats Humides", frictionTarget: 13 };
     return { label: "—", frictionTarget: null };
   }
+
   const t = (typePiano ?? "").toLowerCase();
   if (t.includes("queue")) return { label: "Standard piano à queue", frictionTarget: 12 };
   if (t.includes("droit")) return { label: "Standard piano droit", frictionTarget: 13 };
