@@ -571,7 +571,7 @@ function Index() {
   const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
     <section className="mt-8" aria-label={`Touches ${from} à ${to}`}>
       <div className="technical-sheet">
-        <div className="technical-labels" aria-hidden="true">
+        <div className="technical-labels min-w-[170px] w-44" aria-hidden="true">
           <div className="label-key" />
           <div className="label-wa" title="The minimum weight required to make the key move down.">
             Downweight (Wa)
@@ -695,7 +695,7 @@ function Index() {
       </div>
       {(["friction", "balance"] as const).map((kind) => (
         <div className="result-sheet" key={kind}>
-          <div className="result-label">{kind === "friction" ? "Friction" : "Balance"}</div>
+          <div className="result-label min-w-[170px] w-44">{kind === "friction" ? "Friction" : "Balance"}</div>
           <div className="result-grid">
             {rows.slice(from - 1, to).map((row, offset) => {
               const index = from - 1 + offset;
@@ -783,10 +783,11 @@ function Index() {
             />
           </label>
 
-          <div className="flex flex-wrap gap-1.5 sm:col-span-2 md:col-span-4">
-            <div className="min-w-0 flex-1 text-xs text-muted-foreground">
-              Numéro de série (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
-              <div className="mt-1 flex h-8 w-full items-stretch overflow-hidden rounded border border-foreground/30 bg-background focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
+          <div className="text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
+            Numéro de série (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
+            <div className="mt-1 flex items-end justify-start gap-4">
+              <label className="min-w-[80px] text-xs text-muted-foreground">
+                <span className="block whitespace-nowrap">Lettres avant</span>
                 <input
                   ref={(el) => {
                     snRef.current["sn_prefix"] = el;
@@ -794,9 +795,12 @@ function Index() {
                   value={info["sn_prefix"] ?? ""}
                   onChange={(e) => onPrefixChange(e.target.value)}
                   disabled={!rule.prefix}
-                  placeholder="Lettres (ex: J, F)"
-                  className="w-28 bg-transparent px-2 text-sm text-foreground outline-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                  placeholder="ex: J, F"
+                  className="mt-1 h-8 w-full max-w-[80px] rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                 />
+              </label>
+              <label className="min-w-[150px] text-xs text-muted-foreground">
+                <span className="block whitespace-nowrap">N° de série</span>
                 <input
                   ref={(el) => {
                     snRef.current["sn_num"] = el;
@@ -805,39 +809,41 @@ function Index() {
                   onChange={(e) => updateInfo("sn_num", e.target.value.replace(/[^0-9]/g, ""))}
                   required
                   inputMode="numeric"
-                  placeholder="N° de série (chiffres)"
-                  className="flex-1 border-x border-input bg-transparent px-2 text-sm text-foreground outline-none"
+                  placeholder="Chiffres"
+                  className="mt-1 h-8 w-full max-w-[150px] rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
                 />
+              </label>
+              <label className="min-w-[80px] text-xs text-muted-foreground">
+                <span className="block whitespace-nowrap">Lettre fin</span>
                 <input
                   value={info["sn_suffix"] ?? ""}
                   onChange={(e) => updateInfo("sn_suffix", e.target.value.toUpperCase().slice(0, 3))}
                   disabled={!rule.suffix}
-                  placeholder="Lettre fin (ex: A, B)"
-                  className="w-28 bg-transparent px-2 text-sm text-foreground outline-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                  placeholder="ex: A, B"
+                  className="mt-1 h-8 w-full max-w-[80px] rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                 />
-              </div>
-              {!serialFormatValid && (
-                <p className="mt-1 text-[0.7rem] leading-snug text-destructive">
-                  {SERIAL_FORMAT_ERROR}
-                </p>
-              )}
-              <p className="mt-1 text-[0.7rem] leading-snug text-muted-foreground">
-                Profil d'usine : <span className="text-foreground">{profile.label}</span>
-                {profile.frictionTarget !== null && ` — friction cible ${profile.frictionTarget} g`}
-              </p>
+              </label>
+              <label className="min-w-[120px] text-xs text-muted-foreground">
+                <span className="block whitespace-nowrap">Date de fabrication</span>
+                <input
+                  value={info["fabrication"] ?? ""}
+                  onChange={(e) => {
+                    fabricationTouched.current = true;
+                    updateInfo("fabrication", e.target.value);
+                  }}
+                  className="mt-1 h-8 w-full max-w-[120px] rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+                />
+              </label>
             </div>
-
-            <label className="w-[120px] shrink-0 text-xs text-muted-foreground">
-              Date de fabrication
-              <input
-                value={info["fabrication"] ?? ""}
-                onChange={(e) => {
-                  fabricationTouched.current = true;
-                  updateInfo("fabrication", e.target.value);
-                }}
-                className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
-              />
-            </label>
+            {!serialFormatValid && (
+              <p className="mt-1 text-[0.7rem] leading-snug text-destructive">
+                {SERIAL_FORMAT_ERROR}
+              </p>
+            )}
+            <p className="mt-1 text-[0.7rem] leading-snug text-muted-foreground">
+              Profil d'usine : <span className="text-foreground">{profile.label}</span>
+              {profile.frictionTarget !== null && ` — friction cible ${profile.frictionTarget} g`}
+            </p>
           </div>
 
           <label className="text-xs text-muted-foreground">
