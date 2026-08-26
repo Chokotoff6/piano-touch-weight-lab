@@ -474,6 +474,84 @@ function Index() {
     return true;
   };
 
+  const [currentDbId, setCurrentDbId] = useState<string | null>(null);
+  const [askUpdate, setAskUpdate] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const buildPayload = (): DiagnosticPayload => {
+    const year = Number((info["fabrication"] ?? "").match(/\d{4}/)?.[0]);
+    return {
+      user_fingerprint: getFingerprint(),
+      marque: info["marque"] ?? "",
+      type_piano: info["type_piano"] ?? "",
+      modele: info["modele"] ?? "",
+      prefixe_lettre: info["sn_prefix"] ?? "",
+      numero_central: info["sn_num"] ?? "",
+      suffixe_lettre: info["sn_suffix"] ?? "",
+      annee_fabrication: Number.isFinite(year) ? year : null,
+      pays: info["pays"] ?? "",
+      ville: info["ville"] ?? "",
+      zone_climatique: climateZone !== null ? String(climateZone) : "",
+      type_entretien: info["entretien"] ?? "",
+      remarques: info["remarques"] ?? "",
+      mesures_wa: rows.map((r) => r.wa),
+      mesures_wd: rows.map((r) => r.wd),
+    };
+  };
+
+  const exportCsvFile = () => {
+    const meta: Record<string, string> = {
+      Marque: info["marque"] ?? "",
+      "Type de piano": info["type_piano"] ?? "",
+      Modèle: info["modele"] ?? "",
+      "Préfixe lettre": info["sn_prefix"] ?? "",
+      "Numéro de série": info["sn_num"] ?? "",
+      "Suffixe lettre": info["sn_suffix"] ?? "",
+      "Date de fabrication": info["fabrication"] ?? "",
+      Pays: info["pays"] ?? "",
+      Ville: info["ville"] ?? "",
+      "Zone climatique": climateZone !== null ? String(climateZone) : "",
+      "Profil d'usine": profile.label,
+      "Type d'entretien": info["entretien"] ?? "",
+      Remarques: info["remarques"] ?? "",
+      "Date et heure de saisie": new Date().toISOString(),
+    };
+    const sn = (info["sn_num"] ?? "piano").replace(/[^\w-]/g, "");
+    downloadCsv(`touchweight_${sn}_${Date.now()}.csv`, buildCsv(meta, rows));
+  };
+
+  const syncAndFinish = async (mode: "insert" | "update") => {
+    setIsExporting(true);
+    try {
+      const payload = buildPayload();
+      if (mode === "update" && currentDbId) {
+        await updateDiagnostic(currentDbId, payload);
+      } else {
+        const id = await insertDiagnostic(payload);
+        setCurrentDbId(id);
+      }
+      markSubmission();
+      setIsDirty(false);
+      toast.success("Fichier CSV généré et diagnostic synchronisé avec succès");
+    } catch {
+      showMessage("La synchronisation cloud a échoué. Le fichier CSV a été généré localement.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExport = () => {
+    if (!guardExport()) return;
+    exportCsvFile();
+    if (currentDbId && isDirty) {
+      setAskUpdate(true);
+      return;
+    }
+    void syncAndFinish(currentDbId ? "update" : "insert");
+  };
+
+
+
 
 
   const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
