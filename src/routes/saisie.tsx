@@ -591,15 +591,6 @@ function Index() {
     }
   };
 
-  const handleExport = () => {
-    if (!guardExport()) return;
-    exportCsvFile();
-    if (currentDbId && isDirty) {
-      setAskUpdate(true);
-      return;
-    }
-    void syncAndFinish(currentDbId ? "update" : "insert");
-  };
 
 
 
