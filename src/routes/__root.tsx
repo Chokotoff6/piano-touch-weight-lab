@@ -139,39 +139,116 @@ const LEGAL_TEXT =
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const topbar = useTopbarState();
+  const isSaisie = pathname === "/saisie";
 
-const linkClass = "rounded-md px-4 py-2 text-base font-medium text-muted-foreground transition-colors hover:bg-background hover:text-foreground";
-const activeLinkClass = "rounded-md bg-background px-4 py-2 text-base font-medium text-foreground shadow-sm";
+  const linkClass = "rounded-md px-3 py-2 text-base font-semibold text-muted-foreground transition-colors hover:bg-background hover:text-foreground sm:px-4 sm:text-lg";
+  const activeLinkClass = "rounded-md bg-background px-3 py-2 text-base font-semibold text-foreground shadow-sm sm:px-4 sm:text-lg";
+
+  const dispatchAction = (type: string) => {
+    window.dispatchEvent(new CustomEvent(type, { bubbles: true }));
+  };
 
   return (
     <QueryClientProvider client={queryClient}>
       <nav className="border-b border-border bg-background">
-        <div className="mx-auto flex max-w-[1400px] items-center px-6 py-2">
-          <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
-            <Link to="/" className={linkClass} activeOptions={{ exact: true }} activeProps={{ className: activeLinkClass }}>
-              Accueil
-            </Link>
-            <Link to="/saisie" className={linkClass} activeProps={{ className: activeLinkClass }}>
-              Saisie
-            </Link>
-            <Link
-              to="/resultats"
-              className={linkClass}
-              activeProps={{ className: activeLinkClass }}
-              onClick={(e) => {
-                const missing = requiredKeysGate.getMissing?.() ?? [];
-                if (missing.length > 0) {
-                  e.preventDefault();
-                  window.dispatchEvent(
-                    new CustomEvent("required-keys-blocked", {
-                      detail: { message: missingRequiredMessage(missing) },
-                    }),
-                  );
-                }
-              }}
-            >
-              Résultats
-            </Link>
+        <div className="mx-auto max-w-[1400px] px-4 py-3 sm:px-6">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
+            <div className="flex min-w-0 flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
+              <Link to="/" className={linkClass} activeOptions={{ exact: true }} activeProps={{ className: activeLinkClass }}>
+                Accueil
+              </Link>
+              <Link to="/saisie" className={linkClass} activeProps={{ className: activeLinkClass }}>
+                Saisie
+              </Link>
+              <Link
+                to="/resultats"
+                className={linkClass}
+                activeProps={{ className: activeLinkClass }}
+                onClick={(e) => {
+                  const missing = requiredKeysGate.getMissing?.() ?? [];
+                  if (missing.length > 0) {
+                    e.preventDefault();
+                    window.dispatchEvent(
+                      new CustomEvent("required-keys-blocked", {
+                        detail: { message: missingRequiredMessage(missing) },
+                      }),
+                    );
+                  }
+                }}
+              >
+                Comparer
+              </Link>
+            </div>
+
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+              <DropdownMenu>
+                <div className="flex items-center">
+                  <Button
+                    size="sm"
+                    className="rounded-r-none"
+                    disabled={!isSaisie || !topbar.exportReady || topbar.isExporting}
+                    onClick={() => dispatchAction("piano-export")}
+                  >
+                    Exporter les mesures
+                  </Button>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-l-none border-l-0 px-2"
+                      disabled={!isSaisie || !topbar.exportReady || topbar.isExporting}
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </div>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => dispatchAction("piano-export-csv")}>
+                    Exporter CSV seul
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => dispatchAction("piano-export-cloud")}>
+                    Sauvegarder sur le cloud
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <div className="flex items-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-r-none"
+                    disabled
+                  >
+                    Importer / Charger
+                  </Button>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-l-none border-l-0 px-2"
+                      disabled
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </div>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem disabled>Importer un CSV</DropdownMenuItem>
+                  <DropdownMenuItem disabled>Charger une sauvegarde</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!isSaisie}
+                onClick={() => dispatchAction("piano-reset")}
+              >
+                Reset
+              </Button>
+            </div>
           </div>
         </div>
       </nav>
