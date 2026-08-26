@@ -208,6 +208,8 @@ function Index() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
+  const fabricationTouched = useRef(false);
+
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
   const [isGeocoding, setIsGeocoding] = useState(false);
