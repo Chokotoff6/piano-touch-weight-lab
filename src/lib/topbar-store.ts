@@ -28,5 +28,6 @@ export function useTopbarState() {
       return () => listeners.delete(callback);
     },
     () => state,
+    () => state,
   );
 }
