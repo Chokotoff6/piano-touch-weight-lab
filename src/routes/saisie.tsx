@@ -826,7 +826,7 @@ function Index() {
             </p>
           </div>
 
-          <label className="text-xs text-muted-foreground">
+          <label className="text-xs text-muted-foreground md:col-span-1 max-w-[8rem] justify-self-start">
             Date de fabrication
             <input
               value={info["fabrication"] ?? ""}
@@ -835,7 +835,7 @@ function Index() {
                 updateInfo("fabrication", e.target.value);
               }}
 
-              className="mt-1 h-8 w-24 rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
             />
           </label>
 
