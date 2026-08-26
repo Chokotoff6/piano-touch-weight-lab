@@ -288,7 +288,9 @@ function Index() {
         info["sn_prefix"] ?? "",
         climateZone,
         info["type_piano"],
+        info["sn_num"] ?? "",
       ),
+
     [info, climateZone],
   );
 
