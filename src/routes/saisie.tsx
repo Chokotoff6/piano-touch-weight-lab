@@ -253,6 +253,10 @@ function Index() {
     );
   }, [info]);
 
+  const exportReady = useMemo(() => {
+    return Boolean(info["marque"]?.trim() && info["sn_num"]?.trim());
+  }, [info]);
+
   useEffect(() => {
     if (canEnterWeights) {
       if (blockTimeout.current) clearTimeout(blockTimeout.current);
