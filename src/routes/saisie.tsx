@@ -8,6 +8,18 @@ import {
   missingRequiredMessage,
   requiredKeysGate,
 } from "@/lib/required-keys";
+import { SmartCombobox } from "@/components/SmartCombobox";
+import {
+  BRAND_MODELS_SUGGESTIONS,
+  BRAND_SUGGESTIONS,
+  FREQUENT_COUNTRIES,
+  SUGGESTED_COUNTRIES,
+  normalizeEntry,
+  type ClimateZone,
+} from "@/lib/piano-constants";
+import { fallbackZone, resolveClimateZone } from "@/lib/climate";
+
+const ALL_COUNTRIES = Array.from(new Set([...FREQUENT_COUNTRIES, ...SUGGESTED_COUNTRIES]));
 
 
 export const Route = createFileRoute("/saisie")({
