@@ -617,6 +617,7 @@ function Index() {
             <SmartCombobox
               value={info["marque"] ?? ""}
               options={BRAND_SUGGESTIONS}
+              placeholder="Saisissez une marque (ex: YAMAHA, PLEYEL...)"
               onCommit={(v) => {
                 updateInfo("marque", v);
                 if ((info["modele"] ?? "") !== "") updateInfo("modele", "");
@@ -631,6 +632,7 @@ function Index() {
               options={modelsFor(info["marque"] ?? "", info["type_piano"])}
               groups={modelGroupsFor(info["marque"] ?? "", info["type_piano"])}
               disabled={!info["marque"]?.trim()}
+              placeholder="Saisissez ou cherchez un modèle..."
               onCommit={(v) => {
                 updateInfo("modele", v);
                 const inferred = inferTypeFromModel(info["marque"] ?? "", v);
