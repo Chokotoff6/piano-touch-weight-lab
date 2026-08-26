@@ -722,7 +722,7 @@ function Index() {
                 updateInfo("fabrication", e.target.value);
               }}
 
-              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+              className="mt-1 h-8 w-1/2 rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
             />
           </label>
 
