@@ -25,6 +25,7 @@ import {
   isSerialFormatValid,
   SERIAL_FORMAT_ERROR,
 } from "@/lib/serial-dating";
+import { HONEYPOT_NAME, passesBotChecks } from "@/lib/anti-bot";
 
 const ALL_COUNTRIES = Array.from(new Set([...FREQUENT_COUNTRIES, ...SUGGESTED_COUNTRIES]));
 
