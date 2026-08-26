@@ -115,6 +115,47 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      insert_diagnostic: {
+        Args: {
+          _annee_fabrication: number
+          _marque: string
+          _mesures_wa: Json
+          _mesures_wd: Json
+          _modele: string
+          _numero_central: string
+          _pays: string
+          _prefixe_lettre: string
+          _remarques: string
+          _suffixe_lettre: string
+          _type_entretien: string
+          _type_piano: string
+          _user_fingerprint: string
+          _ville: string
+          _zone_climatique: string
+        }
+        Returns: string
+      }
+      update_own_diagnostic: {
+        Args: {
+          _annee_fabrication: number
+          _id: string
+          _marque: string
+          _mesures_wa: Json
+          _mesures_wd: Json
+          _modele: string
+          _numero_central: string
+          _pays: string
+          _prefixe_lettre: string
+          _remarques: string
+          _suffixe_lettre: string
+          _type_entretien: string
+          _type_piano: string
+          _user_fingerprint: string
+          _ville: string
+          _zone_climatique: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
