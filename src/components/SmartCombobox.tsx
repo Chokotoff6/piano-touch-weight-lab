@@ -9,6 +9,7 @@ type Props = {
   groups?: Group[];
   disabled?: boolean;
   placeholder?: string;
+  openOnFocus?: boolean;
   onCommit: (value: string) => void;
 };
 
