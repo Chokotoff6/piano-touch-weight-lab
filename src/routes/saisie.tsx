@@ -14,7 +14,6 @@ import {
   BRAND_SUGGESTIONS,
   FREQUENT_COUNTRIES,
   SUGGESTED_COUNTRIES,
-  normalizeEntry,
   type ClimateZone,
 } from "@/lib/piano-constants";
 import { fallbackZone, resolveClimateZone } from "@/lib/climate";
@@ -570,6 +569,7 @@ function Index() {
         className="mt-8 rounded-md border-2 border-foreground bg-card p-4"
         data-dirty={isDirty}
         data-saved-at={savedAt ?? ""}
+        data-climate-zone={climateZone ?? ""}
       >
         <h2 className="text-sm font-semibold">Informations</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
