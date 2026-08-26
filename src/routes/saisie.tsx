@@ -708,9 +708,7 @@ function Index() {
               </p>
             )}
             <p className="mt-1 text-[0.7rem] leading-snug text-muted-foreground">
-              ⚠️ Important : Veuillez vérifier sur la plaque signalétique de l'appareil si des
-              lettres apparaissent avant ou après le numéro de série, et complétez les cases
-              correspondantes.
+              ⚠️ Reportez le numéro du cadre métallique (inclure les lettres si existantes).
             </p>
             <p className="mt-1 text-[0.7rem] leading-snug text-muted-foreground">
               Profil d'usine : <span className="text-foreground">{profile.label}</span>
