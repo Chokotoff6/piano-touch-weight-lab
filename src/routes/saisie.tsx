@@ -740,28 +740,9 @@ function Index() {
             />
           </label>
 
-          <label className="text-xs text-muted-foreground">
-            Modèle
-            <SmartCombobox
-              value={info["modele"] ?? ""}
-              options={modelsFor(info["marque"] ?? "", info["type_piano"])}
-              groups={modelGroupsFor(info["marque"] ?? "", info["type_piano"])}
-              disabled={!info["marque"]?.trim()}
-              openOnFocus
-              placeholder="Saisissez ou cherchez un modèle..."
-              onCommit={(v) => {
-                updateInfo("modele", v);
-                const inferred = inferTypeFromModel(info["marque"] ?? "", v);
-                if (inferred) updateInfo("type_piano", inferred);
-              }}
-            />
-          </label>
-
-
-
-          <fieldset className="text-xs text-muted-foreground md:col-span-2">
+          <fieldset className="text-xs text-muted-foreground">
             <legend>Type de piano</legend>
-            <div className="mt-1 flex h-8 items-center gap-4">
+            <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/30 bg-background px-2">
               {["Piano Droit", "Piano à Queue"].map((t) => (
                 <label key={t} className="flex items-center gap-1 text-sm text-foreground">
                   <input
@@ -782,6 +763,25 @@ function Index() {
               ))}
             </div>
           </fieldset>
+
+
+
+          <label className="text-xs text-muted-foreground">
+            Modèle
+            <SmartCombobox
+              value={info["modele"] ?? ""}
+              options={modelsFor(info["marque"] ?? "", info["type_piano"])}
+              groups={modelGroupsFor(info["marque"] ?? "", info["type_piano"])}
+              disabled={!info["marque"]?.trim()}
+              openOnFocus
+              placeholder="Saisissez ou cherchez un modèle..."
+              onCommit={(v) => {
+                updateInfo("modele", v);
+                const inferred = inferTypeFromModel(info["marque"] ?? "", v);
+                if (inferred) updateInfo("type_piano", inferred);
+              }}
+            />
+          </label>
 
           <div className="text-xs text-muted-foreground sm:col-span-2 md:col-span-3">
             Numéro de série (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
