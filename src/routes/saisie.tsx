@@ -478,6 +478,36 @@ function Index() {
     return () => window.removeEventListener("required-keys-blocked", onBlocked);
   }, []);
 
+  useEffect(() => {
+    const exportCsvOnly = () => {
+      if (!guardExport()) return;
+      exportCsvFile();
+    };
+    const saveCloudOnly = () => {
+      if (!guardExport()) return;
+      if (currentDbId && isDirty) {
+        setAskUpdate(true);
+        return;
+      }
+      void syncAndFinish(currentDbId ? "update" : "insert");
+    };
+    const onExport = () => {
+      exportCsvOnly();
+      saveCloudOnly();
+    };
+    const onReset = () => setRows(EMPTY);
+
+    const handlers: Record<string, EventListener> = {
+      "piano-export": onExport as EventListener,
+      "piano-export-csv": exportCsvOnly as EventListener,
+      "piano-export-cloud": saveCloudOnly as EventListener,
+      "piano-reset": onReset as EventListener,
+    };
+
+    Object.entries(handlers).forEach(([type, fn]) => window.addEventListener(type, fn));
+    return () => Object.entries(handlers).forEach(([type, fn]) => window.removeEventListener(type, fn));
+  }, [rows, info, currentDbId, isDirty, honeypot, climateZone, profile]);
+
   const guardExport = () => {
     // Contrôle anti-robot : échec silencieux, aucun message affiché.
     if (!passesBotChecks(honeypot)) return false;
