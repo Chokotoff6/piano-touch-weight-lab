@@ -1009,7 +1009,7 @@ function Index() {
       {renderSection(45, 88, gridRef2)}
 
       <AlertDialog open={askUpdate} onOpenChange={setAskUpdate}>
-        <AlertDialogContent>
+        <AlertDialogContent className="w-full max-w-xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Un diagnostic existe déjà pour cette session</AlertDialogTitle>
             <AlertDialogDescription>
