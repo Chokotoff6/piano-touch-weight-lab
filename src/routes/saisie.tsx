@@ -632,6 +632,7 @@ function Index() {
               options={modelsFor(info["marque"] ?? "", info["type_piano"])}
               groups={modelGroupsFor(info["marque"] ?? "", info["type_piano"])}
               disabled={!info["marque"]?.trim()}
+              openOnFocus
               placeholder="Saisissez ou cherchez un modèle..."
               onCommit={(v) => {
                 updateInfo("modele", v);
