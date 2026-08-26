@@ -697,10 +697,19 @@ function Index() {
                 className="w-28 bg-transparent px-2 text-sm text-foreground outline-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
               />
             </div>
+            {!serialFormatValid && (
+              <p className="mt-1 text-[0.7rem] leading-snug text-destructive">
+                {SERIAL_FORMAT_ERROR}
+              </p>
+            )}
             <p className="mt-1 text-[0.7rem] leading-snug text-muted-foreground">
               ⚠️ Important : Veuillez vérifier sur la plaque signalétique de l'appareil si des
               lettres apparaissent avant ou après le numéro de série, et complétez les cases
               correspondantes.
+            </p>
+            <p className="mt-1 text-[0.7rem] leading-snug text-muted-foreground">
+              Profil d'usine : <span className="text-foreground">{profile.label}</span>
+              {profile.frictionTarget !== null && ` — friction cible ${profile.frictionTarget} g`}
             </p>
           </div>
 
@@ -708,7 +717,11 @@ function Index() {
             Date de fabrication
             <input
               value={info["fabrication"] ?? ""}
-              onChange={(e) => updateInfo("fabrication", e.target.value)}
+              onChange={(e) => {
+                fabricationTouched.current = true;
+                updateInfo("fabrication", e.target.value);
+              }}
+
               className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
             />
           </label>
