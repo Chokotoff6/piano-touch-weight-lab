@@ -174,6 +174,8 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
 
+      <Toaster />
+
       {pathname === "/" && (
         <footer className="mx-auto max-w-[1400px] px-6 py-10">
           <p className="text-[0.65rem] leading-relaxed text-muted-foreground">{LEGAL_TEXT}</p>
