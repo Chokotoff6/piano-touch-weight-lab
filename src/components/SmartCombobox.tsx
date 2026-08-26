@@ -19,6 +19,7 @@ export function SmartCombobox({
   groups,
   disabled,
   placeholder,
+  openOnFocus,
   onCommit,
 }: Props) {
   const [draft, setDraft] = useState(value);
