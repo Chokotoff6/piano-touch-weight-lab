@@ -671,7 +671,7 @@ function Index() {
           </fieldset>
 
           <div className="text-xs text-muted-foreground sm:col-span-2 md:col-span-3">
-            Numéro de série
+            Numéro de série (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
             <div className="mt-1 flex h-8 w-full max-w-xl items-stretch overflow-hidden rounded border border-input bg-background focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
               <input
                 ref={(el) => {
@@ -707,9 +707,6 @@ function Index() {
                 {SERIAL_FORMAT_ERROR}
               </p>
             )}
-            <p className="mt-1 text-[0.7rem] leading-snug text-muted-foreground">
-              ⚠️ Reportez le numéro du cadre métallique (inclure les lettres si existantes).
-            </p>
             <p className="mt-1 text-[0.7rem] leading-snug text-muted-foreground">
               Profil d'usine : <span className="text-foreground">{profile.label}</span>
               {profile.frictionTarget !== null && ` — friction cible ${profile.frictionTarget} g`}
