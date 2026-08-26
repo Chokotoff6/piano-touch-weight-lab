@@ -99,6 +99,9 @@ const MAINTENANCE_OPTIONS = [
   "Modifications importantes",
 ] as const;
 
+// Commutateur temporaire : désactive le contrôle des touches Do/Do# lors de l'export/sauvegarde.
+// Passer à `false` pour réactiver la validation obligatoire.
+const BYPASS_REQUIRED_KEYS_VALIDATION = true;
 
 const BLACK_RATIO = 0.605;
 
@@ -467,7 +470,8 @@ function Index() {
   const guardExport = () => {
     // Contrôle anti-robot : échec silencieux, aucun message affiché.
     if (!passesBotChecks(honeypot)) return false;
-    if (missingRequired.length > 0) {
+    // Validation Do/Do# temporairement désactivée via BYPASS_REQUIRED_KEYS_VALIDATION.
+    if (!BYPASS_REQUIRED_KEYS_VALIDATION && missingRequired.length > 0) {
       showMessage(missingRequiredMessage(missingRequired));
       return false;
     }
