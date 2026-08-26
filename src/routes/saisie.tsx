@@ -474,6 +474,13 @@ function Index() {
   const guardExport = () => {
     // Contrôle anti-robot : échec silencieux, aucun message affiché.
     if (!passesBotChecks(honeypot)) return false;
+    // Vérification minimale : une marque et un numéro de série sont requis pour exporter.
+    if (!exportReady) {
+      showMessage(
+        "⚠️ Veuillez renseigner au moins une marque et un numéro de série pour pouvoir exporter et sauvegarder votre diagnostic.",
+      );
+      return false;
+    }
     // Validation Do/Do# temporairement désactivée via BYPASS_REQUIRED_KEYS_VALIDATION.
     if (!BYPASS_REQUIRED_KEYS_VALIDATION && missingRequired.length > 0) {
       showMessage(missingRequiredMessage(missingRequired));
