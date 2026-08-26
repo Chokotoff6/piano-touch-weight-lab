@@ -10,7 +10,8 @@ import {
 } from "@/lib/required-keys";
 import { SmartCombobox } from "@/components/SmartCombobox";
 import {
-  BRAND_MODELS_SUGGESTIONS,
+  modelsFor,
+  modelGroupsFor,
   BRAND_SUGGESTIONS,
   FREQUENT_COUNTRIES,
   SUGGESTED_COUNTRIES,
@@ -589,11 +590,13 @@ function Index() {
             Modèle
             <SmartCombobox
               value={info["modele"] ?? ""}
-              options={BRAND_MODELS_SUGGESTIONS[(info["marque"] ?? "").toUpperCase()] ?? []}
+              options={modelsFor(info["marque"] ?? "", info["type_piano"])}
+              groups={modelGroupsFor(info["marque"] ?? "", info["type_piano"])}
               disabled={!info["marque"]?.trim()}
               onCommit={(v) => updateInfo("modele", v)}
             />
           </label>
+
 
 
           <fieldset className="text-xs text-muted-foreground md:col-span-2">
@@ -606,7 +609,13 @@ function Index() {
                     name="type_piano"
                     value={t}
                     checked={info["type_piano"] === t}
-                    onChange={() => updateInfo("type_piano", t)}
+                    onChange={() => {
+                      updateInfo("type_piano", t);
+                      const m = info["modele"] ?? "";
+                      if (m && !modelsFor(info["marque"] ?? "", t).includes(m)) {
+                        updateInfo("modele", "");
+                      }
+                    }}
                   />
                   {t}
                 </label>
