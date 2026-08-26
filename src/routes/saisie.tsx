@@ -785,7 +785,7 @@ function Index() {
 
           <div className="text-xs text-muted-foreground sm:col-span-2 md:col-span-3">
             Numéro de série (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
-            <div className="mt-1 flex h-8 w-full max-w-xl items-stretch overflow-hidden rounded border border-input bg-background focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
+            <div className="mt-1 flex h-8 w-full max-w-xl items-stretch overflow-hidden rounded border border-foreground/30 bg-background focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
               <input
                 ref={(el) => {
                   snRef.current["sn_prefix"] = el;
