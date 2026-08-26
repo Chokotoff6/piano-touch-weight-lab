@@ -19,6 +19,12 @@ import {
   type ClimateZone,
 } from "@/lib/piano-constants";
 import { fallbackZone, resolveClimateZone } from "@/lib/climate";
+import {
+  datePiano,
+  factoryProfile,
+  isSerialFormatValid,
+  SERIAL_FORMAT_ERROR,
+} from "@/lib/serial-dating";
 
 const ALL_COUNTRIES = Array.from(new Set([...FREQUENT_COUNTRIES, ...SUGGESTED_COUNTRIES]));
 
@@ -208,6 +214,8 @@ function Index() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
+  const fabricationTouched = useRef(false);
+
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
   const [isGeocoding, setIsGeocoding] = useState(false);
@@ -262,6 +270,35 @@ function Index() {
       .finally(() => setIsGeocoding(false));
   };
 
+  const serialFormatValid = useMemo(
+    () =>
+      isSerialFormatValid(
+        info["marque"] ?? "",
+        info["sn_prefix"] ?? "",
+        info["sn_num"] ?? "",
+        info["sn_suffix"] ?? "",
+      ),
+    [info],
+  );
+
+  const profile = useMemo(
+    () =>
+      factoryProfile(
+        info["marque"] ?? "",
+        info["sn_prefix"] ?? "",
+        climateZone,
+        info["type_piano"],
+      ),
+    [info, climateZone],
+  );
+
+  // Pré-remplissage de la date de fabrication (reste modifiable manuellement).
+  useEffect(() => {
+    if (fabricationTouched.current) return;
+    const year = datePiano(info["marque"] ?? "", info["sn_prefix"] ?? "", info["sn_num"] ?? "");
+    const value = year === null ? "" : String(year);
+    setInfo((p) => (p["fabrication"] === value ? p : { ...p, fabrication: value }));
+  }, [info["marque"], info["sn_prefix"], info["sn_num"]]);
 
 
   const onPrefixChange = (value: string) => {
@@ -660,10 +697,19 @@ function Index() {
                 className="w-28 bg-transparent px-2 text-sm text-foreground outline-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
               />
             </div>
+            {!serialFormatValid && (
+              <p className="mt-1 text-[0.7rem] leading-snug text-destructive">
+                {SERIAL_FORMAT_ERROR}
+              </p>
+            )}
             <p className="mt-1 text-[0.7rem] leading-snug text-muted-foreground">
               ⚠️ Important : Veuillez vérifier sur la plaque signalétique de l'appareil si des
               lettres apparaissent avant ou après le numéro de série, et complétez les cases
               correspondantes.
+            </p>
+            <p className="mt-1 text-[0.7rem] leading-snug text-muted-foreground">
+              Profil d'usine : <span className="text-foreground">{profile.label}</span>
+              {profile.frictionTarget !== null && ` — friction cible ${profile.frictionTarget} g`}
             </p>
           </div>
 
@@ -671,7 +717,11 @@ function Index() {
             Date de fabrication
             <input
               value={info["fabrication"] ?? ""}
-              onChange={(e) => updateInfo("fabrication", e.target.value)}
+              onChange={(e) => {
+                fabricationTouched.current = true;
+                updateInfo("fabrication", e.target.value);
+              }}
+
               className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
             />
           </label>
