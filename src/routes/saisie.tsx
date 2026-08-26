@@ -783,61 +783,62 @@ function Index() {
             />
           </label>
 
-          <div className="text-xs text-muted-foreground sm:col-span-2 md:col-span-3">
-            Numéro de série (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
-            <div className="mt-1 flex h-8 w-full max-w-xl items-stretch overflow-hidden rounded border border-foreground/30 bg-background focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
-              <input
-                ref={(el) => {
-                  snRef.current["sn_prefix"] = el;
-                }}
-                value={info["sn_prefix"] ?? ""}
-                onChange={(e) => onPrefixChange(e.target.value)}
-                disabled={!rule.prefix}
-                placeholder="Lettres (ex: J, F)"
-                className="w-28 bg-transparent px-2 text-sm text-foreground outline-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-              />
-              <input
-                ref={(el) => {
-                  snRef.current["sn_num"] = el;
-                }}
-                value={info["sn_num"] ?? ""}
-                onChange={(e) => updateInfo("sn_num", e.target.value.replace(/[^0-9]/g, ""))}
-                required
-                inputMode="numeric"
-                placeholder="N° de série (chiffres)"
-                className="flex-1 border-x border-input bg-transparent px-2 text-sm text-foreground outline-none"
-              />
-              <input
-                value={info["sn_suffix"] ?? ""}
-                onChange={(e) => updateInfo("sn_suffix", e.target.value.toUpperCase().slice(0, 3))}
-                disabled={!rule.suffix}
-                placeholder="Lettre fin (ex: A, B)"
-                className="w-28 bg-transparent px-2 text-sm text-foreground outline-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-              />
-            </div>
-            {!serialFormatValid && (
-              <p className="mt-1 text-[0.7rem] leading-snug text-destructive">
-                {SERIAL_FORMAT_ERROR}
+          <div className="flex flex-wrap gap-1.5 sm:col-span-2 md:col-span-4">
+            <div className="min-w-0 flex-1 text-xs text-muted-foreground">
+              Numéro de série (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
+              <div className="mt-1 flex h-8 w-full items-stretch overflow-hidden rounded border border-foreground/30 bg-background focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
+                <input
+                  ref={(el) => {
+                    snRef.current["sn_prefix"] = el;
+                  }}
+                  value={info["sn_prefix"] ?? ""}
+                  onChange={(e) => onPrefixChange(e.target.value)}
+                  disabled={!rule.prefix}
+                  placeholder="Lettres (ex: J, F)"
+                  className="w-28 bg-transparent px-2 text-sm text-foreground outline-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                />
+                <input
+                  ref={(el) => {
+                    snRef.current["sn_num"] = el;
+                  }}
+                  value={info["sn_num"] ?? ""}
+                  onChange={(e) => updateInfo("sn_num", e.target.value.replace(/[^0-9]/g, ""))}
+                  required
+                  inputMode="numeric"
+                  placeholder="N° de série (chiffres)"
+                  className="flex-1 border-x border-input bg-transparent px-2 text-sm text-foreground outline-none"
+                />
+                <input
+                  value={info["sn_suffix"] ?? ""}
+                  onChange={(e) => updateInfo("sn_suffix", e.target.value.toUpperCase().slice(0, 3))}
+                  disabled={!rule.suffix}
+                  placeholder="Lettre fin (ex: A, B)"
+                  className="w-28 bg-transparent px-2 text-sm text-foreground outline-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                />
+              </div>
+              {!serialFormatValid && (
+                <p className="mt-1 text-[0.7rem] leading-snug text-destructive">
+                  {SERIAL_FORMAT_ERROR}
+                </p>
+              )}
+              <p className="mt-1 text-[0.7rem] leading-snug text-muted-foreground">
+                Profil d'usine : <span className="text-foreground">{profile.label}</span>
+                {profile.frictionTarget !== null && ` — friction cible ${profile.frictionTarget} g`}
               </p>
-            )}
-            <p className="mt-1 text-[0.7rem] leading-snug text-muted-foreground">
-              Profil d'usine : <span className="text-foreground">{profile.label}</span>
-              {profile.frictionTarget !== null && ` — friction cible ${profile.frictionTarget} g`}
-            </p>
+            </div>
+
+            <label className="w-[120px] shrink-0 text-xs text-muted-foreground">
+              Date de fabrication
+              <input
+                value={info["fabrication"] ?? ""}
+                onChange={(e) => {
+                  fabricationTouched.current = true;
+                  updateInfo("fabrication", e.target.value);
+                }}
+                className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+              />
+            </label>
           </div>
-
-          <label className="text-xs text-muted-foreground md:col-span-1 max-w-[8rem] justify-self-start">
-            Date de fabrication
-            <input
-              value={info["fabrication"] ?? ""}
-              onChange={(e) => {
-                fabricationTouched.current = true;
-                updateInfo("fabrication", e.target.value);
-              }}
-
-              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
-            />
-          </label>
 
           <label className="text-xs text-muted-foreground">
             Pays
