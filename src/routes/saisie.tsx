@@ -209,6 +209,8 @@ function Index() {
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [climateZone, setClimateZone] = useState<ClimateZone | null>(null);
 
   const rule = BRAND_RULES[(info["marque"] ?? "").trim().toUpperCase()] ?? DEFAULT_RULE;
 
