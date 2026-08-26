@@ -19,6 +19,12 @@ import {
   type ClimateZone,
 } from "@/lib/piano-constants";
 import { fallbackZone, resolveClimateZone } from "@/lib/climate";
+import {
+  datePiano,
+  factoryProfile,
+  isSerialFormatValid,
+  SERIAL_FORMAT_ERROR,
+} from "@/lib/serial-dating";
 
 const ALL_COUNTRIES = Array.from(new Set([...FREQUENT_COUNTRIES, ...SUGGESTED_COUNTRIES]));
 
