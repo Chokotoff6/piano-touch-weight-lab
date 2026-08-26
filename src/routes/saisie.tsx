@@ -25,6 +25,7 @@ import {
   isSerialFormatValid,
   SERIAL_FORMAT_ERROR,
 } from "@/lib/serial-dating";
+import { HONEYPOT_NAME, passesBotChecks } from "@/lib/anti-bot";
 
 const ALL_COUNTRIES = Array.from(new Set([...FREQUENT_COUNTRIES, ...SUGGESTED_COUNTRIES]));
 
@@ -428,7 +429,10 @@ function Index() {
     );
   };
 
+  const [honeypot, setHoneypot] = useState("");
+
   const missingRequired = useMemo(() => missingRequiredKeys(rows), [rows]);
+
 
   useEffect(() => {
     requiredKeysGate.getMissing = () => missingRequiredKeys(rows);
@@ -447,12 +451,15 @@ function Index() {
   }, []);
 
   const guardExport = () => {
+    // Contrôle anti-robot : échec silencieux, aucun message affiché.
+    if (!passesBotChecks(honeypot)) return false;
     if (missingRequired.length > 0) {
       showMessage(missingRequiredMessage(missingRequired));
       return false;
     }
     return true;
   };
+
 
 
   const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
@@ -787,6 +794,18 @@ function Index() {
               className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
             />
           </label>
+
+          <input
+            type="text"
+            name={HONEYPOT_NAME}
+            value={honeypot}
+            onChange={(e) => setHoneypot(e.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            className="absolute h-0 w-0 opacity-0 pointer-events-none -z-10"
+          />
+
         </div>
       </section>
 
