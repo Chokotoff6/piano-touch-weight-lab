@@ -12,6 +12,7 @@ import { SmartCombobox } from "@/components/SmartCombobox";
 import {
   modelsFor,
   modelGroupsFor,
+  inferTypeFromModel,
   BRAND_SUGGESTIONS,
   FREQUENT_COUNTRIES,
   SUGGESTED_COUNTRIES,
@@ -593,7 +594,11 @@ function Index() {
               options={modelsFor(info["marque"] ?? "", info["type_piano"])}
               groups={modelGroupsFor(info["marque"] ?? "", info["type_piano"])}
               disabled={!info["marque"]?.trim()}
-              onCommit={(v) => updateInfo("modele", v)}
+              onCommit={(v) => {
+                updateInfo("modele", v);
+                const inferred = inferTypeFromModel(info["marque"] ?? "", v);
+                if (inferred) updateInfo("type_piano", inferred);
+              }}
             />
           </label>
 

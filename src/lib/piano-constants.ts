@@ -84,6 +84,16 @@ export function modelGroupsFor(brand: string, type?: string) {
   ];
 }
 
+/** Déduit le type de piano à partir d'un modèle connu du dictionnaire. */
+export function inferTypeFromModel(brand: string, model: string): PianoType | null {
+  const entry = BRAND_MODELS_BY_TYPE[brand.trim().toUpperCase()];
+  if (!entry || !model.trim()) return null;
+  const normalized = normalizeEntry(model);
+  if (entry.droit.some((m) => normalizeEntry(m) === normalized)) return "Piano Droit";
+  if (entry.queue.some((m) => normalizeEntry(m) === normalized)) return "Piano à Queue";
+  return null;
+}
+
 export const BRAND_SUGGESTIONS = Object.keys(BRAND_MODELS_BY_TYPE);
 
 
