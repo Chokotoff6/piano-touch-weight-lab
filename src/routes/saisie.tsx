@@ -248,6 +248,19 @@ function Index() {
     markDirty();
   };
 
+  const resolveCity = (raw: string) => {
+    const city = raw.trim();
+    const country = (info["pays"] ?? "").trim();
+    if (!city || !country) return;
+    setIsGeocoding(true);
+    resolveClimateZone(city, country)
+      .then((zone) => setClimateZone(zone))
+      .catch(() => setClimateZone(fallbackZone(country)))
+      .finally(() => setIsGeocoding(false));
+  };
+
+
+
   const onPrefixChange = (value: string) => {
     updateInfo("sn_prefix", value.toUpperCase().slice(0, 3));
     if (rule.autoPrefix && value.length >= 1) snRef.current["sn_num"]?.focus();
