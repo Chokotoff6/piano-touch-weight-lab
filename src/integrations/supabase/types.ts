@@ -14,13 +14,107 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      pianos_diagnostics: {
+        Row: {
+          annee_fabrication: number | null
+          created_at: string
+          date_heure_saisie: string
+          id: string
+          marque: string | null
+          mesures_wa: Json | null
+          mesures_wd: Json | null
+          modele: string | null
+          numero_central: string | null
+          pays: string | null
+          prefixe_lettre: string | null
+          remarques: string | null
+          suffixe_lettre: string | null
+          type_entretien: string | null
+          type_piano: string | null
+          updated_at: string
+          user_fingerprint: string
+          ville: string | null
+          zone_climatique: string | null
+        }
+        Insert: {
+          annee_fabrication?: number | null
+          created_at?: string
+          date_heure_saisie?: string
+          id?: string
+          marque?: string | null
+          mesures_wa?: Json | null
+          mesures_wd?: Json | null
+          modele?: string | null
+          numero_central?: string | null
+          pays?: string | null
+          prefixe_lettre?: string | null
+          remarques?: string | null
+          suffixe_lettre?: string | null
+          type_entretien?: string | null
+          type_piano?: string | null
+          updated_at?: string
+          user_fingerprint: string
+          ville?: string | null
+          zone_climatique?: string | null
+        }
+        Update: {
+          annee_fabrication?: number | null
+          created_at?: string
+          date_heure_saisie?: string
+          id?: string
+          marque?: string | null
+          mesures_wa?: Json | null
+          mesures_wd?: Json | null
+          modele?: string | null
+          numero_central?: string | null
+          pays?: string | null
+          prefixe_lettre?: string | null
+          remarques?: string | null
+          suffixe_lettre?: string | null
+          type_entretien?: string | null
+          type_piano?: string | null
+          updated_at?: string
+          user_fingerprint?: string
+          ville?: string | null
+          zone_climatique?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_own_diagnostics: {
+        Args: { _numero_central: string; _user_fingerprint: string }
+        Returns: {
+          annee_fabrication: number | null
+          created_at: string
+          date_heure_saisie: string
+          id: string
+          marque: string | null
+          mesures_wa: Json | null
+          mesures_wd: Json | null
+          modele: string | null
+          numero_central: string | null
+          pays: string | null
+          prefixe_lettre: string | null
+          remarques: string | null
+          suffixe_lettre: string | null
+          type_entretien: string | null
+          type_piano: string | null
+          updated_at: string
+          user_fingerprint: string
+          ville: string | null
+          zone_climatique: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "pianos_diagnostics"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
     }
     Enums: {
       [_ in never]: never
