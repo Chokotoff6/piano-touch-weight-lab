@@ -25,7 +25,21 @@ import {
   isSerialFormatValid,
   SERIAL_FORMAT_ERROR,
 } from "@/lib/serial-dating";
-import { HONEYPOT_NAME, passesBotChecks } from "@/lib/anti-bot";
+import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
+import { buildCsv, downloadCsv } from "@/lib/export-csv";
+import { getFingerprint } from "@/lib/fingerprint";
+import { insertDiagnostic, updateDiagnostic, type DiagnosticPayload } from "@/lib/diagnostics";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const ALL_COUNTRIES = Array.from(new Set([...FREQUENT_COUNTRIES, ...SUGGESTED_COUNTRIES]));
 
