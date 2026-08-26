@@ -270,13 +270,6 @@ function Index() {
     };
   }, []);
 
-  useEffect(() => {
-    setTopbarState({ exportReady, isExporting });
-    return () => {
-      setTopbarState({ exportReady: false, isExporting: false });
-    };
-  }, [exportReady, isExporting]);
-
   const markDirty = () => {
     setIsDirty(true);
     setSavedAt(new Date().toISOString());
