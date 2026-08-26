@@ -28,6 +28,7 @@ import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
 import { buildCsv, downloadCsv } from "@/lib/export-csv";
 import { getFingerprint } from "@/lib/fingerprint";
 import { insertDiagnostic, updateDiagnostic, type DiagnosticPayload } from "@/lib/diagnostics";
+import { setTopbarState } from "@/lib/topbar-store";
 import { toast } from "sonner";
 import {
   AlertDialog,
