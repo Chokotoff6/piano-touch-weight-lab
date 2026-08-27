@@ -1034,10 +1034,52 @@ function Index() {
         </div>
       </section>
 
-      <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center justify-center">
-        {renderSection(1, 44, gridRef1)}
-        {renderSection(45, 88, gridRef2)}
-      </div>
+      <section className="mx-auto mt-4 flex w-fit flex-col items-center justify-center rounded-lg border bg-white p-6 shadow-sm">
+        <h2 className="self-start text-lg font-bold text-black">Mesures des touches</h2>
+        <button
+          type="button"
+          onClick={() => setRows(EMPTY)}
+          className="mt-4 rounded-md border border-input bg-background px-4 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+        >
+          Reset
+        </button>
+        <div className="flex w-[1200px] max-w-full flex-col items-center justify-center">
+          {renderSection(1, 44, gridRef1)}
+          {renderSection(45, 88, gridRef2)}
+        </div>
+      </section>
+
+      <AlertDialog open={askCompare} onOpenChange={setAskCompare}>
+        <AlertDialogContent className="w-full max-w-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Modifications non sauvegardées</AlertDialogTitle>
+            <AlertDialogDescription>
+              ⚠️ Vos modifications actuelles ne sont pas sauvegardées. Pour intégrer ces mesures
+              dans vos graphiques, une sauvegarde est nécessaire.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continuer la saisie</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void navigate({ to: "/resultats" })}>
+              Ignorer et accéder aux graphiques
+            </AlertDialogAction>
+            <AlertDialogAction
+              onClick={() => {
+                if (!guardExport()) return;
+                goCompareAfterSave.current = true;
+                if (currentDbId && isDirty) {
+                  setAskUpdate(true);
+                  return;
+                }
+                void syncAndFinish(currentDbId ? "update" : "insert");
+              }}
+            >
+              Sauvegarder d'abord
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       <AlertDialog open={askUpdate} onOpenChange={setAskUpdate}>
         <AlertDialogContent className="w-full max-w-xl">
