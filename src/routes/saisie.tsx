@@ -1,10 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
-  REQUIRED_KEY_SET,
-  missingRequiredKeys,
-  missingRequiredMessage,
-  requiredKeysGate,
+  hasAnyMeasurement,
+  incompleteOctaves,
+  OCTAVE_RULE_MESSAGE,
+  saisieGate,
 } from "@/lib/required-keys";
 import { SmartCombobox } from "@/components/SmartCombobox";
 import {
