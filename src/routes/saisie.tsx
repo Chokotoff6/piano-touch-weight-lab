@@ -80,6 +80,8 @@ type Row = { wa: string; wd: string };
 
 const EMPTY: Row[] = Array.from({ length: 88 }, () => ({ wa: "", wd: "" }));
 
+const DRAFT_ROWS_KEY = "ptw_draft_rows";
+
 type SerialRule = { prefix: boolean; suffix: boolean; autoPrefix?: string };
 
 const BRAND_RULES: Record<string, SerialRule> = {
