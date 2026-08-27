@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   REQUIRED_KEY_SET,
   missingRequiredKeys,
@@ -40,39 +40,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+// ---------------------------------------------------------------------------
+// Constantes
+// ---------------------------------------------------------------------------
+
 const ALL_COUNTRIES = Array.from(new Set([...FREQUENT_COUNTRIES, ...SUGGESTED_COUNTRIES]));
 
-
-export const Route = createFileRoute("/saisie")({
-  head: () => ({
-    meta: [
-      { title: "Saisie des mesures — Touchweight statique piano" },
-      {
-        name: "description",
-        content:
-          "Saisie des poids ascendant (Wa) et descendant (Wd) des 88 touches, avec calcul automatique de la friction et de la balance.",
-      },
-      { property: "og:title", content: "Saisie des mesures — Touchweight piano" },
-      {
-        property: "og:description",
-        content:
-          "Consignez Wa et Wd sur 88 touches et obtenez friction et balance instantanément.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
-  component: Index,
-});
-
 const BLACK_KEYS = new Set([
-  2, 5, 7, 10, 12, 14, 17, 19, 22, 24, 26, 29, 31, 34, 36, 38, 41, 43, 46,
-  48, 50, 53, 55, 58, 60, 62, 65, 67, 70, 72, 74, 77, 79, 82, 84, 86,
+  2, 5, 7, 10, 12, 14, 17, 19, 22, 24, 26, 29, 31, 34, 36, 38, 41, 43, 46, 48, 50, 53, 55, 58, 60,
+  62, 65, 67, 70, 72, 74, 77, 79, 82, 84, 86,
 ]);
 
-const NATURAL_KEY_BREAKS = new Set([
-  3, 10, 15, 22, 27, 34, 39, 46, 51, 58, 63, 70, 75, 82, 87,
-]);
+const NATURAL_KEY_BREAKS = new Set([3, 10, 15, 22, 27, 34, 39, 46, 51, 58, 63, 70, 75, 82, 87]);
 
 const C_KEYS = new Set([4, 16, 28, 40, 52, 64, 76, 88]);
 
@@ -116,8 +95,50 @@ const BLACK_OFFSET: Record<number, number> = {
   10: 0, // la#
 };
 
-
 const pitchClass = (key: number) => (key + 20) % 12;
+
+// ---------------------------------------------------------------------------
+// Classes Tailwind partagées (source unique de vérité visuelle)
+// ---------------------------------------------------------------------------
+
+/** Cadre encadré avec titre à cheval sur la bordure supérieure. */
+const FRAME_CLASS = "relative rounded-md border-2 border-foreground bg-card p-4 pt-5";
+const FRAME_TITLE_CLASS = "absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black";
+/** Champ texte standard du formulaire. */
+const INPUT_CLASS =
+  "mt-1 h-8 w-full rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground";
+/** Label principal du cadre « Informations piano ». */
+const FIELD_LABEL_CLASS = "text-lg font-semibold text-black";
+/** Sous-label secondaire (numéro de série éclaté). */
+const SUB_LABEL_CLASS = "text-sm font-normal italic text-black";
+/** Colonne d'étiquettes à gauche des claviers. */
+const SIDE_LABEL_CLASS = "min-w-[170px] w-44 text-right";
+
+// ---------------------------------------------------------------------------
+// Petits composants internes
+// ---------------------------------------------------------------------------
+
+/** Cadre borduré dont le titre chevauche la bordure supérieure (effet fieldset/legend). */
+function Frame({
+  title,
+  className = "",
+  children,
+}: {
+  title: ReactNode;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className={`${FRAME_CLASS} ${className}`}>
+      <h2 className={FRAME_TITLE_CLASS}>{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Grille clavier : calcul des colonnes alignées sur le pixel physique
+// ---------------------------------------------------------------------------
 
 function useSnappedGrid(from: number, to: number) {
   return useCallback(
@@ -192,7 +213,6 @@ function useSnappedGrid(from: number, to: number) {
               const ws = px(m.start - c.start);
               el.style.setProperty("--wstart", `${ws}px`);
               el.style.setProperty("--sep", ws < 0 ? "0px" : "var(--hairline, 1px)");
-
               el.style.removeProperty("--line-x");
             }
           });
@@ -211,7 +231,6 @@ function useSnappedGrid(from: number, to: number) {
           });
 
         applyVars(node);
-
       };
       snap();
       const ro = new ResizeObserver(snap);
@@ -221,7 +240,34 @@ function useSnappedGrid(from: number, to: number) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Route
+// ---------------------------------------------------------------------------
 
+export const Route = createFileRoute("/saisie")({
+  head: () => ({
+    meta: [
+      { title: "Saisie des mesures — Touchweight statique piano" },
+      {
+        name: "description",
+        content:
+          "Saisie des poids ascendant (Wa) et descendant (Wd) des 88 touches, avec calcul automatique de la friction et de la balance.",
+      },
+      { property: "og:title", content: "Saisie des mesures — Touchweight piano" },
+      {
+        property: "og:description",
+        content: "Consignez Wa et Wd sur 88 touches et obtenez friction et balance instantanément.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: Index,
+});
+
+// ---------------------------------------------------------------------------
+// Page Saisie
+// ---------------------------------------------------------------------------
 
 function Index() {
   const [rows, setRows] = useState<Row[]>(EMPTY);
@@ -234,12 +280,21 @@ function Index() {
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
   const fabricationTouched = useRef(false);
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [climateZone, setClimateZone] = useState<ClimateZone | null>(null);
+  const [honeypot, setHoneypot] = useState("");
+  const [currentDbId, setCurrentDbId] = useState<string | null>(null);
+  const [askUpdate, setAskUpdate] = useState(false);
+  const [askCompare, setAskCompare] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const goCompareAfterSave = useRef(false);
 
   const navigate = useNavigate();
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
 
-  // Filet de sécurité local : restauration puis sauvegarde silencieuse des pesées.
+  // --- Persistance locale (filet de sécurité) -------------------------------
+
   const draftLoaded = useRef(false);
   useEffect(() => {
     try {
@@ -262,26 +317,56 @@ function Index() {
       /* stockage indisponible */
     }
   }, [rows]);
-  const [isGeocoding, setIsGeocoding] = useState(false);
-  const [climateZone, setClimateZone] = useState<ClimateZone | null>(null);
+
+  // --- États dérivés ---------------------------------------------------------
 
   const rule = BRAND_RULES[(info["marque"] ?? "").trim().toUpperCase()] ?? DEFAULT_RULE;
 
-  const canEnterWeights = useMemo(() => {
-    return Boolean(
-      info["marque"]?.trim() &&
-        info["modele"]?.trim() &&
-        info["sn_num"]?.trim() &&
-        info["type_piano"] &&
-        info["pays"]?.trim() &&
-        info["ville"]?.trim() &&
-        info["entretien"],
-    );
-  }, [info]);
+  const canEnterWeights = useMemo(
+    () =>
+      Boolean(
+        info["marque"]?.trim() &&
+          info["modele"]?.trim() &&
+          info["sn_num"]?.trim() &&
+          info["type_piano"] &&
+          info["pays"]?.trim() &&
+          info["ville"]?.trim() &&
+          info["entretien"],
+      ),
+    [info],
+  );
 
-  const exportReady = useMemo(() => {
-    return Boolean(info["marque"]?.trim() && info["sn_num"]?.trim());
-  }, [info]);
+  const exportReady = useMemo(
+    () => Boolean(info["marque"]?.trim() && info["sn_num"]?.trim()),
+    [info],
+  );
+
+  const serialFormatValid = useMemo(
+    () =>
+      isSerialFormatValid(
+        info["marque"] ?? "",
+        info["sn_prefix"] ?? "",
+        info["sn_num"] ?? "",
+        info["sn_suffix"] ?? "",
+      ),
+    [info],
+  );
+
+  const profile = useMemo(
+    () =>
+      factoryProfile(
+        info["marque"] ?? "",
+        info["sn_prefix"] ?? "",
+        climateZone,
+        info["type_piano"],
+        info["sn_num"] ?? "",
+      ),
+    [info, climateZone],
+  );
+
+  const missingRequired = useMemo(() => missingRequiredKeys(rows), [rows]);
+
+  // --- Messages temporaires ---------------------------------------------------
 
   useEffect(() => {
     if (canEnterWeights) {
@@ -291,11 +376,29 @@ function Index() {
     }
   }, [canEnterWeights]);
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (blockTimeout.current) clearTimeout(blockTimeout.current);
-    };
-  }, []);
+    },
+    [],
+  );
+
+  const showMessage = (text: string) => {
+    if (blockTimeout.current) clearTimeout(blockTimeout.current);
+    setBlockMessage(text);
+    blockTimeout.current = setTimeout(() => {
+      setBlockMessage(null);
+      blockTimeout.current = null;
+    }, 5000);
+  };
+
+  const showBlockMessage = () => {
+    showMessage(
+      "Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de saisir les mesures.",
+    );
+  };
+
+  // --- Saisie des informations générales ---------------------------------------
 
   const markDirty = () => {
     setIsDirty(true);
@@ -318,30 +421,6 @@ function Index() {
       .finally(() => setIsGeocoding(false));
   };
 
-  const serialFormatValid = useMemo(
-    () =>
-      isSerialFormatValid(
-        info["marque"] ?? "",
-        info["sn_prefix"] ?? "",
-        info["sn_num"] ?? "",
-        info["sn_suffix"] ?? "",
-      ),
-    [info],
-  );
-
-  const profile = useMemo(
-    () =>
-      factoryProfile(
-        info["marque"] ?? "",
-        info["sn_prefix"] ?? "",
-        climateZone,
-        info["type_piano"],
-        info["sn_num"] ?? "",
-      ),
-
-    [info, climateZone],
-  );
-
   // Pré-remplissage de la date de fabrication (reste modifiable manuellement).
   useEffect(() => {
     if (fabricationTouched.current) return;
@@ -350,11 +429,12 @@ function Index() {
     setInfo((p) => (p["fabrication"] === value ? p : { ...p, fabrication: value }));
   }, [info["marque"], info["sn_prefix"], info["sn_num"]]);
 
-
   const onPrefixChange = (value: string) => {
     updateInfo("sn_prefix", value.toUpperCase().slice(0, 3));
     if (rule.autoPrefix && value.length >= 1) snRef.current["sn_num"]?.focus();
   };
+
+  // --- Saisie des poids ---------------------------------------------------------
 
   const cleanWeight = (value: string) => value.replace(/[^0-9]/g, "");
 
@@ -394,15 +474,12 @@ function Index() {
     inputs.current[`${index}-${field}`]?.select();
   };
 
-  const onKeyDown = useCallback(
-    (e: React.KeyboardEvent, index: number, field: "wa" | "wd") => {
-      if (e.key !== "Enter") return;
-      e.preventDefault();
-      if (field === "wa") focusCell(index, "wd");
-      else if (index < 87) focusCell(index + 1, "wa");
-    },
-    [],
-  );
+  const onKeyDown = useCallback((e: React.KeyboardEvent, index: number, field: "wa" | "wd") => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (field === "wa") focusCell(index, "wd");
+    else if (index < 87) focusCell(index + 1, "wa");
+  }, []);
 
   const setValue = (index: number, field: "wa" | "wd", value: string) => {
     const cleaned = cleanWeight(value);
@@ -461,25 +538,7 @@ function Index() {
     );
   };
 
-  const showMessage = (text: string) => {
-    if (blockTimeout.current) clearTimeout(blockTimeout.current);
-    setBlockMessage(text);
-    blockTimeout.current = setTimeout(() => {
-      setBlockMessage(null);
-      blockTimeout.current = null;
-    }, 5000);
-  };
-
-  const showBlockMessage = () => {
-    showMessage(
-      "Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de saisir les mesures.",
-    );
-  };
-
-  const [honeypot, setHoneypot] = useState("");
-
-  const missingRequired = useMemo(() => missingRequiredKeys(rows), [rows]);
-
+  // --- Touches obligatoires (gate global) ---------------------------------------
 
   useEffect(() => {
     requiredKeysGate.getMissing = () => missingRequiredKeys(rows);
@@ -497,6 +556,7 @@ function Index() {
     return () => window.removeEventListener("required-keys-blocked", onBlocked);
   }, []);
 
+  // --- Export & sauvegarde cloud -------------------------------------------------
 
   const guardExport = () => {
     // Contrôle anti-robot : échec silencieux, aucun message affiché.
@@ -522,12 +582,6 @@ function Index() {
     }
     return true;
   };
-
-  const [currentDbId, setCurrentDbId] = useState<string | null>(null);
-  const [askUpdate, setAskUpdate] = useState(false);
-  const [askCompare, setAskCompare] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-  const goCompareAfterSave = useRef(false);
 
   const buildPayload = (): DiagnosticPayload => {
     const year = Number((info["fabrication"] ?? "").match(/\d{4}/)?.[0]);
@@ -595,6 +649,9 @@ function Index() {
       setIsExporting(false);
     }
   };
+
+  // --- Synchronisation avec la barre supérieure -----------------------------------
+
   useEffect(() => {
     setTopbarState({ exportReady, isExporting, isDirty });
     return () => {
@@ -640,14 +697,63 @@ function Index() {
     };
 
     Object.entries(handlers).forEach(([type, fn]) => window.addEventListener(type, fn));
-    return () => Object.entries(handlers).forEach(([type, fn]) => window.removeEventListener(type, fn));
+    return () =>
+      Object.entries(handlers).forEach(([type, fn]) => window.removeEventListener(type, fn));
   }, [rows, info, currentDbId, isDirty, honeypot, climateZone, profile]);
 
+  // --- Rendu : champ de saisie d'un poids (Wa ou Wd) ------------------------------
+
+  const renderWeightInput = (index: number, field: "wa" | "wd") => (
+    <div
+      className={`weight-fields weight-fields-${field} ${!canEnterWeights ? "opacity-40" : ""}`}
+      onClick={() => {
+        if (!canEnterWeights) showBlockMessage();
+      }}
+    >
+      <input
+        ref={(el) => {
+          inputs.current[`${index}-${field}`] = el;
+        }}
+        value={rows[index]![field]}
+        onChange={(e) => canEnterWeights && setValue(index, field, e.target.value)}
+        onBlur={(e) => canEnterWeights && handleBlur(index, field, e.target.value)}
+        onKeyDown={(e) => {
+          if (!canEnterWeights) {
+            e.preventDefault();
+            showBlockMessage();
+            return;
+          }
+          if (e.key === "Enter") {
+            handleBlur(index, field, e.currentTarget.value);
+          }
+          onKeyDown(e, index, field);
+        }}
+        onBeforeInput={(e) => {
+          if (!canEnterWeights) {
+            e.preventDefault();
+            showBlockMessage();
+          }
+        }}
+        inputMode="numeric"
+        min={5}
+        max={99}
+        step={1}
+        aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
+        title={errors[`${index}-${field}`] ?? undefined}
+        className={`weight-input ${REQUIRED_KEY_SET.has(index + 1) ? "is-required" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
+      />
+    </div>
+  );
+
+  // --- Rendu : une section de 44 touches -----------------------------------------
 
   const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
-    <section className="mt-2 flex w-full flex-col items-center" aria-label={`Touches ${from} à ${to}`}>
+    <section
+      className="mt-2 flex w-full flex-col items-center"
+      aria-label={`Touches ${from} à ${to}`}
+    >
       <div className="technical-sheet">
-        <div className="technical-labels min-w-[170px] w-44 text-right" aria-hidden="true">
+        <div className={`technical-labels ${SIDE_LABEL_CLASS}`} aria-hidden="true">
           <div className="label-key" />
           <div className="label-wa" title="The minimum weight required to make the key move down.">
             Downweight (Wa)
@@ -667,7 +773,6 @@ function Index() {
           >
             Upweight (Wd)
           </div>
-
         </div>
         <div className="piano-grid" ref={gridRef}>
           {rows.slice(from - 1, to).map((row, offset) => {
@@ -685,84 +790,8 @@ function Index() {
                   {index + 1}
                 </div>
                 <div className="key-body">
-                  <div
-                    className={`weight-fields weight-fields-wa ${!canEnterWeights ? "opacity-40" : ""}`}
-                    onClick={() => {
-                      if (!canEnterWeights) showBlockMessage();
-                    }}
-                  >
-                    <input
-                      ref={(el) => {
-                        inputs.current[`${index}-wa`] = el;
-                      }}
-                      value={row.wa}
-                      onChange={(e) => canEnterWeights && setValue(index, "wa", e.target.value)}
-                      onBlur={(e) => canEnterWeights && handleBlur(index, "wa", e.target.value)}
-                      onKeyDown={(e) => {
-                        if (!canEnterWeights) {
-                          e.preventDefault();
-                          showBlockMessage();
-                          return;
-                        }
-                        if (e.key === "Enter") {
-                          handleBlur(index, "wa", e.currentTarget.value);
-                        }
-                        onKeyDown(e, index, "wa");
-                      }}
-                      onBeforeInput={(e) => {
-                        if (!canEnterWeights) {
-                          e.preventDefault();
-                          showBlockMessage();
-                        }
-                      }}
-                      inputMode="numeric"
-                      min={5}
-                      max={99}
-                      step={1}
-                      aria-label={`Wa touche ${index + 1}`}
-                      title={errors[`${index}-wa`] ?? undefined}
-                      className={`weight-input ${REQUIRED_KEY_SET.has(index + 1) ? "is-required" : ""} ${errors[`${index}-wa`] ? "error" : ""}`}
-                    />
-                  </div>
-                  <div
-                    className={`weight-fields weight-fields-wd ${!canEnterWeights ? "opacity-40" : ""}`}
-                    onClick={() => {
-                      if (!canEnterWeights) showBlockMessage();
-                    }}
-                  >
-                    <input
-                      ref={(el) => {
-                        inputs.current[`${index}-wd`] = el;
-                      }}
-                      value={row.wd}
-                      onChange={(e) => canEnterWeights && setValue(index, "wd", e.target.value)}
-                      onBlur={(e) => canEnterWeights && handleBlur(index, "wd", e.target.value)}
-                      onKeyDown={(e) => {
-                        if (!canEnterWeights) {
-                          e.preventDefault();
-                          showBlockMessage();
-                          return;
-                        }
-                        if (e.key === "Enter") {
-                          handleBlur(index, "wd", e.currentTarget.value);
-                        }
-                        onKeyDown(e, index, "wd");
-                      }}
-                      onBeforeInput={(e) => {
-                        if (!canEnterWeights) {
-                          e.preventDefault();
-                          showBlockMessage();
-                        }
-                      }}
-                      inputMode="numeric"
-                      min={5}
-                      max={99}
-                      step={1}
-                      aria-label={`Wd touche ${index + 1}`}
-                      title={errors[`${index}-wd`] ?? undefined}
-                      className={`weight-input ${REQUIRED_KEY_SET.has(index + 1) ? "is-required" : ""} ${errors[`${index}-wd`] ? "error" : ""}`}
-                    />
-                  </div>
+                  {renderWeightInput(index, "wa")}
+                  {renderWeightInput(index, "wd")}
                 </div>
               </div>
             );
@@ -771,7 +800,9 @@ function Index() {
       </div>
       {(["friction", "balance"] as const).map((kind) => (
         <div className="result-sheet" key={kind}>
-          <div className="result-label min-w-[170px] w-44 text-right">{kind === "friction" ? "Friction" : "Balance"}</div>
+          <div className={`result-label ${SIDE_LABEL_CLASS}`}>
+            {kind === "friction" ? "Friction" : "Balance"}
+          </div>
           <div className="result-grid">
             {rows.slice(from - 1, to).map((row, offset) => {
               const index = from - 1 + offset;
@@ -784,7 +815,6 @@ function Index() {
                     <span className="rv-text">{black ? null : formatResult(value)}</span>
                   </div>
                 </div>
-
               );
             })}
           </div>
@@ -793,217 +823,217 @@ function Index() {
     </section>
   );
 
+  // --- Rendu : page ----------------------------------------------------------------
+
   return (
     <main className="mx-auto max-w-[1400px] px-6 py-10">
-      <section
-        className="relative mt-10 rounded-md border-2 border-foreground bg-card p-4 pt-5 [&_input]:border-foreground/60"
+      <div
         data-dirty={isDirty}
         data-saved-at={savedAt ?? ""}
         data-climate-zone={climateZone ?? ""}
       >
-        <h2 className="absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black">Informations piano</h2>
-        <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-4">
-          <label className="text-lg font-semibold text-black">
-            Marque
-            <SmartCombobox
-              value={info["marque"] ?? ""}
-              options={BRAND_SUGGESTIONS}
-              placeholder="Saisissez une marque (ex: YAMAHA, PLEYEL...)"
-              onCommit={(v) => {
-                updateInfo("marque", v);
-                if ((info["modele"] ?? "") !== "") updateInfo("modele", "");
-              }}
-            />
-          </label>
+        <Frame title="Informations piano" className="mt-10 [&_input]:border-foreground/60">
+          <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-4">
+            <label className={FIELD_LABEL_CLASS}>
+              Marque
+              <SmartCombobox
+                value={info["marque"] ?? ""}
+                options={BRAND_SUGGESTIONS}
+                placeholder="Saisissez une marque (ex: YAMAHA, PLEYEL...)"
+                onCommit={(v) => {
+                  updateInfo("marque", v);
+                  if ((info["modele"] ?? "") !== "") updateInfo("modele", "");
+                }}
+              />
+            </label>
 
-          <fieldset className="max-w-[200px] text-lg font-semibold text-black">
-            <legend>Type</legend>
-            <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 bg-white px-2">
-              {["Droit", "à Queue"].map((t) => (
-                <label key={t} className="flex items-center gap-1 text-sm text-foreground">
-                  <input
-                    type="radio"
-                    name="type_piano"
-                    value={t}
-                    checked={info["type_piano"] === t}
-                    onChange={() => {
-                      updateInfo("type_piano", t);
-                      const m = info["modele"] ?? "";
-                      if (m && !modelsFor(info["marque"] ?? "", t).includes(m)) {
-                        updateInfo("modele", "");
-                      }
-                    }}
-                  />
-                  {t}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-
-
-
-          <label className="text-lg font-semibold text-black">
-            Modèle
-            <SmartCombobox
-              value={info["modele"] ?? ""}
-              options={modelsFor(info["marque"] ?? "", info["type_piano"])}
-              groups={modelGroupsFor(info["marque"] ?? "", info["type_piano"])}
-              disabled={!info["marque"]?.trim()}
-              openOnFocus
-              className="!bg-white"
-              placeholder="Saisissez ou cherchez un modèle..."
-              onCommit={(v) => {
-                updateInfo("modele", v);
-                const inferred = inferTypeFromModel(info["marque"] ?? "", v);
-                if (inferred) updateInfo("type_piano", inferred);
-              }}
-            />
-          </label>
-
-          <div className="mt-10 text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
-            <span className="text-lg font-semibold text-black">Numéro de série</span>{" "}
-            <span className="text-muted-foreground">
-              (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
-            </span>
-            <div className="mt-1 flex items-end justify-start gap-4">
-              <label className="min-w-[80px] text-sm font-normal italic text-black">
-                <span className="block whitespace-nowrap">Lettres</span>
-                <input
-                  ref={(el) => {
-                    snRef.current["sn_prefix"] = el;
-                  }}
-                  value={info["sn_prefix"] ?? ""}
-                  onChange={(e) => onPrefixChange(e.target.value)}
-                  disabled={!rule.prefix}
-                  placeholder="ex: J, F"
-                  className="mt-1 h-8 w-full max-w-[80px] rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                />
-              </label>
-              <label className="min-w-[150px] text-sm font-normal italic text-black">
-                <span className="block whitespace-nowrap">N° de série</span>
-                <input
-                  ref={(el) => {
-                    snRef.current["sn_num"] = el;
-                  }}
-                  value={info["sn_num"] ?? ""}
-                  onChange={(e) => updateInfo("sn_num", e.target.value.replace(/[^0-9]/g, ""))}
-                  required
-                  inputMode="numeric"
-                  placeholder="Chiffres"
-                  className="mt-1 h-8 w-full max-w-[150px] rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
-                />
-              </label>
-              <label className="min-w-[80px] text-sm font-normal italic text-black">
-                <span className="block whitespace-nowrap">Lettre fin</span>
-                <input
-                  value={info["sn_suffix"] ?? ""}
-                  onChange={(e) => updateInfo("sn_suffix", e.target.value.toUpperCase().slice(0, 3))}
-                  disabled={!rule.suffix}
-                  placeholder="ex: A, B"
-                  className="mt-1 h-8 w-full max-w-[80px] rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                />
-              </label>
-              <label className="min-w-[120px] text-sm font-normal italic text-black">
-                <span className="block whitespace-nowrap">Date fabrication</span>
-                <input
-                  value={info["fabrication"] ?? ""}
-                  onChange={(e) => {
-                    fabricationTouched.current = true;
-                    updateInfo("fabrication", e.target.value);
-                  }}
-                  className="mt-1 h-8 w-full max-w-[120px] rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
-                />
-              </label>
-              <div className="flex h-8 items-end text-xs text-black">
-                <span>
-                  Profil d&apos;usine :{" "}
-                  <span className="text-foreground">{profile.label}</span>
-                  {profile.frictionTarget !== null && ` — friction cible ${profile.frictionTarget} g`}
-                </span>
+            <fieldset className={`max-w-[200px] ${FIELD_LABEL_CLASS}`}>
+              <legend>Type</legend>
+              <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 bg-white px-2">
+                {["Droit", "à Queue"].map((t) => (
+                  <label key={t} className="flex items-center gap-1 text-sm text-foreground">
+                    <input
+                      type="radio"
+                      name="type_piano"
+                      value={t}
+                      checked={info["type_piano"] === t}
+                      onChange={() => {
+                        updateInfo("type_piano", t);
+                        const m = info["modele"] ?? "";
+                        if (m && !modelsFor(info["marque"] ?? "", t).includes(m)) {
+                          updateInfo("modele", "");
+                        }
+                      }}
+                    />
+                    {t}
+                  </label>
+                ))}
               </div>
-            </div>
-            {!serialFormatValid && (
-              <p className="mt-1 text-[0.7rem] leading-snug text-destructive">
-                {SERIAL_FORMAT_ERROR}
-              </p>
-            )}
-          </div>
+            </fieldset>
 
-          <label className="mt-4 text-lg font-semibold text-black">
-            Pays
-            <SmartCombobox
-              value={info["pays"] ?? ""}
-              options={ALL_COUNTRIES}
-              groups={[
-                { label: "Suggestions fréquentes", options: FREQUENT_COUNTRIES },
-                { label: "Tous les pays", options: SUGGESTED_COUNTRIES },
-              ]}
-              onCommit={(v) => updateInfo("pays", v)}
-            />
-          </label>
+            <label className={FIELD_LABEL_CLASS}>
+              Modèle
+              <SmartCombobox
+                value={info["modele"] ?? ""}
+                options={modelsFor(info["marque"] ?? "", info["type_piano"])}
+                groups={modelGroupsFor(info["marque"] ?? "", info["type_piano"])}
+                disabled={!info["marque"]?.trim()}
+                openOnFocus
+                className="!bg-white"
+                placeholder="Saisissez ou cherchez un modèle..."
+                onCommit={(v) => {
+                  updateInfo("modele", v);
+                  const inferred = inferTypeFromModel(info["marque"] ?? "", v);
+                  if (inferred) updateInfo("type_piano", inferred);
+                }}
+              />
+            </label>
 
-          <label className="mt-4 text-lg font-semibold text-black">
-            <span className="flex items-center gap-2">
-              Ville
-              {isGeocoding && <span className="text-[0.65rem] italic">Vérification…</span>}
-            </span>
-            <input
-              value={info["ville"] ?? ""}
-              disabled={!info["pays"]?.trim()}
-              onChange={(e) => updateInfo("ville", e.target.value)}
-              onBlur={(e) => resolveCity(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  resolveCity((e.target as HTMLInputElement).value);
-                }
-              }}
-              className="mt-1 h-8 w-full rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-            />
-          </label>
-
-
-          <fieldset className="mt-4 text-lg font-semibold text-black sm:col-span-2 md:col-span-4">
-            <legend>Type d'entretien</legend>
-            <div className="mt-1 flex flex-wrap items-center gap-4">
-              {MAINTENANCE_OPTIONS.map((t) => (
-                <label key={t} className="flex items-center gap-1 text-sm text-foreground">
+            <div className="mt-10 text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
+              <span className={FIELD_LABEL_CLASS}>Numéro de série</span>{" "}
+              <span className="text-muted-foreground">
+                (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
+              </span>
+              <div className="mt-1 flex items-end justify-start gap-4">
+                <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
+                  <span className="block whitespace-nowrap">Lettres</span>
                   <input
-                    type="radio"
-                    name="entretien"
-                    value={t}
-                    required
-                    checked={info["entretien"] === t}
-                    onChange={() => updateInfo("entretien", t)}
+                    ref={(el) => {
+                      snRef.current["sn_prefix"] = el;
+                    }}
+                    value={info["sn_prefix"] ?? ""}
+                    onChange={(e) => onPrefixChange(e.target.value)}
+                    disabled={!rule.prefix}
+                    placeholder="ex: J, F"
+                    className={`${INPUT_CLASS} max-w-[80px]`}
                   />
-                  {t}
                 </label>
-              ))}
+                <label className={`min-w-[150px] ${SUB_LABEL_CLASS}`}>
+                  <span className="block whitespace-nowrap">N° de série</span>
+                  <input
+                    ref={(el) => {
+                      snRef.current["sn_num"] = el;
+                    }}
+                    value={info["sn_num"] ?? ""}
+                    onChange={(e) => updateInfo("sn_num", e.target.value.replace(/[^0-9]/g, ""))}
+                    required
+                    inputMode="numeric"
+                    placeholder="Chiffres"
+                    className={`${INPUT_CLASS} max-w-[150px]`}
+                  />
+                </label>
+                <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
+                  <span className="block whitespace-nowrap">Lettre fin</span>
+                  <input
+                    value={info["sn_suffix"] ?? ""}
+                    onChange={(e) =>
+                      updateInfo("sn_suffix", e.target.value.toUpperCase().slice(0, 3))
+                    }
+                    disabled={!rule.suffix}
+                    placeholder="ex: A, B"
+                    className={`${INPUT_CLASS} max-w-[80px]`}
+                  />
+                </label>
+                <label className={`min-w-[120px] ${SUB_LABEL_CLASS}`}>
+                  <span className="block whitespace-nowrap">Date fabrication</span>
+                  <input
+                    value={info["fabrication"] ?? ""}
+                    onChange={(e) => {
+                      fabricationTouched.current = true;
+                      updateInfo("fabrication", e.target.value);
+                    }}
+                    className={`${INPUT_CLASS} max-w-[120px]`}
+                  />
+                </label>
+                <div className="flex h-8 items-end text-xs text-black">
+                  <span>
+                    Profil d&apos;usine : <span className="text-foreground">{profile.label}</span>
+                    {profile.frictionTarget !== null &&
+                      ` — friction cible ${profile.frictionTarget} g`}
+                  </span>
+                </div>
+              </div>
+              {!serialFormatValid && (
+                <p className="mt-1 text-[0.7rem] leading-snug text-destructive">
+                  {SERIAL_FORMAT_ERROR}
+                </p>
+              )}
             </div>
-          </fieldset>
 
-          <label className="mt-6 text-lg font-semibold text-black sm:col-span-2 md:col-span-4">
-            Remarques
+            <label className={`mt-4 ${FIELD_LABEL_CLASS}`}>
+              Pays
+              <SmartCombobox
+                value={info["pays"] ?? ""}
+                options={ALL_COUNTRIES}
+                groups={[
+                  { label: "Suggestions fréquentes", options: FREQUENT_COUNTRIES },
+                  { label: "Tous les pays", options: SUGGESTED_COUNTRIES },
+                ]}
+                onCommit={(v) => updateInfo("pays", v)}
+              />
+            </label>
+
+            <label className={`mt-4 ${FIELD_LABEL_CLASS}`}>
+              <span className="flex items-center gap-2">
+                Ville
+                {isGeocoding && <span className="text-[0.65rem] italic">Vérification…</span>}
+              </span>
+              <input
+                value={info["ville"] ?? ""}
+                disabled={!info["pays"]?.trim()}
+                onChange={(e) => updateInfo("ville", e.target.value)}
+                onBlur={(e) => resolveCity(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    resolveCity((e.target as HTMLInputElement).value);
+                  }
+                }}
+                className={INPUT_CLASS}
+              />
+            </label>
+
+            <fieldset className={`mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
+              <legend>Type d'entretien</legend>
+              <div className="mt-1 flex flex-wrap items-center gap-4">
+                {MAINTENANCE_OPTIONS.map((t) => (
+                  <label key={t} className="flex items-center gap-1 text-sm text-foreground">
+                    <input
+                      type="radio"
+                      name="entretien"
+                      value={t}
+                      required
+                      checked={info["entretien"] === t}
+                      onChange={() => updateInfo("entretien", t)}
+                    />
+                    {t}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
+              Remarques
+              <input
+                value={info["remarques"] ?? ""}
+                onChange={(e) => updateInfo("remarques", e.target.value)}
+                className={INPUT_CLASS}
+              />
+            </label>
+
             <input
-              value={info["remarques"] ?? ""}
-              onChange={(e) => updateInfo("remarques", e.target.value)}
-              className="mt-1 h-8 w-full rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+              type="text"
+              name={HONEYPOT_NAME}
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              className="pointer-events-none absolute -z-10 h-0 w-0 opacity-0"
             />
-          </label>
-
-          <input
-            type="text"
-            name={HONEYPOT_NAME}
-            value={honeypot}
-            onChange={(e) => setHoneypot(e.target.value)}
-            tabIndex={-1}
-            autoComplete="off"
-            aria-hidden="true"
-            className="absolute h-0 w-0 opacity-0 pointer-events-none -z-10"
-          />
-
-        </div>
-      </section>
+          </div>
+        </Frame>
+      </div>
 
       {blockMessage && (
         <div className="mt-6 rounded-md border border-amber-500/50 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
@@ -1011,15 +1041,23 @@ function Index() {
         </div>
       )}
 
-      <section className="relative mt-8 rounded-md border-2 border-foreground bg-card p-4 pt-5">
-        <h2 className="absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black">Moyennes <span className="text-sm font-normal">(auto)</span></h2>
+      <Frame
+        title={
+          <>
+            Moyennes <span className="text-sm font-normal">(auto)</span>
+          </>
+        }
+        className="mt-8"
+      >
         <div className="mt-2 grid grid-cols-4 gap-3">
-          {([
-            { key: "wa", label: "Downweight (Wa)" },
-            { key: "wd", label: "Upweight (Wd)" },
-            { key: "friction", label: "Friction" },
-            { key: "balance", label: "Balance" },
-          ] as const).map(({ key, label }) => (
+          {(
+            [
+              { key: "wa", label: "Downweight (Wa)" },
+              { key: "wd", label: "Upweight (Wd)" },
+              { key: "friction", label: "Friction" },
+              { key: "balance", label: "Balance" },
+            ] as const
+          ).map(({ key, label }) => (
             <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
               <div className="text-[0.8125rem] font-bold uppercase tracking-wide text-muted-foreground">
                 {label}
@@ -1040,14 +1078,13 @@ function Index() {
             </div>
           ))}
         </div>
-      </section>
+      </Frame>
 
-      <section className="relative mt-8 rounded-md border-2 border-foreground bg-card p-4 pt-5">
-        <h2 className="absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black">Mesures poids de touches</h2>
+      <Frame title="Mesures poids de touches" className="mt-8">
         <button
           type="button"
           onClick={() => setRows(EMPTY)}
-          className="absolute top-4 left-4 z-10 rounded-md border border-input bg-background px-3 py-1 text-base font-bold text-muted-foreground transition-colors hover:bg-accent"
+          className="absolute left-4 top-4 z-10 rounded-md border border-input bg-background px-3 py-1 text-base font-bold text-muted-foreground transition-colors hover:bg-accent"
         >
           Reset
         </button>
@@ -1055,7 +1092,7 @@ function Index() {
           {renderSection(1, 44, gridRef1)}
           {renderSection(45, 88, gridRef2)}
         </div>
-      </section>
+      </Frame>
 
       <AlertDialog open={askCompare} onOpenChange={setAskCompare}>
         <AlertDialogContent className="w-full max-w-xl">
@@ -1087,7 +1124,6 @@ function Index() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
 
       <AlertDialog open={askUpdate} onOpenChange={setAskUpdate}>
         <AlertDialogContent className="w-full max-w-xl">
