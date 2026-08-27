@@ -549,19 +549,24 @@ function Index() {
       }
       markSubmission();
       setIsDirty(false);
-      toast.success("Fichier CSV généré et diagnostic synchronisé avec succès");
+      toast.success("Diagnostic synchronisé avec succès");
+      if (goCompareAfterSave.current) {
+        goCompareAfterSave.current = false;
+        void navigate({ to: "/resultats" });
+      }
     } catch {
-      showMessage("La synchronisation cloud a échoué. Le fichier CSV a été généré localement.");
+      goCompareAfterSave.current = false;
+      showMessage("La synchronisation cloud a échoué. Les données restent enregistrées localement.");
     } finally {
       setIsExporting(false);
     }
   };
   useEffect(() => {
-    setTopbarState({ exportReady, isExporting });
+    setTopbarState({ exportReady, isExporting, isDirty });
     return () => {
-      setTopbarState({ exportReady: false, isExporting: false });
+      setTopbarState({ exportReady: false, isExporting: false, isDirty: false });
     };
-  }, [exportReady, isExporting]);
+  }, [exportReady, isExporting, isDirty]);
 
   useEffect(() => {
     const exportCsvOnly = () => {
