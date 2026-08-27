@@ -491,7 +491,9 @@ function Index() {
 
   const [currentDbId, setCurrentDbId] = useState<string | null>(null);
   const [askUpdate, setAskUpdate] = useState(false);
+  const [askCompare, setAskCompare] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const goCompareAfterSave = useRef(false);
 
   const buildPayload = (): DiagnosticPayload => {
     const year = Number((info["fabrication"] ?? "").match(/\d{4}/)?.[0]);
