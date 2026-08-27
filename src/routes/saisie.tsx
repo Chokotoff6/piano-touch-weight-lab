@@ -987,8 +987,10 @@ function Index() {
         </div>
       </section>
 
-      {renderSection(1, 44, gridRef1)}
-      {renderSection(45, 88, gridRef2)}
+      <div className="flex w-full flex-col items-center justify-center">
+        {renderSection(1, 44, gridRef1)}
+        {renderSection(45, 88, gridRef2)}
+      </div>
 
       <AlertDialog open={askUpdate} onOpenChange={setAskUpdate}>
         <AlertDialogContent className="w-full max-w-xl">
