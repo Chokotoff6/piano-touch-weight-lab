@@ -188,6 +188,8 @@ function RootComponent() {
               </Link>
             </div>
 
+            <div className="mx-10 h-6 w-[2px] bg-gray-400" aria-hidden="true" />
+
             <DropdownMenu>
               <div className="flex items-center">
                 <Button
@@ -218,8 +220,6 @@ function RootComponent() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            <div className="mx-6 h-6 w-[1px] bg-gray-200" aria-hidden="true" />
 
             <DropdownMenu>
               <div className="flex items-center">
