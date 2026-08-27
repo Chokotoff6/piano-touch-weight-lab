@@ -809,7 +809,10 @@ function Index() {
           </label>
 
           <div className="mt-4 text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
-            Numéro de série (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
+            <span className="text-black">Numéro de série</span>{" "}
+            <span className="text-muted-foreground">
+              (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
+            </span>
             <div className="mt-1 flex items-end justify-start gap-4">
               <label className="min-w-[80px] text-xs text-black">
                 <span className="block whitespace-nowrap">Lettres avant</span>
@@ -874,7 +877,7 @@ function Index() {
             )}
           </div>
 
-          <label className="text-xs text-black">
+          <label className="mt-4 text-xs text-black">
             Pays
             <SmartCombobox
               value={info["pays"] ?? ""}
@@ -887,7 +890,7 @@ function Index() {
             />
           </label>
 
-          <label className="text-xs text-black">
+          <label className="mt-4 text-xs text-black">
             <span className="flex items-center gap-2">
               Ville
               {isGeocoding && <span className="text-[0.65rem] italic">Vérification…</span>}
@@ -908,7 +911,7 @@ function Index() {
           </label>
 
 
-          <fieldset className="text-xs text-black sm:col-span-2 md:col-span-4">
+          <fieldset className="mt-4 text-xs text-black sm:col-span-2 md:col-span-4">
             <legend>Type d'entretien</legend>
             <div className="mt-1 flex flex-wrap items-center gap-4">
               {MAINTENANCE_OPTIONS.map((t) => (
@@ -987,7 +990,7 @@ function Index() {
         </div>
       </section>
 
-      <div className="flex w-full flex-col items-center justify-center">
+      <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center justify-center">
         {renderSection(1, 44, gridRef1)}
         {renderSection(45, 88, gridRef2)}
       </div>
