@@ -1,4 +1,4 @@
-export type PianoType = "Piano Droit" | "Piano à Queue";
+export type PianoType = "Droit" | "à Queue";
 
 export const BRAND_MODELS_BY_TYPE: Record<string, { droit: string[]; queue: string[] }> = {
   YAMAHA: {
@@ -158,20 +158,30 @@ export const BRAND_MODELS_SUGGESTIONS: Record<string, string[]> = Object.fromEnt
   Object.entries(BRAND_MODELS_BY_TYPE).map(([brand, m]) => [brand, [...m.droit, ...m.queue]]),
 );
 
-/** Modèles filtrés par marque et, si connu, par type de piano. */
+/** Normalise le libellé de type (« Droit » / « à Queue », insensible à la casse et aux préfixes). */
+function typeKey(type?: string): "droit" | "queue" | null {
+  const t = (type ?? "").toLowerCase();
+  if (t.includes("queue")) return "queue";
+  if (t.includes("droit")) return "droit";
+  return null;
+}
+
+/** Modèles filtrés par marque et, si connu, par type de piano (exclusion stricte). */
 export function modelsFor(brand: string, type?: string): string[] {
   const entry = BRAND_MODELS_BY_TYPE[brand.trim().toUpperCase()];
   if (!entry) return [];
-  if (type === "Piano Droit") return entry.droit;
-  if (type === "Piano à Queue") return entry.queue;
+  const t = typeKey(type);
+  if (t === "droit") return entry.droit;
+  if (t === "queue") return entry.queue;
   return [...entry.droit, ...entry.queue];
 }
 
 export function modelGroupsFor(brand: string, type?: string) {
   const entry = BRAND_MODELS_BY_TYPE[brand.trim().toUpperCase()];
   if (!entry) return [];
-  if (type === "Piano Droit") return [{ label: "Droits", options: entry.droit }];
-  if (type === "Piano à Queue") return [{ label: "De queue", options: entry.queue }];
+  const t = typeKey(type);
+  if (t === "droit") return [{ label: "Droits", options: entry.droit }];
+  if (t === "queue") return [{ label: "De queue", options: entry.queue }];
   return [
     { label: "Droits", options: entry.droit },
     { label: "De queue", options: entry.queue },
@@ -183,8 +193,8 @@ export function inferTypeFromModel(brand: string, model: string): PianoType | nu
   const entry = BRAND_MODELS_BY_TYPE[brand.trim().toUpperCase()];
   if (!entry || !model.trim()) return null;
   const normalized = normalizeEntry(model);
-  if (entry.droit.some((m) => normalizeEntry(m) === normalized)) return "Piano Droit";
-  if (entry.queue.some((m) => normalizeEntry(m) === normalized)) return "Piano à Queue";
+  if (entry.droit.some((m) => normalizeEntry(m) === normalized)) return "Droit";
+  if (entry.queue.some((m) => normalizeEntry(m) === normalized)) return "à Queue";
   return null;
 }
 
