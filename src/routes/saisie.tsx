@@ -365,7 +365,7 @@ function Index() {
     [info, climateZone],
   );
 
-  const missingRequired = useMemo(() => missingRequiredKeys(rows), [rows]);
+  const octaveGaps = useMemo(() => incompleteOctaves(rows), [rows]);
 
   // --- Messages temporaires ---------------------------------------------------
 
