@@ -214,6 +214,10 @@ const MODEL_ADDITIONS: Record<string, { droit: string[]; queue: string[] }> = {
     droit: ["116", "122", "126", "132", "Primus 116", "Eduard 122", "Konsole 122"],
     queue: ["168", "186", "208", "242", "278", "Baron 186", "Maestro 208"],
   },
+  "BALDWIN & WURLITZER": {
+    droit: ["Acorn", "Hamilton", "Studio 243", "121", "Console"],
+    queue: ["M", "R", "L", "SF-10", "SD-10", "165", "185"],
+  },
   BALDWIN: {
     droit: ["Acorn", "Hamilton", "Studio 243", "121", "Console"],
     queue: ["M", "R", "L", "SF-10", "SD-10", "165", "185"],
