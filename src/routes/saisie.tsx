@@ -645,9 +645,9 @@ function Index() {
 
 
   const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
-    <section className="mt-8 flex w-full flex-col items-center" aria-label={`Touches ${from} à ${to}`}>
+    <section className="mt-2 flex w-full flex-col items-center" aria-label={`Touches ${from} à ${to}`}>
       <div className="technical-sheet">
-        <div className="technical-labels min-w-[170px] w-44" aria-hidden="true">
+        <div className="technical-labels min-w-[170px] w-44 text-right" aria-hidden="true">
           <div className="label-key" />
           <div className="label-wa" title="The minimum weight required to make the key move down.">
             Downweight (Wa)
@@ -771,7 +771,7 @@ function Index() {
       </div>
       {(["friction", "balance"] as const).map((kind) => (
         <div className="result-sheet" key={kind}>
-          <div className="result-label min-w-[170px] w-44">{kind === "friction" ? "Friction" : "Balance"}</div>
+          <div className="result-label min-w-[170px] w-44 text-right">{kind === "friction" ? "Friction" : "Balance"}</div>
           <div className="result-grid">
             {rows.slice(from - 1, to).map((row, offset) => {
               const index = from - 1 + offset;
@@ -1012,7 +1012,7 @@ function Index() {
       )}
 
       <section className="relative mt-8 rounded-md border-2 border-foreground bg-card p-4 pt-5">
-        <h2 className="absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black">Moyennes mesurées</h2>
+        <h2 className="absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black">Moyennes <span className="text-sm font-normal">(auto)</span></h2>
         <div className="mt-2 grid grid-cols-4 gap-3">
           {([
             { key: "wa", label: "Downweight (Wa)" },
@@ -1047,7 +1047,7 @@ function Index() {
         <button
           type="button"
           onClick={() => setRows(EMPTY)}
-          className="absolute top-4 right-4 z-10 rounded-md border border-input bg-background px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
+          className="absolute top-4 left-4 z-10 rounded-md border border-input bg-background px-3 py-1 text-base font-bold text-muted-foreground transition-colors hover:bg-accent"
         >
           Reset
         </button>

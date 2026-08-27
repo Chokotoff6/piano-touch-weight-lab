@@ -194,11 +194,12 @@ function RootComponent() {
               <div className="flex items-center">
                 <Button
                   size="sm"
-                  className="rounded-r-none text-lg"
+                  variant={topbar.isDirty ? "default" : "outline"}
+                  className={`rounded-r-none text-lg ${topbar.isDirty ? "" : "bg-white hover:bg-accent"}`}
                   disabled={actionsDisabled}
                   onClick={() => dispatchAction("piano-save")}
                 >
-                  Save
+                  Sauver
                 </Button>
                 <DropdownMenuTrigger asChild>
                   <Button
