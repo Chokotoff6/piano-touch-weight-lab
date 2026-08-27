@@ -840,7 +840,7 @@ function Index() {
             type="button"
             onClick={resetInfo}
             title="Réinitialiser uniquement la fiche d'informations"
-            className="absolute right-4 top-3 z-10 rounded border border-foreground/30 bg-card px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/60 hover:text-foreground"
+            className="absolute right-4 top-3 z-10 rounded-md border border-input bg-background px-3 py-1 text-base font-bold text-muted-foreground transition-colors hover:bg-accent"
           >
             Reset
           </button>
@@ -1030,24 +1030,21 @@ function Index() {
 
             <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
               Remarques
-              {remarquesRequired && remarquesInvalid && (
-                <span className="ml-1 text-sm font-normal text-destructive">
-                  Veuillez indiquer les modifications
-                </span>
-              )}
               <input
                 ref={remarquesRef}
                 required={remarquesRequired}
                 aria-invalid={remarquesInvalid}
-                placeholder={remarquesRequired ? "Veuillez indiquer les modifications" : undefined}
+                placeholder={
+                  remarquesRequired ? "⚠️ ! Veuillez indiquer les modifications" : undefined
+                }
                 value={info["remarques"] ?? ""}
                 onChange={(e) => updateInfo("remarques", e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") e.preventDefault();
                 }}
-                className={`${INPUT_CLASS} ${
+                className={`${INPUT_CLASS} placeholder:text-foreground placeholder:font-medium ${
                   remarquesInvalid
-                    ? "border-destructive placeholder:text-destructive focus:border-destructive focus:ring-destructive"
+                    ? "border-destructive placeholder:text-foreground focus:border-destructive focus:ring-destructive"
                     : ""
                 }`}
               />
