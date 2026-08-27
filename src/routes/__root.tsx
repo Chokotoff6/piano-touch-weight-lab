@@ -281,7 +281,7 @@ function RootComponent() {
         rel="noopener noreferrer"
         title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
         aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
-        className="fixed right-8 top-16 z-50 flex h-9 w-9 items-center justify-center rounded-md border border-input bg-background text-base hover:bg-accent"
+        className="fixed right-4 top-2 z-50 flex h-16 w-16 items-center justify-center rounded-lg border border-input bg-background text-3xl shadow-sm hover:bg-accent"
       >
         ☕
       </a>
