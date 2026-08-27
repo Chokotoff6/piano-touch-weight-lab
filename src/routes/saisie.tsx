@@ -1008,15 +1008,26 @@ function Index() {
 
             <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
               Remarques
-              {info["entretien"] === "Modifications importantes" && (
-                <span className="ml-1 text-sm font-normal text-destructive">(obligatoire)</span>
+              {remarquesRequired && remarquesInvalid && (
+                <span className="ml-1 text-sm font-normal text-destructive">
+                  Veuillez indiquer les modifications
+                </span>
               )}
               <input
                 ref={remarquesRef}
-                required={info["entretien"] === "Modifications importantes"}
+                required={remarquesRequired}
+                aria-invalid={remarquesInvalid}
+                placeholder={remarquesRequired ? "Veuillez indiquer les modifications" : undefined}
                 value={info["remarques"] ?? ""}
                 onChange={(e) => updateInfo("remarques", e.target.value)}
-                className={INPUT_CLASS}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
+                }}
+                className={`${INPUT_CLASS} ${
+                  remarquesInvalid
+                    ? "border-destructive placeholder:text-destructive focus:border-destructive focus:ring-destructive"
+                    : ""
+                }`}
               />
             </label>
 
