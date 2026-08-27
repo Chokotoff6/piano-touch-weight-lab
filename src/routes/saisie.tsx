@@ -508,6 +508,13 @@ function Index() {
       );
       return false;
     }
+    // Si des modifications importantes sont déclarées, les remarques sont obligatoires.
+    if (info["entretien"] === "Modifications importantes" && !(info["remarques"] ?? "").trim()) {
+      showMessage(
+        "⚠️ Veuillez décrire les modifications importantes dans le champ Remarques avant d'enregistrer.",
+      );
+      return false;
+    }
     // Validation Do/Do# temporairement désactivée via BYPASS_REQUIRED_KEYS_VALIDATION.
     if (!BYPASS_REQUIRED_KEYS_VALIDATION && missingRequired.length > 0) {
       showMessage(missingRequiredMessage(missingRequired));
@@ -809,7 +816,7 @@ function Index() {
             />
           </label>
 
-          <fieldset className="text-lg font-semibold text-black">
+          <fieldset className="max-w-[200px] text-lg font-semibold text-black">
             <legend>Type</legend>
             <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 bg-white px-2">
               {["Droit", "à Queue"].map((t) => (
@@ -1037,16 +1044,14 @@ function Index() {
 
       <section className="relative mt-8 rounded-md border-2 border-foreground bg-card p-4 pt-5">
         <h2 className="absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black">Mesures poids de touches</h2>
-        <div className="flex justify-start">
-          <button
-            type="button"
-            onClick={() => setRows(EMPTY)}
-            className="rounded-md border border-input bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
-          >
-            Reset
-          </button>
-        </div>
-        <div className="mx-auto flex w-fit max-w-full flex-col items-center justify-center">
+        <button
+          type="button"
+          onClick={() => setRows(EMPTY)}
+          className="absolute top-4 right-4 z-10 rounded-md border border-input bg-background px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
+        >
+          Reset
+        </button>
+        <div className="mx-auto flex w-full flex-col items-center">
           {renderSection(1, 44, gridRef1)}
           {renderSection(45, 88, gridRef2)}
         </div>
