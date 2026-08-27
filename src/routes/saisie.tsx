@@ -788,14 +788,14 @@ function Index() {
   return (
     <main className="mx-auto max-w-[1400px] px-6 py-10">
       <section
-        className="mt-8 rounded-md border-2 border-foreground bg-card p-4 [&_input]:border-foreground/30"
+        className="mt-8 rounded-md border-2 border-foreground bg-card p-4 [&_input]:border-foreground/60"
         data-dirty={isDirty}
         data-saved-at={savedAt ?? ""}
         data-climate-zone={climateZone ?? ""}
       >
-        <h2 className="text-sm font-bold">Informations piano</h2>
+        <h2 className="text-lg font-bold text-black">Informations piano</h2>
         <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-4">
-          <label className="text-xs text-black">
+          <label className="text-sm font-medium text-black">
             Marque
             <SmartCombobox
               value={info["marque"] ?? ""}
@@ -808,9 +808,9 @@ function Index() {
             />
           </label>
 
-          <fieldset className="text-xs text-black">
+          <fieldset className="text-sm font-medium text-black">
             <legend>Type de piano</legend>
-            <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/30 bg-background px-2">
+            <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 bg-white px-2">
               {["Droit", "à Queue"].map((t) => (
                 <label key={t} className="flex items-center gap-1 text-sm text-foreground">
                   <input
@@ -834,7 +834,7 @@ function Index() {
 
 
 
-          <label className="text-xs text-black">
+          <label className="text-sm font-medium text-black">
             Modèle
             <SmartCombobox
               value={info["modele"] ?? ""}
@@ -852,13 +852,13 @@ function Index() {
             />
           </label>
 
-          <div className="mt-4 text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
-            <span className="text-black">Numéro de série</span>{" "}
+          <div className="mt-6 text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
+            <span className="text-sm font-medium text-black">Numéro de série</span>{" "}
             <span className="text-muted-foreground">
               (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
             </span>
             <div className="mt-1 flex items-end justify-start gap-4">
-              <label className="min-w-[80px] text-xs text-black">
+              <label className="min-w-[80px] text-sm font-medium text-black">
                 <span className="block whitespace-nowrap">Lettres avant</span>
                 <input
                   ref={(el) => {
@@ -868,10 +868,10 @@ function Index() {
                   onChange={(e) => onPrefixChange(e.target.value)}
                   disabled={!rule.prefix}
                   placeholder="ex: J, F"
-                  className="mt-1 h-8 w-full max-w-[80px] rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                  className="mt-1 h-8 w-full max-w-[80px] rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                 />
               </label>
-              <label className="min-w-[150px] text-xs text-black">
+              <label className="min-w-[150px] text-sm font-medium text-black">
                 <span className="block whitespace-nowrap">N° de série</span>
                 <input
                   ref={(el) => {
@@ -882,20 +882,20 @@ function Index() {
                   required
                   inputMode="numeric"
                   placeholder="Chiffres"
-                  className="mt-1 h-8 w-full max-w-[150px] rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+                  className="mt-1 h-8 w-full max-w-[150px] rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
                 />
               </label>
-              <label className="min-w-[80px] text-xs text-black">
+              <label className="min-w-[80px] text-sm font-medium text-black">
                 <span className="block whitespace-nowrap">Lettre fin</span>
                 <input
                   value={info["sn_suffix"] ?? ""}
                   onChange={(e) => updateInfo("sn_suffix", e.target.value.toUpperCase().slice(0, 3))}
                   disabled={!rule.suffix}
                   placeholder="ex: A, B"
-                  className="mt-1 h-8 w-full max-w-[80px] rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                  className="mt-1 h-8 w-full max-w-[80px] rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                 />
               </label>
-              <label className="min-w-[120px] text-xs text-black">
+              <label className="min-w-[120px] text-sm font-medium text-black">
                 <span className="block whitespace-nowrap">Date de fabrication</span>
                 <input
                   value={info["fabrication"] ?? ""}
@@ -903,7 +903,7 @@ function Index() {
                     fabricationTouched.current = true;
                     updateInfo("fabrication", e.target.value);
                   }}
-                  className="mt-1 h-8 w-full max-w-[120px] rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+                  className="mt-1 h-8 w-full max-w-[120px] rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
                 />
               </label>
               <div className="flex h-8 items-end text-xs text-black">
@@ -921,7 +921,7 @@ function Index() {
             )}
           </div>
 
-          <label className="mt-4 text-xs text-black">
+          <label className="mt-4 text-sm font-medium text-black">
             Pays
             <SmartCombobox
               value={info["pays"] ?? ""}
@@ -934,7 +934,7 @@ function Index() {
             />
           </label>
 
-          <label className="mt-4 text-xs text-black">
+          <label className="mt-4 text-sm font-medium text-black">
             <span className="flex items-center gap-2">
               Ville
               {isGeocoding && <span className="text-[0.65rem] italic">Vérification…</span>}
@@ -950,12 +950,12 @@ function Index() {
                   resolveCity((e.target as HTMLInputElement).value);
                 }
               }}
-              className="mt-1 h-8 w-full rounded border border-input bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+              className="mt-1 h-8 w-full rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             />
           </label>
 
 
-          <fieldset className="mt-4 text-xs text-black sm:col-span-2 md:col-span-4">
+          <fieldset className="mt-4 text-sm font-medium text-black sm:col-span-2 md:col-span-4">
             <legend>Type d'entretien</legend>
             <div className="mt-1 flex flex-wrap items-center gap-4">
               {MAINTENANCE_OPTIONS.map((t) => (
@@ -974,12 +974,12 @@ function Index() {
             </div>
           </fieldset>
 
-          <label className="text-xs text-black sm:col-span-2 md:col-span-4">
+          <label className="text-sm font-medium text-black sm:col-span-2 md:col-span-4">
             Remarques
             <input
               value={info["remarques"] ?? ""}
               onChange={(e) => updateInfo("remarques", e.target.value)}
-              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+              className="mt-1 h-8 w-full rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
             />
           </label>
 
