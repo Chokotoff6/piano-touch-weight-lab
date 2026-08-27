@@ -179,8 +179,8 @@ const MODEL_ADDITIONS: Record<string, { droit: string[]; queue: string[] }> = {
     queue: ["174", "182", "205", "C169", "C189", "C213", "W180", "W206", "K175", "K195", "K219", "K230", "K256", "K280"],
   },
   "C. BECHSTEIN": {
-    droit: ["Modèle 8", "Modèle 9", "Modèle 10", "Concert 8", "112", "116", "124", "A114", "A124", "Millennium 116", "Academy 124"],
-    queue: ["Modèle A", "Modèle B", "Modèle C", "Modèle D", "Modèle E", "Modèle V", "L167", "M116", "A160", "A175", "A190", "A208", "A228", "C234", "D282"],
+    droit: ["Modèle 8", "Modèle 9", "Modèle 10", "Concert 8", "112", "116", "124", "A114", "A124", "Millennium 116", "Academy 124", "V120", "T122", "P126"],
+    queue: ["Modèle A", "Modèle B", "Modèle C", "Modèle D", "Modèle E", "Modèle V", "L167", "M116", "A160", "A175", "A190", "A208", "A228", "C234", "D282", "V158", "T177", "P188"],
   },
   "W. HOFFMANN": {
     droit: ["V120", "T122", "P126", "112", "116", "124"],
