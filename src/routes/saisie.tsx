@@ -567,9 +567,9 @@ function Index() {
       );
       return false;
     }
-    // Validation Do/Do# temporairement désactivée via BYPASS_REQUIRED_KEYS_VALIDATION.
-    if (!BYPASS_REQUIRED_KEYS_VALIDATION && missingRequired.length > 0) {
-      showMessage(missingRequiredMessage(missingRequired));
+    // Règle de remplissage : une blanche + une noire mesurées par octave.
+    if (octaveGaps.length > 0) {
+      showTopbarAlert("save", OCTAVE_RULE_MESSAGE);
       return false;
     }
     return true;
