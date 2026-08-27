@@ -3,9 +3,10 @@ import { useSyncExternalStore } from "react";
 type TopbarState = {
   exportReady: boolean;
   isExporting: boolean;
+  isDirty: boolean;
 };
 
-let state: TopbarState = { exportReady: false, isExporting: false };
+let state: TopbarState = { exportReady: false, isExporting: false, isDirty: false };
 const listeners = new Set<() => void>();
 
 function emit() {

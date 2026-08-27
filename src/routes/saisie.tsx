@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   REQUIRED_KEY_SET,
@@ -79,6 +79,8 @@ const C_KEYS = new Set([4, 16, 28, 40, 52, 64, 76, 88]);
 type Row = { wa: string; wd: string };
 
 const EMPTY: Row[] = Array.from({ length: 88 }, () => ({ wa: "", wd: "" }));
+
+const DRAFT_ROWS_KEY = "ptw_draft_rows";
 
 type SerialRule = { prefix: boolean; suffix: boolean; autoPrefix?: string };
 
@@ -233,8 +235,33 @@ function Index() {
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
   const fabricationTouched = useRef(false);
 
+  const navigate = useNavigate();
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
+
+  // Filet de sécurité local : restauration puis sauvegarde silencieuse des pesées.
+  const draftLoaded = useRef(false);
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(DRAFT_ROWS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Row[];
+        if (Array.isArray(parsed) && parsed.length === 88) setRows(parsed);
+      }
+    } catch {
+      /* stockage indisponible */
+    }
+    draftLoaded.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!draftLoaded.current) return;
+    try {
+      window.localStorage.setItem(DRAFT_ROWS_KEY, JSON.stringify(rows));
+    } catch {
+      /* stockage indisponible */
+    }
+  }, [rows]);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [climateZone, setClimateZone] = useState<ClimateZone | null>(null);
 
@@ -491,7 +518,9 @@ function Index() {
 
   const [currentDbId, setCurrentDbId] = useState<string | null>(null);
   const [askUpdate, setAskUpdate] = useState(false);
+  const [askCompare, setAskCompare] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const goCompareAfterSave = useRef(false);
 
   const buildPayload = (): DiagnosticPayload => {
     const year = Number((info["fabrication"] ?? "").match(/\d{4}/)?.[0]);
@@ -547,26 +576,31 @@ function Index() {
       }
       markSubmission();
       setIsDirty(false);
-      toast.success("Fichier CSV généré et diagnostic synchronisé avec succès");
+      toast.success("Diagnostic synchronisé avec succès");
+      if (goCompareAfterSave.current) {
+        goCompareAfterSave.current = false;
+        void navigate({ to: "/resultats" });
+      }
     } catch {
-      showMessage("La synchronisation cloud a échoué. Le fichier CSV a été généré localement.");
+      goCompareAfterSave.current = false;
+      showMessage("La synchronisation cloud a échoué. Les données restent enregistrées localement.");
     } finally {
       setIsExporting(false);
     }
   };
   useEffect(() => {
-    setTopbarState({ exportReady, isExporting });
+    setTopbarState({ exportReady, isExporting, isDirty });
     return () => {
-      setTopbarState({ exportReady: false, isExporting: false });
+      setTopbarState({ exportReady: false, isExporting: false, isDirty: false });
     };
-  }, [exportReady, isExporting]);
+  }, [exportReady, isExporting, isDirty]);
 
   useEffect(() => {
     const exportCsvOnly = () => {
       if (!guardExport()) return;
       exportCsvFile();
     };
-    const saveCloudOnly = () => {
+    const saveCloud = () => {
       if (!guardExport()) return;
       if (currentDbId && isDirty) {
         setAskUpdate(true);
@@ -574,16 +608,26 @@ function Index() {
       }
       void syncAndFinish(currentDbId ? "update" : "insert");
     };
+    const quickSave = () => {
+      if (!guardExport()) return;
+      void syncAndFinish(currentDbId ? "update" : "insert");
+    };
     const onExport = () => {
       exportCsvOnly();
-      saveCloudOnly();
+      saveCloud();
     };
+    const onPdf = () => window.print();
+    const onCompareGuard = () => setAskCompare(true);
     const onReset = () => setRows(EMPTY);
 
     const handlers: Record<string, EventListener> = {
       "piano-export": onExport as EventListener,
       "piano-export-csv": exportCsvOnly as EventListener,
-      "piano-export-cloud": saveCloudOnly as EventListener,
+      "piano-export-pdf": onPdf as EventListener,
+      "piano-export-cloud": saveCloud as EventListener,
+      "piano-save": saveCloud as EventListener,
+      "piano-save-quick": quickSave as EventListener,
+      "piano-compare-guard": onCompareGuard as EventListener,
       "piano-reset": onReset as EventListener,
     };
 
@@ -744,14 +788,14 @@ function Index() {
   return (
     <main className="mx-auto max-w-[1400px] px-6 py-10">
       <section
-        className="mt-8 rounded-md border-2 border-foreground bg-card p-4 [&_input]:border-foreground/30"
+        className="mt-8 rounded-md border-2 border-foreground bg-card p-4 [&_input]:border-foreground/60"
         data-dirty={isDirty}
         data-saved-at={savedAt ?? ""}
         data-climate-zone={climateZone ?? ""}
       >
-        <h2 className="text-sm font-bold">Informations piano</h2>
+        <h2 className="text-lg font-bold text-black">Informations piano</h2>
         <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-4">
-          <label className="text-xs text-black">
+          <label className="text-sm font-medium text-black">
             Marque
             <SmartCombobox
               value={info["marque"] ?? ""}
@@ -764,9 +808,9 @@ function Index() {
             />
           </label>
 
-          <fieldset className="text-xs text-black">
+          <fieldset className="text-sm font-medium text-black">
             <legend>Type de piano</legend>
-            <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/30 bg-background px-2">
+            <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 bg-white px-2">
               {["Droit", "à Queue"].map((t) => (
                 <label key={t} className="flex items-center gap-1 text-sm text-foreground">
                   <input
@@ -790,7 +834,7 @@ function Index() {
 
 
 
-          <label className="text-xs text-black">
+          <label className="text-sm font-medium text-black">
             Modèle
             <SmartCombobox
               value={info["modele"] ?? ""}
@@ -808,13 +852,13 @@ function Index() {
             />
           </label>
 
-          <div className="mt-4 text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
-            <span className="text-black">Numéro de série</span>{" "}
+          <div className="mt-6 text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
+            <span className="text-sm font-medium text-black">Numéro de série</span>{" "}
             <span className="text-muted-foreground">
               (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
             </span>
             <div className="mt-1 flex items-end justify-start gap-4">
-              <label className="min-w-[80px] text-xs text-black">
+              <label className="min-w-[80px] text-sm font-medium text-black">
                 <span className="block whitespace-nowrap">Lettres avant</span>
                 <input
                   ref={(el) => {
@@ -824,10 +868,10 @@ function Index() {
                   onChange={(e) => onPrefixChange(e.target.value)}
                   disabled={!rule.prefix}
                   placeholder="ex: J, F"
-                  className="mt-1 h-8 w-full max-w-[80px] rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                  className="mt-1 h-8 w-full max-w-[80px] rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                 />
               </label>
-              <label className="min-w-[150px] text-xs text-black">
+              <label className="min-w-[150px] text-sm font-medium text-black">
                 <span className="block whitespace-nowrap">N° de série</span>
                 <input
                   ref={(el) => {
@@ -838,20 +882,20 @@ function Index() {
                   required
                   inputMode="numeric"
                   placeholder="Chiffres"
-                  className="mt-1 h-8 w-full max-w-[150px] rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+                  className="mt-1 h-8 w-full max-w-[150px] rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
                 />
               </label>
-              <label className="min-w-[80px] text-xs text-black">
+              <label className="min-w-[80px] text-sm font-medium text-black">
                 <span className="block whitespace-nowrap">Lettre fin</span>
                 <input
                   value={info["sn_suffix"] ?? ""}
                   onChange={(e) => updateInfo("sn_suffix", e.target.value.toUpperCase().slice(0, 3))}
                   disabled={!rule.suffix}
                   placeholder="ex: A, B"
-                  className="mt-1 h-8 w-full max-w-[80px] rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                  className="mt-1 h-8 w-full max-w-[80px] rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                 />
               </label>
-              <label className="min-w-[120px] text-xs text-black">
+              <label className="min-w-[120px] text-sm font-medium text-black">
                 <span className="block whitespace-nowrap">Date de fabrication</span>
                 <input
                   value={info["fabrication"] ?? ""}
@@ -859,7 +903,7 @@ function Index() {
                     fabricationTouched.current = true;
                     updateInfo("fabrication", e.target.value);
                   }}
-                  className="mt-1 h-8 w-full max-w-[120px] rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+                  className="mt-1 h-8 w-full max-w-[120px] rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
                 />
               </label>
               <div className="flex h-8 items-end text-xs text-black">
@@ -877,7 +921,7 @@ function Index() {
             )}
           </div>
 
-          <label className="mt-4 text-xs text-black">
+          <label className="mt-4 text-sm font-medium text-black">
             Pays
             <SmartCombobox
               value={info["pays"] ?? ""}
@@ -890,7 +934,7 @@ function Index() {
             />
           </label>
 
-          <label className="mt-4 text-xs text-black">
+          <label className="mt-4 text-sm font-medium text-black">
             <span className="flex items-center gap-2">
               Ville
               {isGeocoding && <span className="text-[0.65rem] italic">Vérification…</span>}
@@ -906,12 +950,12 @@ function Index() {
                   resolveCity((e.target as HTMLInputElement).value);
                 }
               }}
-              className="mt-1 h-8 w-full rounded border border-input bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+              className="mt-1 h-8 w-full rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             />
           </label>
 
 
-          <fieldset className="mt-4 text-xs text-black sm:col-span-2 md:col-span-4">
+          <fieldset className="mt-4 text-sm font-medium text-black sm:col-span-2 md:col-span-4">
             <legend>Type d'entretien</legend>
             <div className="mt-1 flex flex-wrap items-center gap-4">
               {MAINTENANCE_OPTIONS.map((t) => (
@@ -930,12 +974,12 @@ function Index() {
             </div>
           </fieldset>
 
-          <label className="text-xs text-black sm:col-span-2 md:col-span-4">
+          <label className="text-sm font-medium text-black sm:col-span-2 md:col-span-4">
             Remarques
             <input
               value={info["remarques"] ?? ""}
               onChange={(e) => updateInfo("remarques", e.target.value)}
-              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+              className="mt-1 h-8 w-full rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
             />
           </label>
 
@@ -990,10 +1034,52 @@ function Index() {
         </div>
       </section>
 
-      <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center justify-center">
-        {renderSection(1, 44, gridRef1)}
-        {renderSection(45, 88, gridRef2)}
-      </div>
+      <section className="mx-auto mt-4 flex w-fit flex-col items-center justify-center rounded-lg border bg-white p-6 shadow-sm">
+        <h2 className="self-start text-lg font-bold text-black">Mesures des touches</h2>
+        <button
+          type="button"
+          onClick={() => setRows(EMPTY)}
+          className="mt-4 rounded-md border border-input bg-background px-4 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+        >
+          Reset
+        </button>
+        <div className="flex w-[1200px] max-w-full flex-col items-center justify-center">
+          {renderSection(1, 44, gridRef1)}
+          {renderSection(45, 88, gridRef2)}
+        </div>
+      </section>
+
+      <AlertDialog open={askCompare} onOpenChange={setAskCompare}>
+        <AlertDialogContent className="w-full max-w-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Modifications non sauvegardées</AlertDialogTitle>
+            <AlertDialogDescription>
+              ⚠️ Vos modifications actuelles ne sont pas sauvegardées. Pour intégrer ces mesures
+              dans vos graphiques, une sauvegarde est nécessaire.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continuer la saisie</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void navigate({ to: "/resultats" })}>
+              Ignorer et accéder aux graphiques
+            </AlertDialogAction>
+            <AlertDialogAction
+              onClick={() => {
+                if (!guardExport()) return;
+                goCompareAfterSave.current = true;
+                if (currentDbId && isDirty) {
+                  setAskUpdate(true);
+                  return;
+                }
+                void syncAndFinish(currentDbId ? "update" : "insert");
+              }}
+            >
+              Sauvegarder d'abord
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       <AlertDialog open={askUpdate} onOpenChange={setAskUpdate}>
         <AlertDialogContent className="w-full max-w-xl">

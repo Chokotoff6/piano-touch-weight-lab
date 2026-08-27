@@ -149,18 +149,51 @@ function RootComponent() {
     window.dispatchEvent(new CustomEvent(type, { bubbles: true }));
   };
 
+  const actionsDisabled = !isSaisie || !topbar.exportReady || topbar.isExporting;
+
   return (
     <QueryClientProvider client={queryClient}>
       <nav className="border-b border-border bg-background">
         <div className="mx-auto max-w-[1400px] px-4 py-3 sm:px-6">
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
-            <div className="flex min-w-0 flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
               <Link to="/" className={linkClass} activeOptions={{ exact: true }} activeProps={{ className: activeLinkClass }}>
                 Accueil
               </Link>
               <Link to="/saisie" className={linkClass} activeProps={{ className: activeLinkClass }}>
                 Saisie
               </Link>
+            </div>
+
+            <DropdownMenu>
+              <div className="flex items-center">
+                <Button
+                  size="sm"
+                  className="rounded-r-none"
+                  disabled={actionsDisabled}
+                  onClick={() => dispatchAction("piano-save")}
+                >
+                  Save
+                </Button>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-l-none border-l-0 px-2"
+                    disabled={actionsDisabled}
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </div>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => dispatchAction("piano-save-quick")}>
+                  Sauvegarde rapide
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
               <Link
                 to="/resultats"
                 className={linkClass}
@@ -174,6 +207,11 @@ function RootComponent() {
                         detail: { message: missingRequiredMessage(missing) },
                       }),
                     );
+                    return;
+                  }
+                  if (isSaisie && topbar.isDirty) {
+                    e.preventDefault();
+                    dispatchAction("piano-compare-guard");
                   }
                 }}
               >
@@ -181,77 +219,60 @@ function RootComponent() {
               </Link>
             </div>
 
-            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-              <DropdownMenu>
-                <div className="flex items-center">
-                  <Button
-                    size="sm"
-                    className="rounded-r-none"
-                    disabled={!isSaisie || !topbar.exportReady || topbar.isExporting}
-                    onClick={() => dispatchAction("piano-export")}
-                  >
-                    Exporter les mesures
-                  </Button>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="rounded-l-none border-l-0 px-2"
-                      disabled={!isSaisie || !topbar.exportReady || topbar.isExporting}
-                    >
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                </div>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => dispatchAction("piano-export-csv")}>
-                    Exporter CSV seul
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => dispatchAction("piano-export-cloud")}>
-                    Sauvegarder sur le cloud
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <div className="mx-6 h-6 w-[1px] bg-gray-200" aria-hidden="true" />
 
-              <DropdownMenu>
-                <div className="flex items-center">
+            <DropdownMenu>
+              <div className="flex items-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-r-none"
+                  disabled={actionsDisabled}
+                  onClick={() => dispatchAction("piano-export-csv")}
+                >
+                  Exporter
+                </Button>
+                <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="rounded-r-none"
-                    disabled
+                    className="rounded-l-none border-l-0 px-2"
+                    disabled={actionsDisabled}
                   >
-                    Importer / Charger
+                    <ChevronDown className="h-4 w-4" />
                   </Button>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="rounded-l-none border-l-0 px-2"
-                      disabled
-                    >
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                </div>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem disabled>Importer un CSV</DropdownMenuItem>
-                  <DropdownMenuItem disabled>Charger une sauvegarde</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                </DropdownMenuTrigger>
+              </div>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => dispatchAction("piano-export-csv")}>
+                  Télécharger le fichier CSV local
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => dispatchAction("piano-export-pdf")}>
+                  Générer le rapport PDF d'impression
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!isSaisie}
-                onClick={() => dispatchAction("piano-reset")}
-              >
-                Reset
-              </Button>
-            </div>
+            <DropdownMenu>
+              <div className="flex items-center">
+                <Button variant="outline" size="sm" className="rounded-r-none" disabled>
+                  Importer
+                </Button>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="rounded-l-none border-l-0 px-2" disabled>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </div>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem disabled>Charger un fichier CSV local</DropdownMenuItem>
+                <DropdownMenuItem disabled>Restaurer depuis l'historique en ligne</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </nav>
+
 
       <a
         href="https://buymeacoffee.com"
