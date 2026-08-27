@@ -539,23 +539,14 @@ function Index() {
     );
   };
 
-  // --- Touches obligatoires (gate global) ---------------------------------------
+  // --- Gate global (navigation Comparer) ----------------------------------------
 
   useEffect(() => {
-    requiredKeysGate.getMissing = () => missingRequiredKeys(rows);
+    saisieGate.hasData = () => hasAnyMeasurement(rows);
     return () => {
-      requiredKeysGate.getMissing = null;
+      saisieGate.hasData = null;
     };
   }, [rows]);
-
-  useEffect(() => {
-    const onBlocked = (e: Event) => {
-      const detail = (e as CustomEvent<{ message: string }>).detail;
-      if (detail?.message) showMessage(detail.message);
-    };
-    window.addEventListener("required-keys-blocked", onBlocked);
-    return () => window.removeEventListener("required-keys-blocked", onBlocked);
-  }, []);
 
   // --- Export & sauvegarde cloud -------------------------------------------------
 
