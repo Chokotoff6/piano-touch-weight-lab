@@ -872,10 +872,6 @@ function Index() {
                 {SERIAL_FORMAT_ERROR}
               </p>
             )}
-            <p className="mt-1 text-[0.7rem] leading-snug text-muted-foreground">
-              Profil d'usine : <span className="text-foreground">{profile.label}</span>
-              {profile.frictionTarget !== null && ` — friction cible ${profile.frictionTarget} g`}
-            </p>
           </div>
 
           <label className="text-xs text-black">
