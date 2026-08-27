@@ -28,6 +28,9 @@ export function SmartCombobox({
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState(false);
   const wrap = useRef<HTMLDivElement | null>(null);
+  const input = useRef<HTMLInputElement | null>(null);
+  /** Interaction sur un contrôle « ami » (ex : Type de piano) : la liste reste ouverte. */
+  const keepOpen = useRef(false);
 
   useEffect(() => setDraft(value), [value]);
 
