@@ -233,8 +233,33 @@ function Index() {
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
   const fabricationTouched = useRef(false);
 
+  const navigate = useNavigate();
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
+
+  // Filet de sécurité local : restauration puis sauvegarde silencieuse des pesées.
+  const draftLoaded = useRef(false);
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(DRAFT_ROWS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Row[];
+        if (Array.isArray(parsed) && parsed.length === 88) setRows(parsed);
+      }
+    } catch {
+      /* stockage indisponible */
+    }
+    draftLoaded.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!draftLoaded.current) return;
+    try {
+      window.localStorage.setItem(DRAFT_ROWS_KEY, JSON.stringify(rows));
+    } catch {
+      /* stockage indisponible */
+    }
+  }, [rows]);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [climateZone, setClimateZone] = useState<ClimateZone | null>(null);
 
