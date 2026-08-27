@@ -860,7 +860,7 @@ function Index() {
             </span>
             <div className="mt-1 flex items-end justify-start gap-4">
               <label className="min-w-[80px] text-sm font-normal italic text-black">
-                <span className="block whitespace-nowrap">Lettres avant</span>
+                <span className="block whitespace-nowrap">Lettres</span>
                 <input
                   ref={(el) => {
                     snRef.current["sn_prefix"] = el;
