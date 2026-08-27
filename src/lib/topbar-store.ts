@@ -1,12 +1,20 @@
 import { useSyncExternalStore } from "react";
 
+export type TopbarAlert = { anchor: "save" | "compare"; message: string } | null;
+
 type TopbarState = {
   exportReady: boolean;
   isExporting: boolean;
   isDirty: boolean;
+  alert: TopbarAlert;
 };
 
-let state: TopbarState = { exportReady: false, isExporting: false, isDirty: false };
+let state: TopbarState = {
+  exportReady: false,
+  isExporting: false,
+  isDirty: false,
+  alert: null,
+};
 const listeners = new Set<() => void>();
 
 function emit() {
@@ -16,6 +24,23 @@ function emit() {
 export function setTopbarState(next: Partial<TopbarState>) {
   state = { ...state, ...next };
   emit();
+}
+
+let alertTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function showTopbarAlert(anchor: "save" | "compare", message: string) {
+  if (alertTimer) clearTimeout(alertTimer);
+  setTopbarState({ alert: { anchor, message } });
+  alertTimer = setTimeout(() => {
+    setTopbarState({ alert: null });
+    alertTimer = null;
+  }, 5000);
+}
+
+export function clearTopbarAlert() {
+  if (alertTimer) clearTimeout(alertTimer);
+  alertTimer = null;
+  setTopbarState({ alert: null });
 }
 
 export function getTopbarState() {

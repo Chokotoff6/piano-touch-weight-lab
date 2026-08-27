@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { missingRequiredMessage, requiredKeysGate } from "@/lib/required-keys";
-import { setTopbarState, useTopbarState } from "@/lib/topbar-store";
+import { EMPTY_DATA_MESSAGE, saisieGate } from "@/lib/required-keys";
+import { setTopbarState, showTopbarAlert, useTopbarState } from "@/lib/topbar-store";
 import {
   ChevronDown,
 } from "lucide-react";
@@ -163,64 +163,74 @@ function RootComponent() {
               <Link to="/saisie" className={linkClass} activeProps={{ className: activeLinkClass }}>
                 Saisie
               </Link>
-              <Link
-                to="/resultats"
-                className={linkClass}
-                activeProps={{ className: activeLinkClass }}
-                onClick={(e) => {
-                  const missing = requiredKeysGate.getMissing?.() ?? [];
-                  if (missing.length > 0) {
-                    e.preventDefault();
-                    window.dispatchEvent(
-                      new CustomEvent("required-keys-blocked", {
-                        detail: { message: missingRequiredMessage(missing) },
-                      }),
-                    );
-                    return;
-                  }
-                  if (isSaisie && topbar.isDirty) {
-                    e.preventDefault();
-                    dispatchAction("piano-compare-guard");
-                  }
-                }}
-              >
-                Comparer
-              </Link>
+              <div className="relative">
+                <Link
+                  to="/resultats"
+                  className={linkClass}
+                  activeProps={{ className: activeLinkClass }}
+                  onClick={(e) => {
+                    const hasData = saisieGate.hasData?.() ?? true;
+                    if (!hasData) {
+                      e.preventDefault();
+                      showTopbarAlert("compare", EMPTY_DATA_MESSAGE);
+                      return;
+                    }
+                    if (isSaisie && topbar.isDirty) {
+                      e.preventDefault();
+                      dispatchAction("piano-compare-guard");
+                    }
+                  }}
+                >
+                  Comparer
+                </Link>
+                {topbar.alert?.anchor === "compare" && (
+                  <div className="absolute left-0 top-full z-50 mt-2 w-72 rounded-md border border-amber-500 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 shadow-lg">
+                    {topbar.alert.message}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="mx-10 h-6 w-[2px] bg-gray-400" aria-hidden="true" />
 
-            <DropdownMenu>
-              <div className="flex items-center">
-                <Button
-                  size="sm"
-                  variant={topbar.isDirty ? "default" : "outline"}
-                  className={`rounded-r-none text-lg ${topbar.isDirty ? "" : "bg-white hover:bg-accent"}`}
-                  disabled={actionsDisabled}
-                  onClick={() => dispatchAction("piano-save")}
-                >
-                  Sauver
-                </Button>
-                <DropdownMenuTrigger asChild>
+            <div className="relative">
+              <DropdownMenu>
+                <div className="flex items-center">
                   <Button
-                    variant={topbar.isDirty ? "default" : "outline"}
                     size="sm"
-                    className={`rounded-l-none border-l-0 px-2 ${topbar.isDirty ? "" : "bg-white hover:bg-accent"}`}
+                    variant={topbar.isDirty ? "default" : "outline"}
+                    className={`rounded-r-none text-lg ${topbar.isDirty ? "" : "bg-white hover:bg-accent"}`}
                     disabled={actionsDisabled}
+                    onClick={() => dispatchAction("piano-save")}
                   >
-                    <ChevronDown className="h-4 w-4" />
+                    Sauver
                   </Button>
-                </DropdownMenuTrigger>
-              </div>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem onClick={() => dispatchAction("piano-save-cloud")}>
-                  Synchronisation cloud
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => dispatchAction("piano-save-quick")}>
-                  Sauvegarde rapide
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant={topbar.isDirty ? "default" : "outline"}
+                      size="sm"
+                      className={`rounded-l-none border-l-0 px-2 ${topbar.isDirty ? "" : "bg-white hover:bg-accent"}`}
+                      disabled={actionsDisabled}
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </div>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => dispatchAction("piano-save-cloud")}>
+                    Synchronisation cloud
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => dispatchAction("piano-save-quick")}>
+                    Sauvegarde rapide
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              {topbar.alert?.anchor === "save" && (
+                <div className="absolute left-0 top-full z-50 mt-2 w-80 rounded-md border border-amber-500 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 shadow-lg">
+                  {topbar.alert.message}
+                </div>
+              )}
+            </div>
 
             <DropdownMenu>
               <div className="flex items-center">
@@ -282,7 +292,7 @@ function RootComponent() {
         rel="noopener noreferrer"
         title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
         aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
-        className="fixed right-4 top-2 z-50 flex h-16 w-16 items-center justify-center rounded-lg border border-input bg-background text-3xl shadow-sm hover:bg-accent"
+        className="fixed right-6 top-4 z-50 flex h-32 w-32 items-center justify-center rounded-2xl border-4 border-amber-600 bg-amber-400 text-7xl text-amber-950 shadow-xl transition-transform hover:scale-105 hover:bg-amber-300"
       >
         ☕
       </a>
