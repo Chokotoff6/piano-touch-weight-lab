@@ -58,11 +58,21 @@ export function SmartCombobox({
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
-      if (wrap.current && !wrap.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("[data-keep-combobox-open]")) {
+        // le filtre change mais la liste ouverte reste affichée
+        keepOpen.current = true;
+        window.setTimeout(() => {
+          keepOpen.current = false;
+          if (open) input.current?.focus();
+        }, 0);
+        return;
+      }
+      if (wrap.current && !wrap.current.contains(target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
-  }, []);
+  }, [open]);
 
   return (
     <div ref={wrap} className="relative">
