@@ -163,29 +163,32 @@ function RootComponent() {
               <Link to="/saisie" className={linkClass} activeProps={{ className: activeLinkClass }}>
                 Saisie
               </Link>
-              <Link
-                to="/resultats"
-                className={linkClass}
-                activeProps={{ className: activeLinkClass }}
-                onClick={(e) => {
-                  const missing = requiredKeysGate.getMissing?.() ?? [];
-                  if (missing.length > 0) {
-                    e.preventDefault();
-                    window.dispatchEvent(
-                      new CustomEvent("required-keys-blocked", {
-                        detail: { message: missingRequiredMessage(missing) },
-                      }),
-                    );
-                    return;
-                  }
-                  if (isSaisie && topbar.isDirty) {
-                    e.preventDefault();
-                    dispatchAction("piano-compare-guard");
-                  }
-                }}
-              >
-                Comparer
-              </Link>
+              <div className="relative">
+                <Link
+                  to="/resultats"
+                  className={linkClass}
+                  activeProps={{ className: activeLinkClass }}
+                  onClick={(e) => {
+                    const hasData = saisieGate.hasData?.() ?? true;
+                    if (!hasData) {
+                      e.preventDefault();
+                      showTopbarAlert("compare", EMPTY_DATA_MESSAGE);
+                      return;
+                    }
+                    if (isSaisie && topbar.isDirty) {
+                      e.preventDefault();
+                      dispatchAction("piano-compare-guard");
+                    }
+                  }}
+                >
+                  Comparer
+                </Link>
+                {topbar.alert?.anchor === "compare" && (
+                  <div className="absolute left-0 top-full z-50 mt-2 w-72 rounded-md border border-amber-500 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 shadow-lg">
+                    {topbar.alert.message}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="mx-10 h-6 w-[2px] bg-gray-400" aria-hidden="true" />
