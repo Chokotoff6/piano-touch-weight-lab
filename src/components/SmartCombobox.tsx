@@ -90,7 +90,7 @@ export function SmartCombobox({
             setTyped(false);
           }
         }}
-        className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+        className={`mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground ${className ?? ""}`}
       />
       {open && !disabled && (
         <ul className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded border border-input bg-popover py-1 text-sm shadow-md">
