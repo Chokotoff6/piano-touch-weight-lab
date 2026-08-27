@@ -92,7 +92,10 @@ export function SmartCombobox({
           setTyped(e.target.value.length > 0);
           setOpen(true);
         }}
-        onBlur={() => commit(draft)}
+        onBlur={() => {
+          if (keepOpen.current) return;
+          commit(draft);
+        }}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
