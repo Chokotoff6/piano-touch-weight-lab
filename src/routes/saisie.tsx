@@ -809,7 +809,10 @@ function Index() {
           </label>
 
           <div className="mt-4 text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
-            Numéro de série (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
+            <span className="text-black">Numéro de série</span>{" "}
+            <span className="text-muted-foreground">
+              (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
+            </span>
             <div className="mt-1 flex items-end justify-start gap-4">
               <label className="min-w-[80px] text-xs text-black">
                 <span className="block whitespace-nowrap">Lettres avant</span>
