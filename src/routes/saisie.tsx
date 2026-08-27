@@ -1035,7 +1035,7 @@ function Index() {
       </section>
 
       <section className="mx-auto mt-4 flex w-fit flex-col items-center justify-center rounded-lg border bg-white p-6 shadow-sm">
-        <h2 className="self-start text-lg font-bold text-black">Mesures des touches</h2>
+        <h2 className="self-start text-lg font-bold text-black">Mesures poids de touches</h2>
         <button
           type="button"
           onClick={() => setRows(EMPTY)}
