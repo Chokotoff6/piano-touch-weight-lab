@@ -789,12 +789,12 @@ function Index() {
   return (
     <main className="mx-auto max-w-[1400px] px-6 py-10">
       <section
-        className="mt-8 rounded-md border-2 border-foreground bg-card p-4 [&_input]:border-foreground/60"
+        className="relative mt-10 rounded-md border-2 border-foreground bg-card p-4 pt-5 [&_input]:border-foreground/60"
         data-dirty={isDirty}
         data-saved-at={savedAt ?? ""}
         data-climate-zone={climateZone ?? ""}
       >
-        <h2 className="text-lg font-bold text-black">Informations piano</h2>
+        <h2 className="absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black">Informations piano</h2>
         <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-4">
           <label className="text-lg font-semibold text-black">
             Marque
@@ -1004,8 +1004,8 @@ function Index() {
         </div>
       )}
 
-      <section className="mt-4 rounded-md border-2 border-foreground bg-card p-4">
-        <h2 className="text-lg font-bold text-black">Moyennes mesurées</h2>
+      <section className="relative mt-8 rounded-md border-2 border-foreground bg-card p-4 pt-5">
+        <h2 className="absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black">Moyennes mesurées</h2>
         <div className="mt-2 grid grid-cols-4 gap-3">
           {([
             { key: "wa", label: "Downweight (Wa)" },
@@ -1035,23 +1035,22 @@ function Index() {
         </div>
       </section>
 
-      <section className="mx-auto mt-4 w-fit rounded-md border-2 border-foreground bg-card p-4">
-        <h2 className="text-lg font-bold text-black">Mesures poids de touches</h2>
-        <div className="mx-auto mt-1 flex w-fit max-w-full flex-col items-center justify-center">
+      <section className="relative mt-8 rounded-md border-2 border-foreground bg-card p-4 pt-5">
+        <h2 className="absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black">Mesures poids de touches</h2>
+        <div className="flex justify-start">
+          <button
+            type="button"
+            onClick={() => setRows(EMPTY)}
+            className="rounded-md border border-input bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
+          >
+            Reset
+          </button>
+        </div>
+        <div className="mx-auto flex w-fit max-w-full flex-col items-center justify-center">
           {renderSection(1, 44, gridRef1)}
           {renderSection(45, 88, gridRef2)}
         </div>
       </section>
-
-      <div className="mt-2 flex justify-start">
-        <button
-          type="button"
-          onClick={() => setRows(EMPTY)}
-          className="rounded-md border border-input bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
-        >
-          Reset
-        </button>
-      </div>
 
       <AlertDialog open={askCompare} onOpenChange={setAskCompare}>
         <AlertDialogContent className="w-full max-w-xl">
