@@ -751,7 +751,7 @@ function Index() {
       >
         <h2 className="text-sm font-bold">Informations piano</h2>
         <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-4">
-          <label className="text-xs text-muted-foreground">
+          <label className="text-xs text-black">
             Marque
             <SmartCombobox
               value={info["marque"] ?? ""}
