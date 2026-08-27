@@ -1,6 +1,6 @@
 export type PianoType = "Droit" | "à Queue";
 
-export const BRAND_MODELS_BY_TYPE: Record<string, { droit: string[]; queue: string[] }> = {
+const BASE_BRAND_MODELS_BY_TYPE: Record<string, { droit: string[]; queue: string[] }> = {
   YAMAHA: {
     droit: [
       "U1", "U1A", "U1B", "U1C", "U1H", "U1M", "U1G", "U1E", "U10A", "U10BL", "U100",
