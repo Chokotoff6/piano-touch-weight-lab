@@ -593,7 +593,7 @@ function Index() {
 
 
   const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
-    <section className="mt-8" aria-label={`Touches ${from} à ${to}`}>
+    <section className="mt-8 flex w-full flex-col items-center" aria-label={`Touches ${from} à ${to}`}>
       <div className="technical-sheet">
         <div className="technical-labels min-w-[170px] w-44" aria-hidden="true">
           <div className="label-key" />
