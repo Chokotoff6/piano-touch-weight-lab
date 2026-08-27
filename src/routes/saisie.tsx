@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
+  REQUIRED_KEY_SET,
   hasAnyMeasurement,
   incompleteOctaves,
   OCTAVE_RULE_MESSAGE,
