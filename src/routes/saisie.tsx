@@ -897,7 +897,7 @@ function Index() {
                 />
               </label>
               <label className="min-w-[120px] text-sm font-normal italic text-black">
-                <span className="block whitespace-nowrap">Date de fabrication</span>
+                <span className="block whitespace-nowrap">Date fabrication</span>
                 <input
                   value={info["fabrication"] ?? ""}
                   onChange={(e) => {
