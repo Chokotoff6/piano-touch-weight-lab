@@ -28,7 +28,7 @@ import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
 import { buildCsv, downloadCsv } from "@/lib/export-csv";
 import { getFingerprint } from "@/lib/fingerprint";
 import { insertDiagnostic, updateDiagnostic, type DiagnosticPayload } from "@/lib/diagnostics";
-import { setTopbarState } from "@/lib/topbar-store";
+import { setTopbarState, showTopbarAlert } from "@/lib/topbar-store";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -79,10 +79,6 @@ const MAINTENANCE_OPTIONS = [
   "Réglages personnalisés",
   "Modifications importantes",
 ] as const;
-
-// Commutateur temporaire : désactive le contrôle des touches Do/Do# lors de l'export/sauvegarde.
-// Passer à `false` pour réactiver la validation obligatoire.
-const BYPASS_REQUIRED_KEYS_VALIDATION = true;
 
 const BLACK_RATIO = 0.605;
 
@@ -276,6 +272,7 @@ function Index() {
   const [isDirty, setIsDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [blockMessage, setBlockMessage] = useState<string | null>(null);
+  const remarquesRef = useRef<HTMLInputElement | null>(null);
   const blockTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -981,7 +978,7 @@ function Index() {
                     resolveCity((e.target as HTMLInputElement).value);
                   }
                 }}
-                className={INPUT_CLASS}
+                className={`${INPUT_CLASS} !bg-white disabled:!bg-white`}
               />
             </label>
 
@@ -996,7 +993,12 @@ function Index() {
                       value={t}
                       required
                       checked={info["entretien"] === t}
-                      onChange={() => updateInfo("entretien", t)}
+                      onChange={() => {
+                        updateInfo("entretien", t);
+                        if (t === "Modifications importantes") {
+                          setTimeout(() => remarquesRef.current?.focus(), 0);
+                        }
+                      }}
                     />
                     {t}
                   </label>
@@ -1006,7 +1008,12 @@ function Index() {
 
             <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
               Remarques
+              {info["entretien"] === "Modifications importantes" && (
+                <span className="ml-1 text-sm font-normal text-destructive">(obligatoire)</span>
+              )}
               <input
+                ref={remarquesRef}
+                required={info["entretien"] === "Modifications importantes"}
                 value={info["remarques"] ?? ""}
                 onChange={(e) => updateInfo("remarques", e.target.value)}
                 className={INPUT_CLASS}
@@ -1076,7 +1083,7 @@ function Index() {
         <button
           type="button"
           onClick={() => setRows(EMPTY)}
-          className="absolute left-[calc(1rem+4rem)] top-16 z-10 -translate-x-1/2 rounded-md border border-input bg-background px-3 py-1 text-base font-bold text-muted-foreground transition-colors hover:bg-accent"
+          className="absolute left-[calc(1rem+4rem)] top-4 z-10 -translate-x-1/2 rounded-md border border-input bg-background px-3 py-1 text-base font-bold text-muted-foreground transition-colors hover:bg-accent"
         >
           Reset
         </button>
