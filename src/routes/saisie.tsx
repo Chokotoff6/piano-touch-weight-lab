@@ -625,6 +625,7 @@ function Index() {
       "piano-export-csv": exportCsvOnly as EventListener,
       "piano-export-pdf": onPdf as EventListener,
       "piano-export-cloud": saveCloud as EventListener,
+      "piano-save-cloud": saveCloud as EventListener,
       "piano-save": saveCloud as EventListener,
       "piano-save-quick": quickSave as EventListener,
       "piano-compare-guard": onCompareGuard as EventListener,
@@ -795,7 +796,7 @@ function Index() {
       >
         <h2 className="text-lg font-bold text-black">Informations piano</h2>
         <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-4">
-          <label className="text-sm font-medium text-black">
+          <label className="text-lg font-semibold text-black">
             Marque
             <SmartCombobox
               value={info["marque"] ?? ""}
@@ -808,7 +809,7 @@ function Index() {
             />
           </label>
 
-          <fieldset className="text-sm font-medium text-black">
+          <fieldset className="text-lg font-semibold text-black">
             <legend>Type de piano</legend>
             <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 bg-white px-2">
               {["Droit", "à Queue"].map((t) => (
@@ -834,7 +835,7 @@ function Index() {
 
 
 
-          <label className="text-sm font-medium text-black">
+          <label className="text-lg font-semibold text-black">
             Modèle
             <SmartCombobox
               value={info["modele"] ?? ""}
@@ -852,13 +853,13 @@ function Index() {
             />
           </label>
 
-          <div className="mt-6 text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
-            <span className="text-sm font-medium text-black">Numéro de série</span>{" "}
+          <div className="mt-10 text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
+            <span className="text-lg font-semibold text-black">Numéro de série</span>{" "}
             <span className="text-muted-foreground">
               (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
             </span>
             <div className="mt-1 flex items-end justify-start gap-4">
-              <label className="min-w-[80px] text-sm font-medium text-black">
+              <label className="min-w-[80px] text-sm font-normal italic text-black">
                 <span className="block whitespace-nowrap">Lettres avant</span>
                 <input
                   ref={(el) => {
@@ -871,7 +872,7 @@ function Index() {
                   className="mt-1 h-8 w-full max-w-[80px] rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                 />
               </label>
-              <label className="min-w-[150px] text-sm font-medium text-black">
+              <label className="min-w-[150px] text-sm font-normal italic text-black">
                 <span className="block whitespace-nowrap">N° de série</span>
                 <input
                   ref={(el) => {
@@ -885,7 +886,7 @@ function Index() {
                   className="mt-1 h-8 w-full max-w-[150px] rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
                 />
               </label>
-              <label className="min-w-[80px] text-sm font-medium text-black">
+              <label className="min-w-[80px] text-sm font-normal italic text-black">
                 <span className="block whitespace-nowrap">Lettre fin</span>
                 <input
                   value={info["sn_suffix"] ?? ""}
@@ -895,7 +896,7 @@ function Index() {
                   className="mt-1 h-8 w-full max-w-[80px] rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                 />
               </label>
-              <label className="min-w-[120px] text-sm font-medium text-black">
+              <label className="min-w-[120px] text-sm font-normal italic text-black">
                 <span className="block whitespace-nowrap">Date de fabrication</span>
                 <input
                   value={info["fabrication"] ?? ""}
@@ -921,7 +922,7 @@ function Index() {
             )}
           </div>
 
-          <label className="mt-4 text-sm font-medium text-black">
+          <label className="mt-4 text-lg font-semibold text-black">
             Pays
             <SmartCombobox
               value={info["pays"] ?? ""}
@@ -934,7 +935,7 @@ function Index() {
             />
           </label>
 
-          <label className="mt-4 text-sm font-medium text-black">
+          <label className="mt-4 text-lg font-semibold text-black">
             <span className="flex items-center gap-2">
               Ville
               {isGeocoding && <span className="text-[0.65rem] italic">Vérification…</span>}
@@ -955,7 +956,7 @@ function Index() {
           </label>
 
 
-          <fieldset className="mt-4 text-sm font-medium text-black sm:col-span-2 md:col-span-4">
+          <fieldset className="mt-4 text-lg font-semibold text-black sm:col-span-2 md:col-span-4">
             <legend>Type d'entretien</legend>
             <div className="mt-1 flex flex-wrap items-center gap-4">
               {MAINTENANCE_OPTIONS.map((t) => (
@@ -974,7 +975,7 @@ function Index() {
             </div>
           </fieldset>
 
-          <label className="text-sm font-medium text-black sm:col-span-2 md:col-span-4">
+          <label className="mt-6 text-lg font-semibold text-black sm:col-span-2 md:col-span-4">
             Remarques
             <input
               value={info["remarques"] ?? ""}
@@ -1004,7 +1005,7 @@ function Index() {
       )}
 
       <section className="mt-4 rounded-md border-2 border-foreground bg-card p-4">
-        <h2 className="text-sm font-bold">Moyennes mesurées</h2>
+        <h2 className="text-lg font-bold text-black">Moyennes mesurées</h2>
         <div className="mt-2 grid grid-cols-4 gap-3">
           {([
             { key: "wa", label: "Downweight (Wa)" },
@@ -1034,20 +1035,23 @@ function Index() {
         </div>
       </section>
 
-      <section className="mx-auto mt-4 flex w-fit flex-col items-center justify-center rounded-lg border bg-white p-6 shadow-sm">
-        <h2 className="self-start text-lg font-bold text-black">Mesures poids de touches</h2>
-        <button
-          type="button"
-          onClick={() => setRows(EMPTY)}
-          className="mt-4 rounded-md border border-input bg-background px-4 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-        >
-          Reset
-        </button>
-        <div className="flex w-[1200px] max-w-full flex-col items-center justify-center">
+      <section className="mx-auto mt-4 w-fit rounded-md border-2 border-foreground bg-card p-4">
+        <h2 className="text-lg font-bold text-black">Mesures poids de touches</h2>
+        <div className="mx-auto mt-1 flex w-fit max-w-full flex-col items-center justify-center">
           {renderSection(1, 44, gridRef1)}
           {renderSection(45, 88, gridRef2)}
         </div>
       </section>
+
+      <div className="mt-2 flex justify-start">
+        <button
+          type="button"
+          onClick={() => setRows(EMPTY)}
+          className="rounded-md border border-input bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
+        >
+          Reset
+        </button>
+      </div>
 
       <AlertDialog open={askCompare} onOpenChange={setAskCompare}>
         <AlertDialogContent className="w-full max-w-xl">
