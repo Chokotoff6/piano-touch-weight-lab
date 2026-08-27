@@ -203,9 +203,9 @@ function RootComponent() {
                 </Button>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    variant="outline"
+                    variant={topbar.isDirty ? "default" : "outline"}
                     size="sm"
-                    className="rounded-l-none border-l-0 px-2"
+                    className={`rounded-l-none border-l-0 px-2 ${topbar.isDirty ? "" : "bg-white hover:bg-accent"}`}
                     disabled={actionsDisabled}
                   >
                     <ChevronDown className="h-4 w-4" />
