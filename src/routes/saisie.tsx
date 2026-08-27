@@ -810,7 +810,7 @@ function Index() {
           </label>
 
           <fieldset className="text-lg font-semibold text-black">
-            <legend>Type de piano</legend>
+            <legend>Type piano</legend>
             <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 bg-white px-2">
               {["Droit", "à Queue"].map((t) => (
                 <label key={t} className="flex items-center gap-1 text-sm text-foreground">
@@ -860,7 +860,7 @@ function Index() {
             </span>
             <div className="mt-1 flex items-end justify-start gap-4">
               <label className="min-w-[80px] text-sm font-normal italic text-black">
-                <span className="block whitespace-nowrap">Lettres avant</span>
+                <span className="block whitespace-nowrap">Lettres</span>
                 <input
                   ref={(el) => {
                     snRef.current["sn_prefix"] = el;
@@ -897,7 +897,7 @@ function Index() {
                 />
               </label>
               <label className="min-w-[120px] text-sm font-normal italic text-black">
-                <span className="block whitespace-nowrap">Date de fabrication</span>
+                <span className="block whitespace-nowrap">Date fabrication</span>
                 <input
                   value={info["fabrication"] ?? ""}
                   onChange={(e) => {
