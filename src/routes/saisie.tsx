@@ -836,7 +836,7 @@ function Index() {
               />
             </label>
 
-            <fieldset className={`max-w-[200px] ${FIELD_LABEL_CLASS}`}>
+            <fieldset className={FIELD_LABEL_CLASS} data-keep-combobox-open>
               <legend>Type</legend>
               <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 bg-white px-2">
                 {["Droit", "à Queue"].map((t) => (
