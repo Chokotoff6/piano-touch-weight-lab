@@ -112,7 +112,7 @@ const FIELD_LABEL_CLASS = "text-lg font-semibold text-black";
 /** Sous-label secondaire (numéro de série éclaté). */
 const SUB_LABEL_CLASS = "text-sm font-normal italic text-black";
 /** Colonne d'étiquettes à gauche des claviers. */
-const SIDE_LABEL_CLASS = "min-w-[170px] w-44 text-right";
+const SIDE_LABEL_CLASS = "min-w-[120px] w-32 text-right";
 
 // ---------------------------------------------------------------------------
 // Petits composants internes
@@ -833,7 +833,7 @@ function Index() {
         data-climate-zone={climateZone ?? ""}
       >
         <Frame title="Informations piano" className="mt-10 [&_input]:border-foreground/60">
-          <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-4">
+          <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-[1fr_210px_1fr_1fr]">
             <label className={FIELD_LABEL_CLASS}>
               Marque
               <SmartCombobox
@@ -1080,11 +1080,11 @@ function Index() {
         </div>
       </Frame>
 
-      <Frame title="Mesures poids de touches" className="mt-8">
+      <Frame title="Mesures poids de touches" className="mt-8 pb-10">
         <button
           type="button"
           onClick={() => setRows(EMPTY)}
-          className="absolute left-4 top-4 z-10 rounded-md border border-input bg-background px-3 py-1 text-base font-bold text-muted-foreground transition-colors hover:bg-accent"
+          className="absolute left-[calc(1rem+4rem)] top-16 z-10 -translate-x-1/2 rounded-md border border-input bg-background px-3 py-1 text-base font-bold text-muted-foreground transition-colors hover:bg-accent"
         >
           Reset
         </button>
