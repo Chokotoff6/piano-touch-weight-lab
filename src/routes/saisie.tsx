@@ -767,7 +767,7 @@ function Index() {
           <fieldset className="text-xs text-muted-foreground">
             <legend>Type de piano</legend>
             <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/30 bg-background px-2">
-              {["Piano Droit", "Piano à Queue"].map((t) => (
+              {["Droit", "à Queue"].map((t) => (
                 <label key={t} className="flex items-center gap-1 text-sm text-foreground">
                   <input
                     type="radio"
