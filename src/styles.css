@@ -164,6 +164,7 @@
     position: absolute;
     right: 0.3rem;
     white-space: nowrap;
+    text-align: right;
   }
 
   .label-key { top: 0.315rem; }
@@ -397,6 +398,7 @@
     padding-right: 0.3rem;
     color: var(--foreground);
     font: 700 clamp(0.54rem, 0.96vw, 0.816rem) / 1 "Work Sans", sans-serif;
+    text-align: right;
   }
 
   .result-grid {
