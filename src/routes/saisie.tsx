@@ -764,7 +764,7 @@ function Index() {
             />
           </label>
 
-          <fieldset className="text-xs text-muted-foreground">
+          <fieldset className="text-xs text-black">
             <legend>Type de piano</legend>
             <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/30 bg-background px-2">
               {["Droit", "à Queue"].map((t) => (
@@ -790,7 +790,7 @@ function Index() {
 
 
 
-          <label className="text-xs text-muted-foreground">
+          <label className="text-xs text-black">
             Modèle
             <SmartCombobox
               value={info["modele"] ?? ""}
@@ -798,6 +798,7 @@ function Index() {
               groups={modelGroupsFor(info["marque"] ?? "", info["type_piano"])}
               disabled={!info["marque"]?.trim()}
               openOnFocus
+              className="!bg-white"
               placeholder="Saisissez ou cherchez un modèle..."
               onCommit={(v) => {
                 updateInfo("modele", v);
@@ -807,10 +808,10 @@ function Index() {
             />
           </label>
 
-          <div className="text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
+          <div className="mt-4 text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
             Numéro de série (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
             <div className="mt-1 flex items-end justify-start gap-4">
-              <label className="min-w-[80px] text-xs text-muted-foreground">
+              <label className="min-w-[80px] text-xs text-black">
                 <span className="block whitespace-nowrap">Lettres avant</span>
                 <input
                   ref={(el) => {
@@ -823,7 +824,7 @@ function Index() {
                   className="mt-1 h-8 w-full max-w-[80px] rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                 />
               </label>
-              <label className="min-w-[150px] text-xs text-muted-foreground">
+              <label className="min-w-[150px] text-xs text-black">
                 <span className="block whitespace-nowrap">N° de série</span>
                 <input
                   ref={(el) => {
@@ -837,7 +838,7 @@ function Index() {
                   className="mt-1 h-8 w-full max-w-[150px] rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
                 />
               </label>
-              <label className="min-w-[80px] text-xs text-muted-foreground">
+              <label className="min-w-[80px] text-xs text-black">
                 <span className="block whitespace-nowrap">Lettre fin</span>
                 <input
                   value={info["sn_suffix"] ?? ""}
@@ -847,7 +848,7 @@ function Index() {
                   className="mt-1 h-8 w-full max-w-[80px] rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                 />
               </label>
-              <label className="min-w-[120px] text-xs text-muted-foreground">
+              <label className="min-w-[120px] text-xs text-black">
                 <span className="block whitespace-nowrap">Date de fabrication</span>
                 <input
                   value={info["fabrication"] ?? ""}
@@ -858,6 +859,13 @@ function Index() {
                   className="mt-1 h-8 w-full max-w-[120px] rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
                 />
               </label>
+              <div className="flex h-8 items-end text-xs text-black">
+                <span>
+                  Profil d&apos;usine :{" "}
+                  <span className="text-foreground">{profile.label}</span>
+                  {profile.frictionTarget !== null && ` — friction cible ${profile.frictionTarget} g`}
+                </span>
+              </div>
             </div>
             {!serialFormatValid && (
               <p className="mt-1 text-[0.7rem] leading-snug text-destructive">
@@ -870,7 +878,7 @@ function Index() {
             </p>
           </div>
 
-          <label className="text-xs text-muted-foreground">
+          <label className="text-xs text-black">
             Pays
             <SmartCombobox
               value={info["pays"] ?? ""}
@@ -883,7 +891,7 @@ function Index() {
             />
           </label>
 
-          <label className="text-xs text-muted-foreground">
+          <label className="text-xs text-black">
             <span className="flex items-center gap-2">
               Ville
               {isGeocoding && <span className="text-[0.65rem] italic">Vérification…</span>}
@@ -899,12 +907,12 @@ function Index() {
                   resolveCity((e.target as HTMLInputElement).value);
                 }
               }}
-              className="mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+              className="mt-1 h-8 w-full rounded border border-input bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             />
           </label>
 
 
-          <fieldset className="text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
+          <fieldset className="text-xs text-black sm:col-span-2 md:col-span-4">
             <legend>Type d'entretien</legend>
             <div className="mt-1 flex flex-wrap items-center gap-4">
               {MAINTENANCE_OPTIONS.map((t) => (
@@ -923,7 +931,7 @@ function Index() {
             </div>
           </fieldset>
 
-          <label className="text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
+          <label className="text-xs text-black sm:col-span-2 md:col-span-4">
             Remarques
             <input
               value={info["remarques"] ?? ""}
