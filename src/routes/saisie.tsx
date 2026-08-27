@@ -566,7 +566,7 @@ function Index() {
       if (!guardExport()) return;
       exportCsvFile();
     };
-    const saveCloudOnly = () => {
+    const saveCloud = () => {
       if (!guardExport()) return;
       if (currentDbId && isDirty) {
         setAskUpdate(true);
@@ -574,16 +574,26 @@ function Index() {
       }
       void syncAndFinish(currentDbId ? "update" : "insert");
     };
+    const quickSave = () => {
+      if (!guardExport()) return;
+      void syncAndFinish(currentDbId ? "update" : "insert");
+    };
     const onExport = () => {
       exportCsvOnly();
-      saveCloudOnly();
+      saveCloud();
     };
+    const onPdf = () => window.print();
+    const onCompareGuard = () => setAskCompare(true);
     const onReset = () => setRows(EMPTY);
 
     const handlers: Record<string, EventListener> = {
       "piano-export": onExport as EventListener,
       "piano-export-csv": exportCsvOnly as EventListener,
-      "piano-export-cloud": saveCloudOnly as EventListener,
+      "piano-export-pdf": onPdf as EventListener,
+      "piano-export-cloud": saveCloud as EventListener,
+      "piano-save": saveCloud as EventListener,
+      "piano-save-quick": quickSave as EventListener,
+      "piano-compare-guard": onCompareGuard as EventListener,
       "piano-reset": onReset as EventListener,
     };
 
