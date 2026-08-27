@@ -364,6 +364,20 @@ function Index() {
 
   const octaveGaps = useMemo(() => incompleteOctaves(rows), [rows]);
 
+  /** Remarques obligatoires dès que des modifications importantes sont déclarées. */
+  const remarquesRequired = info["entretien"] === "Modifications importantes";
+  const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
+
+  /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
+  const resetInfo = () => {
+    setInfo({});
+    setClimateZone(null);
+    setCurrentDbId(null);
+    setErrors({});
+    fabricationTouched.current = false;
+    markDirty();
+  };
+
   // --- Messages temporaires ---------------------------------------------------
 
   useEffect(() => {
@@ -822,6 +836,14 @@ function Index() {
         data-climate-zone={climateZone ?? ""}
       >
         <Frame title="Informations piano" className="mt-10 [&_input]:border-foreground/60">
+          <button
+            type="button"
+            onClick={resetInfo}
+            title="Réinitialiser uniquement la fiche d'informations"
+            className="absolute right-4 top-3 z-10 rounded border border-foreground/30 bg-card px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/60 hover:text-foreground"
+          >
+            Reset
+          </button>
           <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-[1fr_210px_1fr_1fr]">
             <label className={FIELD_LABEL_CLASS}>
               Marque
@@ -836,7 +858,7 @@ function Index() {
               />
             </label>
 
-            <fieldset className={`max-w-[200px] ${FIELD_LABEL_CLASS}`}>
+            <fieldset className={FIELD_LABEL_CLASS} data-keep-combobox-open>
               <legend>Type</legend>
               <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 bg-white px-2">
                 {["Droit", "à Queue"].map((t) => (
@@ -1008,15 +1030,26 @@ function Index() {
 
             <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
               Remarques
-              {info["entretien"] === "Modifications importantes" && (
-                <span className="ml-1 text-sm font-normal text-destructive">(obligatoire)</span>
+              {remarquesRequired && remarquesInvalid && (
+                <span className="ml-1 text-sm font-normal text-destructive">
+                  Veuillez indiquer les modifications
+                </span>
               )}
               <input
                 ref={remarquesRef}
-                required={info["entretien"] === "Modifications importantes"}
+                required={remarquesRequired}
+                aria-invalid={remarquesInvalid}
+                placeholder={remarquesRequired ? "Veuillez indiquer les modifications" : undefined}
                 value={info["remarques"] ?? ""}
                 onChange={(e) => updateInfo("remarques", e.target.value)}
-                className={INPUT_CLASS}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
+                }}
+                className={`${INPUT_CLASS} ${
+                  remarquesInvalid
+                    ? "border-destructive placeholder:text-destructive focus:border-destructive focus:ring-destructive"
+                    : ""
+                }`}
               />
             </label>
 
@@ -1083,7 +1116,7 @@ function Index() {
         <button
           type="button"
           onClick={() => setRows(EMPTY)}
-          className="absolute left-[calc(1rem+4rem)] top-4 z-10 -translate-x-1/2 rounded-md border border-input bg-background px-3 py-1 text-base font-bold text-muted-foreground transition-colors hover:bg-accent"
+          className="absolute left-[calc(1rem+4rem)] top-12 z-10 -translate-x-1/2 -translate-y-1/2 rounded-md border border-input bg-background px-3 py-1 text-base font-bold text-muted-foreground transition-colors hover:bg-accent"
         >
           Reset
         </button>

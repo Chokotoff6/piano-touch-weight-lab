@@ -28,6 +28,9 @@ export function SmartCombobox({
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState(false);
   const wrap = useRef<HTMLDivElement | null>(null);
+  const input = useRef<HTMLInputElement | null>(null);
+  /** Interaction sur un contrôle « ami » (ex : Type de piano) : la liste reste ouverte. */
+  const keepOpen = useRef(false);
 
   useEffect(() => setDraft(value), [value]);
 
@@ -55,15 +58,26 @@ export function SmartCombobox({
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
-      if (wrap.current && !wrap.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("[data-keep-combobox-open]")) {
+        // le filtre change mais la liste ouverte reste affichée
+        keepOpen.current = true;
+        window.setTimeout(() => {
+          keepOpen.current = false;
+          if (open) input.current?.focus();
+        }, 0);
+        return;
+      }
+      if (wrap.current && !wrap.current.contains(target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
-  }, []);
+  }, [open]);
 
   return (
     <div ref={wrap} className="relative">
       <input
+        ref={input}
         value={draft}
         disabled={disabled}
         placeholder={placeholder}
@@ -78,7 +92,10 @@ export function SmartCombobox({
           setTyped(e.target.value.length > 0);
           setOpen(true);
         }}
-        onBlur={() => commit(draft)}
+        onBlur={() => {
+          if (keepOpen.current) return;
+          commit(draft);
+        }}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
