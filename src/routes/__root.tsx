@@ -163,37 +163,6 @@ function RootComponent() {
               <Link to="/saisie" className={linkClass} activeProps={{ className: activeLinkClass }}>
                 Saisie
               </Link>
-            </div>
-
-            <DropdownMenu>
-              <div className="flex items-center">
-                <Button
-                  size="sm"
-                  className="rounded-r-none"
-                  disabled={actionsDisabled}
-                  onClick={() => dispatchAction("piano-save")}
-                >
-                  Save
-                </Button>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-l-none border-l-0 px-2"
-                    disabled={actionsDisabled}
-                  >
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-              </div>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem onClick={() => dispatchAction("piano-save-quick")}>
-                  Sauvegarde rapide
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
               <Link
                 to="/resultats"
                 className={linkClass}
@@ -219,6 +188,37 @@ function RootComponent() {
               </Link>
             </div>
 
+            <DropdownMenu>
+              <div className="flex items-center">
+                <Button
+                  size="sm"
+                  className="rounded-r-none text-lg"
+                  disabled={actionsDisabled}
+                  onClick={() => dispatchAction("piano-save")}
+                >
+                  Save
+                </Button>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-l-none border-l-0 px-2"
+                    disabled={actionsDisabled}
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </div>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => dispatchAction("piano-save-cloud")}>
+                  Synchronisation cloud
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => dispatchAction("piano-save-quick")}>
+                  Sauvegarde rapide
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <div className="mx-6 h-6 w-[1px] bg-gray-200" aria-hidden="true" />
 
             <DropdownMenu>
@@ -226,7 +226,7 @@ function RootComponent() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-r-none"
+                  className="rounded-r-none text-lg"
                   disabled={actionsDisabled}
                   onClick={() => dispatchAction("piano-export-csv")}
                 >
@@ -255,7 +255,7 @@ function RootComponent() {
 
             <DropdownMenu>
               <div className="flex items-center">
-                <Button variant="outline" size="sm" className="rounded-r-none" disabled>
+                <Button variant="outline" size="sm" className="rounded-r-none text-lg" disabled>
                   Importer
                 </Button>
                 <DropdownMenuTrigger asChild>
@@ -270,6 +270,7 @@ function RootComponent() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+
         </div>
       </nav>
 
@@ -280,7 +281,7 @@ function RootComponent() {
         rel="noopener noreferrer"
         title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
         aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
-        className="fixed right-8 top-16 z-50 flex h-9 w-9 items-center justify-center rounded-md border border-input bg-background text-base hover:bg-accent"
+        className="fixed right-4 top-2 z-50 flex h-16 w-16 items-center justify-center rounded-lg border border-input bg-background text-3xl shadow-sm hover:bg-accent"
       >
         ☕
       </a>
