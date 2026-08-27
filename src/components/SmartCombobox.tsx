@@ -10,6 +10,7 @@ type Props = {
   disabled?: boolean;
   placeholder?: string;
   openOnFocus?: boolean;
+  className?: string;
   onCommit: (value: string) => void;
 };
 
