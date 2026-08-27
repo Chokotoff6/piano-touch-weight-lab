@@ -836,6 +836,14 @@ function Index() {
         data-climate-zone={climateZone ?? ""}
       >
         <Frame title="Informations piano" className="mt-10 [&_input]:border-foreground/60">
+          <button
+            type="button"
+            onClick={resetInfo}
+            title="Réinitialiser uniquement la fiche d'informations"
+            className="absolute right-4 top-3 z-10 rounded border border-foreground/30 bg-card px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/60 hover:text-foreground"
+          >
+            Reset
+          </button>
           <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-[1fr_210px_1fr_1fr]">
             <label className={FIELD_LABEL_CLASS}>
               Marque
