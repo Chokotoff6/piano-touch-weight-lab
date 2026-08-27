@@ -364,6 +364,20 @@ function Index() {
 
   const octaveGaps = useMemo(() => incompleteOctaves(rows), [rows]);
 
+  /** Remarques obligatoires dès que des modifications importantes sont déclarées. */
+  const remarquesRequired = info["entretien"] === "Modifications importantes";
+  const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
+
+  /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
+  const resetInfo = () => {
+    setInfo({});
+    setClimateZone(null);
+    setCurrentDbId(null);
+    setErrors({});
+    fabricationTouched.current = false;
+    markDirty();
+  };
+
   // --- Messages temporaires ---------------------------------------------------
 
   useEffect(() => {
