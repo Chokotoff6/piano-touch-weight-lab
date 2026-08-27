@@ -18,6 +18,11 @@ export const OCTAVE_RANGES: [number, number][] = [
   [76, 87],
 ];
 
+/** Touches Do / Do# mises en évidence visuellement dans la grille. */
+export const REQUIRED_KEY_SET = new Set([
+  4, 5, 16, 17, 28, 29, 40, 41, 52, 53, 64, 65, 76, 77, 88,
+]);
+
 type Row = { wa: string; wd: string };
 
 const filled = (row: Row | undefined) =>
