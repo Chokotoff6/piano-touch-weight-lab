@@ -1,6 +1,6 @@
 export type PianoType = "Droit" | "à Queue";
 
-export const BRAND_MODELS_BY_TYPE: Record<string, { droit: string[]; queue: string[] }> = {
+const BASE_BRAND_MODELS_BY_TYPE: Record<string, { droit: string[]; queue: string[] }> = {
   YAMAHA: {
     droit: [
       "U1", "U1A", "U1B", "U1C", "U1H", "U1M", "U1G", "U1E", "U10A", "U10BL", "U100",
@@ -153,6 +153,112 @@ export const BRAND_MODELS_BY_TYPE: Record<string, { droit: string[]; queue: stri
     queue: ["SIG-50", "SIG-54", "SIG-57", "NSG-175", "NSG-186"],
   },
 };
+
+/** Catalogue standard (hauteurs / longueurs) pour les marques sans catalogue détaillé. */
+const STANDARD_CATALOG = {
+  droit: ["110", "112", "115", "116", "118", "121", "122", "125", "126", "131", "SU-118", "SU-121JS"],
+  queue: ["150", "151", "161", "172", "175", "178", "185", "186", "208", "218", "NS-150", "SIG-50"],
+};
+
+/** Ajouts exhaustifs : modèles historiques, d'occasion et contemporains. */
+const MODEL_ADDITIONS: Record<string, { droit: string[]; queue: string[] }> = {
+  YAMAHA: {
+    droit: ["b1", "b2", "b3", "U1", "U2", "U3", "YUS1", "YUS3", "YUS5", "P116", "P121", "SE122", "SE132", "SU118", "SU7", "UX", "U10BL", "U30BL", "YU1", "YU3", "YU5"],
+    queue: ["GB1K", "GC1", "GC2", "CX1", "CX2", "CX3", "CX5", "CX6", "CX7", "C1", "C2", "C3", "C5", "C7", "G1", "G2", "G3", "G5", "S3X", "S5X", "S6X", "S7X", "CF4", "CF6", "CFX"],
+  },
+  KAWAI: {
+    droit: ["K-15E", "K-200", "K-300", "K-500", "K-600", "K-800", "K-2", "K-3", "K-5", "K-6", "K-8", "KX-21", "BS-20", "NS-20", "UST-9"],
+    queue: ["GL-10", "GL-30", "GL-40", "GL-50", "GX-1", "GX-2", "GX-3", "GX-5", "GX-6", "GX-7", "RX-1", "RX-2", "RX-3", "RX-5", "RX-6", "RX-7", "GE-20", "GE-30", "SK-2", "SK-3", "SK-5", "SK-6", "SK-7", "SK-EX"],
+  },
+  "STEINWAY & SONS": {
+    droit: ["V-125", "K-132"],
+    queue: ["S-155", "M-170", "O-180", "A-188", "B-211", "C-227", "D-274"],
+  },
+  SCHIMMEL: {
+    droit: ["112", "116", "120", "122", "124", "130", "C116", "C121", "C126", "K122", "K125", "K132", "W114", "W118", "W123"],
+    queue: ["174", "182", "205", "C169", "C189", "C213", "W180", "W206", "K175", "K195", "K219", "K230", "K256", "K280"],
+  },
+  "C. BECHSTEIN": {
+    droit: ["Modèle 8", "Modèle 9", "Modèle 10", "Concert 8", "112", "116", "124", "A114", "A124", "Millennium 116", "Academy 124", "V120", "T122", "P126"],
+    queue: ["Modèle A", "Modèle B", "Modèle C", "Modèle D", "Modèle E", "Modèle V", "L167", "M116", "A160", "A175", "A190", "A208", "A228", "C234", "D282", "V158", "T177", "P188"],
+  },
+  "W. HOFFMANN": {
+    droit: ["V120", "T122", "P126", "112", "116", "124"],
+    queue: ["V158", "T177", "P188"],
+  },
+  PLEYEL: {
+    droit: ["Modèle P", "Modèle 9", "Marigny", "P124", "P130", "P131"],
+    queue: ["Modèle 3", "Modèle 3 Bis", "Modèle F", "P170", "P190", "P204"],
+  },
+  "GROTRIAN-STEINWEG": {
+    droit: ["110", "112", "113", "114", "120", "122", "124", "Classic 124", "Concert 132"],
+    queue: ["160", "165", "185", "192", "200", "208", "223", "225", "275", "G-165", "G-192", "G-208", "G-225", "G-277"],
+  },
+  BÖSENDORFER: {
+    droit: ["120CL", "130CL"],
+    queue: ["155", "170", "175", "185", "200", "214", "214VC", "225", "230VC", "275", "280VC", "290 Imperial"],
+  },
+  SAUTER: {
+    droit: ["112", "116", "122", "130", "Nova 116", "Vista 122", "Master Class 122", "Master Class 130"],
+    queue: ["160", "185", "220", "Alpha 160", "Delta 185", "Omega 220", "Concert 275"],
+  },
+  BLÜTHNER: {
+    droit: ["Modèle A", "Modèle B", "Modèle C", "Modèle D", "118", "124", "132"],
+    queue: ["Modèle 1", "Modèle 2", "Modèle 4", "Modèle 6", "Modèle 10", "Modèle 11", "166", "190", "210", "238", "280"],
+  },
+  PETROF: {
+    droit: ["P 118", "P 122", "P 125", "P 131", "P 135", "115", "116", "125"],
+    queue: ["P 159 Bora", "P 173 Regia", "P 194 Storm", "P 210 Pasat", "P 237 Monsoon", "P 284 Mistral", "Modèle III", "Modèle IV"],
+  },
+  SEILER: {
+    droit: ["116", "122", "126", "132", "Primus 116", "Eduard 122", "Konsole 122"],
+    queue: ["168", "186", "208", "242", "278", "Baron 186", "Maestro 208"],
+  },
+  "BALDWIN & WURLITZER": {
+    droit: ["Acorn", "Hamilton", "Studio 243", "121", "Console"],
+    queue: ["M", "R", "L", "SF-10", "SD-10", "165", "185"],
+  },
+  BALDWIN: {
+    droit: ["Acorn", "Hamilton", "Studio 243", "121", "Console"],
+    queue: ["M", "R", "L", "SF-10", "SD-10", "165", "185"],
+  },
+  WURLITZER: {
+    droit: ["Acorn", "Hamilton", "Studio 243", "121", "Console"],
+    queue: ["M", "R", "L", "SF-10", "SD-10", "165", "185"],
+  },
+  SAMICK: { ...STANDARD_CATALOG },
+  "YOUNG CHANG": { ...STANDARD_CATALOG },
+  "PEARL RIVER": { ...STANDARD_CATALOG },
+  HAILUN: { ...STANDARD_CATALOG },
+  FEURICH: { ...STANDARD_CATALOG },
+  RITMÜLLER: { ...STANDARD_CATALOG },
+};
+
+function mergeUnique(a: string[] = [], b: string[] = []): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const v of [...a, ...b]) {
+    const k = v.trim().toLowerCase();
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    out.push(v);
+  }
+  return out;
+}
+
+export const BRAND_MODELS_BY_TYPE: Record<string, { droit: string[]; queue: string[] }> = (() => {
+  const out: Record<string, { droit: string[]; queue: string[] }> = {};
+  const brands = new Set([...Object.keys(BASE_BRAND_MODELS_BY_TYPE), ...Object.keys(MODEL_ADDITIONS)]);
+  for (const brand of brands) {
+    const base = BASE_BRAND_MODELS_BY_TYPE[brand];
+    const add = MODEL_ADDITIONS[brand];
+    out[brand] = {
+      droit: mergeUnique(base?.droit, add?.droit),
+      queue: mergeUnique(base?.queue, add?.queue),
+    };
+  }
+  return out;
+})();
 
 export const BRAND_MODELS_SUGGESTIONS: Record<string, string[]> = Object.fromEntries(
   Object.entries(BRAND_MODELS_BY_TYPE).map(([brand, m]) => [brand, [...m.droit, ...m.queue]]),
