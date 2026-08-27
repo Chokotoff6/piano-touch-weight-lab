@@ -77,6 +77,7 @@ export function SmartCombobox({
   return (
     <div ref={wrap} className="relative">
       <input
+        ref={input}
         value={draft}
         disabled={disabled}
         placeholder={placeholder}
