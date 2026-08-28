@@ -665,8 +665,8 @@ function Index() {
       return {
         wa: avgWa.toFixed(1),
         wd: avgWd.toFixed(1),
-        friction: ((avgWd - avgWa) / 2).toFixed(1),
-        balance: ((avgWd + avgWa) / 2).toFixed(1),
+        friction: ((avgWa - avgWd) / 2).toFixed(1),
+        balance: ((avgWa + avgWd) / 2).toFixed(1),
         count: valid.length,
       };
     };
@@ -754,8 +754,8 @@ function Index() {
     const wd = parseWeight(r.wd);
     if (wa === null || wd === null) return { friction: "", balance: "" };
     return {
-      friction: ((wd - wa) / 2).toFixed(1),
-      balance: ((wd + wa) / 2).toFixed(1),
+      friction: ((wa - wd) / 2).toFixed(1),
+      balance: ((wa + wd) / 2).toFixed(1),
     };
   };
 
@@ -872,8 +872,8 @@ function Index() {
           key: i + 1,
           wa,
           wd,
-          friction: valid ? Number(((wd - wa) / 2).toFixed(1)) : null,
-          balance: valid ? Number(((wd + wa) / 2).toFixed(1)) : null,
+          friction: valid ? Number(((wa - wd) / 2).toFixed(1)) : null,
+          balance: valid ? Number(((wa + wd) / 2).toFixed(1)) : null,
         };
       }),
     [rows],
@@ -1228,7 +1228,9 @@ function Index() {
                 <div key={index} className={`result-col ${black ? "is-black" : "is-white"}`}>
                   <div className="result-strip">{black ? formatResult(value) : null}</div>
                   <div className="result-value">
-                    <span className="rv-text">{black ? null : formatResult(value)}</span>
+                    <span className="rv-text !w-full !px-0.5 !text-center !whitespace-nowrap !overflow-visible">
+                      {black ? null : formatResult(value)}
+                    </span>
                   </div>
                 </div>
               );
@@ -1593,6 +1595,18 @@ function Index() {
         >
           Reset
         </button>
+        {hasAnyMeasurement(rows) && octaveGaps.length === 0 && (
+          <div
+            data-pdf-hide
+            className="pointer-events-none absolute left-0 top-1/2 z-10 flex w-32 justify-center"
+            style={{ transform: "translateY(calc(-50% + 10px))" }}
+          >
+            <div className="flex items-center gap-1.5 !rounded-md !border !border-gray-600 !bg-white !px-2.5 !py-1 !shadow-sm">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+              <span className="text-[10px] font-semibold text-gray-950">Clavier valide</span>
+            </div>
+          </div>
+        )}
         <div className="mx-auto flex w-full flex-col items-center">
           {renderSection(1, 44, gridRef1)}
           {renderSection(45, 88, gridRef2)}
