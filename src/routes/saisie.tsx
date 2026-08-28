@@ -61,6 +61,8 @@ const DRAFT_ROWS_KEY = "ptw_draft_rows";
 
 const FORM_INCOMPLETE_MESSAGE =
   "⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de sauver.";
+const COHERENCE_MESSAGE =
+  "⚠️ Erreur de cohérence : Le poids descendant (Wa) doit toujours être supérieur au poids ascendant (Wd).";
 
 type SerialRule = { prefix: boolean; suffix: boolean; autoPrefix?: string };
 
