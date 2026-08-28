@@ -150,7 +150,6 @@ function RootComponent() {
     window.dispatchEvent(new CustomEvent(type, { bubbles: true }));
   };
 
-  const actionsDisabled = !isSaisie || !topbar.exportReady || topbar.isExporting;
   /** Le bouton Sauver reste visuellement actif : blanc au repos, sombre dès qu'il y a des modifications. */
   const saveDisabled = !isSaisie || topbar.isExporting;
 
@@ -202,7 +201,7 @@ function RootComponent() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="rounded-r-none border border-gray-300 bg-white text-lg text-gray-800 hover:bg-accent"
+                    className={`${topbar.hasSaved ? "rounded-r-none" : ""} border border-gray-300 bg-white text-lg text-gray-800 hover:bg-accent`}
                     onClick={() => {
                       if (saveDisabled) return;
                       dispatchAction("piano-save");
@@ -210,15 +209,17 @@ function RootComponent() {
                   >
                     Sauver
                   </Button>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="rounded-l-none border border-l-0 border-gray-300 bg-white px-2 text-gray-800 hover:bg-accent"
-                    >
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
+                  {topbar.hasSaved && (
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-l-none border border-l-0 border-gray-300 bg-white px-2 text-gray-800 hover:bg-accent"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  )}
                 </div>
                 <DropdownMenuContent align="start">
                   <DropdownMenuItem onClick={() => dispatchAction("piano-save-cloud")}>
@@ -237,12 +238,11 @@ function RootComponent() {
             </div>
 
             <DropdownMenu>
-              <div className="flex items-center">
+              <div className="relative flex items-center">
                 <Button
                   variant="outline"
                   size="sm"
                   className="rounded-r-none text-lg"
-                  disabled={actionsDisabled}
                   onClick={() => dispatchAction("piano-export-csv")}
                 >
                   Exporter
@@ -252,11 +252,15 @@ function RootComponent() {
                     variant="outline"
                     size="sm"
                     className="rounded-l-none border-l-0 px-2"
-                    disabled={actionsDisabled}
                   >
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
+                {topbar.alert?.anchor === "export" && (
+                  <div className="absolute left-0 top-full z-50 mt-2 w-80 rounded-md border border-amber-500 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 shadow-lg">
+                    {topbar.alert.message}
+                  </div>
+                )}
               </div>
               <DropdownMenuContent align="start">
                 <DropdownMenuItem onClick={() => dispatchAction("piano-export-csv")}>

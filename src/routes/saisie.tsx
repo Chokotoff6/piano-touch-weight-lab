@@ -61,6 +61,8 @@ const DRAFT_ROWS_KEY = "ptw_draft_rows";
 
 const FORM_INCOMPLETE_MESSAGE =
   "⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de sauver.";
+const COHERENCE_MESSAGE =
+  "⚠️ Erreur de cohérence : Le poids descendant (Wa) doit toujours être supérieur au poids ascendant (Wd).";
 
 type SerialRule = { prefix: boolean; suffix: boolean; autoPrefix?: string };
 
@@ -335,11 +337,24 @@ function Index() {
     [info],
   );
 
-  // Dès que la dernière information requise est remplie, le curseur se place
+  const requiredSheetFieldsComplete = useMemo(
+    () =>
+      Boolean(
+        info["marque"]?.trim() &&
+          info["modele"]?.trim() &&
+          info["sn_num"]?.trim() &&
+          info["type_piano"] &&
+          info["pays"]?.trim() &&
+          info["entretien"],
+      ),
+    [info],
+  );
+
+  // Dès que les six informations de la fiche sont remplies, le curseur se place
   // automatiquement dans la première zone de saisie (Wa, touche 1 / La0).
   const weightsFocusedOnce = useRef(false);
   useEffect(() => {
-    if (!canEnterWeights) {
+    if (!requiredSheetFieldsComplete) {
       weightsFocusedOnce.current = false;
       return;
     }
@@ -347,7 +362,7 @@ function Index() {
     weightsFocusedOnce.current = true;
     inputs.current["0-wa"]?.focus();
     inputs.current["0-wa"]?.select();
-  }, [canEnterWeights]);
+  }, [requiredSheetFieldsComplete]);
 
   const exportReady = useMemo(
     () => Boolean(info["marque"]?.trim() && info["sn_num"]?.trim()),
@@ -475,12 +490,17 @@ function Index() {
 
   const sectionAverages = useMemo(() => {
     const calc = (slice: Row[]) => {
-      const valid = slice.filter((r) => parseWeight(r.wa) !== null && parseWeight(r.wd) !== null);
+      const valid = slice
+        .map((r) => ({ wa: parseWeight(r.wa), wd: parseWeight(r.wd) }))
+        .filter(
+          (entry): entry is { wa: number; wd: number } =>
+            entry.wa !== null && entry.wd !== null && entry.wa > entry.wd,
+        );
       if (valid.length === 0) {
         return { wa: "—", wd: "—", friction: "—", balance: "—", count: 0 };
       }
-      const avgWa = valid.reduce((s, r) => s + parseWeight(r.wa)!, 0) / valid.length;
-      const avgWd = valid.reduce((s, r) => s + parseWeight(r.wd)!, 0) / valid.length;
+      const avgWa = valid.reduce((s, entry) => s + entry.wa, 0) / valid.length;
+      const avgWd = valid.reduce((s, entry) => s + entry.wd, 0) / valid.length;
       return {
         wa: avgWa.toFixed(1),
         wd: avgWd.toFixed(1),
@@ -523,12 +543,16 @@ function Index() {
     const cleaned = cleanWeight(value);
     const key = `${index}-${field}`;
     if (cleaned === "") {
+      const current = rows[index];
+      if (!current) return;
+      const updated: Row = { ...current, [field]: "" };
+      setRows((prev) => prev.map((r, i) => (i === index ? updated : r)));
+      checkCoherence(index, updated);
       setErrors((prev) => {
         const next = { ...prev };
         delete next[key];
         return next;
       });
-      setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: "" } : r)));
       return;
     }
     const num = parseWeight(value);
@@ -536,12 +560,35 @@ function Index() {
       setErrors((prev) => ({ ...prev, [key]: "Valeur invalide (5-99, nombre entier)" }));
       return;
     }
+    const current = rows[index];
+    if (!current) return;
     setErrors((prev) => {
       const next = { ...prev };
       delete next[key];
       return next;
     });
+    const updated: Row = { ...current, [field]: num.toString() };
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: num.toString() } : r)));
+    checkCoherence(index, updated);
+  };
+
+  /** Applique (ou lève) l'alerte de cohérence Wa > Wd sur les deux cellules d'une touche. */
+  const checkCoherence = (index: number, row: Row) => {
+    const wa = parseWeight(row.wa);
+    const wd = parseWeight(row.wd);
+    const waKey = `${index}-wa`;
+    const wdKey = `${index}-wd`;
+    if (wa !== null && wd !== null && wa <= wd) {
+      setErrors((prev) => ({ ...prev, [waKey]: COHERENCE_MESSAGE, [wdKey]: COHERENCE_MESSAGE }));
+      showMessage(COHERENCE_MESSAGE);
+      return;
+    }
+    setErrors((prev) => {
+      const next = { ...prev };
+      if (next[waKey] === COHERENCE_MESSAGE) delete next[waKey];
+      if (next[wdKey] === COHERENCE_MESSAGE) delete next[wdKey];
+      return next;
+    });
   };
 
   const compute = (r: Row) => {
@@ -576,7 +623,7 @@ function Index() {
 
   // --- Export & sauvegarde cloud -------------------------------------------------
 
-  const guardExport = () => {
+  const guardExport = (anchor: "save" | "export" = "save") => {
     // Contrôle anti-robot : échec silencieux, aucun message affiché.
     if (!passesBotChecks(honeypot)) return false;
     const formIncomplete =
@@ -584,12 +631,12 @@ function Index() {
       (info["entretien"] === "Modifications importantes" && !(info["remarques"] ?? "").trim());
     // PRIORITÉ 1 : fiche d'informations incomplète.
     if (formIncomplete) {
-      showTopbarAlert("save", FORM_INCOMPLETE_MESSAGE);
+      showTopbarAlert(anchor, FORM_INCOMPLETE_MESSAGE);
       return false;
     }
     // PRIORITÉ 2 : règle d'octave non remplie (fiche complète uniquement).
     if (octaveGaps.length > 0) {
-      showTopbarAlert("save", OCTAVE_RULE_MESSAGE);
+      showTopbarAlert(anchor, OCTAVE_RULE_MESSAGE);
       return false;
     }
     return true;
@@ -665,15 +712,15 @@ function Index() {
   // --- Synchronisation avec la barre supérieure -----------------------------------
 
   useEffect(() => {
-    setTopbarState({ exportReady, isExporting, isDirty });
+    setTopbarState({ exportReady, isExporting, isDirty, hasSaved: Boolean(currentDbId) });
     return () => {
-      setTopbarState({ exportReady: false, isExporting: false, isDirty: false });
+      setTopbarState({ exportReady: false, isExporting: false, isDirty: false, hasSaved: false });
     };
-  }, [exportReady, isExporting, isDirty]);
+  }, [exportReady, isExporting, isDirty, currentDbId]);
 
   useEffect(() => {
     const exportCsvOnly = () => {
-      if (!guardExport()) return;
+      if (!guardExport("export")) return;
       exportCsvFile();
     };
     const saveCloud = () => {
@@ -692,7 +739,10 @@ function Index() {
       exportCsvOnly();
       saveCloud();
     };
-    const onPdf = () => window.print();
+    const onPdf = () => {
+      if (!guardExport("export")) return;
+      window.print();
+    };
     const onCompareGuard = () => setAskCompare(true);
     const onReset = () => setRows(EMPTY);
 
@@ -752,7 +802,7 @@ function Index() {
         step={1}
         aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
-        className={`weight-input ${isBlack ? "![background-color:#f3f4f6] text-black font-semibold" : "![background-color:#e5e7eb] text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        className={`weight-input ${isBlack ? "![background-color:#d1d5db] text-black font-semibold" : "![background-color:#f9fafb] text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
       />
     </div>
   );
