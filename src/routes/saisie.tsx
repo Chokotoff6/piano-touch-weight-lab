@@ -838,7 +838,7 @@ function Index() {
             type="button"
             onClick={resetInfo}
             title="Réinitialiser uniquement la fiche d'informations"
-            className="absolute right-4 top-3 z-10 rounded-md border border-input bg-background px-4 py-1.5 text-lg font-bold text-muted-foreground transition-colors hover:bg-accent"
+            className="absolute right-10 top-10 z-10 rounded-md border border-input bg-background px-4 py-1.5 text-lg font-bold text-muted-foreground transition-colors hover:bg-accent"
           >
             Reset
           </button>
@@ -1086,7 +1086,7 @@ function Index() {
             ] as const
           ).map(({ key, label }) => (
             <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
-              <div className="text-[0.8125rem] font-bold uppercase tracking-wide text-muted-foreground">
+              <div className="text-[0.8125rem] font-bold tracking-wide text-muted-foreground">
                 {label}
               </div>
               <div className="mt-1 text-lg font-semibold tabular-nums">

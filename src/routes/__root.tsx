@@ -25,6 +25,7 @@ import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
+import coffeeLogoAsset from "@/assets/buy-me-a-coffee-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -292,9 +293,13 @@ function RootComponent() {
         rel="noopener noreferrer"
         title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
         aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
-        className="fixed right-6 top-4 z-50 flex h-32 w-32 items-center justify-center rounded-2xl border-4 border-amber-600 bg-amber-400 text-7xl text-amber-950 shadow-xl transition-transform hover:scale-105 hover:bg-amber-300"
+        className="fixed right-6 top-4 z-50 flex h-20 w-20 items-center justify-center rounded-xl bg-transparent shadow-xl transition-transform hover:scale-105"
       >
-        ☕
+        <img
+          src={coffeeLogoAsset.url}
+          alt="Buy me a coffee"
+          className="h-full w-full rounded-xl object-cover"
+        />
       </a>
 
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
