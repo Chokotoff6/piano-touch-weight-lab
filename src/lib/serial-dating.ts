@@ -146,18 +146,20 @@ export function factoryProfile(
   num?: string,
 ): FactoryProfile {
   const key = brandKey(brand);
+  const n = parseInt(clean(num), 10);
   if (key === "YAMAHA" || key === "KAWAI") {
-    if (clean(prefix) !== "") return { label: "Europe/Climats Humides", frictionTarget: 13 };
-    const n = parseInt(clean(num), 10);
-    // Règle synchrone : gros numéros sans préfixe = production Europe, sans attendre la météo.
-    if (Number.isFinite(n) && n >= 2000000)
+    // Règle synchrone : préfixe vide + gros numéro = production Europe, sans attendre la météo.
+    if (clean(prefix) === "" && Number.isFinite(n) && n >= 2000000)
       return { label: "Europe/Climats Humides", frictionTarget: 13 };
+    // Sinon le profil dépend de la ville validée (zone climatique).
     if (zone === 3 || zone === 5) return { label: "Japon/Climat Sec", frictionTarget: 11 };
     if (zone === 1 || zone === 2 || zone === 4)
       return { label: "Europe/Climats Humides", frictionTarget: 13 };
     return { label: "—", frictionTarget: null };
   }
 
+  // Autres marques : indéterminable tant que la ville (zone climatique) n'est pas validée.
+  if (zone === null) return { label: "—", frictionTarget: null };
   const t = (typePiano ?? "").toLowerCase();
   if (t.includes("queue")) return { label: "Standard piano à queue", frictionTarget: 12 };
   if (t.includes("droit")) return { label: "Standard piano droit", frictionTarget: 13 };

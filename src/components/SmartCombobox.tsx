@@ -136,7 +136,7 @@ export const SmartCombobox = forwardRef<SmartComboboxHandle, Props>(
           className={`mt-1 h-8 w-full rounded border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground ${className ?? ""}`}
         />
         {open && !disabled && (
-          <ul className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded border border-input bg-popover py-1 text-sm shadow-md">
+          <ul className="absolute left-0 z-50 mt-1 block h-auto max-h-60 w-full overflow-y-auto rounded border border-input bg-popover py-1 text-sm shadow-md">
             {normalizeEntry(draft) &&
               !options.some((o) => o === normalizeEntry(draft)) && (
                 <li>
