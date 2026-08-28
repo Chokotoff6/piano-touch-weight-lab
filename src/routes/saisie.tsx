@@ -715,9 +715,9 @@ function Index() {
 
   // --- Rendu : champ de saisie d'un poids (Wa ou Wd) ------------------------------
 
-  const renderWeightInput = (index: number, field: "wa" | "wd") => (
+  const renderWeightInput = (index: number, field: "wa" | "wd", isBlack: boolean) => (
     <div
-      className={`weight-fields weight-fields-${field} ${!canEnterWeights ? "opacity-40" : ""}`}
+      className={`weight-fields weight-fields-${field}`}
       onClick={() => {
         if (!canEnterWeights) showBlockMessage();
       }}
@@ -752,7 +752,7 @@ function Index() {
         step={1}
         aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
-        className={`weight-input ${errors[`${index}-${field}`] ? "error" : ""}`}
+        className={`weight-input ${isBlack ? "![background-color:#9ca3af] text-black" : "![background-color:#f9fafb] text-black"} ${errors[`${index}-${field}`] ? "error" : ""}`}
       />
     </div>
   );
@@ -802,8 +802,8 @@ function Index() {
                   {index + 1}
                 </div>
                 <div className="key-body">
-                  {renderWeightInput(index, "wa")}
-                  {renderWeightInput(index, "wd")}
+                  {renderWeightInput(index, "wa", black)}
+                  {renderWeightInput(index, "wd", black)}
                 </div>
               </div>
             );
