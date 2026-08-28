@@ -57,9 +57,7 @@ export const SmartCombobox = forwardRef<SmartComboboxHandle, Props>(
   }, [groups, options, draft]);
 
   const commit = (raw: string) => {
-    console.log("[SmartCombobox] commit raw=", raw, "value=", value);
     const next = resolveEntry(raw, options);
-    console.log("[SmartCombobox] commit next=", next);
     setDraft(next);
     setOpen(false);
     setTyped(false);
