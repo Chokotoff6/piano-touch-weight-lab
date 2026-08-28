@@ -1086,6 +1086,15 @@ function Index() {
         className={`weight-input !font-sans ${isBlack ? "" : "![background-color:#cbd5e1] !text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
         style={isBlack ? { backgroundColor: "#cbd5e1", color: "#000000", fontWeight: 600 } : undefined}
       />
+      {blockAnchor && blockAnchor.index === index && blockAnchor.field === field && (
+        <div
+          role="alert"
+          className="pointer-events-none absolute left-[calc(100%+0.5rem)] top-0 z-50 w-72 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-xs font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
+        >
+          ⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type
+          d'entretien avant de valider.
+        </div>
+      )}
       {coherenceIndex === index && field === "wd" && (
         <div
           role="alert"
