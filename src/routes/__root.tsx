@@ -202,8 +202,12 @@ function RootComponent() {
                   <Button
                     size="sm"
                     variant={topbar.isDirty ? "default" : "outline"}
-                    className={`rounded-r-none text-lg ${topbar.isDirty ? "" : "bg-white hover:bg-accent"}`}
-                    disabled={actionsDisabled}
+                    className={`rounded-r-none text-lg ${
+                      topbar.isDirty
+                        ? "bg-neutral-700 text-white hover:bg-neutral-800"
+                        : "bg-white hover:bg-accent"
+                    }`}
+                    disabled={saveDisabled}
                     onClick={() => dispatchAction("piano-save")}
                   >
                     Sauver
@@ -212,8 +216,12 @@ function RootComponent() {
                     <Button
                       variant={topbar.isDirty ? "default" : "outline"}
                       size="sm"
-                      className={`rounded-l-none border-l-0 px-2 ${topbar.isDirty ? "" : "bg-white hover:bg-accent"}`}
-                      disabled={actionsDisabled}
+                      className={`rounded-l-none border-l-0 px-2 ${
+                        topbar.isDirty
+                          ? "bg-neutral-700 text-white hover:bg-neutral-800"
+                          : "bg-white hover:bg-accent"
+                      }`}
+                      disabled={saveDisabled}
                     >
                       <ChevronDown className="h-4 w-4" />
                     </Button>
