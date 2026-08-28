@@ -1298,7 +1298,7 @@ function Index() {
               <div className="!text-[1.1rem] font-bold tracking-wide text-muted-foreground">
                 {label}
               </div>
-              <div className="mt-1 text-lg font-semibold tabular-nums">
+              <div className="mt-1 !text-2xl font-semibold tabular-nums">
                 {sectionAverages.global[key]}
               </div>
               <div className="mt-0.5 flex justify-center gap-2 text-[0.65rem] text-muted-foreground tabular-nums">
@@ -1307,9 +1307,9 @@ function Index() {
                 <span>{sectionAverages.second[key]}</span>
               </div>
               <div className="flex justify-center gap-2 text-[0.55rem] text-muted-foreground tabular-nums">
-                <span className="!text-[1.1rem]">1-44</span>
+                <span className="!text-xs font-medium">1-44</span>
                 <span className="invisible">/</span>
-                <span className="!text-[1.1rem]">45-88</span>
+                <span className="!text-xs font-medium">45-88</span>
               </div>
             </div>
           ))}
