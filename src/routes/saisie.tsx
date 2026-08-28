@@ -446,7 +446,6 @@ function Index() {
     [info],
   );
 
-
   const exportReady = useMemo(
     () => Boolean(info["marque"]?.trim() && info["sn_num"]?.trim()),
     [info],
@@ -690,48 +689,44 @@ function Index() {
     else if (index < 87) focusCell(index + 1, "wa");
   }, []);
 
-  const setValue = (index: number, field: "wa" | "wd", value: string) => {
-    const cleaned = cleanWeight(value);
-    markDirty();
-    setErrors((prev) => {
-      const next = { ...prev };
-      delete next[`${index}-${field}`];
-      return next;
-    });
-    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: cleaned } : r)));
+  /** Met à jour une cellule (Wa/Wd) et renvoie la ligne résultante. */
+  const setRowField = (index: number, field: "wa" | "wd", value: string): Row => {
+    const updated: Row = { ...rows[index]!, [field]: value };
+    setRows((prev) => prev.map((r, i) => (i === index ? updated : r)));
+    return updated;
   };
 
-  const handleBlur = (index: number, field: "wa" | "wd", value: string) => {
-    const cleaned = cleanWeight(value);
-    const key = `${index}-${field}`;
-    if (cleaned === "") {
-      const current = rows[index];
-      if (!current) return;
-      const updated: Row = { ...current, [field]: "" };
-      setRows((prev) => prev.map((r, i) => (i === index ? updated : r)));
-      checkCoherence(index, updated);
-      setErrors((prev) => {
-        const next = { ...prev };
-        delete next[key];
-        return next;
-      });
-      return;
-    }
-    const num = parseWeight(value);
-    if (num === null) {
-      setErrors((prev) => ({ ...prev, [key]: "Valeur invalide (5-99, nombre entier)" }));
-      return;
-    }
-    const current = rows[index];
-    if (!current) return;
+  const clearError = (key: string) =>
     setErrors((prev) => {
+      if (!(key in prev)) return prev;
       const next = { ...prev };
       delete next[key];
       return next;
     });
-    const updated: Row = { ...current, [field]: num.toString() };
-    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: num.toString() } : r)));
-    checkCoherence(index, updated);
+
+  const setValue = (index: number, field: "wa" | "wd", value: string) => {
+    markDirty();
+    clearError(`${index}-${field}`);
+    setRows((prev) =>
+      prev.map((r, i) => (i === index ? { ...r, [field]: cleanWeight(value) } : r)),
+    );
+  };
+
+  const handleBlur = (index: number, field: "wa" | "wd", value: string) => {
+    const key = `${index}-${field}`;
+    const cleaned = cleanWeight(value);
+    if (cleaned === "") {
+      clearError(key);
+      checkCoherence(index, setRowField(index, field, ""));
+      return;
+    }
+    const num = parseWeight(cleaned);
+    if (num === null) {
+      setErrors((prev) => ({ ...prev, [key]: "Valeur invalide (5-99, nombre entier)" }));
+      return;
+    }
+    clearError(key);
+    checkCoherence(index, setRowField(index, field, num.toString()));
   };
 
   /** Applique (ou lève) l'alerte de cohérence Wa > Wd sur les deux cellules d'une touche. */
@@ -765,10 +760,8 @@ function Index() {
   };
 
   const formatAverageResult = (value: string) => {
-    if (value === "—") {
-      return <span className="!text-2xl">—</span>;
-    }
-    const [integer, decimal = "0"] = value.split(".");
+    if (value === "—") return <span className="!text-2xl">—</span>;
+    const [integer, decimal] = value.split(".");
     return (
       <>
         {integer}
@@ -904,8 +897,6 @@ function Index() {
     );
     await generateLandscapeReport(page1, page2, filename);
   };
-
-
 
   // --- Import (CSV local / historique en ligne) -----------------------------------
 
@@ -1108,19 +1099,19 @@ function Index() {
     const onReset = () => setRows(EMPTY);
 
     const handlers: Record<string, EventListener> = {
-      "piano-export": onExport as EventListener,
-      "piano-export-csv": exportCsvOnly as EventListener,
-      "piano-export-pdf": onPdf as EventListener,
-      "piano-export-cloud": saveCloud as EventListener,
-      "piano-save-cloud": saveCloud as EventListener,
-      "piano-save": saveCloud as EventListener,
-      "piano-save-quick": quickSave as EventListener,
-      "piano-compare-guard": onCompareGuard as EventListener,
-      "piano-reset": onReset as EventListener,
-      "piano-import-csv": (() => importInputRef.current?.click()) as EventListener,
-      "piano-import-history": (() => void importFromHistory()) as EventListener,
-      "piano-import-history-row": ((event: Event) =>
-        restoreHistoryRow((event as CustomEvent<string>).detail)) as EventListener,
+      "piano-export": onExport,
+      "piano-export-csv": exportCsvOnly,
+      "piano-export-pdf": onPdf,
+      "piano-export-cloud": saveCloud,
+      "piano-save-cloud": saveCloud,
+      "piano-save": saveCloud,
+      "piano-save-quick": quickSave,
+      "piano-compare-guard": onCompareGuard,
+      "piano-reset": onReset,
+      "piano-import-csv": () => importInputRef.current?.click(),
+      "piano-import-history": () => void importFromHistory(),
+      "piano-import-history-row": (event: Event) =>
+        restoreHistoryRow((event as CustomEvent<string>).detail),
     };
 
     Object.entries(handlers).forEach(([type, fn]) => window.addEventListener(type, fn));
@@ -1162,13 +1153,10 @@ function Index() {
           }
         }}
         inputMode="numeric"
-        min={5}
-        max={99}
-        step={1}
         aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
-        className={`weight-input !font-sans ${isBlack ? "" : "![background-color:#cbd5e1] !text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
-        style={isBlack ? { backgroundColor: "#cbd5e1", color: "#000000", fontWeight: 600 } : undefined}
+        className={`weight-input !font-sans font-semibold !text-black ${isBlack ? "" : "![background-color:#cbd5e1]"} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
       />
     </div>
   );
@@ -1529,7 +1517,7 @@ function Index() {
 
       {blockMessage && (
         <div
-          className="fixed left-1/2 top-24 !z-[99999] w-[min(90vw,32rem)] -translate-x-1/2 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-4 py-3 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
+          className="fixed left-1/2 top-24 w-[min(90vw,32rem)] -translate-x-1/2 rounded-md border border-yellow-300 px-4 py-3 text-sm font-medium text-gray-950 shadow-lg"
           style={{ zIndex: 99999, backgroundColor: "rgba(254, 240, 138, 0.7)" }}
         >
           {blockMessage}
@@ -1547,7 +1535,6 @@ function Index() {
       {coherenceIndex !== null && coherenceAnchor && (
         <SvgTooltip x={coherenceAnchor.x} y={coherenceAnchor.y} text={COHERENCE_MESSAGE} />
       )}
-
 
       <Frame
         title={
