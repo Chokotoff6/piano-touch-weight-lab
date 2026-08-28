@@ -337,6 +337,19 @@ function Index() {
     [info],
   );
 
+  const requiredSheetFieldsComplete = useMemo(
+    () =>
+      Boolean(
+        info["marque"]?.trim() &&
+          info["modele"]?.trim() &&
+          info["sn_num"]?.trim() &&
+          info["type_piano"] &&
+          info["pays"]?.trim() &&
+          info["entretien"],
+      ),
+    [info],
+  );
+
   // Dès que la dernière information requise est remplie, le curseur se place
   // automatiquement dans la première zone de saisie (Wa, touche 1 / La0).
   const weightsFocusedOnce = useRef(false);
