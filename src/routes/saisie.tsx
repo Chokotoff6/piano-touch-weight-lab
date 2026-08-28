@@ -79,6 +79,75 @@ const SAVE_NEW_MESSAGE =
 const COHERENCE_MESSAGE =
   "⚠️ Erreur de cohérence : Le poids descendant (Wa) doit toujours être supérieur au poids ascendant (Wd).";
 
+function wrapTooltipText(text: string, maxChars: number): string[] {
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    if (!current) current = word;
+    else if ((current + " " + word).length <= maxChars) current += " " + word;
+    else {
+      lines.push(current);
+      current = word;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
+function SvgTooltip({ x, y, text }: { x: number; y: number; text: string }) {
+  const maxChars = 42;
+  const lines = wrapTooltipText(text, maxChars);
+  const charWidth = 6.4;
+  const lineHeight = 16;
+  const padX = 10;
+  const padY = 8;
+  const width = Math.min(maxChars, Math.max(...lines.map((l) => l.length))) * charWidth + padX * 2;
+  const height = lines.length * lineHeight + padY * 2;
+  return (
+    <svg
+      role="alert"
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      style={{
+        position: "fixed",
+        left: x,
+        top: y,
+        zIndex: 99999,
+        pointerEvents: "none",
+        overflow: "visible",
+      }}
+    >
+      <g>
+        <rect
+          x="0"
+          y="0"
+          width={width}
+          height={height}
+          rx="4"
+          fill="#fef08a"
+          opacity="1"
+          stroke="#fde047"
+        />
+        {lines.map((line, i) => (
+          <text
+            key={i}
+            x={padX}
+            y={padY + lineHeight * (i + 1) - 4}
+            fill="#000000"
+            fontWeight="600"
+            fontSize="12"
+            fontFamily="ui-sans-serif, system-ui, Arial, sans-serif"
+          >
+            {line}
+          </text>
+        ))}
+      </g>
+    </svg>
+  );
+}
+
 type SerialRule = { prefix: boolean; suffix: boolean; autoPrefix?: string };
 
 const BRAND_RULES: Record<string, SerialRule> = {
@@ -1375,21 +1444,12 @@ function Index() {
             </label>
 
             <div
-              className={`mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}
-              ref={(el) => {
-                if (el) {
-                  el.style.setProperty("display", "flex", "important");
-                  el.style.setProperty("flex-direction", "row", "important");
-                  el.style.setProperty("align-items", "center", "important");
-                  el.style.setProperty("flex-wrap", "wrap", "important");
-                  el.style.setProperty("gap", "24px", "important");
-                  el.style.setProperty("width", "100%", "important");
-                }
-              }}
+              className={`!flex !flex-row !items-center !flex-nowrap !gap-6 !w-full mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}
+              style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", gap: "24px", width: "100%" }}
             >
               <span className="shrink-0">Type d'entretien</span>
               {MAINTENANCE_OPTIONS.map((t) => (
-                <label key={t} className="flex items-center gap-1 text-sm text-foreground">
+                <label key={t} className="flex shrink-0 items-center gap-1 text-sm text-foreground">
                   <input
                     type="radio"
                     name="entretien"
@@ -1477,47 +1537,17 @@ function Index() {
       )}
 
       {blockAnchor && (
-        <div
-          role="alert"
-          className="!rounded-md !border !border-yellow-300 px-3 py-2 text-xs font-medium !text-gray-950 !shadow-lg"
-          style={{
-            position: "fixed",
-            left: blockAnchor.x,
-            top: blockAnchor.y,
-            width: "18rem",
-            zIndex: 99999,
-            backgroundColor: "rgba(254, 240, 138, 0.7)",
-            pointerEvents: "none",
-          }}
-        >
-          ⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type
-          d'entretien avant de valider.
-        </div>
+        <SvgTooltip
+          x={blockAnchor.x}
+          y={blockAnchor.y}
+          text="⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de valider."
+        />
       )}
 
       {coherenceIndex !== null && coherenceAnchor && (
-        <div
-          role="alert"
-          className="!rounded-md !border !border-yellow-300 px-3 py-2 text-xs font-medium !text-gray-950 !shadow-lg"
-          ref={(el) => {
-            if (el) {
-              el.style.setProperty("background-color", "#fef08a", "important");
-              el.style.setProperty("opacity", "1", "important");
-              el.style.setProperty("color", "#000000", "important");
-              el.style.setProperty("z-index", "99999", "important");
-              el.style.setProperty("position", "absolute", "important");
-            }
-          }}
-          style={{
-            left: coherenceAnchor.x,
-            top: coherenceAnchor.y,
-            width: "18rem",
-            pointerEvents: "none",
-          }}
-        >
-          {COHERENCE_MESSAGE}
-        </div>
+        <SvgTooltip x={coherenceAnchor.x} y={coherenceAnchor.y} text={COHERENCE_MESSAGE} />
       )}
+
 
       <Frame
         title={
