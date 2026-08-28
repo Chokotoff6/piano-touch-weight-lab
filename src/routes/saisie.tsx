@@ -367,8 +367,10 @@ function Index() {
     }
     if (weightsFocusedOnce.current) return;
     weightsFocusedOnce.current = true;
-    inputs.current["0-wa"]?.focus();
-    inputs.current["0-wa"]?.select();
+    setTimeout(() => {
+      inputs.current["0-wa"]?.focus();
+      inputs.current["0-wa"]?.select();
+    }, 50);
   }, [requiredSheetFieldsComplete]);
 
   const exportReady = useMemo(
@@ -454,13 +456,22 @@ function Index() {
     setSavedAt(new Date().toISOString());
   };
 
+  const normalizeCity = (raw: string) =>
+    raw
+      .toUpperCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^A-Z0-9\s'-]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
   const updateInfo = (key: string, value: string) => {
     setInfo((p) => ({ ...p, [key]: value }));
     markDirty();
   };
 
   const resolveCity = (raw: string) => {
-    const city = raw.trim();
+    const city = normalizeCity(raw);
     const country = (info["pays"] ?? "").trim();
     if (!city || !country) return;
     setIsGeocoding(true);
@@ -1166,12 +1177,18 @@ function Index() {
               <input
                 value={info["ville"] ?? ""}
                 disabled={!info["pays"]?.trim()}
-                onChange={(e) => updateInfo("ville", e.target.value)}
-                onBlur={(e) => resolveCity(e.target.value)}
+                onChange={(e) => updateInfo("ville", normalizeCity(e.target.value))}
+                onBlur={(e) => {
+                  const city = normalizeCity(e.target.value);
+                  updateInfo("ville", city);
+                  resolveCity(city);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
-                    resolveCity((e.target as HTMLInputElement).value);
+                    const city = normalizeCity((e.target as HTMLInputElement).value);
+                    updateInfo("ville", city);
+                    resolveCity(city);
                   }
                 }}
                 className={`${INPUT_CLASS} !bg-white disabled:!bg-white`}
@@ -1274,7 +1291,7 @@ function Index() {
             ] as const
           ).map(({ key, label }) => (
             <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
-              <div className="text-[0.8125rem] font-bold tracking-wide text-muted-foreground">
+              <div className="!text-[1.1rem] font-bold tracking-wide text-muted-foreground">
                 {label}
               </div>
               <div className="mt-1 text-lg font-semibold tabular-nums">
@@ -1286,9 +1303,9 @@ function Index() {
                 <span>{sectionAverages.second[key]}</span>
               </div>
               <div className="flex justify-center gap-2 text-[0.55rem] text-muted-foreground tabular-nums">
-                <span>1-44</span>
+                <span className="!text-[1.1rem]">1-44</span>
                 <span className="invisible">/</span>
-                <span>45-88</span>
+                <span className="!text-[1.1rem]">45-88</span>
               </div>
             </div>
           ))}

@@ -344,7 +344,7 @@ function RootComponent() {
         <img
           src={premiumCoffeeAsset.url}
           alt="Buy me a coffee"
-          className="h-full w-full rounded-lg object-cover"
+          className="!h-14 !w-auto rounded-lg object-cover"
         />
       </a>
 
