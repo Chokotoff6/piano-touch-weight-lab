@@ -1371,9 +1371,9 @@ function Index() {
               />
             </label>
 
-            <fieldset className={`mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
-              <legend>Type d'entretien</legend>
-              <div className="mt-1 flex flex-wrap items-center gap-4">
+            <fieldset className={`mt-4 ${FIELD_LABEL_CLASS} flex flex-row flex-wrap items-center gap-4 sm:col-span-2 md:col-span-4`}>
+              <legend className="shrink-0">Type d'entretien</legend>
+              <div className="flex flex-row flex-wrap items-center gap-4">
                 {MAINTENANCE_OPTIONS.map((t) => (
                   <label key={t} className="flex items-center gap-1 text-sm text-foreground">
                     <input
@@ -1487,12 +1487,12 @@ function Index() {
           role="alert"
           className="!rounded-md !border !border-yellow-300 px-3 py-2 text-xs font-medium !text-gray-950 !shadow-lg"
           style={{
-            position: "fixed",
+            position: "absolute",
             left: coherenceAnchor.x,
             top: coherenceAnchor.y,
             width: "18rem",
             zIndex: 99999,
-            backgroundColor: "rgba(254, 240, 138, 0.7)",
+            backgroundColor: "rgba(254, 240, 138, 0.9)",
             pointerEvents: "none",
           }}
         >
