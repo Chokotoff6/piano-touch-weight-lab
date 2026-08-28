@@ -333,7 +333,7 @@
     min-width: 0;
     height: 0.95625rem;
     border: none;
-    background: #d1d5db !important; /* bg-gray-300 : cases des touches blanches */
+    background: #cbd5e1 !important; /* gris moyen de contraste net : touches blanches */
     padding: 0 1px;
     color: #000 !important;
     text-align: center;
@@ -350,10 +350,10 @@
     margin-top: 1px;
   }
 
-  /* Touches noires : bg-gray-400, texte noir lisible */
+  /* Touches noires : gris anthracite éclairci, texte blanc */
   .is-black .weight-input {
-    background: #9ca3af !important; /* bg-gray-400 */
-    color: #000 !important;
+    background: #4b5563 !important;
+    color: #fff !important;
   }
 
   .is-black .weight-input::placeholder {
