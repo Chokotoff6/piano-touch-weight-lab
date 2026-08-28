@@ -11,6 +11,7 @@ type Props = {
   placeholder?: string;
   openOnFocus?: boolean;
   className?: string;
+  keepOpenSelector?: string;
   onCommit: (value: string) => void;
 };
 
