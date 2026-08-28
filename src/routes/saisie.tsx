@@ -1076,13 +1076,13 @@ function Index() {
         step={1}
         aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
-        className={`weight-input !font-mono ${isBlack ? "" : "![background-color:#cbd5e1] !text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        className={`weight-input !font-sans ${isBlack ? "" : "![background-color:#cbd5e1] !text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
         style={isBlack ? { backgroundColor: "#cbd5e1", color: "#000000", fontWeight: 600 } : undefined}
       />
       {coherenceIndex === index && field === "wd" && (
         <div
           role="alert"
-          className="pointer-events-none absolute left-[calc(100%+0.5rem)] top-0 z-50 w-72 rounded-md border border-destructive bg-background px-3 py-2 text-xs font-semibold text-foreground shadow-lg"
+          className="pointer-events-none absolute left-[calc(100%+0.5rem)] top-0 z-50 w-72 !rounded-md !border !border-yellow-300 !bg-[#fef08a] !bg-opacity-100 px-3 py-2 text-xs font-semibold !text-gray-950 !shadow-lg"
         >
           {COHERENCE_MESSAGE}
         </div>
@@ -1444,7 +1444,7 @@ function Index() {
       </div>
 
       {blockMessage && (
-        <div className="mt-6 rounded-md border border-amber-500/50 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+        <div className="mt-6 !rounded-md !border !border-yellow-300 !bg-[#fef08a] !bg-opacity-100 px-4 py-3 text-sm !text-gray-950 !shadow-lg">
           {blockMessage}
         </div>
       )}
