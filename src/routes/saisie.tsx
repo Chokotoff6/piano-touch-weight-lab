@@ -1477,47 +1477,17 @@ function Index() {
       )}
 
       {blockAnchor && (
-        <div
-          role="alert"
-          className="!rounded-md !border !border-yellow-300 px-3 py-2 text-xs font-medium !text-gray-950 !shadow-lg"
-          style={{
-            position: "fixed",
-            left: blockAnchor.x,
-            top: blockAnchor.y,
-            width: "18rem",
-            zIndex: 99999,
-            backgroundColor: "rgba(254, 240, 138, 0.7)",
-            pointerEvents: "none",
-          }}
-        >
-          ⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type
-          d'entretien avant de valider.
-        </div>
+        <SvgTooltip
+          x={blockAnchor.x}
+          y={blockAnchor.y}
+          text="⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de valider."
+        />
       )}
 
       {coherenceIndex !== null && coherenceAnchor && (
-        <div
-          role="alert"
-          className="!rounded-md !border !border-yellow-300 px-3 py-2 text-xs font-medium !text-gray-950 !shadow-lg"
-          ref={(el) => {
-            if (el) {
-              el.style.setProperty("background-color", "#fef08a", "important");
-              el.style.setProperty("opacity", "1", "important");
-              el.style.setProperty("color", "#000000", "important");
-              el.style.setProperty("z-index", "99999", "important");
-              el.style.setProperty("position", "absolute", "important");
-            }
-          }}
-          style={{
-            left: coherenceAnchor.x,
-            top: coherenceAnchor.y,
-            width: "18rem",
-            pointerEvents: "none",
-          }}
-        >
-          {COHERENCE_MESSAGE}
-        </div>
+        <SvgTooltip x={coherenceAnchor.x} y={coherenceAnchor.y} text={COHERENCE_MESSAGE} />
       )}
+
 
       <Frame
         title={
