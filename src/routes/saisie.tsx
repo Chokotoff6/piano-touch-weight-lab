@@ -1291,7 +1291,7 @@ function Index() {
             ] as const
           ).map(({ key, label }) => (
             <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
-              <div className="text-[0.8125rem] font-bold tracking-wide text-muted-foreground">
+              <div className="!text-[1.1rem] font-bold tracking-wide text-muted-foreground">
                 {label}
               </div>
               <div className="mt-1 text-lg font-semibold tabular-nums">
@@ -1303,9 +1303,9 @@ function Index() {
                 <span>{sectionAverages.second[key]}</span>
               </div>
               <div className="flex justify-center gap-2 text-[0.55rem] text-muted-foreground tabular-nums">
-                <span>1-44</span>
+                <span className="!text-[1.1rem]">1-44</span>
                 <span className="invisible">/</span>
-                <span>45-88</span>
+                <span className="!text-[1.1rem]">45-88</span>
               </div>
             </div>
           ))}
