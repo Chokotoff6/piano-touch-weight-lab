@@ -151,6 +151,8 @@ function RootComponent() {
   };
 
   const actionsDisabled = !isSaisie || !topbar.exportReady || topbar.isExporting;
+  /** Le bouton Sauver reste visuellement actif : blanc au repos, sombre dès qu'il y a des modifications. */
+  const saveDisabled = !isSaisie || topbar.isExporting;
 
   return (
     <QueryClientProvider client={queryClient}>
