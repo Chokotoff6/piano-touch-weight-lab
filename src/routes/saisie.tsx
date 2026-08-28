@@ -1177,12 +1177,18 @@ function Index() {
               <input
                 value={info["ville"] ?? ""}
                 disabled={!info["pays"]?.trim()}
-                onChange={(e) => updateInfo("ville", e.target.value)}
-                onBlur={(e) => resolveCity(e.target.value)}
+                onChange={(e) => updateInfo("ville", normalizeCity(e.target.value))}
+                onBlur={(e) => {
+                  const city = normalizeCity(e.target.value);
+                  updateInfo("ville", city);
+                  resolveCity(city);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
-                    resolveCity((e.target as HTMLInputElement).value);
+                    const city = normalizeCity((e.target as HTMLInputElement).value);
+                    updateInfo("ville", city);
+                    resolveCity(city);
                   }
                 }}
                 className={`${INPUT_CLASS} !bg-white disabled:!bg-white`}
