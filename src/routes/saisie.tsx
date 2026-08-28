@@ -1371,7 +1371,7 @@ function Index() {
               />
             </label>
 
-            <fieldset className={`mt-4 ${FIELD_LABEL_CLASS} flex flex-row flex-wrap items-center gap-4 sm:col-span-2 md:col-span-4`}>
+            <fieldset className={`mt-4 ${FIELD_LABEL_CLASS} !flex !flex-row !items-center !flex-wrap !gap-x-6 !gap-y-2 !w-full sm:col-span-2 md:col-span-4`}>
               <legend className="shrink-0">Type d'entretien</legend>
               <div className="flex flex-row flex-wrap items-center gap-4">
                 {MAINTENANCE_OPTIONS.map((t) => (
