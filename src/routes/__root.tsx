@@ -245,7 +245,6 @@ function RootComponent() {
                   variant="outline"
                   size="sm"
                   className="rounded-r-none text-lg"
-                  disabled={exportDisabled}
                   onClick={() => dispatchAction("piano-export-csv")}
                 >
                   Exporter
@@ -255,7 +254,6 @@ function RootComponent() {
                     variant="outline"
                     size="sm"
                     className="rounded-l-none border-l-0 px-2"
-                    disabled={exportDisabled}
                   >
                     <ChevronDown className="h-4 w-4" />
                   </Button>
