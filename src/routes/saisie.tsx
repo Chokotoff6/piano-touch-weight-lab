@@ -761,10 +761,8 @@ function Index() {
   };
 
   const formatAverageResult = (value: string) => {
-    if (value === "—") {
-      return <span className="!text-2xl">—</span>;
-    }
-    const [integer, decimal = "0"] = value.split(".");
+    if (value === "—") return <span className="!text-2xl">—</span>;
+    const [integer, decimal] = value.split(".");
     return (
       <>
         {integer}
@@ -1158,13 +1156,10 @@ function Index() {
           }
         }}
         inputMode="numeric"
-        min={5}
-        max={99}
-        step={1}
         aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
-        className={`weight-input !font-sans ${isBlack ? "" : "![background-color:#cbd5e1] !text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
-        style={isBlack ? { backgroundColor: "#cbd5e1", color: "#000000", fontWeight: 600 } : undefined}
+        className={`weight-input !font-sans font-semibold !text-black ${isBlack ? "" : "![background-color:#cbd5e1]"} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
       />
     </div>
   );
@@ -1525,7 +1520,7 @@ function Index() {
 
       {blockMessage && (
         <div
-          className="fixed left-1/2 top-24 !z-[99999] w-[min(90vw,32rem)] -translate-x-1/2 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-4 py-3 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
+          className="fixed left-1/2 top-24 w-[min(90vw,32rem)] -translate-x-1/2 rounded-md border border-yellow-300 px-4 py-3 text-sm font-medium text-gray-950 shadow-lg"
           style={{ zIndex: 99999, backgroundColor: "rgba(254, 240, 138, 0.7)" }}
         >
           {blockMessage}
