@@ -7,7 +7,7 @@ import {
   OCTAVE_RULE_MESSAGE,
   saisieGate,
 } from "@/lib/required-keys";
-import { SmartCombobox } from "@/components/SmartCombobox";
+import { SmartCombobox, type SmartComboboxHandle } from "@/components/SmartCombobox";
 import { modelsFor, modelGroupsFor, inferTypeFromModel } from "@/data/pianoModels";
 import {
   BRAND_SUGGESTIONS,
@@ -271,6 +271,7 @@ function Index() {
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [blockMessage, setBlockMessage] = useState<string | null>(null);
   const remarquesRef = useRef<HTMLInputElement | null>(null);
+  const modelComboRef = useRef<SmartComboboxHandle | null>(null);
   const blockTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -856,7 +857,7 @@ function Index() {
               />
             </label>
 
-            <fieldset className={FIELD_LABEL_CLASS} data-keep-combobox-open>
+            <fieldset className={FIELD_LABEL_CLASS}>
               <legend>Type</legend>
               <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 bg-white px-2">
                 {["Droit", "à Queue"].map((t) => (
@@ -872,6 +873,7 @@ function Index() {
                         if (m && !modelsFor(info["marque"] ?? "", t).includes(m)) {
                           updateInfo("modele", "");
                         }
+                        modelComboRef.current?.open();
                       }}
                     />
                     {t}
@@ -883,6 +885,7 @@ function Index() {
             <label className={FIELD_LABEL_CLASS}>
               Modèle
               <SmartCombobox
+                ref={modelComboRef}
                 value={info["modele"] ?? ""}
                 options={modelsFor(info["marque"] ?? "", info["type_piano"])}
                 groups={modelGroupsFor(info["marque"] ?? "", info["type_piano"])}
@@ -904,45 +907,47 @@ function Index() {
                 (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
               </span>
               <div className="mt-1 flex items-end justify-start gap-4">
-                <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
-                   <span className="block whitespace-nowrap">Lettre</span>
-                  <input
-                    ref={(el) => {
-                      snRef.current["sn_prefix"] = el;
-                    }}
-                    value={info["sn_prefix"] ?? ""}
-                    onChange={(e) => onPrefixChange(e.target.value)}
-                    disabled={!rule.prefix}
-                    placeholder="ex: J, F"
-                    className={`${INPUT_CLASS} max-w-[80px]`}
-                  />
-                </label>
-                <label className={`min-w-[150px] ${SUB_LABEL_CLASS}`}>
-                  <span className="block whitespace-nowrap">N° de série</span>
-                  <input
-                    ref={(el) => {
-                      snRef.current["sn_num"] = el;
-                    }}
-                    value={info["sn_num"] ?? ""}
-                    onChange={(e) => updateInfo("sn_num", e.target.value.replace(/[^0-9]/g, ""))}
-                    required
-                    inputMode="numeric"
-                    placeholder="Chiffres"
-                    className={`${INPUT_CLASS} max-w-[150px]`}
-                  />
-                </label>
-                <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
-                  <span className="block whitespace-nowrap">Lettre fin</span>
-                  <input
-                    value={info["sn_suffix"] ?? ""}
-                    onChange={(e) =>
-                      updateInfo("sn_suffix", e.target.value.toUpperCase().slice(0, 3))
-                    }
-                    disabled={!rule.suffix}
-                    placeholder="ex: A, B"
-                    className={`${INPUT_CLASS} max-w-[80px]`}
-                  />
-                </label>
+                <div className="flex items-end gap-2">
+                  <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
+                     <span className="block whitespace-nowrap">Lettre</span>
+                    <input
+                      ref={(el) => {
+                        snRef.current["sn_prefix"] = el;
+                      }}
+                      value={info["sn_prefix"] ?? ""}
+                      onChange={(e) => onPrefixChange(e.target.value)}
+                      disabled={!rule.prefix}
+                      placeholder="ex: J, F"
+                      className={`${INPUT_CLASS} max-w-[80px]`}
+                    />
+                  </label>
+                  <label className={`min-w-[150px] ${SUB_LABEL_CLASS}`}>
+                    <span className="block whitespace-nowrap">N° de série</span>
+                    <input
+                      ref={(el) => {
+                        snRef.current["sn_num"] = el;
+                      }}
+                      value={info["sn_num"] ?? ""}
+                      onChange={(e) => updateInfo("sn_num", e.target.value.replace(/[^0-9]/g, ""))}
+                      required
+                      inputMode="numeric"
+                      placeholder="Chiffres"
+                      className={`${INPUT_CLASS} max-w-[150px]`}
+                    />
+                  </label>
+                  <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
+                    <span className="block whitespace-nowrap">Lettre fin</span>
+                    <input
+                      value={info["sn_suffix"] ?? ""}
+                      onChange={(e) =>
+                        updateInfo("sn_suffix", e.target.value.toUpperCase().slice(0, 3))
+                      }
+                      disabled={!rule.suffix}
+                      placeholder="ex: A, B"
+                      className={`${INPUT_CLASS} max-w-[80px]`}
+                    />
+                  </label>
+                </div>
                 <label className={`min-w-[120px] ${SUB_LABEL_CLASS}`}>
                   <span className="block whitespace-nowrap">Date fabrication</span>
                   <input
@@ -1033,7 +1038,7 @@ function Index() {
                 required={remarquesRequired}
                 aria-invalid={remarquesInvalid}
                 placeholder={
-                  remarquesRequired ? "⚠️ ! Veuillez indiquer les modifications" : undefined
+                  remarquesRequired ? "⚠️ Veuillez indiquer les modifications" : undefined
                 }
                 value={info["remarques"] ?? ""}
                 onChange={(e) => updateInfo("remarques", e.target.value)}
