@@ -67,6 +67,10 @@ const DRAFT_ROWS_KEY = "ptw_draft_rows";
 
 const FORM_INCOMPLETE_MESSAGE =
   "⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de sauver.";
+const SAVE_UPDATE_MESSAGE =
+  "⚠️ Diagnostic synchronisé avec succès dans la base de données de l'application (Cloud)";
+const SAVE_NEW_MESSAGE =
+  "⚠️ Nouvelle session de suivi chronologique créée avec succès. Cette fiche historique est archivée de manière étanche dans la base de données cloud pour vos futures comparaisons.";
 const COHERENCE_MESSAGE =
   "⚠️ Erreur de cohérence : Le poids descendant (Wa) doit toujours être supérieur au poids ascendant (Wd).";
 
@@ -798,7 +802,7 @@ function Index() {
       }
       markSubmission();
       setIsDirty(false);
-      toast.success("Diagnostic synchronisé avec succès");
+      showTopbarAlert("save", mode === "update" ? SAVE_UPDATE_MESSAGE : SAVE_NEW_MESSAGE);
       if (goCompareAfterSave.current) {
         goCompareAfterSave.current = false;
         void navigate({ to: "/resultats" });
@@ -1294,7 +1298,7 @@ function Index() {
               <div className="!text-[1.1rem] font-bold tracking-wide text-muted-foreground">
                 {label}
               </div>
-              <div className="mt-1 text-lg font-semibold tabular-nums">
+              <div className="mt-1 !text-2xl font-semibold tabular-nums">
                 {sectionAverages.global[key]}
               </div>
               <div className="mt-0.5 flex justify-center gap-2 text-[0.65rem] text-muted-foreground tabular-nums">
@@ -1303,9 +1307,9 @@ function Index() {
                 <span>{sectionAverages.second[key]}</span>
               </div>
               <div className="flex justify-center gap-2 text-[0.55rem] text-muted-foreground tabular-nums">
-                <span className="!text-[1.1rem]">1-44</span>
+                <span className="!text-xs font-medium">1-44</span>
                 <span className="invisible">/</span>
-                <span className="!text-[1.1rem]">45-88</span>
+                <span className="!text-xs font-medium">45-88</span>
               </div>
             </div>
           ))}
