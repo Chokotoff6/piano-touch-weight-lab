@@ -1495,7 +1495,8 @@ function Index() {
             top: coherenceAnchor.y,
             width: "18rem",
             zIndex: 99999,
-            backgroundColor: "rgba(254, 240, 138, 0.9)",
+            backgroundColor: "#fef08a",
+            opacity: 1,
             pointerEvents: "none",
           }}
         >
