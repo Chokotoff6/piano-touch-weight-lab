@@ -291,9 +291,10 @@ function Index() {
   const [isDirty, setIsDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [blockMessage, setBlockMessage] = useState<string | null>(null);
-  const [blockAnchor, setBlockAnchor] = useState<{ index: number; field: "wa" | "wd" } | null>(null);
+  const [blockAnchor, setBlockAnchor] = useState<{ x: number; y: number } | null>(null);
   const blockAnchorTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [coherenceIndex, setCoherenceIndex] = useState<number | null>(null);
+  const [coherenceAnchor, setCoherenceAnchor] = useState<{ x: number; y: number } | null>(null);
   const remarquesRef = useRef<HTMLInputElement | null>(null);
   const modelComboRef = useRef<SmartComboboxHandle | null>(null);
   const blockTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
