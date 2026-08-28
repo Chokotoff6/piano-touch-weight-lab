@@ -1050,7 +1050,7 @@ function Index() {
     <div
       className={`weight-fields weight-fields-${field}`}
       onClick={() => {
-        if (!canEnterWeights) showBlockMessage();
+        if (!canEnterWeights) showBlockMessage(index, field);
       }}
     >
       <input
