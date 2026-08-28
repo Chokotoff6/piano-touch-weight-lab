@@ -728,10 +728,11 @@ function Index() {
         remarques: meta["Remarques"] ?? prev["remarques"] ?? "",
       }));
       fabricationTouched.current = true;
+      setCurrentDbId(null);
       markDirty();
-      toast.success("Fichier CSV importé");
+      showTopbarAlert("import", "Fichier CSV importé.");
     } catch {
-      showMessage("⚠️ Fichier CSV illisible : format Touchweight attendu.");
+      showTopbarAlert("import", "⚠️ Fichier CSV illisible : format Touchweight attendu.");
     }
   };
 
