@@ -802,7 +802,7 @@ function Index() {
       }
       markSubmission();
       setIsDirty(false);
-      toast.success("Diagnostic synchronisé avec succès");
+      showTopbarAlert("save", mode === "update" ? SAVE_UPDATE_MESSAGE : SAVE_NEW_MESSAGE);
       if (goCompareAfterSave.current) {
         goCompareAfterSave.current = false;
         void navigate({ to: "/resultats" });
