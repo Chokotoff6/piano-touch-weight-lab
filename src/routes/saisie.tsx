@@ -291,9 +291,10 @@ function Index() {
   const [isDirty, setIsDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [blockMessage, setBlockMessage] = useState<string | null>(null);
-  const [blockAnchor, setBlockAnchor] = useState<{ index: number; field: "wa" | "wd" } | null>(null);
+  const [blockAnchor, setBlockAnchor] = useState<{ x: number; y: number } | null>(null);
   const blockAnchorTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [coherenceIndex, setCoherenceIndex] = useState<number | null>(null);
+  const [coherenceAnchor, setCoherenceAnchor] = useState<{ x: number; y: number } | null>(null);
   const remarquesRef = useRef<HTMLInputElement | null>(null);
   const modelComboRef = useRef<SmartComboboxHandle | null>(null);
   const blockTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -486,15 +487,24 @@ function Index() {
 
   const showCoherencePopover = (index: number) => {
     if (coherenceTimeout.current) clearTimeout(coherenceTimeout.current);
+    const el = inputs.current[`${index}-wd`];
+    if (el) {
+      const r = el.getBoundingClientRect();
+      setCoherenceAnchor({ x: r.right + 8, y: r.top });
+    }
     setCoherenceIndex(index);
     coherenceTimeout.current = setTimeout(() => {
       setCoherenceIndex(null);
+      setCoherenceAnchor(null);
       coherenceTimeout.current = null;
     }, 3000);
   };
 
   useEffect(() => {
-    const dismissCoherencePopover = () => setCoherenceIndex(null);
+    const dismissCoherencePopover = () => {
+      setCoherenceIndex(null);
+      setCoherenceAnchor(null);
+    };
     document.addEventListener("pointerdown", dismissCoherencePopover);
     return () => {
       document.removeEventListener("pointerdown", dismissCoherencePopover);
@@ -505,7 +515,9 @@ function Index() {
   /** Alerte ancrée sur la touche cliquée, près du curseur, quand la fiche est incomplète. */
   const showBlockMessage = (index: number, field: "wa" | "wd") => {
     if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
-    setBlockAnchor({ index, field });
+    const el = inputs.current[`${index}-${field}`];
+    const r = el?.getBoundingClientRect();
+    setBlockAnchor(r ? { x: r.right + 8, y: r.top } : { x: window.innerWidth / 2 - 144, y: 120 });
     blockAnchorTimeout.current = setTimeout(() => {
       setBlockAnchor(null);
       blockAnchorTimeout.current = null;
@@ -1086,25 +1098,6 @@ function Index() {
         className={`weight-input !font-sans ${isBlack ? "" : "![background-color:#cbd5e1] !text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
         style={isBlack ? { backgroundColor: "#cbd5e1", color: "#000000", fontWeight: 600 } : undefined}
       />
-      {blockAnchor && blockAnchor.index === index && blockAnchor.field === field && (
-        <div
-          role="alert"
-          className="pointer-events-none absolute left-[calc(100%+0.5rem)] top-0 !z-[99999] w-72 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-xs font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
-          style={{ position: "absolute", zIndex: 99999, backgroundColor: "rgba(254, 240, 138, 0.7)" }}
-        >
-          ⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type
-          d'entretien avant de valider.
-        </div>
-      )}
-      {coherenceIndex === index && field === "wd" && (
-        <div
-          role="alert"
-          className="pointer-events-none absolute left-[calc(100%+0.5rem)] top-0 !z-[99999] w-72 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-xs font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
-          style={{ position: "absolute", zIndex: 99999, backgroundColor: "rgba(254, 240, 138, 0.7)" }}
-        >
-          {COHERENCE_MESSAGE}
-        </div>
-      )}
     </div>
   );
 
@@ -1467,6 +1460,43 @@ function Index() {
           style={{ zIndex: 99999, backgroundColor: "rgba(254, 240, 138, 0.7)" }}
         >
           {blockMessage}
+        </div>
+      )}
+
+      {blockAnchor && (
+        <div
+          role="alert"
+          className="!rounded-md !border !border-yellow-300 px-3 py-2 text-xs font-medium !text-gray-950 !shadow-lg"
+          style={{
+            position: "fixed",
+            left: blockAnchor.x,
+            top: blockAnchor.y,
+            width: "18rem",
+            zIndex: 99999,
+            backgroundColor: "rgba(254, 240, 138, 0.7)",
+            pointerEvents: "none",
+          }}
+        >
+          ⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type
+          d'entretien avant de valider.
+        </div>
+      )}
+
+      {coherenceIndex !== null && coherenceAnchor && (
+        <div
+          role="alert"
+          className="!rounded-md !border !border-yellow-300 px-3 py-2 text-xs font-medium !text-gray-950 !shadow-lg"
+          style={{
+            position: "fixed",
+            left: coherenceAnchor.x,
+            top: coherenceAnchor.y,
+            width: "18rem",
+            zIndex: 99999,
+            backgroundColor: "rgba(254, 240, 138, 0.7)",
+            pointerEvents: "none",
+          }}
+        >
+          {COHERENCE_MESSAGE}
         </div>
       )}
 
