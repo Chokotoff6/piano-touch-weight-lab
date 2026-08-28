@@ -864,6 +864,7 @@ function Index() {
         isExporting: false,
         isDirty: false,
         hasSaved: false,
+        historyRows: [],
       });
     };
   }, [exportReady, requiredSheetFieldsComplete, octaveGaps.length, info, isExporting, isDirty, currentDbId]);
