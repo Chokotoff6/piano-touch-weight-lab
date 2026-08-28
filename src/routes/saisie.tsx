@@ -22,8 +22,11 @@ import {
   SERIAL_FORMAT_ERROR,
 } from "@/lib/serial-dating";
 import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
-import { buildCsv, downloadCsv } from "@/lib/export-csv";
+import { buildCsv, buildExportFilename, downloadCsv } from "@/lib/export-csv";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
+
+const INVALID_CSV_MESSAGE =
+  "⚠️ Fichier non valide. Veuillez importer un fichier CSV généré par l'application Piano Touch Analyzer.";
 import { getFingerprint } from "@/lib/fingerprint";
 import {
   getOwnDiagnostics,
