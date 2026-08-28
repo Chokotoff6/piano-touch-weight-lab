@@ -551,12 +551,14 @@ function Index() {
       setErrors((prev) => ({ ...prev, [key]: "Valeur invalide (5-99, nombre entier)" }));
       return;
     }
+    const current = rows[index];
+    if (!current) return;
     setErrors((prev) => {
       const next = { ...prev };
       delete next[key];
       return next;
     });
-    const updated: Row = { ...rows[index]!, [field]: num.toString() };
+    const updated: Row = { ...current, [field]: num.toString() };
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: num.toString() } : r)));
     checkCoherence(index, updated);
   };
