@@ -1487,12 +1487,12 @@ function Index() {
           role="alert"
           className="!rounded-md !border !border-yellow-300 px-3 py-2 text-xs font-medium !text-gray-950 !shadow-lg"
           style={{
-            position: "fixed",
+            position: "absolute",
             left: coherenceAnchor.x,
             top: coherenceAnchor.y,
             width: "18rem",
             zIndex: 99999,
-            backgroundColor: "rgba(254, 240, 138, 0.7)",
+            backgroundColor: "rgba(254, 240, 138, 0.9)",
             pointerEvents: "none",
           }}
         >
