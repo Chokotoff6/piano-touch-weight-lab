@@ -1499,14 +1499,19 @@ function Index() {
         <div
           role="alert"
           className="!rounded-md !border !border-yellow-300 px-3 py-2 text-xs font-medium !text-gray-950 !shadow-lg"
+          ref={(el) => {
+            if (el) {
+              el.style.setProperty("background-color", "#fef08a", "important");
+              el.style.setProperty("opacity", "1", "important");
+              el.style.setProperty("color", "#000000", "important");
+              el.style.setProperty("z-index", "99999", "important");
+              el.style.setProperty("position", "absolute", "important");
+            }
+          }}
           style={{
-            position: "absolute",
             left: coherenceAnchor.x,
             top: coherenceAnchor.y,
             width: "18rem",
-            zIndex: 99999,
-            backgroundColor: "#fef08a",
-            opacity: 1,
             pointerEvents: "none",
           }}
         >
