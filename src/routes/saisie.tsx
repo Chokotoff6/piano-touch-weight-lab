@@ -633,9 +633,10 @@ function Index() {
     const wdKey = `${index}-wd`;
     if (wa !== null && wd !== null && wa <= wd) {
       setErrors((prev) => ({ ...prev, [waKey]: COHERENCE_MESSAGE, [wdKey]: COHERENCE_MESSAGE }));
-      showMessage(COHERENCE_MESSAGE);
+      showCoherencePopover(index);
       return;
     }
+    if (coherenceIndex === index) setCoherenceIndex(null);
     setErrors((prev) => {
       const next = { ...prev };
       if (next[waKey] === COHERENCE_MESSAGE) delete next[waKey];
