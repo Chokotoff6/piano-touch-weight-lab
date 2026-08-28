@@ -487,15 +487,24 @@ function Index() {
 
   const showCoherencePopover = (index: number) => {
     if (coherenceTimeout.current) clearTimeout(coherenceTimeout.current);
+    const el = inputs.current[`${index}-wd`];
+    if (el) {
+      const r = el.getBoundingClientRect();
+      setCoherenceAnchor({ x: r.right + 8, y: r.top });
+    }
     setCoherenceIndex(index);
     coherenceTimeout.current = setTimeout(() => {
       setCoherenceIndex(null);
+      setCoherenceAnchor(null);
       coherenceTimeout.current = null;
     }, 3000);
   };
 
   useEffect(() => {
-    const dismissCoherencePopover = () => setCoherenceIndex(null);
+    const dismissCoherencePopover = () => {
+      setCoherenceIndex(null);
+      setCoherenceAnchor(null);
+    };
     document.addEventListener("pointerdown", dismissCoherencePopover);
     return () => {
       document.removeEventListener("pointerdown", dismissCoherencePopover);
@@ -506,7 +515,9 @@ function Index() {
   /** Alerte ancrée sur la touche cliquée, près du curseur, quand la fiche est incomplète. */
   const showBlockMessage = (index: number, field: "wa" | "wd") => {
     if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
-    setBlockAnchor({ index, field });
+    const el = inputs.current[`${index}-${field}`];
+    const r = el?.getBoundingClientRect();
+    setBlockAnchor(r ? { x: r.right + 8, y: r.top } : { x: window.innerWidth / 2 - 144, y: 120 });
     blockAnchorTimeout.current = setTimeout(() => {
       setBlockAnchor(null);
       blockAnchorTimeout.current = null;
