@@ -64,8 +64,10 @@ export function normalizeFilenameSegment(value: string | undefined | null): stri
   const v = (value ?? "").trim();
   if (!v) return "INCONNU";
   return removeAccents(v)
+    .replace(/&/g, "-")
     .replace(/\s+/g, "-")
     .replace(FILENAME_UNSAFE, "")
+    .replace(/-+/g, "-")
     .toUpperCase();
 }
 
