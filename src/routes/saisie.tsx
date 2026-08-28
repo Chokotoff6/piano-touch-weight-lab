@@ -1063,7 +1063,7 @@ function Index() {
         onKeyDown={(e) => {
           if (!canEnterWeights) {
             e.preventDefault();
-            showBlockMessage();
+            showBlockMessage(index, field);
             return;
           }
           if (e.key === "Enter") {
