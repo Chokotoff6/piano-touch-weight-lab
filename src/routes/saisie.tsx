@@ -538,12 +538,16 @@ function Index() {
     const cleaned = cleanWeight(value);
     const key = `${index}-${field}`;
     if (cleaned === "") {
+      const current = rows[index];
+      if (!current) return;
+      const updated: Row = { ...current, [field]: "" };
+      setRows((prev) => prev.map((r, i) => (i === index ? updated : r)));
+      checkCoherence(index, updated);
       setErrors((prev) => {
         const next = { ...prev };
         delete next[key];
         return next;
       });
-      setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: "" } : r)));
       return;
     }
     const num = parseWeight(value);
