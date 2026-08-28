@@ -349,14 +349,14 @@
     margin-top: 1px;
   }
 
-  /* Touches noires : case anthracite très foncée, texte blanc lisible */
+  /* Touches noires : case grisée/anthracite clair, texte noir lisible */
   .is-black .weight-input {
-    background: oklch(0.205 0 0);
-    color: #ffffff;
+    background: #b0b0b0;
+    color: oklch(0.15 0 0);
   }
 
   .is-black .weight-input::placeholder {
-    color: oklch(0.75 0 0);
+    color: oklch(0.4 0 0);
   }
 
   .weight-input::placeholder {

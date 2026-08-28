@@ -207,8 +207,10 @@ function RootComponent() {
                         ? "bg-neutral-700 text-white hover:bg-neutral-800"
                         : "bg-white text-gray-700 border-gray-300 hover:bg-accent"
                     }`}
-                    disabled={saveDisabled}
-                    onClick={() => dispatchAction("piano-save")}
+                    onClick={() => {
+                      if (saveDisabled) return;
+                      dispatchAction("piano-save");
+                    }}
                   >
                     Sauver
                   </Button>
@@ -221,7 +223,6 @@ function RootComponent() {
                           ? "bg-neutral-700 text-white hover:bg-neutral-800"
                           : "bg-white text-gray-700 border-gray-300 hover:bg-accent"
                       }`}
-                      disabled={saveDisabled}
                     >
                       <ChevronDown className="h-4 w-4" />
                     </Button>

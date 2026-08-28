@@ -576,22 +576,12 @@ function Index() {
   const guardExport = () => {
     // Contrôle anti-robot : échec silencieux, aucun message affiché.
     if (!passesBotChecks(honeypot)) return false;
-    // Vérification minimale : une marque et un numéro de série sont requis pour exporter.
-    if (!exportReady) {
-      showMessage(
-        "⚠️ Veuillez renseigner au moins une marque et un numéro de série pour pouvoir exporter et sauvegarder votre diagnostic.",
-      );
-      return false;
-    }
-    // Si des modifications importantes sont déclarées, les remarques sont obligatoires.
-    if (info["entretien"] === "Modifications importantes" && !(info["remarques"] ?? "").trim()) {
-      showMessage(
-        "⚠️ Veuillez décrire les modifications importantes dans le champ Remarques avant d'enregistrer.",
-      );
-      return false;
-    }
-    // Règle de remplissage : une blanche + une noire mesurées par octave.
-    if (octaveGaps.length > 0) {
+    // Formulaire incomplet ou règle d'octave non remplie : blocage + bulle
+    // d'alerte en overlay ancrée au bouton Sauver.
+    const formIncomplete =
+      !canEnterWeights ||
+      (info["entretien"] === "Modifications importantes" && !(info["remarques"] ?? "").trim());
+    if (formIncomplete || octaveGaps.length > 0) {
       showTopbarAlert("save", OCTAVE_RULE_MESSAGE);
       return false;
     }
