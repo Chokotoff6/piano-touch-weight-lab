@@ -350,11 +350,11 @@ function Index() {
     [info],
   );
 
-  // Dès que la dernière information requise est remplie, le curseur se place
+  // Dès que les six informations de la fiche sont remplies, le curseur se place
   // automatiquement dans la première zone de saisie (Wa, touche 1 / La0).
   const weightsFocusedOnce = useRef(false);
   useEffect(() => {
-    if (!canEnterWeights) {
+    if (!requiredSheetFieldsComplete) {
       weightsFocusedOnce.current = false;
       return;
     }
@@ -362,7 +362,7 @@ function Index() {
     weightsFocusedOnce.current = true;
     inputs.current["0-wa"]?.focus();
     inputs.current["0-wa"]?.select();
-  }, [canEnterWeights]);
+  }, [requiredSheetFieldsComplete]);
 
   const exportReady = useMemo(
     () => Boolean(info["marque"]?.trim() && info["sn_num"]?.trim()),
