@@ -23,8 +23,14 @@ import {
 } from "@/lib/serial-dating";
 import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
 import { buildCsv, downloadCsv } from "@/lib/export-csv";
+import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { getFingerprint } from "@/lib/fingerprint";
-import { insertDiagnostic, updateDiagnostic, type DiagnosticPayload } from "@/lib/diagnostics";
+import {
+  getOwnDiagnostics,
+  insertDiagnostic,
+  updateDiagnostic,
+  type DiagnosticPayload,
+} from "@/lib/diagnostics";
 import { setTopbarState, showTopbarAlert } from "@/lib/topbar-store";
 import { toast } from "sonner";
 import {
@@ -288,6 +294,7 @@ function Index() {
   const [askUpdate, setAskUpdate] = useState(false);
   const [askCompare, setAskCompare] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
   const goCompareAfterSave = useRef(false);
 
   const navigate = useNavigate();
@@ -684,6 +691,90 @@ function Index() {
     downloadCsv(`touchweight_${sn}_${Date.now()}.csv`, buildCsv(meta, rows));
   };
 
+  // --- Import (CSV local / historique en ligne) -----------------------------------
+
+  /** Applique un fichier CSV Touchweight au formulaire et aux 88 pesées. */
+  const importCsvContent = (content: string) => {
+    try {
+      const { meta, rows: imported } = parseDiagnosticCsv(content);
+      setRows(imported.map((r) => ({ wa: cleanWeight(r.wa), wd: cleanWeight(r.wd) })));
+      setInfo((prev) => ({
+        ...prev,
+        marque: meta["Marque"] ?? prev["marque"] ?? "",
+        type_piano: meta["Type de piano"] ?? prev["type_piano"] ?? "",
+        modele: meta["Modèle"] ?? prev["modele"] ?? "",
+        sn_prefix: meta["Préfixe lettre"] ?? prev["sn_prefix"] ?? "",
+        sn_num: meta["Numéro de série"] ?? prev["sn_num"] ?? "",
+        sn_suffix: meta["Suffixe lettre"] ?? prev["sn_suffix"] ?? "",
+        fabrication: meta["Date de fabrication"] ?? prev["fabrication"] ?? "",
+        pays: meta["Pays"] ?? prev["pays"] ?? "",
+        ville: meta["Ville"] ?? prev["ville"] ?? "",
+        entretien: meta["Type d'entretien"] ?? prev["entretien"] ?? "",
+        remarques: meta["Remarques"] ?? prev["remarques"] ?? "",
+      }));
+      fabricationTouched.current = true;
+      markDirty();
+      toast.success("Fichier CSV importé");
+    } catch {
+      showMessage("⚠️ Fichier CSV illisible : format Touchweight attendu.");
+    }
+  };
+
+  const onImportFile = (file: File | undefined) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => importCsvContent(String(reader.result ?? ""));
+    reader.onerror = () => showMessage("⚠️ Lecture du fichier impossible.");
+    reader.readAsText(file, "utf-8");
+  };
+
+  /** Restaure la dernière pesée enregistrée en ligne pour ce numéro de série. */
+  const importFromHistory = async () => {
+    const serial = (info["sn_num"] ?? "").trim();
+    if (!serial) {
+      showMessage("⚠️ Renseignez d'abord le numéro de série pour retrouver votre historique.");
+      return;
+    }
+    try {
+      const history = await getOwnDiagnostics(getFingerprint(), serial);
+      const latest = history
+        .slice()
+        .sort((a, b) => b.date_heure_saisie.localeCompare(a.date_heure_saisie))[0];
+      if (!latest) {
+        showMessage("Aucune fiche en ligne trouvée pour ce numéro de série.");
+        return;
+      }
+      const wa = Array.isArray(latest.mesures_wa) ? (latest.mesures_wa as unknown[]) : [];
+      const wd = Array.isArray(latest.mesures_wd) ? (latest.mesures_wd as unknown[]) : [];
+      setRows(
+        Array.from({ length: 88 }, (_, i) => ({
+          wa: cleanWeight(String(wa[i] ?? "")),
+          wd: cleanWeight(String(wd[i] ?? "")),
+        })),
+      );
+      setInfo((prev) => ({
+        ...prev,
+        marque: latest.marque ?? "",
+        type_piano: latest.type_piano ?? "",
+        modele: latest.modele ?? "",
+        sn_prefix: latest.prefixe_lettre ?? "",
+        sn_num: latest.numero_central ?? serial,
+        sn_suffix: latest.suffixe_lettre ?? "",
+        fabrication: latest.annee_fabrication ? String(latest.annee_fabrication) : "",
+        pays: latest.pays ?? "",
+        ville: latest.ville ?? "",
+        entretien: latest.type_entretien ?? "",
+        remarques: latest.remarques ?? "",
+      }));
+      fabricationTouched.current = true;
+      setCurrentDbId(latest.id);
+      setIsDirty(false);
+      toast.success("Fiche restaurée depuis l'historique en ligne");
+    } catch {
+      showMessage("⚠️ La restauration depuis l'historique en ligne a échoué.");
+    }
+  };
+
   const syncAndFinish = async (mode: "insert" | "update") => {
     setIsExporting(true);
     try {
@@ -712,11 +803,25 @@ function Index() {
   // --- Synchronisation avec la barre supérieure -----------------------------------
 
   useEffect(() => {
-    setTopbarState({ exportReady, isExporting, isDirty, hasSaved: Boolean(currentDbId) });
+    setTopbarState({
+      exportReady,
+      measuresReady: requiredSheetFieldsComplete && octaveGaps.length === 0,
+      serialFilled: Boolean(info["sn_num"]?.trim()),
+      isExporting,
+      isDirty,
+      hasSaved: Boolean(currentDbId),
+    });
     return () => {
-      setTopbarState({ exportReady: false, isExporting: false, isDirty: false, hasSaved: false });
+      setTopbarState({
+        exportReady: false,
+        measuresReady: false,
+        serialFilled: false,
+        isExporting: false,
+        isDirty: false,
+        hasSaved: false,
+      });
     };
-  }, [exportReady, isExporting, isDirty, currentDbId]);
+  }, [exportReady, requiredSheetFieldsComplete, octaveGaps.length, info, isExporting, isDirty, currentDbId]);
 
   useEffect(() => {
     const exportCsvOnly = () => {
@@ -756,6 +861,8 @@ function Index() {
       "piano-save-quick": quickSave as EventListener,
       "piano-compare-guard": onCompareGuard as EventListener,
       "piano-reset": onReset as EventListener,
+      "piano-import-csv": (() => importInputRef.current?.click()) as EventListener,
+      "piano-import-history": (() => void importFromHistory()) as EventListener,
     };
 
     Object.entries(handlers).forEach(([type, fn]) => window.addEventListener(type, fn));
@@ -802,7 +909,7 @@ function Index() {
         step={1}
         aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
-        className={`weight-input ${isBlack ? "![background-color:#d1d5db] text-black font-semibold" : "![background-color:#f9fafb] text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        className={`weight-input ${isBlack ? "![background-color:#9ca3af] text-black font-semibold" : "![background-color:#d1d5db] text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
       />
     </div>
   );
@@ -1127,6 +1234,18 @@ function Index() {
               aria-hidden="true"
               className="pointer-events-none absolute -z-10 h-0 w-0 opacity-0"
             />
+
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(e) => {
+                onImportFile(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+
           </div>
         </Frame>
       </div>

@@ -1,6 +1,25 @@
 // Synchronisation cloud du diagnostic (INSERT / UPDATE via fonctions sécurisées).
 import { supabase } from "@/integrations/supabase/client";
 
+export type DiagnosticHistoryRow = {
+  id: string;
+  marque: string | null;
+  type_piano: string | null;
+  modele: string | null;
+  prefixe_lettre: string | null;
+  numero_central: string | null;
+  suffixe_lettre: string | null;
+  annee_fabrication: number | null;
+  pays: string | null;
+  ville: string | null;
+  zone_climatique: string | null;
+  type_entretien: string | null;
+  remarques: string | null;
+  mesures_wa: unknown;
+  mesures_wd: unknown;
+  date_heure_saisie: string;
+};
+
 export type DiagnosticPayload = {
   user_fingerprint: string;
   marque: string;
@@ -47,4 +66,16 @@ export async function updateDiagnostic(id: string, p: DiagnosticPayload): Promis
   const { data, error } = await supabase.rpc("update_own_diagnostic", { _id: id, ...args(p) });
   if (error) throw error;
   return (data as string | null) ?? null;
+}
+
+export async function getOwnDiagnostics(
+  userFingerprint: string,
+  numeroCentral: string,
+): Promise<DiagnosticHistoryRow[]> {
+  const { data, error } = await supabase.rpc("get_own_diagnostics", {
+    _user_fingerprint: userFingerprint,
+    _numero_central: numeroCentral,
+  });
+  if (error) throw error;
+  return (data ?? []) as DiagnosticHistoryRow[];
 }
