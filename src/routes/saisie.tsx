@@ -925,7 +925,7 @@ function Index() {
         aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
         className={`weight-input ${isBlack ? "" : "![background-color:#cbd5e1] !text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
-        style={isBlack ? { backgroundColor: "#9ca3af", color: "#000000", fontWeight: 600 } : undefined}
+        style={isBlack ? { backgroundColor: "#e2e8f0", color: "#000000", fontWeight: 600 } : undefined}
       />
     </div>
   );
