@@ -146,7 +146,7 @@
 @layer components {
   .technical-sheet {
     display: grid;
-    grid-template-columns: minmax(120px, auto) minmax(0, 1fr);
+    grid-template-columns: minmax(60px, auto) minmax(0, 1fr);
     width: 100%;
     margin-inline: auto;
     overflow: hidden;
@@ -162,7 +162,7 @@
 
   .technical-labels > div {
     position: absolute;
-    right: 0.3rem;
+    right: 0.15rem;
     white-space: nowrap;
     text-align: right;
   }
@@ -370,7 +370,7 @@
 
   .result-sheet {
     display: grid;
-    grid-template-columns: minmax(120px, auto) minmax(0, 1fr);
+    grid-template-columns: minmax(60px, auto) minmax(0, 1fr);
     box-sizing: border-box;
     width: 100%;
     height: 2rem;
@@ -383,7 +383,7 @@
     box-sizing: border-box;
     align-items: center;
     justify-content: flex-end;
-    padding-right: 0.3rem;
+    padding-right: 0.15rem;
     color: var(--foreground);
     font: 700 clamp(0.54rem, 0.96vw, 0.816rem) / 1 "Work Sans", sans-serif;
     text-align: right;
