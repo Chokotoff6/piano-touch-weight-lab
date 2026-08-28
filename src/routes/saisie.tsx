@@ -576,12 +576,16 @@ function Index() {
   const guardExport = () => {
     // Contrôle anti-robot : échec silencieux, aucun message affiché.
     if (!passesBotChecks(honeypot)) return false;
-    // Formulaire incomplet ou règle d'octave non remplie : blocage + bulle
-    // d'alerte en overlay ancrée au bouton Sauver.
     const formIncomplete =
       !canEnterWeights ||
       (info["entretien"] === "Modifications importantes" && !(info["remarques"] ?? "").trim());
-    if (formIncomplete || octaveGaps.length > 0) {
+    // PRIORITÉ 1 : fiche d'informations incomplète.
+    if (formIncomplete) {
+      showTopbarAlert("save", FORM_INCOMPLETE_MESSAGE);
+      return false;
+    }
+    // PRIORITÉ 2 : règle d'octave non remplie (fiche complète uniquement).
+    if (octaveGaps.length > 0) {
       showTopbarAlert("save", OCTAVE_RULE_MESSAGE);
       return false;
     }
