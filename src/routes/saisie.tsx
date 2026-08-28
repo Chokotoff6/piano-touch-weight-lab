@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
-  REQUIRED_KEY_SET,
   hasAnyMeasurement,
   incompleteOctaves,
   OCTAVE_RULE_MESSAGE,
@@ -742,7 +741,7 @@ function Index() {
         step={1}
         aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
-        className={`weight-input ${REQUIRED_KEY_SET.has(index + 1) ? "is-required" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        className={`weight-input ${errors[`${index}-${field}`] ? "error" : ""}`}
       />
     </div>
   );
