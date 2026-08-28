@@ -201,12 +201,8 @@ function RootComponent() {
                 <div className="flex items-center">
                   <Button
                     size="sm"
-                    variant={topbar.isDirty ? "default" : "outline"}
-                    className={`rounded-r-none text-lg ${
-                      topbar.isDirty
-                        ? "bg-neutral-700 text-white hover:bg-neutral-800"
-                        : "bg-white text-gray-700 border-gray-300 hover:bg-accent"
-                    }`}
+                    variant="outline"
+                    className="rounded-r-none border border-gray-300 bg-white text-lg text-gray-800 hover:bg-accent"
                     onClick={() => {
                       if (saveDisabled) return;
                       dispatchAction("piano-save");
@@ -216,13 +212,9 @@ function RootComponent() {
                   </Button>
                   <DropdownMenuTrigger asChild>
                     <Button
-                      variant={topbar.isDirty ? "default" : "outline"}
+                      variant="outline"
                       size="sm"
-                      className={`rounded-l-none border-l-0 px-2 ${
-                        topbar.isDirty
-                          ? "bg-neutral-700 text-white hover:bg-neutral-800"
-                          : "bg-white text-gray-700 border-gray-300 hover:bg-accent"
-                      }`}
+                      className="rounded-l-none border border-l-0 border-gray-300 bg-white px-2 text-gray-800 hover:bg-accent"
                     >
                       <ChevronDown className="h-4 w-4" />
                     </Button>
