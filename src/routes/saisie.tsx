@@ -1182,7 +1182,7 @@ function Index() {
             type="button"
             onClick={resetInfo}
             title="Réinitialiser uniquement la fiche d'informations"
-            className="absolute right-10 top-10 z-10 rounded-md border border-input bg-background px-4 py-1.5 !text-xs font-bold text-muted-foreground transition-colors hover:bg-accent"
+            className="absolute right-10 top-10 z-10 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
           >
             Reset
           </button>
@@ -1502,7 +1502,7 @@ function Index() {
           type="button"
           data-pdf-hide
           onClick={() => setRows(EMPTY)}
-          className="absolute left-[calc(1rem+4rem)] top-12 z-10 -translate-x-1/2 -translate-y-1/2 rounded-md border border-input bg-background px-4 py-1.5 !text-xs font-bold text-muted-foreground transition-colors hover:bg-accent"
+          className="absolute left-[calc(1rem+4rem)] top-12 z-10 -translate-x-1/2 -translate-y-1/2 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
         >
           Reset
         </button>
