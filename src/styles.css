@@ -333,9 +333,7 @@
     min-width: 0;
     height: 0.95625rem;
     border: none;
-    background: #cbd5e1 !important; /* gris moyen de contraste net : touches blanches */
     padding: 0 1px;
-    color: #000 !important;
     text-align: center;
     font-size: clamp(0.42rem, 0.9vw, 0.83rem);
     font-style: italic;
@@ -344,16 +342,8 @@
     outline: none;
   }
 
-
-
   .weight-input + .weight-input {
     margin-top: 1px;
-  }
-
-  /* Touches noires : gris anthracite éclairci, texte blanc */
-  .is-black .weight-input {
-    background: #4b5563 !important;
-    color: #fff !important;
   }
 
   .is-black .weight-input::placeholder {
