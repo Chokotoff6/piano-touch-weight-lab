@@ -1,6 +1,8 @@
 import { useSyncExternalStore } from "react";
 
-export type TopbarAlert = { anchor: "save" | "compare" | "export"; message: string } | null;
+export type TopbarAlert = { anchor: "save" | "compare" | "export" | "import"; message: string } | null;
+
+export type HistoryRowRef = { id: string; label: string };
 
 type TopbarState = {
   exportReady: boolean;
@@ -10,6 +12,7 @@ type TopbarState = {
   isDirty: boolean;
   hasSaved: boolean;
   alert: TopbarAlert;
+  historyRows: HistoryRowRef[];
 };
 
 let state: TopbarState = {
@@ -20,6 +23,7 @@ let state: TopbarState = {
   isDirty: false,
   hasSaved: false,
   alert: null,
+  historyRows: [],
 };
 const listeners = new Set<() => void>();
 
@@ -34,7 +38,7 @@ export function setTopbarState(next: Partial<TopbarState>) {
 
 let alertTimer: ReturnType<typeof setTimeout> | null = null;
 
-export function showTopbarAlert(anchor: "save" | "compare" | "export", message: string) {
+export function showTopbarAlert(anchor: "save" | "compare" | "export" | "import", message: string) {
   if (alertTimer) clearTimeout(alertTimer);
   setTopbarState({ alert: { anchor, message } });
   alertTimer = setTimeout(() => {
