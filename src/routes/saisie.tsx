@@ -446,7 +446,6 @@ function Index() {
     [info],
   );
 
-
   const exportReady = useMemo(
     () => Boolean(info["marque"]?.trim() && info["sn_num"]?.trim()),
     [info],
@@ -898,8 +897,6 @@ function Index() {
     );
     await generateLandscapeReport(page1, page2, filename);
   };
-
-
 
   // --- Import (CSV local / historique en ligne) -----------------------------------
 
@@ -1538,7 +1535,6 @@ function Index() {
       {coherenceIndex !== null && coherenceAnchor && (
         <SvgTooltip x={coherenceAnchor.x} y={coherenceAnchor.y} text={COHERENCE_MESSAGE} />
       )}
-
 
       <Frame
         title={
