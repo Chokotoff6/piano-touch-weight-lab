@@ -690,48 +690,44 @@ function Index() {
     else if (index < 87) focusCell(index + 1, "wa");
   }, []);
 
-  const setValue = (index: number, field: "wa" | "wd", value: string) => {
-    const cleaned = cleanWeight(value);
-    markDirty();
-    setErrors((prev) => {
-      const next = { ...prev };
-      delete next[`${index}-${field}`];
-      return next;
-    });
-    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: cleaned } : r)));
+  /** Met à jour une cellule (Wa/Wd) et renvoie la ligne résultante. */
+  const setRowField = (index: number, field: "wa" | "wd", value: string): Row => {
+    const updated: Row = { ...rows[index]!, [field]: value };
+    setRows((prev) => prev.map((r, i) => (i === index ? updated : r)));
+    return updated;
   };
 
-  const handleBlur = (index: number, field: "wa" | "wd", value: string) => {
-    const cleaned = cleanWeight(value);
-    const key = `${index}-${field}`;
-    if (cleaned === "") {
-      const current = rows[index];
-      if (!current) return;
-      const updated: Row = { ...current, [field]: "" };
-      setRows((prev) => prev.map((r, i) => (i === index ? updated : r)));
-      checkCoherence(index, updated);
-      setErrors((prev) => {
-        const next = { ...prev };
-        delete next[key];
-        return next;
-      });
-      return;
-    }
-    const num = parseWeight(value);
-    if (num === null) {
-      setErrors((prev) => ({ ...prev, [key]: "Valeur invalide (5-99, nombre entier)" }));
-      return;
-    }
-    const current = rows[index];
-    if (!current) return;
+  const clearError = (key: string) =>
     setErrors((prev) => {
+      if (!(key in prev)) return prev;
       const next = { ...prev };
       delete next[key];
       return next;
     });
-    const updated: Row = { ...current, [field]: num.toString() };
-    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: num.toString() } : r)));
-    checkCoherence(index, updated);
+
+  const setValue = (index: number, field: "wa" | "wd", value: string) => {
+    markDirty();
+    clearError(`${index}-${field}`);
+    setRows((prev) =>
+      prev.map((r, i) => (i === index ? { ...r, [field]: cleanWeight(value) } : r)),
+    );
+  };
+
+  const handleBlur = (index: number, field: "wa" | "wd", value: string) => {
+    const key = `${index}-${field}`;
+    const cleaned = cleanWeight(value);
+    if (cleaned === "") {
+      clearError(key);
+      checkCoherence(index, setRowField(index, field, ""));
+      return;
+    }
+    const num = parseWeight(cleaned);
+    if (num === null) {
+      setErrors((prev) => ({ ...prev, [key]: "Valeur invalide (5-99, nombre entier)" }));
+      return;
+    }
+    clearError(key);
+    checkCoherence(index, setRowField(index, field, num.toString()));
   };
 
   /** Applique (ou lève) l'alerte de cohérence Wa > Wd sur les deux cellules d'une touche. */
@@ -1108,19 +1104,19 @@ function Index() {
     const onReset = () => setRows(EMPTY);
 
     const handlers: Record<string, EventListener> = {
-      "piano-export": onExport as EventListener,
-      "piano-export-csv": exportCsvOnly as EventListener,
-      "piano-export-pdf": onPdf as EventListener,
-      "piano-export-cloud": saveCloud as EventListener,
-      "piano-save-cloud": saveCloud as EventListener,
-      "piano-save": saveCloud as EventListener,
-      "piano-save-quick": quickSave as EventListener,
-      "piano-compare-guard": onCompareGuard as EventListener,
-      "piano-reset": onReset as EventListener,
-      "piano-import-csv": (() => importInputRef.current?.click()) as EventListener,
-      "piano-import-history": (() => void importFromHistory()) as EventListener,
-      "piano-import-history-row": ((event: Event) =>
-        restoreHistoryRow((event as CustomEvent<string>).detail)) as EventListener,
+      "piano-export": onExport,
+      "piano-export-csv": exportCsvOnly,
+      "piano-export-pdf": onPdf,
+      "piano-export-cloud": saveCloud,
+      "piano-save-cloud": saveCloud,
+      "piano-save": saveCloud,
+      "piano-save-quick": quickSave,
+      "piano-compare-guard": onCompareGuard,
+      "piano-reset": onReset,
+      "piano-import-csv": () => importInputRef.current?.click(),
+      "piano-import-history": () => void importFromHistory(),
+      "piano-import-history-row": (event: Event) =>
+        restoreHistoryRow((event as CustomEvent<string>).detail),
     };
 
     Object.entries(handlers).forEach(([type, fn]) => window.addEventListener(type, fn));
