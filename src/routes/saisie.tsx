@@ -456,13 +456,22 @@ function Index() {
     setSavedAt(new Date().toISOString());
   };
 
+  const normalizeCity = (raw: string) =>
+    raw
+      .toUpperCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^A-Z0-9\s'-]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
   const updateInfo = (key: string, value: string) => {
     setInfo((p) => ({ ...p, [key]: value }));
     markDirty();
   };
 
   const resolveCity = (raw: string) => {
-    const city = raw.trim();
+    const city = normalizeCity(raw);
     const country = (info["pays"] ?? "").trim();
     if (!city || !country) return;
     setIsGeocoding(true);
