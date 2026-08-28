@@ -1089,7 +1089,7 @@ function Index() {
       {blockAnchor && blockAnchor.index === index && blockAnchor.field === field && (
         <div
           role="alert"
-          className="pointer-events-none absolute left-[calc(100%+0.5rem)] top-0 z-50 w-72 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-xs font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
+          className="pointer-events-none absolute left-[calc(100%+0.5rem)] top-0 !z-[60] w-72 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-xs font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
         >
           ⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type
           d'entretien avant de valider.
@@ -1098,7 +1098,7 @@ function Index() {
       {coherenceIndex === index && field === "wd" && (
         <div
           role="alert"
-          className="pointer-events-none absolute left-[calc(100%+0.5rem)] top-0 z-50 w-72 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-xs font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
+          className="pointer-events-none absolute left-[calc(100%+0.5rem)] top-0 !z-[60] w-72 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-xs font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
         >
           {COHERENCE_MESSAGE}
         </div>
