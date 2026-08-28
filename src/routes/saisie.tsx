@@ -1117,22 +1117,22 @@ function Index() {
         <div className={`technical-labels ${SIDE_LABEL_CLASS}`} aria-hidden="true">
           <div className="label-key" />
           <div className="label-wa" title="The minimum weight required to make the key move down.">
-            Downweight (Wa)
+            Poids Desc. (Wa)
           </div>
           <div className="label-wd" title="The maximum weight the key can lift when returning up.">
-            Upweight (Wd)
+            Poids Asc. (Wd)
           </div>
           <div
             className="label-wa-white"
             title="The minimum weight required to make the key move down."
           >
-            Downweight (Wa)
+            Poids Desc. (Wa)
           </div>
           <div
             className="label-wd-white"
             title="The maximum weight the key can lift when returning up."
           >
-            Upweight (Wd)
+            Poids Asc. (Wd)
           </div>
         </div>
         <div className="piano-grid" ref={gridRef}>
@@ -1479,8 +1479,8 @@ function Index() {
         <div className="mt-2 grid grid-cols-4 gap-3">
           {(
             [
-              { key: "wa", label: "Downweight (Wa)" },
-              { key: "wd", label: "Upweight (Wd)" },
+              { key: "wa", label: "Poids descendant (Wa)" },
+              { key: "wd", label: "Poids ascendant (Wd)" },
               { key: "friction", label: "Friction" },
               { key: "balance", label: "Balance" },
             ] as const
