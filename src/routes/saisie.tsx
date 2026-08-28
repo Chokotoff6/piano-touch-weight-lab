@@ -119,29 +119,31 @@ function SvgTooltip({ x, y, text }: { x: number; y: number; text: string }) {
         overflow: "visible",
       }}
     >
-      <rect
-        x="0"
-        y="0"
-        width={width}
-        height={height}
-        rx="4"
-        fill="#fef08a"
-        opacity="1"
-        stroke="#fde047"
-      />
-      {lines.map((line, i) => (
-        <text
-          key={i}
-          x={padX}
-          y={padY + lineHeight * (i + 1) - 4}
-          fill="#000000"
-          fontWeight="600"
-          fontSize="12"
-          fontFamily="ui-sans-serif, system-ui, Arial, sans-serif"
-        >
-          {line}
-        </text>
-      ))}
+      <g>
+        <rect
+          x="0"
+          y="0"
+          width={width}
+          height={height}
+          rx="4"
+          fill="#fef08a"
+          opacity="1"
+          stroke="#fde047"
+        />
+        {lines.map((line, i) => (
+          <text
+            key={i}
+            x={padX}
+            y={padY + lineHeight * (i + 1) - 4}
+            fill="#000000"
+            fontWeight="600"
+            fontSize="12"
+            fontFamily="ui-sans-serif, system-ui, Arial, sans-serif"
+          >
+            {line}
+          </text>
+        ))}
+      </g>
     </svg>
   );
 }
