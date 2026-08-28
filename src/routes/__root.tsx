@@ -222,10 +222,10 @@ function RootComponent() {
                 </div>
                 <DropdownMenuContent align="start">
                   <DropdownMenuItem onClick={() => dispatchAction("piano-save-cloud")}>
-                    Synchronisation cloud
+                    Enregistrer les modifications (Mettre à jour la fiche en cours)
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => dispatchAction("piano-save-quick")}>
-                    Sauvegarde rapide
+                    Créer une nouvelle fiche (Faire une autre pesée à une date différente)
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
