@@ -696,6 +696,9 @@ function Index() {
   };
 
   const formatAverageResult = (value: string) => {
+    if (value === "—") {
+      return <span className="!text-2xl">—</span>;
+    }
     const [integer, decimal = "0"] = value.split(".");
     return (
       <>
@@ -1371,7 +1374,7 @@ function Index() {
               />
             </label>
 
-            <fieldset className={`mt-4 ${FIELD_LABEL_CLASS} flex flex-row flex-wrap items-center gap-4 sm:col-span-2 md:col-span-4`}>
+            <fieldset className={`mt-4 ${FIELD_LABEL_CLASS} !flex !flex-row !items-center !flex-wrap !gap-x-6 !gap-y-2 !w-full sm:col-span-2 md:col-span-4`}>
               <legend className="shrink-0">Type d'entretien</legend>
               <div className="flex flex-row flex-wrap items-center gap-4">
                 {MAINTENANCE_OPTIONS.map((t) => (
@@ -1492,7 +1495,8 @@ function Index() {
             top: coherenceAnchor.y,
             width: "18rem",
             zIndex: 99999,
-            backgroundColor: "rgba(254, 240, 138, 0.9)",
+            backgroundColor: "#fef08a",
+            opacity: 1,
             pointerEvents: "none",
           }}
         >
