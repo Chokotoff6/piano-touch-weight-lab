@@ -22,74 +22,83 @@ export type SmartComboboxHandle = {
 
 export const SmartCombobox = forwardRef<SmartComboboxHandle, Props>(
   ({ value, options, groups, disabled, placeholder, openOnFocus, className, keepOpenSelector, onCommit }, ref) => {
-  const [draft, setDraft] = useState(value);
-  const [open, setOpen] = useState(false);
-  const [typed, setTyped] = useState(false);
-  const wrap = useRef<HTMLDivElement | null>(null);
-  const input = useRef<HTMLInputElement | null>(null);
-  /** Interaction sur un contrôle « ami » (ex : Type de piano) : la liste reste ouverte. */
-  const keepOpen = useRef(false);
-  /** Demande d'ouverture différée si le champ est encore disabled au moment de l'appel. */
-  const pendingOpen = useRef(false);
+    const [draft, setDraft] = useState(value);
+    const [open, setOpen] = useState(false);
+    const [typed, setTyped] = useState(false);
+    const wrap = useRef<HTMLDivElement | null>(null);
+    const input = useRef<HTMLInputElement | null>(null);
+    const disabledRef = useRef(disabled);
+    useEffect(() => {
+      disabledRef.current = disabled;
+    }, [disabled]);
+    /** Interaction sur un contrôle « ami » (ex : Type de piano) : la liste ouverte reste affichée. */
+    const keepOpen = useRef(false);
+    /** Demande d'ouverture différée si le champ est encore disabled au moment de l'appel. */
+    const pendingOpen = useRef(false);
 
-  useImperativeHandle(ref, () => ({
-    open: () => {
-      pendingOpen.current = true;
-      input.current?.focus();
-    },
-    focus: () => input.current?.focus(),
-  }));
+    useImperativeHandle(ref, () => ({
+      open: () => {
+        if (disabledRef.current) {
+          pendingOpen.current = true;
+        } else {
+          setOpen(true);
+          setTyped(false);
+        }
+        input.current?.focus();
+      },
+      focus: () => input.current?.focus(),
+    }));
 
-  useEffect(() => {
-    if (pendingOpen.current && !disabled) {
-      pendingOpen.current = false;
-      setOpen(true);
-      setTyped(false);
-    }
-  }, [disabled]);
-
-  useEffect(() => setDraft(value), [value]);
-
-  const filtered = useMemo(() => {
-    const list: Group[] = groups?.length ? groups : [{ label: "", options }];
-    return list
-      .map((g) => ({ label: g.label, options: fuzzyFilter(g.options, draft).slice(0, 8) }))
-      .filter((g) => g.options.length > 0);
-  }, [groups, options, draft]);
-
-  const commit = (raw: string) => {
-    const next = resolveEntry(raw, options);
-    setDraft(next);
-    setOpen(false);
-    setTyped(false);
-    if (next !== value) onCommit(next);
-  };
-
-  const pick = (option: string) => {
-    setDraft(option);
-    setOpen(false);
-    setTyped(false);
-    if (option !== value) onCommit(option);
-  };
-
-  useEffect(() => {
-    const selector = keepOpenSelector ?? "[data-keep-combobox-open]";
-    const onDown = (e: MouseEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (target?.closest(selector)) {
-        // le filtre change mais la liste ouverte reste affichée
-        keepOpen.current = true;
-        window.setTimeout(() => {
-          keepOpen.current = false;
-          if (open) input.current?.focus();
-        }, 0);
-        return;
+    useEffect(() => {
+      if (pendingOpen.current && !disabled) {
+        pendingOpen.current = false;
+        setOpen(true);
+        setTyped(false);
       }
-      if (wrap.current && !wrap.current.contains(target as Node)) setOpen(false);
+    }, [disabled]);
+
+    useEffect(() => setDraft(value), [value]);
+
+    const filtered = useMemo(() => {
+      const list: Group[] = groups?.length ? groups : [{ label: "", options }];
+      return list
+        .map((g) => ({ label: g.label, options: fuzzyFilter(g.options, draft).slice(0, 8) }))
+        .filter((g) => g.options.length > 0);
+    }, [groups, options, draft]);
+
+    const commit = (raw: string) => {
+      const next = resolveEntry(raw, options);
+      setDraft(next);
+      setOpen(false);
+      setTyped(false);
+      if (next !== value) onCommit(next);
     };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [open, keepOpenSelector]);
+
+    const pick = (option: string) => {
+      setDraft(option);
+      setOpen(false);
+      setTyped(false);
+      if (option !== value) onCommit(option);
+    };
+
+    useEffect(() => {
+      const selector = keepOpenSelector ?? "[data-keep-combobox-open]";
+      const onDown = (e: MouseEvent) => {
+        const target = e.target as HTMLElement | null;
+        if (target?.closest(selector)) {
+          // le filtre change mais la liste ouverte reste affichée
+          keepOpen.current = true;
+          window.setTimeout(() => {
+            keepOpen.current = false;
+            if (open) input.current?.focus();
+          }, 0);
+          return;
+        }
+        if (wrap.current && !wrap.current.contains(target as Node)) setOpen(false);
+      };
+      document.addEventListener("mousedown", onDown);
+      return () => document.removeEventListener("mousedown", onDown);
+    }, [open, keepOpenSelector]);
 
     return (
       <div ref={wrap} className="relative">
