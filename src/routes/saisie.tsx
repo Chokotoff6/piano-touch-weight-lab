@@ -1086,7 +1086,7 @@ function Index() {
             ] as const
           ).map(({ key, label }) => (
             <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
-              <div className="text-[0.8125rem] font-bold uppercase tracking-wide text-muted-foreground">
+              <div className="text-[0.8125rem] font-bold tracking-wide text-muted-foreground">
                 {label}
               </div>
               <div className="mt-1 text-lg font-semibold tabular-nums">
