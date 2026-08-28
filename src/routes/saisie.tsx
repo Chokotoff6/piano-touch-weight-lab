@@ -291,9 +291,11 @@ function Index() {
   const [isDirty, setIsDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [blockMessage, setBlockMessage] = useState<string | null>(null);
+  const [coherenceIndex, setCoherenceIndex] = useState<number | null>(null);
   const remarquesRef = useRef<HTMLInputElement | null>(null);
   const modelComboRef = useRef<SmartComboboxHandle | null>(null);
   const blockTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const coherenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
@@ -416,7 +418,6 @@ function Index() {
   const focusFirstWeight = useCallback(() => {
     if (weightsFocusedOnce.current) return;
     weightsFocusedOnce.current = true;
-    remarksFocusedOnce.current = true;
     setTimeout(() => {
       inputs.current["0-wa"]?.focus();
       inputs.current["0-wa"]?.select();
@@ -429,18 +430,20 @@ function Index() {
       remarksFocusedOnce.current = false;
       return;
     }
-    if (weightsFocusedOnce.current || remarksFocusedOnce.current) return;
 
-    const needsRemarks = remarquesRequired && !(info["remarques"] ?? "").trim();
-    if (needsRemarks) {
+    if (remarquesRequired) {
+      if (remarksFocusedOnce.current) return;
+      weightsFocusedOnce.current = false;
       remarksFocusedOnce.current = true;
       setTimeout(() => {
         remarquesRef.current?.focus();
       }, 50);
-    } else {
-      focusFirstWeight();
+      return;
     }
-  }, [requiredSheetFieldsComplete, remarquesRequired, info["remarques"], focusFirstWeight]);
+
+    remarksFocusedOnce.current = false;
+    focusFirstWeight();
+  }, [requiredSheetFieldsComplete, remarquesRequired, focusFirstWeight]);
 
   /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
   const resetInfo = () => {
@@ -477,6 +480,24 @@ function Index() {
       blockTimeout.current = null;
     }, 5000);
   };
+
+  const showCoherencePopover = (index: number) => {
+    if (coherenceTimeout.current) clearTimeout(coherenceTimeout.current);
+    setCoherenceIndex(index);
+    coherenceTimeout.current = setTimeout(() => {
+      setCoherenceIndex(null);
+      coherenceTimeout.current = null;
+    }, 3000);
+  };
+
+  useEffect(() => {
+    const dismissCoherencePopover = () => setCoherenceIndex(null);
+    document.addEventListener("pointerdown", dismissCoherencePopover);
+    return () => {
+      document.removeEventListener("pointerdown", dismissCoherencePopover);
+      if (coherenceTimeout.current) clearTimeout(coherenceTimeout.current);
+    };
+  }, []);
 
   const showBlockMessage = () => {
     showMessage(
@@ -633,9 +654,10 @@ function Index() {
     const wdKey = `${index}-wd`;
     if (wa !== null && wd !== null && wa <= wd) {
       setErrors((prev) => ({ ...prev, [waKey]: COHERENCE_MESSAGE, [wdKey]: COHERENCE_MESSAGE }));
-      showMessage(COHERENCE_MESSAGE);
+      showCoherencePopover(index);
       return;
     }
+    if (coherenceIndex === index) setCoherenceIndex(null);
     setErrors((prev) => {
       const next = { ...prev };
       if (next[waKey] === COHERENCE_MESSAGE) delete next[waKey];
@@ -652,6 +674,16 @@ function Index() {
       friction: ((wd - wa) / 2).toFixed(1),
       balance: ((wd + wa) / 2).toFixed(1),
     };
+  };
+
+  const formatAverageResult = (value: string) => {
+    const [integer, decimal = "0"] = value.split(".");
+    return (
+      <>
+        {integer}
+        <span className="!text-2xl">.{decimal}</span>
+      </>
+    );
   };
 
   const formatResult = (value: string) => {
@@ -1044,9 +1076,17 @@ function Index() {
         step={1}
         aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
-        className={`weight-input ${isBlack ? "" : "![background-color:#cbd5e1] !text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        className={`weight-input !font-mono ${isBlack ? "" : "![background-color:#cbd5e1] !text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
         style={isBlack ? { backgroundColor: "#cbd5e1", color: "#000000", fontWeight: 600 } : undefined}
       />
+      {coherenceIndex === index && field === "wd" && (
+        <div
+          role="alert"
+          className="pointer-events-none absolute left-[calc(100%+0.5rem)] top-0 z-50 w-72 rounded-md border border-destructive bg-background px-3 py-2 text-xs font-semibold text-foreground shadow-lg"
+        >
+          {COHERENCE_MESSAGE}
+        </div>
+      )}
     </div>
   );
 
@@ -1142,7 +1182,7 @@ function Index() {
             type="button"
             onClick={resetInfo}
             title="Réinitialiser uniquement la fiche d'informations"
-            className="absolute right-10 top-10 z-10 rounded-md border border-input bg-background px-4 py-1.5 text-lg font-bold text-muted-foreground transition-colors hover:bg-accent"
+            className="absolute right-10 top-10 z-10 rounded-md border border-input bg-background px-4 py-1.5 !text-xs font-bold text-muted-foreground transition-colors hover:bg-accent"
           >
             Reset
           </button>
@@ -1359,13 +1399,13 @@ function Index() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
-                    if ((info["remarques"] ?? "").trim()) {
+                    if (e.currentTarget.value.trim()) {
                       focusFirstWeight();
                     }
                   }
                 }}
-                onBlur={() => {
-                  if ((info["remarques"] ?? "").trim()) {
+                onBlur={(e) => {
+                  if (e.currentTarget.value.trim()) {
                     focusFirstWeight();
                   }
                 }}
@@ -1434,7 +1474,7 @@ function Index() {
                 {label}
               </div>
               <div className="mt-1 !text-2xl font-semibold tabular-nums">
-                {sectionAverages.global[key]}
+                {formatAverageResult(sectionAverages.global[key])}
               </div>
               <div className="mt-0.5 flex justify-center gap-2 text-[0.65rem] text-muted-foreground tabular-nums">
                 <span>{sectionAverages.first[key]}</span>
@@ -1462,7 +1502,7 @@ function Index() {
           type="button"
           data-pdf-hide
           onClick={() => setRows(EMPTY)}
-          className="absolute left-[calc(1rem+4rem)] top-12 z-10 -translate-x-1/2 -translate-y-1/2 rounded-md border border-input bg-background px-4 py-1.5 text-lg font-bold text-muted-foreground transition-colors hover:bg-accent"
+          className="absolute left-[calc(1rem+4rem)] top-12 z-10 -translate-x-1/2 -translate-y-1/2 rounded-md border border-input bg-background px-4 py-1.5 !text-xs font-bold text-muted-foreground transition-colors hover:bg-accent"
         >
           Reset
         </button>

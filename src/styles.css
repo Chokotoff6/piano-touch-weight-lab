@@ -335,10 +335,12 @@
     border: none;
     padding: 0 1px;
     text-align: center;
+    font-family: ui-monospace, "SFMono-Regular", "Menlo", "Consolas",
+      "DejaVu Sans Mono", monospace;
     font-size: clamp(0.42rem, 0.9vw, 0.83rem);
-    font-style: italic;
+    font-style: normal;
     font-weight: 600;
-    font-variant-numeric: tabular-nums;
+    font-variant-numeric: tabular-nums slashed-zero;
     outline: none;
   }
 
