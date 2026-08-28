@@ -25,7 +25,7 @@ import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
-import coffeeLogoAsset from "@/assets/buy-me-a-coffee-logo.png.asset.json";
+import premiumCoffeeAsset from "@/assets/premium-coffee.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -111,7 +111,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Work+Sans:wght@400;500;600&display=swap",
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.png", type: "image/png" },
     ],
   }),
   shellComponent: RootShell,
@@ -201,7 +201,7 @@ function RootComponent() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className={`${topbar.hasSaved ? "rounded-r-none" : ""} border border-gray-300 bg-white text-lg text-gray-800 hover:bg-accent`}
+                    className={`${topbar.hasSaved ? "rounded-r-none" : ""} border border-gray-300 bg-white text-lg text-muted-foreground hover:bg-accent`}
                     onClick={() => {
                       if (saveDisabled) return;
                       dispatchAction("piano-save");
@@ -214,7 +214,7 @@ function RootComponent() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="rounded-l-none border border-l-0 border-gray-300 bg-white px-2 text-gray-800 hover:bg-accent"
+                        className="rounded-l-none border border-l-0 border-gray-300 bg-white px-2 text-muted-foreground hover:bg-accent"
                       >
                         <ChevronDown className="h-4 w-4" />
                       </Button>
@@ -237,57 +237,96 @@ function RootComponent() {
               )}
             </div>
 
-            <DropdownMenu>
+            {topbar.measuresReady ? (
+              <DropdownMenu>
+                <div className="relative flex items-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-r-none text-lg text-muted-foreground"
+                    onClick={() => dispatchAction("piano-export-csv")}
+                  >
+                    Exporter
+                  </Button>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-l-none border-l-0 px-2 text-muted-foreground"
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  {topbar.alert?.anchor === "export" && (
+                    <div className="absolute left-0 top-full z-50 mt-2 w-80 rounded-md border border-amber-500 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 shadow-lg">
+                      {topbar.alert.message}
+                    </div>
+                  )}
+                </div>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => dispatchAction("piano-export-csv")}>
+                    Télécharger le fichier CSV local
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => dispatchAction("piano-export-pdf")}>
+                    Générer le rapport PDF d'impression
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
               <div className="relative flex items-center">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-r-none text-lg"
+                  className="text-lg text-muted-foreground"
                   onClick={() => dispatchAction("piano-export-csv")}
                 >
                   Exporter
                 </Button>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-l-none border-l-0 px-2"
-                  >
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
                 {topbar.alert?.anchor === "export" && (
                   <div className="absolute left-0 top-full z-50 mt-2 w-80 rounded-md border border-amber-500 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 shadow-lg">
                     {topbar.alert.message}
                   </div>
                 )}
               </div>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem onClick={() => dispatchAction("piano-export-csv")}>
-                  Télécharger le fichier CSV local
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => dispatchAction("piano-export-pdf")}>
-                  Générer le rapport PDF d'impression
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            )}
 
-            <DropdownMenu>
-              <div className="flex items-center">
-                <Button variant="outline" size="sm" className="rounded-r-none text-lg" disabled>
-                  Importer
-                </Button>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="rounded-l-none border-l-0 px-2" disabled>
-                    <ChevronDown className="h-4 w-4" />
+            {topbar.serialFilled ? (
+              <DropdownMenu>
+                <div className="flex items-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-r-none text-lg text-muted-foreground"
+                    onClick={() => dispatchAction("piano-import-csv")}
+                  >
+                    Importer
                   </Button>
-                </DropdownMenuTrigger>
-              </div>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem disabled>Charger un fichier CSV local</DropdownMenuItem>
-                <DropdownMenuItem disabled>Restaurer depuis l'historique en ligne</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-l-none border-l-0 px-2 text-muted-foreground"
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </div>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => dispatchAction("piano-import-history")}>
+                    Restaurer depuis l&apos;historique en ligne
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-lg text-muted-foreground"
+                onClick={() => dispatchAction("piano-import-csv")}
+              >
+                Importer
+              </Button>
+            )}
           </div>
 
         </div>
@@ -300,12 +339,12 @@ function RootComponent() {
         rel="noopener noreferrer"
         title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
         aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
-        className="fixed right-6 top-4 z-50 flex h-20 w-20 items-center justify-center rounded-xl bg-transparent shadow-xl transition-transform hover:scale-105"
+        className="fixed right-6 top-4 z-50 flex h-14 w-14 -translate-x-full items-center justify-center rounded-lg bg-transparent shadow-xl transition-transform hover:scale-105"
       >
         <img
-          src={coffeeLogoAsset.url}
+          src={premiumCoffeeAsset.url}
           alt="Buy me a coffee"
-          className="h-full w-full rounded-xl object-cover"
+          className="h-full w-full rounded-lg object-cover"
         />
       </a>
 

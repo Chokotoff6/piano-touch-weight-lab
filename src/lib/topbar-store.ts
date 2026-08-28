@@ -4,6 +4,8 @@ export type TopbarAlert = { anchor: "save" | "compare" | "export"; message: stri
 
 type TopbarState = {
   exportReady: boolean;
+  measuresReady: boolean;
+  serialFilled: boolean;
   isExporting: boolean;
   isDirty: boolean;
   hasSaved: boolean;
@@ -12,6 +14,8 @@ type TopbarState = {
 
 let state: TopbarState = {
   exportReady: false,
+  measuresReady: false,
+  serialFilled: false,
   isExporting: false,
   isDirty: false,
   hasSaved: false,

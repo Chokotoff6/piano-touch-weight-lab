@@ -23,8 +23,14 @@ import {
 } from "@/lib/serial-dating";
 import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
 import { buildCsv, downloadCsv } from "@/lib/export-csv";
+import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { getFingerprint } from "@/lib/fingerprint";
-import { insertDiagnostic, updateDiagnostic, type DiagnosticPayload } from "@/lib/diagnostics";
+import {
+  getOwnDiagnostics,
+  insertDiagnostic,
+  updateDiagnostic,
+  type DiagnosticPayload,
+} from "@/lib/diagnostics";
 import { setTopbarState, showTopbarAlert } from "@/lib/topbar-store";
 import { toast } from "sonner";
 import {
@@ -288,6 +294,7 @@ function Index() {
   const [askUpdate, setAskUpdate] = useState(false);
   const [askCompare, setAskCompare] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
   const goCompareAfterSave = useRef(false);
 
   const navigate = useNavigate();
@@ -712,11 +719,25 @@ function Index() {
   // --- Synchronisation avec la barre supérieure -----------------------------------
 
   useEffect(() => {
-    setTopbarState({ exportReady, isExporting, isDirty, hasSaved: Boolean(currentDbId) });
+    setTopbarState({
+      exportReady,
+      measuresReady: requiredSheetFieldsComplete && octaveGaps.length === 0,
+      serialFilled: Boolean(info["sn_num"]?.trim()),
+      isExporting,
+      isDirty,
+      hasSaved: Boolean(currentDbId),
+    });
     return () => {
-      setTopbarState({ exportReady: false, isExporting: false, isDirty: false, hasSaved: false });
+      setTopbarState({
+        exportReady: false,
+        measuresReady: false,
+        serialFilled: false,
+        isExporting: false,
+        isDirty: false,
+        hasSaved: false,
+      });
     };
-  }, [exportReady, isExporting, isDirty, currentDbId]);
+  }, [exportReady, requiredSheetFieldsComplete, octaveGaps.length, info, isExporting, isDirty, currentDbId]);
 
   useEffect(() => {
     const exportCsvOnly = () => {
