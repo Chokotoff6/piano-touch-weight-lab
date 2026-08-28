@@ -1356,7 +1356,17 @@ function Index() {
                 value={info["remarques"] ?? ""}
                 onChange={(e) => updateInfo("remarques", e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") e.preventDefault();
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if ((info["remarques"] ?? "").trim()) {
+                      focusFirstWeight();
+                    }
+                  }
+                }}
+                onBlur={() => {
+                  if ((info["remarques"] ?? "").trim()) {
+                    focusFirstWeight();
+                  }
                 }}
                 className={`${INPUT_CLASS} placeholder:text-foreground placeholder:font-medium ${
                   remarquesInvalid
