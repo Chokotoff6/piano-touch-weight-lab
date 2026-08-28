@@ -22,8 +22,11 @@ import {
   SERIAL_FORMAT_ERROR,
 } from "@/lib/serial-dating";
 import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
-import { buildCsv, downloadCsv } from "@/lib/export-csv";
+import { buildCsv, buildExportFilename, downloadCsv } from "@/lib/export-csv";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
+
+const INVALID_CSV_MESSAGE =
+  "⚠️ Fichier non valide. Veuillez importer un fichier CSV généré par l'application Piano Touch Analyzer.";
 import { getFingerprint } from "@/lib/fingerprint";
 import {
   getOwnDiagnostics,
@@ -702,8 +705,13 @@ function Index() {
       Remarques: info["remarques"] ?? "",
       "Date et heure de saisie": new Date().toISOString(),
     };
-    const sn = (info["sn_num"] ?? "piano").replace(/[^\w-]/g, "");
-    downloadCsv(`touchweight_${sn}_${Date.now()}.csv`, buildCsv(meta, rows));
+    const filename = buildExportFilename(
+      info["marque"],
+      info["modele"],
+      info["sn_num"],
+      new Date(),
+    );
+    downloadCsv(filename, buildCsv(meta, rows));
   };
 
   // --- Import (CSV local / historique en ligne) -----------------------------------
@@ -732,7 +740,7 @@ function Index() {
       markDirty();
       showTopbarAlert("import", "Fichier CSV importé.");
     } catch {
-      showTopbarAlert("import", "⚠️ Fichier CSV illisible : format Touchweight attendu.");
+      showTopbarAlert("import", INVALID_CSV_MESSAGE);
     }
   };
 
