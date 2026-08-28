@@ -1374,30 +1374,40 @@ function Index() {
               />
             </label>
 
-            <fieldset className={`mt-4 ${FIELD_LABEL_CLASS} !flex !flex-row !items-center !flex-wrap !gap-x-6 !gap-y-2 !w-full sm:col-span-2 md:col-span-4`}>
-              <legend className="shrink-0">Type d'entretien</legend>
-              <div className="flex flex-row flex-wrap items-center gap-4">
-                {MAINTENANCE_OPTIONS.map((t) => (
-                  <label key={t} className="flex items-center gap-1 text-sm text-foreground">
-                    <input
-                      type="radio"
-                      name="entretien"
-                      value={t}
-                      required
-                      checked={info["entretien"] === t}
-                      onChange={() => {
-                        updateInfo("entretien", t);
-                        if (t === "Modifications importantes") {
-                          remarksFocusedOnce.current = true;
-                          setTimeout(() => remarquesRef.current?.focus(), 0);
-                        }
-                      }}
-                    />
-                    {t}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
+            <div
+              className={`mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}
+              ref={(el) => {
+                if (el) {
+                  el.style.setProperty("display", "flex", "important");
+                  el.style.setProperty("flex-direction", "row", "important");
+                  el.style.setProperty("align-items", "center", "important");
+                  el.style.setProperty("flex-wrap", "wrap", "important");
+                  el.style.setProperty("gap", "24px", "important");
+                  el.style.setProperty("width", "100%", "important");
+                }
+              }}
+            >
+              <span className="shrink-0">Type d'entretien</span>
+              {MAINTENANCE_OPTIONS.map((t) => (
+                <label key={t} className="flex items-center gap-1 text-sm text-foreground">
+                  <input
+                    type="radio"
+                    name="entretien"
+                    value={t}
+                    required
+                    checked={info["entretien"] === t}
+                    onChange={() => {
+                      updateInfo("entretien", t);
+                      if (t === "Modifications importantes") {
+                        remarksFocusedOnce.current = true;
+                        setTimeout(() => remarquesRef.current?.focus(), 0);
+                      }
+                    }}
+                  />
+                  {t}
+                </label>
+              ))}
+            </div>
 
             <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
               Remarques
@@ -1489,14 +1499,19 @@ function Index() {
         <div
           role="alert"
           className="!rounded-md !border !border-yellow-300 px-3 py-2 text-xs font-medium !text-gray-950 !shadow-lg"
+          ref={(el) => {
+            if (el) {
+              el.style.setProperty("background-color", "#fef08a", "important");
+              el.style.setProperty("opacity", "1", "important");
+              el.style.setProperty("color", "#000000", "important");
+              el.style.setProperty("z-index", "99999", "important");
+              el.style.setProperty("position", "absolute", "important");
+            }
+          }}
           style={{
-            position: "absolute",
             left: coherenceAnchor.x,
             top: coherenceAnchor.y,
             width: "18rem",
-            zIndex: 99999,
-            backgroundColor: "#fef08a",
-            opacity: 1,
             pointerEvents: "none",
           }}
         >
