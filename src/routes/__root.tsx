@@ -186,7 +186,7 @@ function RootComponent() {
                   Comparer
                 </Link>
                 {topbar.alert?.anchor === "compare" && (
-                  <div className="absolute left-0 top-full z-50 mt-2 w-72 !rounded-md !border !border-yellow-300 !bg-[#fef08a] !bg-opacity-75 px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg">
+                  <div className="absolute left-0 top-full z-50 mt-2 w-72 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg">
                     {topbar.alert.message}
                   </div>
                 )}
@@ -231,7 +231,7 @@ function RootComponent() {
                 </DropdownMenuContent>
               </DropdownMenu>
               {topbar.alert?.anchor === "save" && (
-                <div className="absolute left-0 top-full z-50 mt-2 w-80 !rounded-md !border !border-yellow-300 !bg-[#fef08a] !bg-opacity-75 px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg">
+                <div className="absolute left-0 top-full z-50 mt-2 w-80 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg">
                   {topbar.alert.message}
                 </div>
               )}
@@ -258,7 +258,7 @@ function RootComponent() {
                     </Button>
                   </DropdownMenuTrigger>
                   {topbar.alert?.anchor === "export" && (
-                    <div className="absolute left-0 top-full z-50 mt-2 w-80 !rounded-md !border !border-yellow-300 !bg-[#fef08a] !bg-opacity-75 px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg">
+                    <div className="absolute left-0 top-full z-50 mt-2 w-80 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg">
                       {topbar.alert.message}
                     </div>
                   )}
@@ -283,7 +283,7 @@ function RootComponent() {
                   Exporter
                 </Button>
                 {topbar.alert?.anchor === "export" && (
-                  <div className="absolute left-0 top-full z-50 mt-2 w-80 !rounded-md !border !border-yellow-300 !bg-[#fef08a] !bg-opacity-75 px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg">
+                  <div className="absolute left-0 top-full z-50 mt-2 w-80 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg">
                     {topbar.alert.message}
                   </div>
                 )}
@@ -352,7 +352,7 @@ function RootComponent() {
                 </Button>
               )}
               {topbar.alert?.anchor === "import" && (
-                <div className="absolute left-0 top-full z-50 mt-2 w-80 !rounded-md !border !border-yellow-300 !bg-[#fef08a] !bg-opacity-75 px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg">
+                <div className="absolute left-0 top-full z-50 mt-2 w-80 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg">
                   {topbar.alert.message}
                 </div>
               )}

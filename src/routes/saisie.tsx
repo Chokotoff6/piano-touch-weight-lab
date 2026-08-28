@@ -291,6 +291,8 @@ function Index() {
   const [isDirty, setIsDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [blockMessage, setBlockMessage] = useState<string | null>(null);
+  const [blockAnchor, setBlockAnchor] = useState<{ index: number; field: "wa" | "wd" } | null>(null);
+  const blockAnchorTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [coherenceIndex, setCoherenceIndex] = useState<number | null>(null);
   const remarquesRef = useRef<HTMLInputElement | null>(null);
   const modelComboRef = useRef<SmartComboboxHandle | null>(null);
@@ -462,6 +464,7 @@ function Index() {
       if (blockTimeout.current) clearTimeout(blockTimeout.current);
       blockTimeout.current = null;
       setBlockMessage(null);
+      setBlockAnchor(null);
     }
   }, [canEnterWeights]);
 
@@ -499,10 +502,14 @@ function Index() {
     };
   }, []);
 
-  const showBlockMessage = () => {
-    showMessage(
-      "Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de saisir les mesures.",
-    );
+  /** Alerte ancrée sur la touche cliquée, près du curseur, quand la fiche est incomplète. */
+  const showBlockMessage = (index: number, field: "wa" | "wd") => {
+    if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
+    setBlockAnchor({ index, field });
+    blockAnchorTimeout.current = setTimeout(() => {
+      setBlockAnchor(null);
+      blockAnchorTimeout.current = null;
+    }, 3000);
   };
 
   // --- Saisie des informations générales ---------------------------------------
@@ -1043,7 +1050,7 @@ function Index() {
     <div
       className={`weight-fields weight-fields-${field}`}
       onClick={() => {
-        if (!canEnterWeights) showBlockMessage();
+        if (!canEnterWeights) showBlockMessage(index, field);
       }}
     >
       <input
@@ -1056,7 +1063,7 @@ function Index() {
         onKeyDown={(e) => {
           if (!canEnterWeights) {
             e.preventDefault();
-            showBlockMessage();
+            showBlockMessage(index, field);
             return;
           }
           if (e.key === "Enter") {
@@ -1067,7 +1074,7 @@ function Index() {
         onBeforeInput={(e) => {
           if (!canEnterWeights) {
             e.preventDefault();
-            showBlockMessage();
+            showBlockMessage(index, field);
           }
         }}
         inputMode="numeric"
@@ -1079,10 +1086,19 @@ function Index() {
         className={`weight-input !font-sans ${isBlack ? "" : "![background-color:#cbd5e1] !text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
         style={isBlack ? { backgroundColor: "#cbd5e1", color: "#000000", fontWeight: 600 } : undefined}
       />
+      {blockAnchor && blockAnchor.index === index && blockAnchor.field === field && (
+        <div
+          role="alert"
+          className="pointer-events-none absolute left-[calc(100%+0.5rem)] top-0 z-50 w-72 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-xs font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
+        >
+          ⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type
+          d'entretien avant de valider.
+        </div>
+      )}
       {coherenceIndex === index && field === "wd" && (
         <div
           role="alert"
-          className="pointer-events-none absolute left-[calc(100%+0.5rem)] top-0 z-50 w-72 !rounded-md !border !border-yellow-300 !bg-[#fef08a] !bg-opacity-75 px-3 py-2 text-xs font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
+          className="pointer-events-none absolute left-[calc(100%+0.5rem)] top-0 z-50 w-72 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-xs font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
         >
           {COHERENCE_MESSAGE}
         </div>
@@ -1247,7 +1263,7 @@ function Index() {
               />
             </label>
 
-            <div className="mt-9 text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
+            <div className="mt-8 text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
               <span className={FIELD_LABEL_CLASS}>Numéro de série</span>{" "}
               <span className="text-muted-foreground">
                 (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
@@ -1444,7 +1460,7 @@ function Index() {
       </div>
 
       {blockMessage && (
-        <div className="fixed left-1/2 top-24 z-[60] w-[min(90vw,32rem)] -translate-x-1/2 !rounded-md !border !border-yellow-300 !bg-[#fef08a] !bg-opacity-75 px-4 py-3 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg">
+        <div className="fixed left-1/2 top-24 z-[60] w-[min(90vw,32rem)] -translate-x-1/2 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-4 py-3 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg">
           {blockMessage}
         </div>
       )}
