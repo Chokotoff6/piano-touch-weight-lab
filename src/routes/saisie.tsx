@@ -1463,6 +1463,43 @@ function Index() {
         </div>
       )}
 
+      {blockAnchor && (
+        <div
+          role="alert"
+          className="!rounded-md !border !border-yellow-300 px-3 py-2 text-xs font-medium !text-gray-950 !shadow-lg"
+          style={{
+            position: "fixed",
+            left: blockAnchor.x,
+            top: blockAnchor.y,
+            width: "18rem",
+            zIndex: 99999,
+            backgroundColor: "rgba(254, 240, 138, 0.7)",
+            pointerEvents: "none",
+          }}
+        >
+          ⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type
+          d'entretien avant de valider.
+        </div>
+      )}
+
+      {coherenceIndex !== null && coherenceAnchor && (
+        <div
+          role="alert"
+          className="!rounded-md !border !border-yellow-300 px-3 py-2 text-xs font-medium !text-gray-950 !shadow-lg"
+          style={{
+            position: "fixed",
+            left: coherenceAnchor.x,
+            top: coherenceAnchor.y,
+            width: "18rem",
+            zIndex: 99999,
+            backgroundColor: "rgba(254, 240, 138, 0.7)",
+            pointerEvents: "none",
+          }}
+        >
+          {COHERENCE_MESSAGE}
+        </div>
+      )}
+
       <Frame
         title={
           <>
