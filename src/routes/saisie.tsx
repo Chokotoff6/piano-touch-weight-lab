@@ -32,7 +32,7 @@ import {
   type DiagnosticPayload,
   type DiagnosticHistoryRow,
 } from "@/lib/diagnostics";
-import { setTopbarState, showTopbarAlert } from "@/lib/topbar-store";
+import { getTopbarState, setTopbarState, showTopbarAlert } from "@/lib/topbar-store";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -854,6 +854,7 @@ function Index() {
       isExporting,
       isDirty,
       hasSaved: Boolean(currentDbId),
+      historyRows: info["sn_num"]?.trim() ? getTopbarState().historyRows : [],
     });
     return () => {
       setTopbarState({
