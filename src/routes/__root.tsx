@@ -201,7 +201,7 @@ function RootComponent() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className={`${topbar.hasSaved ? "rounded-r-none" : ""} border border-gray-300 bg-white text-lg text-muted-foreground hover:bg-accent`}
+                    className={`${topbar.hasSaved ? "rounded-r-none" : ""} border border-gray-300 bg-white text-lg ${topbar.isDirty && topbar.measuresReady ? "text-gray-900 font-bold" : "text-gray-400"} hover:bg-accent`}
                     onClick={() => {
                       if (saveDisabled) return;
                       dispatchAction("piano-save");
@@ -214,7 +214,7 @@ function RootComponent() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="rounded-l-none border border-l-0 border-gray-300 bg-white px-2 text-muted-foreground hover:bg-accent"
+                        className={`rounded-l-none border border-l-0 border-gray-300 bg-white px-2 ${topbar.isDirty && topbar.measuresReady ? "text-gray-900 font-bold" : "text-gray-400"} hover:bg-accent`}
                       >
                         <ChevronDown className="h-4 w-4" />
                       </Button>

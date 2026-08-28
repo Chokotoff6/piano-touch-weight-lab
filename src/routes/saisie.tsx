@@ -920,7 +920,7 @@ function Index() {
         step={1}
         aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
-        className={`weight-input ${isBlack ? "![background-color:#4b5563] text-white font-semibold" : "![background-color:#cbd5e1] text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        className={`weight-input ${isBlack ? "![background-color:#9ca3af] !text-black font-semibold" : "![background-color:#cbd5e1] !text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
       />
     </div>
   );
