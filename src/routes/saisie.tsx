@@ -501,10 +501,14 @@ function Index() {
     };
   }, []);
 
-  const showBlockMessage = () => {
-    showMessage(
-      "Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de saisir les mesures.",
-    );
+  /** Alerte ancrée sur la touche cliquée, près du curseur, quand la fiche est incomplète. */
+  const showBlockMessage = (index: number, field: "wa" | "wd") => {
+    if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
+    setBlockAnchor({ index, field });
+    blockAnchorTimeout.current = setTimeout(() => {
+      setBlockAnchor(null);
+      blockAnchorTimeout.current = null;
+    }, 3000);
   };
 
   // --- Saisie des informations générales ---------------------------------------
