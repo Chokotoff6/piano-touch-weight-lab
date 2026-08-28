@@ -372,21 +372,6 @@ function Index() {
     [info],
   );
 
-  // Dès que les six informations de la fiche sont remplies, le curseur se place
-  // automatiquement dans la première zone de saisie (Wa, touche 1 / La0).
-  const weightsFocusedOnce = useRef(false);
-  useEffect(() => {
-    if (!requiredSheetFieldsComplete) {
-      weightsFocusedOnce.current = false;
-      return;
-    }
-    if (weightsFocusedOnce.current) return;
-    weightsFocusedOnce.current = true;
-    setTimeout(() => {
-      inputs.current["0-wa"]?.focus();
-      inputs.current["0-wa"]?.select();
-    }, 50);
-  }, [requiredSheetFieldsComplete]);
 
   const exportReady = useMemo(
     () => Boolean(info["marque"]?.trim() && info["sn_num"]?.trim()),
@@ -421,6 +406,41 @@ function Index() {
   /** Remarques obligatoires dès que des modifications importantes sont déclarées. */
   const remarquesRequired = info["entretien"] === "Modifications importantes";
   const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
+
+  // Dès que les six informations de la fiche sont remplies, le curseur se place
+  // automatiquement dans la première zone de saisie (Wa, touche 1 / La0),
+  // ou dans le champ Remarques si des modifications importantes sont déclarées.
+  const weightsFocusedOnce = useRef(false);
+  const remarksFocusedOnce = useRef(false);
+
+  const focusFirstWeight = useCallback(() => {
+    if (weightsFocusedOnce.current) return;
+    weightsFocusedOnce.current = true;
+    remarksFocusedOnce.current = true;
+    setTimeout(() => {
+      inputs.current["0-wa"]?.focus();
+      inputs.current["0-wa"]?.select();
+    }, 50);
+  }, []);
+
+  useEffect(() => {
+    if (!requiredSheetFieldsComplete) {
+      weightsFocusedOnce.current = false;
+      remarksFocusedOnce.current = false;
+      return;
+    }
+    if (weightsFocusedOnce.current || remarksFocusedOnce.current) return;
+
+    const needsRemarks = remarquesRequired && !(info["remarques"] ?? "").trim();
+    if (needsRemarks) {
+      remarksFocusedOnce.current = true;
+      setTimeout(() => {
+        remarquesRef.current?.focus();
+      }, 50);
+    } else {
+      focusFirstWeight();
+    }
+  }, [requiredSheetFieldsComplete, remarquesRequired, info["remarques"], focusFirstWeight]);
 
   /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
   const resetInfo = () => {
@@ -1314,6 +1334,7 @@ function Index() {
                       onChange={() => {
                         updateInfo("entretien", t);
                         if (t === "Modifications importantes") {
+                          remarksFocusedOnce.current = true;
                           setTimeout(() => remarquesRef.current?.focus(), 0);
                         }
                       }}
@@ -1336,7 +1357,17 @@ function Index() {
                 value={info["remarques"] ?? ""}
                 onChange={(e) => updateInfo("remarques", e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") e.preventDefault();
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if ((info["remarques"] ?? "").trim()) {
+                      focusFirstWeight();
+                    }
+                  }
+                }}
+                onBlur={() => {
+                  if ((info["remarques"] ?? "").trim()) {
+                    focusFirstWeight();
+                  }
                 }}
                 className={`${INPUT_CLASS} placeholder:text-foreground placeholder:font-medium ${
                   remarquesInvalid
