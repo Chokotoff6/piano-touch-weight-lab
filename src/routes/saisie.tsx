@@ -121,7 +121,7 @@ const FIELD_LABEL_CLASS = "text-lg font-semibold text-black";
 /** Sous-label secondaire (numéro de série éclaté). */
 const SUB_LABEL_CLASS = "text-sm font-normal italic text-black";
 /** Colonne d'étiquettes à gauche des claviers. */
-const SIDE_LABEL_CLASS = "min-w-[60px] w-16 text-right";
+const SIDE_LABEL_CLASS = "min-w-[120px] w-32 text-right";
 
 // ---------------------------------------------------------------------------
 // Petits composants internes
@@ -924,8 +924,7 @@ function Index() {
         step={1}
         aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
-        className={`weight-input ${isBlack ? "" : "![background-color:#cbd5e1] !text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
-        style={isBlack ? { backgroundColor: "#9ca3af", color: "#000000", fontWeight: "600" } : undefined}
+        className={`weight-input ${isBlack ? "![background-color:#9ca3af] !text-black font-semibold" : "![background-color:#cbd5e1] !text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
       />
     </div>
   );
