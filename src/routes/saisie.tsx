@@ -1442,21 +1442,12 @@ function Index() {
             </label>
 
             <div
-              className={`mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}
-              ref={(el) => {
-                if (el) {
-                  el.style.setProperty("display", "flex", "important");
-                  el.style.setProperty("flex-direction", "row", "important");
-                  el.style.setProperty("align-items", "center", "important");
-                  el.style.setProperty("flex-wrap", "wrap", "important");
-                  el.style.setProperty("gap", "24px", "important");
-                  el.style.setProperty("width", "100%", "important");
-                }
-              }}
+              className={`!flex !flex-row !items-center !flex-nowrap !gap-6 !w-full mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}
+              style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", gap: "24px", width: "100%" }}
             >
               <span className="shrink-0">Type d'entretien</span>
               {MAINTENANCE_OPTIONS.map((t) => (
-                <label key={t} className="flex items-center gap-1 text-sm text-foreground">
+                <label key={t} className="flex shrink-0 items-center gap-1 text-sm text-foreground">
                   <input
                     type="radio"
                     name="entretien"
