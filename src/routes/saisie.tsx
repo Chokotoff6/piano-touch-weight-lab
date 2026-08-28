@@ -367,8 +367,10 @@ function Index() {
     }
     if (weightsFocusedOnce.current) return;
     weightsFocusedOnce.current = true;
-    inputs.current["0-wa"]?.focus();
-    inputs.current["0-wa"]?.select();
+    setTimeout(() => {
+      inputs.current["0-wa"]?.focus();
+      inputs.current["0-wa"]?.select();
+    }, 50);
   }, [requiredSheetFieldsComplete]);
 
   const exportReady = useMemo(
