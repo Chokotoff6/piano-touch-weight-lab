@@ -473,9 +473,19 @@ function Index() {
     return num;
   };
 
+  /** Cohérence physique : Wa doit être strictement supérieur à Wd. */
+  const isCoherent = (r: Row) => {
+    const wa = parseWeight(r.wa);
+    const wd = parseWeight(r.wd);
+    if (wa === null || wd === null) return true;
+    return wa > wd;
+  };
+
   const sectionAverages = useMemo(() => {
     const calc = (slice: Row[]) => {
-      const valid = slice.filter((r) => parseWeight(r.wa) !== null && parseWeight(r.wd) !== null);
+      const valid = slice.filter(
+        (r) => parseWeight(r.wa) !== null && parseWeight(r.wd) !== null && isCoherent(r),
+      );
       if (valid.length === 0) {
         return { wa: "—", wd: "—", friction: "—", balance: "—", count: 0 };
       }
@@ -541,7 +551,28 @@ function Index() {
       delete next[key];
       return next;
     });
+    const updated: Row = { ...rows[index]!, [field]: num.toString() };
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: num.toString() } : r)));
+    checkCoherence(index, updated);
+  };
+
+  /** Applique (ou lève) l'alerte de cohérence Wa > Wd sur les deux cellules d'une touche. */
+  const checkCoherence = (index: number, row: Row) => {
+    const wa = parseWeight(row.wa);
+    const wd = parseWeight(row.wd);
+    const waKey = `${index}-wa`;
+    const wdKey = `${index}-wd`;
+    if (wa !== null && wd !== null && wa <= wd) {
+      setErrors((prev) => ({ ...prev, [waKey]: COHERENCE_MESSAGE, [wdKey]: COHERENCE_MESSAGE }));
+      showMessage(COHERENCE_MESSAGE);
+      return;
+    }
+    setErrors((prev) => {
+      const next = { ...prev };
+      if (next[waKey] === COHERENCE_MESSAGE) delete next[waKey];
+      if (next[wdKey] === COHERENCE_MESSAGE) delete next[wdKey];
+      return next;
+    });
   };
 
   const compute = (r: Row) => {
@@ -576,7 +607,7 @@ function Index() {
 
   // --- Export & sauvegarde cloud -------------------------------------------------
 
-  const guardExport = () => {
+  const guardExport = (anchor: "save" | "export" = "save") => {
     // Contrôle anti-robot : échec silencieux, aucun message affiché.
     if (!passesBotChecks(honeypot)) return false;
     const formIncomplete =
@@ -584,12 +615,12 @@ function Index() {
       (info["entretien"] === "Modifications importantes" && !(info["remarques"] ?? "").trim());
     // PRIORITÉ 1 : fiche d'informations incomplète.
     if (formIncomplete) {
-      showTopbarAlert("save", FORM_INCOMPLETE_MESSAGE);
+      showTopbarAlert(anchor, FORM_INCOMPLETE_MESSAGE);
       return false;
     }
     // PRIORITÉ 2 : règle d'octave non remplie (fiche complète uniquement).
     if (octaveGaps.length > 0) {
-      showTopbarAlert("save", OCTAVE_RULE_MESSAGE);
+      showTopbarAlert(anchor, OCTAVE_RULE_MESSAGE);
       return false;
     }
     return true;
@@ -665,15 +696,15 @@ function Index() {
   // --- Synchronisation avec la barre supérieure -----------------------------------
 
   useEffect(() => {
-    setTopbarState({ exportReady, isExporting, isDirty });
+    setTopbarState({ exportReady, isExporting, isDirty, hasSaved: Boolean(currentDbId) });
     return () => {
-      setTopbarState({ exportReady: false, isExporting: false, isDirty: false });
+      setTopbarState({ exportReady: false, isExporting: false, isDirty: false, hasSaved: false });
     };
-  }, [exportReady, isExporting, isDirty]);
+  }, [exportReady, isExporting, isDirty, currentDbId]);
 
   useEffect(() => {
     const exportCsvOnly = () => {
-      if (!guardExport()) return;
+      if (!guardExport("export")) return;
       exportCsvFile();
     };
     const saveCloud = () => {
@@ -692,7 +723,10 @@ function Index() {
       exportCsvOnly();
       saveCloud();
     };
-    const onPdf = () => window.print();
+    const onPdf = () => {
+      if (!guardExport("export")) return;
+      window.print();
+    };
     const onCompareGuard = () => setAskCompare(true);
     const onReset = () => setRows(EMPTY);
 
@@ -752,7 +786,7 @@ function Index() {
         step={1}
         aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
-        className={`weight-input ${isBlack ? "![background-color:#f3f4f6] text-black font-semibold" : "![background-color:#e5e7eb] text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        className={`weight-input ${isBlack ? "![background-color:#d1d5db] text-black font-semibold" : "![background-color:#f9fafb] text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
       />
     </div>
   );
