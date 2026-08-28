@@ -59,6 +59,9 @@ const EMPTY: Row[] = Array.from({ length: 88 }, () => ({ wa: "", wd: "" }));
 
 const DRAFT_ROWS_KEY = "ptw_draft_rows";
 
+const FORM_INCOMPLETE_MESSAGE =
+  "⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de sauver.";
+
 type SerialRule = { prefix: boolean; suffix: boolean; autoPrefix?: string };
 
 const BRAND_RULES: Record<string, SerialRule> = {
