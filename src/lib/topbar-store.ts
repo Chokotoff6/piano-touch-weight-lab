@@ -40,7 +40,7 @@ export function showTopbarAlert(anchor: "save" | "compare" | "export", message: 
   alertTimer = setTimeout(() => {
     setTopbarState({ alert: null });
     alertTimer = null;
-  }, 5000);
+  }, 8000);
 }
 
 export function clearTopbarAlert() {

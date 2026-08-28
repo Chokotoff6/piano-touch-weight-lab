@@ -6,9 +6,10 @@ const BLACK_KEYS = new Set([
   62, 65, 67, 70, 72, 74, 77, 79, 82, 84, 86,
 ]);
 
-/** Découpage du clavier en octaves (bornes incluses), à partir des Do. */
+/** Découpage du clavier en octaves (bornes incluses), à partir des Do.
+ *  L'octave 0 (touches 1-3, La0-Si0) et l'octave 8 (touche 88, Do8) sont
+ *  exclues de la règle : la validation s'applique des octaves 1 à 7. */
 export const OCTAVE_RANGES: [number, number][] = [
-  [1, 3],
   [4, 15],
   [16, 27],
   [28, 39],
@@ -44,7 +45,7 @@ export function incompleteOctaves(rows: Row[]): number[] {
 }
 
 export const OCTAVE_RULE_MESSAGE =
-  "⚠️ Veuillez saisir au minimum une valeur pour une touche blanche et une touche noire pour chaque octave.";
+  "⚠️ Veuillez saisir au minimum une valeur pour une touche blanche et une touche noire pour chaque octave (de l'octave 1 à 7).";
 
 export const EMPTY_DATA_MESSAGE = "⚠️ Veuillez d'abord saisir les données de votre piano.";
 
