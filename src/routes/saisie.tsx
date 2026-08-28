@@ -30,9 +30,9 @@ import {
   insertDiagnostic,
   updateDiagnostic,
   type DiagnosticPayload,
+  type DiagnosticHistoryRow,
 } from "@/lib/diagnostics";
-import { setTopbarState, showTopbarAlert } from "@/lib/topbar-store";
-import { toast } from "sonner";
+import { getTopbarState, setTopbarState, showTopbarAlert } from "@/lib/topbar-store";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -728,10 +728,11 @@ function Index() {
         remarques: meta["Remarques"] ?? prev["remarques"] ?? "",
       }));
       fabricationTouched.current = true;
+      setCurrentDbId(null);
       markDirty();
-      toast.success("Fichier CSV importé");
+      showTopbarAlert("import", "Fichier CSV importé.");
     } catch {
-      showMessage("⚠️ Fichier CSV illisible : format Touchweight attendu.");
+      showTopbarAlert("import", "⚠️ Fichier CSV illisible : format Touchweight attendu.");
     }
   };
 
@@ -743,51 +744,79 @@ function Index() {
     reader.readAsText(file, "utf-8");
   };
 
-  /** Restaure la dernière pesée enregistrée en ligne pour ce numéro de série. */
+  /** Recherche l'historique en ligne et peuple le sous-menu de la flèche [Importer ▼]. */
+  const historyRowsRef = useRef<DiagnosticHistoryRow[]>([]);
+
+  const formatHistoryLabel = (iso: string) => {
+    const date = new Date(iso);
+    const label = new Intl.DateTimeFormat("fr-FR", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(date);
+    return `Pesée du ${label.replace(/^(\d+ )(\w)/, (_m, d: string, m: string) => d + m.toUpperCase())}`;
+  };
+
   const importFromHistory = async () => {
     const serial = (info["sn_num"] ?? "").trim();
     if (!serial) {
-      showMessage("⚠️ Renseignez d'abord le numéro de série pour retrouver votre historique.");
+      showTopbarAlert(
+        "import",
+        "⚠️ Veuillez saisir d'abord le numéro de série du piano pour rechercher son historique en ligne.",
+      );
       return;
     }
     try {
-      const history = await getOwnDiagnostics(getFingerprint(), serial);
-      const latest = history
+      const history = (await getOwnDiagnostics(getFingerprint(), serial))
         .slice()
-        .sort((a, b) => b.date_heure_saisie.localeCompare(a.date_heure_saisie))[0];
-      if (!latest) {
-        showMessage("Aucune fiche en ligne trouvée pour ce numéro de série.");
+        .sort((a, b) => b.date_heure_saisie.localeCompare(a.date_heure_saisie));
+      if (history.length === 0) {
+        setTopbarState({ historyRows: [] });
+        historyRowsRef.current = [];
+        showTopbarAlert("import", "Aucune fiche en ligne trouvée pour ce numéro de série.");
         return;
       }
-      const wa = Array.isArray(latest.mesures_wa) ? (latest.mesures_wa as unknown[]) : [];
-      const wd = Array.isArray(latest.mesures_wd) ? (latest.mesures_wd as unknown[]) : [];
-      setRows(
-        Array.from({ length: 88 }, (_, i) => ({
-          wa: cleanWeight(String(wa[i] ?? "")),
-          wd: cleanWeight(String(wd[i] ?? "")),
-        })),
-      );
-      setInfo((prev) => ({
-        ...prev,
-        marque: latest.marque ?? "",
-        type_piano: latest.type_piano ?? "",
-        modele: latest.modele ?? "",
-        sn_prefix: latest.prefixe_lettre ?? "",
-        sn_num: latest.numero_central ?? serial,
-        sn_suffix: latest.suffixe_lettre ?? "",
-        fabrication: latest.annee_fabrication ? String(latest.annee_fabrication) : "",
-        pays: latest.pays ?? "",
-        ville: latest.ville ?? "",
-        entretien: latest.type_entretien ?? "",
-        remarques: latest.remarques ?? "",
-      }));
-      fabricationTouched.current = true;
-      setCurrentDbId(latest.id);
-      setIsDirty(false);
-      toast.success("Fiche restaurée depuis l'historique en ligne");
+      historyRowsRef.current = history;
+      setTopbarState({
+        historyRows: history.map((row) => ({ id: row.id, label: formatHistoryLabel(row.date_heure_saisie) })),
+      });
     } catch {
-      showMessage("⚠️ La restauration depuis l'historique en ligne a échoué.");
+      showTopbarAlert("import", "⚠️ La recherche dans l'historique en ligne a échoué.");
     }
+  };
+
+  /** Restaure la pesée choisie dans la liste chronologique de l'historique en ligne. */
+  const restoreHistoryRow = (id: string) => {
+    const row = historyRowsRef.current.find((entry) => entry.id === id);
+    if (!row) return;
+    const wa = Array.isArray(row.mesures_wa) ? (row.mesures_wa as unknown[]) : [];
+    const wd = Array.isArray(row.mesures_wd) ? (row.mesures_wd as unknown[]) : [];
+    setRows(
+      Array.from({ length: 88 }, (_, i) => ({
+        wa: cleanWeight(String(wa[i] ?? "")),
+        wd: cleanWeight(String(wd[i] ?? "")),
+      })),
+    );
+    setInfo((prev) => ({
+      ...prev,
+      marque: row.marque ?? "",
+      type_piano: row.type_piano ?? "",
+      modele: row.modele ?? "",
+      sn_prefix: row.prefixe_lettre ?? "",
+      sn_num: row.numero_central ?? prev["sn_num"] ?? "",
+      sn_suffix: row.suffixe_lettre ?? "",
+      fabrication: row.annee_fabrication ? String(row.annee_fabrication) : "",
+      pays: row.pays ?? "",
+      ville: row.ville ?? "",
+      entretien: row.type_entretien ?? "",
+      remarques: row.remarques ?? "",
+    }));
+    fabricationTouched.current = true;
+    setCurrentDbId(row.id);
+    setIsDirty(false);
+    setTopbarState({ historyRows: [] });
+    historyRowsRef.current = [];
+    showTopbarAlert("import", "Fiche restaurée depuis l'historique en ligne.");
   };
 
   const syncAndFinish = async (mode: "insert" | "update") => {
@@ -825,6 +854,7 @@ function Index() {
       isExporting,
       isDirty,
       hasSaved: Boolean(currentDbId),
+      historyRows: info["sn_num"]?.trim() ? getTopbarState().historyRows : [],
     });
     return () => {
       setTopbarState({
@@ -834,6 +864,7 @@ function Index() {
         isExporting: false,
         isDirty: false,
         hasSaved: false,
+        historyRows: [],
       });
     };
   }, [exportReady, requiredSheetFieldsComplete, octaveGaps.length, info, isExporting, isDirty, currentDbId]);
@@ -878,6 +909,8 @@ function Index() {
       "piano-reset": onReset as EventListener,
       "piano-import-csv": (() => importInputRef.current?.click()) as EventListener,
       "piano-import-history": (() => void importFromHistory()) as EventListener,
+      "piano-import-history-row": ((event: Event) =>
+        restoreHistoryRow((event as CustomEvent<string>).detail)) as EventListener,
     };
 
     Object.entries(handlers).forEach(([type, fn]) => window.addEventListener(type, fn));
