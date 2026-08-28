@@ -333,12 +333,13 @@
     min-width: 0;
     height: 0.95625rem;
     border: none;
-    background: #f9fafb; /* bg-gray-50 : cases des touches blanches */
+    background: #d1d5db !important; /* bg-gray-300 : cases des touches blanches */
     padding: 0 1px;
-    color: var(--foreground);
+    color: #000 !important;
     text-align: center;
     font-size: clamp(0.42rem, 0.9vw, 0.83rem);
     font-style: italic;
+    font-weight: 600;
     font-variant-numeric: tabular-nums;
     outline: none;
   }
@@ -351,8 +352,8 @@
 
   /* Touches noires : bg-gray-400, texte noir lisible */
   .is-black .weight-input {
-    background: #9ca3af; /* bg-gray-400 */
-    color: oklch(0.15 0 0);
+    background: #9ca3af !important; /* bg-gray-400 */
+    color: #000 !important;
   }
 
   .is-black .weight-input::placeholder {
