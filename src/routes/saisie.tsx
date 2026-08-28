@@ -1089,7 +1089,7 @@ function Index() {
       {blockAnchor && blockAnchor.index === index && blockAnchor.field === field && (
         <div
           role="alert"
-          className="pointer-events-none absolute left-[calc(100%+0.5rem)] top-0 !z-[60] w-72 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-xs font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
+          className="pointer-events-none absolute left-[calc(100%+0.5rem)] top-0 !z-[9999] w-72 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-xs font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
         >
           ⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type
           d'entretien avant de valider.
@@ -1098,7 +1098,7 @@ function Index() {
       {coherenceIndex === index && field === "wd" && (
         <div
           role="alert"
-          className="pointer-events-none absolute left-[calc(100%+0.5rem)] top-0 !z-[60] w-72 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-xs font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
+          className="pointer-events-none absolute left-[calc(100%+0.5rem)] top-0 !z-[9999] w-72 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-xs font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
         >
           {COHERENCE_MESSAGE}
         </div>
@@ -1263,7 +1263,7 @@ function Index() {
               />
             </label>
 
-            <div className="mt-8 text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
+            <div className="!block !-mt-2 !pt-0 text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
               <span className={FIELD_LABEL_CLASS}>Numéro de série</span>{" "}
               <span className="text-muted-foreground">
                 (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
@@ -1460,7 +1460,7 @@ function Index() {
       </div>
 
       {blockMessage && (
-        <div className="fixed left-1/2 top-24 z-[60] w-[min(90vw,32rem)] -translate-x-1/2 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-4 py-3 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg">
+        <div className="fixed left-1/2 top-24 !z-[9999] w-[min(90vw,32rem)] -translate-x-1/2 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-4 py-3 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg">
           {blockMessage}
         </div>
       )}
