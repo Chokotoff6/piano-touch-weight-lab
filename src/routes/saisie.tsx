@@ -1074,7 +1074,7 @@ function Index() {
         onBeforeInput={(e) => {
           if (!canEnterWeights) {
             e.preventDefault();
-            showBlockMessage();
+            showBlockMessage(index, field);
           }
         }}
         inputMode="numeric"
