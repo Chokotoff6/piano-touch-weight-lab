@@ -385,8 +385,10 @@ function Index() {
   const moyennesRef = useRef<HTMLElement | null>(null);
   const mesuresRef = useRef<HTMLElement | null>(null);
   const goCompareAfterSave = useRef(false);
+  const prevRequiredComplete = useRef(false);
 
   const navigate = useNavigate();
+
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
 
@@ -516,7 +518,26 @@ function Index() {
     focusFirstWeight();
   }, [requiredSheetFieldsComplete, remarquesRequired, focusFirstWeight]);
 
+  /** Défilement fluide vers le cadre Moyennes dès que la fiche du haut devient complète. */
+  const scrollToMoyennes = useCallback(() => {
+    const nav = document.querySelector("nav");
+    const moyennes = moyennesRef.current;
+    if (!moyennes) return;
+    const headerHeight = nav?.getBoundingClientRect().height ?? 0;
+    const rect = moyennes.getBoundingClientRect();
+    const target = rect.top + window.scrollY - headerHeight - 12;
+    window.scrollTo({ top: Math.max(0, target), behavior: "smooth" });
+  }, []);
+
+  useEffect(() => {
+    if (!prevRequiredComplete.current && requiredSheetFieldsComplete) {
+      scrollToMoyennes();
+    }
+    prevRequiredComplete.current = requiredSheetFieldsComplete;
+  }, [requiredSheetFieldsComplete, scrollToMoyennes]);
+
   /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
+
   const resetInfo = () => {
     setInfo({});
     setClimateZone(null);
@@ -1242,7 +1263,7 @@ function Index() {
   // --- Rendu : page ----------------------------------------------------------------
 
   return (
-    <main className="mx-auto max-w-[1400px] px-6 py-10">
+    <main className="mx-auto max-w-[1400px] px-6 py-10 !pb-64">
       <div
         data-dirty={isDirty}
         data-saved-at={savedAt ?? ""}
@@ -1597,7 +1618,14 @@ function Index() {
           {renderSection(1, 44, gridRef1)}
           {renderSection(45, 88, gridRef2)}
         </div>
+        {octaveGaps.length === 0 && (
+          <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+            <span className="!h-2 !w-2 !rounded-full !bg-green-500 !animate-pulse" />
+            <span className="!text-[10px] !font-medium !text-green-600">Clavier valide</span>
+          </div>
+        )}
       </Frame>
+
 
       {/* Conteneur hors écran dédié à la capture PDF (largeur bornée à 1024 px). */}
       <div
