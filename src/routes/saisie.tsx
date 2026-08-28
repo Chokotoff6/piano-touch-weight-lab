@@ -417,7 +417,6 @@ function Index() {
   const focusFirstWeight = useCallback(() => {
     if (weightsFocusedOnce.current) return;
     weightsFocusedOnce.current = true;
-    remarksFocusedOnce.current = true;
     setTimeout(() => {
       inputs.current["0-wa"]?.focus();
       inputs.current["0-wa"]?.select();
@@ -430,18 +429,20 @@ function Index() {
       remarksFocusedOnce.current = false;
       return;
     }
-    if (weightsFocusedOnce.current || remarksFocusedOnce.current) return;
 
-    const needsRemarks = remarquesRequired && !(info["remarques"] ?? "").trim();
-    if (needsRemarks) {
+    if (remarquesRequired) {
+      if (remarksFocusedOnce.current) return;
+      weightsFocusedOnce.current = false;
       remarksFocusedOnce.current = true;
       setTimeout(() => {
         remarquesRef.current?.focus();
       }, 50);
-    } else {
-      focusFirstWeight();
+      return;
     }
-  }, [requiredSheetFieldsComplete, remarquesRequired, info["remarques"], focusFirstWeight]);
+
+    remarksFocusedOnce.current = false;
+    focusFirstWeight();
+  }, [requiredSheetFieldsComplete, remarquesRequired, focusFirstWeight]);
 
   /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
   const resetInfo = () => {
