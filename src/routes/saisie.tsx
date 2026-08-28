@@ -478,7 +478,7 @@ function Index() {
     blockTimeout.current = setTimeout(() => {
       setBlockMessage(null);
       blockTimeout.current = null;
-    }, 5000);
+    }, 3000);
   };
 
   const showCoherencePopover = (index: number) => {
@@ -1082,7 +1082,7 @@ function Index() {
       {coherenceIndex === index && field === "wd" && (
         <div
           role="alert"
-          className="pointer-events-none absolute left-[calc(100%+0.5rem)] top-0 z-50 w-72 !rounded-md !border !border-yellow-300 !bg-[#fef08a] !bg-opacity-100 px-3 py-2 text-xs font-semibold !text-gray-950 !shadow-lg"
+          className="pointer-events-none absolute left-[calc(100%+0.5rem)] top-0 z-50 w-72 !rounded-md !border !border-yellow-300 !bg-[#fef08a] !bg-opacity-75 px-3 py-2 text-xs font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
         >
           {COHERENCE_MESSAGE}
         </div>
@@ -1247,7 +1247,7 @@ function Index() {
               />
             </label>
 
-            <div className="mt-10 text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
+            <div className="mt-9 text-xs text-muted-foreground sm:col-span-2 md:col-span-4">
               <span className={FIELD_LABEL_CLASS}>Numéro de série</span>{" "}
               <span className="text-muted-foreground">
                 (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
@@ -1444,7 +1444,7 @@ function Index() {
       </div>
 
       {blockMessage && (
-        <div className="mt-6 !rounded-md !border !border-yellow-300 !bg-[#fef08a] !bg-opacity-100 px-4 py-3 text-sm !text-gray-950 !shadow-lg">
+        <div className="fixed left-1/2 top-24 z-[60] w-[min(90vw,32rem)] -translate-x-1/2 !rounded-md !border !border-yellow-300 !bg-[#fef08a] !bg-opacity-75 px-4 py-3 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg">
           {blockMessage}
         </div>
       )}
