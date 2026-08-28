@@ -158,6 +158,27 @@ function Accueil() {
               standards.
             </AccordionContent>
           </AccordionItem>
+
+          <AccordionItem value="q5">
+            <AccordionTrigger>
+              Pourquoi le profil d'usine (Europe ou Japon) fait-il varier la Friction cible et pas la Balance ?
+            </AccordionTrigger>
+            <AccordionContent>
+              Le profil d'usine détermine le calibrage d'origine des feutres de la mécanique. Le feutre est une matière organique extrêmement sensible à l'humidité de l'air (hygrométrie) :
+
+              <p className="mt-2">
+                <strong>Profil Europe (Climats Humides)</strong> : Les feutres ont tendance à se gorger d'eau et à gonfler avec l'humidité ambiante, ce qui serre davantage les axes métalliques. L'usine calibre donc une friction théorique d'origine plus élevée, fixée à une cible de 13g.
+              </p>
+
+              <p className="mt-2">
+                <strong>Profil Japon (Climat Sec / Intérieur)</strong> : Les feutres restent plus secs et rétractés, libérant le mouvement des axes métalliques. La friction théorique cible y est donc plus fluide, fixée à 11g.
+              </p>
+
+              <p className="mt-2">
+                La Balance (le plombage de la touche en bois), quant à elle, reste une constante physique fixe (environ 40-42g) définie en usine par l'emplacement et la masse des plombs d'équilibrage insérés dans le corps de la touche, quelle que soit la zone géographique d'exportation.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
         </Accordion>
       </section>
     </main>
