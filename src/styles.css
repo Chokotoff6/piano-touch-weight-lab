@@ -343,19 +343,6 @@
     outline: none;
   }
 
-  .is-black .weight-input {
-    background: oklch(0.936 0 0);
-  }
-
-  .weight-input.is-required {
-    background: oklch(0.6 0 0);
-    box-shadow: inset 0 0 0 1px var(--foreground);
-  }
-
-  .is-black .weight-input.is-required {
-    background: oklch(0.82 0 0);
-    box-shadow: inset 0 0 0 1px var(--foreground);
-  }
 
 
   .weight-input + .weight-input {
