@@ -485,14 +485,17 @@ function Index() {
 
   const sectionAverages = useMemo(() => {
     const calc = (slice: Row[]) => {
-      const valid = slice.filter(
-        (r) => parseWeight(r.wa) !== null && parseWeight(r.wd) !== null && isCoherent(r),
-      );
+      const valid = slice
+        .map((r) => ({ row: r, wa: parseWeight(r.wa), wd: parseWeight(r.wd) }))
+        .filter(
+          (entry): entry is { row: Row; wa: number; wd: number } =>
+            entry.wa !== null && entry.wd !== null && entry.wa > entry.wd,
+        );
       if (valid.length === 0) {
         return { wa: "—", wd: "—", friction: "—", balance: "—", count: 0 };
       }
-      const avgWa = valid.reduce((s, r) => s + parseWeight(r.wa)!, 0) / valid.length;
-      const avgWd = valid.reduce((s, r) => s + parseWeight(r.wd)!, 0) / valid.length;
+      const avgWa = valid.reduce((s, entry) => s + entry.wa, 0) / valid.length;
+      const avgWd = valid.reduce((s, entry) => s + entry.wd, 0) / valid.length;
       return {
         wa: avgWa.toFixed(1),
         wd: avgWd.toFixed(1),
