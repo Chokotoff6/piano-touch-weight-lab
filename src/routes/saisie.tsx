@@ -488,20 +488,12 @@ function Index() {
     return num;
   };
 
-  /** Cohérence physique : Wa doit être strictement supérieur à Wd. */
-  const isCoherent = (r: Row) => {
-    const wa = parseWeight(r.wa);
-    const wd = parseWeight(r.wd);
-    if (wa === null || wd === null) return true;
-    return wa > wd;
-  };
-
   const sectionAverages = useMemo(() => {
     const calc = (slice: Row[]) => {
       const valid = slice
-        .map((r) => ({ row: r, wa: parseWeight(r.wa), wd: parseWeight(r.wd) }))
+        .map((r) => ({ wa: parseWeight(r.wa), wd: parseWeight(r.wd) }))
         .filter(
-          (entry): entry is { row: Row; wa: number; wd: number } =>
+          (entry): entry is { wa: number; wd: number } =>
             entry.wa !== null && entry.wd !== null && entry.wa > entry.wd,
         );
       if (valid.length === 0) {

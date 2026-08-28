@@ -152,8 +152,6 @@ function RootComponent() {
 
   /** Le bouton Sauver reste visuellement actif : blanc au repos, sombre dès qu'il y a des modifications. */
   const saveDisabled = !isSaisie || topbar.isExporting;
-  /** Exporter reste cliquable : le blocage est appliqué par la garde de la page Saisie. */
-  const exportDisabled = !isSaisie || topbar.isExporting;
 
   return (
     <QueryClientProvider client={queryClient}>
