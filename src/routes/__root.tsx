@@ -155,7 +155,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <nav className="border-b border-border bg-background">
+      <nav className="!sticky !top-0 !z-[50] !bg-white !shadow-md border-b border-border">
         <div className="mx-auto max-w-[1400px] px-4 py-3 sm:px-6">
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
