@@ -339,12 +339,12 @@ function RootComponent() {
         rel="noopener noreferrer"
         title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
         aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
-        className="fixed right-6 top-4 z-50 flex h-14 w-14 -translate-x-full items-center justify-center rounded-lg bg-transparent shadow-xl transition-transform hover:scale-105"
+        className="fixed right-6 top-4 z-50 flex max-h-none -translate-x-full items-center justify-center rounded-lg bg-transparent shadow-xl transition-transform hover:scale-105"
       >
         <img
           src={premiumCoffeeAsset.url}
           alt="Buy me a coffee"
-          className="!h-14 !w-auto rounded-lg object-cover"
+          className="!h-20 !w-auto rounded-lg object-cover"
         />
       </a>
 
