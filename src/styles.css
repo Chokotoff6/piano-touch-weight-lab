@@ -473,6 +473,15 @@
     transform: translateX(var(--shift, 0px));
   }
 
+  .result-col.is-white .result-value {
+    width: 130%;
+    margin-left: -15%;
+    overflow: visible;
+    z-index: 10;
+    background: var(--background);
+  }
+
+
   .result-col .result-value::before {
     position: absolute;
     top: 0;
