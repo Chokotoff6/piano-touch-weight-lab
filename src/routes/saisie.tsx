@@ -752,7 +752,7 @@ function Index() {
         step={1}
         aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
-        className={`weight-input ${isBlack ? "![background-color:#9ca3af] text-black" : "![background-color:#f9fafb] text-black"} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        className={`weight-input ${isBlack ? "![background-color:#f3f4f6] text-black font-semibold" : "![background-color:#e5e7eb] text-black font-semibold"} ${errors[`${index}-${field}`] ? "error" : ""}`}
       />
     </div>
   );
