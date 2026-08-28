@@ -30,9 +30,9 @@ import {
   insertDiagnostic,
   updateDiagnostic,
   type DiagnosticPayload,
+  type DiagnosticHistoryRow,
 } from "@/lib/diagnostics";
 import { setTopbarState, showTopbarAlert } from "@/lib/topbar-store";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -907,6 +907,8 @@ function Index() {
       "piano-reset": onReset as EventListener,
       "piano-import-csv": (() => importInputRef.current?.click()) as EventListener,
       "piano-import-history": (() => void importFromHistory()) as EventListener,
+      "piano-import-history-row": ((event: Event) =>
+        restoreHistoryRow((event as CustomEvent<string>).detail)) as EventListener,
     };
 
     Object.entries(handlers).forEach(([type, fn]) => window.addEventListener(type, fn));
