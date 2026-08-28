@@ -849,6 +849,7 @@ function Index() {
                 value={info["marque"] ?? ""}
                 options={BRAND_SUGGESTIONS}
                 placeholder="Saisissez une marque (ex: YAMAHA, PLEYEL...)"
+                onTyping={markDirty}
                 onCommit={(v) => {
                   updateInfo("marque", v);
                   if ((info["modele"] ?? "") !== "") updateInfo("modele", "");
@@ -893,6 +894,7 @@ function Index() {
                 keepOpenSelector="[data-keep-model-open]"
                 className="!bg-white"
                 placeholder="Saisissez ou cherchez un modèle..."
+                onTyping={markDirty}
                 onCommit={(v) => {
                   updateInfo("modele", v);
                   const inferred = inferTypeFromModel(info["marque"] ?? "", v);
@@ -983,6 +985,7 @@ function Index() {
                   { label: "Suggestions fréquentes", options: FREQUENT_COUNTRIES },
                   { label: "Tous les pays", options: SUGGESTED_COUNTRIES },
                 ]}
+                onTyping={markDirty}
                 onCommit={(v) => updateInfo("pays", v)}
               />
             </label>

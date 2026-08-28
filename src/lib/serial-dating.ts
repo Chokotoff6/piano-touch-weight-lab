@@ -146,6 +146,9 @@ export function factoryProfile(
   num?: string,
 ): FactoryProfile {
   const key = brandKey(brand);
+  // Condition absolue : aucun calcul si le N° central est vide ou indéterminé.
+  if (!clean(num) || !Number.isFinite(parseInt(clean(num), 10)))
+    return { label: "—", frictionTarget: null };
   const n = parseInt(clean(num), 10);
   if (key === "YAMAHA" || key === "KAWAI") {
     // Règle synchrone : préfixe vide + gros numéro = production Europe, sans attendre la météo.

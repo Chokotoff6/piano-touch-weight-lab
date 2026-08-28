@@ -205,7 +205,7 @@ function RootComponent() {
                     className={`rounded-r-none text-lg ${
                       topbar.isDirty
                         ? "bg-neutral-700 text-white hover:bg-neutral-800"
-                        : "bg-white hover:bg-accent"
+                        : "bg-white text-gray-700 border-gray-300 hover:bg-accent"
                     }`}
                     disabled={saveDisabled}
                     onClick={() => dispatchAction("piano-save")}
@@ -219,7 +219,7 @@ function RootComponent() {
                       className={`rounded-l-none border-l-0 px-2 ${
                         topbar.isDirty
                           ? "bg-neutral-700 text-white hover:bg-neutral-800"
-                          : "bg-white hover:bg-accent"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-accent"
                       }`}
                       disabled={saveDisabled}
                     >
