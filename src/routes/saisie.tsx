@@ -485,6 +485,8 @@ function Index() {
   // ou dans le champ Remarques si des modifications importantes sont déclarées.
   const weightsFocusedOnce = useRef(false);
   const remarksFocusedOnce = useRef(false);
+  const scrolledToAverages = useRef(false);
+
 
   const focusFirstWeight = useCallback(() => {
     if (weightsFocusedOnce.current) return;
@@ -534,8 +536,17 @@ function Index() {
       blockTimeout.current = null;
       setBlockMessage(null);
       setBlockAnchor(null);
+      if (!scrolledToAverages.current && moyennesRef.current) {
+        scrolledToAverages.current = true;
+        const top =
+          moyennesRef.current.getBoundingClientRect().top + window.scrollY - 20;
+        window.scrollTo({ top, behavior: "smooth" });
+      }
+    } else {
+      scrolledToAverages.current = false;
     }
   }, [canEnterWeights]);
+
 
   useEffect(
     () => () => {
