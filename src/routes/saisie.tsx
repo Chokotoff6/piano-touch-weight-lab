@@ -861,6 +861,8 @@ function Index() {
       "piano-save-quick": quickSave as EventListener,
       "piano-compare-guard": onCompareGuard as EventListener,
       "piano-reset": onReset as EventListener,
+      "piano-import-csv": (() => importInputRef.current?.click()) as EventListener,
+      "piano-import-history": (() => void importFromHistory()) as EventListener,
     };
 
     Object.entries(handlers).forEach(([type, fn]) => window.addEventListener(type, fn));
