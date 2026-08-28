@@ -24,6 +24,8 @@ import {
 import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
 import { buildCsv, buildExportFilename, downloadCsv } from "@/lib/export-csv";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
+import { generateLandscapeReport } from "@/lib/pdf-report";
+import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
 
 const INVALID_CSV_MESSAGE =
   "⚠️ Fichier non valide. Veuillez importer un fichier CSV généré par l'application Piano Touch Analyzer.";
@@ -134,14 +136,16 @@ const SIDE_LABEL_CLASS = "min-w-[120px] w-32 text-right";
 function Frame({
   title,
   className = "",
+  innerRef,
   children,
 }: {
   title: ReactNode;
   className?: string;
+  innerRef?: (node: HTMLElement | null) => void;
   children: ReactNode;
 }) {
   return (
-    <section className={`${FRAME_CLASS} ${className}`}>
+    <section className={`${FRAME_CLASS} ${className}`} ref={innerRef}>
       <h2 className={FRAME_TITLE_CLASS}>{title}</h2>
       {children}
     </section>
@@ -302,6 +306,10 @@ function Index() {
   const [askCompare, setAskCompare] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const importInputRef = useRef<HTMLInputElement | null>(null);
+  const pdfInfoRef = useRef<HTMLDivElement | null>(null);
+  const pdfChartRef = useRef<HTMLDivElement | null>(null);
+  const moyennesRef = useRef<HTMLElement | null>(null);
+  const mesuresRef = useRef<HTMLElement | null>(null);
   const goCompareAfterSave = useRef(false);
 
   const navigate = useNavigate();
@@ -714,6 +722,48 @@ function Index() {
     downloadCsv(filename, buildCsv(meta, rows));
   };
 
+  // --- Rapport PDF Premium (A4 paysage, 2 pages) -----------------------------------
+
+  const serialFull = `${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`;
+
+  const chartData = useMemo<ChartPoint[]>(
+    () =>
+      rows.map((r, i) => {
+        const wa = parseWeight(r.wa);
+        const wd = parseWeight(r.wd);
+        const valid = wa !== null && wd !== null && wa > wd;
+        return {
+          key: i + 1,
+          wa,
+          wd,
+          friction: valid ? Number(((wd - wa) / 2).toFixed(1)) : null,
+          balance: valid ? Number(((wd + wa) / 2).toFixed(1)) : null,
+        };
+      }),
+    [rows],
+  );
+
+  /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
+  const exportPdfFile = async () => {
+    const page1 = [pdfInfoRef.current, moyennesRef.current, mesuresRef.current].filter(
+      (el): el is HTMLElement => el !== null,
+    );
+    const page2 = [moyennesRef.current, pdfChartRef.current].filter(
+      (el): el is HTMLElement => el !== null,
+    );
+    if (page1.length === 0) return;
+    const filename = buildExportFilename(
+      info["marque"],
+      info["modele"],
+      info["sn_num"],
+      new Date(),
+      "pdf",
+    );
+    await generateLandscapeReport(page1, page2, filename);
+  };
+
+
+
   // --- Import (CSV local / historique en ligne) -----------------------------------
 
   /** Applique un fichier CSV Touchweight au formulaire et aux 88 pesées. */
@@ -900,7 +950,16 @@ function Index() {
     };
     const onPdf = () => {
       if (!guardExport("export")) return;
-      window.print();
+      setIsExporting(true);
+      void exportPdfFile()
+        .catch(() => showTopbarAlert("export", "⚠️ La génération du rapport PDF a échoué."))
+        .finally(() => setIsExporting(false));
+      // Sauvegarde cloud simultanée (UPDATE ou INSERT selon l'état de la fiche).
+      if (currentDbId && isDirty) {
+        setAskUpdate(true);
+        return;
+      }
+      void syncAndFinish(currentDbId ? "update" : "insert");
     };
     const onCompareGuard = () => setAskCompare(true);
     const onReset = () => setRows(EMPTY);
@@ -1326,6 +1385,9 @@ function Index() {
           </>
         }
         className="mt-8"
+        innerRef={(node) => {
+          moyennesRef.current = node;
+        }}
       >
         <div className="mt-2 grid grid-cols-4 gap-3">
           {(
@@ -1358,9 +1420,16 @@ function Index() {
         </div>
       </Frame>
 
-      <Frame title="Mesures poids de touches" className="mt-8 pb-10">
+      <Frame
+        title="Mesures poids de touches"
+        className="mt-8 pb-10"
+        innerRef={(node) => {
+          mesuresRef.current = node;
+        }}
+      >
         <button
           type="button"
+          data-pdf-hide
           onClick={() => setRows(EMPTY)}
           className="absolute left-[calc(1rem+4rem)] top-12 z-10 -translate-x-1/2 -translate-y-1/2 rounded-md border border-input bg-background px-4 py-1.5 text-lg font-bold text-muted-foreground transition-colors hover:bg-accent"
         >
@@ -1371,6 +1440,35 @@ function Index() {
           {renderSection(45, 88, gridRef2)}
         </div>
       </Frame>
+
+      {/* Conteneur hors écran dédié à la capture PDF (largeur bornée à 1024 px). */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed left-[-10000px] top-0 -z-10 w-[1024px] max-w-[1024px] bg-white p-4"
+      >
+        <div ref={pdfInfoRef} className="bg-white">
+          <PdfInfoTable
+            info={{
+              marque: info["marque"] ?? "",
+              modele: info["modele"] ?? "",
+              typePiano: info["type_piano"] ?? "",
+              serial: serialFull,
+              fabrication: info["fabrication"] ?? "",
+              profil:
+                profile.frictionTarget !== null
+                  ? `${profile.label} — friction cible ${profile.frictionTarget} g`
+                  : profile.label,
+              pays: info["pays"] ?? "",
+              ville: info["ville"] ?? "",
+              entretien: info["entretien"] ?? "",
+              remarques: info["remarques"] ?? "",
+            }}
+          />
+        </div>
+        <div ref={pdfChartRef} className="mt-4 bg-white">
+          <PdfComparisonChart data={chartData} frictionTarget={profile.frictionTarget} />
+        </div>
+      </div>
 
       <AlertDialog open={askCompare} onOpenChange={setAskCompare}>
         <AlertDialogContent className="w-full max-w-xl">
