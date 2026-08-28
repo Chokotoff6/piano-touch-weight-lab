@@ -1333,6 +1333,7 @@ function Index() {
                       onChange={() => {
                         updateInfo("entretien", t);
                         if (t === "Modifications importantes") {
+                          remarksFocusedOnce.current = true;
                           setTimeout(() => remarquesRef.current?.focus(), 0);
                         }
                       }}
