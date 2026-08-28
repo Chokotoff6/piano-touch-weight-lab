@@ -21,7 +21,7 @@ export type SmartComboboxHandle = {
 };
 
 export const SmartCombobox = forwardRef<SmartComboboxHandle, Props>(
-  ({ value, options, groups, disabled, placeholder, openOnFocus, className, onCommit }, ref) => {
+  ({ value, options, groups, disabled, placeholder, openOnFocus, className, keepOpenSelector, onCommit }, ref) => {
   const [draft, setDraft] = useState(value);
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState(false);
