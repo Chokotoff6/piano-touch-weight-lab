@@ -696,6 +696,9 @@ function Index() {
   };
 
   const formatAverageResult = (value: string) => {
+    if (value === "—") {
+      return <span className="!text-2xl">—</span>;
+    }
     const [integer, decimal = "0"] = value.split(".");
     return (
       <>
