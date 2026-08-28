@@ -79,6 +79,73 @@ const SAVE_NEW_MESSAGE =
 const COHERENCE_MESSAGE =
   "⚠️ Erreur de cohérence : Le poids descendant (Wa) doit toujours être supérieur au poids ascendant (Wd).";
 
+function wrapTooltipText(text: string, maxChars: number): string[] {
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    if (!current) current = word;
+    else if ((current + " " + word).length <= maxChars) current += " " + word;
+    else {
+      lines.push(current);
+      current = word;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
+function SvgTooltip({ x, y, text }: { x: number; y: number; text: string }) {
+  const maxChars = 42;
+  const lines = wrapTooltipText(text, maxChars);
+  const charWidth = 6.4;
+  const lineHeight = 16;
+  const padX = 10;
+  const padY = 8;
+  const width = Math.min(maxChars, Math.max(...lines.map((l) => l.length))) * charWidth + padX * 2;
+  const height = lines.length * lineHeight + padY * 2;
+  return (
+    <svg
+      role="alert"
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      style={{
+        position: "fixed",
+        left: x,
+        top: y,
+        zIndex: 99999,
+        pointerEvents: "none",
+        overflow: "visible",
+      }}
+    >
+      <rect
+        x="0"
+        y="0"
+        width={width}
+        height={height}
+        rx="4"
+        fill="#fef08a"
+        opacity="1"
+        stroke="#fde047"
+      />
+      {lines.map((line, i) => (
+        <text
+          key={i}
+          x={padX}
+          y={padY + lineHeight * (i + 1) - 4}
+          fill="#000000"
+          fontWeight="600"
+          fontSize="12"
+          fontFamily="ui-sans-serif, system-ui, Arial, sans-serif"
+        >
+          {line}
+        </text>
+      ))}
+    </svg>
+  );
+}
+
 type SerialRule = { prefix: boolean; suffix: boolean; autoPrefix?: string };
 
 const BRAND_RULES: Record<string, SerialRule> = {
