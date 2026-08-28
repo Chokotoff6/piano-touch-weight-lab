@@ -73,9 +73,10 @@ export const SmartCombobox = forwardRef<SmartComboboxHandle, Props>(
   };
 
   useEffect(() => {
+    const selector = keepOpenSelector ?? "[data-keep-combobox-open]";
     const onDown = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
-      if (target?.closest("[data-keep-combobox-open]")) {
+      if (target?.closest(selector)) {
         // le filtre change mais la liste ouverte reste affichée
         keepOpen.current = true;
         window.setTimeout(() => {
@@ -88,7 +89,7 @@ export const SmartCombobox = forwardRef<SmartComboboxHandle, Props>(
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
-  }, [open]);
+  }, [open, keepOpenSelector]);
 
     return (
       <div ref={wrap} className="relative">
