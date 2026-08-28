@@ -292,7 +292,7 @@ function RootComponent() {
         target="_blank"
         rel="noopener noreferrer"
         title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
-        aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site dévelopbé bénévolement"
+        aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
         className="fixed right-6 top-4 z-50 flex h-20 w-20 items-center justify-center rounded-xl bg-transparent shadow-xl transition-transform hover:scale-105"
       >
         <img
