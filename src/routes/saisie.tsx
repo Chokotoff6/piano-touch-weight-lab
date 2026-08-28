@@ -464,6 +464,7 @@ function Index() {
       if (blockTimeout.current) clearTimeout(blockTimeout.current);
       blockTimeout.current = null;
       setBlockMessage(null);
+      setBlockAnchor(null);
     }
   }, [canEnterWeights]);
 
