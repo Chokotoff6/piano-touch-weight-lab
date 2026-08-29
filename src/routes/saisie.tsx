@@ -374,6 +374,9 @@ function Index() {
   const blockTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const coherenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  /** Badge vert retardé : ne s'allume qu'après 0,5 s sans cadre rouge ni erreur. */
+  const [badgeVisible, setBadgeVisible] = useState(false);
+  const badgeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
   const fabricationTouched = useRef(false);
