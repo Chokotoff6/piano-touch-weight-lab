@@ -1665,6 +1665,7 @@ function Index() {
           <>
 Moyennes{" "}
             <span
+              data-pdf-hide
               className="font-normal"
               style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
             >
