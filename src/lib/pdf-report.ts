@@ -24,18 +24,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
       doc.querySelectorAll("[data-pdf-hide]").forEach((node) => {
         (node as HTMLElement).style.visibility = "hidden";
       });
-      // Mentions d'aide entre parenthèses : retirées du flux (titres nus).
-      doc.querySelectorAll("[data-pdf-collapse]").forEach((node) => {
-        (node as HTMLElement).style.display = "none";
-      });
-      // Bordures hermétiques : lignes noires pleines et continues.
-      doc.querySelectorAll("section").forEach((node) => {
-        const el = node as HTMLElement;
-        el.style.borderStyle = "solid";
-        el.style.borderColor = "#000000";
-      });
     },
-
   });
   return {
     dataUrl: canvas.toDataURL("image/png"),
