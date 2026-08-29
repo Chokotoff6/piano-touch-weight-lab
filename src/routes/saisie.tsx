@@ -1146,7 +1146,7 @@ function Index() {
       void syncAndFinish(currentDbId ? "update" : "insert");
     };
     const onCompareGuard = () => setAskCompare(true);
-    const onReset = () => setRows(EMPTY);
+    const onReset = () => setConfirmReset("rows");
 
     const handlers: Record<string, EventListener> = {
       "piano-export": onExport,
