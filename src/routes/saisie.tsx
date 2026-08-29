@@ -1760,7 +1760,7 @@ Moyennes{" "}
             Reset
           </button>
         </div>
-        {keyboardValid && (
+        {badgeVisible && (
           <div
             data-pdf-hide
             className="pointer-events-none absolute left-0 top-1/2 z-10 flex w-32 justify-center"
