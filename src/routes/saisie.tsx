@@ -1110,7 +1110,7 @@ function Index() {
   useEffect(() => {
     setTopbarState({
       exportReady,
-      measuresReady: requiredSheetFieldsComplete && octaveGaps.length === 0 && orphanKeys.length === 0,
+      measuresReady: requiredSheetFieldsComplete && keyboardValid,
       serialFilled: Boolean(info["sn_num"]?.trim()),
       isExporting,
       isDirty,
