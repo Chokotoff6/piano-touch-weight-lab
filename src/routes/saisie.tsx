@@ -1538,14 +1538,31 @@ function Index() {
         title={
           <>
             Moyennes <span className="text-sm font-normal">(auto)</span>
+            {weighingMode && (
+              <span className="ml-3 text-sm font-normal text-gray-600">
+                {info["marque"]} {info["modele"]} • N° {info["sn_num"]} •{" "}
+                {info["fabrication"]?.trim() || "—"} • {info["ville"]}, {info["pays"]} •
+                Profil : {profile.label}
+              </span>
+            )}
           </>
         }
-        className="mt-8"
+        className={weighingMode ? "mt-4 !p-3 !pt-4" : "mt-8"}
         innerRef={(node) => {
           moyennesRef.current = node;
         }}
       >
-        <div className="mt-2 grid grid-cols-4 gap-3">
+        {weighingMode && (
+          <button
+            type="button"
+            data-pdf-hide
+            onClick={() => setWeighingMode(false)}
+            className="absolute -top-2.5 right-4 z-10 rounded-md border border-input bg-background px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
+          >
+            Modifier infos piano
+          </button>
+        )}
+        <div className={`grid grid-cols-4 ${weighingMode ? "mt-0.5 !gap-2.5" : "mt-2 gap-3"}`}>
           {(
             [
               { key: "wa", label: "Poids descendant (Wa)" },
@@ -1578,7 +1595,7 @@ function Index() {
 
       <Frame
         title="Mesures poids de touches"
-        className="mt-8 pb-10"
+        className={weighingMode ? "mt-4 pb-4" : "mt-8 pb-10"}
         innerRef={(node) => {
           mesuresRef.current = node;
         }}
