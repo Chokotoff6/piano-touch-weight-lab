@@ -362,6 +362,9 @@ function Index() {
   const [blockMessage, setBlockMessage] = useState<string | null>(null);
   const [blockAnchor, setBlockAnchor] = useState<{ x: number; y: number } | null>(null);
   const blockAnchorTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Mode pesée : formulaire masqué, bandeau résumé affiché. */
+  const [weighingMode, setWeighingMode] = useState(false);
+  const weighingBtnRef = useRef<HTMLButtonElement | null>(null);
   const [coherenceIndex, setCoherenceIndex] = useState<number | null>(null);
   const [coherenceAnchor, setCoherenceAnchor] = useState<{ x: number; y: number } | null>(null);
   const remarquesRef = useRef<HTMLInputElement | null>(null);
@@ -385,7 +388,7 @@ function Index() {
   const moyennesRef = useRef<HTMLElement | null>(null);
   const mesuresRef = useRef<HTMLElement | null>(null);
   const goCompareAfterSave = useRef(false);
-  const moyennesScrolledOnce = useRef(false);
+
 
   const navigate = useNavigate();
   const gridRef1 = useSnappedGrid(1, 44);
@@ -481,53 +484,31 @@ function Index() {
   const remarquesRequired = info["entretien"] === "Modifications importantes";
   const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
 
-  // Dès que les six informations de la fiche sont remplies, le curseur se place
-  // automatiquement dans la première zone de saisie (Wa, touche 1 / La0),
-  // ou dans le champ Remarques si des modifications importantes sont déclarées.
-  const weightsFocusedOnce = useRef(false);
-  const remarksFocusedOnce = useRef(false);
-
+  /** Téléporte le curseur dans la première case Wa (Touche 1 / La0). */
   const focusFirstWeight = useCallback(() => {
-    if (weightsFocusedOnce.current) return;
-    weightsFocusedOnce.current = true;
     setTimeout(() => {
       inputs.current["0-wa"]?.focus({ preventScroll: true });
       inputs.current["0-wa"]?.select();
     }, 50);
   }, []);
 
-  useEffect(() => {
+  /** Validation consciente de la fiche : alerte si incomplète, sinon mode pesée. */
+  const onValidateWeighing = useCallback(() => {
     if (!requiredSheetFieldsComplete) {
-      weightsFocusedOnce.current = false;
-      remarksFocusedOnce.current = false;
-      moyennesScrolledOnce.current = false;
+      if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
+      const r = weighingBtnRef.current?.getBoundingClientRect();
+      setBlockAnchor(
+        r ? { x: Math.max(8, r.left - 340), y: Math.max(8, r.top - 12) } : { x: window.innerWidth / 2 - 144, y: 120 },
+      );
+      blockAnchorTimeout.current = setTimeout(() => {
+        setBlockAnchor(null);
+        blockAnchorTimeout.current = null;
+      }, 3000);
       return;
     }
-
-    const scrollToMoyennes = () => {
-      if (moyennesScrolledOnce.current) return;
-      moyennesScrolledOnce.current = true;
-      const el = moyennesRef.current;
-      if (!el) return;
-      const top = el.offsetTop - 20;
-      window.scrollTo({ top, behavior: "smooth" });
-    };
-
-    if (remarquesRequired) {
-      if (remarksFocusedOnce.current) return;
-      weightsFocusedOnce.current = false;
-      remarksFocusedOnce.current = true;
-      setTimeout(() => {
-        remarquesRef.current?.focus();
-        scrollToMoyennes();
-      }, 50);
-      return;
-    }
-
-    remarksFocusedOnce.current = false;
+    setWeighingMode(true);
     focusFirstWeight();
-    scrollToMoyennes();
-  }, [requiredSheetFieldsComplete, remarquesRequired, focusFirstWeight]);
+  }, [requiredSheetFieldsComplete, focusFirstWeight]);
 
   /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
   const resetInfo = () => {
@@ -1257,7 +1238,8 @@ function Index() {
   // --- Rendu : page ----------------------------------------------------------------
 
   return (
-    <main className="mx-auto max-w-[1400px] px-6 py-10">
+    <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
+      {!weighingMode && (
       <div
         data-dirty={isDirty}
         data-saved-at={savedAt ?? ""}
@@ -1274,7 +1256,7 @@ function Index() {
           </button>
           <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-[1fr_210px_1fr_1fr]">
             <label className={FIELD_LABEL_CLASS}>
-              Marque
+              Marque<span className="text-red-500 font-bold ml-1">*</span>
               <SmartCombobox
                 value={info["marque"] ?? ""}
                 options={BRAND_SUGGESTIONS}
@@ -1288,7 +1270,7 @@ function Index() {
             </label>
 
             <fieldset className={FIELD_LABEL_CLASS} data-keep-model-open>
-              <legend>Type</legend>
+              <legend>Type de piano<span className="text-red-500 font-bold ml-1">*</span></legend>
               <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 bg-white px-2">
                 {["Droit", "à Queue"].map((t) => (
                   <label key={t} className="flex items-center gap-1 text-sm text-foreground">
@@ -1313,7 +1295,7 @@ function Index() {
             </fieldset>
 
             <label className={FIELD_LABEL_CLASS}>
-              Modèle
+              Modèle<span className="text-red-500 font-bold ml-1">*</span>
               <SmartCombobox
                 ref={modelComboRef}
                 value={info["modele"] ?? ""}
@@ -1334,7 +1316,7 @@ function Index() {
             </label>
 
             <div className="text-xs text-muted-foreground sm:col-span-2 md:col-span-4" style={{ marginTop: "12px", paddingTop: "0px", display: "block" }}>
-              <span className={FIELD_LABEL_CLASS}>Numéro de série</span>{" "}
+              <span className={FIELD_LABEL_CLASS}>Numéro de série<span className="text-red-500 font-bold ml-1">*</span></span>{" "}
               <span className="text-muted-foreground">
                 (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
               </span>
@@ -1354,7 +1336,7 @@ function Index() {
                     />
                   </label>
                   <label className={`min-w-[150px] ${SUB_LABEL_CLASS}`}>
-                    <span className="block whitespace-nowrap">N° de série</span>
+                    <span className="block whitespace-nowrap">N° de série<span className="text-red-500 font-bold ml-1">*</span></span>
                     <input
                       ref={(el) => {
                         snRef.current["sn_num"] = el;
@@ -1407,7 +1389,7 @@ function Index() {
             </div>
 
             <label className={`mt-4 ${FIELD_LABEL_CLASS}`}>
-              Pays
+              Pays<span className="text-red-500 font-bold ml-1">*</span>
               <SmartCombobox
                 value={info["pays"] ?? ""}
                 options={ALL_COUNTRIES}
@@ -1422,7 +1404,7 @@ function Index() {
 
             <label className={`mt-4 ${FIELD_LABEL_CLASS}`}>
               <span className="flex items-center gap-2">
-                Ville
+                Ville<span className="text-red-500 font-bold ml-1">*</span>
                 {isGeocoding && <span className="text-[0.65rem] italic">Vérification…</span>}
               </span>
               <input
@@ -1450,7 +1432,7 @@ function Index() {
               className={`!flex !flex-row !items-center !flex-nowrap !gap-6 !w-full mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}
               style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", gap: "24px", width: "100%" }}
             >
-              <span className="shrink-0">Type d'entretien</span>
+              <span className="shrink-0">Type d'entretien<span className="text-red-500 font-bold ml-1">*</span></span>
               {MAINTENANCE_OPTIONS.map((t) => (
                 <label key={t} className="flex shrink-0 items-center gap-1 text-sm text-foreground">
                   <input
@@ -1462,7 +1444,6 @@ function Index() {
                     onChange={() => {
                       updateInfo("entretien", t);
                       if (t === "Modifications importantes") {
-                        remarksFocusedOnce.current = true;
                         setTimeout(() => remarquesRef.current?.focus(), 0);
                       }
                     }}
@@ -1484,17 +1465,7 @@ function Index() {
                 value={info["remarques"] ?? ""}
                 onChange={(e) => updateInfo("remarques", e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    if (e.currentTarget.value.trim()) {
-                      focusFirstWeight();
-                    }
-                  }
-                }}
-                onBlur={(e) => {
-                  if (e.currentTarget.value.trim()) {
-                    focusFirstWeight();
-                  }
+                  if (e.key === "Enter") e.preventDefault();
                 }}
                 className={`${INPUT_CLASS} placeholder:text-foreground placeholder:font-medium ${
                   remarquesInvalid
@@ -1526,9 +1497,21 @@ function Index() {
               }}
             />
 
+            <div className="mt-2 flex justify-end sm:col-span-2 md:col-span-4">
+              <button
+                ref={weighingBtnRef}
+                type="button"
+                onClick={onValidateWeighing}
+                className="rounded-md bg-gray-900 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-gray-700"
+              >
+                Données de pesée ➔
+              </button>
+            </div>
+
           </div>
         </Frame>
       </div>
+      )}
 
       {blockMessage && (
         <div
@@ -1555,14 +1538,31 @@ function Index() {
         title={
           <>
             Moyennes <span className="text-sm font-normal">(auto)</span>
+            {weighingMode && (
+              <span className="ml-3 text-sm font-normal text-gray-600">
+                {info["marque"]} {info["modele"]} • N° {info["sn_num"]} •{" "}
+                {info["fabrication"]?.trim() || "—"} • {info["ville"]}, {info["pays"]} •
+                Profil : {profile.label}
+              </span>
+            )}
           </>
         }
-        className="mt-8"
+        className={weighingMode ? "mt-4 !p-3 !pt-4" : "mt-8"}
         innerRef={(node) => {
           moyennesRef.current = node;
         }}
       >
-        <div className="mt-2 grid grid-cols-4 gap-3">
+        {weighingMode && (
+          <button
+            type="button"
+            data-pdf-hide
+            onClick={() => setWeighingMode(false)}
+            className="absolute -top-2.5 right-4 z-10 rounded-md border border-input bg-background px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
+          >
+            Modifier infos piano
+          </button>
+        )}
+        <div className={`grid grid-cols-4 ${weighingMode ? "mt-0.5 !gap-2.5" : "mt-2 gap-3"}`}>
           {(
             [
               { key: "wa", label: "Poids descendant (Wa)" },
@@ -1595,7 +1595,7 @@ function Index() {
 
       <Frame
         title="Mesures poids de touches"
-        className="mt-8 pb-10"
+        className={weighingMode ? "mt-4 pb-4" : "mt-8 pb-10"}
         innerRef={(node) => {
           mesuresRef.current = node;
         }}
