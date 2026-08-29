@@ -34,14 +34,18 @@ async function capture(el: HTMLElement): Promise<Capture> {
 }
 
 
-/** Empile verticalement les blocs capturés sur une page A4 paysage, à l'échelle. */
-function drawPage(pdf: jsPDF, blocks: Capture[]) {
+/** Échelle (mm/px) tenant dans une page A4 paysage pour une pile de blocs. */
+function pageRatio(blocks: Capture[]): number {
   const availW = PAGE_W - MARGIN * 2;
   const availH = PAGE_H - MARGIN * 2 - GAP * (blocks.length - 1);
-  // Échelle commune : mm par pixel, limitée par la largeur ET la hauteur totale.
   const maxPxW = Math.max(...blocks.map((b) => b.width));
   const totalPxH = blocks.reduce((sum, b) => sum + b.height, 0);
-  const ratio = Math.min(availW / maxPxW, availH / totalPxH);
+  return Math.min(availW / maxPxW, availH / totalPxH);
+}
+
+/** Empile verticalement les blocs capturés sur une page A4 paysage, à l'échelle imposée. */
+function drawPage(pdf: jsPDF, blocks: Capture[], ratio: number) {
+  const availW = PAGE_W - MARGIN * 2;
   let y = MARGIN;
   for (const block of blocks) {
     const w = block.width * ratio;
