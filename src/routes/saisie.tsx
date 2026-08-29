@@ -534,6 +534,9 @@ function Index() {
     focusFirstWeight();
   }, [requiredSheetFieldsComplete, remarquesInvalid, focusFirstWeight]);
 
+  /** Confirmation de réinitialisation en cartouche jaune ("rows" = mesures, "info" = fiche). */
+  const [confirmReset, setConfirmReset] = useState<null | "rows" | "info">(null);
+
   /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
   const resetInfo = () => {
     setInfo({});
@@ -717,6 +720,14 @@ function Index() {
   };
 
   const onKeyDown = useCallback((e: React.KeyboardEvent, index: number, field: "wa" | "wd") => {
+    if (e.shiftKey && e.key === "Tab") {
+      const nextCKey = Array.from(C_KEYS).find((key) => key > index + 1);
+      if (nextCKey !== undefined) {
+        e.preventDefault();
+        focusCell(nextCKey - 1, "wa");
+      }
+      return;
+    }
     if (e.key !== "Enter") return;
     e.preventDefault();
     if (field === "wa") focusCell(index, "wd");
@@ -1135,7 +1146,7 @@ function Index() {
       void syncAndFinish(currentDbId ? "update" : "insert");
     };
     const onCompareGuard = () => setAskCompare(true);
-    const onReset = () => setRows(EMPTY);
+    const onReset = () => setConfirmReset("rows");
 
     const handlers: Record<string, EventListener> = {
       "piano-export": onExport,
@@ -1194,7 +1205,8 @@ function Index() {
         inputMode="numeric"
         aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
-        className={`weight-input !font-sans font-semibold !text-black ${isBlack ? "" : "![background-color:#cbd5e1]"} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        onFocus={(e) => e.currentTarget.select()}
+        className={`weight-input !font-sans font-semibold !text-black ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
       />
     </div>
@@ -1291,14 +1303,23 @@ function Index() {
         data-climate-zone={climateZone ?? ""}
       >
         <Frame title="Informations piano" className="mt-10 [&_input]:border-foreground/60">
-          <button
-            type="button"
-            onClick={resetInfo}
-            title="Réinitialiser uniquement la fiche d'informations"
-            className="absolute right-10 top-10 z-10 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
-          >
-            Reset
-          </button>
+          <div className="absolute right-10 top-10 z-10">
+            {confirmReset === "info" && (
+              <div className="absolute bottom-full right-0 mb-2 flex min-w-max items-center gap-2 !rounded-md !border !border-yellow-300 !bg-[#fef08a] px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
+                <span>Voulez-vous effacer toutes les infos piano saisies ?</span>
+                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { resetInfo(); setConfirmReset(null); }}>Oui</button>
+                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setConfirmReset("info")}
+              title="Réinitialiser uniquement la fiche d'informations"
+              className="rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+            >
+              Reset
+            </button>
+          </div>
           <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-[1fr_210px_1fr_1fr]">
             <label className={FIELD_LABEL_CLASS}>
               Marque<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
@@ -1596,13 +1617,15 @@ function Index() {
         }}
       >
         {weighingMode && (
-          <span className="!absolute !-top-3.5 !left-1/2 !-translate-x-1/2 !bg-card !px-2 !flex !items-center !gap-x-4 !text-sm !font-medium !text-gray-950">
-            {info["marque"]} {info["modele"]} ({info["fabrication"]?.trim() || "—"}) • N° {info["sn_num"]} • Date mesure : {new Date().toISOString().slice(0, 10)}
+          <span className="!absolute !-top-3.5 !left-1/2 !-translate-x-1/2 !flex !items-center !gap-x-4 !whitespace-nowrap !w-auto !min-w-max !overflow-visible !bg-card !px-2 !text-gray-950 !font-medium">
+            <span className="!whitespace-nowrap !w-auto !min-w-max !overflow-visible">
+              {info["marque"]} {info["modele"]} ({info["fabrication"]?.trim() || "—"}) • N° {info["sn_num"]} • Date mesure : {new Date().toISOString().slice(0, 10)}
+            </span>
             <button
               type="button"
               data-pdf-hide
               onClick={() => setWeighingMode(false)}
-              className="rounded-md border border-input bg-background px-2.5 py-0.5 !text-xs font-medium !text-gray-950 transition-colors hover:bg-accent"
+              className="!whitespace-nowrap !w-auto !min-w-max !overflow-visible rounded-md border border-input bg-background px-2.5 py-0.5 !text-xs font-medium !text-gray-950 transition-colors hover:bg-accent"
             >
               Modifier infos piano
             </button>
@@ -1646,23 +1669,31 @@ function Index() {
           mesuresRef.current = node;
         }}
       >
-        <button
-          type="button"
-          data-pdf-hide
-          onClick={() => setRows(EMPTY)}
-          className="absolute left-[calc(1rem+4rem)] top-12 z-10 -translate-x-1/2 -translate-y-1/2 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
-        >
-          Reset
-        </button>
+        <div className="absolute left-[calc(1rem+4rem)] top-12 z-10 -translate-x-1/2 -translate-y-1/2">
+          {confirmReset === "rows" && (
+            <div className="absolute bottom-full left-1/2 mb-2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-yellow-300 !bg-[#fef08a] px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
+              <span>Voulez-vous effacer toutes les données de poids saisies ?</span>
+              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { setRows(EMPTY); setConfirmReset(null); }}>Oui</button>
+              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
+            </div>
+          )}
+          <button
+            type="button"
+            data-pdf-hide
+            onClick={() => setConfirmReset("rows")}
+            className="rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+          >
+            Reset
+          </button>
+        </div>
         {hasAnyMeasurement(rows) && octaveGaps.length === 0 && orphanKeys.length === 0 && (
           <div
             data-pdf-hide
             className="pointer-events-none absolute left-0 top-1/2 z-10 flex w-32 justify-center"
-            style={{ transform: "translateY(calc(-50% + 10px))" }}
+            style={{ transform: "translateY(calc(-50% + 15px))" }}
           >
-            <div className="flex items-center gap-1.5 !rounded-md !border !border-gray-600 !bg-white !px-2.5 !py-1 !shadow-sm">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
-              <span className="text-[10px] font-semibold text-gray-950">Clavier valide</span>
+            <div className="flex items-center !rounded-md !border !border-green-600 !bg-green-100 !px-2.5 !py-1 !shadow-sm">
+              <span className="text-[10px] font-semibold !text-gray-950">Clavier valide</span>
             </div>
           </div>
         )}
