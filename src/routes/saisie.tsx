@@ -982,7 +982,8 @@ function Index() {
 
   /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
   const exportPdfFile = async () => {
-    const page1 = [pdfInfoRef.current, moyennesRef.current, mesuresRef.current].filter(
+    // Page 1 : uniquement Moyennes + Mesures (cadre "Informations piano" exclu).
+    const page1 = [moyennesRef.current, mesuresRef.current].filter(
       (el): el is HTMLElement => el !== null,
     );
     const page2 = [moyennesRef.current, pdfChartRef.current].filter(
@@ -1664,6 +1665,7 @@ function Index() {
           <>
 Moyennes{" "}
             <span
+              data-pdf-hide
               className="font-normal"
               style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
             >
@@ -1730,6 +1732,7 @@ Moyennes{" "}
           <>
             Mesures poids de touches{" "}
             <span
+              data-pdf-hide
               className="font-normal normal-case"
               style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
             >
