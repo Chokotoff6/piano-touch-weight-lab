@@ -22,7 +22,7 @@ import {
   SERIAL_FORMAT_ERROR,
 } from "@/lib/serial-dating";
 import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
-import { buildCsv, buildExportFilename, downloadCsv } from "@/lib/export-csv";
+import { buildCsv, buildExportFilename, downloadCsv, formatLocalDateTime } from "@/lib/export-csv";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { generateLandscapeReport } from "@/lib/pdf-report";
 import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
