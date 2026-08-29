@@ -982,8 +982,7 @@ function Index() {
 
   /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
   const exportPdfFile = async () => {
-    // Page 1 : uniquement Moyennes + Mesures (cadre "Informations piano" exclu).
-    const page1 = [moyennesRef.current, mesuresRef.current].filter(
+    const page1 = [pdfInfoRef.current, moyennesRef.current, mesuresRef.current].filter(
       (el): el is HTMLElement => el !== null,
     );
     const page2 = [moyennesRef.current, pdfChartRef.current].filter(
@@ -1352,16 +1351,6 @@ function Index() {
 
   return (
     <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
-      <input
-        ref={importInputRef}
-        type="file"
-        accept=".csv,text/csv"
-        style={{ display: "none" }}
-        onChange={(e) => {
-          onImportFile(e.target.files?.[0]);
-          e.target.value = "";
-        }}
-      />
       {!weighingMode && (
       <div
         data-dirty={isDirty}
@@ -1623,6 +1612,17 @@ function Index() {
               className="pointer-events-none absolute -z-10 h-0 w-0 opacity-0"
             />
 
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(e) => {
+                onImportFile(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+
             <div className="mt-2 flex justify-end sm:col-span-2 md:col-span-4">
               <button
                 ref={weighingBtnRef}
@@ -1665,7 +1665,6 @@ function Index() {
           <>
 Moyennes{" "}
             <span
-              data-pdf-hide
               className="font-normal"
               style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
             >
@@ -1732,7 +1731,6 @@ Moyennes{" "}
           <>
             Mesures poids de touches{" "}
             <span
-              data-pdf-hide
               className="font-normal normal-case"
               style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
             >
