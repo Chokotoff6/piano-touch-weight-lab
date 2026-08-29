@@ -385,6 +385,7 @@ function Index() {
   const moyennesRef = useRef<HTMLElement | null>(null);
   const mesuresRef = useRef<HTMLElement | null>(null);
   const goCompareAfterSave = useRef(false);
+  const moyennesScrolledOnce = useRef(false);
 
   const navigate = useNavigate();
   const gridRef1 = useSnappedGrid(1, 44);
@@ -490,7 +491,7 @@ function Index() {
     if (weightsFocusedOnce.current) return;
     weightsFocusedOnce.current = true;
     setTimeout(() => {
-      inputs.current["0-wa"]?.focus();
+      inputs.current["0-wa"]?.focus({ preventScroll: true });
       inputs.current["0-wa"]?.select();
     }, 50);
   }, []);
@@ -499,8 +500,18 @@ function Index() {
     if (!requiredSheetFieldsComplete) {
       weightsFocusedOnce.current = false;
       remarksFocusedOnce.current = false;
+      moyennesScrolledOnce.current = false;
       return;
     }
+
+    const scrollToMoyennes = () => {
+      if (moyennesScrolledOnce.current) return;
+      moyennesScrolledOnce.current = true;
+      const el = moyennesRef.current;
+      if (!el) return;
+      const top = el.offsetTop - 20;
+      window.scrollTo({ top, behavior: "smooth" });
+    };
 
     if (remarquesRequired) {
       if (remarksFocusedOnce.current) return;
@@ -508,12 +519,14 @@ function Index() {
       remarksFocusedOnce.current = true;
       setTimeout(() => {
         remarquesRef.current?.focus();
+        scrollToMoyennes();
       }, 50);
       return;
     }
 
     remarksFocusedOnce.current = false;
     focusFirstWeight();
+    scrollToMoyennes();
   }, [requiredSheetFieldsComplete, remarquesRequired, focusFirstWeight]);
 
   /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
@@ -1227,8 +1240,8 @@ function Index() {
               return (
                 <div key={index} className={`result-col ${black ? "is-black" : "is-white"}`}>
                   <div className="result-strip">{black ? formatResult(value) : null}</div>
-                  <div className="result-value">
-                    <span className="rv-text !w-full !px-0.5 !text-center !whitespace-nowrap !overflow-visible">
+                  <div className={`result-value ${kind === "balance" && !black ? "!overflow-visible" : ""}`}>
+                    <span className={`rv-text !text-center !whitespace-nowrap !overflow-visible ${kind === "balance" && !black ? "!w-[125%] !max-w-none !px-0" : "!w-full !px-0.5"}`}>
                       {black ? null : formatResult(value)}
                     </span>
                   </div>
