@@ -1160,7 +1160,7 @@ function Index() {
         historyRows: [],
       });
     };
-  }, [exportReady, requiredSheetFieldsComplete, keyboardValid, info, isExporting, isDirty, currentDbId]);
+  }, [exportReady, requiredSheetFieldsComplete, badgeVisible, info, isExporting, isDirty, currentDbId]);
 
   useEffect(() => {
     const exportCsvOnly = () => {
