@@ -1683,7 +1683,7 @@ Moyennes{" "}
               <div className="mt-1 !text-2xl font-semibold tabular-nums">
                 {formatAverageResult(sectionAverages.global[key])}
                 {(key === "wa" || key === "wd") && sectionAverages.global[key] !== "—" && (
-                  <span className="!text-xs !font-medium !text-gray-500"> g.</span>
+                  <span className="!text-xs !font-medium !text-gray-500"> gr.</span>
                 )}
               </div>
               <div className="mt-0.5 flex justify-center gap-2 text-[0.65rem] text-muted-foreground tabular-nums">
