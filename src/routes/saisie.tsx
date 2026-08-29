@@ -1666,6 +1666,7 @@ function Index() {
           <>
 Moyennes{" "}
             <span
+              data-pdf-hide
               className="font-normal"
               style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
             >
@@ -1682,6 +1683,7 @@ Moyennes{" "}
           <span className="!absolute !-top-3.5 !left-1/2 !-translate-x-1/2 !flex !items-center !gap-x-4 !whitespace-nowrap !w-auto !min-w-max !overflow-visible !bg-card !px-2 !text-gray-950 !font-medium">
             <span className="!whitespace-nowrap !w-auto !min-w-max !overflow-visible" style={{ fontSize: "0.83rem" }}>
               {info["marque"]} {info["modele"]} ({info["fabrication"]?.trim() || "—"}) -  SN {info["sn_num"]}  /  Mesure {new Date().toISOString().slice(0, 10)}
+              <span data-pdf-only style={{ display: "none" }}>{` ${new Date().toTimeString().slice(0, 5)}`}</span>
             </span>
             <button
               type="button"
