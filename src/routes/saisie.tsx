@@ -1738,7 +1738,7 @@ Moyennes{" "}
             </span>
           </>
         }
-        className={weighingMode ? "mt-4 pb-4" : "mt-8 pb-10 !hidden"}
+        className={weighingMode ? "!mt-[26px] pb-4" : "mt-8 pb-10 !hidden"}
         innerRef={(node) => {
           mesuresRef.current = node;
         }}
