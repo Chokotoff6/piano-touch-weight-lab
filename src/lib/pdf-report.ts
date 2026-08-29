@@ -8,31 +8,59 @@ const PAGE_W = 297; // mm (A4 paysage)
 const PAGE_H = 210;
 const MARGIN = 8;
 const GAP = 4;
+/** Largeur fixe du conteneur isolé photographié par html2canvas. */
+const CAPTURE_W = 1120;
 
+/**
+ * Clone le bloc dans un conteneur caché de 1120 px de large, purge les éléments
+ * interactifs (`data-pdf-hide`), révèle les compléments PDF (`data-pdf-only`),
+ * puis photographie ce conteneur isolé.
+ */
 async function capture(el: HTMLElement): Promise<Capture> {
-  // Marge haute : les titres des cadres débordent au-dessus de la bordure.
-  const PAD = 14;
-  const canvas = await html2canvas(el, {
-    scale: 2,
-    backgroundColor: "#ffffff",
-    useCORS: true,
-    logging: false,
-    y: -PAD,
-    height: el.offsetHeight + PAD * 2,
-    onclone: (doc) => {
-      // Les commandes interactives n'ont pas leur place dans le rapport.
-      doc.querySelectorAll("[data-pdf-hide]").forEach((node) => {
-        (node as HTMLElement).style.visibility = "hidden";
-      });
-    },
-  });
-  return {
-    dataUrl: canvas.toDataURL("image/png"),
-    width: canvas.width,
-    height: canvas.height,
-  };
-}
+  const host = document.createElement("div");
+  host.style.cssText =
+    "position:fixed;left:-9999px;top:0;width:1120px;max-width:1120px;background:#ffffff;padding:16px;z-index:-1;";
+  const clone = el.cloneNode(true) as HTMLElement;
+  clone.style.width = `${CAPTURE_W - 32}px`;
+  clone.style.maxWidth = `${CAPTURE_W - 32}px`;
+  clone.style.margin = "0";
+  host.appendChild(clone);
+  document.body.appendChild(host);
 
+  // Les champs clonés perdent leur valeur (propriété, pas attribut) : on la recopie.
+  const sources = el.querySelectorAll<HTMLInputElement>("input");
+  const targets = clone.querySelectorAll<HTMLInputElement>("input");
+  targets.forEach((input, i) => {
+    const value = sources[i]?.value ?? "";
+    input.setAttribute("value", value);
+    input.value = value;
+  });
+
+  host.querySelectorAll<HTMLElement>("[data-pdf-hide]").forEach((node) => {
+    node.style.display = "none";
+  });
+  host.querySelectorAll<HTMLElement>("[data-pdf-only]").forEach((node) => {
+    node.style.display = "inline";
+  });
+
+  try {
+    const canvas = await html2canvas(host, {
+      scale: 2,
+      backgroundColor: "#ffffff",
+      useCORS: true,
+      logging: false,
+      width: CAPTURE_W,
+      windowWidth: CAPTURE_W,
+    });
+    return {
+      dataUrl: canvas.toDataURL("image/png"),
+      width: canvas.width,
+      height: canvas.height,
+    };
+  } finally {
+    host.remove();
+  }
+}
 
 /** Empile verticalement les blocs capturés sur une page A4 paysage, à l'échelle. */
 function drawPage(pdf: jsPDF, blocks: Capture[]) {
@@ -61,8 +89,10 @@ export async function generateLandscapeReport(
   page2: HTMLElement[],
   filename: string,
 ): Promise<void> {
-  const captures1 = await Promise.all(page1.map(capture));
-  const captures2 = await Promise.all(page2.map(capture));
+  const captures1: Capture[] = [];
+  for (const el of page1) captures1.push(await capture(el));
+  const captures2: Capture[] = [];
+  for (const el of page2) captures2.push(await capture(el));
 
   const pdf = new jsPDF({ orientation: "landscape", format: "a4", unit: "mm" });
   drawPage(pdf, captures1);
