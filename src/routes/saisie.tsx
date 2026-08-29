@@ -1590,14 +1590,14 @@ function Index() {
             Moyennes <span className="text-sm font-normal">(auto)</span>
           </>
         }
-        className={weighingMode ? "mt-4 !p-3 !pt-4" : "mt-8"}
+        className={weighingMode ? "mt-4 !p-3 !pt-4" : "mt-8 !hidden"}
         innerRef={(node) => {
           moyennesRef.current = node;
         }}
       >
         {weighingMode && (
-          <span className="!absolute !-top-3.5 !right-4 !bg-card !px-2 !ml-auto !flex !items-center !gap-4 !text-sm !font-normal !text-gray-950">
-            {info["marque"]} {info["modele"]} • N° {info["sn_num"]} • {info["fabrication"]?.trim() || "—"}
+          <span className="!absolute !-top-3.5 !left-1/2 !-translate-x-1/2 !bg-card !px-2 !flex !items-center !gap-x-4 !text-sm !font-medium !text-gray-950">
+            {info["marque"]} {info["modele"]} ({info["fabrication"]?.trim() || "—"}) • N° {info["sn_num"]} • Date mesure : {new Date().toISOString().slice(0, 10)}
             <button
               type="button"
               data-pdf-hide
@@ -1641,7 +1641,7 @@ function Index() {
 
       <Frame
         title="Mesures poids de touches"
-        className={weighingMode ? "mt-4 pb-4" : "mt-8 pb-10"}
+        className={weighingMode ? "mt-4 pb-4" : "mt-8 pb-10 !hidden"}
         innerRef={(node) => {
           mesuresRef.current = node;
         }}
