@@ -1732,6 +1732,7 @@ Moyennes{" "}
           <>
             Mesures poids de touches{" "}
             <span
+              data-pdf-hide
               className="font-normal normal-case"
               style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
             >
