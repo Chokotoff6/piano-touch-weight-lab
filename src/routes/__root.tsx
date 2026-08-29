@@ -274,7 +274,7 @@ function RootComponent() {
                 </div>
                 <DropdownMenuContent align="start">
                   <DropdownMenuItem onClick={() => dispatchAction("piano-export-csv")}>
-                    Exporter fichier CSV
+                    Télécharger le fichier CSV local
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => dispatchAction("piano-export-pdf")}>
                     Générer rapport PDF
@@ -326,7 +326,7 @@ function RootComponent() {
                   </div>
                   <DropdownMenuContent align="start">
                     <DropdownMenuItem onClick={() => dispatchAction("piano-import-csv")}>
-                      Importer fichier CSV
+                      Charger un fichier CSV local
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onSelect={(event) => event.preventDefault()}
@@ -365,13 +365,12 @@ function RootComponent() {
               )}
               {topbar.alert?.anchor === "import" && (
                 <div
-                  className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-yellow-300 !bg-[#fef08a] px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
-                  style={{ position: "absolute", zIndex: 99999, backgroundColor: "#fef08a", opacity: 1 }}
+                  className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
+                  style={{ position: "absolute", zIndex: 99999, backgroundColor: "rgba(254, 240, 138, 0.7)" }}
                 >
                   {topbar.alert.message}
                 </div>
               )}
-
             </div>
           </div>
 

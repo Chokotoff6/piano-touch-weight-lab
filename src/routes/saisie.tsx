@@ -982,7 +982,7 @@ function Index() {
 
   /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
   const exportPdfFile = async () => {
-    const page1 = [moyennesRef.current, mesuresRef.current].filter(
+    const page1 = [pdfInfoRef.current, moyennesRef.current, mesuresRef.current].filter(
       (el): el is HTMLElement => el !== null,
     );
     const page2 = [moyennesRef.current, pdfChartRef.current].filter(
@@ -998,7 +998,6 @@ function Index() {
     );
     await generateLandscapeReport(page1, page2, filename);
   };
-
 
   // --- Import (CSV local / historique en ligne) -----------------------------------
 
@@ -1186,11 +1185,6 @@ function Index() {
     };
     const onPdf = () => {
       if (!guardExport("export")) return;
-      // Verrou strict : octaves complètes, aucune orpheline, aucune incohérence Wa/Wd.
-      if (!keyboardValid) {
-        showTopbarAlert("export", OCTAVE_RULE_MESSAGE);
-        return;
-      }
       setIsExporting(true);
       void exportPdfFile()
         .catch(() => showTopbarAlert("export", "⚠️ La génération du rapport PDF a échoué."))
@@ -1224,7 +1218,7 @@ function Index() {
     Object.entries(handlers).forEach(([type, fn]) => window.addEventListener(type, fn));
     return () =>
       Object.entries(handlers).forEach(([type, fn]) => window.removeEventListener(type, fn));
-  }, [rows, info, currentDbId, isDirty, honeypot, climateZone, profile, keyboardValid]);
+  }, [rows, info, currentDbId, isDirty, honeypot, climateZone, profile]);
 
   // --- Rendu : champ de saisie d'un poids (Wa ou Wd) ------------------------------
 
@@ -1357,6 +1351,16 @@ function Index() {
 
   return (
     <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
+      <input
+        ref={importInputRef}
+        type="file"
+        accept=".csv,text/csv"
+        style={{ display: "none" }}
+        onChange={(e) => {
+          onImportFile(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
       {!weighingMode && (
       <div
         data-dirty={isDirty}
@@ -1634,18 +1638,6 @@ function Index() {
       </div>
       )}
 
-      <input
-        ref={importInputRef}
-        id="piano-import-csv"
-        type="file"
-        accept=".csv"
-        style={{ display: "none" }}
-        onChange={(e) => {
-          onImportFile(e.target.files?.[0]);
-          e.target.value = "";
-        }}
-      />
-
       {blockMessage && (
         <div
           className="fixed left-1/2 top-24 w-[min(90vw,32rem)] -translate-x-1/2 rounded-md border border-yellow-300 px-4 py-3 text-sm font-medium text-gray-950 shadow-lg"
@@ -1672,7 +1664,6 @@ function Index() {
           <>
 Moyennes{" "}
             <span
-              data-pdf-hide
               className="font-normal"
               style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
             >
@@ -1689,7 +1680,6 @@ Moyennes{" "}
           <span className="!absolute !-top-3.5 !left-1/2 !-translate-x-1/2 !flex !items-center !gap-x-4 !whitespace-nowrap !w-auto !min-w-max !overflow-visible !bg-card !px-2 !text-gray-950 !font-medium">
             <span className="!whitespace-nowrap !w-auto !min-w-max !overflow-visible" style={{ fontSize: "0.83rem" }}>
               {info["marque"]} {info["modele"]} ({info["fabrication"]?.trim() || "—"}) -  SN {info["sn_num"]}  /  Mesure {new Date().toISOString().slice(0, 10)}
-              <span data-pdf-only style={{ display: "none" }}>{` ${new Date().toTimeString().slice(0, 5)}`}</span>
             </span>
             <button
               type="button"
@@ -1740,13 +1730,11 @@ Moyennes{" "}
           <>
             Mesures poids de touches{" "}
             <span
-              data-pdf-hide
               className="font-normal normal-case"
               style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
             >
               (Min. 1 blanche + 1 noire par octave. ex : tous les Do et Do# &gt; shift+tab saute de Do en Do.)
             </span>
-
           </>
         }
         className={weighingMode ? "!mt-[26px] pb-4" : "mt-8 pb-10 !hidden"}
@@ -1788,11 +1776,10 @@ Moyennes{" "}
         </div>
       </Frame>
 
-      {/* Conteneur hors écran dédié à la capture PDF (largeur fixe 1120 px). */}
+      {/* Conteneur hors écran dédié à la capture PDF (largeur bornée à 1024 px). */}
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed left-[-9999px] top-0 -z-10 !w-[1120px] !max-w-[1120px] bg-white p-4"
-
+        className="pointer-events-none fixed left-[-10000px] top-0 -z-10 w-[1024px] max-w-[1024px] bg-white p-4"
       >
         <div ref={pdfInfoRef} className="bg-white">
           <PdfInfoTable
