@@ -326,7 +326,7 @@ function RootComponent() {
                   </div>
                   <DropdownMenuContent align="start">
                     <DropdownMenuItem onClick={() => dispatchAction("piano-import-csv")}>
-                      Charger un fichier CSV local
+                      Importer fichier CSV
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onSelect={(event) => event.preventDefault()}
