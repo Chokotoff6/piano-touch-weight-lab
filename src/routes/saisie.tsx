@@ -1588,19 +1588,6 @@ function Index() {
         title={
           <>
             Moyennes <span className="text-sm font-normal">(auto)</span>
-            {weighingMode && (
-              <span className="ml-3 text-sm font-normal text-gray-600">
-                {info["marque"]} {info["modele"]} • N° {info["sn_num"]} • {info["fabrication"]?.trim() || "—"}
-                <button
-                  type="button"
-                  data-pdf-hide
-                  onClick={() => setWeighingMode(false)}
-                  className="!ml-4 rounded-md border border-input bg-background px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
-                >
-                  Modifier infos piano
-                </button>
-              </span>
-            )}
           </>
         }
         className={weighingMode ? "mt-4 !p-3 !pt-4" : "mt-8"}
@@ -1608,6 +1595,19 @@ function Index() {
           moyennesRef.current = node;
         }}
       >
+        {weighingMode && (
+          <span className="!absolute !-top-3.5 !right-4 !bg-card !px-2 !ml-auto !flex !items-center !gap-4 !text-sm !font-normal !text-gray-950">
+            {info["marque"]} {info["modele"]} • N° {info["sn_num"]} • {info["fabrication"]?.trim() || "—"}
+            <button
+              type="button"
+              data-pdf-hide
+              onClick={() => setWeighingMode(false)}
+              className="rounded-md border border-input bg-background px-2.5 py-0.5 !text-xs font-medium !text-gray-950 transition-colors hover:bg-accent"
+            >
+              Modifier infos piano
+            </button>
+          </span>
+        )}
         <div className={`grid grid-cols-4 ${weighingMode ? "mt-0.5 !gap-2.5" : "mt-2 gap-3"}`}>
           {(
             [
