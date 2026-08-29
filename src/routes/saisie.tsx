@@ -498,6 +498,19 @@ function Index() {
     [errors],
   );
 
+  /**
+   * Validité du clavier — séquence stricte :
+   * TEST 1 (prioritaire) : touche orpheline (cadre rouge) => stop, badge masqué.
+   * TEST 2 (successif) : échantillonnage des octaves, uniquement si zéro cadre rouge.
+   */
+  const keyboardValid = useMemo(() => {
+    if (orphanKeys.length > 0) return false; // TEST 1
+    if (hasConsistencyErrors) return false;
+    if (!hasAnyMeasurement(rows)) return false;
+    if (octaveGaps.length > 0) return false; // TEST 2
+    return true;
+  }, [orphanKeys.length, hasConsistencyErrors, rows, octaveGaps.length]);
+
   /** Remarques obligatoires dès que des modifications importantes sont déclarées. */
   const remarquesRequired = info["entretien"] === "Modifications importantes";
   const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
