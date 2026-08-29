@@ -1238,7 +1238,8 @@ function Index() {
   // --- Rendu : page ----------------------------------------------------------------
 
   return (
-    <main className="mx-auto max-w-[1400px] px-6 py-10">
+    <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
+      {!weighingMode && (
       <div
         data-dirty={isDirty}
         data-saved-at={savedAt ?? ""}
@@ -1496,9 +1497,21 @@ function Index() {
               }}
             />
 
+            <div className="mt-2 flex justify-end sm:col-span-2 md:col-span-4">
+              <button
+                ref={weighingBtnRef}
+                type="button"
+                onClick={onValidateWeighing}
+                className="rounded-md bg-gray-900 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-gray-700"
+              >
+                Données de pesée ➔
+              </button>
+            </div>
+
           </div>
         </Frame>
       </div>
+      )}
 
       {blockMessage && (
         <div
