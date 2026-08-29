@@ -1705,7 +1705,7 @@ function Index() {
             Reset
           </button>
         </div>
-        {hasAnyMeasurement(rows) && octaveGaps.length === 0 && orphanKeys.length === 0 && !hasConsistencyErrors && (
+        {keyboardValid && (
           <div
             data-pdf-hide
             className="pointer-events-none absolute left-0 top-1/2 z-10 flex w-32 justify-center"
