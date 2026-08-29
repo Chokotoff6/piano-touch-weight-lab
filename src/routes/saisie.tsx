@@ -1778,10 +1778,11 @@ Moyennes{" "}
         </div>
       </Frame>
 
-      {/* Conteneur hors écran dédié à la capture PDF (largeur bornée à 1024 px). */}
+      {/* Conteneur hors écran dédié à la capture PDF (largeur fixe 1120 px). */}
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed left-[-10000px] top-0 -z-10 w-[1024px] max-w-[1024px] bg-white p-4"
+        className="pointer-events-none fixed left-[-9999px] top-0 -z-10 !w-[1120px] !max-w-[1120px] bg-white p-4"
+
       >
         <div ref={pdfInfoRef} className="bg-white">
           <PdfInfoTable
