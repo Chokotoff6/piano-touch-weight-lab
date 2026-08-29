@@ -1664,7 +1664,8 @@ function Index() {
           <>
 Moyennes{" "}
             <span
-              className="font-normal"
+              data-pdf-hide
+              className="!print:hidden font-normal"
               style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
             >
               (auto)
@@ -1678,7 +1679,7 @@ Moyennes{" "}
       >
         {weighingMode && (
           <span className="!absolute !-top-3.5 !left-1/2 !-translate-x-1/2 !flex !items-center !gap-x-4 !whitespace-nowrap !w-auto !min-w-max !overflow-visible !bg-card !px-2 !text-gray-950 !font-medium">
-            <span className="!whitespace-nowrap !w-auto !min-w-max !overflow-visible" style={{ fontSize: "0.83rem" }}>
+            <span data-pdf-hide className="!print:hidden !whitespace-nowrap !w-auto !min-w-max !overflow-visible" style={{ fontSize: "0.83rem" }}>
               {info["marque"]} {info["modele"]} ({info["fabrication"]?.trim() || "—"}) -  SN {info["sn_num"]}  /  Mesure {new Date().toISOString().slice(0, 10)}
             </span>
             <button
@@ -1730,7 +1731,8 @@ Moyennes{" "}
           <>
             Mesures poids de touches{" "}
             <span
-              className="font-normal normal-case"
+              data-pdf-hide
+              className="!print:hidden font-normal normal-case"
               style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
             >
               (Min. 1 blanche + 1 noire par octave. ex : tous les Do et Do# &gt; shift+tab saute de Do en Do.)
