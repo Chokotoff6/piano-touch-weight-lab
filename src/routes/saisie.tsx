@@ -1638,7 +1638,13 @@ function Index() {
       <Frame
         title={
           <>
-            Moyennes <span className="text-sm font-normal">(auto)</span>
+Moyennes{" "}
+            <span
+              className="font-normal"
+              style={{ fontFamily: "Arial Narrow, sans-serif", fontSize: "90%" }}
+            >
+              (auto)
+            </span>
           </>
         }
         className={weighingMode ? "!mt-[26px] !p-3 !pt-4" : "mt-8 !hidden"}
