@@ -274,7 +274,7 @@ function RootComponent() {
                 </div>
                 <DropdownMenuContent align="start">
                   <DropdownMenuItem onClick={() => dispatchAction("piano-export-csv")}>
-                    Télécharger le fichier CSV local
+                    Exporter fichier CSV
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => dispatchAction("piano-export-pdf")}>
                     Générer rapport PDF
@@ -326,7 +326,7 @@ function RootComponent() {
                   </div>
                   <DropdownMenuContent align="start">
                     <DropdownMenuItem onClick={() => dispatchAction("piano-import-csv")}>
-                      Charger un fichier CSV local
+                      Importer fichier CSV
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onSelect={(event) => event.preventDefault()}
