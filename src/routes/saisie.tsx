@@ -1704,7 +1704,7 @@ Moyennes{" "}
             Mesures poids de touches{" "}
             <span
               className="font-normal normal-case"
-              style={{ fontFamily: "Arial Narrow, sans-serif", fontSize: "90%" }}
+              style={{ fontFamily: "Arial, sans-serif", fontSize: "80%" }}
             >
               (Min. 1 blanche + 1 noire par octave. ex : tous les Do et Do# &gt; shift+tab saute de Do en Do.)
             </span>
