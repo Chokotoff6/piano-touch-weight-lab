@@ -1283,7 +1283,7 @@ function Index() {
   // --- Rendu : page ----------------------------------------------------------------
 
   return (
-    <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
+    <main className={`mx-auto max-w-[1400px] px-6 pb-64 ${weighingMode ? "py-3" : "py-10"}`}>
       {!weighingMode && (
       <div
         data-dirty={isDirty}
