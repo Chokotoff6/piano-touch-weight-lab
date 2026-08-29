@@ -71,9 +71,21 @@ export function normalizeFilenameSegment(value: string | undefined | null): stri
     .toUpperCase();
 }
 
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/** Date locale au format AAAA-MM-JJ. */
+export function formatLocalDate(d: Date): string {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+/** Date + heure locales au format AAAA-MM-JJ HH:MM. */
+export function formatLocalDateTime(d: Date): string {
+  return `${formatLocalDate(d)} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
 /**
  * Construit le nom de fichier d'export (CSV ou PDF) à partir des métadonnées.
- * Format strict : MARQUE_MODELE_NUMEROSERIE_AAAA-MM-JJ.<ext>
+ * Format strict : MARQUE_MODELE_NUMEROSERIE_AAAA-MM-JJ_HHMM.<ext>
  */
 export function buildExportFilename(
   marque: string | undefined | null,
@@ -85,8 +97,9 @@ export function buildExportFilename(
   const brand = normalizeFilenameSegment(marque);
   const model = normalizeFilenameSegment(modele);
   const serial = normalizeFilenameSegment(numeroSerie);
-  const d = date ? new Date(date) : new Date();
-  const isoDate = Number.isNaN(d.getTime()) ? new Date().toISOString().slice(0, 10) : d.toISOString().slice(0, 10);
-  return `${brand}_${model}_${serial}_${isoDate}.${extension}`;
+  const parsed = date ? new Date(date) : new Date();
+  const d = Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  const stamp = `${formatLocalDate(d)}_${pad2(d.getHours())}${pad2(d.getMinutes())}`;
+  return `${brand}_${model}_${serial}_${stamp}.${extension}`;
 }
 
