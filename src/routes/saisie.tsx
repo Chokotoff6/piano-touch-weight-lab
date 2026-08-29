@@ -1186,6 +1186,11 @@ function Index() {
     };
     const onPdf = () => {
       if (!guardExport("export")) return;
+      // Verrou strict : octaves complètes, aucune orpheline, aucune incohérence Wa/Wd.
+      if (!keyboardValid) {
+        showTopbarAlert("export", OCTAVE_RULE_MESSAGE);
+        return;
+      }
       setIsExporting(true);
       void exportPdfFile()
         .catch(() => showTopbarAlert("export", "⚠️ La génération du rapport PDF a échoué."))
@@ -1219,7 +1224,7 @@ function Index() {
     Object.entries(handlers).forEach(([type, fn]) => window.addEventListener(type, fn));
     return () =>
       Object.entries(handlers).forEach(([type, fn]) => window.removeEventListener(type, fn));
-  }, [rows, info, currentDbId, isDirty, honeypot, climateZone, profile]);
+  }, [rows, info, currentDbId, isDirty, honeypot, climateZone, profile, keyboardValid]);
 
   // --- Rendu : champ de saisie d'un poids (Wa ou Wd) ------------------------------
 
