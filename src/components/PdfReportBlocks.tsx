@@ -22,6 +22,7 @@ export type PdfInfo = {
   ville: string;
   entretien: string;
   remarques: string;
+  dateMesure: string;
 };
 
 const CELL = "border border-neutral-400 px-2 py-1 align-top text-[11px] leading-tight";
@@ -40,7 +41,7 @@ export function PdfInfoTable({ info }: { info: PdfInfo }) {
   return (
     <div className="w-full bg-white">
       <div className="mb-1 text-[13px] font-bold text-black">Informations piano</div>
-      <div className="grid grid-cols-4">
+      <div className="grid grid-cols-5">
         <div className={CELL}>
           <Line2 label="Marque" value={info.marque} />
           <Line2 label="Modèle" value={info.modele} />
@@ -57,6 +58,9 @@ export function PdfInfoTable({ info }: { info: PdfInfo }) {
         <div className={CELL}>
           <Line2 label="Lieu" value={[info.ville, info.pays].filter(Boolean).join(", ")} />
           <Line2 label="Entretien" value={info.entretien} />
+        </div>
+        <div className={CELL}>
+          <Line2 label="Date/Heure mesure" value={info.dateMesure} />
         </div>
       </div>
     </div>
