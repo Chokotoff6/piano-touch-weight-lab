@@ -1664,7 +1664,8 @@ function Index() {
           <>
 Moyennes{" "}
             <span
-              className="font-normal"
+              data-pdf-collapse
+              className="font-normal !print:hidden"
               style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
             >
               (auto)
@@ -1730,7 +1731,8 @@ Moyennes{" "}
           <>
             Mesures poids de touches{" "}
             <span
-              className="font-normal normal-case"
+              data-pdf-collapse
+              className="font-normal normal-case !print:hidden"
               style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
             >
               (Min. 1 blanche + 1 noire par octave. ex : tous les Do et Do# &gt; shift+tab saute de Do en Do.)
