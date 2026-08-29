@@ -385,6 +385,7 @@ function Index() {
   const moyennesRef = useRef<HTMLElement | null>(null);
   const mesuresRef = useRef<HTMLElement | null>(null);
   const goCompareAfterSave = useRef(false);
+  const moyennesScrolledOnce = useRef(false);
 
   const navigate = useNavigate();
   const gridRef1 = useSnappedGrid(1, 44);
