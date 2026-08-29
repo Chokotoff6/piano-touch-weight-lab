@@ -204,7 +204,7 @@ function RootComponent() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className={`${topbar.hasSaved ? "rounded-r-none" : ""} border border-gray-300 bg-white text-lg ${topbar.isDirty && topbar.measuresReady ? "text-gray-900 font-bold" : "text-gray-400"} hover:bg-accent`}
+                    className={`${topbar.hasSaved ? "rounded-r-none" : ""} border border-gray-300 text-lg ${topbar.measuresReady ? "!bg-gray-950 !text-white font-bold" : "bg-white text-gray-400"} hover:bg-accent`}
                     onClick={() => {
                       if (saveDisabled) return;
                       dispatchAction("piano-save");
