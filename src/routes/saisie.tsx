@@ -1240,8 +1240,8 @@ function Index() {
               return (
                 <div key={index} className={`result-col ${black ? "is-black" : "is-white"}`}>
                   <div className="result-strip">{black ? formatResult(value) : null}</div>
-                  <div className={`result-value ${kind === "balance" && !black ? "!overflow-visible" : ""}`}>
-                    <span className={`rv-text !text-center !whitespace-nowrap !overflow-visible ${kind === "balance" && !black ? "!w-[125%] !max-w-none !px-0" : "!w-full !px-0.5"}`}>
+                  <div className={`result-value ${(kind === "balance" || kind === "friction") && !black ? "!overflow-visible" : ""}`}>
+                    <span className={`rv-text !text-center !whitespace-nowrap !overflow-visible ${(kind === "balance" || kind === "friction") && !black ? "!w-[125%] !max-w-none !px-0" : "!w-full !px-0.5"}`}>
                       {black ? null : formatResult(value)}
                     </span>
                   </div>
