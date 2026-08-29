@@ -69,8 +69,11 @@ export async function generateLandscapeReport(
   const captures2 = await Promise.all(page2.map(capture));
 
   const pdf = new jsPDF({ orientation: "landscape", format: "a4", unit: "mm" });
-  drawPage(pdf, captures1);
+  // Échelle commune aux deux pages : les cadres partagés (Moyennes) gardent
+  // exactement la même largeur d'une page à l'autre.
+  const ratio = Math.min(pageRatio(captures1), pageRatio(captures2));
+  drawPage(pdf, captures1, ratio);
   pdf.addPage("a4", "landscape");
-  drawPage(pdf, captures2);
+  drawPage(pdf, captures2, ratio);
   pdf.save(filename);
 }

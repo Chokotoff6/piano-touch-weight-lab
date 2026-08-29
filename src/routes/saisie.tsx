@@ -1797,6 +1797,7 @@ Moyennes{" "}
               ville: info["ville"] ?? "",
               entretien: info["entretien"] ?? "",
               remarques: info["remarques"] ?? "",
+              dateMesure: formatLocalDateTime(new Date()),
             }}
           />
         </div>
