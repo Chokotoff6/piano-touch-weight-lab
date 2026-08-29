@@ -502,19 +502,18 @@ function Index() {
   );
 
   /**
-   * Validité du clavier — séquence stricte, évaluée uniquement au onBlur :
-   * pendant la saisie (focus actif) le badge reste masqué.
+   * Validité du clavier — séquence stricte, rafraîchie en direct à chaque
+   * modification du state des mesures (aucun clic extérieur requis) :
    * TEST 1 (prioritaire) : touche orpheline (cadre rouge) => stop, badge masqué.
    * TEST 2 (successif) : échantillonnage des octaves, uniquement si zéro cadre rouge.
    */
   const keyboardValid = useMemo(() => {
-    if (cellFocused) return false; // saisie en cours : attente du onBlur
     if (orphanKeys.length > 0) return false; // TEST 1
     if (hasConsistencyErrors) return false;
     if (!hasAnyMeasurement(rows)) return false;
     if (octaveGaps.length > 0) return false; // TEST 2
     return true;
-  }, [cellFocused, orphanKeys.length, hasConsistencyErrors, rows, octaveGaps.length]);
+  }, [orphanKeys.length, hasConsistencyErrors, rows, octaveGaps.length]);
 
   /** Remarques obligatoires dès que des modifications importantes sont déclarées. */
   const remarquesRequired = info["entretien"] === "Modifications importantes";
