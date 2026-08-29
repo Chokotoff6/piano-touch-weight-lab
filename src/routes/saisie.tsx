@@ -598,6 +598,22 @@ function Index() {
     };
   }, []);
 
+  /** Alerte ancrée sur la touche orpheline (Wa sans Wd ou inversement). */
+  const showOrphanPopover = (index: number) => {
+    if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
+    const el = inputs.current[`${index}-wa`] ?? inputs.current[`${index}-wd`];
+    const r = el?.getBoundingClientRect();
+    setBlockAnchor({
+      x: r ? r.right + 8 : window.innerWidth / 2 - 144,
+      y: r ? r.top : 120,
+      text: ORPHAN_MESSAGE,
+    });
+    blockAnchorTimeout.current = setTimeout(() => {
+      setBlockAnchor(null);
+      blockAnchorTimeout.current = null;
+    }, 3000);
+  };
+
   /** Alerte ancrée sur la touche cliquée, près du curseur, quand la fiche est incomplète. */
   const showBlockMessage = (index: number, field: "wa" | "wd") => {
     if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
