@@ -492,6 +492,9 @@ function Index() {
     [rows],
   );
 
+  /** Vrai tant qu'une case Wa/Wd a le focus (saisie en cours) — gèle le badge jusqu'au onBlur. */
+  const [cellFocused, setCellFocused] = useState(false);
+
   /** Vrai dès qu'une erreur de cohérence Wa <= Wd est présente sur le clavier. */
   const hasConsistencyErrors = useMemo(
     () => Object.values(errors).some((m) => m === COHERENCE_MESSAGE),
@@ -499,17 +502,19 @@ function Index() {
   );
 
   /**
-   * Validité du clavier — séquence stricte :
+   * Validité du clavier — séquence stricte, évaluée uniquement au onBlur :
+   * pendant la saisie (focus actif) le badge reste masqué.
    * TEST 1 (prioritaire) : touche orpheline (cadre rouge) => stop, badge masqué.
    * TEST 2 (successif) : échantillonnage des octaves, uniquement si zéro cadre rouge.
    */
   const keyboardValid = useMemo(() => {
+    if (cellFocused) return false; // saisie en cours : attente du onBlur
     if (orphanKeys.length > 0) return false; // TEST 1
     if (hasConsistencyErrors) return false;
     if (!hasAnyMeasurement(rows)) return false;
     if (octaveGaps.length > 0) return false; // TEST 2
     return true;
-  }, [orphanKeys.length, hasConsistencyErrors, rows, octaveGaps.length]);
+  }, [cellFocused, orphanKeys.length, hasConsistencyErrors, rows, octaveGaps.length]);
 
   /** Remarques obligatoires dès que des modifications importantes sont déclarées. */
   const remarquesRequired = info["entretien"] === "Modifications importantes";
@@ -1203,7 +1208,10 @@ function Index() {
         }}
         value={rows[index]![field]}
         onChange={(e) => canEnterWeights && setValue(index, field, e.target.value)}
-        onBlur={(e) => canEnterWeights && handleBlur(index, field, e.target.value)}
+        onBlur={(e) => {
+          setCellFocused(false);
+          if (canEnterWeights) handleBlur(index, field, e.target.value);
+        }}
         onKeyDown={(e) => {
           if (!canEnterWeights) {
             e.preventDefault();
@@ -1224,7 +1232,10 @@ function Index() {
         inputMode="numeric"
         aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
-        onFocus={(e) => e.currentTarget.select()}
+        onFocus={(e) => {
+          setCellFocused(true);
+          e.currentTarget.select();
+        }}
         className={`weight-input !font-sans font-semibold !text-black ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
       />
@@ -1630,7 +1641,7 @@ function Index() {
             Moyennes <span className="text-sm font-normal">(auto)</span>
           </>
         }
-        className={weighingMode ? "mt-4 !p-3 !pt-4" : "mt-8 !hidden"}
+        className={weighingMode ? "!mt-[26px] !p-3 !pt-4" : "mt-8 !hidden"}
         innerRef={(node) => {
           moyennesRef.current = node;
         }}
@@ -1665,6 +1676,9 @@ function Index() {
               </div>
               <div className="mt-1 !text-2xl font-semibold tabular-nums">
                 {formatAverageResult(sectionAverages.global[key])}
+                {(key === "wa" || key === "wd") && sectionAverages.global[key] !== "—" && (
+                  <span className="!text-xs !font-medium !text-gray-500"> g.</span>
+                )}
               </div>
               <div className="mt-0.5 flex justify-center gap-2 text-[0.65rem] text-muted-foreground tabular-nums">
                 <span>{sectionAverages.first[key]}</span>
