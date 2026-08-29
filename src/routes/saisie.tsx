@@ -1128,7 +1128,7 @@ function Index() {
         historyRows: [],
       });
     };
-  }, [exportReady, requiredSheetFieldsComplete, octaveGaps.length, info, isExporting, isDirty, currentDbId]);
+  }, [exportReady, requiredSheetFieldsComplete, keyboardValid, info, isExporting, isDirty, currentDbId]);
 
   useEffect(() => {
     const exportCsvOnly = () => {
