@@ -996,6 +996,7 @@ function Index() {
       info["sn_num"],
       new Date(),
       "pdf",
+      true,
     );
     await generateLandscapeReport(page1, page2, filename);
   };
