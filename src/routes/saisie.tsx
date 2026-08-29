@@ -1351,6 +1351,16 @@ function Index() {
 
   return (
     <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
+      <input
+        ref={importInputRef}
+        type="file"
+        accept=".csv,text/csv"
+        style={{ display: "none" }}
+        onChange={(e) => {
+          onImportFile(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
       {!weighingMode && (
       <div
         data-dirty={isDirty}
@@ -1610,17 +1620,6 @@ function Index() {
               autoComplete="off"
               aria-hidden="true"
               className="pointer-events-none absolute -z-10 h-0 w-0 opacity-0"
-            />
-
-            <input
-              ref={importInputRef}
-              type="file"
-              accept=".csv,text/csv"
-              className="hidden"
-              onChange={(e) => {
-                onImportFile(e.target.files?.[0]);
-                e.target.value = "";
-              }}
             />
 
             <div className="mt-2 flex justify-end sm:col-span-2 md:col-span-4">
