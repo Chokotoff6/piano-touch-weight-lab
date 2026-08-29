@@ -22,7 +22,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
     onclone: (doc) => {
       // Les commandes interactives n'ont pas leur place dans le rapport.
       doc.querySelectorAll("[data-pdf-hide]").forEach((node) => {
-        (node as HTMLElement).style.visibility = "hidden";
+        (node as HTMLElement).style.display = "none";
       });
     },
   });
@@ -34,18 +34,22 @@ async function capture(el: HTMLElement): Promise<Capture> {
 }
 
 
-/** Empile verticalement les blocs capturés sur une page A4 paysage, à l'échelle. */
-function drawPage(pdf: jsPDF, blocks: Capture[]) {
+/** Facteur de réduction d'une page : chaque bloc occupe toute la largeur utile. */
+function pageShrink(blocks: Capture[]): number {
+  if (blocks.length === 0) return 1;
   const availW = PAGE_W - MARGIN * 2;
   const availH = PAGE_H - MARGIN * 2 - GAP * (blocks.length - 1);
-  // Échelle commune : mm par pixel, limitée par la largeur ET la hauteur totale.
-  const maxPxW = Math.max(...blocks.map((b) => b.width));
-  const totalPxH = blocks.reduce((sum, b) => sum + b.height, 0);
-  const ratio = Math.min(availW / maxPxW, availH / totalPxH);
+  const totalH = blocks.reduce((sum, b) => sum + (b.height / b.width) * availW, 0);
+  return Math.min(1, availH / totalH);
+}
+
+/** Empile verticalement les blocs capturés sur une page A4 paysage, largeurs unifiées. */
+function drawPage(pdf: jsPDF, blocks: Capture[], shrink: number) {
+  const availW = PAGE_W - MARGIN * 2;
+  const w = availW * shrink;
   let y = MARGIN;
   for (const block of blocks) {
-    const w = block.width * ratio;
-    const h = block.height * ratio;
+    const h = (block.height / block.width) * w;
     const x = MARGIN + (availW - w) / 2;
     pdf.addImage(block.dataUrl, "PNG", x, y, w, h, undefined, "FAST");
     y += h + GAP;
@@ -65,8 +69,10 @@ export async function generateLandscapeReport(
   const captures2 = await Promise.all(page2.map(capture));
 
   const pdf = new jsPDF({ orientation: "landscape", format: "a4", unit: "mm" });
-  drawPage(pdf, captures1);
+  // Largeur identique sur les deux pages (cadre Moyennes aligné page 1 / page 2).
+  const shrink = Math.min(pageShrink(captures1), pageShrink(captures2));
+  drawPage(pdf, captures1, shrink);
   pdf.addPage("a4", "landscape");
-  drawPage(pdf, captures2);
+  drawPage(pdf, captures2, shrink);
   pdf.save(filename);
 }
