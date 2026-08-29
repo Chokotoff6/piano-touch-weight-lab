@@ -500,8 +500,18 @@ function Index() {
     if (!requiredSheetFieldsComplete) {
       weightsFocusedOnce.current = false;
       remarksFocusedOnce.current = false;
+      moyennesScrolledOnce.current = false;
       return;
     }
+
+    const scrollToMoyennes = () => {
+      if (moyennesScrolledOnce.current) return;
+      moyennesScrolledOnce.current = true;
+      const el = moyennesRef.current;
+      if (!el) return;
+      const top = el.offsetTop - 20;
+      window.scrollTo({ top, behavior: "smooth" });
+    };
 
     if (remarquesRequired) {
       if (remarksFocusedOnce.current) return;
@@ -509,12 +519,14 @@ function Index() {
       remarksFocusedOnce.current = true;
       setTimeout(() => {
         remarquesRef.current?.focus();
+        scrollToMoyennes();
       }, 50);
       return;
     }
 
     remarksFocusedOnce.current = false;
     focusFirstWeight();
+    scrollToMoyennes();
   }, [requiredSheetFieldsComplete, remarquesRequired, focusFirstWeight]);
 
   /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
