@@ -1638,7 +1638,13 @@ function Index() {
       <Frame
         title={
           <>
-            Moyennes <span className="text-sm font-normal">(auto)</span>
+Moyennes{" "}
+            <span
+              className="font-normal"
+              style={{ fontFamily: "Arial Narrow, sans-serif", fontSize: "90%" }}
+            >
+              (auto)
+            </span>
           </>
         }
         className={weighingMode ? "!mt-[26px] !p-3 !pt-4" : "mt-8 !hidden"}
@@ -1699,7 +1705,10 @@ function Index() {
         title={
           <>
             Mesures poids de touches{" "}
-            <span className="text-sm font-normal normal-case">
+            <span
+              className="font-normal normal-case"
+              style={{ fontFamily: "Arial Narrow, sans-serif", fontSize: "90%" }}
+            >
               (Min. 1 blanche + 1 noire par octave. ex : tous les Do et Do# &gt; shift+tab saute de Do en Do.)
             </span>
           </>
