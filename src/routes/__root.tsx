@@ -204,7 +204,7 @@ function RootComponent() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className={`${topbar.hasSaved ? "rounded-r-none" : ""} border border-gray-300 bg-white text-lg ${topbar.measuresReady ? "!text-gray-950 !font-bold" : "text-gray-400"} hover:bg-accent`}
+                    className={`${topbar.hasSaved ? "rounded-r-none" : ""} border border-gray-300 bg-white text-lg ${topbar.measuresReady ? "!text-muted-foreground" : "text-gray-400"} hover:bg-accent`}
                     onClick={() => {
                       if (saveDisabled) return;
                       dispatchAction("piano-save");
@@ -217,7 +217,7 @@ function RootComponent() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className={`rounded-l-none border border-l-0 border-gray-300 bg-white px-2 ${topbar.isDirty && topbar.measuresReady ? "text-gray-900 font-bold" : "text-gray-400"} hover:bg-accent`}
+                        className={`rounded-l-none border border-l-0 border-gray-300 bg-white px-2 ${topbar.measuresReady ? "!text-muted-foreground" : "text-gray-400"} hover:bg-accent`}
                       >
                         <ChevronDown className="h-4 w-4" />
                       </Button>
@@ -249,7 +249,7 @@ function RootComponent() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className={`rounded-r-none border border-gray-300 bg-white text-lg ${topbar.exportReady && topbar.measuresReady ? "!text-gray-950 !font-bold" : "text-gray-400"}`}
+                    className={`rounded-r-none border border-gray-300 bg-white text-lg ${topbar.measuresReady ? "!text-muted-foreground" : "text-gray-400"}`}
                     onClick={() => dispatchAction("piano-export-csv")}
                   >
                     Exporter
@@ -258,7 +258,7 @@ function RootComponent() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className={`rounded-l-none border border-l-0 border-gray-300 bg-white px-2 text-lg ${topbar.exportReady && topbar.measuresReady ? "!text-gray-950 !font-bold" : "text-gray-400"}`}
+                      className={`rounded-l-none border border-l-0 border-gray-300 bg-white px-2 text-lg ${topbar.measuresReady ? "!text-muted-foreground" : "text-gray-400"}`}
                     >
                       <ChevronDown className="h-4 w-4" />
                     </Button>
@@ -286,7 +286,7 @@ function RootComponent() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className={`border border-gray-300 bg-white text-lg ${topbar.exportReady && topbar.measuresReady ? "!text-gray-950 !font-bold" : "text-gray-400"}`}
+                  className={`border border-gray-300 bg-white text-lg ${topbar.measuresReady ? "!text-muted-foreground" : "text-gray-400"}`}
                   onClick={() => dispatchAction("piano-export-csv")}
                 >
                   Exporter
@@ -384,14 +384,13 @@ function RootComponent() {
         rel="noopener noreferrer"
         title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
         aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
-        className="fixed right-6 top-4 z-50 flex max-h-none -translate-x-full items-center justify-center rounded-lg bg-transparent shadow-xl transition-transform hover:scale-105"
+        className="fixed right-6 top-4 z-50 flex max-h-none -translate-x-full items-center justify-center rounded-lg bg-transparent transition-transform hover:scale-105"
         style={{ marginLeft: "35px" }}
       >
         <img
           src={premiumCoffeeAsset.url}
           alt="Buy me a coffee"
-          className="!h-20 !w-auto rounded-lg object-cover"
-          style={{ transform: "scale(0.85)", transformOrigin: "right center" }}
+          className="!h-[68px] !w-auto rounded-lg object-cover !shadow-xl"
         />
       </a>
 

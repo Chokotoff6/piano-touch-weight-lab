@@ -498,6 +498,19 @@ function Index() {
     [errors],
   );
 
+  /**
+   * Validité du clavier — séquence stricte :
+   * TEST 1 (prioritaire) : touche orpheline (cadre rouge) => stop, badge masqué.
+   * TEST 2 (successif) : échantillonnage des octaves, uniquement si zéro cadre rouge.
+   */
+  const keyboardValid = useMemo(() => {
+    if (orphanKeys.length > 0) return false; // TEST 1
+    if (hasConsistencyErrors) return false;
+    if (!hasAnyMeasurement(rows)) return false;
+    if (octaveGaps.length > 0) return false; // TEST 2
+    return true;
+  }, [orphanKeys.length, hasConsistencyErrors, rows, octaveGaps.length]);
+
   /** Remarques obligatoires dès que des modifications importantes sont déclarées. */
   const remarquesRequired = info["entretien"] === "Modifications importantes";
   const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
@@ -1097,7 +1110,7 @@ function Index() {
   useEffect(() => {
     setTopbarState({
       exportReady,
-      measuresReady: requiredSheetFieldsComplete && octaveGaps.length === 0 && orphanKeys.length === 0,
+      measuresReady: requiredSheetFieldsComplete && keyboardValid,
       serialFilled: Boolean(info["sn_num"]?.trim()),
       isExporting,
       isDirty,
@@ -1115,7 +1128,7 @@ function Index() {
         historyRows: [],
       });
     };
-  }, [exportReady, requiredSheetFieldsComplete, octaveGaps.length, info, isExporting, isDirty, currentDbId]);
+  }, [exportReady, requiredSheetFieldsComplete, keyboardValid, info, isExporting, isDirty, currentDbId]);
 
   useEffect(() => {
     const exportCsvOnly = () => {
@@ -1669,7 +1682,14 @@ function Index() {
       </Frame>
 
       <Frame
-        title="Mesures poids de touches"
+        title={
+          <>
+            Mesures poids de touches{" "}
+            <span className="text-sm font-normal normal-case">
+              (minimum 1 blanche + 1 noire par octave. ex : tous les do et do#. shift+tab saute de do en do.)
+            </span>
+          </>
+        }
         className={weighingMode ? "mt-4 pb-4" : "mt-8 pb-10 !hidden"}
         innerRef={(node) => {
           mesuresRef.current = node;
@@ -1692,7 +1712,7 @@ function Index() {
             Reset
           </button>
         </div>
-        {hasAnyMeasurement(rows) && octaveGaps.length === 0 && orphanKeys.length === 0 && !hasConsistencyErrors && (
+        {keyboardValid && (
           <div
             data-pdf-hide
             className="pointer-events-none absolute left-0 top-1/2 z-10 flex w-32 justify-center"
