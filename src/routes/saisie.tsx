@@ -1613,17 +1613,6 @@ function Index() {
               className="pointer-events-none absolute -z-10 h-0 w-0 opacity-0"
             />
 
-            <input
-              ref={importInputRef}
-              type="file"
-              accept=".csv,text/csv"
-              className="hidden"
-              onChange={(e) => {
-                onImportFile(e.target.files?.[0]);
-                e.target.value = "";
-              }}
-            />
-
             <div className="mt-2 flex justify-end sm:col-span-2 md:col-span-4">
               <button
                 ref={weighingBtnRef}
@@ -1639,6 +1628,18 @@ function Index() {
         </Frame>
       </div>
       )}
+
+      <input
+        ref={importInputRef}
+        id="piano-import-csv"
+        type="file"
+        accept=".csv"
+        style={{ display: "none" }}
+        onChange={(e) => {
+          onImportFile(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
 
       {blockMessage && (
         <div
