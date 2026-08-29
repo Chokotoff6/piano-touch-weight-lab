@@ -1618,7 +1618,7 @@ function Index() {
       >
         {weighingMode && (
           <span className="!absolute !-top-3.5 !left-1/2 !-translate-x-1/2 !flex !items-center !gap-x-4 !whitespace-nowrap !w-auto !min-w-max !overflow-visible !bg-card !px-2 !text-gray-950 !font-medium">
-            <span className="!whitespace-nowrap !w-auto !min-w-max !overflow-visible">
+            <span className="!whitespace-nowrap !w-auto !min-w-max !overflow-visible" style={{ fontSize: "0.83rem" }}>
               {info["marque"]} {info["modele"]} ({info["fabrication"]?.trim() || "—"}) -  SN {info["sn_num"]}  /  Mesure {new Date().toISOString().slice(0, 10)}
             </span>
             <button
@@ -1690,7 +1690,7 @@ function Index() {
           <div
             data-pdf-hide
             className="pointer-events-none absolute left-0 top-1/2 z-10 flex w-32 justify-center"
-            style={{ transform: "translateY(calc(-50% + 15px))" }}
+            style={{ transform: "translateY(calc(-50% + 30px))" }}
           >
             <div className="flex items-center !rounded-md !border !border-green-600 !bg-green-100 !px-2.5 !py-1 !shadow-sm">
               <span className="text-[10px] font-semibold !text-gray-950">Clavier valide</span>
