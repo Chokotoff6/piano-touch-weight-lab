@@ -1682,7 +1682,14 @@ function Index() {
       </Frame>
 
       <Frame
-        title="Mesures poids de touches"
+        title={
+          <>
+            Mesures poids de touches{" "}
+            <span className="text-sm font-normal normal-case">
+              (minimum 1 blanche + 1 noire par octave. ex : tous les do et do#. shift+tab saute de do en do.)
+            </span>
+          </>
+        }
         className={weighingMode ? "mt-4 pb-4" : "mt-8 pb-10 !hidden"}
         innerRef={(node) => {
           mesuresRef.current = node;
