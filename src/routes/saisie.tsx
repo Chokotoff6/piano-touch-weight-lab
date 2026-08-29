@@ -1617,13 +1617,15 @@ function Index() {
         }}
       >
         {weighingMode && (
-          <span className="!absolute !-top-3.5 !left-1/2 !-translate-x-1/2 !bg-card !px-2 !flex !items-center !gap-x-4 !text-sm !font-medium !text-gray-950">
-            {info["marque"]} {info["modele"]} ({info["fabrication"]?.trim() || "—"}) • N° {info["sn_num"]} • Date mesure : {new Date().toISOString().slice(0, 10)}
+          <span className="!absolute !-top-3.5 !left-1/2 !-translate-x-1/2 !flex !items-center !gap-x-4 !whitespace-nowrap !w-auto !min-w-max !overflow-visible !bg-card !px-2 !text-gray-950 !font-medium">
+            <span className="!whitespace-nowrap !w-auto !min-w-max !overflow-visible">
+              {info["marque"]} {info["modele"]} ({info["fabrication"]?.trim() || "—"}) • N° {info["sn_num"]} • Date mesure : {new Date().toISOString().slice(0, 10)}
+            </span>
             <button
               type="button"
               data-pdf-hide
               onClick={() => setWeighingMode(false)}
-              className="rounded-md border border-input bg-background px-2.5 py-0.5 !text-xs font-medium !text-gray-950 transition-colors hover:bg-accent"
+              className="!whitespace-nowrap !w-auto !min-w-max !overflow-visible rounded-md border border-input bg-background px-2.5 py-0.5 !text-xs font-medium !text-gray-950 transition-colors hover:bg-accent"
             >
               Modifier infos piano
             </button>
