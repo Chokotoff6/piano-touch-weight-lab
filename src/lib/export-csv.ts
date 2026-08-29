@@ -74,7 +74,6 @@ export function normalizeFilenameSegment(value: string | undefined | null): stri
 /**
  * Construit le nom de fichier d'export (CSV ou PDF) à partir des métadonnées.
  * Format strict : MARQUE_MODELE_NUMEROSERIE_AAAA-MM-JJ.<ext>
- * Avec includeTime (rapport PDF) : MARQUE_MODELE_NUMEROSERIE_AAAA-MM-JJ_HHMM.<ext>
  */
 export function buildExportFilename(
   marque: string | undefined | null,
@@ -82,17 +81,12 @@ export function buildExportFilename(
   numeroSerie: string | undefined | null,
   date: Date | string | undefined | null,
   extension: "csv" | "pdf" = "csv",
-  includeTime = false,
 ): string {
   const brand = normalizeFilenameSegment(marque);
   const model = normalizeFilenameSegment(modele);
   const serial = normalizeFilenameSegment(numeroSerie);
   const d = date ? new Date(date) : new Date();
-  const safe = Number.isNaN(d.getTime()) ? new Date() : d;
-  const isoDate = safe.toISOString().slice(0, 10);
-  const timePart = includeTime
-    ? `_${String(safe.getHours()).padStart(2, "0")}${String(safe.getMinutes()).padStart(2, "0")}`
-    : "";
-  return `${brand}_${model}_${serial}_${isoDate}${timePart}.${extension}`;
+  const isoDate = Number.isNaN(d.getTime()) ? new Date().toISOString().slice(0, 10) : d.toISOString().slice(0, 10);
+  return `${brand}_${model}_${serial}_${isoDate}.${extension}`;
 }
 
