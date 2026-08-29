@@ -1351,6 +1351,16 @@ function Index() {
 
   return (
     <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
+      <input
+        ref={importInputRef}
+        type="file"
+        accept=".csv,text/csv"
+        style={{ display: "none" }}
+        onChange={(e) => {
+          onImportFile(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
       {!weighingMode && (
       <div
         data-dirty={isDirty}
