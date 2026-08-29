@@ -1700,7 +1700,7 @@ function Index() {
           <>
             Mesures poids de touches{" "}
             <span className="text-sm font-normal normal-case">
-              (minimum 1 blanche + 1 noire par octave. ex : tous les do et do#. shift+tab saute de do en do.)
+              (Min. 1 blanche + 1 noire par octave. ex : tous les Do et Do# &gt; shift+tab saute de Do en Do.)
             </span>
           </>
         }
