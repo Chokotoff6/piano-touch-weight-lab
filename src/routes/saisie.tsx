@@ -1732,11 +1732,13 @@ Moyennes{" "}
           <>
             Mesures poids de touches{" "}
             <span
+              data-pdf-hide
               className="font-normal normal-case"
               style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
             >
               (Min. 1 blanche + 1 noire par octave. ex : tous les Do et Do# &gt; shift+tab saute de Do en Do.)
             </span>
+
           </>
         }
         className={weighingMode ? "!mt-[26px] pb-4" : "mt-8 pb-10 !hidden"}
