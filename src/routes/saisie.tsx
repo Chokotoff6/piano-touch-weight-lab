@@ -1584,19 +1584,19 @@ function Index() {
         <SvgTooltip x={coherenceAnchor.x} y={coherenceAnchor.y} text={COHERENCE_MESSAGE} />
       )}
 
-      <Frame
-        title={
-          <>
-            Moyennes <span className="text-sm font-normal">(auto)</span>
-          </>
-        }
-        className={weighingMode ? "mt-4 !p-3 !pt-4" : "mt-8"}
-        innerRef={(node) => {
-          moyennesRef.current = node;
-        }}
-      >
-        {weighingMode && (
-          <span className="!absolute !-top-3.5 !right-4 !bg-card !px-2 !ml-auto !flex !items-center !gap-4 !text-sm !font-normal !text-gray-950">
+      {weighingMode && (
+        <Frame
+          title={
+            <>
+              Moyennes <span className="text-sm font-normal">(auto)</span>
+            </>
+          }
+          className="mt-4 !p-3 !pt-4"
+          innerRef={(node) => {
+            moyennesRef.current = node;
+          }}
+        >
+          <span className="!absolute !-top-3.5 !left-1/2 !-translate-x-1/2 !bg-card !px-2 !flex !items-center !gap-x-4 !text-sm !font-normal !text-gray-950">
             {info["marque"]} {info["modele"]} • N° {info["sn_num"]} • {info["fabrication"]?.trim() || "—"}
             <button
               type="button"
@@ -1607,70 +1607,72 @@ function Index() {
               Modifier infos piano
             </button>
           </span>
-        )}
-        <div className={`grid grid-cols-4 ${weighingMode ? "mt-0.5 !gap-2.5" : "mt-2 gap-3"}`}>
-          {(
-            [
-              { key: "wa", label: "Poids descendant (Wa)" },
-              { key: "wd", label: "Poids ascendant (Wd)" },
-              { key: "friction", label: "Friction" },
-              { key: "balance", label: "Balance" },
-            ] as const
-          ).map(({ key, label }) => (
-            <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
-              <div className="!text-[1.1rem] font-bold tracking-wide text-muted-foreground">
-                {label}
+          <div className="grid grid-cols-4 mt-0.5 !gap-2.5">
+            {(
+              [
+                { key: "wa", label: "Poids descendant (Wa)" },
+                { key: "wd", label: "Poids ascendant (Wd)" },
+                { key: "friction", label: "Friction" },
+                { key: "balance", label: "Balance" },
+              ] as const
+            ).map(({ key, label }) => (
+              <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
+                <div className="!text-[1.1rem] font-bold tracking-wide text-muted-foreground">
+                  {label}
+                </div>
+                <div className="mt-1 !text-2xl font-semibold tabular-nums">
+                  {formatAverageResult(sectionAverages.global[key])}
+                </div>
+                <div className="mt-0.5 flex justify-center gap-2 text-[0.65rem] text-muted-foreground tabular-nums">
+                  <span>{sectionAverages.first[key]}</span>
+                  <span className="text-muted-foreground">/</span>
+                  <span>{sectionAverages.second[key]}</span>
+                </div>
+                <div className="flex justify-center gap-2 text-[0.55rem] text-muted-foreground tabular-nums">
+                  <span className="!text-xs font-medium">1-44</span>
+                  <span className="invisible">/</span>
+                  <span className="!text-xs font-medium">45-88</span>
+                </div>
               </div>
-              <div className="mt-1 !text-2xl font-semibold tabular-nums">
-                {formatAverageResult(sectionAverages.global[key])}
-              </div>
-              <div className="mt-0.5 flex justify-center gap-2 text-[0.65rem] text-muted-foreground tabular-nums">
-                <span>{sectionAverages.first[key]}</span>
-                <span className="text-muted-foreground">/</span>
-                <span>{sectionAverages.second[key]}</span>
-              </div>
-              <div className="flex justify-center gap-2 text-[0.55rem] text-muted-foreground tabular-nums">
-                <span className="!text-xs font-medium">1-44</span>
-                <span className="invisible">/</span>
-                <span className="!text-xs font-medium">45-88</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Frame>
-
-      <Frame
-        title="Mesures poids de touches"
-        className={weighingMode ? "mt-4 pb-4" : "mt-8 pb-10"}
-        innerRef={(node) => {
-          mesuresRef.current = node;
-        }}
-      >
-        <button
-          type="button"
-          data-pdf-hide
-          onClick={() => setRows(EMPTY)}
-          className="absolute left-[calc(1rem+4rem)] top-12 z-10 -translate-x-1/2 -translate-y-1/2 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
-        >
-          Reset
-        </button>
-        {hasAnyMeasurement(rows) && octaveGaps.length === 0 && orphanKeys.length === 0 && (
-          <div
-            data-pdf-hide
-            className="pointer-events-none absolute left-0 top-1/2 z-10 flex w-32 justify-center"
-            style={{ transform: "translateY(calc(-50% + 10px))" }}
-          >
-            <div className="flex items-center gap-1.5 !rounded-md !border !border-gray-600 !bg-white !px-2.5 !py-1 !shadow-sm">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
-              <span className="text-[10px] font-semibold text-gray-950">Clavier valide</span>
-            </div>
+            ))}
           </div>
-        )}
-        <div className="mx-auto flex w-full flex-col items-center">
-          {renderSection(1, 44, gridRef1)}
-          {renderSection(45, 88, gridRef2)}
-        </div>
-      </Frame>
+        </Frame>
+      )}
+
+      {weighingMode && (
+        <Frame
+          title="Mesures poids de touches"
+          className="mt-4 pb-4"
+          innerRef={(node) => {
+            mesuresRef.current = node;
+          }}
+        >
+          <button
+            type="button"
+            data-pdf-hide
+            onClick={() => setRows(EMPTY)}
+            className="absolute left-[calc(1rem+4rem)] top-12 z-10 -translate-x-1/2 -translate-y-1/2 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+          >
+            Reset
+          </button>
+          {hasAnyMeasurement(rows) && octaveGaps.length === 0 && orphanKeys.length === 0 && (
+            <div
+              data-pdf-hide
+              className="pointer-events-none absolute left-0 top-1/2 z-10 flex w-32 justify-center"
+              style={{ transform: "translateY(calc(-50% + 10px))" }}
+            >
+              <div className="flex items-center gap-1.5 !rounded-md !border !border-gray-600 !bg-white !px-2.5 !py-1 !shadow-sm">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+                <span className="text-[10px] font-semibold text-gray-950">Clavier valide</span>
+              </div>
+            </div>
+          )}
+          <div className="mx-auto flex w-full flex-col items-center">
+            {renderSection(1, 44, gridRef1)}
+            {renderSection(45, 88, gridRef2)}
+          </div>
+        </Frame>
+      )}
 
       {/* Conteneur hors écran dédié à la capture PDF (largeur bornée à 1024 px). */}
       <div
