@@ -362,6 +362,9 @@ function Index() {
   const [blockMessage, setBlockMessage] = useState<string | null>(null);
   const [blockAnchor, setBlockAnchor] = useState<{ x: number; y: number } | null>(null);
   const blockAnchorTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Mode pesée : formulaire masqué, bandeau résumé affiché. */
+  const [weighingMode, setWeighingMode] = useState(false);
+  const weighingBtnRef = useRef<HTMLButtonElement | null>(null);
   const [coherenceIndex, setCoherenceIndex] = useState<number | null>(null);
   const [coherenceAnchor, setCoherenceAnchor] = useState<{ x: number; y: number } | null>(null);
   const remarquesRef = useRef<HTMLInputElement | null>(null);
@@ -481,53 +484,31 @@ function Index() {
   const remarquesRequired = info["entretien"] === "Modifications importantes";
   const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
 
-  // Dès que les six informations de la fiche sont remplies, le curseur se place
-  // automatiquement dans la première zone de saisie (Wa, touche 1 / La0),
-  // ou dans le champ Remarques si des modifications importantes sont déclarées.
-  const weightsFocusedOnce = useRef(false);
-  const remarksFocusedOnce = useRef(false);
-
+  /** Téléporte le curseur dans la première case Wa (Touche 1 / La0). */
   const focusFirstWeight = useCallback(() => {
-    if (weightsFocusedOnce.current) return;
-    weightsFocusedOnce.current = true;
     setTimeout(() => {
       inputs.current["0-wa"]?.focus({ preventScroll: true });
       inputs.current["0-wa"]?.select();
     }, 50);
   }, []);
 
-  useEffect(() => {
+  /** Validation consciente de la fiche : alerte si incomplète, sinon mode pesée. */
+  const onValidateWeighing = useCallback(() => {
     if (!requiredSheetFieldsComplete) {
-      weightsFocusedOnce.current = false;
-      remarksFocusedOnce.current = false;
-      moyennesScrolledOnce.current = false;
+      if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
+      const r = weighingBtnRef.current?.getBoundingClientRect();
+      setBlockAnchor(
+        r ? { x: Math.max(8, r.left - 340), y: Math.max(8, r.top - 12) } : { x: window.innerWidth / 2 - 144, y: 120 },
+      );
+      blockAnchorTimeout.current = setTimeout(() => {
+        setBlockAnchor(null);
+        blockAnchorTimeout.current = null;
+      }, 3000);
       return;
     }
-
-    const scrollToMoyennes = () => {
-      if (moyennesScrolledOnce.current) return;
-      moyennesScrolledOnce.current = true;
-      const el = moyennesRef.current;
-      if (!el) return;
-      const top = el.offsetTop - 20;
-      window.scrollTo({ top, behavior: "smooth" });
-    };
-
-    if (remarquesRequired) {
-      if (remarksFocusedOnce.current) return;
-      weightsFocusedOnce.current = false;
-      remarksFocusedOnce.current = true;
-      setTimeout(() => {
-        remarquesRef.current?.focus();
-        scrollToMoyennes();
-      }, 50);
-      return;
-    }
-
-    remarksFocusedOnce.current = false;
+    setWeighingMode(true);
     focusFirstWeight();
-    scrollToMoyennes();
-  }, [requiredSheetFieldsComplete, remarquesRequired, focusFirstWeight]);
+  }, [requiredSheetFieldsComplete, focusFirstWeight]);
 
   /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
   const resetInfo = () => {
