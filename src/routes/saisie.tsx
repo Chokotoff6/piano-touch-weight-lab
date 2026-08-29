@@ -534,6 +534,9 @@ function Index() {
     focusFirstWeight();
   }, [requiredSheetFieldsComplete, remarquesInvalid, focusFirstWeight]);
 
+  /** Confirmation de réinitialisation en cartouche jaune ("rows" = mesures, "info" = fiche). */
+  const [confirmReset, setConfirmReset] = useState<null | "rows" | "info">(null);
+
   /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
   const resetInfo = () => {
     setInfo({});
