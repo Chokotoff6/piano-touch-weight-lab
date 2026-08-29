@@ -837,7 +837,12 @@ function Index() {
       showTopbarAlert(anchor, FORM_INCOMPLETE_MESSAGE);
       return false;
     }
-    // PRIORITÉ 2 : règle d'octave non remplie (fiche complète uniquement).
+    // PRIORITÉ 2 : paire Wa/Wd incomplète sur au moins une touche.
+    if (orphanKeys.length > 0) {
+      showOrphanPopover(orphanKeys[0]!);
+      return false;
+    }
+    // PRIORITÉ 3 : règle d'octave non remplie (fiche complète uniquement).
     if (octaveGaps.length > 0) {
       showTopbarAlert(anchor, OCTAVE_RULE_MESSAGE);
       return false;
