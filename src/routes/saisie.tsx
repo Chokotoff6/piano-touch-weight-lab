@@ -1080,7 +1080,7 @@ function Index() {
   useEffect(() => {
     setTopbarState({
       exportReady,
-      measuresReady: requiredSheetFieldsComplete && octaveGaps.length === 0,
+      measuresReady: requiredSheetFieldsComplete && octaveGaps.length === 0 && orphanKeys.length === 0,
       serialFilled: Boolean(info["sn_num"]?.trim()),
       isExporting,
       isDirty,
@@ -1654,7 +1654,7 @@ function Index() {
         >
           Reset
         </button>
-        {hasAnyMeasurement(rows) && octaveGaps.length === 0 && (
+        {hasAnyMeasurement(rows) && octaveGaps.length === 0 && orphanKeys.length === 0 && (
           <div
             data-pdf-hide
             className="pointer-events-none absolute left-0 top-1/2 z-10 flex w-32 justify-center"
