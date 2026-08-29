@@ -76,6 +76,8 @@ const SAVE_UPDATE_MESSAGE =
   "⚠️ Diagnostic synchronisé avec succès dans la base de données de l'application (Cloud)";
 const SAVE_NEW_MESSAGE =
   "⚠️ Nouvelle session de suivi chronologique créée avec succès. Cette fiche historique est archivée de manière étanche dans la base de données cloud pour vos futures comparaisons.";
+const ORPHAN_MESSAGE =
+  "⚠️ Mesure incomplète : Chaque touche mesurée doit obligatoirement posséder à la fois une valeur Wa et une valeur Wd.";
 const COHERENCE_MESSAGE =
   "⚠️ Erreur de cohérence : Le poids descendant (Wa) doit toujours être supérieur au poids ascendant (Wd).";
 
@@ -480,6 +482,16 @@ function Index() {
 
   const octaveGaps = useMemo(() => incompleteOctaves(rows), [rows]);
 
+  /** Touches "orphelines" : Wa rempli sans Wd, ou l'inverse. */
+  const orphanKeys = useMemo(
+    () =>
+      rows
+        .map((r, i) => ({ r, i }))
+        .filter(({ r }) => (r.wa.trim() !== "") !== (r.wd.trim() !== ""))
+        .map(({ i }) => i),
+    [rows],
+  );
+
   /** Remarques obligatoires dès que des modifications importantes sont déclarées. */
   const remarquesRequired = info["entretien"] === "Modifications importantes";
   const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
@@ -585,6 +597,22 @@ function Index() {
       if (coherenceTimeout.current) clearTimeout(coherenceTimeout.current);
     };
   }, []);
+
+  /** Alerte ancrée sur la touche orpheline (Wa sans Wd ou inversement). */
+  const showOrphanPopover = (index: number) => {
+    if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
+    const el = inputs.current[`${index}-wa`] ?? inputs.current[`${index}-wd`];
+    const r = el?.getBoundingClientRect();
+    setBlockAnchor({
+      x: r ? r.right + 8 : window.innerWidth / 2 - 144,
+      y: r ? r.top : 120,
+      text: ORPHAN_MESSAGE,
+    });
+    blockAnchorTimeout.current = setTimeout(() => {
+      setBlockAnchor(null);
+      blockAnchorTimeout.current = null;
+    }, 3000);
+  };
 
   /** Alerte ancrée sur la touche cliquée, près du curseur, quand la fiche est incomplète. */
   const showBlockMessage = (index: number, field: "wa" | "wd") => {
@@ -809,7 +837,12 @@ function Index() {
       showTopbarAlert(anchor, FORM_INCOMPLETE_MESSAGE);
       return false;
     }
-    // PRIORITÉ 2 : règle d'octave non remplie (fiche complète uniquement).
+    // PRIORITÉ 2 : paire Wa/Wd incomplète sur au moins une touche.
+    if (orphanKeys.length > 0) {
+      showOrphanPopover(orphanKeys[0]!);
+      return false;
+    }
+    // PRIORITÉ 3 : règle d'octave non remplie (fiche complète uniquement).
     if (octaveGaps.length > 0) {
       showTopbarAlert(anchor, OCTAVE_RULE_MESSAGE);
       return false;
@@ -1047,7 +1080,7 @@ function Index() {
   useEffect(() => {
     setTopbarState({
       exportReady,
-      measuresReady: requiredSheetFieldsComplete && octaveGaps.length === 0,
+      measuresReady: requiredSheetFieldsComplete && octaveGaps.length === 0 && orphanKeys.length === 0,
       serialFilled: Boolean(info["sn_num"]?.trim()),
       isExporting,
       isDirty,
@@ -1268,7 +1301,7 @@ function Index() {
           </button>
           <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-[1fr_210px_1fr_1fr]">
             <label className={FIELD_LABEL_CLASS}>
-              Marque<span className="text-gray-950 font-bold ml-1 !text-[10px] inline-block">*</span>
+              Marque<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
               <SmartCombobox
                 value={info["marque"] ?? ""}
                 options={BRAND_SUGGESTIONS}
@@ -1282,7 +1315,7 @@ function Index() {
             </label>
 
             <fieldset className={FIELD_LABEL_CLASS} data-keep-model-open>
-              <legend>Type de piano<span className="text-gray-950 font-bold ml-1 !text-[10px] inline-block">*</span></legend>
+              <legend>Type de piano<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></legend>
               <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 bg-white px-2">
                 {["Droit", "à Queue"].map((t) => (
                   <label key={t} className="flex items-center gap-1 text-sm text-foreground">
@@ -1307,7 +1340,7 @@ function Index() {
             </fieldset>
 
             <label className={FIELD_LABEL_CLASS}>
-              Modèle<span className="text-gray-950 font-bold ml-1 !text-[10px] inline-block">*</span>
+              Modèle<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
               <SmartCombobox
                 ref={modelComboRef}
                 value={info["modele"] ?? ""}
@@ -1328,7 +1361,7 @@ function Index() {
             </label>
 
             <div className="text-xs text-muted-foreground sm:col-span-2 md:col-span-4" style={{ marginTop: "12px", paddingTop: "0px", display: "block" }}>
-              <span className={FIELD_LABEL_CLASS}>Numéro de série<span className="text-gray-950 font-bold ml-1 !text-[10px] inline-block">*</span></span>{" "}
+              <span className={FIELD_LABEL_CLASS}>Numéro de série<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></span>{" "}
               <span className="text-muted-foreground">
                 (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
               </span>
@@ -1348,7 +1381,7 @@ function Index() {
                     />
                   </label>
                   <label className={`min-w-[150px] ${SUB_LABEL_CLASS}`}>
-                    <span className="block whitespace-nowrap">N° de série<span className="text-gray-950 font-bold ml-1 !text-[10px] inline-block">*</span></span>
+                    <span className="block whitespace-nowrap">N° de série<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></span>
                     <input
                       ref={(el) => {
                         snRef.current["sn_num"] = el;
@@ -1401,7 +1434,7 @@ function Index() {
             </div>
 
             <label className={`mt-4 ${FIELD_LABEL_CLASS}`}>
-              Pays<span className="text-gray-950 font-bold ml-1 !text-[10px] inline-block">*</span>
+              Pays<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
               <SmartCombobox
                 value={info["pays"] ?? ""}
                 options={ALL_COUNTRIES}
@@ -1416,7 +1449,7 @@ function Index() {
 
             <label className={`mt-4 ${FIELD_LABEL_CLASS}`}>
               <span className="flex items-center gap-2">
-                Ville<span className="text-gray-950 font-bold ml-1 !text-[10px] inline-block">*</span>
+                Ville<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
                 {isGeocoding && <span className="text-[0.65rem] italic">Vérification…</span>}
               </span>
               <input
@@ -1444,7 +1477,7 @@ function Index() {
               className={`!flex !flex-row !items-center !flex-nowrap !gap-6 !w-full mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}
               style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", gap: "24px", width: "100%" }}
             >
-              <span className="shrink-0">Type d'entretien<span className="text-gray-950 font-bold ml-1 !text-[10px] inline-block">*</span></span>
+              <span className="shrink-0">Type d'entretien<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></span>
               {MAINTENANCE_OPTIONS.map((t) => (
                 <label key={t} className="flex shrink-0 items-center gap-1 text-sm text-foreground">
                   <input
@@ -1469,7 +1502,7 @@ function Index() {
               <span className="inline-flex items-center">
                 Remarques
                 {remarquesRequired && (
-                  <span className="text-gray-950 font-bold ml-1 !text-[10px] inline-block">*</span>
+                  <span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
                 )}
               </span>
               <input
@@ -1555,19 +1588,6 @@ function Index() {
         title={
           <>
             Moyennes <span className="text-sm font-normal">(auto)</span>
-            {weighingMode && (
-              <span className="ml-3 text-sm font-normal text-gray-600">
-                {info["marque"]} {info["modele"]} • N° {info["sn_num"]} • {info["fabrication"]?.trim() || "—"}
-                <button
-                  type="button"
-                  data-pdf-hide
-                  onClick={() => setWeighingMode(false)}
-                  className="!ml-4 rounded-md border border-input bg-background px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
-                >
-                  Modifier infos piano
-                </button>
-              </span>
-            )}
           </>
         }
         className={weighingMode ? "mt-4 !p-3 !pt-4" : "mt-8"}
@@ -1575,6 +1595,19 @@ function Index() {
           moyennesRef.current = node;
         }}
       >
+        {weighingMode && (
+          <span className="!absolute !-top-3.5 !right-4 !bg-card !px-2 !ml-auto !flex !items-center !gap-4 !text-sm !font-normal !text-gray-950">
+            {info["marque"]} {info["modele"]} • N° {info["sn_num"]} • {info["fabrication"]?.trim() || "—"}
+            <button
+              type="button"
+              data-pdf-hide
+              onClick={() => setWeighingMode(false)}
+              className="rounded-md border border-input bg-background px-2.5 py-0.5 !text-xs font-medium !text-gray-950 transition-colors hover:bg-accent"
+            >
+              Modifier infos piano
+            </button>
+          </span>
+        )}
         <div className={`grid grid-cols-4 ${weighingMode ? "mt-0.5 !gap-2.5" : "mt-2 gap-3"}`}>
           {(
             [
@@ -1621,7 +1654,7 @@ function Index() {
         >
           Reset
         </button>
-        {hasAnyMeasurement(rows) && octaveGaps.length === 0 && (
+        {hasAnyMeasurement(rows) && octaveGaps.length === 0 && orphanKeys.length === 0 && (
           <div
             data-pdf-hide
             className="pointer-events-none absolute left-0 top-1/2 z-10 flex w-32 justify-center"
