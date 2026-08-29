@@ -1303,14 +1303,23 @@ function Index() {
         data-climate-zone={climateZone ?? ""}
       >
         <Frame title="Informations piano" className="mt-10 [&_input]:border-foreground/60">
-          <button
-            type="button"
-            onClick={resetInfo}
-            title="Réinitialiser uniquement la fiche d'informations"
-            className="absolute right-10 top-10 z-10 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
-          >
-            Reset
-          </button>
+          <div className="absolute right-10 top-10 z-10">
+            {confirmReset === "info" && (
+              <div className="absolute bottom-full right-0 mb-2 flex min-w-max items-center gap-2 !rounded-md !border !border-yellow-300 !bg-[#fef08a] px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
+                <span>Voulez-vous effacer toutes les infos piano saisies ?</span>
+                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { resetInfo(); setConfirmReset(null); }}>Oui</button>
+                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setConfirmReset("info")}
+              title="Réinitialiser uniquement la fiche d'informations"
+              className="rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+            >
+              Reset
+            </button>
+          </div>
           <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-[1fr_210px_1fr_1fr]">
             <label className={FIELD_LABEL_CLASS}>
               Marque<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
