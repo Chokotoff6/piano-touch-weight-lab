@@ -20,9 +20,16 @@ async function capture(el: HTMLElement): Promise<Capture> {
     y: -PAD,
     height: el.offsetHeight + PAD * 2,
     onclone: (doc) => {
-      // Les commandes interactives n'ont pas leur place dans le rapport.
+      // Substitution textuelle : les notices/résumés sont vidés (textContent = "")
+      // pour que les bordures se referment sans trou blanc. Les boutons et
+      // pastilles interactives restent masqués en visibilité.
       doc.querySelectorAll("[data-pdf-hide]").forEach((node) => {
-        (node as HTMLElement).style.visibility = "hidden";
+        const el = node as HTMLElement;
+        if (el.tagName === "SPAN") {
+          el.textContent = "";
+        } else {
+          el.style.visibility = "hidden";
+        }
       });
     },
   });
