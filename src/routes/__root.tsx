@@ -249,7 +249,7 @@ function RootComponent() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className={`rounded-r-none border border-gray-300 bg-white text-lg ${topbar.exportReady && topbar.measuresReady ? "!text-gray-950 !font-bold" : "text-gray-400"}`}
+                    className={`rounded-r-none border border-gray-300 bg-white text-lg ${topbar.measuresReady ? "!text-muted-foreground" : "text-gray-400"}`}
                     onClick={() => dispatchAction("piano-export-csv")}
                   >
                     Exporter
@@ -258,7 +258,7 @@ function RootComponent() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className={`rounded-l-none border border-l-0 border-gray-300 bg-white px-2 text-lg ${topbar.exportReady && topbar.measuresReady ? "!text-gray-950 !font-bold" : "text-gray-400"}`}
+                      className={`rounded-l-none border border-l-0 border-gray-300 bg-white px-2 text-lg ${topbar.measuresReady ? "!text-muted-foreground" : "text-gray-400"}`}
                     >
                       <ChevronDown className="h-4 w-4" />
                     </Button>
@@ -286,7 +286,7 @@ function RootComponent() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className={`border border-gray-300 bg-white text-lg ${topbar.exportReady && topbar.measuresReady ? "!text-gray-950 !font-bold" : "text-gray-400"}`}
+                  className={`border border-gray-300 bg-white text-lg ${topbar.measuresReady ? "!text-muted-foreground" : "text-gray-400"}`}
                   onClick={() => dispatchAction("piano-export-csv")}
                 >
                   Exporter
