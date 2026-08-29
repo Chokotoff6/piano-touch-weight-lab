@@ -492,6 +492,12 @@ function Index() {
     [rows],
   );
 
+  /** Vrai dès qu'une erreur de cohérence Wa <= Wd est présente sur le clavier. */
+  const hasConsistencyErrors = useMemo(
+    () => Object.values(errors).some((m) => m === COHERENCE_MESSAGE),
+    [errors],
+  );
+
   /** Remarques obligatoires dès que des modifications importantes sont déclarées. */
   const remarquesRequired = info["entretien"] === "Modifications importantes";
   const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
@@ -1686,7 +1692,7 @@ function Index() {
             Reset
           </button>
         </div>
-        {hasAnyMeasurement(rows) && octaveGaps.length === 0 && orphanKeys.length === 0 && (
+        {hasAnyMeasurement(rows) && octaveGaps.length === 0 && orphanKeys.length === 0 && !hasConsistencyErrors && (
           <div
             data-pdf-hide
             className="pointer-events-none absolute left-0 top-1/2 z-10 flex w-32 justify-center"
