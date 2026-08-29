@@ -360,7 +360,7 @@ function Index() {
   const [isDirty, setIsDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [blockMessage, setBlockMessage] = useState<string | null>(null);
-  const [blockAnchor, setBlockAnchor] = useState<{ x: number; y: number } | null>(null);
+  const [blockAnchor, setBlockAnchor] = useState<{ x: number; y: number; text?: string } | null>(null);
   const blockAnchorTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Mode pesée : formulaire masqué, bandeau résumé affiché. */
   const [weighingMode, setWeighingMode] = useState(false);
@@ -498,7 +498,19 @@ function Index() {
       if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
       const r = weighingBtnRef.current?.getBoundingClientRect();
       setBlockAnchor(
-        r ? { x: Math.max(8, r.left - 340), y: Math.max(8, r.top - 12) } : { x: window.innerWidth / 2 - 144, y: 120 },
+        r ? { x: Math.max(8, r.left - 340), y: Math.max(8, r.top - 12), text: FORM_INCOMPLETE_MESSAGE } : { x: window.innerWidth / 2 - 144, y: 120, text: FORM_INCOMPLETE_MESSAGE },
+      );
+      blockAnchorTimeout.current = setTimeout(() => {
+        setBlockAnchor(null);
+        blockAnchorTimeout.current = null;
+      }, 3000);
+      return;
+    }
+    if (remarquesInvalid) {
+      if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
+      const r = weighingBtnRef.current?.getBoundingClientRect();
+      setBlockAnchor(
+        r ? { x: Math.max(8, r.left - 340), y: Math.max(8, r.top - 12), text: "⚠️ Veuillez préciser la nature des modifications importantes dans le champ Remarques avant de valider." } : { x: window.innerWidth / 2 - 144, y: 120, text: "⚠️ Veuillez préciser la nature des modifications importantes dans le champ Remarques avant de valider." },
       );
       blockAnchorTimeout.current = setTimeout(() => {
         setBlockAnchor(null);
@@ -508,7 +520,7 @@ function Index() {
     }
     setWeighingMode(true);
     focusFirstWeight();
-  }, [requiredSheetFieldsComplete, focusFirstWeight]);
+  }, [requiredSheetFieldsComplete, remarquesInvalid, focusFirstWeight]);
 
   /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
   const resetInfo = () => {
@@ -1454,7 +1466,12 @@ function Index() {
             </div>
 
             <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
-              Remarques
+              <span className="inline-flex items-center">
+                Remarques
+                {remarquesRequired && (
+                  <span className="text-gray-950 font-bold ml-1 !text-[10px] inline-block">*</span>
+                )}
+              </span>
               <input
                 ref={remarquesRef}
                 required={remarquesRequired}
@@ -1526,7 +1543,7 @@ function Index() {
         <SvgTooltip
           x={blockAnchor.x}
           y={blockAnchor.y}
-          text="⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de valider."
+          text={blockAnchor.text ?? FORM_INCOMPLETE_MESSAGE}
         />
       )}
 
@@ -1540,9 +1557,15 @@ function Index() {
             Moyennes <span className="text-sm font-normal">(auto)</span>
             {weighingMode && (
               <span className="ml-3 text-sm font-normal text-gray-600">
-                {info["marque"]} {info["modele"]} • N° {info["sn_num"]} •{" "}
-                {info["fabrication"]?.trim() || "—"} • {info["ville"]}, {info["pays"]} •
-                Profil : {profile.label}
+                {info["marque"]} {info["modele"]} • N° {info["sn_num"]} • {info["fabrication"]?.trim() || "—"}
+                <button
+                  type="button"
+                  data-pdf-hide
+                  onClick={() => setWeighingMode(false)}
+                  className="!ml-4 rounded-md border border-input bg-background px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
+                >
+                  Modifier infos piano
+                </button>
               </span>
             )}
           </>
@@ -1552,16 +1575,6 @@ function Index() {
           moyennesRef.current = node;
         }}
       >
-        {weighingMode && (
-          <button
-            type="button"
-            data-pdf-hide
-            onClick={() => setWeighingMode(false)}
-            className="absolute -top-2.5 right-4 z-10 rounded-md border border-input bg-background px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
-          >
-            Modifier infos piano
-          </button>
-        )}
         <div className={`grid grid-cols-4 ${weighingMode ? "mt-0.5 !gap-2.5" : "mt-2 gap-3"}`}>
           {(
             [
