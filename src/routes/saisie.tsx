@@ -76,6 +76,8 @@ const SAVE_UPDATE_MESSAGE =
   "⚠️ Diagnostic synchronisé avec succès dans la base de données de l'application (Cloud)";
 const SAVE_NEW_MESSAGE =
   "⚠️ Nouvelle session de suivi chronologique créée avec succès. Cette fiche historique est archivée de manière étanche dans la base de données cloud pour vos futures comparaisons.";
+const ORPHAN_MESSAGE =
+  "⚠️ Mesure incomplète : Chaque touche mesurée doit obligatoirement posséder à la fois une valeur Wa et une valeur Wd.";
 const COHERENCE_MESSAGE =
   "⚠️ Erreur de cohérence : Le poids descendant (Wa) doit toujours être supérieur au poids ascendant (Wd).";
 
@@ -479,6 +481,16 @@ function Index() {
   );
 
   const octaveGaps = useMemo(() => incompleteOctaves(rows), [rows]);
+
+  /** Touches "orphelines" : Wa rempli sans Wd, ou l'inverse. */
+  const orphanKeys = useMemo(
+    () =>
+      rows
+        .map((r, i) => ({ r, i }))
+        .filter(({ r }) => (r.wa.trim() !== "") !== (r.wd.trim() !== ""))
+        .map(({ i }) => i),
+    [rows],
+  );
 
   /** Remarques obligatoires dès que des modifications importantes sont déclarées. */
   const remarquesRequired = info["entretien"] === "Modifications importantes";
