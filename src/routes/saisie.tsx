@@ -1142,7 +1142,7 @@ function Index() {
   useEffect(() => {
     setTopbarState({
       exportReady,
-      measuresReady: requiredSheetFieldsComplete && keyboardValid,
+      measuresReady: requiredSheetFieldsComplete && badgeVisible,
       serialFilled: Boolean(info["sn_num"]?.trim()),
       isExporting,
       isDirty,
