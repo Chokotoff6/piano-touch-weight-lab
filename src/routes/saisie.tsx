@@ -720,6 +720,14 @@ function Index() {
   };
 
   const onKeyDown = useCallback((e: React.KeyboardEvent, index: number, field: "wa" | "wd") => {
+    if (e.shiftKey && e.key === "Tab") {
+      const nextCKey = Array.from(C_KEYS).find((key) => key > index + 1);
+      if (nextCKey !== undefined) {
+        e.preventDefault();
+        focusCell(nextCKey - 1, "wa");
+      }
+      return;
+    }
     if (e.key !== "Enter") return;
     e.preventDefault();
     if (field === "wa") focusCell(index, "wd");
