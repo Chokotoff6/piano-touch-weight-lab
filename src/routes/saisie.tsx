@@ -493,6 +493,8 @@ function Index() {
   );
 
   /** Vrai tant qu'une case Wa/Wd a le focus (saisie en cours) — gèle le badge jusqu'au onBlur. */
+  const [cellFocused, setCellFocused] = useState(false);
+
   
 
   /** Vrai dès qu'une erreur de cohérence Wa <= Wd est présente sur le clavier. */
@@ -502,18 +504,19 @@ function Index() {
   );
 
   /**
-   * Validité du clavier — séquence stricte, rafraîchie en direct à chaque
-   * modification du state des mesures (aucun clic extérieur requis) :
+   * Validité du clavier — recalcul EXCLUSIF au onBlur (saisie stabilisée) :
+   * pendant le focus/onChange, le badge reste figé (aucun flash).
    * TEST 1 (prioritaire) : touche orpheline (cadre rouge) => stop, badge masqué.
    * TEST 2 (successif) : échantillonnage des octaves, uniquement si zéro cadre rouge.
    */
   const keyboardValid = useMemo(() => {
+    if (cellFocused) return false; // gel pendant la frappe
     if (orphanKeys.length > 0) return false; // TEST 1
     if (hasConsistencyErrors) return false;
     if (!hasAnyMeasurement(rows)) return false;
     if (octaveGaps.length > 0) return false; // TEST 2
     return true;
-  }, [orphanKeys.length, hasConsistencyErrors, rows, octaveGaps.length]);
+  }, [cellFocused, orphanKeys.length, hasConsistencyErrors, rows, octaveGaps.length]);
 
   /** Remarques obligatoires dès que des modifications importantes sont déclarées. */
   const remarquesRequired = info["entretien"] === "Modifications importantes";
@@ -1209,6 +1212,7 @@ function Index() {
         onChange={(e) => canEnterWeights && setValue(index, field, e.target.value)}
         onBlur={(e) => {
           if (canEnterWeights) handleBlur(index, field, e.target.value);
+          setCellFocused(false);
         }}
         onKeyDown={(e) => {
           if (!canEnterWeights) {
@@ -1231,6 +1235,7 @@ function Index() {
         aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
         onFocus={(e) => {
+          setCellFocused(true);
           e.currentTarget.select();
         }}
         className={`weight-input !font-sans font-semibold !text-black ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
@@ -1600,7 +1605,7 @@ function Index() {
                 ref={weighingBtnRef}
                 type="button"
                 onClick={onValidateWeighing}
-                className="rounded-md bg-gray-900 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-gray-700"
+                className={`rounded-md !border !border-gray-300 !bg-white px-5 py-2 text-sm font-bold transition-colors hover:bg-accent ${requiredSheetFieldsComplete ? "!text-gray-600" : "!text-gray-400"}`}
               >
                 Données de pesée ➔
               </button>
@@ -1638,7 +1643,7 @@ function Index() {
 Moyennes{" "}
             <span
               className="font-normal"
-              style={{ fontFamily: "Arial, sans-serif", fontSize: "80%" }}
+              style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.9em", color: "#4b5563" }}
             >
               (auto)
             </span>
@@ -1704,7 +1709,7 @@ Moyennes{" "}
             Mesures poids de touches{" "}
             <span
               className="font-normal normal-case"
-              style={{ fontFamily: "Arial, sans-serif", fontSize: "80%" }}
+              style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.9em", color: "#4b5563" }}
             >
               (Min. 1 blanche + 1 noire par octave. ex : tous les Do et Do# &gt; shift+tab saute de Do en Do.)
             </span>
