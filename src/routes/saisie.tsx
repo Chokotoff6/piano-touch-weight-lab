@@ -360,7 +360,7 @@ function Index() {
   const [isDirty, setIsDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [blockMessage, setBlockMessage] = useState<string | null>(null);
-  const [blockAnchor, setBlockAnchor] = useState<{ x: number; y: number } | null>(null);
+  const [blockAnchor, setBlockAnchor] = useState<{ x: number; y: number; text?: string } | null>(null);
   const blockAnchorTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Mode pesée : formulaire masqué, bandeau résumé affiché. */
   const [weighingMode, setWeighingMode] = useState(false);
@@ -498,7 +498,19 @@ function Index() {
       if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
       const r = weighingBtnRef.current?.getBoundingClientRect();
       setBlockAnchor(
-        r ? { x: Math.max(8, r.left - 340), y: Math.max(8, r.top - 12) } : { x: window.innerWidth / 2 - 144, y: 120 },
+        r ? { x: Math.max(8, r.left - 340), y: Math.max(8, r.top - 12), text: FORM_INCOMPLETE_MESSAGE } : { x: window.innerWidth / 2 - 144, y: 120, text: FORM_INCOMPLETE_MESSAGE },
+      );
+      blockAnchorTimeout.current = setTimeout(() => {
+        setBlockAnchor(null);
+        blockAnchorTimeout.current = null;
+      }, 3000);
+      return;
+    }
+    if (remarquesInvalid) {
+      if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
+      const r = weighingBtnRef.current?.getBoundingClientRect();
+      setBlockAnchor(
+        r ? { x: Math.max(8, r.left - 340), y: Math.max(8, r.top - 12), text: "⚠️ Veuillez préciser la nature des modifications importantes dans le champ Remarques avant de valider." } : { x: window.innerWidth / 2 - 144, y: 120, text: "⚠️ Veuillez préciser la nature des modifications importantes dans le champ Remarques avant de valider." },
       );
       blockAnchorTimeout.current = setTimeout(() => {
         setBlockAnchor(null);
@@ -508,7 +520,7 @@ function Index() {
     }
     setWeighingMode(true);
     focusFirstWeight();
-  }, [requiredSheetFieldsComplete, focusFirstWeight]);
+  }, [requiredSheetFieldsComplete, remarquesInvalid, focusFirstWeight]);
 
   /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
   const resetInfo = () => {
@@ -1256,7 +1268,7 @@ function Index() {
           </button>
           <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-[1fr_210px_1fr_1fr]">
             <label className={FIELD_LABEL_CLASS}>
-              Marque<span className="text-red-500 font-bold ml-1">*</span>
+              Marque<span className="text-gray-950 font-bold ml-1 !text-[10px] inline-block">*</span>
               <SmartCombobox
                 value={info["marque"] ?? ""}
                 options={BRAND_SUGGESTIONS}
@@ -1270,7 +1282,7 @@ function Index() {
             </label>
 
             <fieldset className={FIELD_LABEL_CLASS} data-keep-model-open>
-              <legend>Type de piano<span className="text-red-500 font-bold ml-1">*</span></legend>
+              <legend>Type de piano<span className="text-gray-950 font-bold ml-1 !text-[10px] inline-block">*</span></legend>
               <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 bg-white px-2">
                 {["Droit", "à Queue"].map((t) => (
                   <label key={t} className="flex items-center gap-1 text-sm text-foreground">
@@ -1295,7 +1307,7 @@ function Index() {
             </fieldset>
 
             <label className={FIELD_LABEL_CLASS}>
-              Modèle<span className="text-red-500 font-bold ml-1">*</span>
+              Modèle<span className="text-gray-950 font-bold ml-1 !text-[10px] inline-block">*</span>
               <SmartCombobox
                 ref={modelComboRef}
                 value={info["modele"] ?? ""}
@@ -1316,7 +1328,7 @@ function Index() {
             </label>
 
             <div className="text-xs text-muted-foreground sm:col-span-2 md:col-span-4" style={{ marginTop: "12px", paddingTop: "0px", display: "block" }}>
-              <span className={FIELD_LABEL_CLASS}>Numéro de série<span className="text-red-500 font-bold ml-1">*</span></span>{" "}
+              <span className={FIELD_LABEL_CLASS}>Numéro de série<span className="text-gray-950 font-bold ml-1 !text-[10px] inline-block">*</span></span>{" "}
               <span className="text-muted-foreground">
                 (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
               </span>
@@ -1336,7 +1348,7 @@ function Index() {
                     />
                   </label>
                   <label className={`min-w-[150px] ${SUB_LABEL_CLASS}`}>
-                    <span className="block whitespace-nowrap">N° de série<span className="text-red-500 font-bold ml-1">*</span></span>
+                    <span className="block whitespace-nowrap">N° de série<span className="text-gray-950 font-bold ml-1 !text-[10px] inline-block">*</span></span>
                     <input
                       ref={(el) => {
                         snRef.current["sn_num"] = el;
@@ -1389,7 +1401,7 @@ function Index() {
             </div>
 
             <label className={`mt-4 ${FIELD_LABEL_CLASS}`}>
-              Pays<span className="text-red-500 font-bold ml-1">*</span>
+              Pays<span className="text-gray-950 font-bold ml-1 !text-[10px] inline-block">*</span>
               <SmartCombobox
                 value={info["pays"] ?? ""}
                 options={ALL_COUNTRIES}
@@ -1404,7 +1416,7 @@ function Index() {
 
             <label className={`mt-4 ${FIELD_LABEL_CLASS}`}>
               <span className="flex items-center gap-2">
-                Ville<span className="text-red-500 font-bold ml-1">*</span>
+                Ville<span className="text-gray-950 font-bold ml-1 !text-[10px] inline-block">*</span>
                 {isGeocoding && <span className="text-[0.65rem] italic">Vérification…</span>}
               </span>
               <input
@@ -1432,7 +1444,7 @@ function Index() {
               className={`!flex !flex-row !items-center !flex-nowrap !gap-6 !w-full mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}
               style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", gap: "24px", width: "100%" }}
             >
-              <span className="shrink-0">Type d'entretien<span className="text-red-500 font-bold ml-1">*</span></span>
+              <span className="shrink-0">Type d'entretien<span className="text-gray-950 font-bold ml-1 !text-[10px] inline-block">*</span></span>
               {MAINTENANCE_OPTIONS.map((t) => (
                 <label key={t} className="flex shrink-0 items-center gap-1 text-sm text-foreground">
                   <input
@@ -1454,7 +1466,12 @@ function Index() {
             </div>
 
             <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
-              Remarques
+              <span className="inline-flex items-center">
+                Remarques
+                {remarquesRequired && (
+                  <span className="text-gray-950 font-bold ml-1 !text-[10px] inline-block">*</span>
+                )}
+              </span>
               <input
                 ref={remarquesRef}
                 required={remarquesRequired}
@@ -1526,7 +1543,7 @@ function Index() {
         <SvgTooltip
           x={blockAnchor.x}
           y={blockAnchor.y}
-          text="⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de valider."
+          text={blockAnchor.text ?? FORM_INCOMPLETE_MESSAGE}
         />
       )}
 
@@ -1540,9 +1557,15 @@ function Index() {
             Moyennes <span className="text-sm font-normal">(auto)</span>
             {weighingMode && (
               <span className="ml-3 text-sm font-normal text-gray-600">
-                {info["marque"]} {info["modele"]} • N° {info["sn_num"]} •{" "}
-                {info["fabrication"]?.trim() || "—"} • {info["ville"]}, {info["pays"]} •
-                Profil : {profile.label}
+                {info["marque"]} {info["modele"]} • N° {info["sn_num"]} • {info["fabrication"]?.trim() || "—"}
+                <button
+                  type="button"
+                  data-pdf-hide
+                  onClick={() => setWeighingMode(false)}
+                  className="!ml-4 rounded-md border border-input bg-background px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
+                >
+                  Modifier infos piano
+                </button>
               </span>
             )}
           </>
@@ -1552,16 +1575,6 @@ function Index() {
           moyennesRef.current = node;
         }}
       >
-        {weighingMode && (
-          <button
-            type="button"
-            data-pdf-hide
-            onClick={() => setWeighingMode(false)}
-            className="absolute -top-2.5 right-4 z-10 rounded-md border border-input bg-background px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
-          >
-            Modifier infos piano
-          </button>
-        )}
         <div className={`grid grid-cols-4 ${weighingMode ? "mt-0.5 !gap-2.5" : "mt-2 gap-3"}`}>
           {(
             [
