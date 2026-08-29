@@ -388,7 +388,7 @@ function Index() {
   const moyennesRef = useRef<HTMLElement | null>(null);
   const mesuresRef = useRef<HTMLElement | null>(null);
   const goCompareAfterSave = useRef(false);
-  const moyennesScrolledOnce = useRef(false);
+
 
   const navigate = useNavigate();
   const gridRef1 = useSnappedGrid(1, 44);
@@ -1443,7 +1443,6 @@ function Index() {
                     onChange={() => {
                       updateInfo("entretien", t);
                       if (t === "Modifications importantes") {
-                        remarksFocusedOnce.current = true;
                         setTimeout(() => remarquesRef.current?.focus(), 0);
                       }
                     }}
@@ -1465,17 +1464,7 @@ function Index() {
                 value={info["remarques"] ?? ""}
                 onChange={(e) => updateInfo("remarques", e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    if (e.currentTarget.value.trim()) {
-                      focusFirstWeight();
-                    }
-                  }
-                }}
-                onBlur={(e) => {
-                  if (e.currentTarget.value.trim()) {
-                    focusFirstWeight();
-                  }
+                  if (e.key === "Enter") e.preventDefault();
                 }}
                 className={`${INPUT_CLASS} placeholder:text-foreground placeholder:font-medium ${
                   remarquesInvalid
