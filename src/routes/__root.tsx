@@ -385,6 +385,7 @@ function RootComponent() {
         title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
         aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
         className="fixed right-6 top-4 z-50 flex max-h-none -translate-x-full items-center justify-center rounded-lg bg-transparent shadow-xl transition-transform hover:scale-105"
+        style={{ marginRight: "-15px" }}
       >
         <img
           src={premiumCoffeeAsset.url}
