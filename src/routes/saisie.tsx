@@ -493,7 +493,7 @@ function Index() {
   );
 
   /** Vrai tant qu'une case Wa/Wd a le focus (saisie en cours) — gèle le badge jusqu'au onBlur. */
-  const [cellFocused, setCellFocused] = useState(false);
+  
 
   /** Vrai dès qu'une erreur de cohérence Wa <= Wd est présente sur le clavier. */
   const hasConsistencyErrors = useMemo(
@@ -502,19 +502,18 @@ function Index() {
   );
 
   /**
-   * Validité du clavier — séquence stricte, évaluée uniquement au onBlur :
-   * pendant la saisie (focus actif) le badge reste masqué.
+   * Validité du clavier — séquence stricte, rafraîchie en direct à chaque
+   * modification du state des mesures (aucun clic extérieur requis) :
    * TEST 1 (prioritaire) : touche orpheline (cadre rouge) => stop, badge masqué.
    * TEST 2 (successif) : échantillonnage des octaves, uniquement si zéro cadre rouge.
    */
   const keyboardValid = useMemo(() => {
-    if (cellFocused) return false; // saisie en cours : attente du onBlur
     if (orphanKeys.length > 0) return false; // TEST 1
     if (hasConsistencyErrors) return false;
     if (!hasAnyMeasurement(rows)) return false;
     if (octaveGaps.length > 0) return false; // TEST 2
     return true;
-  }, [cellFocused, orphanKeys.length, hasConsistencyErrors, rows, octaveGaps.length]);
+  }, [orphanKeys.length, hasConsistencyErrors, rows, octaveGaps.length]);
 
   /** Remarques obligatoires dès que des modifications importantes sont déclarées. */
   const remarquesRequired = info["entretien"] === "Modifications importantes";
@@ -1209,7 +1208,6 @@ function Index() {
         value={rows[index]![field]}
         onChange={(e) => canEnterWeights && setValue(index, field, e.target.value)}
         onBlur={(e) => {
-          setCellFocused(false);
           if (canEnterWeights) handleBlur(index, field, e.target.value);
         }}
         onKeyDown={(e) => {
@@ -1233,7 +1231,6 @@ function Index() {
         aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
         onFocus={(e) => {
-          setCellFocused(true);
           e.currentTarget.select();
         }}
         className={`weight-input !font-sans font-semibold !text-black ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
@@ -1641,7 +1638,7 @@ function Index() {
 Moyennes{" "}
             <span
               className="font-normal"
-              style={{ fontFamily: "Arial Narrow, sans-serif", fontSize: "90%" }}
+              style={{ fontFamily: "Arial, sans-serif", fontSize: "80%" }}
             >
               (auto)
             </span>
@@ -1707,7 +1704,7 @@ Moyennes{" "}
             Mesures poids de touches{" "}
             <span
               className="font-normal normal-case"
-              style={{ fontFamily: "Arial Narrow, sans-serif", fontSize: "90%" }}
+              style={{ fontFamily: "Arial, sans-serif", fontSize: "80%" }}
             >
               (Min. 1 blanche + 1 noire par octave. ex : tous les Do et Do# &gt; shift+tab saute de Do en Do.)
             </span>
