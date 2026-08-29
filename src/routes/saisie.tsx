@@ -374,6 +374,9 @@ function Index() {
   const blockTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const coherenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  /** Badge vert retardé : ne s'allume qu'après 0,5 s sans cadre rouge ni erreur. */
+  const [badgeVisible, setBadgeVisible] = useState(false);
+  const badgeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
   const fabricationTouched = useRef(false);
@@ -499,10 +502,12 @@ function Index() {
   );
 
   /**
-   * Validité du clavier — recalcul en direct à chaque frappe (keyup/change racine) :
-   * porte logique AND stricte, allumage/extinction instantanés sans attendre le blur.
-   * TEST 1 (prioritaire) : touche orpheline (cadre rouge) => stop, badge masqué.
+   * Validité instantanée du clavier (calcul brut, recalculé à chaque frappe) :
+   * porte logique AND stricte.
+   * TEST 1 (prioritaire) : touche orpheline (cadre rouge) ou erreur Wa<=Wd => faux.
    * TEST 2 (successif) : échantillonnage des octaves, uniquement si zéro cadre rouge.
+   * Les carrés rouges s'affichent instantanément ; le badge vert, lui, est retardé
+   * (voir badgeVisible) : il ne s'allume qu'après 0,5 s sans aucun cadre rouge.
    */
   const keyboardValid = useMemo(() => {
     if (orphanKeys.length > 0) return false; // TEST 1
@@ -511,6 +516,32 @@ function Index() {
     if (octaveGaps.length > 0) return false; // TEST 2
     return true;
   }, [orphanKeys.length, hasConsistencyErrors, rows, octaveGaps.length]);
+
+  /**
+   * Badge vert retardé : extinction instantanée dès qu'un cadre rouge apparaît,
+   * allumage uniquement après un délai de sécurité de 500 ms pendant lequel
+   * le clavier reste strictement valide (octaves complètes + zéro cadre rouge).
+   */
+  useEffect(() => {
+    if (!keyboardValid) {
+      if (badgeTimeout.current) {
+        clearTimeout(badgeTimeout.current);
+        badgeTimeout.current = null;
+      }
+      setBadgeVisible(false);
+      return;
+    }
+    if (badgeTimeout.current) clearTimeout(badgeTimeout.current);
+    badgeTimeout.current = setTimeout(() => {
+      setBadgeVisible(true);
+    }, 500);
+    return () => {
+      if (badgeTimeout.current) {
+        clearTimeout(badgeTimeout.current);
+        badgeTimeout.current = null;
+      }
+    };
+  }, [keyboardValid]);
 
   /** Remarques obligatoires dès que des modifications importantes sont déclarées. */
   const remarquesRequired = info["entretien"] === "Modifications importantes";
@@ -1111,7 +1142,7 @@ function Index() {
   useEffect(() => {
     setTopbarState({
       exportReady,
-      measuresReady: requiredSheetFieldsComplete && keyboardValid,
+      measuresReady: requiredSheetFieldsComplete && badgeVisible,
       serialFilled: Boolean(info["sn_num"]?.trim()),
       isExporting,
       isDirty,
@@ -1129,7 +1160,7 @@ function Index() {
         historyRows: [],
       });
     };
-  }, [exportReady, requiredSheetFieldsComplete, keyboardValid, info, isExporting, isDirty, currentDbId]);
+  }, [exportReady, requiredSheetFieldsComplete, badgeVisible, info, isExporting, isDirty, currentDbId]);
 
   useEffect(() => {
     const exportCsvOnly = () => {
@@ -1635,7 +1666,7 @@ function Index() {
 Moyennes{" "}
             <span
               className="font-normal"
-              style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.8em", color: "#4b5563" }}
+              style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
             >
               (auto)
             </span>
@@ -1701,13 +1732,13 @@ Moyennes{" "}
             Mesures poids de touches{" "}
             <span
               className="font-normal normal-case"
-              style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.8em", color: "#4b5563" }}
+              style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
             >
               (Min. 1 blanche + 1 noire par octave. ex : tous les Do et Do# &gt; shift+tab saute de Do en Do.)
             </span>
           </>
         }
-        className={weighingMode ? "mt-4 pb-4" : "mt-8 pb-10 !hidden"}
+        className={weighingMode ? "!mt-[26px] pb-4" : "mt-8 pb-10 !hidden"}
         innerRef={(node) => {
           mesuresRef.current = node;
         }}
@@ -1729,7 +1760,7 @@ Moyennes{" "}
             Reset
           </button>
         </div>
-        {keyboardValid && (
+        {badgeVisible && (
           <div
             data-pdf-hide
             className="pointer-events-none absolute left-0 top-1/2 z-10 flex w-32 justify-center"
