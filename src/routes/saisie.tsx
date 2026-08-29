@@ -491,7 +491,7 @@ function Index() {
     if (weightsFocusedOnce.current) return;
     weightsFocusedOnce.current = true;
     setTimeout(() => {
-      inputs.current["0-wa"]?.focus();
+      inputs.current["0-wa"]?.focus({ preventScroll: true });
       inputs.current["0-wa"]?.select();
     }, 50);
   }, []);
