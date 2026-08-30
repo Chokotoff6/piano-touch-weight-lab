@@ -302,6 +302,16 @@ function Accueil() {
             </AccordionTrigger>
             <AccordionContent>
               <p>
+                <strong>Avertissement important :</strong> Les scénarios ci-dessous
+                ne constituent que des pistes logiques et des repères théoriques
+                basés sur le croisement du couple (Wa, Wd) et de la Friction (F =
+                (Wa - Wd) / 2). La facture d'instruments reste un artisanat d'art et
+                un savoir-faire sensible, intimement lié à l'approche, à la
+                philosophie de réglage et à l'expérience de chaque technicien. Rien
+                ne remplace l'expertise de l'artisan en atelier.
+              </p>
+
+              <p className="mt-2">
                 Quand l'analyse des données révèle des anomalies de poids, six
                 scénarios cliniques majeurs s'ouvrent à l'interprétation du
                 technicien :
@@ -368,12 +378,6 @@ function Accueil() {
                 nécessaire pour mettre en mouvement cette masse fatigue
                 instantanément les tendons de l'artisan lors des trilles et traits
                 rapides.
-              </p>
-              <p className="mt-2">
-                - Le cas particulier des Pianos Droits : Si le Wa s'envole de
-                manière démesurée, testez la note en enfonçant la pédale forte. Si
-                le Wa redevient instantanément normal, le problème s'oriente vers
-                les ressorts de cuillères d'étouffoirs réglés beaucoup trop durs.
               </p>
 
               <p className="mt-3">Voici le tableau de synthèse clinique des choix d'atelier :</p>
