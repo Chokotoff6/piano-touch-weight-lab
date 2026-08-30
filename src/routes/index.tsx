@@ -302,16 +302,6 @@ function Accueil() {
             </AccordionTrigger>
             <AccordionContent>
               <p>
-                <strong>Avertissement important :</strong> Les scénarios
-                ci-dessous ne constituent que des pistes logiques et des repères
-                théoriques basés sur le croisement du couple (Wa, Wd) et de la
-                Friction (F = (Wa - Wd) / 2). La facture d'instruments reste un
-                artisanat d'art et un savoir-faire sensible, intimement lié à
-                l'approche, à la philosophie de réglage et à l'expérience de
-                chaque technicien. Rien ne remplace l'expertise de l'artisan en
-                atelier.
-              </p>
-              <p className="mt-2">
                 Quand l'analyse des données révèle des anomalies de poids, six
                 scénarios cliniques majeurs s'ouvrent à l'interprétation du
                 technicien :
@@ -396,44 +386,58 @@ function Accueil() {
                       <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Mesures Typiques (Wa / Wd)</th>
                       <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Friction Calculée (F)</th>
                       <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Balance Calculée (B)</th>
+                      <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Origine Mécanique Précise</th>
+                      <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Solution Technique Atelier</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-gray-200">
                     <tr>
-                      <td className="border-b border-gray-200 p-2 font-semibold">A</td>
-                      <td className="border-b border-gray-200 p-2">Wa=65g / Wd=15g</td>
-                      <td className="border-b border-gray-200 p-2">F = 25g (Élevée)</td>
-                      <td className="border-b border-gray-200 p-2">B = 40g (Bonne)</td>
+                      <td className="p-2 font-semibold text-red-700">A : Grippé</td>
+                      <td className="p-2 font-mono">65g / 15g</td>
+                      <td className="p-2 text-red-600 font-bold">25g (Trop Haute)</td>
+                      <td className="p-2 font-mono">40g (Normale)</td>
+                      <td className="p-2">Feutres de mortaises gonflés ou ganses de pivots trop serrées.</td>
+                      <td className="p-2 font-medium">Repasser les mortaises au fer, lubrifier au téflon ou réaléser les centres.</td>
                     </tr>
                     <tr>
-                      <td className="border-b border-gray-200 p-2 font-semibold">B</td>
-                      <td className="border-b border-gray-200 p-2">Wa=65g / Wd=42g</td>
-                      <td className="border-b border-gray-200 p-2">F = 11,5g (Basse)</td>
-                      <td className="border-b border-gray-200 p-2">B = 53,5g (Élevée)</td>
+                      <td className="p-2 font-semibold text-red-700">B : Massif</td>
+                      <td className="p-2 font-mono">65g / 42g</td>
+                      <td className="p-2 font-mono">11,5g (Normale)</td>
+                      <td className="p-2 text-red-600 font-bold">53,5g (Trop Haute)</td>
+                      <td className="p-2">Marteaux lourds (re-feutrage) ou manque de plombs à l'avant de la touche.</td>
+                      <td className="p-2 font-medium">Alléger les têtes de marteaux (ponçage) ou percer pour ajouter du plomb à l'avant.</td>
                     </tr>
                     <tr>
-                      <td className="border-b border-gray-200 p-2 font-semibold">C</td>
-                      <td className="border-b border-gray-200 p-2">Wa=40g / Wd=12g</td>
-                      <td className="border-b border-gray-200 p-2">F = 14g (Élevée)</td>
-                      <td className="border-b border-gray-200 p-2">B = 26g (Basse)</td>
+                      <td className="p-2 font-semibold text-amber-700">C : Éteint</td>
+                      <td className="p-2 font-mono">40g / 12g</td>
+                      <td className="p-2 text-red-600 font-bold">14g (Haute)</td>
+                      <td className="p-2 text-blue-600 font-bold">26g (Trop Basse)</td>
+                      <td className="p-2">Manque critique de contrepoids à l'avant combiné à des pivots durs.</td>
+                      <td className="p-2 font-medium">Revoir entièrement la ligne de plombage de la touche et ajuster la friction.</td>
                     </tr>
                     <tr>
-                      <td className="border-b border-gray-200 p-2 font-semibold">D</td>
-                      <td className="border-b border-gray-200 p-2">Wa=42g / Wd=38g</td>
-                      <td className="border-b border-gray-200 p-2">F = 2g (Nulle)</td>
-                      <td className="border-b border-gray-200 p-2">B = 40g (Bonne)</td>
+                      <td className="p-2 font-semibold text-blue-700">D : Fuyant</td>
+                      <td className="p-2 font-mono">42g / 38g</td>
+                      <td className="p-2 text-blue-600 font-bold">2g (Trop Basse)</td>
+                      <td className="p-2 font-mono">40g (Normale)</td>
+                      <td className="p-2">Feutres de mortaises usés/écrasés ou axes de pivots trop lâches.</td>
+                      <td className="p-2 font-medium">Remplacer intégralement les garnitures de feutre ou changer les axes usés.</td>
                     </tr>
                     <tr>
-                      <td className="border-b border-gray-200 p-2 font-semibold">E</td>
-                      <td className="border-b border-gray-200 p-2">Wa=50g / Wd=26g</td>
-                      <td className="border-b border-gray-200 p-2">F = 12g (Apparente)</td>
-                      <td className="border-b border-gray-200 p-2">B = 38g (Apparente)</td>
+                      <td className="p-2 font-semibold text-indigo-700">E : Faux Idéal (Mou)</td>
+                      <td className="p-2 font-mono">50g / 26g (Standard)</td>
+                      <td className="p-2 text-red-600 font-bold">12g (Haute)</td>
+                      <td className="p-2 text-blue-600 font-bold">38g (Basse)</td>
+                      <td className="p-2">Masse de marteau insuffisante (usure) masquée par des pivots trop durs.</td>
+                      <td className="p-2 font-medium">Recalibrer le plombage global d'usine et détendre/lubrifier les pivots.</td>
                     </tr>
                     <tr>
-                      <td className="border-b border-gray-200 p-2 font-semibold">F</td>
-                      <td className="border-b border-gray-200 p-2">Wa=50g / Wd=26g</td>
-                      <td className="border-b border-gray-200 p-2">F = 12g (Apparente)</td>
-                      <td className="border-b border-gray-200 p-2">B = 38g (Apparente)</td>
+                      <td className="p-2 font-semibold text-purple-700">F : Piège (Inertie)</td>
+                      <td className="p-2 font-mono">50g / 26g (Standard)</td>
+                      <td className="p-2 text-blue-600 font-bold">4g (Basse)</td>
+                      <td className="p-2 text-red-600 font-bold">48g (Haute)</td>
+                      <td className="p-2">Haute inertie dynamique (pièces trop lourdes) masquée par des pivots lâches.</td>
+                      <td className="p-2 font-medium">Réduire impérativement la masse des marteaux et re-plomber selon le protocole Stanwood.</td>
                     </tr>
                   </tbody>
                 </table>
