@@ -289,7 +289,7 @@ function Accueil() {
 
               <p className="mt-1">
                 - Scénario B : Wa est très élevé ET Wd reste élevé (Ex: Wa=65g,
-                Wd=42g) -> Le coupable est l'excès de Masse ou de Plombage
+                Wd=42g) {'->'} Le coupable est l'excès de Masse ou de Plombage
                 (Masse de la Balance B). La cause physique : le mécanisme
                 fonctionne de manière fluide (la friction reste basse), mais il y
                 a un excès de poids brut des pièces mouvantes : soit des
