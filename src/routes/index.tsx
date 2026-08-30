@@ -248,6 +248,17 @@ function Accueil() {
               </p>
 
               <p className="mt-2">
+                <strong>5. Le Keydip (Enfoncement) [Paramètre de compacité]</strong>
+              </p>
+              <p className="mt-1">
+                C'est la distance exacte en millimètres parcourue par la touche
+                depuis sa position de repos jusqu'à sa butée mécanique au fond du
+                clavier (généralement mesurée entre 10,0 mm et 10,5 mm
+                d'enfoncement). Il modifie la perception de la compacité de la
+                mécanique et la course nécessaire au doigt pour déclencher le son.
+              </p>
+
+              <p className="mt-2">
                 <strong>Important :</strong> En facture de piano, les mesures de
                 Wa et Wd doivent toujours être effectuées avec la pédale de
                 sustain (forte) enfoncée. Cela s'applique de manière identique
@@ -447,6 +458,42 @@ function Accueil() {
                 de la mécanique (axes, pivots, mortaises) avant de fixer les plombs
                 définitifs, sous peine de fausser les calculs de balance
                 informatique.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="q8">
+            <AccordionTrigger>
+              À quoi correspondent les courbes de référence d'usine et le suffixe
+              (c) sur la page de comparaison ?
+            </AccordionTrigger>
+            <AccordionContent>
+              <p>
+                Sur la page d'analyse graphique, l'application superpose des
+                courbes de référence d'usine (lignes vertes) basées sur la
+                métrologie moderne de David Stanwood et les critères historiques
+                des grands fabricants (comme Steinway {"&"} Sons au milieu du XXe
+                siècle).
+              </p>
+
+              <p className="mt-2">
+                - La courbe 'Standard Friction' n'est pas une ligne plate : elle
+                est dégressive en continu et descend des graves (15g) vers les
+                aigus (11g) pour épouser la charge naturelle décroissante des têtes
+                de marteaux.
+              </p>
+
+              <p className="mt-2">
+                - La courbe 'Standard Web Wa' reproduit le galbe théorique idéal de
+                l'enfoncement en cloche douce descendante (glissant de 55g à 51g).
+              </p>
+
+              <p className="mt-2">
+                Le petit suffixe '(c)' apposé derrière le nom des courbes ou des
+                moyennes signifie 'Cloud'. Il indique de manière transparente que
+                ces lignes et compteurs proviennent des données anonymisées,
+                agrégées et centralisées en direct depuis la base de données de la
+                communauté de l'application.
               </p>
             </AccordionContent>
           </AccordionItem>
