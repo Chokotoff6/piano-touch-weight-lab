@@ -244,10 +244,10 @@ function Accueil() {
                 Le ressenti sous le doigt : C'est la texture du toucher. Une
                 friction idéale (11g à 13g) donne un toucher 'onctueux'
                 et un contrôle parfait des nuances douces (pianissimo). Une
-                friction trop forte (> 15g) donne un toucher
+                friction trop forte ({'>'} 15g) donne un toucher
                 'pâteux', 'gélatineux' ou 'lourd'.
                 Vous avez l'impression de jouer dans du sable. Une friction
-                trop faible (< 8g) donne un toucher 'clavier
+                trop faible ({'<'} 8g) donne un toucher 'clavier
                 plastique', instable et fuyant.
               </p>
 
