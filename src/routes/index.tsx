@@ -248,6 +248,17 @@ function Accueil() {
               </p>
 
               <p className="mt-2">
+                <strong>5. Le Keydip (Enfoncement) [Paramètre de compacité]</strong>
+              </p>
+              <p className="mt-1">
+                C'est la distance exacte en millimètres parcourue par la touche
+                depuis sa position de repos jusqu'à sa butée mécanique au fond du
+                clavier (généralement mesurée entre 10,0 mm et 10,5 mm
+                d'enfoncement). Il modifie la perception de la compacité de la
+                mécanique et la course nécessaire au doigt pour déclencher le son.
+              </p>
+
+              <p className="mt-2">
                 <strong>Important :</strong> En facture de piano, les mesures de
                 Wa et Wd doivent toujours être effectuées avec la pédale de
                 sustain (forte) enfoncée. Cela s'applique de manière identique
