@@ -302,16 +302,6 @@ function Accueil() {
             </AccordionTrigger>
             <AccordionContent>
               <p>
-                <strong>Avertissement important :</strong> Les scénarios ci-dessous
-                ne constituent que des pistes logiques et des repères théoriques
-                basés sur le croisement du couple (Wa, Wd) et de la Friction (F =
-                (Wa - Wd) / 2). La facture d'instruments reste un artisanat d'art et
-                un savoir-faire sensible, intimement lié à l'approche, à la
-                philosophie de réglage et à l'expérience de chaque technicien. Rien
-                ne remplace l'expertise de l'artisan en atelier.
-              </p>
-
-              <p className="mt-2">
                 Quand l'analyse des données révèle des anomalies de poids, six
                 scénarios cliniques majeurs s'ouvrent à l'interprétation du
                 technicien :
@@ -446,6 +436,18 @@ function Accueil() {
                   </tbody>
                 </table>
               </div>
+
+              <p className="mt-3">
+                <strong>Note sur la Friction (Pianistes {"&"} Techniciens) :</strong>{" "}
+                Si vous êtes pianiste et que vous mesurez votre instrument 'dans son
+                jus', une friction anormalement élevée sur le graphique indique
+                simplement que le piano a besoin d'être révisé par un professionnel.
+                Pour les techniciens réalisant un plombage complet en atelier, il est
+                rappelé qu'il faut impérativement procéder au défrictionnage complet
+                de la mécanique (axes, pivots, mortaises) avant de fixer les plombs
+                définitifs, sous peine de fausser les calculs de balance
+                informatique.
+              </p>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
