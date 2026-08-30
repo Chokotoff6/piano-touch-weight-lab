@@ -278,7 +278,7 @@ function Accueil() {
 
               <p className="mt-1">
                 - Scénario A : Wa est très élevé ET Wd est très bas (Ex: Wa=65g,
-                Wd=15g) -> Le coupable est l'excès de Friction (F). La cause
+                Wd=15g) {'->'} Le coupable est l'excès de Friction (F). La cause
                 physique : la Balance du piano est bonne, mais les articulations
                 sont totalement grippées. L'humidité a fait gonfler les feutres
                 des mortaises de la touche ou les ganses de pivots (les axes en
