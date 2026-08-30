@@ -461,6 +461,42 @@ function Accueil() {
               </p>
             </AccordionContent>
           </AccordionItem>
+
+          <AccordionItem value="q8">
+            <AccordionTrigger>
+              À quoi correspondent les courbes de référence d'usine et le suffixe
+              (c) sur la page de comparaison ?
+            </AccordionTrigger>
+            <AccordionContent>
+              <p>
+                Sur la page d'analyse graphique, l'application superpose des
+                courbes de référence d'usine (lignes vertes) basées sur la
+                métrologie moderne de David Stanwood et les critères historiques
+                des grands fabricants (comme Steinway {"&"} Sons au milieu du XXe
+                siècle).
+              </p>
+
+              <p className="mt-2">
+                - La courbe 'Standard Friction' n'est pas une ligne plate : elle
+                est dégressive en continu et descend des graves (15g) vers les
+                aigus (11g) pour épouser la charge naturelle décroissante des têtes
+                de marteaux.
+              </p>
+
+              <p className="mt-2">
+                - La courbe 'Standard Web Wa' reproduit le galbe théorique idéal de
+                l'enfoncement en cloche douce descendante (glissant de 55g à 51g).
+              </p>
+
+              <p className="mt-2">
+                Le petit suffixe '(c)' apposé derrière le nom des courbes ou des
+                moyennes signifie 'Cloud'. Il indique de manière transparente que
+                ces lignes et compteurs proviennent des données anonymisées,
+                agrégées et centralisées en direct depuis la base de données de la
+                communauté de l'application.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
         </Accordion>
       </section>
     </main>
