@@ -386,16 +386,16 @@ function Accueil() {
                 les ressorts de cuillères d'étouffoirs réglés beaucoup trop durs.
               </p>
 
-              <p className="mt-3">Voici le tableau de synthèse des choix d'atelier :</p>
+              <p className="mt-3">Voici le tableau de synthèse clinique des choix d'atelier :</p>
 
               <div className="overflow-x-auto my-4">
                 <table className="min-w-full border border-gray-200 text-sm">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Scénario</th>
-                      <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Constat Wa / Wd</th>
-                      <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Friction (F)</th>
-                      <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Balance (B)</th>
+                      <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Mesures Typiques (Wa / Wd)</th>
+                      <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Friction Calculée (F)</th>
+                      <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Balance Calculée (B)</th>
                     </tr>
                   </thead>
                   <tbody>
