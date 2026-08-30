@@ -183,182 +183,261 @@ function Accueil() {
           <AccordionItem value="q6">
             <AccordionTrigger>
               Quels sont les facteurs qui interviennent dans le ressenti de
+              {" "}
               "poids de toucher" d'un clavier ?
             </AccordionTrigger>
             <AccordionContent>
-              Pour comprendre comment ces 4 moyennes dictent ce que ressentent
-              vos doigts sur le clavier, imaginez que la touche de votre piano est
-              une balançoire de cour de récréation.
+              <p>
+                Pour comprendre comment ces 4 moyennes dictent ce que ressentent
+                vos doigts sur le clavier, imaginez que la touche de votre piano
+                est une balançoire de cour de récréation.
+              </p>
 
               <p className="mt-2">
                 <strong>1. Le Poids Descendant (Wa) : 'L'effort de démarrage'</strong>
               </p>
-
               <p className="mt-1">
-                Ce que c'est : Le poids minimal nécessaire pour faire
-                s'enfoncer la touche au repos.
-              </p>
-
-              <p className="mt-1">
-                Le ressenti sous le doigt : C'est la première barrière que
-                rencontre votre doigt. Si le Wa est trop élevé (au-dessus de
-                54g), le clavier donne une sensation de 'fermeté' ou de
-                'lourdeur brute' dès que vous posez les doigts sur les
-                touches. Un Wa fort élevé est le premier signal d'alarme
-                d'un problème mécanique majeur. En facture de piano, un
-                standard acoustique oscille généralement entre 48g et 52g au
-                centre. Si votre tracé indique un Wa à 60g, 70g ou plus, le piano
-                souffre d'un dysfonctionnement lourd.
+                Ce que c'est : Le poids minimal nécessaire pour faire s'enfoncer
+                la touche au repos. Le ressenti sous le doigt : C'est la première
+                barrière que rencontre votre doigt. Si le Wa est trop élevé
+                (au-dessus de 54g), le clavier donne une sensation de 'fermeture'
+                ou de 'lourdeur brute' dès que vous posez les doigts sur les
+                touches. Un Wa fort élevé est le premier signal d'alarme d'un
+                problème mécanique majeur.
               </p>
 
               <p className="mt-2">
                 <strong>2. Le Poids Ascendant (Wd) : 'La réactivité du retour'</strong>
               </p>
-
               <p className="mt-1">
-                Ce que c'est : La force avec laquelle la touche pousse votre
-                doigt vers le haut pour revenir à sa position de repos.
-              </p>
-
-              <p className="mt-1">
-                Le ressenti sous le doigt : C'est le dynamisme du clavier. Si
-                le Wd est élevé (autour de 35g-40g), le clavier est
-                'nerveux' et 'rapide' : la touche colle à votre
-                doigt, ce qui est parfait pour la répétition rapide des notes
-                (trilles, répétitions). Si le Wd est trop bas (en dessous de
-                30g), le clavier semble 'mou', 'paresseux', et la
-                touche peine à remonter.
+                Ce que c'est : La force avec laquelle la touche pousse votre doigt
+                vers le haut pour revenir à sa position de repos. Le ressenti sous
+                le doigt : C'est le dynamisme du clavier. Si le Wd est élevé
+                (autour de 35g-40g), le clavier est 'nerveux' et 'rapide' : la
+                touche colle à votre doigt, ce qui est parfait pour la répétition
+                rapide des notes (trilles, répétitions). Si le Wd est trop bas (en
+                dessous de 30g), le clavier semble 'mou', 'paresseux', et la touche
+                peine à remonter.
               </p>
 
               <p className="mt-2">
                 <strong>3. La Friction (F) : 'La fluidité du voyage' [L'ÉLÉMENT MAJEUR DU RESSENTI]</strong>
               </p>
-
               <p className="mt-1">
-                Ce que c'est : La résistance créée par les frottements des
-                pièces en mouvement (les axes en feutre et les pivots en laine
-                sous la touche).
-              </p>
-
-              <p className="mt-1">
-                Le ressenti sous le doigt : C'est la texture du toucher. Une
-                friction idéale (11g à 13g) donne un toucher 'onctueux'
-                et un contrôle parfait des nuances douces (pianissimo). Une
-                friction trop forte ({'>'} 15g) donne un toucher
-                'pâteux', 'gélatineux' ou 'lourd'.
-                Vous avez l'impression de jouer dans du sable. Une friction
-                trop faible ({'<'} 8g) donne un toucher 'clavier
+                Ce que c'est : La résistance créée par les frottements des pièces
+                en mouvement (les axes en feutre et les pivots en laine sous la
+                touche). Le ressenti sous le doigt : C'est la texture du toucher.
+                Une friction idéale (11g à 13g) donne un toucher 'onctueux' et un
+                contrôle parfait des nuances douces (pianissimo). Une friction
+                trop forte ({'>'} 15g) donne un toucher 'pâteux', 'gélatineux' ou
+                'lourd'. Vous avez l'impression de jouer dans du sable. Une
+                friction trop faible ({'<'} 8g) donne un toucher 'clavier
                 plastique', instable et fuyant.
               </p>
 
               <p className="mt-2">
                 <strong>4. La Balance (B) : 'La lourdeur de la balançoire'</strong>
               </p>
-
               <p className="mt-1">
-                Ce que c'est : Le poids d'équilibre moyen de la
-                mécanique une fois qu'on a retiré les frottements.
-              </p>
-
-              <p className="mt-1">
-                Le ressenti sous le doigt : C'est la sensation de masse
-                physique de l'instrument. Si la balance est élevée, vous
-                ressentez que les pièces internes (le bois, les marteaux) sont
-                lourdes à déplacer, indépendamment de leur fluidité.
+                Ce que c'est : Le poids d'équilibre moyen de la mécanique une fois
+                qu'on a retiré les frottements. Le ressenti sous le doigt : C'est
+                la sensation de masse physique pure de l'instrument (le bois, les
+                marteaux) indépendamment des frottements. Si la balance est
+                élevée, vous ressentez que les pièces internes sont lourdes à
+                déplacer, indépendamment de leur fluidité.
               </p>
 
               <p className="mt-2">
-                <strong>Résumé du diagnostic visuel (Croisement des données pour identifier une panne) :</strong>
+                <strong>Important :</strong> En facture de piano, les mesures de
+                Wa et Wd doivent toujours être effectuées avec la pédale de
+                sustain (forte) enfoncée. Cela s'applique de manière identique
+                pour les pianos droits et pour les pianos à queue. Si vous ne
+                bloquez pas les étouffoirs avec la pédale, votre doigt doit
+                soulever deux mécanismes en même temps. Sur un piano droit, les
+                ressorts d'étouffoirs faussent le Wa de 10g à 20g dès le milieu du
+                clavier. Sur un piano à queue, les étouffoirs reposent directement
+                sur l'arrière de la touche et ajoutent un poids mort de 8g à 12g
+                qui s'arrête brusquement à la note 69. Enfoncer la pédale forte
+                permet d'isoler le toucher pur du clavier en libérant les cordes,
+                garantissant une mesure homogène de la note 1 à la note 88.
               </p>
 
+              <p className="mt-2">
+                <strong>⚠️ Ce qui est volontairement laissé de côté ici</strong>
+              </p>
               <p className="mt-1">
-                Quand vous trouvez un clavier trop lourd à enfoncer (Wa élevé),
-                deux scénarios cliniques s'ouvrent à l'analyse :
+                Notre outil mesure uniquement ces données statiques (le piano au
+                repos). Pour être tout à fait complet, le protocole avancé de
+                Stanwood Piano démontre que le ressenti final d'un pianiste en
+                plein jeu dépend également de paramètres dynamiques complexes que
+                nous n'intégrons pas ici :
+              </p>
+              <p className="mt-1">
+                - L'Inertie du Marteau (Hammer Strike Weight) : Le poids physique
+                du feutre et du bois du marteau, qui démultiplie l'effort dès que
+                l'on joue vite ou fort.
+              </p>
+              <p className="mt-1">
+                - Le Rapport de Bascule (Ratio de la mécanique) : La géométrie
+                exacte de la touche (effet de levier) qui amplifie ou réduit le
+                mouvement du doigt.
+              </p>
+              <p className="mt-1">
+                - Le Poids de l'Échappement (Let-off resistance) : La petite
+                résistance supplémentaire ressentie en bout de course lorsque le
+                marteau se libère pour frapper la corde.
+              </p>
+              <p className="mt-1">
+                - La Résistance de la Pédale Forte (Sustain pedal engagement) :
+                L'effort supplémentaire demandé aux doigts pour soulever les
+                étouffoirs en mode de jeu normal par rapport au jeu avec pédale.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="q7">
+            <AccordionTrigger>
+              Stratégies d'analyse mécanique et interprétation des pannes
+              (Réservé aux Techniciens)
+            </AccordionTrigger>
+            <AccordionContent>
+              <p>
+                <strong>Avertissement important :</strong> Les scénarios
+                ci-dessous ne constituent que des pistes logiques et des repères
+                théoriques basés sur le croisement du couple (Wa, Wd) et de la
+                Friction (F = (Wa - Wd) / 2). La facture d'instruments reste un
+                artisanat d'art et un savoir-faire sensible, intimement lié à
+                l'approche, à la philosophie de réglage et à l'expérience de
+                chaque technicien. Rien ne remplace l'expertise de l'artisan en
+                atelier.
+              </p>
+              <p className="mt-2">
+                Quand l'analyse des données révèle des anomalies de poids, six
+                scénarios cliniques majeurs s'ouvrent à l'interprétation du
+                technicien :
               </p>
 
-              <p className="mt-1">
+              <p className="mt-2">
                 - Scénario A : Wa est très élevé ET Wd est très bas (Ex: Wa=65g,
                 Wd=15g) {'->'} Le coupable est l'excès de Friction (F). La cause
                 physique : la Balance du piano est bonne, mais les articulations
                 sont totalement grippées. L'humidité a fait gonfler les feutres
                 des mortaises de la touche ou les ganses de pivots (les axes en
                 laine). Il faut rajouter énormément de poids pour vaincre la
-                résistance au départ, mais le mécanisme n'a plus
-                l'énergie de rejeter la touche vers le haut.
+                résistance au départ, mais le mécanisme n'a plus l'énergie de
+                rejeter la touche vers le haut.
               </p>
-
-              <p className="mt-1">
+              <p className="mt-2">
                 - Scénario B : Wa est très élevé ET Wd reste élevé (Ex: Wa=65g,
                 Wd=42g) {'->'} Le coupable est l'excès de Masse ou de Plombage
                 (Masse de la Balance B). La cause physique : le mécanisme
                 fonctionne de manière fluide (la friction reste basse), mais il y
-                a un excès de poids brut des pièces mouvantes : soit des
-                marteaux trop lourds (après un re-feutrage mal calibré), soit un
-                manque cruel de plombage de compensation dans le corps en bois
-                des touches (le clavier manque de plomb à l'avant pour faire
+                a un excès de poids brut des pièces mouvantes : soit des marteaux
+                trop lourds (après un re-feutrage mal calibré), soit un manque
+                cruel de plombage de compensation dans le corps en bois des
+                touches (le clavier manque de plomb à l'avant pour faire
                 contrepoids). La touche est lourde à descendre, mais puisqu'elle
-                retient une masse importante à l'arrière, elle remonte comme
-                un ressort brutal.
+                retient une masse importante à l'arrière, elle remonte comme un
+                ressort brutal.
               </p>
-
-              <p className="mt-1">
-                - Le cas particulier des Pianos Droits : Si le Wa s'envole,
-                enfoncez la pédale forte. Si le Wa redevient normal, le problème
-                vient des ressorts de cuillères d'étouffoirs qui sont
-                réglés beaucoup trop durs.
-              </p>
-
-              <p className="mt-1">
-                Important : En facture de piano, les mesures de Wa et Wd doivent
-                toujours être effectuées avec la pédale de sustain (forte)
-                enfoncée. Cela s'applique de manière identique pour les
-                pianos droits et pour les pianos à queue. Si vous ne bloquez pas
-                les étouffoirs avec la pédale, votre doigt doit soulever deux
-                mechanisms en même temps. Sur un piano droit, les ressorts
-                d'étouffoirs faussent le Wa de 10g à 20g dès le milieu du
-                clavier. Sur un piano à queue, les étouffoirs reposent
-                directement sur l'arrière de la touche et ajoutent un poids
-                mort de 8g à 12g qui s'arrête brusquement à la note 69.
-                Enfoncer la pédale forte permet d'isoler le toucher pur du
-                clavier en libérant les cordes, garantissant une mesure homogène
-                de la note 1 à la note 88.
-              </p>
-
               <p className="mt-2">
-                <strong>⚠️ Ce qui est volontairement laissé de côté ici</strong>
+                - Scénario C : Wa est anormalement BAS et Wd est anormalement BAS
+                (Ex: Wa=40g, Wd=12g) {'->'} Le coupable est le manque de plombage
+                de compensation à l'avant (défaut de Balance B) combiné à une
+                friction interne élevée. La touche est légère à descendre, mais la
+                mécanique n'a plus aucune force mécanique pour repousser le doigt
+                vers le haut. Le clavier semble 'mort' ou 'éteint', et la touche
+                peine à remonter, bloquant la répétition.
+              </p>
+              <p className="mt-2">
+                - Scénario D : Wa est anormalement BAS et Wd est anormalement HAUT
+                (Ex: Wa=42g, Wd=38g) {'->'} Le coupable est l'absence totale de
+                Friction (F). Les feutres des mortaises sont totalement usés,
+                écrasés ou trop élargis. L'écart entre Wa et Wd est infime. Le
+                clavier est ressenti comme 'fuyant', 'bavard' ou 'clavier
+                plastique'. Le contrôle du pianissimo devient impossible car le
+                moindre effleurement libère la touche sans aucune retenue.
+              </p>
+              <p className="mt-2">
+                - Scénario E : Wa est NORMAL (Ex: 50g) ET Wd est NORMAL (Ex: 26g),
+                mais le clavier est 'mou et fuyant' en plein jeu {'->'} Le coupable
+                est le manque de masse brute compensé artificiellement par le
+                serrage excessif des pivots. Le piano a des marteaux trop légers
+                et manque de plombs, mais la friction élevée retient la touche et
+                fausse la pesée à l'arrêt. En jeu fortissimo, le clavier s'effondre
+                sous le doigt sans offrir la résistance saine nécessaire pour
+                timbrer le son.
+              </p>
+              <p className="mt-2">
+                - Scénario F : Wa est NORMAL (Ex: 50g) ET Wd est NORMAL (Ex: 26g),
+                mais le clavier est 'épuisant et lourd' en jeu rapide {'->'} Le
+                coupable est l'excès de masse et de plombage (haute inertie)
+                masqué par des pivots trop lâches. Les marteaux sont trop lourds et
+                la touche est surchargée de plomb, mais la friction est quasi
+                nulle. La pesée statique semble parfaite, mais la force dynamique
+                nécessaire pour mettre en mouvement cette masse fatigue
+                instantanément les tendons de l'artisan lors des trilles et traits
+                rapides.
+              </p>
+              <p className="mt-2">
+                - Le cas particulier des Pianos Droits : Si le Wa s'envole de
+                manière démesurée, testez la note en enfonçant la pédale forte. Si
+                le Wa redevient instantanément normal, le problème s'oriente vers
+                les ressorts de cuillères d'étouffoirs réglés beaucoup trop durs.
               </p>
 
-              <p className="mt-1">
-                Notre outil mesure uniquement ces données statiques (le piano
-                au repos). Pour être tout à fait complet, le protocole avancé de
-                Stanwood Piano démontre que le ressenti final d'un pianiste
-                en plein jeu dépend également de paramètres dynamiques complexes
-                que nous n'intégrons pas ici :
-              </p>
+              <p className="mt-3">Voici le tableau de synthèse des choix d'atelier :</p>
 
-              <p className="mt-1">
-                - L'Inertie du Marteau (Hammer Strike Weight) : Le poids
-                physique du feutre et du bois du marteau, qui démultiplie
-                l'effort dès que l'on joue vite ou fort.
-              </p>
-
-              <p className="mt-1">
-                - Le Rapport de Bascule (Ratio de la mécanique) : La
-                géométrie exacte de la touche (effet de levier) qui amplifie ou
-                réduit le mouvement du doigt.
-              </p>
-
-              <p className="mt-1">
-                - Le Poids de l'Échappement (Let-off resistance) : La petite
-                résistance supplémentaire ressentie en bout de course lorsque le
-                marteau se libère pour frapper la corde.
-              </p>
-
-              <p className="mt-1">
-                - La Résistance de la Pédale Forte (Sustain pedal engagement) :
-                L'effort supplémentaire demandé aux doigts pour soulever les
-                étouffoirs en mode de jeu normal par rapport au jeu avec pédale.
-              </p>
+              <div className="overflow-x-auto my-4">
+                <table className="min-w-full border border-gray-200 text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Scénario</th>
+                      <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Constat Wa / Wd</th>
+                      <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Friction (F)</th>
+                      <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Balance (B)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="border-b border-gray-200 p-2 font-semibold">A</td>
+                      <td className="border-b border-gray-200 p-2">Wa=65g / Wd=15g</td>
+                      <td className="border-b border-gray-200 p-2">F = 25g (Élevée)</td>
+                      <td className="border-b border-gray-200 p-2">B = 40g (Bonne)</td>
+                    </tr>
+                    <tr>
+                      <td className="border-b border-gray-200 p-2 font-semibold">B</td>
+                      <td className="border-b border-gray-200 p-2">Wa=65g / Wd=42g</td>
+                      <td className="border-b border-gray-200 p-2">F = 11,5g (Basse)</td>
+                      <td className="border-b border-gray-200 p-2">B = 53,5g (Élevée)</td>
+                    </tr>
+                    <tr>
+                      <td className="border-b border-gray-200 p-2 font-semibold">C</td>
+                      <td className="border-b border-gray-200 p-2">Wa=40g / Wd=12g</td>
+                      <td className="border-b border-gray-200 p-2">F = 14g (Élevée)</td>
+                      <td className="border-b border-gray-200 p-2">B = 26g (Basse)</td>
+                    </tr>
+                    <tr>
+                      <td className="border-b border-gray-200 p-2 font-semibold">D</td>
+                      <td className="border-b border-gray-200 p-2">Wa=42g / Wd=38g</td>
+                      <td className="border-b border-gray-200 p-2">F = 2g (Nulle)</td>
+                      <td className="border-b border-gray-200 p-2">B = 40g (Bonne)</td>
+                    </tr>
+                    <tr>
+                      <td className="border-b border-gray-200 p-2 font-semibold">E</td>
+                      <td className="border-b border-gray-200 p-2">Wa=50g / Wd=26g</td>
+                      <td className="border-b border-gray-200 p-2">F = 12g (Apparente)</td>
+                      <td className="border-b border-gray-200 p-2">B = 38g (Apparente)</td>
+                    </tr>
+                    <tr>
+                      <td className="border-b border-gray-200 p-2 font-semibold">F</td>
+                      <td className="border-b border-gray-200 p-2">Wa=50g / Wd=26g</td>
+                      <td className="border-b border-gray-200 p-2">F = 12g (Apparente)</td>
+                      <td className="border-b border-gray-200 p-2">B = 38g (Apparente)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
