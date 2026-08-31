@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { CompareFaq } from "@/components/CompareFaq";
+
 
 export const Route = createFileRoute("/resultats")({
   head: () => ({
@@ -26,6 +28,11 @@ function Resultats() {
   return (
     <main className="mx-auto max-w-[1400px] px-6 py-10">
       <h1 className="text-xl font-semibold">Résultats</h1>
+      <div className="mt-6">
+        <CompareFaq />
+      </div>
     </main>
   );
 }
+
+
