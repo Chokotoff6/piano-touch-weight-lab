@@ -379,22 +379,27 @@ function RootComponent() {
             </div>
 
             <div className="ml-auto flex items-center gap-1 text-sm font-semibold">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => setLang("en")}
                 className={lang === "en" ? "!text-gray-900 underline" : "!text-gray-400"}
               >
                 EN
-              </button>
+              </Button>
               <span className="!text-gray-300">|</span>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => setLang("fr")}
                 className={lang === "fr" ? "!text-gray-900 underline" : "!text-gray-400"}
               >
                 FR
-              </button>
+              </Button>
             </div>
+
           </div>
 
 
