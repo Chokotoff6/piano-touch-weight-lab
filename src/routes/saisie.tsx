@@ -1707,14 +1707,24 @@ Moyennes{" "}
               </div>
               <div className="mt-1 !text-2xl font-semibold tabular-nums">
                 {formatAverageResult(sectionAverages.global[key])}
-                {(key === "wa" || key === "wd") && sectionAverages.global[key] !== "—" && (
-                  <span className="!text-xs !font-medium !text-gray-500"> gr.</span>
+                {sectionAverages.global[key] !== "—" && (
+                  <span className="!text-xs !font-medium"> gr.</span>
                 )}
               </div>
               <div className="mt-0.5 flex justify-center gap-2 text-[0.65rem] text-muted-foreground tabular-nums">
-                <span>{sectionAverages.first[key]}</span>
+                <span>
+                  {sectionAverages.first[key]}
+                  {sectionAverages.first[key] !== "—" && (
+                    <span className="text-muted-foreground"> gr.</span>
+                  )}
+                </span>
                 <span className="text-muted-foreground">/</span>
-                <span>{sectionAverages.second[key]}</span>
+                <span>
+                  {sectionAverages.second[key]}
+                  {sectionAverages.second[key] !== "—" && (
+                    <span className="text-muted-foreground"> gr.</span>
+                  )}
+                </span>
               </div>
               <div className="flex justify-center gap-2 text-[0.55rem] text-muted-foreground tabular-nums">
                 <span className="!text-xs font-medium">1-44</span>
