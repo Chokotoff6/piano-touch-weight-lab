@@ -694,16 +694,9 @@ function Comparer() {
 
       if (cancelled) return;
 
-      // Diagnostic MOCK-MON-PIANO : erreur d'accès OU ligne absente => bloqué.
-      if (mineResult.error || !mineResult.data) {
-        setDebugStatus("error");
-        setDebugWa(null);
-        setDebugRowId(null);
-      } else {
-        setDebugStatus("ok");
-        setDebugWa(mineResult.data.wa_values ?? []);
-        setDebugRowId(`${mineResult.data.serial_number} / id ${mineResult.data.id}`);
-      }
+      // Gate MOCK-MON-PIANO : erreur d'accès OU ligne absente => bloqué.
+      setDebugStatus(mineResult.error || !mineResult.data ? "error" : "ok");
+
 
       setMyPiano(mineResult.data ? profileFromRow(mineResult.data) : null);
       setSameModel(witnessResult.data ? profileFromRow(witnessResult.data) : null);
