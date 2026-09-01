@@ -46,6 +46,8 @@ type ChartPoint = {
   factoryFric: number;
 };
 
+type MetricFamily = "wa" | "bal" | "wd" | "fric";
+
 function buildMockData(): ChartPoint[] {
   const points: ChartPoint[] = [];
   for (let k = 1; k <= 88; k++) {
