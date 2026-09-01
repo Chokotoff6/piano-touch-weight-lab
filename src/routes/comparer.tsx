@@ -380,8 +380,13 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
     const dyLeft = offsetsFor(family.lines, first, family.domain);
     const dyRight = offsetsFor(family.lines, last, family.domain);
     const isHovered = hoveredChart === family.id;
+    const domain = computeDomain(
+      filteredData,
+      family.lines.map((l) => l.dataKey),
+      family.domain,
+    );
     return (
-      <Frame title={family.title} className="h-[310px]">
+      <Frame title={family.title} className="h-[300px] !pt-2">
         <div
           className="h-full w-full"
           onMouseEnter={() => setHoveredChart(family.id)}
@@ -413,7 +418,7 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
                 ticks={DO_POSITIONS}
                 tick={<CustomTickTop dy={-6} />}
               />
-              <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
+              <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={domain} />
               {DO_POSITIONS.map((pos) => (
                 <ReferenceLine key={pos} xAxisId="main" x={pos} stroke="#e5e7eb" strokeWidth={1} />
               ))}
