@@ -417,7 +417,7 @@ function ComparisonChart() {
               />
             ))}
             <Tooltip content={<CustomTooltipContent />} />
-            {lines.map((line) => (
+            {visible.map((line) => (
               <Line
                 key={line.dataKey}
                 xAxisId="main"
@@ -433,7 +433,8 @@ function ComparisonChart() {
                   avg: avg(line.dataKey),
                   color: line.color,
                   count,
-                  dyRight: dyRight.get(line.dataKey) ?? 0,
+                  dyLeft: dyLeft.get(line.dataKey),
+                  dyRight: dyRight.get(line.dataKey),
                 })}
               />
             ))}
