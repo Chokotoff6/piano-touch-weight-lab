@@ -174,7 +174,8 @@ type EndLabelOptions = {
   avg: string;
   color: string;
   count: number;
-  // Décalage vertical du flanc droit (aération 0 / 14 / 28 si moyennes < 1,2 g).
+  // Décalages verticaux anti-collision (-10 / 4 / 18) si courbes trop proches.
+  dyLeft?: number;
   dyRight?: number;
 };
 
@@ -182,7 +183,7 @@ function makeEndLabel(opts: EndLabelOptions) {
   const EndLabel = (props: { x?: number; y?: number; index?: number }) => {
     const { x = 0, y = 0, index = -1 } = props;
     if (index === 0) {
-      const dy = 4;
+      const dy = 4 + (opts.dyLeft ?? 0);
       return (
         <text x={x - 10} y={y} dy={dy} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>
           {opts.shortName}
