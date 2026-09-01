@@ -63,26 +63,49 @@ type ChartPoint = {
   factoryFric: number;
 };
 
-// Référence usine (verte) : profil lissé provisoire dérivé du témoin,
-// en attendant le branchement de la base de références réelles.
 const n1 = (v: number) => Number(v.toFixed(1));
 
-const CHART_DATA: ChartPoint[] = dataRaw.map((d) => ({
-  key: d.noteIndex,
-  isBlack: d.isBlack,
-  waCur: d.Wa,
-  sameWa: d.WitnessWa,
-  stdWa: n1(d.WitnessWa - 2.5),
-  wdCur: d.Wd,
-  sameWd: d.WitnessWd,
-  stdWd: n1(d.WitnessWd + 2.0),
-  balCur: d.Balance,
-  sameBal: d.WitnessBalance,
-  factoryBal: n1(d.WitnessBalance - 1.5),
-  fricCur: d.Friction,
-  sameFric: d.WitnessFriction,
-  factoryFric: n1(d.WitnessFriction + 1.5),
-}));
+// --- Profils de référence chargés depuis la base ---------------------------
+// Le piano de référence courant (modèle confronté). En attendant la sélection
+// dynamique, on cible le modèle du jeu de test.
+const TARGET_MODEL = "K-500";
+const STD_SERIAL = "STD-Kawai-K-500";
+const FACTORY_SERIAL = "FACTORY-Kawai-K-500";
+
+export type RefProfile = {
+  wa: number[];
+  wd: number[];
+  friction: number[];
+  balance: number[];
+};
+
+// Construit les 15 points du graphique. `same` = moyenne communautaire réelle,
+// `ref` = ligne STD-… ou FACTORY-… ; fallback sur le profil témoin local
+// tant que la base ne contient pas ces lignes.
+function buildChartData(same: RefProfile | null, ref: RefProfile | null): ChartPoint[] {
+  return dataRaw.map((d, i) => {
+    const sWa = same?.wa[i] ?? d.WitnessWa;
+    const sWd = same?.wd[i] ?? d.WitnessWd;
+    const sBal = same?.balance[i] ?? d.WitnessBalance;
+    const sFric = same?.friction[i] ?? d.WitnessFriction;
+    return {
+      key: d.noteIndex,
+      isBlack: d.isBlack,
+      waCur: d.Wa,
+      sameWa: n1(sWa),
+      stdWa: n1(ref?.wa[i] ?? sWa - 2.5),
+      wdCur: d.Wd,
+      sameWd: n1(sWd),
+      stdWd: n1(ref?.wd[i] ?? sWd + 2.0),
+      balCur: d.Balance,
+      sameBal: n1(sBal),
+      factoryBal: n1(ref?.balance[i] ?? sBal - 1.5),
+      fricCur: d.Friction,
+      sameFric: n1(sFric),
+      factoryFric: n1(ref?.friction[i] ?? sFric + 1.5),
+    };
+  });
+}
 
 type SeriesKey = keyof Omit<ChartPoint, "key" | "isBlack">;
 
