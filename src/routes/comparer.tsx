@@ -215,8 +215,6 @@ function makeEndLabel(opts: EndLabelOptions) {
   };
   return EndLabel;
 }
-  return EndLabel;
-}
 
 function CustomTickTop(props: {
   x?: number;
