@@ -13,35 +13,25 @@ import {
 } from "recharts";
 
 // ---------------------------------------------------------------------------
-// Page de comparaison — carrosserie graphique (cadres officiels) alimentée par
-// un jeu de données de test local (15 points d'échantillonnage).
+// Page de comparaison — carrosserie graphique (cadres officiels) alimentée
+// EXCLUSIVEMENT par les profils de la table `piano_profiles` (aucune donnée
+// locale, aucun fallback, aucun calcul dérivé d'une série vers une autre).
 // ---------------------------------------------------------------------------
 
 const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];
 
-// --- Jeu de données de test en dur (mockup exact) ---------------------------
-const dataRaw = [
-  { noteIndex: 4, isBlack: false, Wa: 75.0, Wd: 67.0, Friction: 4.0, Balance: 71.0, WitnessWa: 71.5, WitnessWd: 69.0, WitnessFriction: 1.2, WitnessBalance: 70.2 },
-  { noteIndex: 10, isBlack: true, Wa: 78.9, Wd: 56.9, Friction: 11.0, Balance: 67.9, WitnessWa: 75.4, WitnessWd: 58.9, WitnessFriction: 8.3, WitnessBalance: 67.2 },
-  { noteIndex: 16, isBlack: false, Wa: 72.9, Wd: 64.6, Friction: 4.2, Balance: 68.8, WitnessWa: 69.4, WitnessWd: 66.6, WitnessFriction: 1.4, WitnessBalance: 68.0 },
-  { noteIndex: 22, isBlack: true, Wa: 78.0, Wd: 54.6, Friction: 11.7, Balance: 66.3, WitnessWa: 74.5, WitnessWd: 56.6, WitnessFriction: 8.9, WitnessBalance: 65.5 },
-  { noteIndex: 28, isBlack: false, Wa: 70.7, Wd: 64.4, Friction: 3.1, Balance: 67.6, WitnessWa: 67.2, WitnessWd: 66.4, WitnessFriction: 0.4, WitnessBalance: 66.8 },
-  { noteIndex: 34, isBlack: true, Wa: 74.6, Wd: 53.6, Friction: 10.5, Balance: 64.1, WitnessWa: 71.1, WitnessWd: 55.6, WitnessFriction: 7.7, WitnessBalance: 63.3 },
-  { noteIndex: 40, isBlack: false, Wa: 67.2, Wd: 63.1, Friction: 2.1, Balance: 65.2, WitnessWa: 63.7, WitnessWd: 65.1, WitnessFriction: -0.7, WitnessBalance: 64.4 },
-  { noteIndex: 46, isBlack: true, Wa: 72.5, Wd: 50.0, Friction: 11.2, Balance: 61.2, WitnessWa: 69.0, WitnessWd: 52.0, WitnessFriction: 8.5, WitnessBalance: 60.5 },
-  { noteIndex: 52, isBlack: false, Wa: 66.4, Wd: 61.9, Friction: 2.3, Balance: 64.2, WitnessWa: 62.9, WitnessWd: 63.9, WitnessFriction: -0.5, WitnessBalance: 63.4 },
-  { noteIndex: 58, isBlack: true, Wa: 71.6, Wd: 47.7, Friction: 11.9, Balance: 59.6, WitnessWa: 68.1, WitnessWd: 49.7, WitnessFriction: 9.2, WitnessBalance: 58.9 },
-  { noteIndex: 64, isBlack: false, Wa: 64.3, Wd: 59.5, Friction: 2.4, Balance: 61.9, WitnessWa: 60.8, WitnessWd: 61.5, WitnessFriction: -0.4, WitnessBalance: 61.1 },
-  { noteIndex: 70, isBlack: true, Wa: 68.2, Wd: 45.4, Friction: 11.4, Balance: 56.8, WitnessWa: 64.7, WitnessWd: 47.4, WitnessFriction: 8.7, WitnessBalance: 56.0 },
-  { noteIndex: 76, isBlack: false, Wa: 60.7, Wd: 59.3, Friction: 0.7, Balance: 60.0, WitnessWa: 57.2, WitnessWd: 61.3, WitnessFriction: -2.0, WitnessBalance: 59.2 },
-  { noteIndex: 82, isBlack: true, Wa: 66.1, Wd: 44.4, Friction: 10.8, Balance: 55.2, WitnessWa: 62.6, WitnessWd: 46.4, WitnessFriction: 8.1, WitnessBalance: 54.5 },
-  { noteIndex: 88, isBlack: false, Wa: 60.0, Wd: 58.0, Friction: 1.0, Balance: 59.0, WitnessWa: 56.5, WitnessWd: 60.0, WitnessFriction: -1.8, WitnessBalance: 58.2 },
-];
+// Positions d'échantillonnage des 15 mesures sur le clavier 88 touches.
+const SAMPLE_NOTES = [4, 10, 16, 22, 28, 34, 40, 46, 52, 58, 64, 70, 76, 82, 88];
 
-type KeyFilter = "all" | "white" | "black";
+// Note 1 = La0. Touches noires : La#, Do#, Ré#, Fa#, Sol#.
+const BLACK_MODULOS = new Set([2, 5, 7, 10, 0]);
+const isBlackKey = (noteIndex: number) => BLACK_MODULOS.has(noteIndex % 12);
+
+type KeyFilter = "all" | "split" | "white" | "black";
 
 const KEY_FILTERS: Array<{ id: KeyFilter; label: string }> = [
   { id: "all", label: "Toutes les touches" },
+  { id: "split", label: "Vue Éclatée (Blanches ⚪ vs Noires ⚫)" },
   { id: "white", label: "Touches Blanches ⚪" },
   { id: "black", label: "Touches Noires ⚫" },
 ];
@@ -50,24 +40,31 @@ const KEY_FILTERS: Array<{ id: KeyFilter; label: string }> = [
 type ChartPoint = {
   key: number;
   isBlack: boolean;
-  waCur: number;
-  sameWa: number;
-  stdWa: number;
-  wdCur: number;
-  sameWd: number;
-  stdWd: number;
-  balCur: number;
-  sameBal: number;
-  factoryBal: number;
-  fricCur: number;
-  sameFric: number;
-  factoryFric: number;
+  waCur?: number;
+  waCurW?: number;
+  waCurB?: number;
+  sameWa?: number;
+  stdWa?: number;
+  wdCur?: number;
+  wdCurW?: number;
+  wdCurB?: number;
+  sameWd?: number;
+  stdWd?: number;
+  balCur?: number;
+  balCurW?: number;
+  balCurB?: number;
+  sameBal?: number;
+  factoryBal?: number;
+  fricCur?: number;
+  fricCurW?: number;
+  fricCurB?: number;
+  sameFric?: number;
+  factoryFric?: number;
 };
 
 const n1 = (v: number) => Number(v.toFixed(1));
 
 // --- Profils de référence chargés depuis la base ---------------------------
-// Correspondances exactes avec le mockup Supabase :
 //  - "Mon piano" (noir)        : serial_number = 'MOCK-MON-PIANO'
 //  - "Same model(s)" (orange)  : serial_number = 'MOCK-WITNESS'
 //  - "Std" / "Factory" (vert)  : abaque théorique généré localement.
@@ -91,7 +88,7 @@ function makeReferenceProfile(opts: {
   balance: number;
   friction: number;
 }): RefProfile {
-  const count = dataRaw.length;
+  const count = SAMPLE_NOTES.length;
   const step = count > 1 ? (opts.waEnd - opts.waStart) / (count - 1) : 0;
   return {
     wa: Array.from({ length: count }, (_, i) => n1(opts.waStart + step * i)),
@@ -104,31 +101,41 @@ function makeReferenceProfile(opts: {
 const STD_PROFILE = makeReferenceProfile({ waStart: 55, waEnd: 50, wd: 24, balance: 39, friction: 5 });
 const FACTORY_PROFILE = makeReferenceProfile({ waStart: 54, waEnd: 49, wd: 23, balance: 38, friction: 4.5 });
 
-// Construit les 15 points du graphique. Aucune formule locale : chaque série
-// provient exclusivement de son profil chargé (ou de l'abaque pour le vert).
-// Une valeur absente reste vide (pas de point).
+// Construit les 15 points du graphique. Chaque série lit STRICTEMENT son
+// propre tableau brut : aucune dérivation, aucun fallback croisé. Une valeur
+// absente reste vide (pas de point).
 function buildChartData(mine: RefProfile | null, same: RefProfile | null, ref: RefProfile | null): ChartPoint[] {
-  return dataRaw.map((d, i) => {
-    // Chaque série lit STRICTEMENT son propre tableau brut (aucune dérivation
-    // d'une série vers une autre, aucune moyenne locale).
-    const v = (arr: number[] | undefined, fallback?: number) => {
+  return SAMPLE_NOTES.map((noteIndex, i) => {
+    const black = isBlackKey(noteIndex);
+    const v = (arr: number[] | undefined): number | undefined => {
       const raw = arr?.[i];
-      if (typeof raw === "number" && !Number.isNaN(raw)) return n1(raw);
-      return fallback as number;
+      return typeof raw === "number" && !Number.isNaN(raw) ? n1(raw) : undefined;
     };
+    const waCur = v(mine?.wa);
+    const wdCur = v(mine?.wd);
+    const balCur = v(mine?.balance);
+    const fricCur = v(mine?.friction);
     return {
-      key: d.noteIndex,
-      isBlack: d.isBlack,
-      waCur: v(mine?.wa, d.Wa),
+      key: noteIndex,
+      isBlack: black,
+      waCur,
+      waCurW: black ? undefined : waCur,
+      waCurB: black ? waCur : undefined,
       sameWa: v(same?.wa),
       stdWa: v(ref?.wa),
-      wdCur: v(mine?.wd, d.Wd),
+      wdCur,
+      wdCurW: black ? undefined : wdCur,
+      wdCurB: black ? wdCur : undefined,
       sameWd: v(same?.wd),
       stdWd: v(ref?.wd),
-      balCur: v(mine?.balance, d.Balance),
+      balCur,
+      balCurW: black ? undefined : balCur,
+      balCurB: black ? balCur : undefined,
       sameBal: v(same?.balance),
       factoryBal: v(ref?.balance),
-      fricCur: v(mine?.friction, d.Friction),
+      fricCur,
+      fricCurW: black ? undefined : fricCur,
+      fricCurB: black ? fricCur : undefined,
       sameFric: v(same?.friction),
       factoryFric: v(ref?.friction),
     };
