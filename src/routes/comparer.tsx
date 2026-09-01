@@ -182,7 +182,8 @@ type EndLabelOptions = {
   shortName: string;
   avg: string;
   color: string;
-  count: number;
+  firstIndex: number;
+  lastIndex: number;
   dyLeft: number;
   dyRight: number;
 };
@@ -194,16 +195,16 @@ function makeEndLabel(opts: EndLabelOptions) {
     // totalement l'étiquette au lieu de la laisser stagner en haut du cadre.
     const hasPoint =
       typeof x === "number" && Number.isFinite(x) && typeof y === "number" && Number.isFinite(y);
-    const hasValue = value === undefined || (typeof value === "number" && Number.isFinite(value));
+    const hasValue = typeof value === "number" && Number.isFinite(value);
     if (!hasPoint || !hasValue || opts.avg === "—") return <g />;
-    if (index === 0) {
+    if (index === opts.firstIndex) {
       return (
         <text x={x - 44} y={y} dy={opts.dyLeft} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>
           {opts.shortName}
         </text>
       );
     }
-    if (index === opts.count - 1) {
+    if (index === opts.lastIndex) {
       return (
         <text x={x + 10} y={y} dy={opts.dyRight} textAnchor="start" fontSize={11} fontWeight={600} fill={opts.color}>
           {`Moy: ${opts.avg}g`}
@@ -212,6 +213,8 @@ function makeEndLabel(opts: EndLabelOptions) {
     }
     return <g />;
   };
+  return EndLabel;
+}
   return EndLabel;
 }
 
