@@ -234,9 +234,8 @@ function CustomTooltipContent(props: {
 function ComparisonChart() {
   // Données mock en attendant le branchement réel.
   const [data] = useState<ChartPoint[]>(buildMockData);
-  // Domaine vertical live : max de Wa du piano actuel + 1.
-  // Domaine vertical live : max de Wa (actuel + Same models, la plus haute) + 1.
-  const maxWaLive = data.reduce((m, p) => Math.max(m, p.waCur, p.sameWa), 0);
+  // Chaque sous-graphique gère désormais son échelle verticale automatique
+  // (dataMin - 3 / dataMax + 3) — plus de domaine global.
   const count = data.length;
   const first = data[0]!;
   const last = data[count - 1]!;
@@ -292,77 +291,103 @@ function ComparisonChart() {
     { dataKey: "factoryFric", name: "Factory Friction", color: "#a855f7", dyRight: dyRight.factoryFric },
   ];
 
+  // Regroupement par famille (ordre d'empilement vertical).
+  const WA_LINES = LINES.filter((l) => l.name.includes("Wa"));
+  const BAL_LINES = LINES.filter((l) => l.name.includes("Balance"));
+  const WD_LINES = LINES.filter((l) => l.name.includes("Wd"));
+  const FRIC_LINES = LINES.filter((l) => l.name.includes("Friction"));
+
+  // Sous-graphique individuel (famille isolée). Sync global "piano".
+  function SubChart({
+    lines,
+    withTopAxis,
+  }: {
+    lines: typeof LINES;
+    withTopAxis?: boolean;
+  }) {
+    return (
+      <div className="flex-1 h-full w-full min-h-0 relative">
+        <div className="absolute inset-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={data}
+            syncId="piano"
+            margin={{ top: 8, right: 120, bottom: withTopAxis ? 15 : 4, left: 120 }}
+          >
+            <XAxis xAxisId="main" dataKey="key" type="number" domain={[1, 88]} hide />
+            {withTopAxis ? (
+              <XAxis
+                xAxisId="topAxis"
+                dataKey="key"
+                type="number"
+                domain={[1, 88]}
+                orientation="top"
+                height={15}
+                axisLine={false}
+                tickLine={false}
+                ticks={DO_POSITIONS}
+                tick={<CustomTickTop dy={-6} />}
+              />
+            ) : (
+              <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={[1, 88]} hide />
+            )}
+            {/* Échelle automatique respirante : dataMin - 3 → dataMax + 3. */}
+            <YAxis
+              width={0}
+              tick={false}
+              axisLine={false}
+              tickLine={false}
+              domain={["dataMin - 3", "dataMax + 3"]}
+            />
+            {/* Séparateurs verticaux fins aux emplacements des touches DO. */}
+            {DO_POSITIONS.map((pos) => (
+              <ReferenceLine
+                key={pos}
+                xAxisId="main"
+                x={pos}
+                stroke="#e5e7eb"
+                strokeWidth={1}
+              />
+            ))}
+            <Tooltip content={<CustomTooltipContent />} />
+            {lines.map((line) => (
+              <Line
+                key={line.dataKey}
+                xAxisId="main"
+                type="monotone"
+                dataKey={line.dataKey}
+                name={line.name}
+                stroke={line.color}
+                strokeWidth={1.5}
+                dot={line.real ? sampleDot : false}
+                isAnimationActive={false}
+                label={makeEndLabel({
+                  name: line.name,
+                  avg: `${avg(line.dataKey)} g.`,
+                  color: line.color,
+                  count,
+                  dyLeft: line.dyLeft,
+                  dyRight: line.dyRight,
+                })}
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full" style={{ height: 380 }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 8, right: 120, bottom: 15, left: 120 }}>
-          {/* Axe X principal : 1..88, graduations standards du bas masquées. */}
-          <XAxis
-            xAxisId="main"
-            dataKey="key"
-            type="number"
-            domain={[1, 88]}
-            hide
-          />
-          {/* Axe X supérieur : repères des touches DO uniquement. */}
-          <XAxis
-            xAxisId="topAxis"
-            dataKey="key"
-            type="number"
-            domain={[1, 88]}
-            orientation="top"
-            height={15}
-            axisLine={false}
-            tickLine={false}
-            ticks={DO_POSITIONS}
-            tick={<CustomTickTop dy={-6} />}
-          />
-          {/* Axe Y totalement invisible mais actif (zéro écran blanc) :
-              jamais de domain={[]} ni de ticks={[]} vides. */}
-          <YAxis
-            width={0}
-            tick={false}
-            axisLine={false}
-            tickLine={false}
-            domain={[0, maxWaLive + 1]}
-          />
-          {/* Séparateurs verticaux fins aux emplacements des touches DO. */}
-          {DO_POSITIONS.map((pos) => (
-            <ReferenceLine
-              key={pos}
-              xAxisId="main"
-              x={pos}
-              stroke="#e5e7eb"
-              strokeWidth={1}
-            />
-          ))}
-          <Tooltip content={<CustomTooltipContent />} />
-          {/* Toutes les courbes : trait plein continu 1.5 px, labels d'extrémité
-              (BLOC 3). Pastilles r=1.4 uniquement sur les 15 points
-              d'échantillonnage des courbes réelles en noir. */}
-          {LINES.map((line) => (
-            <Line
-              key={line.dataKey}
-              xAxisId="main"
-              type="monotone"
-              dataKey={line.dataKey}
-              name={line.name}
-              stroke={line.color}
-              strokeWidth={1.5}
-              dot={line.real ? sampleDot : false}
-              isAnimationActive={false}
-              label={makeEndLabel({
-                name: line.name,
-                avg: `${avg(line.dataKey)} g.`,
-                color: line.color,
-                count,
-                dyLeft: line.dyLeft,
-                dyRight: line.dyRight,
-              })}
-            />
-          ))}
-        </LineChart>
-      </ResponsiveContainer>
+    <div className="w-full min-h-[650px] flex flex-col justify-between gap-8">
+      {/* BLOC 1 : Wa (conserve l'axe supérieur DO). */}
+      <SubChart lines={WA_LINES} withTopAxis />
+      {/* BLOC 2 : Balance. */}
+      <SubChart lines={BAL_LINES} />
+      {/* BLOC 3 : Wd. */}
+      <SubChart lines={WD_LINES} />
+      {/* BLOC 4 : Friction. */}
+      <SubChart lines={FRIC_LINES} />
     </div>
   );
 }
