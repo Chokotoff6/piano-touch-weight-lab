@@ -397,13 +397,14 @@ function ComparisonChart() {
             ) : (
               <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={[1, 88]} hide />
             )}
-            {/* Échelle individualisée par famille (calibrage rationnel). */}
+            {/* Loupe verticale absolue : domaine fixe écrit en dur. */}
             <YAxis
               width={0}
               tick={false}
               axisLine={false}
               tickLine={false}
               domain={yDomain}
+              allowDataOverflow
             />
             {/* Séparateurs verticaux fins aux emplacements des touches DO. */}
             {DO_POSITIONS.map((pos) => (
