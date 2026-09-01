@@ -95,13 +95,13 @@ function seriesAverage(data: ChartPoint[], key: keyof Omit<ChartPoint, "key">): 
   return (sum / data.length).toFixed(1);
 }
 
-// Pastilles noires affirmées (r = 3) uniquement sur les 15 points
+// Pastilles noires calibrées (r = 2) uniquement sur les 15 points
 // d'échantillonnage de la matrice — réservées aux courbes réelles.
-const SAMPLE_DOT_CONFIG = { r: 3, fill: "#000000", strokeWidth: 0 };
+const SAMPLE_DOT_CONFIG = { r: 2, fill: "#000000", strokeWidth: 0 };
 function sampleDot(props: { cx?: number; cy?: number; index?: number }) {
   const { cx = 0, cy = 0, index = -1 } = props;
   if (!SAMPLE_INDICES.has(index)) return <g key={`dot-${index}`} />;
-  return <circle key={`dot-${index}`} cx={cx} cy={cy} r={3} fill="#000000" strokeWidth={0} />;
+  return <circle key={`dot-${index}`} cx={cx} cy={cy} r={2} fill="#000000" strokeWidth={0} />;
 }
 
 // Étiquettes d'extrémité compressées :
