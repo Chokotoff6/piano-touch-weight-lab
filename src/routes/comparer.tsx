@@ -222,7 +222,7 @@ const FAMILIES: Array<{
   {
     id: "wd",
     title: "Poids de retour (Wd)",
-    domain: [40, 70],
+    domain: [40, 74],
     topAxis: true,
     lines: [
       { dataKey: "wdCur", name: "Mon piano Wd", shortName: "Mon piano Wd", color: "#000000", real: true },
