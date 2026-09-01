@@ -234,6 +234,7 @@ const FAMILIES: Array<{
     id: "bal",
     title: "Balance statique",
     domain: [50, 75],
+    topAxis: true,
     lines: [
       { dataKey: "balCur", name: "Mon piano Balance", shortName: "Mon piano Balance", color: "#000000", real: true },
       { dataKey: "sameBal", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316" },
