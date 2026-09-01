@@ -486,18 +486,15 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
     <div className="w-full flex flex-col px-2 pt-2 pb-4">
       <div className="sticky top-0 z-50 -mx-2 mb-4 flex flex-wrap items-center justify-center gap-2 border-b border-gray-100 bg-white/95 py-3 shadow-sm backdrop-blur-sm">
         {KEY_FILTERS.map((filter) => (
-          <button
+          <Button
             key={filter.id}
             type="button"
+            variant={keyFilter === filter.id ? "default" : "outline"}
             onClick={() => setKeyFilter(filter.id)}
-            className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
-              keyFilter === filter.id
-                ? "border-gray-900 bg-gray-900 text-white"
-                : "border-gray-300 bg-white text-gray-600 hover:border-gray-500 hover:text-gray-900"
-            }`}
+            className="rounded-full px-3.5 py-1.5 text-sm font-medium"
           >
             {filter.label}
-          </button>
+          </Button>
         ))}
       </div>
       <div className="flex w-full flex-col gap-4">
