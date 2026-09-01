@@ -321,7 +321,7 @@ function ComparisonChart() {
               <Line
                 key={line.dataKey}
                 xAxisId="main"
-                type="basis"
+                type="monotone"
                 dataKey={line.dataKey}
                 name={line.name}
                 stroke={line.color}
