@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      piano_profiles: {
+        Row: {
+          balance_values: number[]
+          created_at: string
+          friction_values: number[]
+          id: string
+          marque: string | null
+          modele: string | null
+          serial_number: string
+          wa_values: number[]
+          wd_values: number[]
+        }
+        Insert: {
+          balance_values: number[]
+          created_at?: string
+          friction_values: number[]
+          id?: string
+          marque?: string | null
+          modele?: string | null
+          serial_number: string
+          wa_values: number[]
+          wd_values: number[]
+        }
+        Update: {
+          balance_values?: number[]
+          created_at?: string
+          friction_values?: number[]
+          id?: string
+          marque?: string | null
+          modele?: string | null
+          serial_number?: string
+          wa_values?: number[]
+          wd_values?: number[]
+        }
+        Relationships: []
+      }
       pianos_diagnostics: {
         Row: {
           annee_fabrication: number | null

@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   ResponsiveContainer,
   LineChart,
@@ -21,18 +23,11 @@ import {
 // Positions X des touches DO sur le clavier (1..88).
 const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];
 
-// 15 points d'échantillonnage de la matrice (pastilles noires ultra-fines).
-const SAMPLE_INDICES = new Set(
-  Array.from({ length: 15 }, (_, i) => Math.round((i * 87) / 14)),
-);
-
-// --- Filtre par type de touches ---------------------------------------------
-// Touches noires du clavier (touche 1 = La0 blanc, touche 4 = premier Do).
-const BLACK_KEYS = new Set([
-  2, 5, 7, 10, 12, 14, 17, 19, 22, 24, 26, 29, 31, 34, 36, 38, 41, 43, 46, 48, 50,
-  53, 55, 58, 60, 62, 65, 67, 70, 72, 74, 77, 79, 82, 84, 86,
-]);
-const isBlackKey = (key: number) => BLACK_KEYS.has(key);
+// 15 notes réelles échantillonnées de la matrice (index des cellules 0..14).
+const SAMPLE_NOTES = [4, 10, 16, 22, 28, 34, 40, 46, 52, 58, 64, 70, 76, 82, 88];
+// Touches noires parmi les notes échantillonnées.
+const BLACK_NOTES = new Set([10, 22, 34, 46, 58, 70, 82]);
+const isBlackKey = (key: number) => BLACK_NOTES.has(key);
 
 type KeyFilter = "all" | "white" | "black";
 
@@ -64,9 +59,64 @@ type ChartPoint = {
 
 type MetricFamily = "wa" | "bal" | "wd" | "fric";
 
+// ---------------------------------------------------------------------------
+// Chargement des profils réels depuis la base (table piano_profiles) :
+//  - serial_number = 'MOCK-MON-PIANO' → courbes "Mon piano" (noires)
+//  - serial_number = 'MOCK-WITNESS'   → série "Same model(s)" (orange)
+// Les 15 cellules des matrices wa/wd/friction/balance correspondent aux
+// notes SAMPLE_NOTES. Les références Std / Factory sont dérivées du témoin.
+// ---------------------------------------------------------------------------
+type PianoProfileRow = {
+  serial_number: string;
+  wa_values: number[];
+  wd_values: number[];
+  friction_values: number[];
+  balance_values: number[];
+};
+
+async function fetchProfiles(): Promise<PianoProfileRow[]> {
+  const { data, error } = await supabase
+    .from("piano_profiles")
+    .select("serial_number, wa_values, wd_values, friction_values, balance_values")
+    .in("serial_number", ["MOCK-MON-PIANO", "MOCK-WITNESS"]);
+  if (error) throw error;
+  return (data ?? []) as unknown as PianoProfileRow[];
+}
+
+// Construit les points du graphique à partir des profils réels.
+function buildRealData(cur: PianoProfileRow, same: PianoProfileRow): ChartPoint[] {
+  const n = (v: number) => Number(v.toFixed(1));
+  return SAMPLE_NOTES.map((key, i) => {
+    const wa = Number(cur.wa_values[i]);
+    const wd = Number(cur.wd_values[i]);
+    const fric = Number(cur.friction_values[i]);
+    const bal = Number(cur.balance_values[i]);
+    const sameWa = Number(same.wa_values[i]);
+    const sameWd = Number(same.wd_values[i]);
+    const sameFric = Number(same.friction_values[i]);
+    const sameBal = Number(same.balance_values[i]);
+    return {
+      key,
+      waCur: n(wa),
+      sameWa: n(sameWa),
+      stdWa: n(sameWa - 2.5),
+      wdCur: n(wd),
+      balCur: n(bal),
+      fricCur: n(fric),
+      sameWd: n(sameWd),
+      stdWd: n(sameWd - 2.5),
+      sameBal: n(sameBal),
+      factoryBal: n(sameBal - 2.0),
+      sameFric: n(sameFric),
+      factoryFric: n(sameFric - 2.0),
+    };
+  });
+}
+
+// Données de repli (mock) si les profils ne sont pas encore disponibles.
 function buildMockData(): ChartPoint[] {
   const points: ChartPoint[] = [];
-  for (let k = 1; k <= 88; k++) {
+  for (const k of SAMPLE_NOTES) {
     const t = (k - 1) / 87;
     const wa = 52 - 18 * t + Math.sin(k * 0.7) * 1.2;
     const wd = wa - 12 - Math.cos(k * 0.5) * 0.8;
@@ -111,14 +161,9 @@ function seriesAverage(data: ChartPoint[], key: keyof Omit<ChartPoint, "key">): 
   return (sum / data.length).toFixed(1);
 }
 
-// Pastilles noires calibrées (r = 2) uniquement sur les 15 points
-// d'échantillonnage de la matrice — réservées aux courbes réelles.
+// Pastilles noires calibrées (r = 2) sur chacun des 15 points réels
+// de la matrice — réservées aux courbes "Mon piano".
 const SAMPLE_DOT_CONFIG = { r: 2, fill: "#000000", strokeWidth: 0 };
-function sampleDot(props: { cx?: number; cy?: number; index?: number }) {
-  const { cx = 0, cy = 0, index = -1 } = props;
-  if (!SAMPLE_INDICES.has(index)) return <g key={`dot-${index}`} />;
-  return <circle key={`dot-${index}`} cx={cx} cy={cy} r={2} fill="#000000" strokeWidth={0} />;
-}
 
 // Étiquettes d'extrémité compressées :
 //  - Flanc gauche (index 0)   : nom brut du groupe ("Wa", "Bal.", ...), textAnchor="end", x - 10.
@@ -242,8 +287,18 @@ function CustomTooltipContent(props: {
 }
 
 function ComparisonChart() {
-  // Données mock en attendant le branchement réel.
-  const [data] = useState<ChartPoint[]>(buildMockData);
+  // Profils réels chargés depuis la base ; repli mock si indisponibles.
+  const { data: profiles } = useQuery({
+    queryKey: ["piano-profiles", "mock"],
+    queryFn: fetchProfiles,
+    staleTime: 5 * 60_000,
+  });
+  const data = useMemo<ChartPoint[]>(() => {
+    const cur = profiles?.find((p) => p.serial_number === "MOCK-MON-PIANO");
+    const same = profiles?.find((p) => p.serial_number === "MOCK-WITNESS");
+    if (cur && same) return buildRealData(cur, same);
+    return buildMockData();
+  }, [profiles]);
   // Filtre global par type de touches (blanches / noires / toutes).
   const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
 
