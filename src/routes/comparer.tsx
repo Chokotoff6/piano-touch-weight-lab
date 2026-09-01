@@ -629,42 +629,37 @@ function profileAverage(profile: RefProfile | null, key: keyof RefProfile): stri
 
 function Comparer() {
   const [summary] = useState<PianoSummary>(EMPTY_SUMMARY);
-  const [chartData, setChartData] = useState(() => buildChartData(null, null));
+  const [myPiano, setMyPiano] = useState<RefProfile | null>(null);
   const [sameModel, setSameModel] = useState<RefProfile | null>(null);
   const [factorySpecs, setFactorySpecs] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    const referenceSerial = factorySpecs ? FACTORY_SERIAL : STD_SERIAL;
 
     async function loadComparisonProfiles() {
-      const [communityResult, referenceResult] = await Promise.all([
-        supabase
-          .from("piano_profiles")
-          .select("serial_number, marque, modele, wa_values, wd_values, friction_values, balance_values")
-          .eq("modele", TARGET_MODEL),
-        supabase
-          .from("piano_profiles")
-          .select("serial_number, marque, modele, wa_values, wd_values, friction_values, balance_values")
-          .eq("serial_number", referenceSerial)
-          .maybeSingle(),
-      ]);
+      const { data } = await supabase
+        .from("piano_profiles")
+        .select("serial_number, marque, modele, wa_values, wd_values, friction_values, balance_values")
+        .in("serial_number", [MY_PIANO_SERIAL, WITNESS_SERIAL]);
 
       if (cancelled) return;
-      const communityRows = (communityResult.data ?? []).filter(
-        (row) => !/^(MOCK-|STD-|FACTORY-)/i.test(row.serial_number),
-      );
-      const community = averageProfiles(communityRows);
-      const reference = referenceResult.data ? profileFromRow(referenceResult.data) : null;
-      setSameModel(community);
-      setChartData(buildChartData(community, reference));
+      const rows = data ?? [];
+      const mineRow = rows.find((row) => row.serial_number === MY_PIANO_SERIAL);
+      const witnessRow = rows.find((row) => row.serial_number === WITNESS_SERIAL);
+      setMyPiano(mineRow ? profileFromRow(mineRow) : null);
+      setSameModel(witnessRow ? profileFromRow(witnessRow) : null);
     }
 
     void loadComparisonProfiles();
     return () => {
       cancelled = true;
     };
-  }, [factorySpecs]);
+  }, []);
+
+  const chartData = useMemo(
+    () => buildChartData(myPiano, sameModel, factorySpecs ? FACTORY_PROFILE : STD_PROFILE),
+    [myPiano, sameModel, factorySpecs],
+  );
 
   const current: Averages = {
     wa: seriesAverage(chartData, "waCur"),
