@@ -112,9 +112,10 @@ function buildChartData(same: RefProfile | null, ref: RefProfile | null): ChartP
 type SeriesKey = keyof Omit<ChartPoint, "key" | "isBlack">;
 
 function seriesAverage(data: ChartPoint[], key: SeriesKey): string {
-  if (data.length === 0) return "—";
-  const sum = data.reduce((acc, p) => acc + p[key], 0);
-  return (sum / data.length).toFixed(1);
+  const vals = data.map((p) => p[key]).filter((v): v is number => typeof v === "number" && !Number.isNaN(v));
+  if (vals.length === 0) return "—";
+  const sum = vals.reduce((acc, v) => acc + v, 0);
+  return (sum / vals.length).toFixed(1);
 }
 
 const SAMPLE_DOT_CONFIG = { r: 2, fill: "#000000", strokeWidth: 0 };
@@ -195,7 +196,10 @@ function CustomTooltipContent(props: {
   );
   valid.sort((a, b) => Number(b.value) - Number(a.value));
   return (
-    <div className="rounded-md border border-gray-200 bg-white/95 px-3 py-2 text-xs shadow-md">
+    <div
+      className="rounded-md border border-gray-200 bg-white/95 px-3 py-2 text-xs shadow-md"
+      style={{ pointerEvents: "none" }}
+    >
       <div className="mb-1 font-bold text-gray-800">Touche {label}</div>
       {valid.map((entry) => {
         const color = tooltipColorFor(entry.name ?? "");
@@ -361,7 +365,7 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
               {hoveredNoteIndex !== null && (
                 <ReferenceLine xAxisId="main" x={hoveredNoteIndex} stroke="#94a3b8" strokeWidth={1} />
               )}
-              {isHovered && <Tooltip content={<CustomTooltipContent />} />}
+              {isHovered && <Tooltip content={<CustomTooltipContent />} wrapperStyle={{ pointerEvents: "none" }} isAnimationActive={false} />}
               {family.lines.map((line) => (
                 <Line
                   key={line.dataKey}
