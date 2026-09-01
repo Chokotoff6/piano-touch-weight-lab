@@ -13,35 +13,25 @@ import {
 } from "recharts";
 
 // ---------------------------------------------------------------------------
-// Page de comparaison — carrosserie graphique (cadres officiels) alimentée par
-// un jeu de données de test local (15 points d'échantillonnage).
+// Page de comparaison — carrosserie graphique (cadres officiels) alimentée
+// EXCLUSIVEMENT par les profils de la table `piano_profiles` (aucune donnée
+// locale, aucun fallback, aucun calcul dérivé d'une série vers une autre).
 // ---------------------------------------------------------------------------
 
 const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];
 
-// --- Jeu de données de test en dur (mockup exact) ---------------------------
-const dataRaw = [
-  { noteIndex: 4, isBlack: false, Wa: 75.0, Wd: 67.0, Friction: 4.0, Balance: 71.0, WitnessWa: 71.5, WitnessWd: 69.0, WitnessFriction: 1.2, WitnessBalance: 70.2 },
-  { noteIndex: 10, isBlack: true, Wa: 78.9, Wd: 56.9, Friction: 11.0, Balance: 67.9, WitnessWa: 75.4, WitnessWd: 58.9, WitnessFriction: 8.3, WitnessBalance: 67.2 },
-  { noteIndex: 16, isBlack: false, Wa: 72.9, Wd: 64.6, Friction: 4.2, Balance: 68.8, WitnessWa: 69.4, WitnessWd: 66.6, WitnessFriction: 1.4, WitnessBalance: 68.0 },
-  { noteIndex: 22, isBlack: true, Wa: 78.0, Wd: 54.6, Friction: 11.7, Balance: 66.3, WitnessWa: 74.5, WitnessWd: 56.6, WitnessFriction: 8.9, WitnessBalance: 65.5 },
-  { noteIndex: 28, isBlack: false, Wa: 70.7, Wd: 64.4, Friction: 3.1, Balance: 67.6, WitnessWa: 67.2, WitnessWd: 66.4, WitnessFriction: 0.4, WitnessBalance: 66.8 },
-  { noteIndex: 34, isBlack: true, Wa: 74.6, Wd: 53.6, Friction: 10.5, Balance: 64.1, WitnessWa: 71.1, WitnessWd: 55.6, WitnessFriction: 7.7, WitnessBalance: 63.3 },
-  { noteIndex: 40, isBlack: false, Wa: 67.2, Wd: 63.1, Friction: 2.1, Balance: 65.2, WitnessWa: 63.7, WitnessWd: 65.1, WitnessFriction: -0.7, WitnessBalance: 64.4 },
-  { noteIndex: 46, isBlack: true, Wa: 72.5, Wd: 50.0, Friction: 11.2, Balance: 61.2, WitnessWa: 69.0, WitnessWd: 52.0, WitnessFriction: 8.5, WitnessBalance: 60.5 },
-  { noteIndex: 52, isBlack: false, Wa: 66.4, Wd: 61.9, Friction: 2.3, Balance: 64.2, WitnessWa: 62.9, WitnessWd: 63.9, WitnessFriction: -0.5, WitnessBalance: 63.4 },
-  { noteIndex: 58, isBlack: true, Wa: 71.6, Wd: 47.7, Friction: 11.9, Balance: 59.6, WitnessWa: 68.1, WitnessWd: 49.7, WitnessFriction: 9.2, WitnessBalance: 58.9 },
-  { noteIndex: 64, isBlack: false, Wa: 64.3, Wd: 59.5, Friction: 2.4, Balance: 61.9, WitnessWa: 60.8, WitnessWd: 61.5, WitnessFriction: -0.4, WitnessBalance: 61.1 },
-  { noteIndex: 70, isBlack: true, Wa: 68.2, Wd: 45.4, Friction: 11.4, Balance: 56.8, WitnessWa: 64.7, WitnessWd: 47.4, WitnessFriction: 8.7, WitnessBalance: 56.0 },
-  { noteIndex: 76, isBlack: false, Wa: 60.7, Wd: 59.3, Friction: 0.7, Balance: 60.0, WitnessWa: 57.2, WitnessWd: 61.3, WitnessFriction: -2.0, WitnessBalance: 59.2 },
-  { noteIndex: 82, isBlack: true, Wa: 66.1, Wd: 44.4, Friction: 10.8, Balance: 55.2, WitnessWa: 62.6, WitnessWd: 46.4, WitnessFriction: 8.1, WitnessBalance: 54.5 },
-  { noteIndex: 88, isBlack: false, Wa: 60.0, Wd: 58.0, Friction: 1.0, Balance: 59.0, WitnessWa: 56.5, WitnessWd: 60.0, WitnessFriction: -1.8, WitnessBalance: 58.2 },
-];
+// Positions d'échantillonnage des 15 mesures sur le clavier 88 touches.
+const SAMPLE_NOTES = [4, 10, 16, 22, 28, 34, 40, 46, 52, 58, 64, 70, 76, 82, 88] as const;
 
-type KeyFilter = "all" | "white" | "black";
+// Note 1 = La0. Touches noires : La#, Do#, Ré#, Fa#, Sol#.
+const BLACK_MODULOS = new Set([2, 5, 7, 10, 0]);
+const isBlackKey = (noteIndex: number) => BLACK_MODULOS.has(noteIndex % 12);
+
+type KeyFilter = "all" | "split" | "white" | "black";
 
 const KEY_FILTERS: Array<{ id: KeyFilter; label: string }> = [
   { id: "all", label: "Toutes les touches" },
+  { id: "split", label: "Vue Éclatée (Blanches ⚪ vs Noires ⚫)" },
   { id: "white", label: "Touches Blanches ⚪" },
   { id: "black", label: "Touches Noires ⚫" },
 ];
@@ -50,24 +40,31 @@ const KEY_FILTERS: Array<{ id: KeyFilter; label: string }> = [
 type ChartPoint = {
   key: number;
   isBlack: boolean;
-  waCur: number;
-  sameWa: number;
-  stdWa: number;
-  wdCur: number;
-  sameWd: number;
-  stdWd: number;
-  balCur: number;
-  sameBal: number;
-  factoryBal: number;
-  fricCur: number;
-  sameFric: number;
-  factoryFric: number;
+  waCur: number | undefined;
+  waCurW: number | undefined;
+  waCurB: number | undefined;
+  sameWa: number | undefined;
+  stdWa: number | undefined;
+  wdCur: number | undefined;
+  wdCurW: number | undefined;
+  wdCurB: number | undefined;
+  sameWd: number | undefined;
+  stdWd: number | undefined;
+  balCur: number | undefined;
+  balCurW: number | undefined;
+  balCurB: number | undefined;
+  sameBal: number | undefined;
+  factoryBal: number | undefined;
+  fricCur: number | undefined;
+  fricCurW: number | undefined;
+  fricCurB: number | undefined;
+  sameFric: number | undefined;
+  factoryFric: number | undefined;
 };
 
 const n1 = (v: number) => Number(v.toFixed(1));
 
 // --- Profils de référence chargés depuis la base ---------------------------
-// Correspondances exactes avec le mockup Supabase :
 //  - "Mon piano" (noir)        : serial_number = 'MOCK-MON-PIANO'
 //  - "Same model(s)" (orange)  : serial_number = 'MOCK-WITNESS'
 //  - "Std" / "Factory" (vert)  : abaque théorique généré localement.
@@ -91,7 +88,7 @@ function makeReferenceProfile(opts: {
   balance: number;
   friction: number;
 }): RefProfile {
-  const count = dataRaw.length;
+  const count = SAMPLE_NOTES.length;
   const step = count > 1 ? (opts.waEnd - opts.waStart) / (count - 1) : 0;
   return {
     wa: Array.from({ length: count }, (_, i) => n1(opts.waStart + step * i)),
@@ -104,31 +101,41 @@ function makeReferenceProfile(opts: {
 const STD_PROFILE = makeReferenceProfile({ waStart: 55, waEnd: 50, wd: 24, balance: 39, friction: 5 });
 const FACTORY_PROFILE = makeReferenceProfile({ waStart: 54, waEnd: 49, wd: 23, balance: 38, friction: 4.5 });
 
-// Construit les 15 points du graphique. Aucune formule locale : chaque série
-// provient exclusivement de son profil chargé (ou de l'abaque pour le vert).
-// Une valeur absente reste vide (pas de point).
+// Construit les 15 points du graphique. Chaque série lit STRICTEMENT son
+// propre tableau brut : aucune dérivation, aucun fallback croisé. Une valeur
+// absente reste vide (pas de point).
 function buildChartData(mine: RefProfile | null, same: RefProfile | null, ref: RefProfile | null): ChartPoint[] {
-  return dataRaw.map((d, i) => {
-    // Chaque série lit STRICTEMENT son propre tableau brut (aucune dérivation
-    // d'une série vers une autre, aucune moyenne locale).
-    const v = (arr: number[] | undefined, fallback?: number) => {
+  return SAMPLE_NOTES.map((noteIndex, i) => {
+    const black = isBlackKey(noteIndex);
+    const v = (arr: number[] | undefined): number | undefined => {
       const raw = arr?.[i];
-      if (typeof raw === "number" && !Number.isNaN(raw)) return n1(raw);
-      return fallback as number;
+      return typeof raw === "number" && !Number.isNaN(raw) ? n1(raw) : undefined;
     };
+    const waCur = v(mine?.wa);
+    const wdCur = v(mine?.wd);
+    const balCur = v(mine?.balance);
+    const fricCur = v(mine?.friction);
     return {
-      key: d.noteIndex,
-      isBlack: d.isBlack,
-      waCur: v(mine?.wa, d.Wa),
+      key: noteIndex,
+      isBlack: black,
+      waCur,
+      waCurW: black ? undefined : waCur,
+      waCurB: black ? waCur : undefined,
       sameWa: v(same?.wa),
       stdWa: v(ref?.wa),
-      wdCur: v(mine?.wd, d.Wd),
+      wdCur,
+      wdCurW: black ? undefined : wdCur,
+      wdCurB: black ? wdCur : undefined,
       sameWd: v(same?.wd),
       stdWd: v(ref?.wd),
-      balCur: v(mine?.balance, d.Balance),
+      balCur,
+      balCurW: black ? undefined : balCur,
+      balCurB: black ? balCur : undefined,
       sameBal: v(same?.balance),
       factoryBal: v(ref?.balance),
-      fricCur: v(mine?.friction, d.Friction),
+      fricCur,
+      fricCurW: black ? undefined : fricCur,
+      fricCurB: black ? fricCur : undefined,
       sameFric: v(same?.friction),
       factoryFric: v(ref?.friction),
     };
@@ -140,7 +147,7 @@ function buildChartData(mine: RefProfile | null, same: RefProfile | null, ref: R
 function computeDomain(
   data: ChartPoint[],
   keys: SeriesKey[],
-  fallback: [number, number],
+  baseDomain: [number, number],
 ): [number, number] {
   const vals: number[] = [];
   data.forEach((p) => {
@@ -149,7 +156,7 @@ function computeDomain(
       if (typeof v === "number" && Number.isFinite(v)) vals.push(v);
     });
   });
-  if (vals.length === 0) return fallback;
+  if (vals.length === 0) return baseDomain;
   const min = Math.min(...vals);
   const max = Math.max(...vals);
   const pad = Math.max((max - min) * 0.18, 1.5);
@@ -175,7 +182,8 @@ type EndLabelOptions = {
   shortName: string;
   avg: string;
   color: string;
-  count: number;
+  firstIndex: number;
+  lastIndex: number;
   dyLeft: number;
   dyRight: number;
 };
@@ -187,16 +195,16 @@ function makeEndLabel(opts: EndLabelOptions) {
     // totalement l'étiquette au lieu de la laisser stagner en haut du cadre.
     const hasPoint =
       typeof x === "number" && Number.isFinite(x) && typeof y === "number" && Number.isFinite(y);
-    const hasValue = value === undefined || (typeof value === "number" && Number.isFinite(value));
+    const hasValue = typeof value === "number" && Number.isFinite(value);
     if (!hasPoint || !hasValue || opts.avg === "—") return <g />;
-    if (index === 0) {
+    if (index === opts.firstIndex) {
       return (
         <text x={x - 44} y={y} dy={opts.dyLeft} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>
           {opts.shortName}
         </text>
       );
     }
-    if (index === opts.count - 1) {
+    if (index === opts.lastIndex) {
       return (
         <text x={x + 10} y={y} dy={opts.dyRight} textAnchor="start" fontSize={11} fontWeight={600} fill={opts.color}>
           {`Moy: ${opts.avg}g`}
@@ -285,21 +293,19 @@ type LineDef = {
   real?: boolean;
 };
 
-// Définition des 4 familles : titre du cadre, échelle fixe, séries.
+// Séries de référence affichées avec les valeurs brutes du profil témoin et
+// de l'abaque sélectionné. La série noire est ajoutée selon le mode de vue.
 const FAMILIES: Array<{
   id: string;
   title: string;
   domain: [number, number];
-  topAxis?: boolean;
   lines: LineDef[];
 }> = [
   {
     id: "wa",
     title: "Poids d'enfoncement (Wa)",
     domain: [55, 85],
-    topAxis: true,
     lines: [
-      { dataKey: "waCur", name: "Mon piano Wa", shortName: "Mon piano Wa", color: "#000000", real: true },
       { dataKey: "sameWa", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316" },
       { dataKey: "stdWa", name: "Std", shortName: "Std", color: "#10b981" },
     ],
@@ -308,9 +314,7 @@ const FAMILIES: Array<{
     id: "wd",
     title: "Poids de retour (Wd)",
     domain: [50, 70],
-    topAxis: true,
     lines: [
-      { dataKey: "wdCur", name: "Mon piano Wd", shortName: "Mon piano Wd", color: "#000000", real: true },
       { dataKey: "sameWd", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316" },
       { dataKey: "stdWd", name: "Std", shortName: "Std", color: "#10b981" },
     ],
@@ -319,9 +323,7 @@ const FAMILIES: Array<{
     id: "bal",
     title: "Balance statique",
     domain: [55, 75],
-    topAxis: true,
     lines: [
-      { dataKey: "balCur", name: "Mon piano Balance", shortName: "Mon piano Balance", color: "#000000", real: true },
       { dataKey: "sameBal", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316" },
       { dataKey: "factoryBal", name: "Factory", shortName: "Factory", color: "#10b981" },
     ],
@@ -330,35 +332,56 @@ const FAMILIES: Array<{
     id: "fric",
     title: "Friction mécanique",
     domain: [-2, 16],
-    topAxis: true,
     lines: [
-      { dataKey: "fricCur", name: "Mon piano Friction", shortName: "Mon piano Friction", color: "#000000", real: true },
       { dataKey: "sameFric", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316" },
       { dataKey: "factoryFric", name: "Factory", shortName: "Factory", color: "#10b981" },
     ],
   },
 ];
 
-// Décalages verticaux des étiquettes d'extrémité : trois niveaux groupés
-// (0 / 10 / 20 px) attribués selon l'altitude réelle des courbes (la courbe
-// la plus haute reste à dy 0, centrée sur sa cote). Tous ≤ 20 px : les textes
-// restent groupés face à leur courbe à la note 88, sans déborder du cadre.
 const DY_STEPS = [0, 10, 20];
 
-function offsetsFor(
-  lines: LineDef[],
-  point: ChartPoint | undefined,
-  _domain: [number, number],
-): Map<SeriesKey, number> {
+function offsetsFor(lines: LineDef[], point: ChartPoint | undefined): Map<SeriesKey, number> {
   const map = new Map<SeriesKey, number>();
   if (!point) {
-    lines.forEach((l, i) => map.set(l.dataKey, DY_STEPS[i] ?? 20));
+    lines.forEach((line, index) => map.set(line.dataKey, DY_STEPS[index] ?? 20));
     return map;
   }
   [...lines]
-    .sort((a, b) => point[b.dataKey] - point[a.dataKey]) // courbe haute → basse
-    .forEach((l, i) => map.set(l.dataKey, DY_STEPS[i] ?? 20));
+    .sort((a, b) => {
+      const aValue = point[a.dataKey];
+      const bValue = point[b.dataKey];
+      return (typeof bValue === "number" ? bValue : -Infinity) -
+        (typeof aValue === "number" ? aValue : -Infinity);
+    })
+    .forEach((line, index) => map.set(line.dataKey, DY_STEPS[index] ?? 20));
   return map;
+}
+
+function currentLinesFor(familyId: string, keyFilter: KeyFilter): LineDef[] {
+  const metrics: Record<string, [SeriesKey, SeriesKey, SeriesKey]> = {
+    wa: ["waCur", "waCurW", "waCurB"],
+    wd: ["wdCur", "wdCurW", "wdCurB"],
+    bal: ["balCur", "balCurW", "balCurB"],
+    fric: ["fricCur", "fricCurW", "fricCurB"],
+  };
+  const labels: Record<string, string> = {
+    wa: "Wa",
+    wd: "Wd",
+    bal: "Balance",
+    fric: "Friction",
+  };
+  const metric = metrics[familyId];
+  if (!metric) return [];
+  const label = labels[familyId] ?? "Wa";
+  if (keyFilter === "split") {
+    return [
+      { dataKey: metric[1], name: `Mon piano ${label} — blanches`, shortName: `Mon piano ${label}`, color: "#000000", real: true },
+      { dataKey: metric[2], name: `Mon piano ${label} — noires`, shortName: `Mon piano ${label}`, color: "#6b7280", real: true },
+    ];
+  }
+  const dataKey = keyFilter === "white" ? metric[1] : keyFilter === "black" ? metric[2] : metric[0];
+  return [{ dataKey, name: `Mon piano ${label}`, shortName: `Mon piano ${label}`, color: "#000000", real: true }];
 }
 
 function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
@@ -367,8 +390,8 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
   const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
 
   const filteredData = useMemo(() => {
-    if (keyFilter === "white") return chartData.filter((p) => !p.isBlack);
-    if (keyFilter === "black") return chartData.filter((p) => p.isBlack);
+    if (keyFilter === "white") return chartData.filter((point) => !point.isBlack);
+    if (keyFilter === "black") return chartData.filter((point) => point.isBlack);
     return chartData;
   }, [chartData, keyFilter]);
 
@@ -377,14 +400,11 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
   const last = filteredData[count - 1];
 
   function SubChart({ family }: { family: (typeof FAMILIES)[number] }) {
-    const dyLeft = offsetsFor(family.lines, first, family.domain);
-    const dyRight = offsetsFor(family.lines, last, family.domain);
+    const lines = [...currentLinesFor(family.id, keyFilter), ...family.lines];
+    const dyLeft = offsetsFor(lines, first);
+    const dyRight = offsetsFor(lines, last);
     const isHovered = hoveredChart === family.id;
-    const domain = computeDomain(
-      filteredData,
-      family.lines.map((l) => l.dataKey),
-      family.domain,
-    );
+    const domain = computeDomain(filteredData, lines.map((line) => line.dataKey), family.domain);
     return (
       <Frame title={family.title} className="h-[300px] !pt-2">
         <div
@@ -403,7 +423,7 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
                 setHoveredChart(null);
                 setHoveredNoteIndex(null);
               }}
-              margin={{ top: 5, right: 130, bottom: 15, left: 140 }}
+              margin={{ top: 5, right: 140, bottom: 15, left: 140 }}
             >
               <XAxis xAxisId="main" dataKey="key" type="number" domain={[1, 88]} hide />
               <XAxis
@@ -425,8 +445,14 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
               {hoveredNoteIndex !== null && (
                 <ReferenceLine xAxisId="main" x={hoveredNoteIndex} stroke="#94a3b8" strokeWidth={1} />
               )}
-              {isHovered && <Tooltip content={<CustomTooltipContent />} wrapperStyle={{ pointerEvents: "none" }} isAnimationActive={false} />}
-              {family.lines.map((line) => (
+              {isHovered && (
+                <Tooltip
+                  content={<CustomTooltipContent />}
+                  wrapperStyle={{ pointerEvents: "none" }}
+                  isAnimationActive={false}
+                />
+              )}
+              {lines.map((line) => (
                 <Line
                   key={line.dataKey}
                   xAxisId="main"
@@ -434,16 +460,18 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
                   dataKey={line.dataKey}
                   name={line.name}
                   stroke={line.color}
-                  strokeWidth={1.5}
+                  strokeWidth={line.name.includes("noires") ? 1 : 1.5}
                   dot={line.real ? SAMPLE_DOT_CONFIG : false}
+                  connectNulls={false}
                   isAnimationActive={false}
                   label={makeEndLabel({
                     shortName: line.shortName,
                     avg: seriesAverage(filteredData, line.dataKey),
                     color: line.color,
-                    count,
-                    dyLeft: dyLeft.get(line.dataKey) ?? 4,
-                    dyRight: dyRight.get(line.dataKey) ?? 4,
+                    firstIndex: 0,
+                    lastIndex: count - 1,
+                    dyLeft: dyLeft.get(line.dataKey) ?? 0,
+                    dyRight: dyRight.get(line.dataKey) ?? 0,
                   })}
                 />
               ))}
@@ -457,25 +485,21 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
   return (
     <div className="w-full flex flex-col px-2 pt-2 pb-4">
       <div className="sticky top-0 z-50 -mx-2 mb-4 flex flex-wrap items-center justify-center gap-2 border-b border-gray-100 bg-white/95 py-3 shadow-sm backdrop-blur-sm">
-        <span className="mr-1 text-sm font-semibold text-gray-700">Filtre clavier :</span>
-        {KEY_FILTERS.map((f) => (
-          <button
-            key={f.id}
+        {KEY_FILTERS.map((filter) => (
+          <Button
+            key={filter.id}
             type="button"
-            onClick={() => setKeyFilter(f.id)}
-            className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
-              keyFilter === f.id
-                ? "border-gray-900 bg-gray-900 text-white"
-                : "border-gray-300 bg-white text-gray-600 hover:border-gray-500 hover:text-gray-900"
-            }`}
+            variant={keyFilter === filter.id ? "default" : "outline"}
+            onClick={() => setKeyFilter(filter.id)}
+            className="rounded-full px-3.5 py-1.5 text-sm font-medium"
           >
-            {f.label}
-          </button>
+            {filter.label}
+          </Button>
         ))}
       </div>
       <div className="flex w-full flex-col gap-4">
-        {FAMILIES.map((f) => (
-          <SubChart key={f.id} family={f} />
+        {FAMILIES.map((family) => (
+          <SubChart key={family.id} family={family} />
         ))}
       </div>
     </div>
@@ -650,17 +674,22 @@ function Comparer() {
     let cancelled = false;
 
     async function loadComparisonProfiles() {
-      const { data } = await supabase
-        .from("piano_profiles")
-        .select("serial_number, marque, modele, wa_values, wd_values, friction_values, balance_values")
-        .in("serial_number", [MY_PIANO_SERIAL, WITNESS_SERIAL]);
+      const [mineResult, witnessResult] = await Promise.all([
+        supabase
+          .from("piano_profiles")
+          .select("serial_number, wa_values, wd_values, friction_values, balance_values")
+          .eq("serial_number", MY_PIANO_SERIAL)
+          .maybeSingle(),
+        supabase
+          .from("piano_profiles")
+          .select("serial_number, wa_values, wd_values, friction_values, balance_values")
+          .eq("serial_number", WITNESS_SERIAL)
+          .maybeSingle(),
+      ]);
 
       if (cancelled) return;
-      const rows = data ?? [];
-      const mineRow = rows.find((row) => row.serial_number === MY_PIANO_SERIAL);
-      const witnessRow = rows.find((row) => row.serial_number === WITNESS_SERIAL);
-      setMyPiano(mineRow ? profileFromRow(mineRow) : null);
-      setSameModel(witnessRow ? profileFromRow(witnessRow) : null);
+      setMyPiano(mineResult.data ? profileFromRow(mineResult.data) : null);
+      setSameModel(witnessResult.data ? profileFromRow(witnessResult.data) : null);
     }
 
     void loadComparisonProfiles();
