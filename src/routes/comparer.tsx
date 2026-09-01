@@ -460,7 +460,7 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
                   dataKey={line.dataKey}
                   name={line.name}
                   stroke={line.color}
-                  strokeWidth={line.name.includes("noires") ? 1 : 1.5}
+                  strokeWidth={2}
                   dot={line.real ? SAMPLE_DOT_CONFIG : false}
                   // En Vue Éclatée, les séries blanches/noires alternent des
                   // valeurs et des `undefined` : on relie les segments pour
