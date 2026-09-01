@@ -293,13 +293,13 @@ function ComparisonChart() {
     const dyLeft = offsetsFor(family.lines, first, family.domain);
     const dyRight = offsetsFor(family.lines, last, family.domain);
     return (
-      <Frame title={family.title} className="h-[260px]">
+      <Frame title={family.title} className="h-[300px]">
         <div className="h-full w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={filteredData}
               syncId="piano"
-              margin={{ top: 0, right: 130, bottom: 6, left: 130 }}
+              margin={{ top: 5, right: 130, bottom: 35, left: 120 }}
               style={{ marginTop: "24px" }}
             >
               <XAxis xAxisId="main" dataKey="key" type="number" domain={[1, 88]} hide />
