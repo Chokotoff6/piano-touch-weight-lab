@@ -670,11 +670,9 @@ function Comparer() {
   const [sameModel, setSameModel] = useState<RefProfile | null>(null);
   const [factorySpecs, setFactorySpecs] = useState(false);
 
-  // --- Test de vérité : lecture brute du mockup MOCK-MON-PIANO ---------------
-  // debugStatus = "loading" | "ok" | "error" (erreur RLS OU ligne vide).
+  // Gate d'accès : erreur RLS OU ligne MOCK-MON-PIANO absente => blocage écran.
   const [debugStatus, setDebugStatus] = useState<"loading" | "ok" | "error">("loading");
-  const [debugWa, setDebugWa] = useState<number[] | null>(null);
-  const [debugRowId, setDebugRowId] = useState<string | null>(null);
+
 
   useEffect(() => {
     let cancelled = false;
