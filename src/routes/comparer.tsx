@@ -147,7 +147,7 @@ function buildChartData(mine: RefProfile | null, same: RefProfile | null, ref: R
 function computeDomain(
   data: ChartPoint[],
   keys: SeriesKey[],
-  fallback: [number, number],
+  baseDomain: [number, number],
 ): [number, number] {
   const vals: number[] = [];
   data.forEach((p) => {
