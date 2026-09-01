@@ -568,6 +568,30 @@ function profileFromRow(row: {
   };
 }
 
+function averageProfiles(
+  rows: Array<{
+    wa_values: number[];
+    wd_values: number[];
+    friction_values: number[];
+    balance_values: number[];
+  }>,
+): RefProfile | null {
+  if (rows.length === 0) return null;
+  const average = (values: number[][]) => {
+    const length = Math.max(...values.map((series) => series.length));
+    return Array.from({ length }, (_, index) => {
+      const atIndex = values.map((series) => series[index]).filter((value) => value !== undefined);
+      return atIndex.length > 0 ? atIndex.reduce((sum, value) => sum + value, 0) / atIndex.length : 0;
+    });
+  };
+  return {
+    wa: average(rows.map((row) => row.wa_values)),
+    wd: average(rows.map((row) => row.wd_values)),
+    friction: average(rows.map((row) => row.friction_values)),
+    balance: average(rows.map((row) => row.balance_values)),
+  };
+}
+
 function profileAverage(profile: RefProfile | null, key: keyof RefProfile): string {
   const values = profile?.[key] ?? [];
   if (values.length === 0) return "—";
@@ -578,7 +602,6 @@ function Comparer() {
   const [summary] = useState<PianoSummary>(EMPTY_SUMMARY);
   const [chartData, setChartData] = useState(() => buildChartData(null, null));
   const [sameModel, setSameModel] = useState<RefProfile | null>(null);
-  const [reference, setReference] = useState<RefProfile | null>(null);
   const [factorySpecs, setFactorySpecs] = useState(false);
 
   useEffect(() => {
@@ -602,18 +625,10 @@ function Comparer() {
       const communityRows = (communityResult.data ?? []).filter(
         (row) => !/^(MOCK-|STD-|FACTORY-)/i.test(row.serial_number),
       );
-      const community = communityRows[0]
-        ? {
-            wa: communityRows.flatMap((row) => row.wa_values),
-            wd: communityRows.flatMap((row) => row.wd_values),
-            friction: communityRows.flatMap((row) => row.friction_values),
-            balance: communityRows.flatMap((row) => row.balance_values),
-          }
-        : null;
-      const ref = referenceResult.data ? profileFromRow(referenceResult.data) : null;
+      const community = averageProfiles(communityRows);
+      const reference = referenceResult.data ? profileFromRow(referenceResult.data) : null;
       setSameModel(community);
-      setReference(ref);
-      setChartData(buildChartData(community, ref));
+      setChartData(buildChartData(community, reference));
     }
 
     void loadComparisonProfiles();
@@ -621,6 +636,19 @@ function Comparer() {
       cancelled = true;
     };
   }, [factorySpecs]);
+
+  const current: Averages = {
+    wa: seriesAverage(chartData, "waCur"),
+    wd: seriesAverage(chartData, "wdCur"),
+    friction: seriesAverage(chartData, "fricCur"),
+    balance: seriesAverage(chartData, "balCur"),
+  };
+  const witness: Averages = {
+    wa: profileAverage(sameModel, "wa"),
+    wd: profileAverage(sameModel, "wd"),
+    friction: profileAverage(sameModel, "friction"),
+    balance: profileAverage(sameModel, "balance"),
+  };
 
   const current: Averages = {
     wa: profileAverage(null, "wa"),
