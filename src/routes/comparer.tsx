@@ -198,7 +198,7 @@ type TooltipEntry = {
 function tooltipColorFor(name: string): string {
   const n = name.toLowerCase();
   if (n.includes("mon piano")) return "#000000";
-  if (n.startsWith("same models")) return "#f97316";
+  if (n.startsWith("same model")) return "#f97316";
   return "#10b981"; // Std ou Factory (références)
 }
 
