@@ -650,18 +650,6 @@ function Comparer() {
     balance: profileAverage(sameModel, "balance"),
   };
 
-  const current: Averages = {
-    wa: profileAverage(null, "wa"),
-    wd: profileAverage(null, "wd"),
-    friction: profileAverage(null, "friction"),
-    balance: profileAverage(null, "balance"),
-  };
-  const witness: Averages = {
-    wa: profileAverage(sameModel, "wa"),
-    wd: profileAverage(sameModel, "wd"),
-    friction: profileAverage(sameModel, "friction"),
-    balance: profileAverage(sameModel, "balance"),
-  };
 
   return (
     <main className="mx-auto w-full max-w-[1400px] px-6 py-8">
