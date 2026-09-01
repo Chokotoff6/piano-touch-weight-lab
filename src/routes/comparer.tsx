@@ -45,64 +45,85 @@ const KEY_FILTERS: Array<{ id: KeyFilter; label: string }> = [
   { id: "black", label: "Touches Noires ⚫" },
 ];
 
-// Données fictives temporaires : courbe de Wa décroissante réaliste
-// (~52 g dans le grave → ~34 g dans l'aigu), Wd et dérivés calculés.
-// Les séries témoins / std sont calibrées pour simuler des collisions de
-// texte (< 3 g) aux extrémités, afin de valider la micro-aération (BLOC 3).
-type ChartPoint = {
-  key: number;
-  waCur: number;
-  sameWa: number;
-  stdWa: number;
-  wdCur: number;
-  balCur: number;
-  fricCur: number;
-  sameWd: number;
-  stdWd: number;
-  sameBal: number;
-  factoryBal: number;
-  sameFric: number;
-  factoryFric: number;
+// --- Données réelles (piano_profiles) ---------------------------------------
+// Chaque profil stocke 15 valeurs par mesure (matrice d'échantillonnage),
+// placées aux 15 positions SAMPLE_POSITIONS puis interpolées linéairement
+// sur les 88 touches.
+type ProfileRow = {
+  serial_number: string;
+  marque: string | null;
+  modele: string | null;
+  wa_values: number[];
+  wd_values: number[];
+  balance_values: number[];
+  friction_values: number[];
 };
 
-type MetricFamily = "wa" | "bal" | "wd" | "fric";
+type ChartPoint = {
+  key: number;
+  waCur?: number;
+  sameWa?: number;
+  wdCur?: number;
+  sameWd?: number;
+  balCur?: number;
+  sameBal?: number;
+  fricCur?: number;
+  sameFric?: number;
+};
 
-function buildMockData(): ChartPoint[] {
+type MetricFamily = "wa" | "wd" | "bal" | "fric";
+
+// Étend les 15 points d'échantillonnage sur les 88 touches (interpolation
+// linéaire entre points de mesure, extrapolation plate aux extrémités).
+function expandSamples(values: number[] | null | undefined): (number | undefined)[] {
+  const out: (number | undefined)[] = new Array(88).fill(undefined);
+  if (!values || values.length === 0) return out;
+  const pts = values.slice(0, 15).map((v) => Number(v));
+  while (pts.length < 15) pts.push(pts[pts.length - 1]!);
+  for (let s = 0; s < SAMPLE_POSITIONS.length; s++) {
+    const i0 = SAMPLE_POSITIONS[s]!;
+    out[i0] = Number(pts[s]!.toFixed(1));
+    if (s < SAMPLE_POSITIONS.length - 1) {
+      const i1 = SAMPLE_POSITIONS[s + 1]!;
+      const v0 = pts[s]!;
+      const v1 = pts[s + 1]!;
+      for (let i = i0 + 1; i < i1; i++) {
+        const t = (i - i0) / (i1 - i0);
+        out[i] = Number((v0 + (v1 - v0) * t).toFixed(1));
+      }
+    }
+  }
+  // Extrapolation plate avant le premier / après le dernier point.
+  for (let i = 0; i < SAMPLE_POSITIONS[0]!; i++) out[i] = out[SAMPLE_POSITIONS[0]!];
+  for (let i = SAMPLE_POSITIONS[14]! + 1; i < 88; i++) out[i] = out[SAMPLE_POSITIONS[14]!];
+  return out;
+}
+
+function buildChartData(
+  mine: ProfileRow | undefined,
+  witness: ProfileRow | undefined,
+): ChartPoint[] {
+  const mWa = expandSamples(mine?.wa_values);
+  const mWd = expandSamples(mine?.wd_values);
+  const mBal = expandSamples(mine?.balance_values);
+  const mFric = expandSamples(mine?.friction_values);
+  const wWa = expandSamples(witness?.wa_values);
+  const wWd = expandSamples(witness?.wd_values);
+  const wBal = expandSamples(witness?.balance_values);
+  const wFric = expandSamples(witness?.friction_values);
   const points: ChartPoint[] = [];
   for (let k = 1; k <= 88; k++) {
-    const t = (k - 1) / 87;
-    const wa = 52 - 18 * t + Math.sin(k * 0.7) * 1.2;
-    const wd = wa - 12 - Math.cos(k * 0.5) * 0.8;
-    const bal = (wa + wd) / 2;
-    const fric = (wa - wd) / 2;
-    // Séries témoins / références Wa : écart constant ≥ 3 g pour éviter
-    // toute collision d'étiquettes au flanc gauche (hors aération BLOC 3).
-    const sameWa = wa + 3.5;
-    const stdWa = wa - 3.5;
-    // Flanc GAUCHE (k=1) : trois Wd serrées à moins de 3 g → collision,
-    // mais étiquettes droites espacées (fins ≥ 2,4 g).
-    const sameWd = wd + 1.2 - t * 3.6;
-    const stdWd = wd - 1.1 + t * 3.5;
-    // Flanc DROIT serré (< 3 g) → collision Balance et Friction.
-    const sameBal = bal + 2.4 - t * 1.2; // fin : bal + 1.2
-    const factoryBal = bal - 2.2 + t * 1.1; // fin : bal - 1.1
-    const sameFric = fric + 2.2 - t * 1.1; // fin : fric + 1.1
-    const factoryFric = fric - 2.4 + t * 1.2; // fin : fric - 1.2
-    const n = (v: number) => Number(v.toFixed(1));
+    const i = k - 1;
     points.push({
       key: k,
-      waCur: n(wa),
-      sameWa: n(sameWa),
-      stdWa: n(stdWa),
-      wdCur: n(wd),
-      balCur: n(bal),
-      fricCur: n(fric),
-      sameWd: n(sameWd),
-      stdWd: n(stdWd),
-      sameBal: n(sameBal),
-      factoryBal: n(factoryBal),
-      sameFric: n(sameFric),
-      factoryFric: n(factoryFric),
+      waCur: mWa[i],
+      wdCur: mWd[i],
+      balCur: mBal[i],
+      fricCur: mFric[i],
+      sameWa: wWa[i],
+      sameWd: wWd[i],
+      sameBal: wBal[i],
+      sameFric: wFric[i],
     });
   }
   return points;
