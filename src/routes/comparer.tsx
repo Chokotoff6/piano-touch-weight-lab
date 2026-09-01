@@ -682,14 +682,14 @@ function Comparer() {
       const [mineResult, witnessResult] = await Promise.all([
         supabase
           .from("piano_profiles")
-          .select("serial_number, wa_values, wd_values, friction_values, balance_values")
-          .eq("serial_number", MY_PIANO_SERIAL)
-          .maybeSingle(),
+          .select("*")
+          .eq("serial_number", "MOCK-MON-PIANO")
+          .single(),
         supabase
           .from("piano_profiles")
-          .select("serial_number, wa_values, wd_values, friction_values, balance_values")
-          .eq("serial_number", WITNESS_SERIAL)
-          .maybeSingle(),
+          .select("*")
+          .eq("serial_number", "MOCK-WITNESS")
+          .single(),
       ]);
 
       if (cancelled) return;
