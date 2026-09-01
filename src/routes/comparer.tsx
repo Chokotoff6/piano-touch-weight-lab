@@ -297,8 +297,13 @@ function CustomTooltipContent(props: {
 }
 
 function ComparisonChart() {
-  // Données mock en attendant le branchement réel.
-  const [data] = useState<ChartPoint[]>(buildMockData);
+  // Données réelles chargées depuis piano_profiles (loader de la route).
+  const { profiles } = useLoaderData({ from: "/comparer" });
+  const data = useMemo<ChartPoint[]>(() => {
+    const mine = profiles.find((p) => p.serial_number === "MOCK-MON-PIANO");
+    const witness = profiles.find((p) => p.serial_number === "MOCK-WITNESS");
+    return buildChartData(mine, witness);
+  }, [profiles]);
   // Filtre global par type de touches (blanches / noires / toutes).
   const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
 
