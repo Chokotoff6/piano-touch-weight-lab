@@ -699,9 +699,11 @@ function Comparer() {
       if (mineResult.error || !mineResult.data) {
         setDebugStatus("error");
         setDebugWa(null);
+        setDebugRowId(null);
       } else {
         setDebugStatus("ok");
         setDebugWa(mineResult.data.wa_values ?? []);
+        setDebugRowId(`${mineResult.data.serial_number} / id ${mineResult.data.id}`);
       }
 
       setMyPiano(mineResult.data ? profileFromRow(mineResult.data) : null);
