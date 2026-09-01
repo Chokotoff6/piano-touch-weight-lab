@@ -306,7 +306,8 @@ function ComparisonChart() {
     withTopAxis?: boolean;
   }) {
     return (
-      <div className="flex-1 h-full w-full">
+      <div className="flex-1 h-full w-full min-h-0 relative">
+        <div className="absolute inset-0">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={data}
