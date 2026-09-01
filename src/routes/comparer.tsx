@@ -255,8 +255,9 @@ const FAMILIES: Array<{
 ];
 
 // Décalages verticaux ordonnés (courbe haute → basse) pour interdire tout
-// chevauchement des étiquettes d'extrémité.
-const DY_STEPS = [-10, 4, 18];
+// chevauchement des étiquettes d'extrémité. Tous positifs : aucune étiquette
+// ne remonte dans la bande de l'axe supérieur des DO.
+const DY_STEPS = [4, 18, 32];
 
 function offsetsFor(
   lines: LineDef[],
