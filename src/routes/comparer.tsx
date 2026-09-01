@@ -87,14 +87,6 @@ function buildMockData(): ChartPoint[] {
   return points;
 }
 
-// Écart minimal entre deux valeurs d'un groupe (détection de collision < 3 g).
-function minGap(values: number[]): number {
-  const sorted = [...values].sort((a, b) => a - b);
-  let min = Infinity;
-  for (let i = 1; i < sorted.length; i++) min = Math.min(min, sorted[i]! - sorted[i - 1]!);
-  return min;
-}
-
 // Moyenne d'une série (affichée comme valeur moyenne au flanc droit).
 function seriesAverage(data: ChartPoint[], key: keyof Omit<ChartPoint, "key">): string {
   const sum = data.reduce((acc, p) => acc + (p[key] as number), 0);
@@ -106,29 +98,25 @@ function seriesAverage(data: ChartPoint[], key: keyof Omit<ChartPoint, "key">): 
 function sampleDot(props: { cx?: number; cy?: number; index?: number }) {
   const { cx = 0, cy = 0, index = -1 } = props;
   if (!SAMPLE_INDICES.has(index)) return <g key={`dot-${index}`} />;
-  return <circle key={`dot-${index}`} cx={cx} cy={cy} r={1.4} fill="#111827" />;
+  return <circle key={`dot-${index}`} cx={cx} cy={cy} r={1.4} fill="#000000" />;
 }
 
 // Étiquettes d'extrémité (BLOC 3) :
 //  - Flanc gauche (index 0)   : nom de la courbe, textAnchor="end", x - 10.
 //  - Flanc droit (index max)  : valeur moyenne, textAnchor="start", x + 10.
-//  - Règle 1 : dy = 4 par défaut (pile en face de l'axe de la courbe).
-//  - Règle 2 : si collision (< 3 g), décalage vertical selon l'altitude
-//    géométrique réelle (dyLeft / dyRight de la VERSION REF GRAPH 22).
+//  - dy = 4 fixe (pile en face de l'axe de la courbe), sans décalage complexe.
 type EndLabelOptions = {
   name: string;
   avg: string;
   color: string;
   count: number;
-  dyLeft?: number | null | undefined; // null/undefined → règle 1 (dy 4)
-  dyRight?: number | null | undefined;
 };
 
 function makeEndLabel(opts: EndLabelOptions) {
   const EndLabel = (props: { x?: number; y?: number; index?: number }) => {
     const { x = 0, y = 0, index = -1 } = props;
     if (index === 0) {
-      const dy = opts.dyLeft ?? 4;
+      const dy = 4;
       return (
         <text x={x - 10} y={y} dy={dy} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>
           {opts.name}
@@ -136,7 +124,7 @@ function makeEndLabel(opts: EndLabelOptions) {
       );
     }
     if (index === opts.count - 1) {
-      const dy = opts.dyRight ?? 4;
+      const dy = 4;
       return (
         <text x={x + 10} y={y} dy={dy} textAnchor="start" fontSize={11} fontWeight={600} fill={opts.color}>
           {opts.avg}
@@ -237,34 +225,6 @@ function ComparisonChart() {
   // Chaque sous-graphique gère désormais son échelle verticale automatique
   // (dataMin - 3 / dataMax + 3) — plus de domaine global.
   const count = data.length;
-  const first = data[0]!;
-  const last = data[count - 1]!;
-
-  // Simulation : les spécifications d'usine sont présentes (mock).
-  const isFactorySpecs = true;
-
-  // --- Détection des collisions d'étiquettes (< 3 g) aux extrémités ---------
-  // Flanc GAUCHE — famille Wd : Same models Wd / Std Wd / Wd actuel.
-  const collideLeftWd = minGap([first.sameWd, first.stdWd, first.wdCur]) < 3;
-  // Flanc DROIT — famille Balance (quand isFactorySpecs) : Same models / Factory.
-  const collideRightBal =
-    isFactorySpecs && minGap([last.sameBal, last.factoryBal, last.balCur]) < 3;
-  // Flanc DROIT — famille Friction (quand isFactorySpecs) : Same models / Factory.
-  const collideRightFric =
-    isFactorySpecs && minGap([last.sameFric, last.factoryFric, last.fricCur]) < 3;
-
-  // Règle 2 (VERSION REF GRAPH 22) : décalages conditionnels, sinon règle 1 (dy 4).
-  const dyLeft = {
-    sameWd: collideLeftWd ? -12 : null, // la plus haute monte
-    stdWd: collideLeftWd ? 0 : null, // se cale au centre
-    wdCur: collideLeftWd ? 16 : null, // descend
-  };
-  const dyRight = {
-    sameBal: collideRightBal ? 16 : null, // s'abaisse
-    factoryBal: collideRightBal ? 4 : null, // monte
-    sameFric: collideRightFric ? 8 : null, // s'abaisse
-    factoryFric: collideRightFric ? 4 : null, // se stabilise
-  };
 
   const avg = (key: keyof Omit<ChartPoint, "key">) => seriesAverage(data, key);
 
@@ -274,21 +234,19 @@ function ComparisonChart() {
     name: string;
     color: string;
     real?: boolean; // pastilles noires d'échantillonnage
-    dyLeft?: number | null;
-    dyRight?: number | null;
   }> = [
-    { dataKey: "waCur", name: "Wa actuel", color: "#111827", real: true },
+    { dataKey: "waCur", name: "Wa actuel", color: "#000000", real: true },
     { dataKey: "sameWa", name: "Same models Wa", color: "#f97316" },
     { dataKey: "stdWa", name: "Std Wa", color: "#10b981" },
-    { dataKey: "balCur", name: "Balance actuel", color: "#3b82f6", real: true },
-    { dataKey: "wdCur", name: "Wd actuel", color: "#9ca3af", real: true, dyLeft: dyLeft.wdCur },
-    { dataKey: "fricCur", name: "Friction actuel", color: "#ef4444", real: true },
-    { dataKey: "sameWd", name: "Same models Wd", color: "#f97316", dyLeft: dyLeft.sameWd },
-    { dataKey: "stdWd", name: "Std Wd", color: "#6b7280", dyLeft: dyLeft.stdWd },
-    { dataKey: "sameBal", name: "Same models Balance", color: "#fb923c", dyRight: dyRight.sameBal },
-    { dataKey: "factoryBal", name: "Factory Balance", color: "#0ea5e9", dyRight: dyRight.factoryBal },
-    { dataKey: "sameFric", name: "Same models Friction", color: "#fbbf24", dyRight: dyRight.sameFric },
-    { dataKey: "factoryFric", name: "Factory Friction", color: "#a855f7", dyRight: dyRight.factoryFric },
+    { dataKey: "balCur", name: "Balance actuel", color: "#000000", real: true },
+    { dataKey: "wdCur", name: "Wd actuel", color: "#000000", real: true },
+    { dataKey: "fricCur", name: "Friction actuel", color: "#000000", real: true },
+    { dataKey: "sameWd", name: "Same models Wd", color: "#f97316" },
+    { dataKey: "stdWd", name: "Std Wd", color: "#10b981" },
+    { dataKey: "sameBal", name: "Same models Balance", color: "#f97316" },
+    { dataKey: "factoryBal", name: "Factory Balance", color: "#10b981" },
+    { dataKey: "sameFric", name: "Same models Friction", color: "#f97316" },
+    { dataKey: "factoryFric", name: "Factory Friction", color: "#10b981" },
   ];
 
   // Regroupement par famille (ordre d'empilement vertical).
@@ -366,8 +324,6 @@ function ComparisonChart() {
                   avg: `${avg(line.dataKey)} g.`,
                   color: line.color,
                   count,
-                  dyLeft: line.dyLeft,
-                  dyRight: line.dyRight,
                 })}
               />
             ))}
@@ -379,7 +335,7 @@ function ComparisonChart() {
   }
 
   return (
-    <div className="w-full min-h-[650px] flex flex-col justify-between gap-8">
+    <div className="w-full min-h-[700px] flex flex-col justify-between gap-10">
       {/* BLOC 1 : Wa (conserve l'axe supérieur DO). */}
       <SubChart lines={WA_LINES} withTopAxis />
       {/* BLOC 2 : Balance. */}
