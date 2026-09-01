@@ -233,32 +233,35 @@ function ComparisonChart() {
   const avg = (key: keyof Omit<ChartPoint, "key">) => seriesAverage(data, key);
 
   // Définitions des courbes : trait plein continu 1.5 px, labels d'extrémité.
+  // Noms officiels dépouillés des suffixes de famille (le titre du bloc
+  // indique déjà la mesure) : "Actuel", "Same models", "Std" / "Factory".
   const LINES: Array<{
     dataKey: keyof Omit<ChartPoint, "key">;
     name: string;
     shortName: string;
     color: string;
+    family: MetricFamily;
     real?: boolean; // pastilles noires d'échantillonnage
   }> = [
-    { dataKey: "waCur", name: "Wa actuel", shortName: "Wa", color: "#000000", real: true },
-    { dataKey: "sameWa", name: "Same models Wa", shortName: "Wa", color: "#f97316" },
-    { dataKey: "stdWa", name: "Std Wa", shortName: "Wa", color: "#10b981" },
-    { dataKey: "balCur", name: "Balance actuel", shortName: "Bal.", color: "#000000", real: true },
-    { dataKey: "wdCur", name: "Wd actuel", shortName: "Wd", color: "#000000", real: true },
-    { dataKey: "fricCur", name: "Friction actuel", shortName: "Fric.", color: "#000000", real: true },
-    { dataKey: "sameWd", name: "Same models Wd", shortName: "Wd", color: "#f97316" },
-    { dataKey: "stdWd", name: "Std Wd", shortName: "Wd", color: "#10b981" },
-    { dataKey: "sameBal", name: "Same models Balance", shortName: "Bal.", color: "#f97316" },
-    { dataKey: "factoryBal", name: "Factory Balance", shortName: "Bal.", color: "#10b981" },
-    { dataKey: "sameFric", name: "Same models Friction", shortName: "Fric.", color: "#f97316" },
-    { dataKey: "factoryFric", name: "Factory Friction", shortName: "Fric.", color: "#10b981" },
+    { dataKey: "waCur", name: "Actuel", shortName: "Actuel", color: "#000000", family: "wa", real: true },
+    { dataKey: "sameWa", name: "Same models", shortName: "Same models", color: "#f97316", family: "wa" },
+    { dataKey: "stdWa", name: "Std", shortName: "Std", color: "#10b981", family: "wa" },
+    { dataKey: "balCur", name: "Actuel", shortName: "Actuel", color: "#000000", family: "bal", real: true },
+    { dataKey: "sameBal", name: "Same models", shortName: "Same models", color: "#f97316", family: "bal" },
+    { dataKey: "factoryBal", name: "Factory", shortName: "Factory", color: "#10b981", family: "bal" },
+    { dataKey: "wdCur", name: "Actuel", shortName: "Actuel", color: "#000000", family: "wd", real: true },
+    { dataKey: "sameWd", name: "Same models", shortName: "Same models", color: "#f97316", family: "wd" },
+    { dataKey: "stdWd", name: "Std", shortName: "Std", color: "#10b981", family: "wd" },
+    { dataKey: "fricCur", name: "Actuel", shortName: "Actuel", color: "#000000", family: "fric", real: true },
+    { dataKey: "sameFric", name: "Same models", shortName: "Same models", color: "#f97316", family: "fric" },
+    { dataKey: "factoryFric", name: "Factory", shortName: "Factory", color: "#10b981", family: "fric" },
   ];
 
   // Regroupement par famille (ordre d'empilement vertical).
-  const WA_LINES = LINES.filter((l) => l.name.includes("Wa"));
-  const BAL_LINES = LINES.filter((l) => l.name.includes("Balance"));
-  const WD_LINES = LINES.filter((l) => l.name.includes("Wd"));
-  const FRIC_LINES = LINES.filter((l) => l.name.includes("Friction"));
+  const WA_LINES = LINES.filter((l) => l.family === "wa");
+  const BAL_LINES = LINES.filter((l) => l.family === "bal");
+  const WD_LINES = LINES.filter((l) => l.family === "wd");
+  const FRIC_LINES = LINES.filter((l) => l.family === "fric");
 
   // Sous-graphique individuel (famille isolée). Sync global "piano".
   function SubChart({
