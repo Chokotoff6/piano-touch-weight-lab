@@ -300,14 +300,15 @@ function offsetsFor(
   return map;
 }
 
-function ComparisonChart() {
+function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
   const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
+  const [hoveredChart, setHoveredChart] = useState<string | null>(null);
 
   const filteredData = useMemo(() => {
-    if (keyFilter === "white") return CHART_DATA.filter((p) => !p.isBlack);
-    if (keyFilter === "black") return CHART_DATA.filter((p) => p.isBlack);
-    return CHART_DATA;
-  }, [keyFilter]);
+    if (keyFilter === "white") return chartData.filter((p) => !p.isBlack);
+    if (keyFilter === "black") return chartData.filter((p) => p.isBlack);
+    return chartData;
+  }, [chartData, keyFilter]);
 
   const count = filteredData.length;
   const first = filteredData[0];
@@ -316,14 +317,18 @@ function ComparisonChart() {
   function SubChart({ family }: { family: (typeof FAMILIES)[number] }) {
     const dyLeft = offsetsFor(family.lines, first, family.domain);
     const dyRight = offsetsFor(family.lines, last, family.domain);
+    const isHovered = hoveredChart === family.id;
     return (
-      <Frame title={family.title} className="h-[340px]">
-        <div className="h-full w-full">
+      <Frame title={family.title} className="h-[310px]">
+        <div
+          className="h-full w-full"
+          onMouseEnter={() => setHoveredChart(family.id)}
+          onMouseLeave={() => setHoveredChart(null)}
+        >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={filteredData}
-              syncId="piano"
-              margin={{ top: 5, right: 130, bottom: 35, left: 120 }}
+              margin={{ top: 5, right: 130, bottom: 15, left: 140 }}
             >
               <XAxis xAxisId="main" dataKey="key" type="number" domain={[1, 88]} hide />
               <XAxis
@@ -338,12 +343,11 @@ function ComparisonChart() {
                 ticks={DO_POSITIONS}
                 tick={<CustomTickTop dy={-6} />}
               />
-              {/* Loupe verticale : domaine fixe par famille. */}
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
               {DO_POSITIONS.map((pos) => (
                 <ReferenceLine key={pos} xAxisId="main" x={pos} stroke="#e5e7eb" strokeWidth={1} />
               ))}
-              <Tooltip content={<CustomTooltipContent />} />
+              {isHovered && <Tooltip content={<CustomTooltipContent />} />}
               {family.lines.map((line) => (
                 <Line
                   key={line.dataKey}
@@ -391,9 +395,7 @@ function ComparisonChart() {
           </button>
         ))}
       </div>
-
-      {/* Ordre physique : Wa → Wd → Balance → Friction. */}
-      <div className="flex w-full flex-col gap-6">
+      <div className="flex w-full flex-col gap-4">
         {FAMILIES.map((f) => (
           <SubChart key={f.id} family={f} />
         ))}
