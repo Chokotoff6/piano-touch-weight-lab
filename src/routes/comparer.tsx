@@ -80,33 +80,34 @@ export type RefProfile = {
   balance: number[];
 };
 
-// Construit les 15 points du graphique. `same` = moyenne communautaire réelle,
-// `ref` = ligne STD-… ou FACTORY-… ; fallback sur le profil témoin local
-// tant que la base ne contient pas ces lignes.
+// Construit les 15 points du graphique. Aucune formule locale : `same` vient
+// exclusivement de la moyenne communautaire chargée, `ref` exclusivement de
+// l'abaque STD-… / FACTORY-… . Une valeur absente reste vide (pas de point).
 function buildChartData(same: RefProfile | null, ref: RefProfile | null): ChartPoint[] {
   return dataRaw.map((d, i) => {
-    const sWa = same?.wa[i] ?? d.WitnessWa;
-    const sWd = same?.wd[i] ?? d.WitnessWd;
-    const sBal = same?.balance[i] ?? d.WitnessBalance;
-    const sFric = same?.friction[i] ?? d.WitnessFriction;
+    const v = (arr: number[] | undefined) => {
+      const raw = arr?.[i];
+      return typeof raw === "number" && !Number.isNaN(raw) ? n1(raw) : (undefined as unknown as number);
+    };
     return {
       key: d.noteIndex,
       isBlack: d.isBlack,
       waCur: d.Wa,
-      sameWa: n1(sWa),
-      stdWa: n1(ref?.wa[i] ?? sWa - 2.5),
+      sameWa: v(same?.wa),
+      stdWa: v(ref?.wa),
       wdCur: d.Wd,
-      sameWd: n1(sWd),
-      stdWd: n1(ref?.wd[i] ?? sWd + 2.0),
+      sameWd: v(same?.wd),
+      stdWd: v(ref?.wd),
       balCur: d.Balance,
-      sameBal: n1(sBal),
-      factoryBal: n1(ref?.balance[i] ?? sBal - 1.5),
+      sameBal: v(same?.balance),
+      factoryBal: v(ref?.balance),
       fricCur: d.Friction,
-      sameFric: n1(sFric),
-      factoryFric: n1(ref?.friction[i] ?? sFric + 1.5),
+      sameFric: v(same?.friction),
+      factoryFric: v(ref?.friction),
     };
   });
 }
+
 
 type SeriesKey = keyof Omit<ChartPoint, "key" | "isBlack">;
 
