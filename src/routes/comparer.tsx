@@ -295,21 +295,19 @@ type LineDef = {
   real?: boolean;
 };
 
-// Définition des 4 familles : titre du cadre, échelle fixe, séries.
+// Séries de référence affichées avec les valeurs brutes du profil témoin et
+// de l'abaque sélectionné. La série noire est ajoutée selon le mode de vue.
 const FAMILIES: Array<{
   id: string;
   title: string;
   domain: [number, number];
-  topAxis?: boolean;
   lines: LineDef[];
 }> = [
   {
     id: "wa",
     title: "Poids d'enfoncement (Wa)",
     domain: [55, 85],
-    topAxis: true,
     lines: [
-      { dataKey: "waCur", name: "Mon piano Wa", shortName: "Mon piano Wa", color: "#000000", real: true },
       { dataKey: "sameWa", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316" },
       { dataKey: "stdWa", name: "Std", shortName: "Std", color: "#10b981" },
     ],
@@ -318,9 +316,7 @@ const FAMILIES: Array<{
     id: "wd",
     title: "Poids de retour (Wd)",
     domain: [50, 70],
-    topAxis: true,
     lines: [
-      { dataKey: "wdCur", name: "Mon piano Wd", shortName: "Mon piano Wd", color: "#000000", real: true },
       { dataKey: "sameWd", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316" },
       { dataKey: "stdWd", name: "Std", shortName: "Std", color: "#10b981" },
     ],
@@ -329,9 +325,7 @@ const FAMILIES: Array<{
     id: "bal",
     title: "Balance statique",
     domain: [55, 75],
-    topAxis: true,
     lines: [
-      { dataKey: "balCur", name: "Mon piano Balance", shortName: "Mon piano Balance", color: "#000000", real: true },
       { dataKey: "sameBal", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316" },
       { dataKey: "factoryBal", name: "Factory", shortName: "Factory", color: "#10b981" },
     ],
@@ -340,35 +334,53 @@ const FAMILIES: Array<{
     id: "fric",
     title: "Friction mécanique",
     domain: [-2, 16],
-    topAxis: true,
     lines: [
-      { dataKey: "fricCur", name: "Mon piano Friction", shortName: "Mon piano Friction", color: "#000000", real: true },
       { dataKey: "sameFric", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316" },
       { dataKey: "factoryFric", name: "Factory", shortName: "Factory", color: "#10b981" },
     ],
   },
 ];
 
-// Décalages verticaux des étiquettes d'extrémité : trois niveaux groupés
-// (0 / 10 / 20 px) attribués selon l'altitude réelle des courbes (la courbe
-// la plus haute reste à dy 0, centrée sur sa cote). Tous ≤ 20 px : les textes
-// restent groupés face à leur courbe à la note 88, sans déborder du cadre.
 const DY_STEPS = [0, 10, 20];
 
-function offsetsFor(
-  lines: LineDef[],
-  point: ChartPoint | undefined,
-  _domain: [number, number],
-): Map<SeriesKey, number> {
+function offsetsFor(lines: LineDef[], point: ChartPoint | undefined): Map<SeriesKey, number> {
   const map = new Map<SeriesKey, number>();
   if (!point) {
-    lines.forEach((l, i) => map.set(l.dataKey, DY_STEPS[i] ?? 20));
+    lines.forEach((line, index) => map.set(line.dataKey, DY_STEPS[index] ?? 20));
     return map;
   }
   [...lines]
-    .sort((a, b) => point[b.dataKey] - point[a.dataKey]) // courbe haute → basse
-    .forEach((l, i) => map.set(l.dataKey, DY_STEPS[i] ?? 20));
+    .sort((a, b) => {
+      const aValue = point[a.dataKey];
+      const bValue = point[b.dataKey];
+      return (typeof bValue === "number" ? bValue : -Infinity) -
+        (typeof aValue === "number" ? aValue : -Infinity);
+    })
+    .forEach((line, index) => map.set(line.dataKey, DY_STEPS[index] ?? 20));
   return map;
+}
+
+function currentLinesFor(familyId: string, keyFilter: KeyFilter): LineDef[] {
+  const metric = {
+    wa: ["waCur", "waCurW", "waCurB"],
+    wd: ["wdCur", "wdCurW", "wdCurB"],
+    bal: ["balCur", "balCurW", "balCurB"],
+    fric: ["fricCur", "fricCurW", "fricCurB"],
+  }[familyId] as [SeriesKey, SeriesKey, SeriesKey];
+  const label = {
+    wa: "Wa",
+    wd: "Wd",
+    bal: "Balance",
+    fric: "Friction",
+  }[familyId];
+  if (keyFilter === "split") {
+    return [
+      { dataKey: metric[1], name: `Mon piano ${label} — blanches`, shortName: `Mon piano ${label}`, color: "#000000", real: true },
+      { dataKey: metric[2], name: `Mon piano ${label} — noires`, shortName: `Mon piano ${label}`, color: "#6b7280", real: true },
+    ];
+  }
+  const dataKey = keyFilter === "white" ? metric[1] : keyFilter === "black" ? metric[2] : metric[0];
+  return [{ dataKey, name: `Mon piano ${label}`, shortName: `Mon piano ${label}`, color: "#000000", real: true }];
 }
 
 function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
@@ -377,8 +389,8 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
   const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
 
   const filteredData = useMemo(() => {
-    if (keyFilter === "white") return chartData.filter((p) => !p.isBlack);
-    if (keyFilter === "black") return chartData.filter((p) => p.isBlack);
+    if (keyFilter === "white") return chartData.filter((point) => !point.isBlack);
+    if (keyFilter === "black") return chartData.filter((point) => point.isBlack);
     return chartData;
   }, [chartData, keyFilter]);
 
@@ -387,14 +399,11 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
   const last = filteredData[count - 1];
 
   function SubChart({ family }: { family: (typeof FAMILIES)[number] }) {
-    const dyLeft = offsetsFor(family.lines, first, family.domain);
-    const dyRight = offsetsFor(family.lines, last, family.domain);
+    const lines = [...currentLinesFor(family.id, keyFilter), ...family.lines];
+    const dyLeft = offsetsFor(lines, first);
+    const dyRight = offsetsFor(lines, last);
     const isHovered = hoveredChart === family.id;
-    const domain = computeDomain(
-      filteredData,
-      family.lines.map((l) => l.dataKey),
-      family.domain,
-    );
+    const domain = computeDomain(filteredData, lines.map((line) => line.dataKey), family.domain);
     return (
       <Frame title={family.title} className="h-[300px] !pt-2">
         <div
@@ -413,7 +422,7 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
                 setHoveredChart(null);
                 setHoveredNoteIndex(null);
               }}
-              margin={{ top: 5, right: 130, bottom: 15, left: 140 }}
+              margin={{ top: 5, right: 140, bottom: 15, left: 140 }}
             >
               <XAxis xAxisId="main" dataKey="key" type="number" domain={[1, 88]} hide />
               <XAxis
@@ -435,8 +444,14 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
               {hoveredNoteIndex !== null && (
                 <ReferenceLine xAxisId="main" x={hoveredNoteIndex} stroke="#94a3b8" strokeWidth={1} />
               )}
-              {isHovered && <Tooltip content={<CustomTooltipContent />} wrapperStyle={{ pointerEvents: "none" }} isAnimationActive={false} />}
-              {family.lines.map((line) => (
+              {isHovered && (
+                <Tooltip
+                  content={<CustomTooltipContent />}
+                  wrapperStyle={{ pointerEvents: "none" }}
+                  isAnimationActive={false}
+                />
+              )}
+              {lines.map((line) => (
                 <Line
                   key={line.dataKey}
                   xAxisId="main"
@@ -444,16 +459,18 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
                   dataKey={line.dataKey}
                   name={line.name}
                   stroke={line.color}
-                  strokeWidth={1.5}
+                  strokeWidth={line.name.includes("noires") ? 1 : 1.5}
                   dot={line.real ? SAMPLE_DOT_CONFIG : false}
+                  connectNulls={false}
                   isAnimationActive={false}
                   label={makeEndLabel({
                     shortName: line.shortName,
                     avg: seriesAverage(filteredData, line.dataKey),
                     color: line.color,
-                    count,
-                    dyLeft: dyLeft.get(line.dataKey) ?? 4,
-                    dyRight: dyRight.get(line.dataKey) ?? 4,
+                    firstIndex: 0,
+                    lastIndex: count - 1,
+                    dyLeft: dyLeft.get(line.dataKey) ?? 0,
+                    dyRight: dyRight.get(line.dataKey) ?? 0,
                   })}
                 />
               ))}
@@ -467,25 +484,24 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
   return (
     <div className="w-full flex flex-col px-2 pt-2 pb-4">
       <div className="sticky top-0 z-50 -mx-2 mb-4 flex flex-wrap items-center justify-center gap-2 border-b border-gray-100 bg-white/95 py-3 shadow-sm backdrop-blur-sm">
-        <span className="mr-1 text-sm font-semibold text-gray-700">Filtre clavier :</span>
-        {KEY_FILTERS.map((f) => (
+        {KEY_FILTERS.map((filter) => (
           <button
-            key={f.id}
+            key={filter.id}
             type="button"
-            onClick={() => setKeyFilter(f.id)}
+            onClick={() => setKeyFilter(filter.id)}
             className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
-              keyFilter === f.id
+              keyFilter === filter.id
                 ? "border-gray-900 bg-gray-900 text-white"
                 : "border-gray-300 bg-white text-gray-600 hover:border-gray-500 hover:text-gray-900"
             }`}
           >
-            {f.label}
+            {filter.label}
           </button>
         ))}
       </div>
       <div className="flex w-full flex-col gap-4">
-        {FAMILIES.map((f) => (
-          <SubChart key={f.id} family={f} />
+        {FAMILIES.map((family) => (
+          <SubChart key={family.id} family={family} />
         ))}
       </div>
     </div>
