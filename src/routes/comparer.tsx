@@ -156,7 +156,7 @@ function computeDomain(
       if (typeof v === "number" && Number.isFinite(v)) vals.push(v);
     });
   });
-  if (vals.length === 0) return fallback;
+  if (vals.length === 0) return baseDomain;
   const min = Math.min(...vals);
   const max = Math.max(...vals);
   const pad = Math.max((max - min) * 0.18, 1.5);
