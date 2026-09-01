@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import {
   ResponsiveContainer,
   LineChart,
@@ -62,26 +64,49 @@ type ChartPoint = {
   factoryFric: number;
 };
 
-// Référence usine (verte) : profil lissé provisoire dérivé du témoin,
-// en attendant le branchement de la base de références réelles.
 const n1 = (v: number) => Number(v.toFixed(1));
 
-const CHART_DATA: ChartPoint[] = dataRaw.map((d) => ({
-  key: d.noteIndex,
-  isBlack: d.isBlack,
-  waCur: d.Wa,
-  sameWa: d.WitnessWa,
-  stdWa: n1(d.WitnessWa - 2.5),
-  wdCur: d.Wd,
-  sameWd: d.WitnessWd,
-  stdWd: n1(d.WitnessWd + 2.0),
-  balCur: d.Balance,
-  sameBal: d.WitnessBalance,
-  factoryBal: n1(d.WitnessBalance - 1.5),
-  fricCur: d.Friction,
-  sameFric: d.WitnessFriction,
-  factoryFric: n1(d.WitnessFriction + 1.5),
-}));
+// --- Profils de référence chargés depuis la base ---------------------------
+// Le piano de référence courant (modèle confronté). En attendant la sélection
+// dynamique, on cible le modèle du jeu de test.
+const TARGET_MODEL = "K-500";
+const STD_SERIAL = "STD-Kawai-K-500";
+const FACTORY_SERIAL = "FACTORY-Kawai-K-500";
+
+export type RefProfile = {
+  wa: number[];
+  wd: number[];
+  friction: number[];
+  balance: number[];
+};
+
+// Construit les 15 points du graphique. `same` = moyenne communautaire réelle,
+// `ref` = ligne STD-… ou FACTORY-… ; fallback sur le profil témoin local
+// tant que la base ne contient pas ces lignes.
+function buildChartData(same: RefProfile | null, ref: RefProfile | null): ChartPoint[] {
+  return dataRaw.map((d, i) => {
+    const sWa = same?.wa[i] ?? d.WitnessWa;
+    const sWd = same?.wd[i] ?? d.WitnessWd;
+    const sBal = same?.balance[i] ?? d.WitnessBalance;
+    const sFric = same?.friction[i] ?? d.WitnessFriction;
+    return {
+      key: d.noteIndex,
+      isBlack: d.isBlack,
+      waCur: d.Wa,
+      sameWa: n1(sWa),
+      stdWa: n1(ref?.wa[i] ?? sWa - 2.5),
+      wdCur: d.Wd,
+      sameWd: n1(sWd),
+      stdWd: n1(ref?.wd[i] ?? sWd + 2.0),
+      balCur: d.Balance,
+      sameBal: n1(sBal),
+      factoryBal: n1(ref?.balance[i] ?? sBal - 1.5),
+      fricCur: d.Friction,
+      sameFric: n1(sFric),
+      factoryFric: n1(ref?.friction[i] ?? sFric + 1.5),
+    };
+  });
+}
 
 type SeriesKey = keyof Omit<ChartPoint, "key" | "isBlack">;
 
@@ -222,7 +247,7 @@ const FAMILIES: Array<{
   {
     id: "wd",
     title: "Poids de retour (Wd)",
-    domain: [40, 74],
+    domain: [50, 70],
     topAxis: true,
     lines: [
       { dataKey: "wdCur", name: "Mon piano Wd", shortName: "Mon piano Wd", color: "#000000", real: true },
@@ -233,7 +258,7 @@ const FAMILIES: Array<{
   {
     id: "bal",
     title: "Balance statique",
-    domain: [50, 75],
+    domain: [55, 75],
     topAxis: true,
     lines: [
       { dataKey: "balCur", name: "Mon piano Balance", shortName: "Mon piano Balance", color: "#000000", real: true },
@@ -276,14 +301,16 @@ function offsetsFor(
   return map;
 }
 
-function ComparisonChart() {
+function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
   const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
+  const [hoveredChart, setHoveredChart] = useState<string | null>(null);
+  const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
 
   const filteredData = useMemo(() => {
-    if (keyFilter === "white") return CHART_DATA.filter((p) => !p.isBlack);
-    if (keyFilter === "black") return CHART_DATA.filter((p) => p.isBlack);
-    return CHART_DATA;
-  }, [keyFilter]);
+    if (keyFilter === "white") return chartData.filter((p) => !p.isBlack);
+    if (keyFilter === "black") return chartData.filter((p) => p.isBlack);
+    return chartData;
+  }, [chartData, keyFilter]);
 
   const count = filteredData.length;
   const first = filteredData[0];
@@ -292,14 +319,26 @@ function ComparisonChart() {
   function SubChart({ family }: { family: (typeof FAMILIES)[number] }) {
     const dyLeft = offsetsFor(family.lines, first, family.domain);
     const dyRight = offsetsFor(family.lines, last, family.domain);
+    const isHovered = hoveredChart === family.id;
     return (
-      <Frame title={family.title} className="h-[340px]">
-        <div className="h-full w-full">
+      <Frame title={family.title} className="h-[310px]">
+        <div
+          className="h-full w-full"
+          onMouseEnter={() => setHoveredChart(family.id)}
+          onMouseLeave={() => setHoveredChart(null)}
+        >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={filteredData}
-              syncId="piano"
-              margin={{ top: 5, right: 130, bottom: 35, left: 120 }}
+              onMouseMove={(state) => {
+                const note = state?.activeLabel;
+                if (typeof note === "number") setHoveredNoteIndex(note);
+              }}
+              onMouseLeave={() => {
+                setHoveredChart(null);
+                setHoveredNoteIndex(null);
+              }}
+              margin={{ top: 5, right: 130, bottom: 15, left: 140 }}
             >
               <XAxis xAxisId="main" dataKey="key" type="number" domain={[1, 88]} hide />
               <XAxis
@@ -314,12 +353,14 @@ function ComparisonChart() {
                 ticks={DO_POSITIONS}
                 tick={<CustomTickTop dy={-6} />}
               />
-              {/* Loupe verticale : domaine fixe par famille. */}
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
               {DO_POSITIONS.map((pos) => (
                 <ReferenceLine key={pos} xAxisId="main" x={pos} stroke="#e5e7eb" strokeWidth={1} />
               ))}
-              <Tooltip content={<CustomTooltipContent />} />
+              {hoveredNoteIndex !== null && (
+                <ReferenceLine xAxisId="main" x={hoveredNoteIndex} stroke="#94a3b8" strokeWidth={1} />
+              )}
+              {isHovered && <Tooltip content={<CustomTooltipContent />} />}
               {family.lines.map((line) => (
                 <Line
                   key={line.dataKey}
@@ -367,9 +408,7 @@ function ComparisonChart() {
           </button>
         ))}
       </div>
-
-      {/* Ordre physique : Wa → Wd → Balance → Friction. */}
-      <div className="flex w-full flex-col gap-6">
+      <div className="flex w-full flex-col gap-4">
         {FAMILIES.map((f) => (
           <SubChart key={f.id} family={f} />
         ))}
@@ -515,34 +554,124 @@ function MetricCell({
   );
 }
 
+function profileFromRow(row: {
+  wa_values: number[];
+  wd_values: number[];
+  friction_values: number[];
+  balance_values: number[];
+}): RefProfile {
+  return {
+    wa: row.wa_values,
+    wd: row.wd_values,
+    friction: row.friction_values,
+    balance: row.balance_values,
+  };
+}
+
+function averageProfiles(
+  rows: Array<{
+    wa_values: number[];
+    wd_values: number[];
+    friction_values: number[];
+    balance_values: number[];
+  }>,
+): RefProfile | null {
+  if (rows.length === 0) return null;
+  const average = (values: number[][]) => {
+    const length = Math.max(...values.map((series) => series.length));
+    return Array.from({ length }, (_, index) => {
+      const atIndex = values.map((series) => series[index]).filter((value) => value !== undefined);
+      return atIndex.length > 0 ? atIndex.reduce((sum, value) => sum + value, 0) / atIndex.length : 0;
+    });
+  };
+  return {
+    wa: average(rows.map((row) => row.wa_values)),
+    wd: average(rows.map((row) => row.wd_values)),
+    friction: average(rows.map((row) => row.friction_values)),
+    balance: average(rows.map((row) => row.balance_values)),
+  };
+}
+
+function profileAverage(profile: RefProfile | null, key: keyof RefProfile): string {
+  const values = profile?.[key] ?? [];
+  if (values.length === 0) return "—";
+  return (values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(1);
+}
+
 function Comparer() {
-  // État local isolé : aucune source de données branchée pour l'instant.
-  // Tout est "—" par défaut — prêt à être alimenté plus tard.
   const [summary] = useState<PianoSummary>(EMPTY_SUMMARY);
-  const [current] = useState<Averages>(EMPTY_AVERAGES);
-  const [witness] = useState<Averages>(EMPTY_AVERAGES);
-  // Aucune donnée de comparaison chargée → panneau de filtres masqué.
-  const [hasComparisonData] = useState(false);
+  const [chartData, setChartData] = useState(() => buildChartData(null, null));
+  const [sameModel, setSameModel] = useState<RefProfile | null>(null);
+  const [factorySpecs, setFactorySpecs] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const referenceSerial = factorySpecs ? FACTORY_SERIAL : STD_SERIAL;
+
+    async function loadComparisonProfiles() {
+      const [communityResult, referenceResult] = await Promise.all([
+        supabase
+          .from("piano_profiles")
+          .select("serial_number, marque, modele, wa_values, wd_values, friction_values, balance_values")
+          .eq("modele", TARGET_MODEL),
+        supabase
+          .from("piano_profiles")
+          .select("serial_number, marque, modele, wa_values, wd_values, friction_values, balance_values")
+          .eq("serial_number", referenceSerial)
+          .maybeSingle(),
+      ]);
+
+      if (cancelled) return;
+      const communityRows = (communityResult.data ?? []).filter(
+        (row) => !/^(MOCK-|STD-|FACTORY-)/i.test(row.serial_number),
+      );
+      const community = averageProfiles(communityRows);
+      const reference = referenceResult.data ? profileFromRow(referenceResult.data) : null;
+      setSameModel(community);
+      setChartData(buildChartData(community, reference));
+    }
+
+    void loadComparisonProfiles();
+    return () => {
+      cancelled = true;
+    };
+  }, [factorySpecs]);
+
+  const current: Averages = {
+    wa: seriesAverage(chartData, "waCur"),
+    wd: seriesAverage(chartData, "wdCur"),
+    friction: seriesAverage(chartData, "fricCur"),
+    balance: seriesAverage(chartData, "balCur"),
+  };
+  const witness: Averages = {
+    wa: profileAverage(sameModel, "wa"),
+    wd: profileAverage(sameModel, "wd"),
+    friction: profileAverage(sameModel, "friction"),
+    balance: profileAverage(sameModel, "balance"),
+  };
+
 
   return (
-    <main className="mx-auto max-w-[1400px] w-full px-6 py-8">
-      {/* Bandeau de résumé condensé, ligne centrée, sans cadre. */}
+    <main className="mx-auto w-full max-w-[1400px] px-6 py-8">
       <div className="mb-6">
         <SummaryBanner s={summary} />
       </div>
-
-      {/* Grille responsive : colonne unique sur mobile, deux colonnes sur grand écran. */}
-      <div className="flex flex-col lg:flex-row w-full gap-6">
-        {/* Zone centrale : futur graphique + cadre de confrontation des moyennes. */}
-        <div className={hasComparisonData ? "flex-1 min-w-0" : "w-full"}>
-          {/* Moteur graphique (BLOC 2) : courbes de pesée, axe des DO, tooltip trié. */}
+      <div className="mb-4 flex justify-center">
+        <Button
+          type="button"
+          variant={factorySpecs ? "default" : "outline"}
+          onClick={() => setFactorySpecs((value) => !value)}
+          aria-pressed={factorySpecs}
+        >
+          {factorySpecs ? "Factory Specs" : "Valeurs Types"}
+        </Button>
+      </div>
+      <div className="flex w-full flex-col gap-6">
+        <div className="w-full min-w-0">
           <div className="mb-6">
-            <ComparisonChart />
+            <ComparisonChart chartData={chartData} />
           </div>
-
-          {/* Cadre de confrontation des moyennes (double grands chiffres). */}
           <Frame title="Moyennes" className="mt-2">
-            {/* Ligne 1 — Piano Actuel */}
             <div className="mb-3">
               <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">
                 Piano Actuel
@@ -553,8 +682,6 @@ function Comparer() {
                 ))}
               </div>
             </div>
-
-            {/* Ligne 2 — Piano Témoin (couleur orange active #f97316, tiret gris par défaut). */}
             <div>
               <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">
                 Piano Témoin
@@ -567,18 +694,6 @@ function Comparer() {
             </div>
           </Frame>
         </div>
-
-        {/* Volet de filtres — strictement masqué tant qu'aucune donnée de
-            comparaison n'est chargée. La zone centrale prend alors 100% de la largeur. */}
-        {hasComparisonData && (
-          <aside className="w-full lg:w-80 shrink-0">
-            <Frame title="Filtres" className="mt-2">
-              <p className="text-sm text-muted-foreground">
-                Sélection du piano témoin communautaire — à venir.
-              </p>
-            </Frame>
-          </aside>
-        )}
       </div>
     </main>
   );
