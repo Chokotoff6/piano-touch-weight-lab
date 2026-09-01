@@ -390,15 +390,37 @@ function ComparisonChart() {
   }
 
   return (
-    <div className="w-full h-[580px] flex flex-col justify-between gap-10 py-12 px-2">
+    <div className="w-full flex flex-col px-2 pt-2 pb-12">
+      {/* Interrupteur de sélection : filtre par type de touches. */}
+      <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
+        <span className="mr-1 text-sm font-semibold text-gray-700">
+          Filtre clavier :
+        </span>
+        {KEY_FILTERS.map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            onClick={() => setKeyFilter(f.id)}
+            className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
+              keyFilter === f.id
+                ? "border-gray-900 bg-gray-900 text-white"
+                : "border-gray-300 bg-white text-gray-600 hover:border-gray-500 hover:text-gray-900"
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="w-full h-[580px] flex flex-col justify-between gap-10">
       {/* BLOC 1 : Wa (conserve l'axe supérieur DO). */}
-      <SubChart lines={WA_LINES} withTopAxis />
+      <SubChart lines={WA_LINES} withTopAxis yDomain={["dataMin - 1.5", "dataMax + 1.5"]} />
       {/* BLOC 2 : Balance. */}
-      <SubChart lines={BAL_LINES} />
+      <SubChart lines={BAL_LINES} yDomain={["dataMin - 1.0", "dataMax + 1.0"]} />
       {/* BLOC 3 : Wd. */}
-      <SubChart lines={WD_LINES} />
+      <SubChart lines={WD_LINES} yDomain={["dataMin - 1.5", "dataMax + 1.5"]} />
       {/* BLOC 4 : Friction. */}
-      <SubChart lines={FRIC_LINES} />
+      <SubChart lines={FRIC_LINES} yDomain={["dataMin - 0.5", "dataMax + 0.5"]} />
     </div>
   );
 }
