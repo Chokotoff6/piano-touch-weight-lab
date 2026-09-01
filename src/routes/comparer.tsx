@@ -67,11 +67,12 @@ type ChartPoint = {
 const n1 = (v: number) => Number(v.toFixed(1));
 
 // --- Profils de référence chargés depuis la base ---------------------------
-// Le piano de référence courant (modèle confronté). En attendant la sélection
-// dynamique, on cible le modèle du jeu de test.
-const TARGET_MODEL = "K-500";
-const STD_SERIAL = "STD-Kawai-K-500";
-const FACTORY_SERIAL = "FACTORY-Kawai-K-500";
+// Correspondances exactes avec le mockup Supabase :
+//  - "Mon piano" (noir)        : serial_number = 'MOCK-MON-PIANO'
+//  - "Same model(s)" (orange)  : serial_number = 'MOCK-WITNESS'
+//  - "Std" / "Factory" (vert)  : abaque théorique généré localement.
+const MY_PIANO_SERIAL = "MOCK-MON-PIANO";
+const WITNESS_SERIAL = "MOCK-WITNESS";
 
 export type RefProfile = {
   wa: number[];
@@ -80,30 +81,53 @@ export type RefProfile = {
   balance: number[];
 };
 
-// Construit les 15 points du graphique. Aucune formule locale : `same` vient
-// exclusivement de la moyenne communautaire chargée, `ref` exclusivement de
-// l'abaque STD-… / FACTORY-… . Une valeur absente reste vide (pas de point).
-function buildChartData(same: RefProfile | null, ref: RefProfile | null): ChartPoint[] {
+// Abaque de référence vert (15 points d'échantillonnage), indépendant des
+// autres séries : Wa descend linéairement de `waStart` à `waEnd`, les autres
+// familles sont stables.
+function makeReferenceProfile(opts: {
+  waStart: number;
+  waEnd: number;
+  wd: number;
+  balance: number;
+  friction: number;
+}): RefProfile {
+  const count = dataRaw.length;
+  const step = count > 1 ? (opts.waEnd - opts.waStart) / (count - 1) : 0;
+  return {
+    wa: Array.from({ length: count }, (_, i) => n1(opts.waStart + step * i)),
+    wd: Array.from({ length: count }, () => opts.wd),
+    balance: Array.from({ length: count }, () => opts.balance),
+    friction: Array.from({ length: count }, () => opts.friction),
+  };
+}
+
+const STD_PROFILE = makeReferenceProfile({ waStart: 55, waEnd: 50, wd: 24, balance: 39, friction: 5 });
+const FACTORY_PROFILE = makeReferenceProfile({ waStart: 54, waEnd: 49, wd: 23, balance: 38, friction: 4.5 });
+
+// Construit les 15 points du graphique. Aucune formule locale : chaque série
+// provient exclusivement de son profil chargé (ou de l'abaque pour le vert).
+// Une valeur absente reste vide (pas de point).
+function buildChartData(mine: RefProfile | null, same: RefProfile | null, ref: RefProfile | null): ChartPoint[] {
   return dataRaw.map((d, i) => {
-    const v = (arr: number[] | undefined) => {
+    const v = (arr: number[] | undefined, fallback: number) => {
       const raw = arr?.[i];
-      return typeof raw === "number" && !Number.isNaN(raw) ? n1(raw) : (undefined as unknown as number);
+      return typeof raw === "number" && !Number.isNaN(raw) ? n1(raw) : fallback;
     };
     return {
       key: d.noteIndex,
       isBlack: d.isBlack,
-      waCur: d.Wa,
-      sameWa: v(same?.wa),
-      stdWa: v(ref?.wa),
-      wdCur: d.Wd,
-      sameWd: v(same?.wd),
-      stdWd: v(ref?.wd),
-      balCur: d.Balance,
-      sameBal: v(same?.balance),
-      factoryBal: v(ref?.balance),
-      fricCur: d.Friction,
-      sameFric: v(same?.friction),
-      factoryFric: v(ref?.friction),
+      waCur: v(mine?.wa, d.Wa),
+      sameWa: v(same?.wa, undefined as unknown as number),
+      stdWa: v(ref?.wa, undefined as unknown as number),
+      wdCur: v(mine?.wd, d.Wd),
+      sameWd: v(same?.wd, undefined as unknown as number),
+      stdWd: v(ref?.wd, undefined as unknown as number),
+      balCur: v(mine?.balance, d.Balance),
+      sameBal: v(same?.balance, undefined as unknown as number),
+      factoryBal: v(ref?.balance, undefined as unknown as number),
+      fricCur: v(mine?.friction, d.Friction),
+      sameFric: v(same?.friction, undefined as unknown as number),
+      factoryFric: v(ref?.friction, undefined as unknown as number),
     };
   });
 }
@@ -132,8 +156,14 @@ type EndLabelOptions = {
 };
 
 function makeEndLabel(opts: EndLabelOptions) {
-  const EndLabel = (props: { x?: number; y?: number; index?: number }) => {
-    const { x = 0, y = 0, index = -1 } = props;
+  const EndLabel = (props: { x?: number; y?: number; index?: number; value?: number }) => {
+    const { x, y, index = -1, value } = props;
+    // Sécurité de rendu : sans coordonnée valide (ou sans donnée), on masque
+    // totalement l'étiquette au lieu de la laisser stagner en haut du cadre.
+    const hasPoint =
+      typeof x === "number" && Number.isFinite(x) && typeof y === "number" && Number.isFinite(y);
+    const hasValue = value === undefined || (typeof value === "number" && Number.isFinite(value));
+    if (!hasPoint || !hasValue || opts.avg === "—") return <g />;
     if (index === 0) {
       return (
         <text x={x - 44} y={y} dy={opts.dyLeft} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>
@@ -573,29 +603,6 @@ function profileFromRow(row: {
   };
 }
 
-function averageProfiles(
-  rows: Array<{
-    wa_values: number[];
-    wd_values: number[];
-    friction_values: number[];
-    balance_values: number[];
-  }>,
-): RefProfile | null {
-  if (rows.length === 0) return null;
-  const average = (values: number[][]) => {
-    const length = Math.max(...values.map((series) => series.length));
-    return Array.from({ length }, (_, index) => {
-      const atIndex = values.map((series) => series[index]).filter((value) => value !== undefined);
-      return atIndex.length > 0 ? atIndex.reduce((sum, value) => sum + value, 0) / atIndex.length : 0;
-    });
-  };
-  return {
-    wa: average(rows.map((row) => row.wa_values)),
-    wd: average(rows.map((row) => row.wd_values)),
-    friction: average(rows.map((row) => row.friction_values)),
-    balance: average(rows.map((row) => row.balance_values)),
-  };
-}
 
 function profileAverage(profile: RefProfile | null, key: keyof RefProfile): string {
   const values = profile?.[key] ?? [];
@@ -605,42 +612,37 @@ function profileAverage(profile: RefProfile | null, key: keyof RefProfile): stri
 
 function Comparer() {
   const [summary] = useState<PianoSummary>(EMPTY_SUMMARY);
-  const [chartData, setChartData] = useState(() => buildChartData(null, null));
+  const [myPiano, setMyPiano] = useState<RefProfile | null>(null);
   const [sameModel, setSameModel] = useState<RefProfile | null>(null);
   const [factorySpecs, setFactorySpecs] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    const referenceSerial = factorySpecs ? FACTORY_SERIAL : STD_SERIAL;
 
     async function loadComparisonProfiles() {
-      const [communityResult, referenceResult] = await Promise.all([
-        supabase
-          .from("piano_profiles")
-          .select("serial_number, marque, modele, wa_values, wd_values, friction_values, balance_values")
-          .eq("modele", TARGET_MODEL),
-        supabase
-          .from("piano_profiles")
-          .select("serial_number, marque, modele, wa_values, wd_values, friction_values, balance_values")
-          .eq("serial_number", referenceSerial)
-          .maybeSingle(),
-      ]);
+      const { data } = await supabase
+        .from("piano_profiles")
+        .select("serial_number, marque, modele, wa_values, wd_values, friction_values, balance_values")
+        .in("serial_number", [MY_PIANO_SERIAL, WITNESS_SERIAL]);
 
       if (cancelled) return;
-      const communityRows = (communityResult.data ?? []).filter(
-        (row) => !/^(MOCK-|STD-|FACTORY-)/i.test(row.serial_number),
-      );
-      const community = averageProfiles(communityRows);
-      const reference = referenceResult.data ? profileFromRow(referenceResult.data) : null;
-      setSameModel(community);
-      setChartData(buildChartData(community, reference));
+      const rows = data ?? [];
+      const mineRow = rows.find((row) => row.serial_number === MY_PIANO_SERIAL);
+      const witnessRow = rows.find((row) => row.serial_number === WITNESS_SERIAL);
+      setMyPiano(mineRow ? profileFromRow(mineRow) : null);
+      setSameModel(witnessRow ? profileFromRow(witnessRow) : null);
     }
 
     void loadComparisonProfiles();
     return () => {
       cancelled = true;
     };
-  }, [factorySpecs]);
+  }, []);
+
+  const chartData = useMemo(
+    () => buildChartData(myPiano, sameModel, factorySpecs ? FACTORY_PROFILE : STD_PROFILE),
+    [myPiano, sameModel, factorySpecs],
+  );
 
   const current: Averages = {
     wa: seriesAverage(chartData, "waCur"),
