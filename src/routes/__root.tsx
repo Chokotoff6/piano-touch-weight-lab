@@ -172,7 +172,7 @@ function RootComponent() {
               </Link>
               <div className="relative">
                 <Link
-                  to="/resultats"
+                  to="/comparer"
                   className={linkClass}
                   activeProps={{ className: activeLinkClass }}
                   onClick={(e) => {
