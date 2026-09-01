@@ -161,14 +161,9 @@ function seriesAverage(data: ChartPoint[], key: keyof Omit<ChartPoint, "key">): 
   return (sum / data.length).toFixed(1);
 }
 
-// Pastilles noires calibrées (r = 2) uniquement sur les 15 points
-// d'échantillonnage de la matrice — réservées aux courbes réelles.
+// Pastilles noires calibrées (r = 2) sur chacun des 15 points réels
+// de la matrice — réservées aux courbes "Mon piano".
 const SAMPLE_DOT_CONFIG = { r: 2, fill: "#000000", strokeWidth: 0 };
-function sampleDot(props: { cx?: number; cy?: number; index?: number }) {
-  const { cx = 0, cy = 0, index = -1 } = props;
-  if (!SAMPLE_INDICES.has(index)) return <g key={`dot-${index}`} />;
-  return <circle key={`dot-${index}`} cx={cx} cy={cy} r={2} fill="#000000" strokeWidth={0} />;
-}
 
 // Étiquettes d'extrémité compressées :
 //  - Flanc gauche (index 0)   : nom brut du groupe ("Wa", "Bal.", ...), textAnchor="end", x - 10.
@@ -292,8 +287,18 @@ function CustomTooltipContent(props: {
 }
 
 function ComparisonChart() {
-  // Données mock en attendant le branchement réel.
-  const [data] = useState<ChartPoint[]>(buildMockData);
+  // Profils réels chargés depuis la base ; repli mock si indisponibles.
+  const { data: profiles } = useQuery({
+    queryKey: ["piano-profiles", "mock"],
+    queryFn: fetchProfiles,
+    staleTime: 5 * 60_000,
+  });
+  const data = useMemo<ChartPoint[]>(() => {
+    const cur = profiles?.find((p) => p.serial_number === "MOCK-MON-PIANO");
+    const same = profiles?.find((p) => p.serial_number === "MOCK-WITNESS");
+    if (cur && same) return buildRealData(cur, same);
+    return buildMockData();
+  }, [profiles]);
   // Filtre global par type de touches (blanches / noires / toutes).
   const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
 
