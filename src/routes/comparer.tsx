@@ -291,7 +291,7 @@ function ComparisonChart() {
     const map = new Map<string, number>();
     const entries = lines.map((l) => ({ key: l.dataKey, v: Number(avg(l.dataKey)) }));
     const sorted = [...entries].sort((a, b) => a.v - b.v);
-    if (sorted.length >= 2 && sorted[sorted.length - 1].v - sorted[0].v < 1.2) {
+    if (sorted.length >= 2 && sorted[sorted.length - 1]!.v - sorted[0]!.v < 1.2) {
       // Ordre décroissant : la moyenne la plus haute reste à dy 0, etc.
       [...entries]
         .sort((a, b) => b.v - a.v)
