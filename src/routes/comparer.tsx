@@ -1,7 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import {
   ResponsiveContainer,
   LineChart,
@@ -23,11 +21,18 @@ import {
 // Positions X des touches DO sur le clavier (1..88).
 const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];
 
-// 15 notes réelles échantillonnées de la matrice (index des cellules 0..14).
-const SAMPLE_NOTES = [4, 10, 16, 22, 28, 34, 40, 46, 52, 58, 64, 70, 76, 82, 88];
-// Touches noires parmi les notes échantillonnées.
-const BLACK_NOTES = new Set([10, 22, 34, 46, 58, 70, 82]);
-const isBlackKey = (key: number) => BLACK_NOTES.has(key);
+// 15 points d'échantillonnage de la matrice (pastilles noires ultra-fines).
+const SAMPLE_INDICES = new Set(
+  Array.from({ length: 15 }, (_, i) => Math.round((i * 87) / 14)),
+);
+
+// --- Filtre par type de touches ---------------------------------------------
+// Touches noires du clavier (touche 1 = La0 blanc, touche 4 = premier Do).
+const BLACK_KEYS = new Set([
+  2, 5, 7, 10, 12, 14, 17, 19, 22, 24, 26, 29, 31, 34, 36, 38, 41, 43, 46, 48, 50,
+  53, 55, 58, 60, 62, 65, 67, 70, 72, 74, 77, 79, 82, 84, 86,
+]);
+const isBlackKey = (key: number) => BLACK_KEYS.has(key);
 
 type KeyFilter = "all" | "white" | "black";
 
@@ -59,64 +64,9 @@ type ChartPoint = {
 
 type MetricFamily = "wa" | "bal" | "wd" | "fric";
 
-// ---------------------------------------------------------------------------
-// Chargement des profils réels depuis la base (table piano_profiles) :
-//  - serial_number = 'MOCK-MON-PIANO' → courbes "Mon piano" (noires)
-//  - serial_number = 'MOCK-WITNESS'   → série "Same model(s)" (orange)
-// Les 15 cellules des matrices wa/wd/friction/balance correspondent aux
-// notes SAMPLE_NOTES. Les références Std / Factory sont dérivées du témoin.
-// ---------------------------------------------------------------------------
-type PianoProfileRow = {
-  serial_number: string;
-  wa_values: number[];
-  wd_values: number[];
-  friction_values: number[];
-  balance_values: number[];
-};
-
-async function fetchProfiles(): Promise<PianoProfileRow[]> {
-  const { data, error } = await supabase
-    .from("piano_profiles")
-    .select("serial_number, wa_values, wd_values, friction_values, balance_values")
-    .in("serial_number", ["MOCK-MON-PIANO", "MOCK-WITNESS"]);
-  if (error) throw error;
-  return (data ?? []) as unknown as PianoProfileRow[];
-}
-
-// Construit les points du graphique à partir des profils réels.
-function buildRealData(cur: PianoProfileRow, same: PianoProfileRow): ChartPoint[] {
-  const n = (v: number) => Number(v.toFixed(1));
-  return SAMPLE_NOTES.map((key, i) => {
-    const wa = Number(cur.wa_values[i]);
-    const wd = Number(cur.wd_values[i]);
-    const fric = Number(cur.friction_values[i]);
-    const bal = Number(cur.balance_values[i]);
-    const sameWa = Number(same.wa_values[i]);
-    const sameWd = Number(same.wd_values[i]);
-    const sameFric = Number(same.friction_values[i]);
-    const sameBal = Number(same.balance_values[i]);
-    return {
-      key,
-      waCur: n(wa),
-      sameWa: n(sameWa),
-      stdWa: n(sameWa - 2.5),
-      wdCur: n(wd),
-      balCur: n(bal),
-      fricCur: n(fric),
-      sameWd: n(sameWd),
-      stdWd: n(sameWd - 2.5),
-      sameBal: n(sameBal),
-      factoryBal: n(sameBal - 2.0),
-      sameFric: n(sameFric),
-      factoryFric: n(sameFric - 2.0),
-    };
-  });
-}
-
-// Données de repli (mock) si les profils ne sont pas encore disponibles.
 function buildMockData(): ChartPoint[] {
   const points: ChartPoint[] = [];
-  for (const k of SAMPLE_NOTES) {
+  for (let k = 1; k <= 88; k++) {
     const t = (k - 1) / 87;
     const wa = 52 - 18 * t + Math.sin(k * 0.7) * 1.2;
     const wd = wa - 12 - Math.cos(k * 0.5) * 0.8;
@@ -161,9 +111,14 @@ function seriesAverage(data: ChartPoint[], key: keyof Omit<ChartPoint, "key">): 
   return (sum / data.length).toFixed(1);
 }
 
-// Pastilles noires calibrées (r = 2) sur chacun des 15 points réels
-// de la matrice — réservées aux courbes "Mon piano".
+// Pastilles noires calibrées (r = 2) uniquement sur les 15 points
+// d'échantillonnage de la matrice — réservées aux courbes réelles.
 const SAMPLE_DOT_CONFIG = { r: 2, fill: "#000000", strokeWidth: 0 };
+function sampleDot(props: { cx?: number; cy?: number; index?: number }) {
+  const { cx = 0, cy = 0, index = -1 } = props;
+  if (!SAMPLE_INDICES.has(index)) return <g key={`dot-${index}`} />;
+  return <circle key={`dot-${index}`} cx={cx} cy={cy} r={2} fill="#000000" strokeWidth={0} />;
+}
 
 // Étiquettes d'extrémité compressées :
 //  - Flanc gauche (index 0)   : nom brut du groupe ("Wa", "Bal.", ...), textAnchor="end", x - 10.
@@ -174,8 +129,7 @@ type EndLabelOptions = {
   avg: string;
   color: string;
   count: number;
-  // Décalages verticaux anti-collision (-10 / 4 / 18) si courbes trop proches.
-  dyLeft?: number;
+  // Décalage vertical du flanc droit (aération 0 / 14 / 28 si moyennes < 1,2 g).
   dyRight?: number;
 };
 
@@ -183,7 +137,7 @@ function makeEndLabel(opts: EndLabelOptions) {
   const EndLabel = (props: { x?: number; y?: number; index?: number }) => {
     const { x = 0, y = 0, index = -1 } = props;
     if (index === 0) {
-      const dy = 4 + (opts.dyLeft ?? 0);
+      const dy = 4;
       return (
         <text x={x - 10} y={y} dy={dy} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>
           {opts.shortName}
@@ -288,18 +242,8 @@ function CustomTooltipContent(props: {
 }
 
 function ComparisonChart() {
-  // Profils réels chargés depuis la base ; repli mock si indisponibles.
-  const { data: profiles } = useQuery({
-    queryKey: ["piano-profiles", "mock"],
-    queryFn: fetchProfiles,
-    staleTime: 5 * 60_000,
-  });
-  const data = useMemo<ChartPoint[]>(() => {
-    const cur = profiles?.find((p) => p.serial_number === "MOCK-MON-PIANO");
-    const same = profiles?.find((p) => p.serial_number === "MOCK-WITNESS");
-    if (cur && same) return buildRealData(cur, same);
-    return buildMockData();
-  }, [profiles]);
+  // Données mock en attendant le branchement réel.
+  const [data] = useState<ChartPoint[]>(buildMockData);
   // Filtre global par type de touches (blanches / noires / toutes).
   const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
 
@@ -327,48 +271,33 @@ function ComparisonChart() {
     family: MetricFamily;
     real?: boolean; // pastilles noires d'échantillonnage
   }> = [
-    { dataKey: "waCur", name: "Mon piano Wa", shortName: "Mon piano Wa", color: "#000000", family: "wa", real: true },
+    { dataKey: "waCur", name: "Mon piano Wa", shortName: "Mon piano", color: "#000000", family: "wa", real: true },
     { dataKey: "sameWa", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316", family: "wa" },
     { dataKey: "stdWa", name: "Std", shortName: "Std", color: "#10b981", family: "wa" },
-    { dataKey: "balCur", name: "Mon piano Balance", shortName: "Mon piano Balance", color: "#000000", family: "bal", real: true },
+    { dataKey: "balCur", name: "Mon piano Balance", shortName: "Mon piano", color: "#000000", family: "bal", real: true },
     { dataKey: "sameBal", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316", family: "bal" },
     { dataKey: "factoryBal", name: "Factory", shortName: "Factory", color: "#10b981", family: "bal" },
-    { dataKey: "wdCur", name: "Mon piano Wd", shortName: "Mon piano Wd", color: "#000000", family: "wd", real: true },
+    { dataKey: "wdCur", name: "Mon piano Wd", shortName: "Mon piano", color: "#000000", family: "wd", real: true },
     { dataKey: "sameWd", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316", family: "wd" },
     { dataKey: "stdWd", name: "Std", shortName: "Std", color: "#10b981", family: "wd" },
-    { dataKey: "fricCur", name: "Mon piano Friction", shortName: "Mon piano Friction", color: "#000000", family: "fric", real: true },
+    { dataKey: "fricCur", name: "Mon piano Friction", shortName: "Mon piano", color: "#000000", family: "fric", real: true },
     { dataKey: "sameFric", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316", family: "fric" },
     { dataKey: "factoryFric", name: "Factory", shortName: "Factory", color: "#10b981", family: "fric" },
   ];
 
-  // Sécurité anti-collision brute (flancs gauche ET droit) : si les 3 courbes
-  // d'une famille sont espacées de moins de 1,2 g à une extrémité, on force
-  // l'empilement des 3 textes avec des dy échelonnés (-10 / 4 / 18).
-  const STAGGER_DY = [-10, 4, 18];
-  function staggerFor(entries: Array<{ key: string; v: number }>): Map<string, number> {
+  // Sécurité flanc droit : si les 3 moyennes d'une famille sont espacées de
+  // moins de 1,2 g, on aère verticalement les étiquettes (dy = 0 / 14 / 28).
+  function dyRightFor(lines: typeof LINES): Map<string, number> {
     const map = new Map<string, number>();
+    const entries = lines.map((l) => ({ key: l.dataKey, v: Number(avg(l.dataKey)) }));
     const sorted = [...entries].sort((a, b) => a.v - b.v);
     if (sorted.length >= 2 && sorted[sorted.length - 1]!.v - sorted[0]!.v < 1.2) {
-      // Ordre décroissant : la courbe la plus haute prend le dy le plus haut.
+      // Ordre décroissant : la moyenne la plus haute reste à dy 0, etc.
       [...entries]
         .sort((a, b) => b.v - a.v)
-        .forEach((e, i) => map.set(e.key, STAGGER_DY[i] ?? 0));
+        .forEach((e, i) => map.set(e.key, i * 14));
     }
     return map;
-  }
-  function dyEndsFor(lines: typeof LINES): { left: Map<string, number>; right: Map<string, number> } {
-    // Flanc gauche : valeurs réelles au premier point (index 0).
-    const first = filteredData[0];
-    const leftEntries = lines.map((l) => ({
-      key: l.dataKey as string,
-      v: first ? Number(first[l.dataKey]) : 0,
-    }));
-    // Flanc droit : moyennes affichées.
-    const rightEntries = lines.map((l) => ({
-      key: l.dataKey as string,
-      v: Number(avg(l.dataKey)),
-    }));
-    return { left: staggerFor(leftEntries), right: staggerFor(rightEntries) };
   }
 
   // Regroupement par famille (ordre d'empilement vertical).
