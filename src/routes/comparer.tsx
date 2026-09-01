@@ -341,19 +341,34 @@ function ComparisonChart() {
     { dataKey: "factoryFric", name: "Factory", shortName: "Factory", color: "#10b981", family: "fric" },
   ];
 
-  // Sécurité flanc droit : si les 3 moyennes d'une famille sont espacées de
-  // moins de 1,2 g, on aère verticalement les étiquettes (dy = 0 / 14 / 28).
-  function dyRightFor(lines: typeof LINES): Map<string, number> {
+  // Sécurité anti-collision brute (flancs gauche ET droit) : si les 3 courbes
+  // d'une famille sont espacées de moins de 1,2 g à une extrémité, on force
+  // l'empilement des 3 textes avec des dy échelonnés (-10 / 4 / 18).
+  const STAGGER_DY = [-10, 4, 18];
+  function staggerFor(entries: Array<{ key: string; v: number }>): Map<string, number> {
     const map = new Map<string, number>();
-    const entries = lines.map((l) => ({ key: l.dataKey, v: Number(avg(l.dataKey)) }));
     const sorted = [...entries].sort((a, b) => a.v - b.v);
     if (sorted.length >= 2 && sorted[sorted.length - 1]!.v - sorted[0]!.v < 1.2) {
-      // Ordre décroissant : la moyenne la plus haute reste à dy 0, etc.
+      // Ordre décroissant : la courbe la plus haute prend le dy le plus haut.
       [...entries]
         .sort((a, b) => b.v - a.v)
-        .forEach((e, i) => map.set(e.key, i * 14));
+        .forEach((e, i) => map.set(e.key, STAGGER_DY[i] ?? 0));
     }
     return map;
+  }
+  function dyEndsFor(lines: typeof LINES): { left: Map<string, number>; right: Map<string, number> } {
+    // Flanc gauche : valeurs réelles au premier point (index 0).
+    const first = filteredData[0];
+    const leftEntries = lines.map((l) => ({
+      key: l.dataKey as string,
+      v: first ? Number(first[l.dataKey]) : 0,
+    }));
+    // Flanc droit : moyennes affichées.
+    const rightEntries = lines.map((l) => ({
+      key: l.dataKey as string,
+      v: Number(avg(l.dataKey)),
+    }));
+    return { left: staggerFor(leftEntries), right: staggerFor(rightEntries) };
   }
 
   // Regroupement par famille (ordre d'empilement vertical).
