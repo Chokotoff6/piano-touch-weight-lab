@@ -469,14 +469,14 @@ function ComparisonChart() {
       </div>
 
       <div className="w-full h-[580px] flex flex-col justify-between gap-10">
-      {/* BLOC 1 : Wa (conserve l'axe supérieur DO). */}
-      <SubChart lines={WA_LINES} withTopAxis yDomain={["dataMin - 1.5", "dataMax + 1.5"]} />
-      {/* BLOC 2 : Balance. */}
-      <SubChart lines={BAL_LINES} yDomain={["dataMin - 1.0", "dataMax + 1.0"]} />
-      {/* BLOC 3 : Wd. */}
-      <SubChart lines={WD_LINES} yDomain={["dataMin - 1.5", "dataMax + 1.5"]} />
-      {/* BLOC 4 : Friction. */}
-      <SubChart lines={FRIC_LINES} yDomain={["dataMin - 0.5", "dataMax + 0.5"]} />
+      {/* BLOC 1 (haut) : Wa — conserve l'axe supérieur DO. Domaine fixe [55, 85]. */}
+      <SubChart lines={WA_LINES} withTopAxis yDomain={[55, 85]} />
+      {/* BLOC 2 (milieu haut) : Wd. Domaine fixe [40, 70]. */}
+      <SubChart lines={WD_LINES} yDomain={[40, 70]} />
+      {/* BLOC 3 (milieu bas) : Balance. Domaine fixe [50, 75]. */}
+      <SubChart lines={BAL_LINES} yDomain={[50, 75]} />
+      {/* BLOC 4 (bas) : Friction. Domaine fixe [-2, 16]. */}
+      <SubChart lines={FRIC_LINES} yDomain={[-2, 16]} />
       </div>
     </div>
   );
