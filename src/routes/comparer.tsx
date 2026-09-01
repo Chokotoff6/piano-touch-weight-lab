@@ -109,7 +109,7 @@ function makeEndLabel(opts: EndLabelOptions) {
     const { x = 0, y = 0, index = -1 } = props;
     if (index === 0) {
       return (
-        <text x={x - 10} y={y} dy={opts.dyLeft} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>
+        <text x={x - 44} y={y} dy={opts.dyLeft} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>
           {opts.shortName}
         </text>
       );
