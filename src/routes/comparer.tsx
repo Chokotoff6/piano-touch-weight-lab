@@ -174,7 +174,8 @@ type EndLabelOptions = {
   avg: string;
   color: string;
   count: number;
-  // Décalage vertical du flanc droit (aération 0 / 14 / 28 si moyennes < 1,2 g).
+  // Décalages verticaux anti-collision (-10 / 4 / 18) si courbes trop proches.
+  dyLeft?: number;
   dyRight?: number;
 };
 
@@ -182,7 +183,7 @@ function makeEndLabel(opts: EndLabelOptions) {
   const EndLabel = (props: { x?: number; y?: number; index?: number }) => {
     const { x = 0, y = 0, index = -1 } = props;
     if (index === 0) {
-      const dy = 4;
+      const dy = 4 + (opts.dyLeft ?? 0);
       return (
         <text x={x - 10} y={y} dy={dy} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>
           {opts.shortName}
@@ -326,33 +327,48 @@ function ComparisonChart() {
     family: MetricFamily;
     real?: boolean; // pastilles noires d'échantillonnage
   }> = [
-    { dataKey: "waCur", name: "Mon piano Wa", shortName: "Mon piano", color: "#000000", family: "wa", real: true },
+    { dataKey: "waCur", name: "Mon piano Wa", shortName: "Mon piano Wa", color: "#000000", family: "wa", real: true },
     { dataKey: "sameWa", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316", family: "wa" },
     { dataKey: "stdWa", name: "Std", shortName: "Std", color: "#10b981", family: "wa" },
-    { dataKey: "balCur", name: "Mon piano Balance", shortName: "Mon piano", color: "#000000", family: "bal", real: true },
+    { dataKey: "balCur", name: "Mon piano Balance", shortName: "Mon piano Balance", color: "#000000", family: "bal", real: true },
     { dataKey: "sameBal", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316", family: "bal" },
     { dataKey: "factoryBal", name: "Factory", shortName: "Factory", color: "#10b981", family: "bal" },
-    { dataKey: "wdCur", name: "Mon piano Wd", shortName: "Mon piano", color: "#000000", family: "wd", real: true },
+    { dataKey: "wdCur", name: "Mon piano Wd", shortName: "Mon piano Wd", color: "#000000", family: "wd", real: true },
     { dataKey: "sameWd", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316", family: "wd" },
     { dataKey: "stdWd", name: "Std", shortName: "Std", color: "#10b981", family: "wd" },
-    { dataKey: "fricCur", name: "Mon piano Friction", shortName: "Mon piano", color: "#000000", family: "fric", real: true },
+    { dataKey: "fricCur", name: "Mon piano Friction", shortName: "Mon piano Friction", color: "#000000", family: "fric", real: true },
     { dataKey: "sameFric", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316", family: "fric" },
     { dataKey: "factoryFric", name: "Factory", shortName: "Factory", color: "#10b981", family: "fric" },
   ];
 
-  // Sécurité flanc droit : si les 3 moyennes d'une famille sont espacées de
-  // moins de 1,2 g, on aère verticalement les étiquettes (dy = 0 / 14 / 28).
-  function dyRightFor(lines: typeof LINES): Map<string, number> {
+  // Sécurité anti-collision brute (flancs gauche ET droit) : si les 3 courbes
+  // d'une famille sont espacées de moins de 1,2 g à une extrémité, on force
+  // l'empilement des 3 textes avec des dy échelonnés (-10 / 4 / 18).
+  const STAGGER_DY = [-10, 4, 18];
+  function staggerFor(entries: Array<{ key: string; v: number }>): Map<string, number> {
     const map = new Map<string, number>();
-    const entries = lines.map((l) => ({ key: l.dataKey, v: Number(avg(l.dataKey)) }));
     const sorted = [...entries].sort((a, b) => a.v - b.v);
     if (sorted.length >= 2 && sorted[sorted.length - 1]!.v - sorted[0]!.v < 1.2) {
-      // Ordre décroissant : la moyenne la plus haute reste à dy 0, etc.
+      // Ordre décroissant : la courbe la plus haute prend le dy le plus haut.
       [...entries]
         .sort((a, b) => b.v - a.v)
-        .forEach((e, i) => map.set(e.key, i * 14));
+        .forEach((e, i) => map.set(e.key, STAGGER_DY[i] ?? 0));
     }
     return map;
+  }
+  function dyEndsFor(lines: typeof LINES): { left: Map<string, number>; right: Map<string, number> } {
+    // Flanc gauche : valeurs réelles au premier point (index 0).
+    const first = filteredData[0];
+    const leftEntries = lines.map((l) => ({
+      key: l.dataKey as string,
+      v: first ? Number(first[l.dataKey]) : 0,
+    }));
+    // Flanc droit : moyennes affichées.
+    const rightEntries = lines.map((l) => ({
+      key: l.dataKey as string,
+      v: Number(avg(l.dataKey)),
+    }));
+    return { left: staggerFor(leftEntries), right: staggerFor(rightEntries) };
   }
 
   // Regroupement par famille (ordre d'empilement vertical).
