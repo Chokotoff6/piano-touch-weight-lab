@@ -670,11 +670,9 @@ function Comparer() {
   const [sameModel, setSameModel] = useState<RefProfile | null>(null);
   const [factorySpecs, setFactorySpecs] = useState(false);
 
-  // --- Test de vérité : lecture brute du mockup MOCK-MON-PIANO ---------------
-  // debugStatus = "loading" | "ok" | "error" (erreur RLS OU ligne vide).
+  // Gate d'accès : erreur RLS OU ligne MOCK-MON-PIANO absente => blocage écran.
   const [debugStatus, setDebugStatus] = useState<"loading" | "ok" | "error">("loading");
-  const [debugWa, setDebugWa] = useState<number[] | null>(null);
-  const [debugRowId, setDebugRowId] = useState<string | null>(null);
+
 
   useEffect(() => {
     let cancelled = false;
@@ -696,16 +694,9 @@ function Comparer() {
 
       if (cancelled) return;
 
-      // Diagnostic MOCK-MON-PIANO : erreur d'accès OU ligne absente => bloqué.
-      if (mineResult.error || !mineResult.data) {
-        setDebugStatus("error");
-        setDebugWa(null);
-        setDebugRowId(null);
-      } else {
-        setDebugStatus("ok");
-        setDebugWa(mineResult.data.wa_values ?? []);
-        setDebugRowId(`${mineResult.data.serial_number} / id ${mineResult.data.id}`);
-      }
+      // Gate MOCK-MON-PIANO : erreur d'accès OU ligne absente => bloqué.
+      setDebugStatus(mineResult.error || !mineResult.data ? "error" : "ok");
+
 
       setMyPiano(mineResult.data ? profileFromRow(mineResult.data) : null);
       setSameModel(witnessResult.data ? profileFromRow(witnessResult.data) : null);
@@ -761,20 +752,11 @@ function Comparer() {
               </p>
             </div>
           ) : (
-            <>
-              <div className="mb-2 rounded-md border border-amber-300 bg-amber-50 px-4 py-2">
-                <span className="!text-sm font-mono !text-amber-800 break-words">
-                  Debug Supabase : ligne lue = {debugRowId ?? "…"} — Wa lues ={" "}
-                  {debugStatus === "loading" || debugWa === null
-                    ? "… chargement"
-                    : `[${debugWa.join(", ")}]`}
-                </span>
-              </div>
-              <div className="mb-6">
-                <ComparisonChart chartData={chartData} />
-              </div>
-            </>
+            <div className="mb-6">
+              <ComparisonChart chartData={chartData} />
+            </div>
           )}
+
           <Frame title="Moyennes" className="mt-2">
             <div className="mb-3">
               <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">
