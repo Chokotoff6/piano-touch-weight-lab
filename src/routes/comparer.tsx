@@ -373,6 +373,7 @@ function ComparisonChart() {
             ))}
           </LineChart>
         </ResponsiveContainer>
+        </div>
       </div>
     );
   }
