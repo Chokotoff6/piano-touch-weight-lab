@@ -460,7 +460,7 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
                   dataKey={line.dataKey}
                   name={line.name}
                   stroke={line.color}
-                  strokeWidth={line.name.includes("noires") ? 1 : 1.5}
+                  strokeWidth={2}
                   dot={line.real ? SAMPLE_DOT_CONFIG : false}
                   // En Vue Éclatée, les séries blanches/noires alternent des
                   // valeurs et des `undefined` : on relie les segments pour
@@ -745,8 +745,8 @@ function Comparer() {
           {factorySpecs ? "Factory Specs" : "Valeurs Types"}
         </Button>
       </div>
-      <div className="flex w-full flex-col gap-6">
-        <div className="w-full min-w-0">
+      <div className="flex w-full gap-6">
+        <div className="min-w-0 flex-1">
           {/* --- Test de vérité : diagnostic Supabase MOCK-MON-PIANO --- */}
           {debugStatus === "error" ? (
             <div className="flex w-full items-center justify-center py-16">
@@ -783,6 +783,14 @@ function Comparer() {
             </div>
           </Frame>
         </div>
+        {/* Panneau latéral droit — volet immobile (FRAME_CLASS identique). */}
+        <aside className="hidden w-[260px] shrink-0 lg:block">
+          <Frame title="Filtres d'affinage" className="sticky top-4 h-full">
+            <div className="flex h-full min-h-[200px] items-center justify-center text-sm text-muted-foreground">
+              <span className="italic">Bientôt disponible</span>
+            </div>
+          </Frame>
+        </aside>
       </div>
     </main>
   );
