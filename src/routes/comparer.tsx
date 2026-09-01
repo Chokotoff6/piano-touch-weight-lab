@@ -233,11 +233,6 @@ function ComparisonChart() {
   // Chaque sous-graphique gère désormais son échelle verticale automatique
   // (dataMin - 3 / dataMax + 3) — plus de domaine global.
   const count = data.length;
-  const first = data[0]!;
-  const last = data[count - 1]!;
-
-  // Simulation : les spécifications d'usine sont présentes (mock).
-  const isFactorySpecs = true;
 
   const avg = (key: keyof Omit<ChartPoint, "key">) => seriesAverage(data, key);
 
