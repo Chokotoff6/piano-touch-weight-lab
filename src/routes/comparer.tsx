@@ -674,6 +674,7 @@ function Comparer() {
   // debugStatus = "loading" | "ok" | "error" (erreur RLS OU ligne vide).
   const [debugStatus, setDebugStatus] = useState<"loading" | "ok" | "error">("loading");
   const [debugWa, setDebugWa] = useState<number[] | null>(null);
+  const [debugRowId, setDebugRowId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -682,14 +683,14 @@ function Comparer() {
       const [mineResult, witnessResult] = await Promise.all([
         supabase
           .from("piano_profiles")
-          .select("serial_number, wa_values, wd_values, friction_values, balance_values")
-          .eq("serial_number", MY_PIANO_SERIAL)
-          .maybeSingle(),
+          .select("*")
+          .eq("serial_number", "MOCK-MON-PIANO")
+          .single(),
         supabase
           .from("piano_profiles")
-          .select("serial_number, wa_values, wd_values, friction_values, balance_values")
-          .eq("serial_number", WITNESS_SERIAL)
-          .maybeSingle(),
+          .select("*")
+          .eq("serial_number", "MOCK-WITNESS")
+          .single(),
       ]);
 
       if (cancelled) return;
@@ -698,9 +699,11 @@ function Comparer() {
       if (mineResult.error || !mineResult.data) {
         setDebugStatus("error");
         setDebugWa(null);
+        setDebugRowId(null);
       } else {
         setDebugStatus("ok");
         setDebugWa(mineResult.data.wa_values ?? []);
+        setDebugRowId(`${mineResult.data.serial_number} / id ${mineResult.data.id}`);
       }
 
       setMyPiano(mineResult.data ? profileFromRow(mineResult.data) : null);
@@ -760,7 +763,7 @@ function Comparer() {
             <>
               <div className="mb-2 rounded-md border border-amber-300 bg-amber-50 px-4 py-2">
                 <span className="!text-sm font-mono !text-amber-800 break-words">
-                  Debug Supabase : Wa lues ={" "}
+                  Debug Supabase : ligne lue = {debugRowId ?? "…"} — Wa lues ={" "}
                   {debugStatus === "loading" || debugWa === null
                     ? "… chargement"
                     : `[${debugWa.join(", ")}]`}
