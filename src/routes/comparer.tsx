@@ -371,7 +371,8 @@ function currentLinesFor(familyId: string, keyFilter: KeyFilter): LineDef[] {
     bal: "Balance",
     fric: "Friction",
   };
-  const metric = metrics[familyId] ?? metrics["wa"];
+  const metric = metrics[familyId];
+  if (!metric) return [];
   const label = labels[familyId] ?? "Wa";
   if (keyFilter === "split") {
     return [
