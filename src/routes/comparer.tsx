@@ -321,8 +321,9 @@ function ComparisonChart() {
     seriesAverage(filteredData, key);
 
   // Définitions des courbes : trait plein continu 1.5 px, labels d'extrémité.
-  // Noms officiels dépouillés des suffixes de famille (le titre du bloc
-  // indique déjà la mesure) : "Actuel", "Same models", "Std" / "Factory".
+  // Nommage exact : "Mon piano Wa/Wd/Balance/Friction" (noir, réel) et
+  // "Same model(s)" (orange, témoin). Pas de courbe Std/Factory tant qu'aucune
+  // référence réelle n'est stockée en base.
   const LINES: Array<{
     dataKey: keyof Omit<ChartPoint, "key">;
     name: string;
@@ -333,37 +334,19 @@ function ComparisonChart() {
   }> = [
     { dataKey: "waCur", name: "Mon piano Wa", shortName: "Mon piano", color: "#000000", family: "wa", real: true },
     { dataKey: "sameWa", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316", family: "wa" },
-    { dataKey: "stdWa", name: "Std", shortName: "Std", color: "#10b981", family: "wa" },
-    { dataKey: "balCur", name: "Mon piano Balance", shortName: "Mon piano", color: "#000000", family: "bal", real: true },
-    { dataKey: "sameBal", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316", family: "bal" },
-    { dataKey: "factoryBal", name: "Factory", shortName: "Factory", color: "#10b981", family: "bal" },
     { dataKey: "wdCur", name: "Mon piano Wd", shortName: "Mon piano", color: "#000000", family: "wd", real: true },
     { dataKey: "sameWd", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316", family: "wd" },
-    { dataKey: "stdWd", name: "Std", shortName: "Std", color: "#10b981", family: "wd" },
+    { dataKey: "balCur", name: "Mon piano Balance", shortName: "Mon piano", color: "#000000", family: "bal", real: true },
+    { dataKey: "sameBal", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316", family: "bal" },
     { dataKey: "fricCur", name: "Mon piano Friction", shortName: "Mon piano", color: "#000000", family: "fric", real: true },
     { dataKey: "sameFric", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316", family: "fric" },
-    { dataKey: "factoryFric", name: "Factory", shortName: "Factory", color: "#10b981", family: "fric" },
   ];
 
-  // Sécurité flanc droit : si les 3 moyennes d'une famille sont espacées de
-  // moins de 1,2 g, on aère verticalement les étiquettes (dy = 0 / 14 / 28).
-  function dyRightFor(lines: typeof LINES): Map<string, number> {
-    const map = new Map<string, number>();
-    const entries = lines.map((l) => ({ key: l.dataKey, v: Number(avg(l.dataKey)) }));
-    const sorted = [...entries].sort((a, b) => a.v - b.v);
-    if (sorted.length >= 2 && sorted[sorted.length - 1]!.v - sorted[0]!.v < 1.2) {
-      // Ordre décroissant : la moyenne la plus haute reste à dy 0, etc.
-      [...entries]
-        .sort((a, b) => b.v - a.v)
-        .forEach((e, i) => map.set(e.key, i * 14));
-    }
-    return map;
-  }
-
-  // Regroupement par famille (ordre d'empilement vertical).
+  // Regroupement par famille — ordre physique imposé (de haut en bas) :
+  // WA → WD → BALANCE → FRICTION.
   const WA_LINES = LINES.filter((l) => l.family === "wa");
-  const BAL_LINES = LINES.filter((l) => l.family === "bal");
   const WD_LINES = LINES.filter((l) => l.family === "wd");
+  const BAL_LINES = LINES.filter((l) => l.family === "bal");
   const FRIC_LINES = LINES.filter((l) => l.family === "fric");
 
   // Sous-graphique individuel (famille isolée). Sync global "piano".
