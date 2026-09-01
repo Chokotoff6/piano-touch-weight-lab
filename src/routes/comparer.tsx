@@ -344,7 +344,7 @@ function ComparisonChart() {
   }
 
   return (
-    <div className="w-full min-h-[700px] flex flex-col justify-between gap-10 py-12 px-2">
+    <div className="w-full h-[580px] flex flex-col justify-between gap-10 py-12 px-2">
       {/* BLOC 1 : Wa (conserve l'axe supérieur DO). */}
       <SubChart lines={WA_LINES} withTopAxis />
       {/* BLOC 2 : Balance. */}
