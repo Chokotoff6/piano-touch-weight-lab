@@ -337,8 +337,6 @@ function ComparisonChart() {
                   avg: `${avg(line.dataKey)} g.`,
                   color: line.color,
                   count,
-                  dyLeft: line.dyLeft,
-                  dyRight: line.dyRight,
                 })}
               />
             ))}
@@ -350,7 +348,7 @@ function ComparisonChart() {
   }
 
   return (
-    <div className="w-full min-h-[650px] flex flex-col justify-between gap-8">
+    <div className="w-full min-h-[700px] flex flex-col justify-between gap-10">
       {/* BLOC 1 : Wa (conserve l'axe supérieur DO). */}
       <SubChart lines={WA_LINES} withTopAxis />
       {/* BLOC 2 : Balance. */}
