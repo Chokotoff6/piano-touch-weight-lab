@@ -378,6 +378,7 @@ function ComparisonChart() {
                   avg: avg(line.dataKey),
                   color: line.color,
                   count,
+                  dyRight: dyRight.get(line.dataKey) ?? 0,
                 })}
               />
             ))}
