@@ -745,8 +745,8 @@ function Comparer() {
           {factorySpecs ? "Factory Specs" : "Valeurs Types"}
         </Button>
       </div>
-      <div className="flex w-full flex-col gap-6">
-        <div className="w-full min-w-0">
+      <div className="flex w-full gap-6">
+        <div className="min-w-0 flex-1">
           {/* --- Test de vérité : diagnostic Supabase MOCK-MON-PIANO --- */}
           {debugStatus === "error" ? (
             <div className="flex w-full items-center justify-center py-16">
