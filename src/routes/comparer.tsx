@@ -300,7 +300,6 @@ function ComparisonChart() {
               data={filteredData}
               syncId="piano"
               margin={{ top: 5, right: 130, bottom: 35, left: 120 }}
-              style={{ marginTop: "24px" }}
             >
               <XAxis xAxisId="main" dataKey="key" type="number" domain={[1, 88]} hide />
               <XAxis
