@@ -1,12 +1,192 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ReferenceLine,
+} from "recharts";
 
 // ---------------------------------------------------------------------------
-// Page de comparaison — architecture + grille visuelle uniquement.
-// Aucun graphique Recharts, aucune connexion base de données pour l'instant.
-// Toutes les valeurs sont à "—" (absence de données) tant qu'aucune source
-// de comparaison n'est chargée. Le panneau de filtres reste masqué par défaut.
+// Page de comparaison — architecture, grille visuelle et moteur graphique.
+// Aucune connexion base de données pour l'instant : les courbes utilisent des
+// données fictives temporaires (mock) en attendant le branchement réel.
+// Le panneau de filtres reste masqué par défaut.
 // ---------------------------------------------------------------------------
+
+// --- Moteur graphique (BLOC 2) ---------------------------------------------
+// Positions X des touches DO sur le clavier (1..88).
+const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];
+
+// Données fictives temporaires : courbe de Wa décroissante réaliste
+// (~52 g dans le grave → ~34 g dans l'aigu), Wd et dérivés calculés.
+type ChartPoint = {
+  key: number;
+  waCur: number;
+  wdCur: number;
+  balCur: number;
+  fricCur: number;
+};
+
+function buildMockData(): ChartPoint[] {
+  const points: ChartPoint[] = [];
+  for (let k = 1; k <= 88; k++) {
+    const t = (k - 1) / 87;
+    const wa = 52 - 18 * t + Math.sin(k * 0.7) * 1.2;
+    const wd = wa - 12 - Math.cos(k * 0.5) * 0.8;
+    const bal = (wa + wd) / 2;
+    const fric = (wa - wd) / 2;
+    points.push({
+      key: k,
+      waCur: Number(wa.toFixed(1)),
+      wdCur: Number(wd.toFixed(1)),
+      balCur: Number(bal.toFixed(1)),
+      fricCur: Number(fric.toFixed(1)),
+    });
+  }
+  return points;
+}
+
+// Tick personnalisé de l'axe supérieur :
+//  - note 4 : "(DO)" déporté à gauche (x - 24) + "4" ancré à x,
+//  - autres DO : numéro brut centré sur son axe vertical.
+function CustomTickTop(props: {
+  x?: number;
+  y?: number;
+  dy?: number;
+  payload?: { value: number };
+}) {
+  const { x = 0, y = 0, dy = 0, payload } = props;
+  const value = payload?.value ?? 0;
+  return (
+    <g transform={`translate(${x},${y})`}>
+      {value === 4 && (
+        <text x={-24} y={dy} dy={6} textAnchor="middle" fontSize={10} fill="#6b7280">
+          (DO)
+        </text>
+      )}
+      <text x={0} y={dy} dy={6} textAnchor="middle" fontSize={10} fill="#6b7280">
+        {value}
+      </text>
+    </g>
+  );
+}
+
+// Ordre décroissant des familles de courbes dans le tooltip :
+// Wa → Balance → Wd → Friction (du plus haut niveau de pesée vers le bas).
+const TOOLTIP_GROUP_RANK: Record<string, number> = {
+  "Wa actuel": 0,
+  "Same models Wa": 0,
+  "Std Wa": 0,
+  "Balance actuelle": 1,
+  "Same models Balance": 1,
+  "Std Bal.": 1,
+  "Wd actuel": 2,
+  "Same models Wd": 2,
+  "Std Wd": 2,
+  "Friction actuelle": 3,
+  "Same models Friction": 3,
+  "Std Friction": 3,
+};
+
+type TooltipEntry = {
+  name?: string;
+  value?: number;
+  color?: string;
+};
+
+function CustomTooltipContent(props: {
+  active?: boolean;
+  payload?: TooltipEntry[];
+  label?: number;
+}) {
+  const { active, payload, label } = props;
+  if (!active || !payload || payload.length === 0) return null;
+  const sorted = [...payload].sort((a, b) => {
+    const ra = TOOLTIP_GROUP_RANK[a.name ?? ""] ?? 99;
+    const rb = TOOLTIP_GROUP_RANK[b.name ?? ""] ?? 99;
+    if (ra !== rb) return ra - rb;
+    return (b.value ?? 0) - (a.value ?? 0);
+  });
+  return (
+    <div className="rounded-md border border-gray-200 bg-white/95 px-3 py-2 text-xs shadow-md">
+      <div className="mb-1 font-bold text-gray-800">Touche {label}</div>
+      {sorted.map((entry) => (
+        <div key={entry.name} className="flex items-center justify-between gap-4">
+          <span style={{ color: entry.color }}>{entry.name}</span>
+          <span className="font-semibold tabular-nums text-gray-800">
+            {typeof entry.value === "number" ? entry.value.toFixed(1) : entry.value} g.
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ComparisonChart() {
+  // Données mock en attendant le branchement réel (piano actuel uniquement).
+  const [data] = useState<ChartPoint[]>(buildMockData);
+  // Domaine vertical live : max de Wa du piano actuel + 1.
+  const maxWaLive = data.reduce((m, p) => Math.max(m, p.waCur), 0);
+
+  return (
+    <div className="w-full" style={{ height: 380 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={{ top: 8, right: 120, bottom: 15, left: 120 }}>
+          {/* Axe X principal : 1..88, graduations standards du bas masquées. */}
+          <XAxis
+            xAxisId="main"
+            dataKey="key"
+            type="number"
+            domain={[1, 88]}
+            hide
+          />
+          {/* Axe X supérieur : repères des touches DO uniquement. */}
+          <XAxis
+            xAxisId="topAxis"
+            dataKey="key"
+            type="number"
+            domain={[1, 88]}
+            orientation="top"
+            height={15}
+            axisLine={false}
+            tickLine={false}
+            ticks={DO_POSITIONS}
+            tick={<CustomTickTop dy={-6} />}
+          />
+          {/* Axe Y totalement invisible mais actif (zéro écran blanc) :
+              jamais de domain={[]} ni de ticks={[]} vides. */}
+          <YAxis
+            width={0}
+            tick={false}
+            axisLine={false}
+            tickLine={false}
+            domain={[0, maxWaLive + 1]}
+          />
+          {/* Séparateurs verticaux fins aux emplacements des touches DO. */}
+          {DO_POSITIONS.map((pos) => (
+            <ReferenceLine
+              key={pos}
+              xAxisId="main"
+              x={pos}
+              stroke="#e5e7eb"
+              strokeWidth={1}
+            />
+          ))}
+          <Tooltip content={<CustomTooltipContent />} />
+          {/* Courbes du piano actuel (mock). */}
+          <Line xAxisId="main" type="monotone" dataKey="waCur" name="Wa actuel" stroke="#111827" strokeWidth={2} dot={false} isAnimationActive={false} />
+          <Line xAxisId="main" type="monotone" dataKey="balCur" name="Balance actuelle" stroke="#3b82f6" strokeWidth={1.5} dot={false} isAnimationActive={false} />
+          <Line xAxisId="main" type="monotone" dataKey="wdCur" name="Wd actuel" stroke="#9ca3af" strokeWidth={1.5} dot={false} isAnimationActive={false} />
+          <Line xAxisId="main" type="monotone" dataKey="fricCur" name="Friction actuelle" stroke="#ef4444" strokeWidth={1.5} dot={false} isAnimationActive={false} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/comparer")({
   head: () => ({
