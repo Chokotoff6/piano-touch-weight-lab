@@ -156,8 +156,14 @@ type EndLabelOptions = {
 };
 
 function makeEndLabel(opts: EndLabelOptions) {
-  const EndLabel = (props: { x?: number; y?: number; index?: number }) => {
-    const { x = 0, y = 0, index = -1 } = props;
+  const EndLabel = (props: { x?: number; y?: number; index?: number; value?: number }) => {
+    const { x, y, index = -1, value } = props;
+    // Sécurité de rendu : sans coordonnée valide (ou sans donnée), on masque
+    // totalement l'étiquette au lieu de la laisser stagner en haut du cadre.
+    const hasPoint =
+      typeof x === "number" && Number.isFinite(x) && typeof y === "number" && Number.isFinite(y);
+    const hasValue = value === undefined || (typeof value === "number" && Number.isFinite(value));
+    if (!hasPoint || !hasValue || opts.avg === "—") return <g />;
     if (index === 0) {
       return (
         <text x={x - 44} y={y} dy={opts.dyLeft} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>
