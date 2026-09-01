@@ -130,9 +130,18 @@ function buildChartData(
 }
 
 // Moyenne d'une série (affichée comme valeur moyenne au flanc droit).
+// Ignore les points absents ; renvoie "" si la série est vide.
 function seriesAverage(data: ChartPoint[], key: keyof Omit<ChartPoint, "key">): string {
-  const sum = data.reduce((acc, p) => acc + (p[key] as number), 0);
-  return (sum / data.length).toFixed(1);
+  const vals = data
+    .map((p) => p[key])
+    .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+  if (vals.length === 0) return "";
+  return (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
+}
+
+// Indique si une série contient au moins une valeur réelle.
+function seriesHasData(data: ChartPoint[], key: keyof Omit<ChartPoint, "key">): boolean {
+  return data.some((p) => typeof p[key] === "number");
 }
 
 // Pastilles noires calibrées (r = 2) uniquement sur les 15 points
