@@ -93,20 +93,21 @@ function seriesAverage(data: ChartPoint[], key: keyof Omit<ChartPoint, "key">): 
   return (sum / data.length).toFixed(1);
 }
 
-// Pastille noire ultra-fine (r = 1.4) uniquement sur les 15 points
-// d'échantillonnage de la matrice — réservée aux courbes réelles.
+// Pastilles noires affirmées (r = 3) uniquement sur les 15 points
+// d'échantillonnage de la matrice — réservées aux courbes réelles.
+const SAMPLE_DOT_CONFIG = { r: 3, fill: "#000000", strokeWidth: 0 };
 function sampleDot(props: { cx?: number; cy?: number; index?: number }) {
   const { cx = 0, cy = 0, index = -1 } = props;
   if (!SAMPLE_INDICES.has(index)) return <g key={`dot-${index}`} />;
-  return <circle key={`dot-${index}`} cx={cx} cy={cy} r={1.4} fill="#000000" />;
+  return <circle key={`dot-${index}`} cx={cx} cy={cy} r={3} fill="#000000" strokeWidth={0} />;
 }
 
-// Étiquettes d'extrémité (BLOC 3) :
-//  - Flanc gauche (index 0)   : nom de la courbe, textAnchor="end", x - 10.
-//  - Flanc droit (index max)  : valeur moyenne, textAnchor="start", x + 10.
+// Étiquettes d'extrémité compressées :
+//  - Flanc gauche (index 0)   : nom brut du groupe ("Wa", "Bal.", ...), textAnchor="end", x - 10.
+//  - Flanc droit (index max)  : "Moy: xx.xg", textAnchor="start", x + 10.
 //  - dy = 4 fixe (pile en face de l'axe de la courbe), sans décalage complexe.
 type EndLabelOptions = {
-  name: string;
+  shortName: string;
   avg: string;
   color: string;
   count: number;
@@ -119,7 +120,7 @@ function makeEndLabel(opts: EndLabelOptions) {
       const dy = 4;
       return (
         <text x={x - 10} y={y} dy={dy} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>
-          {opts.name}
+          {opts.shortName}
         </text>
       );
     }
@@ -127,7 +128,7 @@ function makeEndLabel(opts: EndLabelOptions) {
       const dy = 4;
       return (
         <text x={x + 10} y={y} dy={dy} textAnchor="start" fontSize={11} fontWeight={600} fill={opts.color}>
-          {opts.avg}
+          {`Moy: ${opts.avg}g`}
         </text>
       );
     }
