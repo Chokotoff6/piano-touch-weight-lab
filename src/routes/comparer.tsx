@@ -197,7 +197,7 @@ type TooltipEntry = {
 //  - Std / Factory → vert (#10b981)
 function tooltipColorFor(name: string): string {
   const n = name.toLowerCase();
-  if (n.includes("actuel")) return "#000000";
+  if (n.includes("mon piano")) return "#000000";
   if (n.startsWith("same models")) return "#f97316";
   return "#10b981"; // Std ou Factory (références)
 }
@@ -421,6 +421,7 @@ function ComparisonChart() {
       <SubChart lines={WD_LINES} yDomain={["dataMin - 1.5", "dataMax + 1.5"]} />
       {/* BLOC 4 : Friction. */}
       <SubChart lines={FRIC_LINES} yDomain={["dataMin - 0.5", "dataMax + 0.5"]} />
+      </div>
     </div>
   );
 }
