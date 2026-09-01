@@ -59,9 +59,64 @@ type ChartPoint = {
 
 type MetricFamily = "wa" | "bal" | "wd" | "fric";
 
+// ---------------------------------------------------------------------------
+// Chargement des profils réels depuis la base (table piano_profiles) :
+//  - serial_number = 'MOCK-MON-PIANO' → courbes "Mon piano" (noires)
+//  - serial_number = 'MOCK-WITNESS'   → série "Same model(s)" (orange)
+// Les 15 cellules des matrices wa/wd/friction/balance correspondent aux
+// notes SAMPLE_NOTES. Les références Std / Factory sont dérivées du témoin.
+// ---------------------------------------------------------------------------
+type PianoProfileRow = {
+  serial_number: string;
+  wa_values: number[];
+  wd_values: number[];
+  friction_values: number[];
+  balance_values: number[];
+};
+
+async function fetchProfiles(): Promise<PianoProfileRow[]> {
+  const { data, error } = await supabase
+    .from("piano_profiles")
+    .select("serial_number, wa_values, wd_values, friction_values, balance_values")
+    .in("serial_number", ["MOCK-MON-PIANO", "MOCK-WITNESS"]);
+  if (error) throw error;
+  return (data ?? []) as unknown as PianoProfileRow[];
+}
+
+// Construit les points du graphique à partir des profils réels.
+function buildRealData(cur: PianoProfileRow, same: PianoProfileRow): ChartPoint[] {
+  const n = (v: number) => Number(v.toFixed(1));
+  return SAMPLE_NOTES.map((key, i) => {
+    const wa = Number(cur.wa_values[i]);
+    const wd = Number(cur.wd_values[i]);
+    const fric = Number(cur.friction_values[i]);
+    const bal = Number(cur.balance_values[i]);
+    const sameWa = Number(same.wa_values[i]);
+    const sameWd = Number(same.wd_values[i]);
+    const sameFric = Number(same.friction_values[i]);
+    const sameBal = Number(same.balance_values[i]);
+    return {
+      key,
+      waCur: n(wa),
+      sameWa: n(sameWa),
+      stdWa: n(sameWa - 2.5),
+      wdCur: n(wd),
+      balCur: n(bal),
+      fricCur: n(fric),
+      sameWd: n(sameWd),
+      stdWd: n(sameWd - 2.5),
+      sameBal: n(sameBal),
+      factoryBal: n(sameBal - 2.0),
+      sameFric: n(sameFric),
+      factoryFric: n(sameFric - 2.0),
+    };
+  });
+}
+
+// Données de repli (mock) si les profils ne sont pas encore disponibles.
 function buildMockData(): ChartPoint[] {
   const points: ChartPoint[] = [];
-  for (let k = 1; k <= 88; k++) {
+  for (const k of SAMPLE_NOTES) {
     const t = (k - 1) / 87;
     const wa = 52 - 18 * t + Math.sin(k * 0.7) * 1.2;
     const wd = wa - 12 - Math.cos(k * 0.5) * 0.8;
