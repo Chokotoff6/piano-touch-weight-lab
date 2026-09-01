@@ -310,16 +310,19 @@ function ComparisonChart() {
   function SubChart({
     lines,
     withTopAxis,
+    yDomain,
   }: {
     lines: typeof LINES;
     withTopAxis?: boolean;
+    yDomain: [string, string];
   }) {
+    const dyRight = dyRightFor(lines);
     return (
       <div className="flex-1 h-full w-full min-h-0 relative">
         <div className="absolute inset-0">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
-            data={data}
+            data={filteredData}
             syncId="piano"
             margin={{ top: 8, right: 120, bottom: withTopAxis ? 15 : 4, left: 120 }}
           >
