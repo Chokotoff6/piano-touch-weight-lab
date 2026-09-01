@@ -40,26 +40,26 @@ const KEY_FILTERS: Array<{ id: KeyFilter; label: string }> = [
 type ChartPoint = {
   key: number;
   isBlack: boolean;
-  waCur?: number;
-  waCurW?: number;
-  waCurB?: number;
-  sameWa?: number;
-  stdWa?: number;
-  wdCur?: number;
-  wdCurW?: number;
-  wdCurB?: number;
-  sameWd?: number;
-  stdWd?: number;
-  balCur?: number;
-  balCurW?: number;
-  balCurB?: number;
-  sameBal?: number;
-  factoryBal?: number;
-  fricCur?: number;
-  fricCurW?: number;
-  fricCurB?: number;
-  sameFric?: number;
-  factoryFric?: number;
+  waCur: number | undefined;
+  waCurW: number | undefined;
+  waCurB: number | undefined;
+  sameWa: number | undefined;
+  stdWa: number | undefined;
+  wdCur: number | undefined;
+  wdCurW: number | undefined;
+  wdCurB: number | undefined;
+  sameWd: number | undefined;
+  stdWd: number | undefined;
+  balCur: number | undefined;
+  balCurW: number | undefined;
+  balCurB: number | undefined;
+  sameBal: number | undefined;
+  factoryBal: number | undefined;
+  fricCur: number | undefined;
+  fricCurW: number | undefined;
+  fricCurB: number | undefined;
+  sameFric: number | undefined;
+  factoryFric: number | undefined;
 };
 
 const n1 = (v: number) => Number(v.toFixed(1));
@@ -674,17 +674,24 @@ function Comparer() {
     let cancelled = false;
 
     async function loadComparisonProfiles() {
-      const { data } = await supabase
-        .from("piano_profiles")
-        .select("serial_number, marque, modele, wa_values, wd_values, friction_values, balance_values")
-        .in("serial_number", [MY_PIANO_SERIAL, WITNESS_SERIAL]);
+      const profileSelect =
+        "serial_number, wa_values, wd_values, friction_values, balance_values";
+      const [mineResult, witnessResult] = await Promise.all([
+        supabase
+          .from("piano_profiles")
+          .select(profileSelect)
+          .eq("serial_number", MY_PIANO_SERIAL)
+          .maybeSingle(),
+        supabase
+          .from("piano_profiles")
+          .select(profileSelect)
+          .eq("serial_number", WITNESS_SERIAL)
+          .maybeSingle(),
+      ]);
 
       if (cancelled) return;
-      const rows = data ?? [];
-      const mineRow = rows.find((row) => row.serial_number === MY_PIANO_SERIAL);
-      const witnessRow = rows.find((row) => row.serial_number === WITNESS_SERIAL);
-      setMyPiano(mineRow ? profileFromRow(mineRow) : null);
-      setSameModel(witnessRow ? profileFromRow(witnessRow) : null);
+      setMyPiano(mineResult.data ? profileFromRow(mineResult.data) : null);
+      setSameModel(witnessResult.data ? profileFromRow(witnessResult.data) : null);
     }
 
     void loadComparisonProfiles();
