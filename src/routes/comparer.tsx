@@ -245,6 +245,7 @@ const FAMILIES: Array<{
     id: "fric",
     title: "Friction mécanique",
     domain: [-2, 16],
+    topAxis: true,
     lines: [
       { dataKey: "fricCur", name: "Mon piano Friction", shortName: "Mon piano Friction", color: "#000000", real: true },
       { dataKey: "sameFric", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316" },
