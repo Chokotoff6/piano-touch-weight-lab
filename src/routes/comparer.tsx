@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   ResponsiveContainer,
   LineChart,
@@ -21,18 +23,11 @@ import {
 // Positions X des touches DO sur le clavier (1..88).
 const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];
 
-// 15 points d'échantillonnage de la matrice (pastilles noires ultra-fines).
-const SAMPLE_INDICES = new Set(
-  Array.from({ length: 15 }, (_, i) => Math.round((i * 87) / 14)),
-);
-
-// --- Filtre par type de touches ---------------------------------------------
-// Touches noires du clavier (touche 1 = La0 blanc, touche 4 = premier Do).
-const BLACK_KEYS = new Set([
-  2, 5, 7, 10, 12, 14, 17, 19, 22, 24, 26, 29, 31, 34, 36, 38, 41, 43, 46, 48, 50,
-  53, 55, 58, 60, 62, 65, 67, 70, 72, 74, 77, 79, 82, 84, 86,
-]);
-const isBlackKey = (key: number) => BLACK_KEYS.has(key);
+// 15 notes réelles échantillonnées de la matrice (index des cellules 0..14).
+const SAMPLE_NOTES = [4, 10, 16, 22, 28, 34, 40, 46, 52, 58, 64, 70, 76, 82, 88];
+// Touches noires parmi les notes échantillonnées.
+const BLACK_NOTES = new Set([10, 22, 34, 46, 58, 70, 82]);
+const isBlackKey = (key: number) => BLACK_NOTES.has(key);
 
 type KeyFilter = "all" | "white" | "black";
 
