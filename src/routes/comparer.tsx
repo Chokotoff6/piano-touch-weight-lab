@@ -359,18 +359,20 @@ function offsetsFor(lines: LineDef[], point: ChartPoint | undefined): Map<Series
 }
 
 function currentLinesFor(familyId: string, keyFilter: KeyFilter): LineDef[] {
-  const metric = {
+  const metrics: Record<string, [SeriesKey, SeriesKey, SeriesKey]> = {
     wa: ["waCur", "waCurW", "waCurB"],
     wd: ["wdCur", "wdCurW", "wdCurB"],
     bal: ["balCur", "balCurW", "balCurB"],
     fric: ["fricCur", "fricCurW", "fricCurB"],
-  }[familyId] as [SeriesKey, SeriesKey, SeriesKey];
-  const label = {
+  };
+  const labels: Record<string, string> = {
     wa: "Wa",
     wd: "Wd",
     bal: "Balance",
     fric: "Friction",
-  }[familyId];
+  };
+  const metric = metrics[familyId] ?? metrics.wa;
+  const label = labels[familyId] ?? "Wa";
   if (keyFilter === "split") {
     return [
       { dataKey: metric[1], name: `Mon piano ${label} — blanches`, shortName: `Mon piano ${label}`, color: "#000000", real: true },
@@ -674,7 +676,7 @@ function Comparer() {
     let cancelled = false;
 
     async function loadComparisonProfiles() {
-      const profileSelect =
+      const profileSelect: string =
         "serial_number, wa_values, wd_values, friction_values, balance_values";
       const [mineResult, witnessResult] = await Promise.all([
         supabase
