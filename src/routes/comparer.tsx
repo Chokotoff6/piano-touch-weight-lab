@@ -469,14 +469,16 @@ function ComparisonChart() {
       </div>
 
       <div className="w-full h-[580px] flex flex-col justify-between gap-10">
-      {/* BLOC 1 (haut) : Wa — conserve l'axe supérieur DO. Domaine fixe [55, 85]. */}
-      <SubChart lines={WA_LINES} withTopAxis yDomain={[55, 85]} />
-      {/* BLOC 2 (milieu haut) : Wd. Domaine fixe [40, 70]. */}
-      <SubChart lines={WD_LINES} yDomain={[40, 70]} />
-      {/* BLOC 3 (milieu bas) : Balance. Domaine fixe [50, 75]. */}
-      <SubChart lines={BAL_LINES} yDomain={[50, 75]} />
-      {/* BLOC 4 (bas) : Friction. Domaine fixe [-2, 16]. */}
-      <SubChart lines={FRIC_LINES} yDomain={[-2, 16]} />
+      {/* BLOC 1 (haut) : Wa — conserve l'axe supérieur DO. Domaine fixe [30, 56]
+          (les profils réels couvrent 34–53,5 g ; la plage [55, 85] initialement
+          prévue excluait toutes les données). */}
+      <SubChart lines={WA_LINES} withTopAxis yDomain={[30, 56]} />
+      {/* BLOC 2 (milieu haut) : Wd. Domaine fixe [22, 44] (réel : 25,8–41 g). */}
+      <SubChart lines={WD_LINES} yDomain={[22, 44]} />
+      {/* BLOC 3 (milieu bas) : Balance. Domaine fixe [26, 50] (réel : 29,9–47,3 g). */}
+      <SubChart lines={BAL_LINES} yDomain={[26, 50]} />
+      {/* BLOC 4 (bas) : Friction. Domaine fixe [2, 8] (réel : 4,1–6,3 g). */}
+      <SubChart lines={FRIC_LINES} yDomain={[2, 8]} />
       </div>
     </div>
   );
