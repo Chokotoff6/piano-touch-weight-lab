@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ComparerRouteImport } from './routes/comparer'
 import { Route as ResultatsRouteImport } from './routes/resultats'
 import { Route as SaisieRouteImport } from './routes/saisie'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComparerRoute = ComparerRouteImport.update({
+  id: '/comparer',
+  path: '/comparer',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResultatsRoute = ResultatsRouteImport.update({
@@ -31,30 +37,34 @@ const SaisieRoute = SaisieRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/comparer': typeof ComparerRoute
   '/resultats': typeof ResultatsRoute
   '/saisie': typeof SaisieRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/comparer': typeof ComparerRoute
   '/resultats': typeof ResultatsRoute
   '/saisie': typeof SaisieRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/comparer': typeof ComparerRoute
   '/resultats': typeof ResultatsRoute
   '/saisie': typeof SaisieRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/resultats' | '/saisie'
+  fullPaths: '/' | '/comparer' | '/resultats' | '/saisie'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/resultats' | '/saisie'
-  id: '__root__' | '/' | '/resultats' | '/saisie'
+  to: '/' | '/comparer' | '/resultats' | '/saisie'
+  id: '__root__' | '/' | '/comparer' | '/resultats' | '/saisie'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ComparerRoute: typeof ComparerRoute
   ResultatsRoute: typeof ResultatsRoute
   SaisieRoute: typeof SaisieRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/comparer': {
+      id: '/comparer'
+      path: '/comparer'
+      fullPath: '/comparer'
+      preLoaderRoute: typeof ComparerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/resultats': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ComparerRoute: ComparerRoute,
   ResultatsRoute: ResultatsRoute,
   SaisieRoute: SaisieRoute,
 }
