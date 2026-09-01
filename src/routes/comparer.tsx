@@ -462,7 +462,10 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
                   stroke={line.color}
                   strokeWidth={line.name.includes("noires") ? 1 : 1.5}
                   dot={line.real ? SAMPLE_DOT_CONFIG : false}
-                  connectNulls={false}
+                  // En Vue Éclatée, les séries blanches/noires alternent des
+                  // valeurs et des `undefined` : on relie les segments pour
+                  // obtenir un tracé continu au lieu de points isolés.
+                  connectNulls={keyFilter === "split"}
                   isAnimationActive={false}
                   label={makeEndLabel({
                     shortName: line.shortName,
