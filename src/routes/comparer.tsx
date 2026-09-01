@@ -603,29 +603,6 @@ function profileFromRow(row: {
   };
 }
 
-function averageProfiles(
-  rows: Array<{
-    wa_values: number[];
-    wd_values: number[];
-    friction_values: number[];
-    balance_values: number[];
-  }>,
-): RefProfile | null {
-  if (rows.length === 0) return null;
-  const average = (values: number[][]) => {
-    const length = Math.max(...values.map((series) => series.length));
-    return Array.from({ length }, (_, index) => {
-      const atIndex = values.map((series) => series[index]).filter((value) => value !== undefined);
-      return atIndex.length > 0 ? atIndex.reduce((sum, value) => sum + value, 0) / atIndex.length : 0;
-    });
-  };
-  return {
-    wa: average(rows.map((row) => row.wa_values)),
-    wd: average(rows.map((row) => row.wd_values)),
-    friction: average(rows.map((row) => row.friction_values)),
-    balance: average(rows.map((row) => row.balance_values)),
-  };
-}
 
 function profileAverage(profile: RefProfile | null, key: keyof RefProfile): string {
   const values = profile?.[key] ?? [];
