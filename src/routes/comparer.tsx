@@ -17,18 +17,31 @@ import {
 // Le panneau de filtres reste masqué par défaut.
 // ---------------------------------------------------------------------------
 
-// --- Moteur graphique (BLOC 2) ---------------------------------------------
+// --- Moteur graphique (BLOCS 2 + 3) -----------------------------------------
 // Positions X des touches DO sur le clavier (1..88).
 const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];
 
+// 15 points d'échantillonnage de la matrice (pastilles noires ultra-fines).
+const SAMPLE_INDICES = new Set(
+  Array.from({ length: 15 }, (_, i) => Math.round((i * 87) / 14)),
+);
+
 // Données fictives temporaires : courbe de Wa décroissante réaliste
 // (~52 g dans le grave → ~34 g dans l'aigu), Wd et dérivés calculés.
+// Les séries témoins / std sont calibrées pour simuler des collisions de
+// texte (< 3 g) aux extrémités, afin de valider la micro-aération (BLOC 3).
 type ChartPoint = {
   key: number;
   waCur: number;
   wdCur: number;
   balCur: number;
   fricCur: number;
+  sameWd: number;
+  stdWd: number;
+  sameBal: number;
+  factoryBal: number;
+  sameFric: number;
+  factoryFric: number;
 };
 
 function buildMockData(): ChartPoint[] {
@@ -39,15 +52,92 @@ function buildMockData(): ChartPoint[] {
     const wd = wa - 12 - Math.cos(k * 0.5) * 0.8;
     const bal = (wa + wd) / 2;
     const fric = (wa - wd) / 2;
+    // Flanc GAUCHE (k=1) : trois Wd serrées à moins de 3 g → collision,
+    // mais étiquettes droites espacées (fins ≥ 2,4 g).
+    const sameWd = wd + 1.2 - t * 3.6;
+    const stdWd = wd - 1.1 + t * 3.5;
+    // Flanc DROIT serré (< 3 g) → collision Balance et Friction.
+    const sameBal = bal + 2.4 - t * 1.2; // fin : bal + 1.2
+    const factoryBal = bal - 2.2 + t * 1.1; // fin : bal - 1.1
+    const sameFric = fric + 2.2 - t * 1.1; // fin : fric + 1.1
+    const factoryFric = fric - 2.4 + t * 1.2; // fin : fric - 1.2
+    const n = (v: number) => Number(v.toFixed(1));
     points.push({
       key: k,
-      waCur: Number(wa.toFixed(1)),
-      wdCur: Number(wd.toFixed(1)),
-      balCur: Number(bal.toFixed(1)),
-      fricCur: Number(fric.toFixed(1)),
+      waCur: n(wa),
+      wdCur: n(wd),
+      balCur: n(bal),
+      fricCur: n(fric),
+      sameWd: n(sameWd),
+      stdWd: n(stdWd),
+      sameBal: n(sameBal),
+      factoryBal: n(factoryBal),
+      sameFric: n(sameFric),
+      factoryFric: n(factoryFric),
     });
   }
   return points;
+}
+
+// Écart minimal entre deux valeurs d'un groupe (détection de collision < 3 g).
+function minGap(values: number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  let min = Infinity;
+  for (let i = 1; i < sorted.length; i++) min = Math.min(min, sorted[i]! - sorted[i - 1]!);
+  return min;
+}
+
+// Moyenne d'une série (affichée comme valeur moyenne au flanc droit).
+function seriesAverage(data: ChartPoint[], key: keyof Omit<ChartPoint, "key">): string {
+  const sum = data.reduce((acc, p) => acc + (p[key] as number), 0);
+  return (sum / data.length).toFixed(1);
+}
+
+// Pastille noire ultra-fine (r = 1.4) uniquement sur les 15 points
+// d'échantillonnage de la matrice — réservée aux courbes réelles.
+function sampleDot(props: { cx?: number; cy?: number; index?: number }) {
+  const { cx = 0, cy = 0, index = -1 } = props;
+  if (!SAMPLE_INDICES.has(index)) return <g key={`dot-${index}`} />;
+  return <circle key={`dot-${index}`} cx={cx} cy={cy} r={1.4} fill="#111827" />;
+}
+
+// Étiquettes d'extrémité (BLOC 3) :
+//  - Flanc gauche (index 0)   : nom de la courbe, textAnchor="end", x - 10.
+//  - Flanc droit (index max)  : valeur moyenne, textAnchor="start", x + 10.
+//  - Règle 1 : dy = 4 par défaut (pile en face de l'axe de la courbe).
+//  - Règle 2 : si collision (< 3 g), décalage vertical selon l'altitude
+//    géométrique réelle (dyLeft / dyRight de la VERSION REF GRAPH 22).
+type EndLabelOptions = {
+  name: string;
+  avg: string;
+  color: string;
+  count: number;
+  dyLeft?: number | null | undefined; // null/undefined → règle 1 (dy 4)
+  dyRight?: number | null | undefined;
+};
+
+function makeEndLabel(opts: EndLabelOptions) {
+  const EndLabel = (props: { x?: number; y?: number; index?: number }) => {
+    const { x = 0, y = 0, index = -1 } = props;
+    if (index === 0) {
+      const dy = opts.dyLeft ?? 4;
+      return (
+        <text x={x - 10} y={y} dy={dy} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>
+          {opts.name}
+        </text>
+      );
+    }
+    if (index === opts.count - 1) {
+      const dy = opts.dyRight ?? 4;
+      return (
+        <text x={x + 10} y={y} dy={dy} textAnchor="start" fontSize={11} fontWeight={600} fill={opts.color}>
+          {opts.avg}
+        </text>
+      );
+    }
+    return <g />;
+  };
+  return EndLabel;
 }
 
 // Tick personnalisé de l'axe supérieur :
@@ -78,17 +168,19 @@ function CustomTickTop(props: {
 // Ordre décroissant des familles de courbes dans le tooltip :
 // Wa → Balance → Wd → Friction (du plus haut niveau de pesée vers le bas).
 const TOOLTIP_GROUP_RANK: Record<string, number> = {
-  "Wa actuel": 0,
+  Wa: 0,
   "Same models Wa": 0,
   "Std Wa": 0,
-  "Balance actuelle": 1,
+  Balance: 1,
   "Same models Balance": 1,
+  "Factory Balance": 1,
   "Std Bal.": 1,
-  "Wd actuel": 2,
+  Wd: 2,
   "Same models Wd": 2,
   "Std Wd": 2,
-  "Friction actuelle": 3,
+  Friction: 3,
   "Same models Friction": 3,
+  "Factory Friction": 3,
   "Std Friction": 3,
 };
 
@@ -127,10 +219,62 @@ function CustomTooltipContent(props: {
 }
 
 function ComparisonChart() {
-  // Données mock en attendant le branchement réel (piano actuel uniquement).
+  // Données mock en attendant le branchement réel.
   const [data] = useState<ChartPoint[]>(buildMockData);
   // Domaine vertical live : max de Wa du piano actuel + 1.
   const maxWaLive = data.reduce((m, p) => Math.max(m, p.waCur), 0);
+  const count = data.length;
+  const first = data[0]!;
+  const last = data[count - 1]!;
+
+  // Simulation : les spécifications d'usine sont présentes (mock).
+  const isFactorySpecs = true;
+
+  // --- Détection des collisions d'étiquettes (< 3 g) aux extrémités ---------
+  // Flanc GAUCHE — famille Wd : Same models Wd / Std Wd / Wd actuel.
+  const collideLeftWd = minGap([first.sameWd, first.stdWd, first.wdCur]) < 3;
+  // Flanc DROIT — famille Balance (quand isFactorySpecs) : Same models / Factory.
+  const collideRightBal =
+    isFactorySpecs && minGap([last.sameBal, last.factoryBal, last.balCur]) < 3;
+  // Flanc DROIT — famille Friction (quand isFactorySpecs) : Same models / Factory.
+  const collideRightFric =
+    isFactorySpecs && minGap([last.sameFric, last.factoryFric, last.fricCur]) < 3;
+
+  // Règle 2 (VERSION REF GRAPH 22) : décalages conditionnels, sinon règle 1 (dy 4).
+  const dyLeft = {
+    sameWd: collideLeftWd ? -12 : null, // la plus haute monte
+    stdWd: collideLeftWd ? 0 : null, // se cale au centre
+    wdCur: collideLeftWd ? 16 : null, // descend
+  };
+  const dyRight = {
+    sameBal: collideRightBal ? 16 : null, // s'abaisse
+    factoryBal: collideRightBal ? 4 : null, // monte
+    sameFric: collideRightFric ? 8 : null, // s'abaisse
+    factoryFric: collideRightFric ? 4 : null, // se stabilise
+  };
+
+  const avg = (key: keyof Omit<ChartPoint, "key">) => seriesAverage(data, key);
+
+  // Définitions des courbes : trait plein continu 1.5 px, labels d'extrémité.
+  const LINES: Array<{
+    dataKey: keyof Omit<ChartPoint, "key">;
+    name: string;
+    color: string;
+    real?: boolean; // pastilles noires d'échantillonnage
+    dyLeft?: number | null;
+    dyRight?: number | null;
+  }> = [
+    { dataKey: "waCur", name: "Wa", color: "#111827", real: true },
+    { dataKey: "balCur", name: "Balance", color: "#3b82f6", real: true },
+    { dataKey: "wdCur", name: "Wd", color: "#9ca3af", real: true, dyLeft: dyLeft.wdCur },
+    { dataKey: "fricCur", name: "Friction", color: "#ef4444", real: true },
+    { dataKey: "sameWd", name: "Same models Wd", color: "#f97316", dyLeft: dyLeft.sameWd },
+    { dataKey: "stdWd", name: "Std Wd", color: "#6b7280", dyLeft: dyLeft.stdWd },
+    { dataKey: "sameBal", name: "Same models Balance", color: "#fb923c", dyRight: dyRight.sameBal },
+    { dataKey: "factoryBal", name: "Factory Balance", color: "#0ea5e9", dyRight: dyRight.factoryBal },
+    { dataKey: "sameFric", name: "Same models Friction", color: "#fbbf24", dyRight: dyRight.sameFric },
+    { dataKey: "factoryFric", name: "Factory Friction", color: "#a855f7", dyRight: dyRight.factoryFric },
+  ];
 
   return (
     <div className="w-full" style={{ height: 380 }}>
@@ -177,11 +321,30 @@ function ComparisonChart() {
             />
           ))}
           <Tooltip content={<CustomTooltipContent />} />
-          {/* Courbes du piano actuel (mock). */}
-          <Line xAxisId="main" type="monotone" dataKey="waCur" name="Wa actuel" stroke="#111827" strokeWidth={2} dot={false} isAnimationActive={false} />
-          <Line xAxisId="main" type="monotone" dataKey="balCur" name="Balance actuelle" stroke="#3b82f6" strokeWidth={1.5} dot={false} isAnimationActive={false} />
-          <Line xAxisId="main" type="monotone" dataKey="wdCur" name="Wd actuel" stroke="#9ca3af" strokeWidth={1.5} dot={false} isAnimationActive={false} />
-          <Line xAxisId="main" type="monotone" dataKey="fricCur" name="Friction actuelle" stroke="#ef4444" strokeWidth={1.5} dot={false} isAnimationActive={false} />
+          {/* Toutes les courbes : trait plein continu 1.5 px, labels d'extrémité
+              (BLOC 3). Pastilles r=1.4 uniquement sur les 15 points
+              d'échantillonnage des courbes réelles en noir. */}
+          {LINES.map((line) => (
+            <Line
+              key={line.dataKey}
+              xAxisId="main"
+              type="monotone"
+              dataKey={line.dataKey}
+              name={line.name}
+              stroke={line.color}
+              strokeWidth={1.5}
+              dot={line.real ? sampleDot : false}
+              isAnimationActive={false}
+              label={makeEndLabel({
+                name: line.name,
+                avg: `${avg(line.dataKey)} g.`,
+                color: line.color,
+                count,
+                dyLeft: line.dyLeft,
+                dyRight: line.dyRight,
+              })}
+            />
+          ))}
         </LineChart>
       </ResponsiveContainer>
     </div>
