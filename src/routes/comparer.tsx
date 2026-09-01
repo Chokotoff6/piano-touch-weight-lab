@@ -109,7 +109,7 @@ function makeEndLabel(opts: EndLabelOptions) {
     const { x = 0, y = 0, index = -1 } = props;
     if (index === 0) {
       return (
-        <text x={x - 10} y={y} dy={opts.dyLeft} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>
+        <text x={x - 44} y={y} dy={opts.dyLeft} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>
           {opts.shortName}
         </text>
       );
@@ -222,7 +222,7 @@ const FAMILIES: Array<{
   {
     id: "wd",
     title: "Poids de retour (Wd)",
-    domain: [40, 70],
+    domain: [40, 74],
     topAxis: true,
     lines: [
       { dataKey: "wdCur", name: "Mon piano Wd", shortName: "Mon piano Wd", color: "#000000", real: true },
@@ -254,22 +254,40 @@ const FAMILIES: Array<{
   },
 ];
 
-// Décalages verticaux ordonnés (courbe haute → basse) pour interdire tout
-// chevauchement des étiquettes d'extrémité.
-const DY_STEPS = [-10, 4, 18];
+// Empilement adaptatif des étiquettes d'extrémité : on respecte l'altitude
+// réelle de chaque courbe (la valeur la plus haute reste en haut), mais on
+// garantit un interligne de 14 px et une garde sous l'axe supérieur des DO.
+// Aucune étiquette ne remonte dans la bande de l'axe — d'où un dy toujours
+// positif (ou nul).
+const PLOT_H = 180;
+const MIN_GAP = 14;
+const TOP_CLEARANCE = 16;
 
 function offsetsFor(
   lines: LineDef[],
   point: ChartPoint | undefined,
+  domain: [number, number],
 ): Map<SeriesKey, number> {
   const map = new Map<SeriesKey, number>();
   if (!point) {
-    lines.forEach((l) => map.set(l.dataKey, 4));
+    lines.forEach((l, i) => map.set(l.dataKey, TOP_CLEARANCE + i * MIN_GAP));
     return map;
   }
-  [...lines]
-    .sort((a, b) => point[b.dataKey] - point[a.dataKey])
-    .forEach((l, i) => map.set(l.dataKey, DY_STEPS[i] ?? 4 + i * 14));
+  const range = domain[1] - domain[0];
+  const pxPerVal = range > 0 ? PLOT_H / range : 1;
+  // Altitude (px depuis le sommet du graphe) par courbe.
+  const ranked = lines
+    .map((l) => {
+      const v = point[l.dataKey] ?? 0;
+      return { key: l.dataKey, y: (domain[1] - v) * pxPerVal };
+    })
+    .sort((a, b) => a.y - b.y); // du plus haut (y petit) au plus bas
+  let prevBottom = TOP_CLEARANCE - MIN_GAP;
+  for (const { key, y } of ranked) {
+    const target = Math.max(y, prevBottom + MIN_GAP);
+    map.set(key, Math.round(target - y));
+    prevBottom = target;
+  }
   return map;
 }
 
@@ -287,37 +305,31 @@ function ComparisonChart() {
   const last = filteredData[count - 1];
 
   function SubChart({ family }: { family: (typeof FAMILIES)[number] }) {
-    const dyLeft = offsetsFor(family.lines, first);
-    const dyRight = offsetsFor(family.lines, last);
+    const dyLeft = offsetsFor(family.lines, first, family.domain);
+    const dyRight = offsetsFor(family.lines, last, family.domain);
     return (
-      <section className={`${FRAME_CLASS} h-[260px]`}>
-        <h3 className="absolute left-4 top-2 z-10 rounded bg-card/80 px-1 text-lg font-bold text-black">
-          {family.title}
-        </h3>
-        <div className="absolute inset-0 top-10 bottom-2">
+      <Frame title={family.title} className="h-[260px]">
+        <div className="h-full w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={filteredData}
               syncId="piano"
-              margin={{ top: 18, right: 130, bottom: 6, left: 130 }}
+              margin={{ top: 0, right: 130, bottom: 6, left: 130 }}
+              style={{ marginTop: "24px" }}
             >
               <XAxis xAxisId="main" dataKey="key" type="number" domain={[1, 88]} hide />
-              {family.topAxis ? (
-                <XAxis
-                  xAxisId="topAxis"
-                  dataKey="key"
-                  type="number"
-                  domain={[1, 88]}
-                  orientation="top"
-                  height={15}
-                  axisLine={false}
-                  tickLine={false}
-                  ticks={DO_POSITIONS}
-                  tick={<CustomTickTop dy={-6} />}
-                />
-              ) : (
-                <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={[1, 88]} hide />
-              )}
+              <XAxis
+                xAxisId="topAxis"
+                dataKey="key"
+                type="number"
+                domain={[1, 88]}
+                orientation="top"
+                height={15}
+                axisLine={false}
+                tickLine={false}
+                ticks={DO_POSITIONS}
+                tick={<CustomTickTop dy={-6} />}
+              />
               {/* Loupe verticale : domaine fixe par famille. */}
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
               {DO_POSITIONS.map((pos) => (
@@ -348,7 +360,7 @@ function ComparisonChart() {
             </LineChart>
           </ResponsiveContainer>
         </div>
-      </section>
+      </Frame>
     );
   }
 
