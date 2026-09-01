@@ -783,6 +783,14 @@ function Comparer() {
             </div>
           </Frame>
         </div>
+        {/* Panneau latéral droit — volet immobile (FRAME_CLASS identique). */}
+        <aside className="hidden w-[260px] shrink-0 lg:block">
+          <Frame title="Filtres d'affinage" className="sticky top-4 h-full">
+            <div className="flex h-full min-h-[200px] items-center justify-center text-sm text-muted-foreground">
+              <span className="italic">Bientôt disponible</span>
+            </div>
+          </Frame>
+        </aside>
       </div>
     </main>
   );
