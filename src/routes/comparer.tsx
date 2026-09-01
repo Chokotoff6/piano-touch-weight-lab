@@ -293,7 +293,7 @@ function ComparisonChart() {
     const dyLeft = offsetsFor(family.lines, first, family.domain);
     const dyRight = offsetsFor(family.lines, last, family.domain);
     return (
-      <Frame title={family.title} className="h-[300px]">
+      <Frame title={family.title} className="h-[340px]">
         <div className="h-full w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
