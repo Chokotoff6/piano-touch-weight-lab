@@ -56,11 +56,11 @@ function buildMockData(): ChartPoint[] {
     // mais étiquettes droites espacées (fins ≥ 2,4 g).
     const sameWd = wd + 1.2 - t * 3.6;
     const stdWd = wd - 1.1 + t * 3.5;
-    // Flanc GAUCHE espacé (≥ 3 g), Flanc DROIT serré (< 3 g) → collision.
-    const sameBal = bal + 6.5 - t * 2.7; // fin : bal + 3.8
-    const factoryBal = bal + 3.5 + t * 2; // fin : bal + 5.5
-    const sameFric = fric + 5 - t * 8.5; // fin : fric - 3.5
-    const factoryFric = fric - 6 + t * 1; // fin : fric - 5
+    // Flanc DROIT serré (< 3 g) → collision Balance et Friction.
+    const sameBal = bal + 2.4 - t * 1.2; // fin : bal + 1.2
+    const factoryBal = bal - 2.2 + t * 1.1; // fin : bal - 1.1
+    const sameFric = fric + 2.2 - t * 1.1; // fin : fric + 1.1
+    const factoryFric = fric - 2.4 + t * 1.2; // fin : fric - 1.2
     const n = (v: number) => Number(v.toFixed(1));
     points.push({
       key: k,
