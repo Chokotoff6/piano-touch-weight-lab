@@ -456,7 +456,7 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
 
   return (
     <div className="w-full flex flex-col px-2 pt-2 pb-4">
-      <div className="mb-6 flex flex-wrap items-center justify-center gap-2">
+      <div className="sticky top-0 z-50 -mx-2 mb-4 flex flex-wrap items-center justify-center gap-2 border-b border-gray-100 bg-white/95 py-3 shadow-sm backdrop-blur-sm">
         <span className="mr-1 text-sm font-semibold text-gray-700">Filtre clavier :</span>
         {KEY_FILTERS.map((f) => (
           <button
