@@ -109,28 +109,53 @@ const FACTORY_PROFILE = makeReferenceProfile({ waStart: 54, waEnd: 49, wd: 23, b
 // Une valeur absente reste vide (pas de point).
 function buildChartData(mine: RefProfile | null, same: RefProfile | null, ref: RefProfile | null): ChartPoint[] {
   return dataRaw.map((d, i) => {
-    const v = (arr: number[] | undefined, fallback: number) => {
+    // Chaque série lit STRICTEMENT son propre tableau brut (aucune dérivation
+    // d'une série vers une autre, aucune moyenne locale).
+    const v = (arr: number[] | undefined, fallback?: number) => {
       const raw = arr?.[i];
-      return typeof raw === "number" && !Number.isNaN(raw) ? n1(raw) : fallback;
+      if (typeof raw === "number" && !Number.isNaN(raw)) return n1(raw);
+      return fallback as number;
     };
     return {
       key: d.noteIndex,
       isBlack: d.isBlack,
       waCur: v(mine?.wa, d.Wa),
-      sameWa: v(same?.wa, undefined as unknown as number),
-      stdWa: v(ref?.wa, undefined as unknown as number),
+      sameWa: v(same?.wa),
+      stdWa: v(ref?.wa),
       wdCur: v(mine?.wd, d.Wd),
-      sameWd: v(same?.wd, undefined as unknown as number),
-      stdWd: v(ref?.wd, undefined as unknown as number),
+      sameWd: v(same?.wd),
+      stdWd: v(ref?.wd),
       balCur: v(mine?.balance, d.Balance),
-      sameBal: v(same?.balance, undefined as unknown as number),
-      factoryBal: v(ref?.balance, undefined as unknown as number),
+      sameBal: v(same?.balance),
+      factoryBal: v(ref?.balance),
       fricCur: v(mine?.friction, d.Friction),
-      sameFric: v(same?.friction, undefined as unknown as number),
-      factoryFric: v(ref?.friction, undefined as unknown as number),
+      sameFric: v(same?.friction),
+      factoryFric: v(ref?.friction),
     };
   });
 }
+
+// Échelle verticale adaptée aux données réellement présentes dans le cadre
+// (loupe automatique) : évite toute courbe hors champ.
+function computeDomain(
+  data: ChartPoint[],
+  keys: SeriesKey[],
+  fallback: [number, number],
+): [number, number] {
+  const vals: number[] = [];
+  data.forEach((p) => {
+    keys.forEach((k) => {
+      const v = p[k];
+      if (typeof v === "number" && Number.isFinite(v)) vals.push(v);
+    });
+  });
+  if (vals.length === 0) return fallback;
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const pad = Math.max((max - min) * 0.18, 1.5);
+  return [Math.floor(min - pad), Math.ceil(max + pad)];
+}
+
 
 
 type SeriesKey = keyof Omit<ChartPoint, "key" | "isBlack">;
