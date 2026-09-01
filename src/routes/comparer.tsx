@@ -305,8 +305,8 @@ function ComparisonChart() {
   const last = filteredData[count - 1];
 
   function SubChart({ family }: { family: (typeof FAMILIES)[number] }) {
-    const dyLeft = offsetsFor(family.lines, first);
-    const dyRight = offsetsFor(family.lines, last);
+    const dyLeft = offsetsFor(family.lines, first, family.domain);
+    const dyRight = offsetsFor(family.lines, last, family.domain);
     return (
       <Frame title={family.title} className="h-[260px]">
         <div className="h-full w-full">
