@@ -233,21 +233,22 @@ function ComparisonChart() {
   const LINES: Array<{
     dataKey: keyof Omit<ChartPoint, "key">;
     name: string;
+    shortName: string;
     color: string;
     real?: boolean; // pastilles noires d'échantillonnage
   }> = [
-    { dataKey: "waCur", name: "Wa actuel", color: "#000000", real: true },
-    { dataKey: "sameWa", name: "Same models Wa", color: "#f97316" },
-    { dataKey: "stdWa", name: "Std Wa", color: "#10b981" },
-    { dataKey: "balCur", name: "Balance actuel", color: "#000000", real: true },
-    { dataKey: "wdCur", name: "Wd actuel", color: "#000000", real: true },
-    { dataKey: "fricCur", name: "Friction actuel", color: "#000000", real: true },
-    { dataKey: "sameWd", name: "Same models Wd", color: "#f97316" },
-    { dataKey: "stdWd", name: "Std Wd", color: "#10b981" },
-    { dataKey: "sameBal", name: "Same models Balance", color: "#f97316" },
-    { dataKey: "factoryBal", name: "Factory Balance", color: "#10b981" },
-    { dataKey: "sameFric", name: "Same models Friction", color: "#f97316" },
-    { dataKey: "factoryFric", name: "Factory Friction", color: "#10b981" },
+    { dataKey: "waCur", name: "Wa actuel", shortName: "Wa", color: "#000000", real: true },
+    { dataKey: "sameWa", name: "Same models Wa", shortName: "Wa", color: "#f97316" },
+    { dataKey: "stdWa", name: "Std Wa", shortName: "Wa", color: "#10b981" },
+    { dataKey: "balCur", name: "Balance actuel", shortName: "Bal.", color: "#000000", real: true },
+    { dataKey: "wdCur", name: "Wd actuel", shortName: "Wd", color: "#000000", real: true },
+    { dataKey: "fricCur", name: "Friction actuel", shortName: "Fric.", color: "#000000", real: true },
+    { dataKey: "sameWd", name: "Same models Wd", shortName: "Wd", color: "#f97316" },
+    { dataKey: "stdWd", name: "Std Wd", shortName: "Wd", color: "#10b981" },
+    { dataKey: "sameBal", name: "Same models Balance", shortName: "Bal.", color: "#f97316" },
+    { dataKey: "factoryBal", name: "Factory Balance", shortName: "Bal.", color: "#10b981" },
+    { dataKey: "sameFric", name: "Same models Friction", shortName: "Fric.", color: "#f97316" },
+    { dataKey: "factoryFric", name: "Factory Friction", shortName: "Fric.", color: "#10b981" },
   ];
 
   // Regroupement par famille (ordre d'empilement vertical).
@@ -313,16 +314,16 @@ function ComparisonChart() {
               <Line
                 key={line.dataKey}
                 xAxisId="main"
-                type="monotone"
+                type="basis"
                 dataKey={line.dataKey}
                 name={line.name}
                 stroke={line.color}
                 strokeWidth={1.5}
-                dot={line.real ? sampleDot : false}
+                dot={line.real ? SAMPLE_DOT_CONFIG : false}
                 isAnimationActive={false}
                 label={makeEndLabel({
-                  name: line.name,
-                  avg: `${avg(line.dataKey)} g.`,
+                  shortName: line.shortName,
+                  avg: avg(line.dataKey),
                   color: line.color,
                   count,
                 })}
