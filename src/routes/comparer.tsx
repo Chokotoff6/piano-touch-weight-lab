@@ -234,9 +234,8 @@ function CustomTooltipContent(props: {
 function ComparisonChart() {
   // Données mock en attendant le branchement réel.
   const [data] = useState<ChartPoint[]>(buildMockData);
-  // Domaine vertical live : max de Wa du piano actuel + 1.
-  // Domaine vertical live : max de Wa (actuel + Same models, la plus haute) + 1.
-  const maxWaLive = data.reduce((m, p) => Math.max(m, p.waCur, p.sameWa), 0);
+  // Chaque sous-graphique gère désormais son échelle verticale automatique
+  // (dataMin - 3 / dataMax + 3) — plus de domaine global.
   const count = data.length;
   const first = data[0]!;
   const last = data[count - 1]!;
