@@ -361,7 +361,6 @@ function ComparisonChart() {
   }) {
     const visible = lines.filter((l) => seriesHasData(filteredData, l.dataKey));
     const first = filteredData[0];
-    const last = filteredData[count - 1];
     // Anti-collision : flanc gauche sur la première valeur, flanc droit sur
     // les moyennes affichées.
     const dyLeft = staggerDy(
@@ -372,7 +371,6 @@ function ComparisonChart() {
       visible.map((l) => ({ key: l.dataKey, v: Number(avg(l.dataKey) || 0) })),
       1.2,
     );
-    void last;
     return (
       <div className="flex-1 h-full w-full min-h-0 relative">
         <div className="absolute inset-0">
