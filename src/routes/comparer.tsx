@@ -670,6 +670,11 @@ function Comparer() {
   const [sameModel, setSameModel] = useState<RefProfile | null>(null);
   const [factorySpecs, setFactorySpecs] = useState(false);
 
+  // --- Test de vérité : lecture brute du mockup MOCK-MON-PIANO ---------------
+  // debugStatus = "loading" | "ok" | "error" (erreur RLS OU ligne vide).
+  const [debugStatus, setDebugStatus] = useState<"loading" | "ok" | "error">("loading");
+  const [debugWa, setDebugWa] = useState<number[] | null>(null);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -688,6 +693,16 @@ function Comparer() {
       ]);
 
       if (cancelled) return;
+
+      // Diagnostic MOCK-MON-PIANO : erreur d'accès OU ligne absente => bloqué.
+      if (mineResult.error || !mineResult.data) {
+        setDebugStatus("error");
+        setDebugWa(null);
+      } else {
+        setDebugStatus("ok");
+        setDebugWa(mineResult.data.wa_values ?? []);
+      }
+
       setMyPiano(mineResult.data ? profileFromRow(mineResult.data) : null);
       setSameModel(witnessResult.data ? profileFromRow(witnessResult.data) : null);
     }
@@ -734,9 +749,28 @@ function Comparer() {
       </div>
       <div className="flex w-full flex-col gap-6">
         <div className="w-full min-w-0">
-          <div className="mb-6">
-            <ComparisonChart chartData={chartData} />
-          </div>
+          {/* --- Test de vérité : diagnostic Supabase MOCK-MON-PIANO --- */}
+          {debugStatus === "error" ? (
+            <div className="flex w-full items-center justify-center py-16">
+              <p className="!text-2xl !font-bold !text-red-600 text-center">
+                ERREUR D'ACCÈS SUPABASE : Impossible de lire MOCK-MON-PIANO. Vérifie les règles RLS de la table.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="mb-2 rounded-md border border-amber-300 bg-amber-50 px-4 py-2">
+                <span className="!text-sm font-mono !text-amber-800 break-words">
+                  Debug Supabase : Wa lues ={" "}
+                  {debugStatus === "loading" || debugWa === null
+                    ? "… chargement"
+                    : `[${debugWa.join(", ")}]`}
+                </span>
+              </div>
+              <div className="mb-6">
+                <ComparisonChart chartData={chartData} />
+              </div>
+            </>
+          )}
           <Frame title="Moyennes" className="mt-2">
             <div className="mb-3">
               <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">
