@@ -297,13 +297,14 @@ function ComparisonChart() {
             ) : (
               <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={[1, 88]} hide />
             )}
-            {/* Échelle automatique respirante : dataMin - 3 → dataMax + 3. */}
+            {/* Échelle automatique resserrée : dataMin - 1.5 → dataMax + 1.5
+                pour étirer verticalement l'écart entre les trois courbes. */}
             <YAxis
               width={0}
               tick={false}
               axisLine={false}
               tickLine={false}
-              domain={["dataMin - 3", "dataMax + 3"]}
+              domain={["dataMin - 1.5", "dataMax + 1.5"]}
             />
             {/* Séparateurs verticaux fins aux emplacements des touches DO. */}
             {DO_POSITIONS.map((pos) => (
