@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ResponsiveContainer,
@@ -303,6 +304,7 @@ function offsetsFor(
 function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
   const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
   const [hoveredChart, setHoveredChart] = useState<string | null>(null);
+  const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
 
   const filteredData = useMemo(() => {
     if (keyFilter === "white") return chartData.filter((p) => !p.isBlack);
@@ -328,6 +330,14 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={filteredData}
+              onMouseMove={(state) => {
+                const note = state?.activeLabel;
+                if (typeof note === "number") setHoveredNoteIndex(note);
+              }}
+              onMouseLeave={() => {
+                setHoveredChart(null);
+                setHoveredNoteIndex(null);
+              }}
               margin={{ top: 5, right: 130, bottom: 15, left: 140 }}
             >
               <XAxis xAxisId="main" dataKey="key" type="number" domain={[1, 88]} hide />
@@ -347,6 +357,9 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
               {DO_POSITIONS.map((pos) => (
                 <ReferenceLine key={pos} xAxisId="main" x={pos} stroke="#e5e7eb" strokeWidth={1} />
               ))}
+              {hoveredNoteIndex !== null && (
+                <ReferenceLine xAxisId="main" x={hoveredNoteIndex} stroke="#94a3b8" strokeWidth={1} />
+              )}
               {isHovered && <Tooltip content={<CustomTooltipContent />} />}
               {family.lines.map((line) => (
                 <Line
@@ -541,34 +554,108 @@ function MetricCell({
   );
 }
 
+function profileFromRow(row: {
+  wa_values: number[];
+  wd_values: number[];
+  friction_values: number[];
+  balance_values: number[];
+}): RefProfile {
+  return {
+    wa: row.wa_values,
+    wd: row.wd_values,
+    friction: row.friction_values,
+    balance: row.balance_values,
+  };
+}
+
+function profileAverage(profile: RefProfile | null, key: keyof RefProfile): string {
+  const values = profile?.[key] ?? [];
+  if (values.length === 0) return "—";
+  return (values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(1);
+}
+
 function Comparer() {
-  // État local isolé : aucune source de données branchée pour l'instant.
-  // Tout est "—" par défaut — prêt à être alimenté plus tard.
   const [summary] = useState<PianoSummary>(EMPTY_SUMMARY);
-  const [current] = useState<Averages>(EMPTY_AVERAGES);
-  const [witness] = useState<Averages>(EMPTY_AVERAGES);
-  // Aucune donnée de comparaison chargée → panneau de filtres masqué.
-  const [hasComparisonData] = useState(false);
+  const [chartData, setChartData] = useState(() => buildChartData(null, null));
+  const [sameModel, setSameModel] = useState<RefProfile | null>(null);
+  const [reference, setReference] = useState<RefProfile | null>(null);
+  const [factorySpecs, setFactorySpecs] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const referenceSerial = factorySpecs ? FACTORY_SERIAL : STD_SERIAL;
+
+    async function loadComparisonProfiles() {
+      const [communityResult, referenceResult] = await Promise.all([
+        supabase
+          .from("piano_profiles")
+          .select("serial_number, marque, modele, wa_values, wd_values, friction_values, balance_values")
+          .eq("modele", TARGET_MODEL),
+        supabase
+          .from("piano_profiles")
+          .select("serial_number, marque, modele, wa_values, wd_values, friction_values, balance_values")
+          .eq("serial_number", referenceSerial)
+          .maybeSingle(),
+      ]);
+
+      if (cancelled) return;
+      const communityRows = (communityResult.data ?? []).filter(
+        (row) => !/^(MOCK-|STD-|FACTORY-)/i.test(row.serial_number),
+      );
+      const community = communityRows[0]
+        ? {
+            wa: communityRows.flatMap((row) => row.wa_values),
+            wd: communityRows.flatMap((row) => row.wd_values),
+            friction: communityRows.flatMap((row) => row.friction_values),
+            balance: communityRows.flatMap((row) => row.balance_values),
+          }
+        : null;
+      const ref = referenceResult.data ? profileFromRow(referenceResult.data) : null;
+      setSameModel(community);
+      setReference(ref);
+      setChartData(buildChartData(community, ref));
+    }
+
+    void loadComparisonProfiles();
+    return () => {
+      cancelled = true;
+    };
+  }, [factorySpecs]);
+
+  const current: Averages = {
+    wa: profileAverage(null, "wa"),
+    wd: profileAverage(null, "wd"),
+    friction: profileAverage(null, "friction"),
+    balance: profileAverage(null, "balance"),
+  };
+  const witness: Averages = {
+    wa: profileAverage(sameModel, "wa"),
+    wd: profileAverage(sameModel, "wd"),
+    friction: profileAverage(sameModel, "friction"),
+    balance: profileAverage(sameModel, "balance"),
+  };
 
   return (
-    <main className="mx-auto max-w-[1400px] w-full px-6 py-8">
-      {/* Bandeau de résumé condensé, ligne centrée, sans cadre. */}
+    <main className="mx-auto w-full max-w-[1400px] px-6 py-8">
       <div className="mb-6">
         <SummaryBanner s={summary} />
       </div>
-
-      {/* Grille responsive : colonne unique sur mobile, deux colonnes sur grand écran. */}
-      <div className="flex flex-col lg:flex-row w-full gap-6">
-        {/* Zone centrale : futur graphique + cadre de confrontation des moyennes. */}
-        <div className={hasComparisonData ? "flex-1 min-w-0" : "w-full"}>
-          {/* Moteur graphique (BLOC 2) : courbes de pesée, axe des DO, tooltip trié. */}
+      <div className="mb-4 flex justify-center">
+        <Button
+          type="button"
+          variant={factorySpecs ? "default" : "outline"}
+          onClick={() => setFactorySpecs((value) => !value)}
+          aria-pressed={factorySpecs}
+        >
+          {factorySpecs ? "Factory Specs" : "Valeurs Types"}
+        </Button>
+      </div>
+      <div className="flex w-full flex-col gap-6">
+        <div className="w-full min-w-0">
           <div className="mb-6">
-            <ComparisonChart />
+            <ComparisonChart chartData={chartData} />
           </div>
-
-          {/* Cadre de confrontation des moyennes (double grands chiffres). */}
           <Frame title="Moyennes" className="mt-2">
-            {/* Ligne 1 — Piano Actuel */}
             <div className="mb-3">
               <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">
                 Piano Actuel
@@ -579,8 +666,6 @@ function Comparer() {
                 ))}
               </div>
             </div>
-
-            {/* Ligne 2 — Piano Témoin (couleur orange active #f97316, tiret gris par défaut). */}
             <div>
               <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">
                 Piano Témoin
@@ -593,18 +678,6 @@ function Comparer() {
             </div>
           </Frame>
         </div>
-
-        {/* Volet de filtres — strictement masqué tant qu'aucune donnée de
-            comparaison n'est chargée. La zone centrale prend alors 100% de la largeur. */}
-        {hasComparisonData && (
-          <aside className="w-full lg:w-80 shrink-0">
-            <Frame title="Filtres" className="mt-2">
-              <p className="text-sm text-muted-foreground">
-                Sélection du piano témoin communautaire — à venir.
-              </p>
-            </Frame>
-          </aside>
-        )}
       </div>
     </main>
   );
