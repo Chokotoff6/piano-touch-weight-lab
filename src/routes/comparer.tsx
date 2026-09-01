@@ -87,7 +87,6 @@ function buildMockData(): ChartPoint[] {
   return points;
 }
 
-// Écart minimal entre deux valeurs d'un groupe (détection de collision < 3 g).
 // Moyenne d'une série (affichée comme valeur moyenne au flanc droit).
 function seriesAverage(data: ChartPoint[], key: keyof Omit<ChartPoint, "key">): string {
   const sum = data.reduce((acc, p) => acc + (p[key] as number), 0);
