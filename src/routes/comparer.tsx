@@ -46,6 +46,8 @@ type ChartPoint = {
   factoryFric: number;
 };
 
+type MetricFamily = "wa" | "bal" | "wd" | "fric";
+
 function buildMockData(): ChartPoint[] {
   const points: ChartPoint[] = [];
   for (let k = 1; k <= 88; k++) {
@@ -93,13 +95,13 @@ function seriesAverage(data: ChartPoint[], key: keyof Omit<ChartPoint, "key">): 
   return (sum / data.length).toFixed(1);
 }
 
-// Pastilles noires affirmées (r = 3) uniquement sur les 15 points
+// Pastilles noires calibrées (r = 2) uniquement sur les 15 points
 // d'échantillonnage de la matrice — réservées aux courbes réelles.
-const SAMPLE_DOT_CONFIG = { r: 3, fill: "#000000", strokeWidth: 0 };
+const SAMPLE_DOT_CONFIG = { r: 2, fill: "#000000", strokeWidth: 0 };
 function sampleDot(props: { cx?: number; cy?: number; index?: number }) {
   const { cx = 0, cy = 0, index = -1 } = props;
   if (!SAMPLE_INDICES.has(index)) return <g key={`dot-${index}`} />;
-  return <circle key={`dot-${index}`} cx={cx} cy={cy} r={3} fill="#000000" strokeWidth={0} />;
+  return <circle key={`dot-${index}`} cx={cx} cy={cy} r={2} fill="#000000" strokeWidth={0} />;
 }
 
 // Étiquettes d'extrémité compressées :
@@ -176,8 +178,9 @@ type TooltipEntry = {
 //  - Same models  → orange (#f97316)
 //  - Std / Factory → vert (#10b981)
 function tooltipColorFor(name: string): string {
-  if (name.includes("actuel")) return "#000000";
-  if (name.startsWith("Same models")) return "#f97316";
+  const n = name.toLowerCase();
+  if (n.includes("actuel")) return "#000000";
+  if (n.startsWith("same models")) return "#f97316";
   return "#10b981"; // Std ou Factory (références)
 }
 
@@ -230,32 +233,35 @@ function ComparisonChart() {
   const avg = (key: keyof Omit<ChartPoint, "key">) => seriesAverage(data, key);
 
   // Définitions des courbes : trait plein continu 1.5 px, labels d'extrémité.
+  // Noms officiels dépouillés des suffixes de famille (le titre du bloc
+  // indique déjà la mesure) : "Actuel", "Same models", "Std" / "Factory".
   const LINES: Array<{
     dataKey: keyof Omit<ChartPoint, "key">;
     name: string;
     shortName: string;
     color: string;
+    family: MetricFamily;
     real?: boolean; // pastilles noires d'échantillonnage
   }> = [
-    { dataKey: "waCur", name: "Wa actuel", shortName: "Wa", color: "#000000", real: true },
-    { dataKey: "sameWa", name: "Same models Wa", shortName: "Wa", color: "#f97316" },
-    { dataKey: "stdWa", name: "Std Wa", shortName: "Wa", color: "#10b981" },
-    { dataKey: "balCur", name: "Balance actuel", shortName: "Bal.", color: "#000000", real: true },
-    { dataKey: "wdCur", name: "Wd actuel", shortName: "Wd", color: "#000000", real: true },
-    { dataKey: "fricCur", name: "Friction actuel", shortName: "Fric.", color: "#000000", real: true },
-    { dataKey: "sameWd", name: "Same models Wd", shortName: "Wd", color: "#f97316" },
-    { dataKey: "stdWd", name: "Std Wd", shortName: "Wd", color: "#10b981" },
-    { dataKey: "sameBal", name: "Same models Balance", shortName: "Bal.", color: "#f97316" },
-    { dataKey: "factoryBal", name: "Factory Balance", shortName: "Bal.", color: "#10b981" },
-    { dataKey: "sameFric", name: "Same models Friction", shortName: "Fric.", color: "#f97316" },
-    { dataKey: "factoryFric", name: "Factory Friction", shortName: "Fric.", color: "#10b981" },
+    { dataKey: "waCur", name: "Actuel", shortName: "Actuel", color: "#000000", family: "wa", real: true },
+    { dataKey: "sameWa", name: "Same models", shortName: "Same models", color: "#f97316", family: "wa" },
+    { dataKey: "stdWa", name: "Std", shortName: "Std", color: "#10b981", family: "wa" },
+    { dataKey: "balCur", name: "Actuel", shortName: "Actuel", color: "#000000", family: "bal", real: true },
+    { dataKey: "sameBal", name: "Same models", shortName: "Same models", color: "#f97316", family: "bal" },
+    { dataKey: "factoryBal", name: "Factory", shortName: "Factory", color: "#10b981", family: "bal" },
+    { dataKey: "wdCur", name: "Actuel", shortName: "Actuel", color: "#000000", family: "wd", real: true },
+    { dataKey: "sameWd", name: "Same models", shortName: "Same models", color: "#f97316", family: "wd" },
+    { dataKey: "stdWd", name: "Std", shortName: "Std", color: "#10b981", family: "wd" },
+    { dataKey: "fricCur", name: "Actuel", shortName: "Actuel", color: "#000000", family: "fric", real: true },
+    { dataKey: "sameFric", name: "Same models", shortName: "Same models", color: "#f97316", family: "fric" },
+    { dataKey: "factoryFric", name: "Factory", shortName: "Factory", color: "#10b981", family: "fric" },
   ];
 
   // Regroupement par famille (ordre d'empilement vertical).
-  const WA_LINES = LINES.filter((l) => l.name.includes("Wa"));
-  const BAL_LINES = LINES.filter((l) => l.name.includes("Balance"));
-  const WD_LINES = LINES.filter((l) => l.name.includes("Wd"));
-  const FRIC_LINES = LINES.filter((l) => l.name.includes("Friction"));
+  const WA_LINES = LINES.filter((l) => l.family === "wa");
+  const BAL_LINES = LINES.filter((l) => l.family === "bal");
+  const WD_LINES = LINES.filter((l) => l.family === "wd");
+  const FRIC_LINES = LINES.filter((l) => l.family === "fric");
 
   // Sous-graphique individuel (famille isolée). Sync global "piano".
   function SubChart({
@@ -291,13 +297,14 @@ function ComparisonChart() {
             ) : (
               <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={[1, 88]} hide />
             )}
-            {/* Échelle automatique respirante : dataMin - 3 → dataMax + 3. */}
+            {/* Échelle automatique resserrée : dataMin - 1.5 → dataMax + 1.5
+                pour étirer verticalement l'écart entre les trois courbes. */}
             <YAxis
               width={0}
               tick={false}
               axisLine={false}
               tickLine={false}
-              domain={["dataMin - 3", "dataMax + 3"]}
+              domain={["dataMin - 1.5", "dataMax + 1.5"]}
             />
             {/* Séparateurs verticaux fins aux emplacements des touches DO. */}
             {DO_POSITIONS.map((pos) => (
@@ -314,7 +321,7 @@ function ComparisonChart() {
               <Line
                 key={line.dataKey}
                 xAxisId="main"
-                type="basis"
+                type="monotone"
                 dataKey={line.dataKey}
                 name={line.name}
                 stroke={line.color}
@@ -337,7 +344,7 @@ function ComparisonChart() {
   }
 
   return (
-    <div className="w-full min-h-[700px] flex flex-col justify-between gap-10 py-12 px-2">
+    <div className="w-full h-[580px] flex flex-col justify-between gap-10 py-12 px-2">
       {/* BLOC 1 : Wa (conserve l'axe supérieur DO). */}
       <SubChart lines={WA_LINES} withTopAxis />
       {/* BLOC 2 : Balance. */}
