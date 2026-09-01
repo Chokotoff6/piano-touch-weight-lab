@@ -21,7 +21,7 @@ import {
 const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];
 
 // Positions d'échantillonnage des 15 mesures sur le clavier 88 touches.
-const SAMPLE_NOTES = [4, 10, 16, 22, 28, 34, 40, 46, 52, 58, 64, 70, 76, 82, 88];
+const SAMPLE_NOTES = [4, 10, 16, 22, 28, 34, 40, 46, 52, 58, 64, 70, 76, 82, 88] as const;
 
 // Note 1 = La0. Touches noires : La#, Do#, Ré#, Fa#, Sol#.
 const BLACK_MODULOS = new Set([2, 5, 7, 10, 0]);
