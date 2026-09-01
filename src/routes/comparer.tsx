@@ -676,17 +676,15 @@ function Comparer() {
     let cancelled = false;
 
     async function loadComparisonProfiles() {
-      const profileSelect: string =
-        "serial_number, wa_values, wd_values, friction_values, balance_values";
       const [mineResult, witnessResult] = await Promise.all([
         supabase
           .from("piano_profiles")
-          .select(profileSelect)
+          .select("serial_number, wa_values, wd_values, friction_values, balance_values")
           .eq("serial_number", MY_PIANO_SERIAL)
           .maybeSingle(),
         supabase
           .from("piano_profiles")
-          .select(profileSelect)
+          .select("serial_number, wa_values, wd_values, friction_values, balance_values")
           .eq("serial_number", WITNESS_SERIAL)
           .maybeSingle(),
       ]);
