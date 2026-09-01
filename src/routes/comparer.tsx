@@ -763,7 +763,7 @@ function Comparer() {
             <>
               <div className="mb-2 rounded-md border border-amber-300 bg-amber-50 px-4 py-2">
                 <span className="!text-sm font-mono !text-amber-800 break-words">
-                  Debug Supabase : Wa lues ={" "}
+                  Debug Supabase : ligne lue = {debugRowId ?? "…"} — Wa lues ={" "}
                   {debugStatus === "loading" || debugWa === null
                     ? "… chargement"
                     : `[${debugWa.join(", ")}]`}
