@@ -106,7 +106,7 @@ function seriesAverage(data: ChartPoint[], key: keyof Omit<ChartPoint, "key">): 
 function sampleDot(props: { cx?: number; cy?: number; index?: number }) {
   const { cx = 0, cy = 0, index = -1 } = props;
   if (!SAMPLE_INDICES.has(index)) return <g key={`dot-${index}`} />;
-  return <circle key={`dot-${index}`} cx={cx} cy={cy} r={1.4} fill="#111827" />;
+  return <circle key={`dot-${index}`} cx={cx} cy={cy} r={1.4} fill="#000000" />;
 }
 
 // Étiquettes d'extrémité (BLOC 3) :
@@ -277,18 +277,18 @@ function ComparisonChart() {
     dyLeft?: number | null;
     dyRight?: number | null;
   }> = [
-    { dataKey: "waCur", name: "Wa actuel", color: "#111827", real: true },
+    { dataKey: "waCur", name: "Wa actuel", color: "#000000", real: true },
     { dataKey: "sameWa", name: "Same models Wa", color: "#f97316" },
     { dataKey: "stdWa", name: "Std Wa", color: "#10b981" },
-    { dataKey: "balCur", name: "Balance actuel", color: "#3b82f6", real: true },
-    { dataKey: "wdCur", name: "Wd actuel", color: "#9ca3af", real: true, dyLeft: dyLeft.wdCur },
-    { dataKey: "fricCur", name: "Friction actuel", color: "#ef4444", real: true },
-    { dataKey: "sameWd", name: "Same models Wd", color: "#f97316", dyLeft: dyLeft.sameWd },
-    { dataKey: "stdWd", name: "Std Wd", color: "#6b7280", dyLeft: dyLeft.stdWd },
-    { dataKey: "sameBal", name: "Same models Balance", color: "#fb923c", dyRight: dyRight.sameBal },
-    { dataKey: "factoryBal", name: "Factory Balance", color: "#0ea5e9", dyRight: dyRight.factoryBal },
-    { dataKey: "sameFric", name: "Same models Friction", color: "#fbbf24", dyRight: dyRight.sameFric },
-    { dataKey: "factoryFric", name: "Factory Friction", color: "#a855f7", dyRight: dyRight.factoryFric },
+    { dataKey: "balCur", name: "Balance actuel", color: "#000000", real: true },
+    { dataKey: "wdCur", name: "Wd actuel", color: "#000000", real: true },
+    { dataKey: "fricCur", name: "Friction actuel", color: "#000000", real: true },
+    { dataKey: "sameWd", name: "Same models Wd", color: "#f97316" },
+    { dataKey: "stdWd", name: "Std Wd", color: "#10b981" },
+    { dataKey: "sameBal", name: "Same models Balance", color: "#f97316" },
+    { dataKey: "factoryBal", name: "Factory Balance", color: "#10b981" },
+    { dataKey: "sameFric", name: "Same models Friction", color: "#f97316" },
+    { dataKey: "factoryFric", name: "Factory Friction", color: "#10b981" },
   ];
 
   // Regroupement par famille (ordre d'empilement vertical).
