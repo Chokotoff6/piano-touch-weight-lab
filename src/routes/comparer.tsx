@@ -178,8 +178,9 @@ type TooltipEntry = {
 //  - Same models  → orange (#f97316)
 //  - Std / Factory → vert (#10b981)
 function tooltipColorFor(name: string): string {
-  if (name.includes("actuel")) return "#000000";
-  if (name.startsWith("Same models")) return "#f97316";
+  const n = name.toLowerCase();
+  if (n.includes("actuel")) return "#000000";
+  if (n.startsWith("same models")) return "#f97316";
   return "#10b981"; // Std ou Factory (références)
 }
 
