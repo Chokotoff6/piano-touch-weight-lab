@@ -162,7 +162,9 @@ type EndLabelOptions = {
   avg: string;
   color: string;
   count: number;
-  // Décalage vertical du flanc droit (aération 0 / 14 / 28 si moyennes < 1,2 g).
+  // Décalages verticaux anti-collision des deux flancs (dy final absolu).
+  // Valeurs échelonnées ex: -10 / 4 / 18 pour interdire les chevauchements.
+  dyLeft?: number;
   dyRight?: number;
 };
 
@@ -170,7 +172,7 @@ function makeEndLabel(opts: EndLabelOptions) {
   const EndLabel = (props: { x?: number; y?: number; index?: number }) => {
     const { x = 0, y = 0, index = -1 } = props;
     if (index === 0) {
-      const dy = 4;
+      const dy = opts.dyLeft ?? 4;
       return (
         <text x={x - 10} y={y} dy={dy} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>
           {opts.shortName}
@@ -178,7 +180,7 @@ function makeEndLabel(opts: EndLabelOptions) {
       );
     }
     if (index === opts.count - 1) {
-      const dy = 4 + (opts.dyRight ?? 0);
+      const dy = opts.dyRight ?? 4;
       return (
         <text x={x + 10} y={y} dy={dy} textAnchor="start" fontSize={11} fontWeight={600} fill={opts.color}>
           {`Moy: ${opts.avg}g`}
@@ -188,6 +190,26 @@ function makeEndLabel(opts: EndLabelOptions) {
     return <g />;
   };
   return EndLabel;
+}
+
+// Anti-collision des étiquettes d'extrémité : si deux valeurs d'un même
+// flanc sont distantes de moins de `threshold` grammes, on trie les séries
+// par valeur décroissante et on applique des dy fixes échelonnés
+// (-10 / 4 / 18) pour interdire tout chevauchement de texte.
+function staggerDy(
+  entries: Array<{ key: string; v: number }>,
+  threshold: number,
+): Map<string, number> {
+  const map = new Map<string, number>();
+  const sorted = [...entries].sort((a, b) => b.v - a.v);
+  let collides = false;
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i - 1]!.v - sorted[i]!.v < threshold) collides = true;
+  }
+  if (!collides) return map;
+  const STEPS = [-10, 4, 18];
+  sorted.forEach((e, i) => map.set(e.key, STEPS[i] ?? 4 + i * 14));
+  return map;
 }
 
 // Tick personnalisé de l'axe supérieur :
