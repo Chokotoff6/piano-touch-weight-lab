@@ -674,6 +674,7 @@ function Comparer() {
   // debugStatus = "loading" | "ok" | "error" (erreur RLS OU ligne vide).
   const [debugStatus, setDebugStatus] = useState<"loading" | "ok" | "error">("loading");
   const [debugWa, setDebugWa] = useState<number[] | null>(null);
+  const [debugRowId, setDebugRowId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
