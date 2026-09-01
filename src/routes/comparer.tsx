@@ -61,14 +61,14 @@ type ProfileRow = {
 
 type ChartPoint = {
   key: number;
-  waCur?: number;
-  sameWa?: number;
-  wdCur?: number;
-  sameWd?: number;
-  balCur?: number;
-  sameBal?: number;
-  fricCur?: number;
-  sameFric?: number;
+  waCur?: number | undefined;
+  sameWa?: number | undefined;
+  wdCur?: number | undefined;
+  sameWd?: number | undefined;
+  balCur?: number | undefined;
+  sameBal?: number | undefined;
+  fricCur?: number | undefined;
+  sameFric?: number | undefined;
 };
 
 type MetricFamily = "wa" | "wd" | "bal" | "fric";
@@ -164,8 +164,8 @@ type EndLabelOptions = {
   count: number;
   // Décalages verticaux anti-collision des deux flancs (dy final absolu).
   // Valeurs échelonnées ex: -10 / 4 / 18 pour interdire les chevauchements.
-  dyLeft?: number;
-  dyRight?: number;
+  dyLeft?: number | undefined;
+  dyRight?: number | undefined;
 };
 
 function makeEndLabel(opts: EndLabelOptions) {
