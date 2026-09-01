@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { useMemo, useState, type ReactNode } from "react";
 import {
   ResponsiveContainer,
@@ -9,12 +9,14 @@ import {
   Tooltip,
   ReferenceLine,
 } from "recharts";
+import { supabase } from "@/integrations/supabase/client";
 
 // ---------------------------------------------------------------------------
-// Page de comparaison — architecture, grille visuelle et moteur graphique.
-// Aucune connexion base de données pour l'instant : les courbes utilisent des
-// données fictives temporaires (mock) en attendant le branchement réel.
-// Le panneau de filtres reste masqué par défaut.
+// Page de comparaison — connectée aux profils réels (table piano_profiles).
+//  - Courbes noires  : serial_number = 'MOCK-MON-PIANO' ("Mon piano").
+//  - Courbes oranges : serial_number = 'MOCK-WITNESS'  ("Same model(s)").
+// Échelles Y verrouillées avec des domaines fixes pour une loupe verticale
+// stable, sans chaos visuel.
 // ---------------------------------------------------------------------------
 
 // --- Moteur graphique (BLOCS 2 + 3) -----------------------------------------
@@ -22,9 +24,10 @@ import {
 const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];
 
 // 15 points d'échantillonnage de la matrice (pastilles noires ultra-fines).
-const SAMPLE_INDICES = new Set(
-  Array.from({ length: 15 }, (_, i) => Math.round((i * 87) / 14)),
+const SAMPLE_POSITIONS = Array.from({ length: 15 }, (_, i) =>
+  Math.round((i * 87) / 14),
 );
+const SAMPLE_INDICES = new Set(SAMPLE_POSITIONS);
 
 // --- Filtre par type de touches ---------------------------------------------
 // Touches noires du clavier (touche 1 = La0 blanc, touche 4 = premier Do).
