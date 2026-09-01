@@ -1,4 +1,4 @@
-import { createFileRoute, useLoaderData } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, type ReactNode } from "react";
 import {
   ResponsiveContainer,
@@ -9,14 +9,12 @@ import {
   Tooltip,
   ReferenceLine,
 } from "recharts";
-import { supabase } from "@/integrations/supabase/client";
 
 // ---------------------------------------------------------------------------
-// Page de comparaison — connectée aux profils réels (table piano_profiles).
-//  - Courbes noires  : serial_number = 'MOCK-MON-PIANO' ("Mon piano").
-//  - Courbes oranges : serial_number = 'MOCK-WITNESS'  ("Same model(s)").
-// Échelles Y verrouillées avec des domaines fixes pour une loupe verticale
-// stable, sans chaos visuel.
+// Page de comparaison — architecture, grille visuelle et moteur graphique.
+// Aucune connexion base de données pour l'instant : les courbes utilisent des
+// données fictives temporaires (mock) en attendant le branchement réel.
+// Le panneau de filtres reste masqué par défaut.
 // ---------------------------------------------------------------------------
 
 // --- Moteur graphique (BLOCS 2 + 3) -----------------------------------------
@@ -24,10 +22,9 @@ import { supabase } from "@/integrations/supabase/client";
 const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];
 
 // 15 points d'échantillonnage de la matrice (pastilles noires ultra-fines).
-const SAMPLE_POSITIONS = Array.from({ length: 15 }, (_, i) =>
-  Math.round((i * 87) / 14),
+const SAMPLE_INDICES = new Set(
+  Array.from({ length: 15 }, (_, i) => Math.round((i * 87) / 14)),
 );
-const SAMPLE_INDICES = new Set(SAMPLE_POSITIONS);
 
 // --- Filtre par type de touches ---------------------------------------------
 // Touches noires du clavier (touche 1 = La0 blanc, touche 4 = premier Do).
@@ -45,103 +42,73 @@ const KEY_FILTERS: Array<{ id: KeyFilter; label: string }> = [
   { id: "black", label: "Touches Noires ⚫" },
 ];
 
-// --- Données réelles (piano_profiles) ---------------------------------------
-// Chaque profil stocke 15 valeurs par mesure (matrice d'échantillonnage),
-// placées aux 15 positions SAMPLE_POSITIONS puis interpolées linéairement
-// sur les 88 touches.
-type ProfileRow = {
-  serial_number: string;
-  marque: string | null;
-  modele: string | null;
-  wa_values: number[];
-  wd_values: number[];
-  balance_values: number[];
-  friction_values: number[];
-};
-
+// Données fictives temporaires : courbe de Wa décroissante réaliste
+// (~52 g dans le grave → ~34 g dans l'aigu), Wd et dérivés calculés.
+// Les séries témoins / std sont calibrées pour simuler des collisions de
+// texte (< 3 g) aux extrémités, afin de valider la micro-aération (BLOC 3).
 type ChartPoint = {
   key: number;
-  waCur?: number | undefined;
-  sameWa?: number | undefined;
-  wdCur?: number | undefined;
-  sameWd?: number | undefined;
-  balCur?: number | undefined;
-  sameBal?: number | undefined;
-  fricCur?: number | undefined;
-  sameFric?: number | undefined;
+  waCur: number;
+  sameWa: number;
+  stdWa: number;
+  wdCur: number;
+  balCur: number;
+  fricCur: number;
+  sameWd: number;
+  stdWd: number;
+  sameBal: number;
+  factoryBal: number;
+  sameFric: number;
+  factoryFric: number;
 };
 
-type MetricFamily = "wa" | "wd" | "bal" | "fric";
+type MetricFamily = "wa" | "bal" | "wd" | "fric";
 
-// Étend les 15 points d'échantillonnage sur les 88 touches (interpolation
-// linéaire entre points de mesure, extrapolation plate aux extrémités).
-function expandSamples(values: number[] | null | undefined): (number | undefined)[] {
-  const out: (number | undefined)[] = new Array(88).fill(undefined);
-  if (!values || values.length === 0) return out;
-  const pts = values.slice(0, 15).map((v) => Number(v));
-  while (pts.length < 15) pts.push(pts[pts.length - 1]!);
-  for (let s = 0; s < SAMPLE_POSITIONS.length; s++) {
-    const i0 = SAMPLE_POSITIONS[s]!;
-    out[i0] = Number(pts[s]!.toFixed(1));
-    if (s < SAMPLE_POSITIONS.length - 1) {
-      const i1 = SAMPLE_POSITIONS[s + 1]!;
-      const v0 = pts[s]!;
-      const v1 = pts[s + 1]!;
-      for (let i = i0 + 1; i < i1; i++) {
-        const t = (i - i0) / (i1 - i0);
-        out[i] = Number((v0 + (v1 - v0) * t).toFixed(1));
-      }
-    }
-  }
-  // Extrapolation plate avant le premier / après le dernier point.
-  for (let i = 0; i < SAMPLE_POSITIONS[0]!; i++) out[i] = out[SAMPLE_POSITIONS[0]!];
-  for (let i = SAMPLE_POSITIONS[14]! + 1; i < 88; i++) out[i] = out[SAMPLE_POSITIONS[14]!];
-  return out;
-}
-
-function buildChartData(
-  mine: ProfileRow | undefined,
-  witness: ProfileRow | undefined,
-): ChartPoint[] {
-  const mWa = expandSamples(mine?.wa_values);
-  const mWd = expandSamples(mine?.wd_values);
-  const mBal = expandSamples(mine?.balance_values);
-  const mFric = expandSamples(mine?.friction_values);
-  const wWa = expandSamples(witness?.wa_values);
-  const wWd = expandSamples(witness?.wd_values);
-  const wBal = expandSamples(witness?.balance_values);
-  const wFric = expandSamples(witness?.friction_values);
+function buildMockData(): ChartPoint[] {
   const points: ChartPoint[] = [];
   for (let k = 1; k <= 88; k++) {
-    const i = k - 1;
+    const t = (k - 1) / 87;
+    const wa = 52 - 18 * t + Math.sin(k * 0.7) * 1.2;
+    const wd = wa - 12 - Math.cos(k * 0.5) * 0.8;
+    const bal = (wa + wd) / 2;
+    const fric = (wa - wd) / 2;
+    // Séries témoins / références Wa : écart constant ≥ 3 g pour éviter
+    // toute collision d'étiquettes au flanc gauche (hors aération BLOC 3).
+    const sameWa = wa + 3.5;
+    const stdWa = wa - 3.5;
+    // Flanc GAUCHE (k=1) : trois Wd serrées à moins de 3 g → collision,
+    // mais étiquettes droites espacées (fins ≥ 2,4 g).
+    const sameWd = wd + 1.2 - t * 3.6;
+    const stdWd = wd - 1.1 + t * 3.5;
+    // Flanc DROIT serré (< 3 g) → collision Balance et Friction.
+    const sameBal = bal + 2.4 - t * 1.2; // fin : bal + 1.2
+    const factoryBal = bal - 2.2 + t * 1.1; // fin : bal - 1.1
+    const sameFric = fric + 2.2 - t * 1.1; // fin : fric + 1.1
+    const factoryFric = fric - 2.4 + t * 1.2; // fin : fric - 1.2
+    const n = (v: number) => Number(v.toFixed(1));
     points.push({
       key: k,
-      waCur: mWa[i],
-      wdCur: mWd[i],
-      balCur: mBal[i],
-      fricCur: mFric[i],
-      sameWa: wWa[i],
-      sameWd: wWd[i],
-      sameBal: wBal[i],
-      sameFric: wFric[i],
+      waCur: n(wa),
+      sameWa: n(sameWa),
+      stdWa: n(stdWa),
+      wdCur: n(wd),
+      balCur: n(bal),
+      fricCur: n(fric),
+      sameWd: n(sameWd),
+      stdWd: n(stdWd),
+      sameBal: n(sameBal),
+      factoryBal: n(factoryBal),
+      sameFric: n(sameFric),
+      factoryFric: n(factoryFric),
     });
   }
   return points;
 }
 
 // Moyenne d'une série (affichée comme valeur moyenne au flanc droit).
-// Ignore les points absents ; renvoie "" si la série est vide.
 function seriesAverage(data: ChartPoint[], key: keyof Omit<ChartPoint, "key">): string {
-  const vals = data
-    .map((p) => p[key])
-    .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
-  if (vals.length === 0) return "";
-  return (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
-}
-
-// Indique si une série contient au moins une valeur réelle.
-function seriesHasData(data: ChartPoint[], key: keyof Omit<ChartPoint, "key">): boolean {
-  return data.some((p) => typeof p[key] === "number");
+  const sum = data.reduce((acc, p) => acc + (p[key] as number), 0);
+  return (sum / data.length).toFixed(1);
 }
 
 // Pastilles noires calibrées (r = 2) uniquement sur les 15 points
@@ -162,17 +129,15 @@ type EndLabelOptions = {
   avg: string;
   color: string;
   count: number;
-  // Décalages verticaux anti-collision des deux flancs (dy final absolu).
-  // Valeurs échelonnées ex: -10 / 4 / 18 pour interdire les chevauchements.
-  dyLeft?: number | undefined;
-  dyRight?: number | undefined;
+  // Décalage vertical du flanc droit (aération 0 / 14 / 28 si moyennes < 1,2 g).
+  dyRight?: number;
 };
 
 function makeEndLabel(opts: EndLabelOptions) {
   const EndLabel = (props: { x?: number; y?: number; index?: number }) => {
     const { x = 0, y = 0, index = -1 } = props;
     if (index === 0) {
-      const dy = opts.dyLeft ?? 4;
+      const dy = 4;
       return (
         <text x={x - 10} y={y} dy={dy} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>
           {opts.shortName}
@@ -180,7 +145,7 @@ function makeEndLabel(opts: EndLabelOptions) {
       );
     }
     if (index === opts.count - 1) {
-      const dy = opts.dyRight ?? 4;
+      const dy = 4 + (opts.dyRight ?? 0);
       return (
         <text x={x + 10} y={y} dy={dy} textAnchor="start" fontSize={11} fontWeight={600} fill={opts.color}>
           {`Moy: ${opts.avg}g`}
@@ -190,26 +155,6 @@ function makeEndLabel(opts: EndLabelOptions) {
     return <g />;
   };
   return EndLabel;
-}
-
-// Anti-collision des étiquettes d'extrémité : si deux valeurs d'un même
-// flanc sont distantes de moins de `threshold` grammes, on trie les séries
-// par valeur décroissante et on applique des dy fixes échelonnés
-// (-10 / 4 / 18) pour interdire tout chevauchement de texte.
-function staggerDy(
-  entries: Array<{ key: string; v: number }>,
-  threshold: number,
-): Map<string, number> {
-  const map = new Map<string, number>();
-  const sorted = [...entries].sort((a, b) => b.v - a.v);
-  let collides = false;
-  for (let i = 1; i < sorted.length; i++) {
-    if (sorted[i - 1]!.v - sorted[i]!.v < threshold) collides = true;
-  }
-  if (!collides) return map;
-  const STEPS = [-10, 4, 18];
-  sorted.forEach((e, i) => map.set(e.key, STEPS[i] ?? 4 + i * 14));
-  return map;
 }
 
 // Tick personnalisé de l'axe supérieur :
@@ -297,13 +242,8 @@ function CustomTooltipContent(props: {
 }
 
 function ComparisonChart() {
-  // Données réelles chargées depuis piano_profiles (loader de la route).
-  const { profiles } = useLoaderData({ from: "/comparer" });
-  const data = useMemo<ChartPoint[]>(() => {
-    const mine = profiles.find((p) => p.serial_number === "MOCK-MON-PIANO");
-    const witness = profiles.find((p) => p.serial_number === "MOCK-WITNESS");
-    return buildChartData(mine, witness);
-  }, [profiles]);
+  // Données mock en attendant le branchement réel.
+  const [data] = useState<ChartPoint[]>(buildMockData);
   // Filtre global par type de touches (blanches / noires / toutes).
   const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
 
@@ -321,9 +261,8 @@ function ComparisonChart() {
     seriesAverage(filteredData, key);
 
   // Définitions des courbes : trait plein continu 1.5 px, labels d'extrémité.
-  // Nommage exact : "Mon piano Wa/Wd/Balance/Friction" (noir, réel) et
-  // "Same model(s)" (orange, témoin). Pas de courbe Std/Factory tant qu'aucune
-  // référence réelle n'est stockée en base.
+  // Noms officiels dépouillés des suffixes de famille (le titre du bloc
+  // indique déjà la mesure) : "Actuel", "Same models", "Std" / "Factory".
   const LINES: Array<{
     dataKey: keyof Omit<ChartPoint, "key">;
     name: string;
@@ -334,19 +273,37 @@ function ComparisonChart() {
   }> = [
     { dataKey: "waCur", name: "Mon piano Wa", shortName: "Mon piano", color: "#000000", family: "wa", real: true },
     { dataKey: "sameWa", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316", family: "wa" },
-    { dataKey: "wdCur", name: "Mon piano Wd", shortName: "Mon piano", color: "#000000", family: "wd", real: true },
-    { dataKey: "sameWd", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316", family: "wd" },
+    { dataKey: "stdWa", name: "Std", shortName: "Std", color: "#10b981", family: "wa" },
     { dataKey: "balCur", name: "Mon piano Balance", shortName: "Mon piano", color: "#000000", family: "bal", real: true },
     { dataKey: "sameBal", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316", family: "bal" },
+    { dataKey: "factoryBal", name: "Factory", shortName: "Factory", color: "#10b981", family: "bal" },
+    { dataKey: "wdCur", name: "Mon piano Wd", shortName: "Mon piano", color: "#000000", family: "wd", real: true },
+    { dataKey: "sameWd", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316", family: "wd" },
+    { dataKey: "stdWd", name: "Std", shortName: "Std", color: "#10b981", family: "wd" },
     { dataKey: "fricCur", name: "Mon piano Friction", shortName: "Mon piano", color: "#000000", family: "fric", real: true },
     { dataKey: "sameFric", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316", family: "fric" },
+    { dataKey: "factoryFric", name: "Factory", shortName: "Factory", color: "#10b981", family: "fric" },
   ];
 
-  // Regroupement par famille — ordre physique imposé (de haut en bas) :
-  // WA → WD → BALANCE → FRICTION.
+  // Sécurité flanc droit : si les 3 moyennes d'une famille sont espacées de
+  // moins de 1,2 g, on aère verticalement les étiquettes (dy = 0 / 14 / 28).
+  function dyRightFor(lines: typeof LINES): Map<string, number> {
+    const map = new Map<string, number>();
+    const entries = lines.map((l) => ({ key: l.dataKey, v: Number(avg(l.dataKey)) }));
+    const sorted = [...entries].sort((a, b) => a.v - b.v);
+    if (sorted.length >= 2 && sorted[sorted.length - 1]!.v - sorted[0]!.v < 1.2) {
+      // Ordre décroissant : la moyenne la plus haute reste à dy 0, etc.
+      [...entries]
+        .sort((a, b) => b.v - a.v)
+        .forEach((e, i) => map.set(e.key, i * 14));
+    }
+    return map;
+  }
+
+  // Regroupement par famille (ordre d'empilement vertical).
   const WA_LINES = LINES.filter((l) => l.family === "wa");
-  const WD_LINES = LINES.filter((l) => l.family === "wd");
   const BAL_LINES = LINES.filter((l) => l.family === "bal");
+  const WD_LINES = LINES.filter((l) => l.family === "wd");
   const FRIC_LINES = LINES.filter((l) => l.family === "fric");
 
   // Sous-graphique individuel (famille isolée). Sync global "piano".
@@ -357,20 +314,9 @@ function ComparisonChart() {
   }: {
     lines: typeof LINES;
     withTopAxis?: boolean;
-    yDomain: [number, number];
+    yDomain: [string, string];
   }) {
-    const visible = lines.filter((l) => seriesHasData(filteredData, l.dataKey));
-    const first = filteredData[0];
-    // Anti-collision : flanc gauche sur la première valeur, flanc droit sur
-    // les moyennes affichées.
-    const dyLeft = staggerDy(
-      visible.map((l) => ({ key: l.dataKey, v: Number(first?.[l.dataKey] ?? 0) })),
-      1.2,
-    );
-    const dyRight = staggerDy(
-      visible.map((l) => ({ key: l.dataKey, v: Number(avg(l.dataKey) || 0) })),
-      1.2,
-    );
+    const dyRight = dyRightFor(lines);
     return (
       <div className="flex-1 h-full w-full min-h-0 relative">
         <div className="absolute inset-0">
@@ -397,14 +343,13 @@ function ComparisonChart() {
             ) : (
               <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={[1, 88]} hide />
             )}
-            {/* Loupe verticale absolue : domaine fixe écrit en dur. */}
+            {/* Échelle individualisée par famille (calibrage rationnel). */}
             <YAxis
               width={0}
               tick={false}
               axisLine={false}
               tickLine={false}
               domain={yDomain}
-              allowDataOverflow
             />
             {/* Séparateurs verticaux fins aux emplacements des touches DO. */}
             {DO_POSITIONS.map((pos) => (
@@ -417,7 +362,7 @@ function ComparisonChart() {
               />
             ))}
             <Tooltip content={<CustomTooltipContent />} />
-            {visible.map((line) => (
+            {lines.map((line) => (
               <Line
                 key={line.dataKey}
                 xAxisId="main"
@@ -433,8 +378,7 @@ function ComparisonChart() {
                   avg: avg(line.dataKey),
                   color: line.color,
                   count,
-                  dyLeft: dyLeft.get(line.dataKey),
-                  dyRight: dyRight.get(line.dataKey),
+                  dyRight: dyRight.get(line.dataKey) ?? 0,
                 })}
               />
             ))}
@@ -469,38 +413,20 @@ function ComparisonChart() {
       </div>
 
       <div className="w-full h-[580px] flex flex-col justify-between gap-10">
-      {/* BLOC 1 (haut) : Wa — conserve l'axe supérieur DO. Domaine fixe [30, 56]
-          (les profils réels couvrent 34–53,5 g ; la plage [55, 85] initialement
-          prévue excluait toutes les données). */}
-      <SubChart lines={WA_LINES} withTopAxis yDomain={[30, 56]} />
-      {/* BLOC 2 (milieu haut) : Wd. Domaine fixe [22, 44] (réel : 25,8–41 g). */}
-      <SubChart lines={WD_LINES} yDomain={[22, 44]} />
-      {/* BLOC 3 (milieu bas) : Balance. Domaine fixe [26, 50] (réel : 29,9–47,3 g). */}
-      <SubChart lines={BAL_LINES} yDomain={[26, 50]} />
-      {/* BLOC 4 (bas) : Friction. Domaine fixe [2, 8] (réel : 4,1–6,3 g). */}
-      <SubChart lines={FRIC_LINES} yDomain={[2, 8]} />
+      {/* BLOC 1 : Wa (conserve l'axe supérieur DO). */}
+      <SubChart lines={WA_LINES} withTopAxis yDomain={["dataMin - 1.5", "dataMax + 1.5"]} />
+      {/* BLOC 2 : Balance. */}
+      <SubChart lines={BAL_LINES} yDomain={["dataMin - 1.0", "dataMax + 1.0"]} />
+      {/* BLOC 3 : Wd. */}
+      <SubChart lines={WD_LINES} yDomain={["dataMin - 1.5", "dataMax + 1.5"]} />
+      {/* BLOC 4 : Friction. */}
+      <SubChart lines={FRIC_LINES} yDomain={["dataMin - 0.5", "dataMax + 0.5"]} />
       </div>
     </div>
   );
 }
 
 export const Route = createFileRoute("/comparer")({
-  // Lecture réelle Supabase : charge les deux profils de référence.
-  //  - 'MOCK-MON-PIANO' → courbes noires ("Mon piano")
-  //  - 'MOCK-WITNESS'   → courbes oranges ("Same model(s)")
-  loader: async (): Promise<{ profiles: ProfileRow[] }> => {
-    const { data, error } = await supabase
-      .from("piano_profiles")
-      .select(
-        "serial_number, marque, modele, wa_values, wd_values, balance_values, friction_values",
-      )
-      .in("serial_number", ["MOCK-MON-PIANO", "MOCK-WITNESS"]);
-    if (error) {
-      console.error("[comparer] chargement piano_profiles:", error.message);
-      return { profiles: [] };
-    }
-    return { profiles: (data ?? []) as ProfileRow[] };
-  },
   head: () => ({
     meta: [
       { title: "Comparer — Touchweight statique piano" },
