@@ -345,12 +345,9 @@ function Comparer() {
       <div className="flex flex-col lg:flex-row w-full gap-6">
         {/* Zone centrale : futur graphique + cadre de confrontation des moyennes. */}
         <div className={hasComparisonData ? "flex-1 min-w-0" : "w-full"}>
-          {/* Emplacement réservé au futur graphique (aucun Recharts pour l'instant). */}
-          <div
-            className="mb-6 rounded-md border-2 border-dashed border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground"
-            aria-label="Emplacement réservé au graphique"
-          >
-            Graphique — à venir
+          {/* Moteur graphique (BLOC 2) : courbes de pesée, axe des DO, tooltip trié. */}
+          <div className="mb-6">
+            <ComparisonChart />
           </div>
 
           {/* Cadre de confrontation des moyennes (double grands chiffres). */}
