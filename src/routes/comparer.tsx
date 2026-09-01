@@ -483,6 +483,22 @@ function ComparisonChart() {
 }
 
 export const Route = createFileRoute("/comparer")({
+  // Lecture réelle Supabase : charge les deux profils de référence.
+  //  - 'MOCK-MON-PIANO' → courbes noires ("Mon piano")
+  //  - 'MOCK-WITNESS'   → courbes oranges ("Same model(s)")
+  loader: async (): Promise<{ profiles: ProfileRow[] }> => {
+    const { data, error } = await supabase
+      .from("piano_profiles")
+      .select(
+        "serial_number, marque, modele, wa_values, wd_values, balance_values, friction_values",
+      )
+      .in("serial_number", ["MOCK-MON-PIANO", "MOCK-WITNESS"]);
+    if (error) {
+      console.error("[comparer] chargement piano_profiles:", error.message);
+      return { profiles: [] };
+    }
+    return { profiles: (data ?? []) as ProfileRow[] };
+  },
   head: () => ({
     meta: [
       { title: "Comparer — Touchweight statique piano" },
