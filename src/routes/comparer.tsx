@@ -33,6 +33,8 @@ const SAMPLE_INDICES = new Set(
 type ChartPoint = {
   key: number;
   waCur: number;
+  sameWa: number;
+  stdWa: number;
   wdCur: number;
   balCur: number;
   fricCur: number;
@@ -52,6 +54,10 @@ function buildMockData(): ChartPoint[] {
     const wd = wa - 12 - Math.cos(k * 0.5) * 0.8;
     const bal = (wa + wd) / 2;
     const fric = (wa - wd) / 2;
+    // Séries témoins / références Wa : écart constant ≥ 3 g pour éviter
+    // toute collision d'étiquettes au flanc gauche (hors aération BLOC 3).
+    const sameWa = wa + 3.5;
+    const stdWa = wa - 3.5;
     // Flanc GAUCHE (k=1) : trois Wd serrées à moins de 3 g → collision,
     // mais étiquettes droites espacées (fins ≥ 2,4 g).
     const sameWd = wd + 1.2 - t * 3.6;
@@ -65,6 +71,8 @@ function buildMockData(): ChartPoint[] {
     points.push({
       key: k,
       waCur: n(wa),
+      sameWa: n(sameWa),
+      stdWa: n(stdWa),
       wdCur: n(wd),
       balCur: n(bal),
       fricCur: n(fric),
@@ -165,30 +173,24 @@ function CustomTickTop(props: {
   );
 }
 
-// Ordre décroissant des familles de courbes dans le tooltip :
-// Wa → Balance → Wd → Friction (du plus haut niveau de pesée vers le bas).
-const TOOLTIP_GROUP_RANK: Record<string, number> = {
-  Wa: 0,
-  "Same models Wa": 0,
-  "Std Wa": 0,
-  Balance: 1,
-  "Same models Balance": 1,
-  "Factory Balance": 1,
-  "Std Bal.": 1,
-  Wd: 2,
-  "Same models Wd": 2,
-  "Std Wd": 2,
-  Friction: 3,
-  "Same models Friction": 3,
-  "Factory Friction": 3,
-  "Std Friction": 3,
-};
+// Le tooltip trie désormais strictement par poids décroissant (voir
+// CustomTooltipContent) — plus de rang par famille de courbe.
 
 type TooltipEntry = {
   name?: string;
   value?: number;
   color?: string;
 };
+
+// Couleur de pastille / texte selon la famille de la série (charte graphique) :
+//  - Actuel       → noir (#000000)
+//  - Same models  → orange (#f97316)
+//  - Std / Factory → vert (#10b981)
+function tooltipColorFor(name: string): string {
+  if (name.includes("actuel")) return "#000000";
+  if (name.startsWith("Same models")) return "#f97316";
+  return "#10b981"; // Std ou Factory (références)
+}
 
 function CustomTooltipContent(props: {
   active?: boolean;
@@ -197,23 +199,34 @@ function CustomTooltipContent(props: {
 }) {
   const { active, payload, label } = props;
   if (!active || !payload || payload.length === 0) return null;
-  const sorted = [...payload].sort((a, b) => {
-    const ra = TOOLTIP_GROUP_RANK[a.name ?? ""] ?? 99;
-    const rb = TOOLTIP_GROUP_RANK[b.name ?? ""] ?? 99;
-    if (ra !== rb) return ra - rb;
-    return (b.value ?? 0) - (a.value ?? 0);
-  });
+  // 1. Capture complète : copie du payload reçu.
+  const items = [...payload];
+  // 2. Filtre les éléments sans valeur numérique valide.
+  const valid = items.filter(
+    (e) => e.value !== undefined && typeof e.value === "number" && !Number.isNaN(e.value),
+  );
+  // 3. Tri dynamique strict par poids décroissant (live, touche par touche).
+  valid.sort((a, b) => Number(b.value) - Number(a.value));
   return (
     <div className="rounded-md border border-gray-200 bg-white/95 px-3 py-2 text-xs shadow-md">
       <div className="mb-1 font-bold text-gray-800">Touche {label}</div>
-      {sorted.map((entry) => (
-        <div key={entry.name} className="flex items-center justify-between gap-4">
-          <span style={{ color: entry.color }}>{entry.name}</span>
-          <span className="font-semibold tabular-nums text-gray-800">
-            {typeof entry.value === "number" ? entry.value.toFixed(1) : entry.value} g.
-          </span>
-        </div>
-      ))}
+      {valid.map((entry) => {
+        const color = tooltipColorFor(entry.name ?? "");
+        return (
+          <div key={entry.name} className="flex items-center justify-between gap-4">
+            <span className="flex items-center gap-2">
+              <span
+                className="inline-block h-2.5 w-2.5 rounded-full"
+                style={{ backgroundColor: color }}
+              />
+              <span style={{ color }}>{entry.name}</span>
+            </span>
+            <span className="font-semibold tabular-nums text-gray-800">
+              {typeof entry.value === "number" ? entry.value.toFixed(1) : entry.value} g.
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -222,7 +235,8 @@ function ComparisonChart() {
   // Données mock en attendant le branchement réel.
   const [data] = useState<ChartPoint[]>(buildMockData);
   // Domaine vertical live : max de Wa du piano actuel + 1.
-  const maxWaLive = data.reduce((m, p) => Math.max(m, p.waCur), 0);
+  // Domaine vertical live : max de Wa (actuel + Same models, la plus haute) + 1.
+  const maxWaLive = data.reduce((m, p) => Math.max(m, p.waCur, p.sameWa), 0);
   const count = data.length;
   const first = data[0]!;
   const last = data[count - 1]!;
@@ -264,10 +278,12 @@ function ComparisonChart() {
     dyLeft?: number | null;
     dyRight?: number | null;
   }> = [
-    { dataKey: "waCur", name: "Wa", color: "#111827", real: true },
-    { dataKey: "balCur", name: "Balance", color: "#3b82f6", real: true },
-    { dataKey: "wdCur", name: "Wd", color: "#9ca3af", real: true, dyLeft: dyLeft.wdCur },
-    { dataKey: "fricCur", name: "Friction", color: "#ef4444", real: true },
+    { dataKey: "waCur", name: "Wa actuel", color: "#111827", real: true },
+    { dataKey: "sameWa", name: "Same models Wa", color: "#f97316" },
+    { dataKey: "stdWa", name: "Std Wa", color: "#10b981" },
+    { dataKey: "balCur", name: "Balance actuel", color: "#3b82f6", real: true },
+    { dataKey: "wdCur", name: "Wd actuel", color: "#9ca3af", real: true, dyLeft: dyLeft.wdCur },
+    { dataKey: "fricCur", name: "Friction actuel", color: "#ef4444", real: true },
     { dataKey: "sameWd", name: "Same models Wd", color: "#f97316", dyLeft: dyLeft.sameWd },
     { dataKey: "stdWd", name: "Std Wd", color: "#6b7280", dyLeft: dyLeft.stdWd },
     { dataKey: "sameBal", name: "Same models Balance", color: "#fb923c", dyRight: dyRight.sameBal },
