@@ -254,40 +254,25 @@ const FAMILIES: Array<{
   },
 ];
 
-// Empilement adaptatif des étiquettes d'extrémité : on respecte l'altitude
-// réelle de chaque courbe (la valeur la plus haute reste en haut), mais on
-// garantit un interligne de 14 px et une garde sous l'axe supérieur des DO.
-// Aucune étiquette ne remonte dans la bande de l'axe — d'où un dy toujours
-// positif (ou nul).
-const PLOT_H = 180;
-const MIN_GAP = 14;
-const TOP_CLEARANCE = 16;
+// Décalages verticaux des étiquettes d'extrémité : trois niveaux groupés
+// (0 / 10 / 20 px) attribués selon l'altitude réelle des courbes (la courbe
+// la plus haute reste à dy 0, centrée sur sa cote). Tous ≤ 20 px : les textes
+// restent groupés face à leur courbe à la note 88, sans déborder du cadre.
+const DY_STEPS = [0, 10, 20];
 
 function offsetsFor(
   lines: LineDef[],
   point: ChartPoint | undefined,
-  domain: [number, number],
+  _domain: [number, number],
 ): Map<SeriesKey, number> {
   const map = new Map<SeriesKey, number>();
   if (!point) {
-    lines.forEach((l, i) => map.set(l.dataKey, TOP_CLEARANCE + i * MIN_GAP));
+    lines.forEach((l, i) => map.set(l.dataKey, DY_STEPS[i] ?? 20));
     return map;
   }
-  const range = domain[1] - domain[0];
-  const pxPerVal = range > 0 ? PLOT_H / range : 1;
-  // Altitude (px depuis le sommet du graphe) par courbe.
-  const ranked = lines
-    .map((l) => {
-      const v = point[l.dataKey] ?? 0;
-      return { key: l.dataKey, y: (domain[1] - v) * pxPerVal };
-    })
-    .sort((a, b) => a.y - b.y); // du plus haut (y petit) au plus bas
-  let prevBottom = TOP_CLEARANCE - MIN_GAP;
-  for (const { key, y } of ranked) {
-    const target = Math.max(y, prevBottom + MIN_GAP);
-    map.set(key, Math.round(target - y));
-    prevBottom = target;
-  }
+  [...lines]
+    .sort((a, b) => point[b.dataKey] - point[a.dataKey]) // courbe haute → basse
+    .forEach((l, i) => map.set(l.dataKey, DY_STEPS[i] ?? 20));
   return map;
 }
 
