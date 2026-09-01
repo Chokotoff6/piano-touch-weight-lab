@@ -290,34 +290,28 @@ function ComparisonChart() {
     const dyLeft = offsetsFor(family.lines, first);
     const dyRight = offsetsFor(family.lines, last);
     return (
-      <section className={`${FRAME_CLASS} h-[260px]`}>
-        <h3 className="absolute left-4 top-2 z-10 rounded bg-card/80 px-1 text-lg font-bold text-black">
-          {family.title}
-        </h3>
-        <div className="absolute inset-0 top-10 bottom-2">
+      <Frame title={family.title} className="h-[260px]">
+        <div className="h-full w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={filteredData}
               syncId="piano"
-              margin={{ top: 18, right: 130, bottom: 6, left: 130 }}
+              margin={{ top: 0, right: 130, bottom: 6, left: 130 }}
+              style={{ marginTop: "24px" }}
             >
               <XAxis xAxisId="main" dataKey="key" type="number" domain={[1, 88]} hide />
-              {family.topAxis ? (
-                <XAxis
-                  xAxisId="topAxis"
-                  dataKey="key"
-                  type="number"
-                  domain={[1, 88]}
-                  orientation="top"
-                  height={15}
-                  axisLine={false}
-                  tickLine={false}
-                  ticks={DO_POSITIONS}
-                  tick={<CustomTickTop dy={-6} />}
-                />
-              ) : (
-                <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={[1, 88]} hide />
-              )}
+              <XAxis
+                xAxisId="topAxis"
+                dataKey="key"
+                type="number"
+                domain={[1, 88]}
+                orientation="top"
+                height={15}
+                axisLine={false}
+                tickLine={false}
+                ticks={DO_POSITIONS}
+                tick={<CustomTickTop dy={-6} />}
+              />
               {/* Loupe verticale : domaine fixe par famille. */}
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
               {DO_POSITIONS.map((pos) => (
@@ -348,7 +342,7 @@ function ComparisonChart() {
             </LineChart>
           </ResponsiveContainer>
         </div>
-      </section>
+      </Frame>
     );
   }
 
