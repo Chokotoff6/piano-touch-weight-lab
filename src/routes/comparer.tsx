@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { externalSupabase } from "@/integrations/external-supabase/client";
 import {
   ResponsiveContainer,
   LineChart,
@@ -680,13 +680,14 @@ function Comparer() {
     let cancelled = false;
 
     async function loadComparisonProfiles() {
+      // Source de vérité : projet Supabase EXTERNE (djnznvmdzyvlekqypaox).
       const [mineResult, witnessResult] = await Promise.all([
-        supabase
+        externalSupabase
           .from("piano_profiles")
           .select("*")
           .eq("serial_number", "MOCK-MON-PIANO")
           .single(),
-        supabase
+        externalSupabase
           .from("piano_profiles")
           .select("*")
           .eq("serial_number", "MOCK-WITNESS")
