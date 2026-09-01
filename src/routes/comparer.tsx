@@ -88,13 +88,6 @@ function buildMockData(): ChartPoint[] {
 }
 
 // Écart minimal entre deux valeurs d'un groupe (détection de collision < 3 g).
-function minGap(values: number[]): number {
-  const sorted = [...values].sort((a, b) => a - b);
-  let min = Infinity;
-  for (let i = 1; i < sorted.length; i++) min = Math.min(min, sorted[i]! - sorted[i - 1]!);
-  return min;
-}
-
 // Moyenne d'une série (affichée comme valeur moyenne au flanc droit).
 function seriesAverage(data: ChartPoint[], key: keyof Omit<ChartPoint, "key">): string {
   const sum = data.reduce((acc, p) => acc + (p[key] as number), 0);
