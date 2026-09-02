@@ -301,8 +301,23 @@ function currentLinesFor(familyId: string, keyFilter: KeyFilter): LineDef[] {
 function ComparisonChart({ chartData, keyFilter }: { chartData: ChartPoint[]; keyFilter: KeyFilter }) {
   const [hoveredChart, setHoveredChart] = useState<string | null>(null);
   const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
   const first = chartData[0];
   const last = chartData[chartData.length - 1];
+
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+    const update = () => setContainerWidth(node.clientWidth);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  // Ancrage fixe du tooltip sur le flanc droit du graphique.
+  const tooltipPosition = { x: Math.max(containerWidth - 200, 0), y: 8 };
 
   function SubChart({ family }: { family: (typeof FAMILIES)[number] }) {
     const lines = [...currentLinesFor(family.id, keyFilter), ...family.lines];
@@ -319,7 +334,7 @@ function ComparisonChart({ chartData, keyFilter }: { chartData: ChartPoint[]; ke
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
               {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#e5e7eb" strokeWidth={1} />)}
               {hoveredNoteIndex !== null && <ReferenceLine xAxisId="main" x={hoveredNoteIndex} stroke="#94a3b8" strokeWidth={1} />}
-              {isHovered && <Tooltip content={<CustomTooltipContent />} wrapperStyle={{ pointerEvents: "none" }} isAnimationActive={false} />}
+              {isHovered && <Tooltip content={<CustomTooltipContent />} position={tooltipPosition} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ pointerEvents: "none" }} isAnimationActive={false} />}
               {lines.map((line) => <Line key={line.dataKey} xAxisId="main" type="monotone" dataKey={line.dataKey} name={line.name} stroke={line.color} strokeWidth={2} dot={line.real ? SAMPLE_DOT_CONFIG : false} connectNulls={true} isAnimationActive={false} label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color: line.color, firstIndex: 0, lastIndex: chartData.length - 1, dyLeft: dyLeft.get(line.dataKey) ?? 0, dyRight: dyRight.get(line.dataKey) ?? 0 })} />)}
             </LineChart>
           </ResponsiveContainer>
@@ -328,7 +343,7 @@ function ComparisonChart({ chartData, keyFilter }: { chartData: ChartPoint[]; ke
     );
   }
 
-  return <div className="w-full px-2 pb-4 pt-2"><div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div></div>;
+  return <div ref={containerRef} className="w-full px-2 pb-4 pt-2"><div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div></div>;
 }
 
 export const Route = createFileRoute("/comparer")({
