@@ -174,10 +174,10 @@ function RootComponent() {
               <div className="relative">
                 <Link
                   to="/comparer"
-                  className={linkClass}
+                  className={topbar.measuresReady || isComparer ? linkClass : "cursor-not-allowed rounded-md px-3 py-2 text-base font-semibold !text-gray-300 sm:px-4 sm:text-lg"}
                   activeProps={{ className: activeLinkClass }}
                   onClick={(e) => {
-                    const hasData = saisieGate.hasData?.() ?? true;
+                    const hasData = (saisieGate.hasData?.() ?? false) || topbar.measuresReady;
                     if (!hasData) {
                       e.preventDefault();
                       showTopbarAlert("compare", EMPTY_DATA_MESSAGE);
