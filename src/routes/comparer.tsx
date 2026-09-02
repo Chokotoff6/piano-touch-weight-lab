@@ -475,13 +475,23 @@ function SidebarPanel(props: SidebarPanelProps) {
   const switchRow = (label: string, checked: boolean, onChange: (value: boolean) => void) => (
     <label className="flex min-w-0 items-center justify-between gap-3 text-xs font-medium text-slate-700">
       <span className="min-w-0">{label}</span>
-      <Switch checked={checked} disabled={props.filtersDisabled} onCheckedChange={onChange} />
+      <Switch checked={checked} disabled={props.filtersDisabled} onCheckedChange={onChange} className="data-[state=checked]:bg-slate-500 data-[state=unchecked]:bg-gray-200" />
     </label>
   );
   return (
     <Frame title="Filtres" className="h-fit">
       <div className="flex flex-col gap-4 pt-2">
-          <div>
+          <div className="space-y-2">
+            <Button type="button" variant="outline" onClick={props.cycleKeyFilter} aria-label={`Vue clavier : ${props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Vue clavier : <span className="font-semibold">{props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}</span></span></Button>
+            <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Niveau d'usage instrument : <span className="font-semibold">{usageLabel}</span> ↻</span></Button>
+            <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left ${props.importantChanges ? "font-semibold text-slate-700" : "text-slate-500"}`}><CycleIcon /><span>Modifications importantes : <span className="font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></span></Button>
+          </div>
+          <div className="space-y-2.5 border-t border-gray-200 pt-3">
+            {switchRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
+            {switchRow("Même année de fabrication", props.sameYear, props.setSameYear)}
+            {switchRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
+          </div>
+          <div className="border-t border-gray-200 pt-3">
             <div className="mb-1.5 !text-base !font-bold !text-black">Comparer avec</div>
             <div className="flex items-center gap-1.5">
               <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={pillClass(props.cloudEnabled)}>Cloud</Button>
@@ -489,16 +499,6 @@ function SidebarPanel(props: SidebarPanelProps) {
               <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={pillClass(props.csvActive)}>CSV</Button>
               <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
             </div>
-          </div>
-          <div className="space-y-2.5">
-            {switchRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
-            {switchRow("Même année de fabrication", props.sameYear, props.setSameYear)}
-            {switchRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
-          </div>
-          <div className="space-y-2 border-t border-gray-200 pt-3">
-            <Button type="button" variant="outline" onClick={props.cycleKeyFilter} aria-label={`Vue clavier : ${props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Vue clavier : <span className="font-semibold">{props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}</span></span></Button>
-            <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Niveau d'usage : <span className="font-semibold">{usageLabel}</span></span></Button>
-            <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left ${props.importantChanges ? "font-semibold text-slate-700" : "text-slate-500"}`}><CycleIcon /><span>Modifications importantes : <span className="font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></span></Button>
           </div>
         </div>
       </Frame>
