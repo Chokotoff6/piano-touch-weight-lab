@@ -413,8 +413,8 @@ export const Route = createFileRoute("/comparer")({
 
 const FRAME_CLASS = "relative rounded-md border-2 border-foreground bg-card p-4 pt-5";
 const FRAME_TITLE_CLASS = "absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black";
-function Frame({ title, className = "", titleClassName, children }: { title: ReactNode; className?: string; titleClassName?: string; children: ReactNode }) {
-  return <section className={`${FRAME_CLASS} ${className}`}><h2 className={titleClassName ?? FRAME_TITLE_CLASS}>{title}</h2>{children}</section>;
+function Frame({ title, className = "", titleClassName, id, children }: { title: ReactNode; className?: string; titleClassName?: string; id?: string; children: ReactNode }) {
+  return <section id={id} className={`${FRAME_CLASS} ${className}`}><h2 className={titleClassName ?? FRAME_TITLE_CLASS}>{title}</h2>{children}</section>;
 }
 
 const COLUMNS = [
@@ -501,15 +501,6 @@ function SidebarPanel(props: SidebarPanelProps) {
             {switchRow("Même année de fabrication", props.sameYear, props.setSameYear)}
             {switchRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
           </div>
-          <div className="border-t border-gray-200 pt-3">
-            <div className="mb-1.5 !text-base !font-bold !text-black">Comparer avec même(s) modèle(s)</div>
-            <div className="flex items-center gap-1.5">
-              <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={pillClass(props.cloudEnabled)}>Cloud</Button>
-              <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={pillClass(props.standardEnabled)}>Standard</Button>
-              <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={pillClass(props.csvActive)}>CSV</Button>
-              <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
-            </div>
-          </div>
         </div>
       </Frame>
     );
@@ -533,6 +524,7 @@ function Comparer() {
   const [cloudProfile, setCloudProfile] = useState<RefProfile | null>(null);
   const [cloudSampleCount, setCloudSampleCount] = useState(0);
   const [imported, setImported] = useState<RefProfile | null>(null);
+  const [importedMeta, setImportedMeta] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
   const averagesRef = useRef<HTMLDivElement>(null);
   const [averagesHeight, setAveragesHeight] = useState(0);
@@ -608,11 +600,27 @@ function Comparer() {
   async function handleImport(file: File) {
     try {
       const parsed = parseDiagnosticCsv(await file.text());
-      const toNumber = (value: string) => { const normalized = value.trim().replace(",", "."); const number = Number(normalized); return normalized === "" || !Number.isFinite(number) ? Number.NaN : number; };
-      setImported({ wa: parsed.rows.map((row) => toNumber(row.wa)), wd: parsed.rows.map((row) => toNumber(row.wd)), friction: [], balance: [] });
+      const toNumber = (value: string) => {
+        const normalized = value.trim().replace(",", ".");
+        const number = Number(normalized);
+        return normalized === "" || !Number.isFinite(number) ? Number.NaN : number;
+      };
+      const wa = parsed.rows.map((row) => toNumber(row.wa));
+      const wd = parsed.rows.map((row) => toNumber(row.wd));
+      const friction = wa.map((value, index) => {
+        const down = wd[index];
+        return Number.isFinite(value) && Number.isFinite(down) ? n1(Math.abs((value - down) / 2)) : Number.NaN;
+      });
+      const balance = wa.map((value, index) => {
+        const down = wd[index];
+        return Number.isFinite(value) && Number.isFinite(down) ? n1((value + down) / 2) : Number.NaN;
+      });
+      setImported({ wa, wd, friction, balance });
+      setImportedMeta(parsed.meta);
       setSourceMode("import");
     } catch {
       setImported(null);
+      setImportedMeta({});
     }
   }
 
