@@ -248,7 +248,6 @@ function RootComponent() {
                 </div>
               )}
             </div>
-            )}
 
             {topbar.measuresReady ? (
               <DropdownMenu>
