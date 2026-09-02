@@ -317,12 +317,13 @@ function offsetsFor(lines: LineDef[], point: ChartPoint | undefined) {
 }
 
 function currentLinesFor(familyId: string, keyFilter: KeyFilter): LineDef[] {
-  const metrics: Record<string, [SeriesKey, SeriesKey, SeriesKey]> = { wa: ["waCur", "waCurW", "waCurB"], wd: ["wdCur", "wdCurW", "wdCurB"], bal: ["balCur", "balCurW", "balCurB"], fric: ["fricCur", "fricCurW", "fricCurB"] };
+  const metrics: Record<string, [SeriesKey, SeriesKey, SeriesKey, SeriesKey]> = { wa: ["waCur", "waCurW", "waCurB", "waMid"], wd: ["wdCur", "wdCurW", "wdCurB", "wdMid"], bal: ["balCur", "balCurW", "balCurB", "balMid"], fric: ["fricCur", "fricCurW", "fricCurB", "fricMid"] };
   const metric = metrics[familyId];
   if (!metric) return [];
   if (keyFilter === "split") return [
     { dataKey: metric[1], name: "Mon piano — blanches", shortName: "Blanches", color: "#000000", real: true },
     { dataKey: metric[2], name: "Mon piano — noires", shortName: "Noires", color: "#6b7280", real: true },
+    { dataKey: metric[3], name: "Mon piano", shortName: "Mon piano", color: "#000000" },
   ];
   return [{ dataKey: metric[0], name: "Mon piano", shortName: "Mon piano", color: "#000000", real: true }];
 }
