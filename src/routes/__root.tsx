@@ -147,6 +147,7 @@ function RootComponent() {
     initLang();
   }, []);
   const isSaisie = pathname === "/saisie";
+  const isComparer = pathname === "/comparer";
 
   const linkClass = "rounded-md px-3 py-2 text-base font-semibold text-muted-foreground transition-colors hover:bg-background hover:text-foreground sm:px-4 sm:text-lg";
   const activeLinkClass = "rounded-md bg-background px-3 py-2 text-base font-semibold text-foreground shadow-sm sm:px-4 sm:text-lg";
@@ -307,6 +308,7 @@ function RootComponent() {
               </div>
             )}
 
+            {!isComparer && (
             <div className="relative flex items-center">
               {topbar.serialFilled ? (
                 <DropdownMenu>
@@ -375,36 +377,34 @@ function RootComponent() {
                 >
                   {topbar.alert.message}
                 </div>
-              )}
-            </div>
+               )}
+             </div>
+             )}
 
-            <div className="ml-auto flex items-center gap-1 text-sm font-semibold">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setLang("en")}
-                className={lang === "en" ? "!text-gray-900 underline" : "!text-gray-400"}
-              >
-                EN
-              </Button>
-              <span className="!text-gray-300">|</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setLang("fr")}
-                className={lang === "fr" ? "!text-gray-900 underline" : "!text-gray-400"}
-              >
-                FR
-              </Button>
-            </div>
+             <div className="ml-auto flex items-center gap-1 text-sm font-semibold">
+               <Button
+                 variant="ghost"
+                 size="sm"
+                 onClick={() => setLang("en")}
+                 className={lang === "en" ? "!text-gray-900 underline" : "!text-gray-400"}
+               >
+                 EN
+               </Button>
+               <span className="!text-gray-300">|</span>
+               <Button
+                 type="button"
+                 variant="ghost"
+                 size="sm"
+                 onClick={() => setLang("fr")}
+                 className={lang === "fr" ? "!text-gray-900 underline" : "!text-gray-400"}
+               >
+                 FR
+               </Button>
+              </div>
 
+            </div>
           </div>
-
-
-        </div>
-      </nav>
+       </nav>
 
 
       <a

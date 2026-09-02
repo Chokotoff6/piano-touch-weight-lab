@@ -37,11 +37,16 @@ export type ExternalPianoProfileRow = {
   balance_values: number[];
   remarques: string | null;
   annee_fabrication: number | null;
+  manufacture_year?: number | null;
+  mesure_date?: string | null;
   zone_climatique?: string | null;
   type_entretien?: string | null;
+  climate_zone?: string | null;
+  maintenance_type?: string | null;
   usage_level?: string | null;
   created_at: string;
 };
+
 
 export const externalSupabase = createClient(
   EXTERNAL_SUPABASE_URL,
