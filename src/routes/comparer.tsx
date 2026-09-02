@@ -413,7 +413,7 @@ export const Route = createFileRoute("/comparer")({
 
 const FRAME_CLASS = "relative rounded-md border-2 border-foreground bg-card p-4 pt-5";
 const FRAME_TITLE_CLASS = "absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black";
-function Frame({ title, className = "", titleClassName, id, children }: { title: ReactNode; className?: string; titleClassName?: string; id?: string; children: ReactNode }) {
+function Frame({ title, className = "", titleClassName, id, children }: { title: ReactNode; className?: string; titleClassName?: string; id?: string | undefined; children: ReactNode }) {
   return <section id={id} className={`${FRAME_CLASS} ${className}`}><h2 className={titleClassName ?? FRAME_TITLE_CLASS}>{title}</h2>{children}</section>;
 }
 
