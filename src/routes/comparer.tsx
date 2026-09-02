@@ -298,7 +298,7 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
   );
 }
 
-type LineDef = { dataKey: SeriesKey; name: string; shortName: string; color: string; real?: boolean };
+type LineDef = { dataKey: SeriesKey; name: string; shortName: string; color: string; real?: boolean; hidden?: boolean };
 const FAMILIES: Array<{ id: string; title: string; domain: [number, number]; lines: LineDef[] }> = [
   { id: "wa", title: "Poids d'enfoncement (Wa)", domain: [55, 85], lines: [{ dataKey: "sameWa", name: "Même modèle(s)", shortName: "Même modèle(s)", color: "#f97316" }, { dataKey: "stdWa", name: "Std", shortName: "Std", color: "#10b981" }] },
   { id: "wd", title: "Poids de retour (Wd)", domain: [50, 70], lines: [{ dataKey: "sameWd", name: "Même modèle(s)", shortName: "Même modèle(s)", color: "#f97316" }, { dataKey: "stdWd", name: "Std", shortName: "Std", color: "#10b981" }] },
@@ -323,7 +323,7 @@ function currentLinesFor(familyId: string, keyFilter: KeyFilter): LineDef[] {
   if (keyFilter === "split") return [
     { dataKey: metric[1], name: "Mon piano — blanches", shortName: "Blanches", color: "#000000", real: true },
     { dataKey: metric[2], name: "Mon piano — noires", shortName: "Noires", color: "#6b7280", real: true },
-    { dataKey: metric[3], name: "Mon piano", shortName: "Mon piano", color: "#000000" },
+    { dataKey: metric[3], name: "Mon piano", shortName: "Mon piano", color: "#000000", hidden: true },
   ];
   return [{ dataKey: metric[0], name: "Mon piano", shortName: "Mon piano", color: "#000000", real: true }];
 }
@@ -345,8 +345,6 @@ function ComparisonChart({ chartData, keyFilter }: { chartData: ChartPoint[]; ke
   const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
-  const first = chartData[0];
-  const last = chartData[chartData.length - 1];
 
   useEffect(() => {
     const node = containerRef.current;
@@ -363,8 +361,16 @@ function ComparisonChart({ chartData, keyFilter }: { chartData: ChartPoint[]; ke
 
   function SubChart({ family }: { family: (typeof FAMILIES)[number] }) {
     const lines = [...currentLinesFor(family.id, keyFilter), ...family.lines];
-    const dyLeft = offsetsFor(lines, first);
-    const dyRight = offsetsFor(lines, last);
+    // Chaque courbe est ancrée sur SON propre premier / dernier point défini
+    // (indispensable en vue éclatée où blanches et noires ne partagent pas les mêmes index).
+    const endpointOffsets = (side: "left" | "right") => new Map(
+      lines.map((line) => {
+        const index = side === "left" ? firstDefinedIndex(chartData, line.dataKey) : lastDefinedIndex(chartData, line.dataKey);
+        return [line.dataKey, offsetsFor(lines, chartData[index]).get(line.dataKey) ?? 0] as const;
+      }),
+    );
+    const dyLeft = endpointOffsets("left");
+    const dyRight = endpointOffsets("right");
     const isHovered = hoveredChart === family.id;
     return (
       <Frame title={family.title} className="h-[300px] !pt-2">
@@ -377,7 +383,7 @@ function ComparisonChart({ chartData, keyFilter }: { chartData: ChartPoint[]; ke
               {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#e5e7eb" strokeWidth={1} />)}
               {hoveredNoteIndex !== null && <ReferenceLine xAxisId="main" x={hoveredNoteIndex} stroke="#94a3b8" strokeWidth={1} />}
               {isHovered && <Tooltip content={<CustomTooltipContent />} position={tooltipPosition} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ pointerEvents: "none" }} isAnimationActive={false} />}
-              {lines.map((line) => <Line key={line.dataKey} xAxisId="main" type="monotone" dataKey={line.dataKey} name={line.name} stroke={line.color} strokeWidth={2} dot={line.real ? SAMPLE_DOT_CONFIG : false} connectNulls={true} isAnimationActive={false} label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color: line.color, firstIndex: firstDefinedIndex(chartData, line.dataKey), lastIndex: lastDefinedIndex(chartData, line.dataKey), dyLeft: dyLeft.get(line.dataKey) ?? 0, dyRight: dyRight.get(line.dataKey) ?? 0 })} />)}
+              {lines.map((line) => <Line key={line.dataKey} xAxisId="main" type="monotone" dataKey={line.dataKey} name={line.name} stroke={line.hidden ? "transparent" : line.color} strokeWidth={2} dot={line.real ? SAMPLE_DOT_CONFIG : false} connectNulls={true} isAnimationActive={false} label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color: line.color, firstIndex: firstDefinedIndex(chartData, line.dataKey), lastIndex: lastDefinedIndex(chartData, line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden })} />)}
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -404,8 +410,8 @@ export const Route = createFileRoute("/comparer")({
 
 const FRAME_CLASS = "relative rounded-md border-2 border-foreground bg-card p-4 pt-5";
 const FRAME_TITLE_CLASS = "absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black";
-function Frame({ title, className = "", children }: { title: ReactNode; className?: string; children: ReactNode }) {
-  return <section className={`${FRAME_CLASS} ${className}`}><h2 className={FRAME_TITLE_CLASS}>{title}</h2>{children}</section>;
+function Frame({ title, className = "", titleClassName, children }: { title: ReactNode; className?: string; titleClassName?: string; children: ReactNode }) {
+  return <section className={`${FRAME_CLASS} ${className}`}><h2 className={titleClassName ?? FRAME_TITLE_CLASS}>{title}</h2>{children}</section>;
 }
 
 const COLUMNS = [
@@ -467,13 +473,23 @@ function SidebarPanel(props: SidebarPanelProps) {
   const switchRow = (label: string, checked: boolean, onChange: (value: boolean) => void) => (
     <label className="flex min-w-0 items-center justify-between gap-3 text-xs font-medium text-slate-700">
       <span className="min-w-0">{label}</span>
-      <Switch checked={checked} disabled={props.filtersDisabled} onCheckedChange={onChange} />
+      <Switch checked={checked} disabled={props.filtersDisabled} onCheckedChange={onChange} className="data-[state=checked]:bg-slate-500 data-[state=unchecked]:bg-gray-200" />
     </label>
   );
   return (
     <Frame title="Filtres" className="h-fit">
       <div className="flex flex-col gap-4 pt-2">
-          <div>
+          <div className="space-y-2">
+            <Button type="button" variant="outline" onClick={props.cycleKeyFilter} aria-label={`Vue clavier : ${props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Vue clavier : <span className="font-semibold">{props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}</span></span></Button>
+            <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Niveau d'usage instrument : <span className="font-semibold">{usageLabel}</span> ↻</span></Button>
+            <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left ${props.importantChanges ? "font-semibold text-slate-700" : "text-slate-500"}`}><CycleIcon /><span>Modifications importantes : <span className="font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></span></Button>
+          </div>
+          <div className="space-y-2.5 border-t border-gray-200 pt-3">
+            {switchRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
+            {switchRow("Même année de fabrication", props.sameYear, props.setSameYear)}
+            {switchRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
+          </div>
+          <div className="border-t border-gray-200 pt-3">
             <div className="mb-1.5 !text-base !font-bold !text-black">Comparer avec</div>
             <div className="flex items-center gap-1.5">
               <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={pillClass(props.cloudEnabled)}>Cloud</Button>
@@ -481,16 +497,6 @@ function SidebarPanel(props: SidebarPanelProps) {
               <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={pillClass(props.csvActive)}>CSV</Button>
               <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
             </div>
-          </div>
-          <div className="space-y-2.5">
-            {switchRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
-            {switchRow("Même année de fabrication", props.sameYear, props.setSameYear)}
-            {switchRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
-          </div>
-          <div className="space-y-2 border-t border-gray-200 pt-3">
-            <Button type="button" variant="outline" onClick={props.cycleKeyFilter} aria-label={`Vue clavier : ${props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Vue clavier : <span className="font-semibold">{props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}</span></span></Button>
-            <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Niveau d'usage : <span className="font-semibold">{usageLabel}</span></span></Button>
-            <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left ${props.importantChanges ? "font-semibold text-slate-700" : "text-slate-500"}`}><CycleIcon /><span>Modifications importantes : <span className="font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></span></Button>
           </div>
         </div>
       </Frame>
@@ -516,6 +522,18 @@ function Comparer() {
   const [cloudSampleCount, setCloudSampleCount] = useState(0);
   const [imported, setImported] = useState<RefProfile | null>(null);
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
+  const averagesRef = useRef<HTMLDivElement>(null);
+  const [averagesHeight, setAveragesHeight] = useState(0);
+
+  useEffect(() => {
+    const node = averagesRef.current;
+    if (!node) return;
+    const update = () => setAveragesHeight(node.offsetHeight);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [status]);
 
   useEffect(() => {
     let cancelled = false;
@@ -603,15 +621,15 @@ function Comparer() {
         <>
           <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-stretch gap-6">
             <div className="min-w-0">
-              <div className="sticky top-[77px] z-40 mb-4 w-full bg-white/95 pb-1 pt-2 shadow-sm backdrop-blur-sm">
-                <Frame title={<><span>Moyennes</span><span className="ml-2 text-sm font-semibold text-muted-foreground">({summary})</span></>} className="h-fit">
+              <div ref={averagesRef} className="sticky top-[127px] z-40 mb-[50px] w-full border-b border-border/60 bg-background/95 pb-2 pt-2 shadow-sm backdrop-blur-sm">
+                <Frame titleClassName="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<><span>Moyennes</span><span className="ml-2 text-sm font-semibold text-muted-foreground">({summary})</span></>} className="h-fit">
                   <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">Piano Actuel</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={current[key]} />)}</div></div>
                   <div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">Même modèle(s)</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={sourceMode === "cloud" ? witness[key] : "—"} active />)}</div>{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div>
                 </Frame>
               </div>
               <ComparisonChart chartData={chartData} keyFilter={keyFilter} />
             </div>
-            <aside className="min-w-0"><div className="sticky top-[77px] z-40 mt-[474px] h-fit"><SidebarPanel cloudEnabled={sourceMode === "cloud"} standardEnabled={standardEnabled} csvActive={sourceMode === "import"} onToggleCloud={() => setSourceMode((value) => value === "cloud" ? "none" : "cloud")} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} filtersDisabled={sourceMode !== "cloud"} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
+            <aside className="min-w-0"><div className="sticky z-40 mt-[200px] h-fit" style={{ top: averagesHeight > 0 ? `${averagesHeight + 177}px` : "400px" }}><SidebarPanel cloudEnabled={sourceMode === "cloud"} standardEnabled={standardEnabled} csvActive={sourceMode === "import"} onToggleCloud={() => setSourceMode((value) => value === "cloud" ? "none" : "cloud")} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} filtersDisabled={sourceMode !== "cloud"} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
           </div>
         </>
       )}
