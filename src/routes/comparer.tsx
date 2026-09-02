@@ -187,6 +187,21 @@ function databaseUsage(value: UsageLevel) {
   return value === "low" ? "Low" : "Intensive";
 }
 
+// Abaque théorique d'usine calculé en local (aucun appel réseau).
+function makeFactoryStandard(): RefProfile {
+  const ramp = (start: number, end: number) =>
+    Array.from({ length: 88 }, (_, index) => n1(start + ((end - start) * index) / 87));
+  const wa = ramp(68, 58);
+  const wd = ramp(56, 48);
+  return {
+    wa,
+    wd,
+    balance: wa.map((value, index) => n1((value + wd[index]) / 2)),
+    friction: wa.map((value, index) => n1((value - wd[index]) / 2)),
+  };
+}
+const FACTORY_STANDARD: RefProfile = makeFactoryStandard();
+
 const SAMPLE_DOT_CONFIG = { r: 2, fill: "#000000", strokeWidth: 0 };
 
 type EndLabelOptions = {
