@@ -441,10 +441,12 @@ function SidebarPanel(props: SidebarPanelProps) {
 
 function Comparer() {
   const [sourceMode, setSourceMode] = useState<SourceMode>("cloud");
-  const [standardEnabled, setStandardEnabled] = useState(false);
+  const [standardEnabled, setStandardEnabled] = useState(true);
+  const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
   const [sameClimate, setSameClimate] = useState(true);
   const [sameYear, setSameYear] = useState(false);
   const [importantChanges, setImportantChanges] = useState(false);
+  const [youngOnly, setYoungOnly] = useState(false);
   const [usageLevel, setUsageLevel] = useState<UsageLevel>("all");
   const [mine, setMine] = useState<ProfileRecord | null>(null);
   const [profiles, setProfiles] = useState<ProfileRecord[]>([]);
