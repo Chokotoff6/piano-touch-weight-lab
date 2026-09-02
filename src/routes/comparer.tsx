@@ -127,7 +127,7 @@ function seriesAverage(data: ChartPoint[], key: SeriesKey): string {
     .map((point) => point[key])
     .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
   if (values.length === 0) return "—";
-  return (values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(1);
+  return (values.reduce<number>((sum, value) => sum + value, 0) / values.length).toFixed(1);
 }
 
 function profileAverage(profile: RefProfile | null, key: keyof RefProfile): string {
