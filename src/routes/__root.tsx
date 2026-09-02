@@ -377,10 +377,9 @@ function RootComponent() {
                 >
                   {topbar.alert.message}
                 </div>
-              )}
+               )}
+             </div>
              )}
-
-             <div className="ml-auto flex items-center gap-1 text-sm font-semibold">
                <Button
                  type="button"
                  variant="ghost"
