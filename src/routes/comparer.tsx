@@ -364,18 +364,79 @@ function averageSet(chartData: ChartPoint[]): Averages {
   return { wa: seriesAverage(chartData, "waCur"), wd: seriesAverage(chartData, "wdCur"), friction: seriesAverage(chartData, "fricCur"), balance: seriesAverage(chartData, "balCur") };
 }
 
-function SummaryBanner() {
-  return <p className="w-full text-center !text-gray-700 text-sm font-medium tracking-wide">Résumé : Comparaison externe • Profils chargés depuis la source Cloud</p>;
-}
+const PILL_BASE = "h-8 flex-1 rounded-full border px-2 text-xs transition-colors whitespace-nowrap";
+const pillClass = (active: boolean) =>
+  `${PILL_BASE} ${active ? "border-gray-300 bg-gray-100 font-semibold text-slate-700" : "border-gray-200 bg-white text-gray-400 hover:border-gray-300 hover:text-gray-500"}`;
 
-function SourceSelector({ sourceMode, standardEnabled, onCloud, onStandard, onImport }: { sourceMode: SourceMode; standardEnabled: boolean; onCloud: () => void; onStandard: () => void; onImport: (file: File) => void }) {
+type SidebarPanelProps = {
+  cloudEnabled: boolean;
+  standardEnabled: boolean;
+  csvActive: boolean;
+  onToggleCloud: () => void;
+  onToggleStandard: () => void;
+  onImport: (file: File) => void;
+  keyFilter: KeyFilter;
+  setKeyFilter: (value: KeyFilter) => void;
+  filtersDisabled: boolean;
+  sameClimate: boolean;
+  sameYear: boolean;
+  importantChanges: boolean;
+  youngOnly: boolean;
+  usageLevel: UsageLevel;
+  setSameClimate: (value: boolean) => void;
+  setSameYear: (value: boolean) => void;
+  setImportantChanges: (value: boolean) => void;
+  setYoungOnly: (value: boolean) => void;
+  cycleUsage: () => void;
+};
+
+function SidebarPanel(props: SidebarPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  return <div className="mb-6 flex flex-wrap items-center gap-2"><span className="mr-1 text-sm font-semibold text-foreground">Comparer avec </span><Button type="button" variant={sourceMode === "cloud" ? "default" : "outline"} aria-pressed={sourceMode === "cloud"} onClick={onCloud}>Cloud</Button><Button type="button" variant={standardEnabled ? "default" : "outline"} aria-pressed={standardEnabled} onClick={onStandard}>Standard</Button><Button type="button" variant={sourceMode === "import" ? "default" : "outline"} onClick={() => inputRef.current?.click()}>Import CSV</Button><input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) onImport(file); event.target.value = ""; }} /></div>;
-}
-
-function RefinementPanel({ disabled, sameClimate, sameYear, importantChanges, usageLevel, setSameClimate, setSameYear, setImportantChanges, cycleUsage }: { disabled: boolean; sameClimate: boolean; sameYear: boolean; importantChanges: boolean; usageLevel: UsageLevel; setSameClimate: (value: boolean) => void; setSameYear: (value: boolean) => void; setImportantChanges: (value: boolean) => void; cycleUsage: () => void }) {
-  const usageLabel = usageLevel === "all" ? "Tous" : usageLevel === "low" ? "Faible" : "Intensif";
-  return <Frame title="Filtres d'affinage" className="sticky top-4 h-full"><div className="space-y-4 pt-2"><label className="flex items-center justify-between gap-3 text-sm font-medium text-foreground"><span>Même zone climatique</span><Switch checked={sameClimate} disabled={disabled} onCheckedChange={setSameClimate} /></label><label className="flex items-center justify-between gap-3 text-sm font-medium text-foreground"><span>Même année de fabrication</span><Switch checked={sameYear} disabled={disabled} onCheckedChange={setSameYear} /></label><label className="flex items-center justify-between gap-3 text-sm font-medium text-foreground"><span>Modifications importantes</span><Switch checked={importantChanges} disabled={disabled} onCheckedChange={setImportantChanges} /></label><Button type="button" variant="outline" className="w-full" disabled={disabled} onClick={cycleUsage} aria-label={`Niveau d'usage : ${usageLabel}`}>Niveau d'usage : {usageLabel}</Button></div></Frame>;
+  const usageLabel = props.usageLevel === "all" ? "Tous" : props.usageLevel === "low" ? "Faible" : "Intensif";
+  const switchRow = (label: string, checked: boolean, onChange: (value: boolean) => void) => (
+    <label className="flex items-center justify-between gap-3 text-xs font-medium text-slate-700">
+      <span>{label}</span>
+      <Switch checked={checked} disabled={props.filtersDisabled} onCheckedChange={onChange} />
+    </label>
+  );
+  return (
+    <Frame title="Filtres d'affinage" className="sticky top-4">
+      <div className="space-y-4 pt-2">
+        <div>
+          <div className="mb-1.5 text-[0.68rem] font-semibold uppercase tracking-wide text-gray-500">Comparer avec</div>
+          <div className="flex items-center gap-1.5">
+            <button type="button" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={pillClass(props.cloudEnabled)}>Cloud</button>
+            <button type="button" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={pillClass(props.standardEnabled)}>Standard</button>
+            <button type="button" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={pillClass(props.csvActive)}>CSV</button>
+            <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
+          </div>
+        </div>
+        <div>
+          <div className="mb-1.5 text-[0.68rem] font-semibold uppercase tracking-wide text-gray-500">Vue clavier</div>
+          <div className="flex items-center gap-1.5">
+            {KEY_FILTERS.map((filter) => (
+              <button key={filter.id} type="button" aria-pressed={props.keyFilter === filter.id} onClick={() => props.setKeyFilter(filter.id)} className={pillClass(props.keyFilter === filter.id)}>{filter.label}</button>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-2.5">
+          {switchRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
+          {switchRow("Même année de fabrication", props.sameYear, props.setSameYear)}
+          {switchRow("Modifications importantes", props.importantChanges, props.setImportantChanges)}
+          {switchRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
+        </div>
+        <button
+          type="button"
+          disabled={props.filtersDisabled}
+          onClick={props.cycleUsage}
+          aria-label={`Niveau d'usage : ${usageLabel}`}
+          className={`${PILL_BASE} w-full border-gray-200 bg-white ${props.filtersDisabled ? "text-gray-300" : "text-slate-700 hover:border-gray-300"}`}
+        >
+          Niveau d'usage : <span className="font-semibold">{usageLabel}</span>
+        </button>
+      </div>
+    </Frame>
+  );
 }
 
 function Comparer() {
