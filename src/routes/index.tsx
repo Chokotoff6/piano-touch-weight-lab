@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 
 import {
   Accordion,
@@ -8,6 +8,12 @@ import {
 } from "@/components/ui/accordion";
 
 export const Route = createFileRoute("/")({
+  // Redirection temporaire (302) vers /comparer.
+  // Les utilisateurs qui arrivent sur "/" atterrissent directement sur la
+  // page Comparer. Pas de boucle : /comparer est une route distincte.
+  beforeLoad: () => {
+    throw redirect({ to: "/comparer" });
+  },
   head: () => ({
     meta: [
       { title: "Accueil — Touchweight statique piano" },
