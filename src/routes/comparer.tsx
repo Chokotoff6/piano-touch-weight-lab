@@ -70,6 +70,10 @@ type ChartPoint = {
   fricCurB: number | undefined;
   sameFric: number | undefined;
   factoryFric: number | undefined;
+  waMid: number | undefined;
+  wdMid: number | undefined;
+  balMid: number | undefined;
+  fricMid: number | undefined;
 };
 
 type SeriesKey = keyof Omit<ChartPoint, "key" | "isBlack">;
