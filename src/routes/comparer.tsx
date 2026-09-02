@@ -70,6 +70,10 @@ type ChartPoint = {
   fricCurB: number | undefined;
   sameFric: number | undefined;
   factoryFric: number | undefined;
+  waMid: number | undefined;
+  wdMid: number | undefined;
+  balMid: number | undefined;
+  fricMid: number | undefined;
 };
 
 type SeriesKey = keyof Omit<ChartPoint, "key" | "isBlack">;
@@ -86,7 +90,7 @@ function buildChartData(
   cloud: RefProfile | null,
   standard: RefProfile | null,
 ): ChartPoint[] {
-  return SAMPLE_NOTES.map((noteIndex, sampleIndex) => {
+  const points: ChartPoint[] = SAMPLE_NOTES.map((noteIndex, sampleIndex) => {
     const black = isBlackKey(noteIndex);
     const waCur = valueAt(mine?.wa, noteIndex, sampleIndex);
     const wdCur = valueAt(mine?.wd, noteIndex, sampleIndex);
@@ -115,8 +119,26 @@ function buildChartData(
       fricCurB: black ? fricCur : undefined,
       sameFric: valueAt(cloud?.friction, noteIndex, sampleIndex),
       factoryFric: valueAt(standard?.friction, noteIndex, sampleIndex),
+      waMid: undefined,
+      wdMid: undefined,
+      balMid: undefined,
+      fricMid: undefined,
     };
   });
+  // Ligne fantôme servant uniquement à ancrer l'étiquette "Mon piano" à mi-hauteur
+  // entre la courbe des blanches et celle des noires en vue éclatée.
+  const midOf = (whiteKey: SeriesKey, blackKey: SeriesKey) => {
+    const firstOf = (key: SeriesKey) => points.find((point) => typeof point[key] === "number")?.[key] as number | undefined;
+    const white = firstOf(whiteKey);
+    const black = firstOf(blackKey);
+    if (typeof white !== "number" || typeof black !== "number") return undefined;
+    return n1((white + black) / 2);
+  };
+  const waMid = midOf("waCurW", "waCurB");
+  const wdMid = midOf("wdCurW", "wdCurB");
+  const balMid = midOf("balCurW", "balCurB");
+  const fricMid = midOf("fricCurW", "fricCurB");
+  return points.map((point) => ({ ...point, waMid, wdMid, balMid, fricMid }));
 }
 
 function seriesAverage(data: ChartPoint[], key: SeriesKey): string {
@@ -209,10 +231,12 @@ type EndLabelOptions = {
   shortName: string;
   avg: string;
   color: string;
+  labelColor?: string;
   firstIndex: number;
   lastIndex: number;
   dyLeft: number;
   dyRight: number;
+  showAverage?: boolean;
 };
 
 const LABEL_MIN_Y = 14;
@@ -224,12 +248,13 @@ function makeEndLabel(opts: EndLabelOptions) {
     const { x, y, index = -1, value } = props;
     const hasPoint = typeof x === "number" && Number.isFinite(x) && typeof y === "number" && Number.isFinite(y);
     const hasValue = typeof value === "number" && Number.isFinite(value);
-    if (!hasPoint || !hasValue || opts.avg === "—") return <g />;
+    const color = opts.labelColor ?? opts.color;
+    if (!hasPoint || !hasValue) return <g />;
     if (index === opts.firstIndex) {
-      return <text x={x - 8} y={y} dy={clampLabelY(y, opts.dyLeft)} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>{opts.shortName}</text>;
+      return <text x={x - 8} y={y} dy={clampLabelY(y, opts.dyLeft)} textAnchor="end" fontSize={11} fontWeight={600} fill={color}>{opts.shortName}</text>;
     }
-    if (index === opts.lastIndex) {
-      return <text x={x + 10} y={y} dy={clampLabelY(y, opts.dyRight)} textAnchor="start" fontSize={11} fontWeight={600} fill={opts.color}>{`Moy: ${opts.avg}g`}</text>;
+    if (index === opts.lastIndex && opts.showAverage !== false && opts.avg !== "—") {
+      return <text x={x + 10} y={y} dy={clampLabelY(y, opts.dyRight)} textAnchor="start" fontSize={11} fontWeight={600} fill={color}>{`Moy: ${opts.avg}g`}</text>;
     }
     return <g />;
   };
@@ -292,12 +317,13 @@ function offsetsFor(lines: LineDef[], point: ChartPoint | undefined) {
 }
 
 function currentLinesFor(familyId: string, keyFilter: KeyFilter): LineDef[] {
-  const metrics: Record<string, [SeriesKey, SeriesKey, SeriesKey]> = { wa: ["waCur", "waCurW", "waCurB"], wd: ["wdCur", "wdCurW", "wdCurB"], bal: ["balCur", "balCurW", "balCurB"], fric: ["fricCur", "fricCurW", "fricCurB"] };
+  const metrics: Record<string, [SeriesKey, SeriesKey, SeriesKey, SeriesKey]> = { wa: ["waCur", "waCurW", "waCurB", "waMid"], wd: ["wdCur", "wdCurW", "wdCurB", "wdMid"], bal: ["balCur", "balCurW", "balCurB", "balMid"], fric: ["fricCur", "fricCurW", "fricCurB", "fricMid"] };
   const metric = metrics[familyId];
   if (!metric) return [];
   if (keyFilter === "split") return [
     { dataKey: metric[1], name: "Mon piano — blanches", shortName: "Blanches", color: "#000000", real: true },
     { dataKey: metric[2], name: "Mon piano — noires", shortName: "Noires", color: "#6b7280", real: true },
+    { dataKey: metric[3], name: "Mon piano", shortName: "Mon piano", color: "#000000" },
   ];
   return [{ dataKey: metric[0], name: "Mon piano", shortName: "Mon piano", color: "#000000", real: true }];
 }
