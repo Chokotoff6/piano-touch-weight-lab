@@ -220,6 +220,10 @@ type EndLabelOptions = {
   dyRight: number;
 };
 
+const LABEL_MIN_Y = 14;
+const LABEL_MAX_Y = 248;
+const clampLabelY = (y: number, dy: number) => Math.min(Math.max(y + dy, LABEL_MIN_Y), LABEL_MAX_Y) - y;
+
 function makeEndLabel(opts: EndLabelOptions) {
   const EndLabel = (props: { x?: number; y?: number; index?: number; value?: number }) => {
     const { x, y, index = -1, value } = props;
@@ -227,15 +231,16 @@ function makeEndLabel(opts: EndLabelOptions) {
     const hasValue = typeof value === "number" && Number.isFinite(value);
     if (!hasPoint || !hasValue || opts.avg === "—") return <g />;
     if (index === opts.firstIndex) {
-      return <text x={x - 44} y={y} dy={opts.dyLeft} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>{opts.shortName}</text>;
+      return <text x={x - 8} y={y} dy={clampLabelY(y, opts.dyLeft)} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>{opts.shortName}</text>;
     }
     if (index === opts.lastIndex) {
-      return <text x={x + 10} y={y} dy={opts.dyRight} textAnchor="start" fontSize={11} fontWeight={600} fill={opts.color}>{`Moy: ${opts.avg}g`}</text>;
+      return <text x={x + 10} y={y} dy={clampLabelY(y, opts.dyRight)} textAnchor="start" fontSize={11} fontWeight={600} fill={opts.color}>{`Moy: ${opts.avg}g`}</text>;
     }
     return <g />;
   };
   return EndLabel;
 }
+
 
 function CustomTickTop(props: { x?: number; y?: number; dy?: number; payload?: { value: number } }) {
   const { x = 0, y = 0, dy = 0, payload } = props;
