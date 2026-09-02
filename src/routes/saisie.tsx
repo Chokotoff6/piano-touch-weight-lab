@@ -727,13 +727,14 @@ function Index() {
 
   // --- Saisie des poids ---------------------------------------------------------
 
-  const cleanWeight = (value: string) => value.replace(/[^0-9]/g, "");
+  /** Conserve les dixièmes présents dans les CSV et dans la saisie clavier. */
+  const cleanWeight = (value: string) => value.replace(",", ".").replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
 
   const parseWeight = (value: string): number | null => {
     const cleaned = cleanWeight(value);
-    if (cleaned === "") return null;
-    const num = parseInt(cleaned, 10);
-    if (Number.isNaN(num) || !Number.isInteger(num) || num < 5 || num > 99) return null;
+    if (cleaned === "" || cleaned === ".") return null;
+    const num = Number(cleaned);
+    if (!Number.isFinite(num) || num < 5 || num > 99) return null;
     return num;
   };
 
