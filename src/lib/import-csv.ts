@@ -1,5 +1,6 @@
 export type ImportedDiagnostic = {
   meta: Record<string, string>;
+  /** Toujours 88 emplacements, indexés directement par touche 1 à 88. */
   rows: { wa: string; wd: string }[];
 };
 
@@ -54,8 +55,8 @@ export function parseDiagnosticCsv(content: string): ImportedDiagnostic {
   let headerIndex = -1;
   let headerType: "export" | "technical" | null = null;
 
-  lines.forEach((line, index) => {
-    const values = parseLine(line);
+  for (let index = 0; index < lines.length; index += 1) {
+    const values = parseLine(lines[index] ?? "");
     if (!headerType && values.length >= 3) {
       if (looksLikeExportHeader(values)) {
         headerIndex = index;
@@ -68,28 +69,22 @@ export function parseDiagnosticCsv(content: string): ImportedDiagnostic {
     if (headerIndex === -1 && values[0]?.trim() && values.length >= 2) {
       meta[values[0]] = values.slice(1).join(";");
     }
-  });
-
-  if (headerIndex === -1 || headerType === null) {
-    throw new Error("INVALID_CSV");
   }
 
-  const headerValues = parseLine(lines[headerIndex]!);
+  if (headerIndex === -1 || headerType === null) throw new Error("INVALID_CSV");
+
+  const headerValues = parseLine(lines[headerIndex] ?? "");
   const indexCol = headerType === "export" ? headerValues.indexOf("Touche") : headerValues.indexOf("note_index");
   const waCol = headerType === "export" ? headerValues.indexOf("Wa (g)") : headerValues.indexOf("wa");
   const wdCol = headerType === "export" ? headerValues.indexOf("Wd (g)") : headerValues.indexOf("wd");
+  if (indexCol === -1 || waCol === -1 || wdCol === -1) throw new Error("INVALID_CSV");
 
-  if (indexCol === -1 || waCol === -1 || wdCol === -1) {
-    throw new Error("INVALID_CSV");
-  }
-
+  // Pas de filtrage par couleur de touche : les 88 lignes sont toutes importées.
   const rows = Array.from({ length: 88 }, () => ({ wa: "", wd: "" }));
-  for (const line of lines.slice(headerIndex + 1)) {
-    const values = parseLine(line);
+  for (const rawLine of lines.slice(headerIndex + 1)) {
+    const values = parseLine(rawLine);
     if (values.length <= Math.max(indexCol, waCol, wdCol)) continue;
-    const rawKey = values[indexCol]?.trim();
-    if (!rawKey) continue;
-    const key = Number(rawKey);
+    const key = Number(values[indexCol]?.trim());
     if (!Number.isInteger(key) || key < 1 || key > 88) continue;
     rows[key - 1] = { wa: values[waCol] ?? "", wd: values[wdCol] ?? "" };
   }
