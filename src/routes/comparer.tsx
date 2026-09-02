@@ -474,10 +474,10 @@ function Comparer() {
 
   const cloudProfile = useMemo(() => {
     if (!mine || sourceMode !== "cloud") return null;
-    const filters = { sameClimate, sameYear, importantChanges, usageLevel };
+    const filters = { sameClimate, sameYear, importantChanges, youngOnly, usageLevel };
     const matching = profiles.filter((profile) => profile.serialNumber !== MY_PIANO_SERIAL && !TECHNICAL_SERIAL.test(profile.serialNumber) && matchesCloudFilters(profile, mine, filters));
     return averageProfiles(matching);
-  }, [mine, profiles, sourceMode, sameClimate, sameYear, importantChanges, usageLevel]);
+  }, [mine, profiles, sourceMode, sameClimate, sameYear, importantChanges, youngOnly, usageLevel]);
 
   const activeCurrent = sourceMode === "import" && imported ? imported : mine;
   const chartData = useMemo(() => buildChartData(activeCurrent, cloudProfile, standardEnabled ? standard : null), [activeCurrent, cloudProfile, standard, standardEnabled]);
