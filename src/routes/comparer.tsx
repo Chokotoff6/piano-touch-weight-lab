@@ -376,7 +376,7 @@ function ComparisonChart({ chartData, keyFilter }: { chartData: ChartPoint[]; ke
     const dyRight = endpointOffsets("right");
     const isHovered = hoveredChart === family.id;
     return (
-      <Frame title={family.title} className="h-[300px] !pt-2">
+      <Frame id={family.id === "bal" ? "balance-frame" : undefined} title={family.title} className="h-[300px] !pt-2">
         <div className="h-full w-full" onMouseEnter={() => setHoveredChart(family.id)} onMouseLeave={() => setHoveredChart(null)}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} onMouseMove={(state) => { const note = state?.activeLabel; if (typeof note === "number") setHoveredNoteIndex(note); }} onMouseLeave={() => { setHoveredChart(null); setHoveredNoteIndex(null); }} margin={{ top: 5, right: 140, bottom: 15, left: 140 }}>
@@ -538,6 +538,33 @@ function Comparer() {
     observer.observe(node);
     return () => observer.disconnect();
   }, [status]);
+
+  useEffect(() => {
+    if (status !== "ok" || averagesHeight <= 0) return;
+    const averages = averagesRef.current;
+    const balance = document.getElementById("balance-frame");
+    if (!averages || !balance) return;
+
+    const getScrollLimit = () => {
+      const balanceBottom = balance.getBoundingClientRect().bottom + window.scrollY;
+      const averagesBottom = averages.getBoundingClientRect().bottom;
+      return Math.max(0, balanceBottom - averagesBottom);
+    };
+    const clampScroll = () => {
+      const limit = getScrollLimit();
+      if (window.scrollY > limit) window.scrollTo({ top: limit, behavior: "auto" });
+    };
+    const stopPastBalance = (event: WheelEvent) => {
+      if (event.deltaY > 0 && window.scrollY >= getScrollLimit() - 1) event.preventDefault();
+    };
+    window.addEventListener("scroll", clampScroll, { passive: true });
+    window.addEventListener("wheel", stopPastBalance, { passive: false });
+    clampScroll();
+    return () => {
+      window.removeEventListener("scroll", clampScroll);
+      window.removeEventListener("wheel", stopPastBalance);
+    };
+  }, [averagesHeight, status]);
 
   useEffect(() => {
     let cancelled = false;
