@@ -418,30 +418,34 @@ function SidebarPanel(props: SidebarPanelProps) {
     </label>
   );
   return (
-    <Frame title="Filtres" className="sticky top-[100px] z-40">
-      <div className="space-y-4 pt-2">
-        <div>
-          <div className="mb-1.5 !text-base !font-bold !text-black">Comparer avec</div>
-          <div className="flex items-center gap-1.5">
-            <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={pillClass(props.cloudEnabled)}>Cloud</Button>
-            <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={pillClass(props.standardEnabled)}>Standard</Button>
-            <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={pillClass(props.csvActive)}>CSV</Button>
-            <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
+    <Frame title="Filtres" className="sticky top-0 z-40">
+      <div className="flex min-h-[calc(100vh-2rem)] flex-col pt-2">
+        <div className="space-y-4">
+          <div>
+            <div className="mb-1.5 !text-base !font-bold !text-black">Comparer avec</div>
+            <div className="flex items-center gap-1.5">
+              <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={pillClass(props.cloudEnabled)}>Cloud</Button>
+              <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={pillClass(props.standardEnabled)}>Standard</Button>
+              <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={pillClass(props.csvActive)}>CSV</Button>
+              <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
+            </div>
+          </div>
+          <div>
+            <div className="mb-1.5 !text-base !font-bold !text-black">Vue clavier</div>
+            <div className="flex items-center gap-1.5">
+              {KEY_FILTERS.map((filter) => <Button key={filter.id} type="button" variant="outline" aria-pressed={props.keyFilter === filter.id} onClick={() => props.setKeyFilter(filter.id)} className={pillClass(props.keyFilter === filter.id)}>{filter.label}</Button>)}
+            </div>
+          </div>
+          <div className="space-y-2.5">
+            {switchRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
+            {switchRow("Même année de fabrication", props.sameYear, props.setSameYear)}
+            {switchRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
           </div>
         </div>
-        <div>
-          <div className="mb-1.5 !text-base !font-bold !text-black">Vue clavier</div>
-          <div className="flex items-center gap-1.5">
-            {KEY_FILTERS.map((filter) => <Button key={filter.id} type="button" variant="outline" aria-pressed={props.keyFilter === filter.id} onClick={() => props.setKeyFilter(filter.id)} className={pillClass(props.keyFilter === filter.id)}>{filter.label}</Button>)}
-          </div>
+        <div className="mt-auto space-y-2.5 border-t border-gray-200 pt-4">
+          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage : ${usageLabel}`} className={`${PILL_BASE} w-full border-gray-200 bg-white text-slate-700 hover:border-gray-300`}>Niveau d'usage : <span className="font-semibold">{usageLabel}</span></Button>
+          <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} w-full border-gray-200 bg-white text-left ${props.importantChanges ? "font-semibold text-slate-700" : "text-slate-500"}`}>Modifications importantes : <span className="font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></Button>
         </div>
-        <div className="space-y-2.5">
-          {switchRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
-          {switchRow("Même année de fabrication", props.sameYear, props.setSameYear)}
-          <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} w-full border-gray-200 bg-white text-left ${props.importantChanges ? "font-semibold text-slate-700" : "text-slate-500"}`}>Modifications importantes</Button>
-          {switchRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
-        </div>
-        <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage : ${usageLabel}`} className={`${PILL_BASE} w-full border-gray-200 bg-white text-slate-700 hover:border-gray-300`}>Niveau d'usage : <span className="font-semibold">{usageLabel}</span></Button>
       </div>
     </Frame>
   );
