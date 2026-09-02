@@ -144,8 +144,8 @@ function averageProfiles(profiles: ProfileRecord[]): RefProfile | null {
     return Array.from({ length }, (_, index) => {
       const values = profiles
         .map((profile) => profile[key][index])
-        .filter((value) => typeof value === "number" && Number.isFinite(value));
-      return values.length > 0 ? n1(values.reduce((sum, value) => sum + value, 0) / values.length) : Number.NaN;
+        .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+      return values.length > 0 ? n1(values.reduce<number>((sum, value) => sum + value, 0) / values.length) : Number.NaN;
     });
   };
   return { wa: average("wa"), wd: average("wd"), balance: average("balance"), friction: average("friction") };
