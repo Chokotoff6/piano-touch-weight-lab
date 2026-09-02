@@ -276,8 +276,10 @@ function CustomTickTop(props: { x?: number; y?: number; dy?: number; payload?: {
 type TooltipEntry = { name?: string; value?: number; color?: string };
 function tooltipColorFor(name: string) {
   const lower = name.toLowerCase();
+  if (lower.includes("noires")) return "#000000";
+  if (lower.includes("blanches")) return "#6b7280";
   if (lower.includes("mon piano")) return "#000000";
-  if (lower.startsWith("même modèle") || lower.startsWith("meme modele")) return "#f97316";
+  if (lower.startsWith("cloud")) return "#f97316";
   return "#10b981";
 }
 
@@ -285,6 +287,7 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
   const { active, payload, label } = props;
   if (!active || !payload || payload.length === 0) return null;
   const valid = [...payload]
+    .filter((entry) => entry.name !== "Mon piano centre")
     .filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value))
     .sort((a, b) => Number(b.value) - Number(a.value));
   return (
