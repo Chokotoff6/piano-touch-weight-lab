@@ -1778,7 +1778,7 @@ Moyennes{" "}
             style={{ transform: "translateY(calc(-50% + 30px))" }}
           >
             <div className="flex items-center !rounded-md !border !border-green-600 !bg-green-100 !px-2.5 !py-1 !shadow-sm">
-              <span className="text-[10px] font-semibold !text-gray-950">Clavier valide</span>
+              <span className="text-[10px] font-semibold !text-gray-950">Saisie valide</span>
             </div>
           </div>
         )}
