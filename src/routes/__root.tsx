@@ -401,10 +401,7 @@ function RootComponent() {
                </Button>
              </div>
 
-          </div>
-
-
-        </div>
+           </div>
       </nav>
 
 
