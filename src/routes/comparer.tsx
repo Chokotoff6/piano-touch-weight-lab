@@ -231,10 +231,12 @@ type EndLabelOptions = {
   shortName: string;
   avg: string;
   color: string;
+  labelColor?: string;
   firstIndex: number;
   lastIndex: number;
   dyLeft: number;
   dyRight: number;
+  showAverage?: boolean;
 };
 
 const LABEL_MIN_Y = 14;
@@ -246,12 +248,13 @@ function makeEndLabel(opts: EndLabelOptions) {
     const { x, y, index = -1, value } = props;
     const hasPoint = typeof x === "number" && Number.isFinite(x) && typeof y === "number" && Number.isFinite(y);
     const hasValue = typeof value === "number" && Number.isFinite(value);
-    if (!hasPoint || !hasValue || opts.avg === "—") return <g />;
+    const color = opts.labelColor ?? opts.color;
+    if (!hasPoint || !hasValue) return <g />;
     if (index === opts.firstIndex) {
-      return <text x={x - 8} y={y} dy={clampLabelY(y, opts.dyLeft)} textAnchor="end" fontSize={11} fontWeight={600} fill={opts.color}>{opts.shortName}</text>;
+      return <text x={x - 8} y={y} dy={clampLabelY(y, opts.dyLeft)} textAnchor="end" fontSize={11} fontWeight={600} fill={color}>{opts.shortName}</text>;
     }
-    if (index === opts.lastIndex) {
-      return <text x={x + 10} y={y} dy={clampLabelY(y, opts.dyRight)} textAnchor="start" fontSize={11} fontWeight={600} fill={opts.color}>{`Moy: ${opts.avg}g`}</text>;
+    if (index === opts.lastIndex && opts.showAverage !== false && opts.avg !== "—") {
+      return <text x={x + 10} y={y} dy={clampLabelY(y, opts.dyRight)} textAnchor="start" fontSize={11} fontWeight={600} fill={color}>{`Moy: ${opts.avg}g`}</text>;
     }
     return <g />;
   };
