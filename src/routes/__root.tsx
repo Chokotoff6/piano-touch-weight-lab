@@ -147,6 +147,7 @@ function RootComponent() {
     initLang();
   }, []);
   const isSaisie = pathname === "/saisie";
+  const isComparer = pathname === "/comparer";
 
   const linkClass = "rounded-md px-3 py-2 text-base font-semibold text-muted-foreground transition-colors hover:bg-background hover:text-foreground sm:px-4 sm:text-lg";
   const activeLinkClass = "rounded-md bg-background px-3 py-2 text-base font-semibold text-foreground shadow-sm sm:px-4 sm:text-lg";
@@ -247,6 +248,7 @@ function RootComponent() {
                 </div>
               )}
             </div>
+            )}
 
             {topbar.measuresReady ? (
               <DropdownMenu>
@@ -307,6 +309,7 @@ function RootComponent() {
               </div>
             )}
 
+            {!isComparer && (
             <div className="relative flex items-center">
               {topbar.serialFilled ? (
                 <DropdownMenu>
