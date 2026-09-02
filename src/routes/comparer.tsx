@@ -90,7 +90,7 @@ function buildChartData(
   cloud: RefProfile | null,
   standard: RefProfile | null,
 ): ChartPoint[] {
-  return SAMPLE_NOTES.map((noteIndex, sampleIndex) => {
+  const points: ChartPoint[] = SAMPLE_NOTES.map((noteIndex, sampleIndex) => {
     const black = isBlackKey(noteIndex);
     const waCur = valueAt(mine?.wa, noteIndex, sampleIndex);
     const wdCur = valueAt(mine?.wd, noteIndex, sampleIndex);
@@ -119,8 +119,26 @@ function buildChartData(
       fricCurB: black ? fricCur : undefined,
       sameFric: valueAt(cloud?.friction, noteIndex, sampleIndex),
       factoryFric: valueAt(standard?.friction, noteIndex, sampleIndex),
+      waMid: undefined,
+      wdMid: undefined,
+      balMid: undefined,
+      fricMid: undefined,
     };
   });
+  // Ligne fantôme servant uniquement à ancrer l'étiquette "Mon piano" à mi-hauteur
+  // entre la courbe des blanches et celle des noires en vue éclatée.
+  const midOf = (whiteKey: SeriesKey, blackKey: SeriesKey) => {
+    const firstOf = (key: SeriesKey) => points.find((point) => typeof point[key] === "number")?.[key] as number | undefined;
+    const white = firstOf(whiteKey);
+    const black = firstOf(blackKey);
+    if (typeof white !== "number" || typeof black !== "number") return undefined;
+    return n1((white + black) / 2);
+  };
+  const waMid = midOf("waCurW", "waCurB");
+  const wdMid = midOf("wdCurW", "wdCurB");
+  const balMid = midOf("balCurW", "balCurB");
+  const fricMid = midOf("fricCurW", "fricCurB");
+  return points.map((point) => ({ ...point, waMid, wdMid, balMid, fricMid }));
 }
 
 function seriesAverage(data: ChartPoint[], key: SeriesKey): string {
