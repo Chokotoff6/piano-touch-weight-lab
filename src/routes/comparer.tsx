@@ -465,25 +465,10 @@ function Comparer() {
   const [youngOnly, setYoungOnly] = useState(false);
   const [usageLevel, setUsageLevel] = useState<UsageLevel>("all");
   const [mine, setMine] = useState<ProfileRecord | null>(null);
-  const [standard, setStandard] = useState<RefProfile | null>(null);
-  const [cloudProfile, setCloudProfile] = useState<RefProfile | null>(null);
-  const [cloudSampleCount, setCloudSampleCount] = useState(0);
-  const [imported, setImported] = useState<RefProfile | null>(null);
-  const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
-
-  useEffect(() => {
-    let cancelled = false;
-    async function loadBaseProfiles() {
-      const [mineResult, standardResult] = await Promise.all([
-        externalSupabase.from("piano_profiles").select(PROFILE_FIELDS).eq("serial_number", MY_PIANO_SERIAL).single(),
-        externalSupabase.from("piano_profiles").select(PROFILE_FIELDS).eq("serial_number", STANDARD_SERIAL).maybeSingle(),
-      ]);
-      if (cancelled) return;
-      if (mineResult.error || !mineResult.data) { setStatus("error"); return; }
-      const current = profileFromRow(mineResult.data as ExternalPianoProfileRow);
-      const factory = standardResult.data ? profileFromRow(standardResult.data as ExternalPianoProfileRow) : null;
-      setMine(current);
-      setStandard(factory);
+  const [standard, setStandard] = useState<RefProfile>(FACTORY_STANDARD);
+...
+       const current = profileFromRow(mineResult.data as ExternalPianoProfileRow);
+       setMine(current);
       setStatus("ok");
     }
     void loadBaseProfiles();
