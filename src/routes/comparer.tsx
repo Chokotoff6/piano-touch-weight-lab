@@ -177,12 +177,14 @@ function matchesCloudFilters(
   filters: { sameClimate: boolean; sameYear: boolean; importantChanges: boolean; usageLevel: UsageLevel },
 ) {
   if (profile.model && mine.model && normalizeValue(profile.model) !== normalizeValue(mine.model)) return false;
-  if (filters.sameClimate && normalizeValue(profile.climate) !== normalizeValue(mine.climate)) return false;
-  if (filters.sameYear && profile.year !== mine.year) return false;
+  if (filters.sameClimate && mine.climate && normalizeValue(profile.climate) !== normalizeValue(mine.climate)) return false;
+  if (filters.sameYear && mine.year !== null && profile.year !== mine.year) return false;
   if (filters.importantChanges && normalizeValue(profile.maintenance) !== "modifications importantes") return false;
   if (filters.usageLevel !== "all") {
+    // La colonne usage_level n'existe pas encore dans le schéma externe.
+    // Ne pas exclure les profils tant que ce critère ne peut pas être évalué.
     const expected = filters.usageLevel === "low" ? "faible" : "intensif";
-    if (normalizeValue(profile.usageLevel) !== expected) return false;
+    if (profile.usageLevel && normalizeValue(profile.usageLevel) !== expected) return false;
   }
   return true;
 }
