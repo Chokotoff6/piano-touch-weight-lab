@@ -376,7 +376,7 @@ function ComparisonChart({ chartData, keyFilter }: { chartData: ChartPoint[]; ke
     const dyRight = endpointOffsets("right");
     const isHovered = hoveredChart === family.id;
     return (
-      <Frame id={family.id === "bal" ? "balance-frame" : undefined} title={family.title} className="h-[300px] !pt-2">
+      <Frame id="balance-frame" title={family.title} className={`h-[300px] !pt-2 ${family.id === "bal" ? "" : ""}`}>
         <div className="h-full w-full" onMouseEnter={() => setHoveredChart(family.id)} onMouseLeave={() => setHoveredChart(null)}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} onMouseMove={(state) => { const note = state?.activeLabel; if (typeof note === "number") setHoveredNoteIndex(note); }} onMouseLeave={() => { setHoveredChart(null); setHoveredNoteIndex(null); }} margin={{ top: 5, right: 140, bottom: 15, left: 140 }}>
@@ -636,11 +636,11 @@ function Comparer() {
       const wd = parsed.rows.map((row) => toNumber(row.wd));
       const friction = wa.map((value, index) => {
         const down = wd[index];
-        return Number.isFinite(value) && Number.isFinite(down) ? n1(Math.abs((value - down) / 2)) : Number.NaN;
+        return typeof down === "number" && Number.isFinite(value) && Number.isFinite(down) ? n1(Math.abs((value - down) / 2)) : Number.NaN;
       });
       const balance = wa.map((value, index) => {
         const down = wd[index];
-        return Number.isFinite(value) && Number.isFinite(down) ? n1((value + down) / 2) : Number.NaN;
+        return typeof down === "number" && Number.isFinite(value) && Number.isFinite(down) ? n1((value + down) / 2) : Number.NaN;
       });
       setImported({ wa, wd, friction, balance });
       setImportedMeta(parsed.meta);
