@@ -376,7 +376,7 @@ function ComparisonChart({ chartData, keyFilter }: { chartData: ChartPoint[]; ke
     const dyRight = endpointOffsets("right");
     const isHovered = hoveredChart === family.id;
     return (
-      <Frame title={family.title} className="h-[300px] !pt-2">
+      <Frame dataFrame={family.id} title={family.title} className="h-[300px] !pt-2">
         <div className="h-full w-full" onMouseEnter={() => setHoveredChart(family.id)} onMouseLeave={() => setHoveredChart(null)}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} onMouseMove={(state) => { const note = state?.activeLabel; if (typeof note === "number") setHoveredNoteIndex(note); }} onMouseLeave={() => { setHoveredChart(null); setHoveredNoteIndex(null); }} margin={{ top: 5, right: 140, bottom: 15, left: 140 }}>
@@ -413,8 +413,8 @@ export const Route = createFileRoute("/comparer")({
 
 const FRAME_CLASS = "relative rounded-md border-2 border-foreground bg-card p-4 pt-5";
 const FRAME_TITLE_CLASS = "absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black";
-function Frame({ title, className = "", titleClassName, children }: { title: ReactNode; className?: string; titleClassName?: string; children: ReactNode }) {
-  return <section className={`${FRAME_CLASS} ${className}`}><h2 className={titleClassName ?? FRAME_TITLE_CLASS}>{title}</h2>{children}</section>;
+function Frame({ title, className = "", titleClassName, dataFrame, children }: { title: ReactNode; className?: string; titleClassName?: string; dataFrame?: string | undefined; children: ReactNode }) {
+  return <section data-frame={dataFrame} className={`${FRAME_CLASS} ${className}`}><h2 className={titleClassName ?? FRAME_TITLE_CLASS}>{title}</h2>{children}</section>;
 }
 
 const COLUMNS = [
@@ -480,9 +480,18 @@ function SidebarPanel(props: SidebarPanelProps) {
     </label>
   );
   return (
-    <Frame title="Filtres" className="h-fit">
+    <Frame title="Réglages" className="h-fit">
       <div className="flex flex-col gap-4 pt-2">
-          <div className="space-y-2">
+          <div>
+            <div className="mb-1.5 whitespace-nowrap !text-xs !font-bold !text-black">Comparer piano avec :</div>
+            <div className="flex items-center gap-1.5">
+              <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={pillClass(props.cloudEnabled)}>Cloud</Button>
+              <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={pillClass(props.standardEnabled)}>Standard</Button>
+              <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={pillClass(props.csvActive)}>CSV</Button>
+              <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
+            </div>
+          </div>
+          <div className="space-y-2 border-t border-gray-200 pt-3">
             <Button type="button" variant="outline" onClick={props.cycleKeyFilter} aria-label={`Vue clavier : ${props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Vue clavier : <span className="font-semibold">{props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}</span></span></Button>
             <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Niveau d'usage instrument : <span className="font-semibold">{usageLabel}</span> ↻</span></Button>
             <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left ${props.importantChanges ? "font-semibold text-slate-700" : "text-slate-500"}`}><CycleIcon /><span>Modifications importantes : <span className="font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></span></Button>
@@ -491,15 +500,6 @@ function SidebarPanel(props: SidebarPanelProps) {
             {switchRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
             {switchRow("Même année de fabrication", props.sameYear, props.setSameYear)}
             {switchRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
-          </div>
-          <div className="border-t border-gray-200 pt-3">
-            <div className="mb-1.5 !text-base !font-bold !text-black">Comparer avec même(s) modèle(s)</div>
-            <div className="flex items-center gap-1.5">
-              <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={pillClass(props.cloudEnabled)}>Cloud</Button>
-              <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={pillClass(props.standardEnabled)}>Standard</Button>
-              <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={pillClass(props.csvActive)}>CSV</Button>
-              <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
-            </div>
           </div>
         </div>
       </Frame>
@@ -524,6 +524,7 @@ function Comparer() {
   const [cloudProfile, setCloudProfile] = useState<RefProfile | null>(null);
   const [cloudSampleCount, setCloudSampleCount] = useState(0);
   const [imported, setImported] = useState<RefProfile | null>(null);
+  const [importedMeta, setImportedMeta] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
   const averagesRef = useRef<HTMLDivElement>(null);
   const [averagesHeight, setAveragesHeight] = useState(0);
@@ -537,6 +538,33 @@ function Comparer() {
     observer.observe(node);
     return () => observer.disconnect();
   }, [status]);
+
+  useEffect(() => {
+    if (status !== "ok" || averagesHeight <= 0) return;
+    const averages = averagesRef.current;
+    const balance = document.querySelector<HTMLElement>('[data-frame="bal"]');
+    if (!averages || !balance) return;
+
+    const getScrollLimit = () => {
+      const balanceBottom = balance.getBoundingClientRect().bottom + window.scrollY;
+      const averagesBottom = averages.getBoundingClientRect().bottom;
+      return Math.max(0, balanceBottom - averagesBottom);
+    };
+    const clampScroll = () => {
+      const limit = getScrollLimit();
+      if (window.scrollY > limit) window.scrollTo({ top: limit, behavior: "auto" });
+    };
+    const stopPastBalance = (event: WheelEvent) => {
+      if (event.deltaY > 0 && window.scrollY >= getScrollLimit() - 1) event.preventDefault();
+    };
+    window.addEventListener("scroll", clampScroll, { passive: true });
+    window.addEventListener("wheel", stopPastBalance, { passive: false });
+    clampScroll();
+    return () => {
+      window.removeEventListener("scroll", clampScroll);
+      window.removeEventListener("wheel", stopPastBalance);
+    };
+  }, [averagesHeight, status]);
 
   useEffect(() => {
     let cancelled = false;
@@ -599,11 +627,27 @@ function Comparer() {
   async function handleImport(file: File) {
     try {
       const parsed = parseDiagnosticCsv(await file.text());
-      const toNumber = (value: string) => { const normalized = value.trim().replace(",", "."); const number = Number(normalized); return normalized === "" || !Number.isFinite(number) ? Number.NaN : number; };
-      setImported({ wa: parsed.rows.map((row) => toNumber(row.wa)), wd: parsed.rows.map((row) => toNumber(row.wd)), friction: [], balance: [] });
+      const toNumber = (value: string) => {
+        const normalized = value.trim().replace(",", ".");
+        const number = Number(normalized);
+        return normalized === "" || !Number.isFinite(number) ? Number.NaN : number;
+      };
+      const wa = parsed.rows.map((row) => toNumber(row.wa));
+      const wd = parsed.rows.map((row) => toNumber(row.wd));
+      const friction = wa.map((value, index) => {
+        const down = wd[index];
+        return typeof down === "number" && Number.isFinite(value) && Number.isFinite(down) ? n1(Math.abs((value - down) / 2)) : Number.NaN;
+      });
+      const balance = wa.map((value, index) => {
+        const down = wd[index];
+        return typeof down === "number" && Number.isFinite(value) && Number.isFinite(down) ? n1((value + down) / 2) : Number.NaN;
+      });
+      setImported({ wa, wd, friction, balance });
+      setImportedMeta(parsed.meta);
       setSourceMode("import");
     } catch {
       setImported(null);
+      setImportedMeta({});
     }
   }
 
@@ -615,7 +659,13 @@ function Comparer() {
     setKeyFilter((value) => value === "all" ? "split" : "all");
   }
 
-  const summary = `${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - Mesure (${summaryValue(mine?.measureDate)})`;
+  const importedModel = importedMeta["Modèle"] ?? importedMeta["Modele"] ?? "";
+  const importedYear = importedMeta["Date de fabrication"] ?? "";
+  const importedSerial = importedMeta["Numéro de série"] ?? importedMeta["Numero de serie"] ?? "";
+  const importedDate = importedMeta["Date de mesure"] ?? importedMeta["Date et heure de saisie"] ?? "";
+  const summary = sourceMode === "import"
+    ? `${summaryValue(importedModel)} - (${summaryValue(importedYear)}) - ${summaryValue(importedSerial)} - Mesure (${summaryValue(importedDate)})`
+    : `${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - Mesure (${summaryValue(mine?.measureDate)})`;
   const cloudIsEmpty = sourceMode === "cloud" && cloudSampleCount === 0;
 
   return (
@@ -624,7 +674,7 @@ function Comparer() {
         <>
           <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-stretch gap-6">
             <div className="min-w-0">
-              <div ref={averagesRef} className="sticky top-[127px] z-40 mb-[50px] w-full border-b border-border/60 bg-background pb-2 pt-2">
+              <div ref={averagesRef} className="sticky top-[127px] z-50 mb-[50px] w-full border-b border-border/60 bg-background pb-2 pt-2">
                 <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<><span>Moyennes</span><span className="ml-2 text-sm font-semibold text-muted-foreground">({summary})</span></>} className="h-fit">
                   <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">Piano Actuel</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={current[key]} />)}</div></div>
                   <div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">Cloud</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={sourceMode === "cloud" ? witness[key] : "—"} active />)}</div>{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div>

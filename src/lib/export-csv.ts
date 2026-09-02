@@ -16,7 +16,7 @@ export function computeRow(r: ExportRow) {
     return { friction: "", balance: "" };
   }
   return {
-    friction: ((wd - wa) / 2).toFixed(1),
+    friction: Math.abs((wa - wd) / 2).toFixed(1),
     balance: ((wd + wa) / 2).toFixed(1),
   };
 }
