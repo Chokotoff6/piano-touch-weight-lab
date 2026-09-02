@@ -196,8 +196,14 @@ function makeFactoryStandard(): RefProfile {
   return {
     wa,
     wd,
-    balance: wa.map((value, index) => n1((value + wd[index]) / 2)),
-    friction: wa.map((value, index) => n1((value - wd[index]) / 2)),
+    balance: wa.map((value, index) => {
+      const returnWeight = wd[index];
+      return returnWeight === undefined ? Number.NaN : n1((value + returnWeight) / 2);
+    }),
+    friction: wa.map((value, index) => {
+      const returnWeight = wd[index];
+      return returnWeight === undefined ? Number.NaN : n1((value - returnWeight) / 2);
+    }),
   };
 }
 const FACTORY_STANDARD: RefProfile = makeFactoryStandard();
