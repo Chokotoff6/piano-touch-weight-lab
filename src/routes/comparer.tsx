@@ -424,9 +424,9 @@ function SidebarPanel(props: SidebarPanelProps) {
     </label>
   );
   return (
-    <Frame title="Filtres" className="sticky top-0 z-40">
-      <div className="flex min-h-[calc(100vh-2rem)] flex-col pt-2">
-        <div className="space-y-4">
+    <div className="sticky top-[100px] z-40 h-fit">
+      <Frame title="Filtres" className="h-fit">
+        <div className="flex flex-col gap-4 pt-2">
           <div>
             <div className="mb-1.5 !text-base !font-bold !text-black">Comparer avec</div>
             <div className="flex items-center gap-1.5">
@@ -447,13 +447,13 @@ function SidebarPanel(props: SidebarPanelProps) {
             {switchRow("Même année de fabrication", props.sameYear, props.setSameYear)}
             {switchRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
           </div>
+          <div className="space-y-2.5 border-t border-gray-200 pt-4">
+            <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage : ${usageLabel}`} className={`${PILL_BASE} w-full border-gray-200 bg-white text-slate-700 hover:border-gray-300`}>Niveau d'usage : <span className="font-semibold">{usageLabel}</span> ↻</Button>
+            <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} w-full border-gray-200 bg-white text-left ${props.importantChanges ? "font-semibold text-slate-700" : "text-slate-500"}`}>Modifications importantes : <span className="font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span> ↻</Button>
+          </div>
         </div>
-        <div className="mt-auto space-y-2.5 border-t border-gray-200 pt-4">
-          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage : ${usageLabel}`} className={`${PILL_BASE} w-full border-gray-200 bg-white text-slate-700 hover:border-gray-300`}>Niveau d'usage : <span className="font-semibold">{usageLabel}</span></Button>
-          <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} w-full border-gray-200 bg-white text-left ${props.importantChanges ? "font-semibold text-slate-700" : "text-slate-500"}`}>Modifications importantes : <span className="font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></Button>
-        </div>
-      </div>
-    </Frame>
+      </Frame>
+    </div>
   );
 }
 
