@@ -280,7 +280,7 @@ const FAMILIES: Array<{ id: string; title: string; domain: [number, number]; lin
   { id: "bal", title: "Balance statique", domain: [55, 75], lines: [{ dataKey: "sameBal", name: "Même modèle(s)", shortName: "Même modèle(s)", color: "#f97316" }, { dataKey: "factoryBal", name: "Factory", shortName: "Factory", color: "#10b981" }] },
   { id: "fric", title: "Friction mécanique", domain: [-2, 16], lines: [{ dataKey: "sameFric", name: "Même modèle(s)", shortName: "Même modèle(s)", color: "#f97316" }, { dataKey: "factoryFric", name: "Factory", shortName: "Factory", color: "#10b981" }] },
 ];
-const DY_STEPS = [0, 10, 20];
+const DY_STEPS = [-10, 4, 18, 32];
 function offsetsFor(lines: LineDef[], point: ChartPoint | undefined) {
   const map = new Map<SeriesKey, number>();
   [...lines].sort((a, b) => {
@@ -575,15 +575,17 @@ function Comparer() {
     <main className="mx-auto w-full max-w-[1400px] px-6 py-8">
       {status === "loading" ? <p className="py-16 text-center text-muted-foreground">Chargement des profils externes…</p> : status === "error" ? <div className="flex w-full items-center justify-center py-16"><p className="!text-2xl !font-bold !text-red-600 text-center">ERREUR D’ACCÈS : Impossible de lire le profil du piano mesuré.</p></div> : (
         <>
-          <div className="sticky top-[77px] z-40 mb-4 w-full bg-white/95 pb-1 pt-2 shadow-sm backdrop-blur-sm">
-            <Frame title={<><span>Moyennes</span><span className="ml-2 text-sm font-semibold text-muted-foreground">({summary})</span></>} className="h-fit">
-              <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">Piano Actuel</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={current[key]} />)}</div></div>
-              <div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">Même modèle(s)</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={sourceMode === "cloud" ? witness[key] : "—"} active />)}</div>{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div>
-            </Frame>
-          </div>
           <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-stretch gap-6">
-            <div className="min-w-0"><ComparisonChart chartData={chartData} keyFilter={keyFilter} /></div>
-            <aside className="min-w-0"><div className="sticky top-[77px] z-40 mt-[200px] h-fit"><SidebarPanel cloudEnabled={sourceMode === "cloud"} standardEnabled={standardEnabled} csvActive={sourceMode === "import"} onToggleCloud={() => setSourceMode((value) => value === "cloud" ? "none" : "cloud")} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} filtersDisabled={sourceMode !== "cloud"} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
+            <div className="min-w-0">
+              <div className="sticky top-[77px] z-40 mb-4 w-full bg-white/95 pb-1 pt-2 shadow-sm backdrop-blur-sm">
+                <Frame title={<><span>Moyennes</span><span className="ml-2 text-sm font-semibold text-muted-foreground">({summary})</span></>} className="h-fit">
+                  <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">Piano Actuel</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={current[key]} />)}</div></div>
+                  <div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">Même modèle(s)</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={sourceMode === "cloud" ? witness[key] : "—"} active />)}</div>{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div>
+                </Frame>
+              </div>
+              <ComparisonChart chartData={chartData} keyFilter={keyFilter} />
+            </div>
+            <aside className="min-w-0"><div className="sticky top-[77px] z-40 mt-[474px] h-fit"><SidebarPanel cloudEnabled={sourceMode === "cloud"} standardEnabled={standardEnabled} csvActive={sourceMode === "import"} onToggleCloud={() => setSourceMode((value) => value === "cloud" ? "none" : "cloud")} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} filtersDisabled={sourceMode !== "cloud"} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
           </div>
         </>
       )}
