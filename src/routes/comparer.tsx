@@ -558,7 +558,7 @@ function Comparer() {
       {status === "loading" ? <p className="py-16 text-center text-muted-foreground">Chargement des profils externes…</p> : status === "error" ? <div className="flex w-full items-center justify-center py-16"><p className="!text-2xl !font-bold !text-red-600 text-center">ERREUR D’ACCÈS : Impossible de lire le profil du piano mesuré.</p></div> : (
         <>
           <div className="sticky top-0 z-50 mb-3 w-full border-b border-gray-200 bg-white/95 px-3 py-2 text-center text-base font-bold text-black shadow-sm backdrop-blur-sm">{summary}</div>
-          <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-start gap-6">
+          <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-start gap-6" style={{ alignItems: "stretch" }}>
             <div className="min-w-0">
               <ComparisonChart chartData={chartData} keyFilter={keyFilter} />
               <Frame title="Moyennes" className="mt-2"><div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">Piano Actuel</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={current[key]} />)}</div></div><div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">Même modèle(s)</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={sourceMode === "cloud" ? witness[key] : "—"} active />)}</div>{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div></Frame>
