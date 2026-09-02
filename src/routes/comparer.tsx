@@ -376,7 +376,7 @@ function ComparisonChart({ chartData, keyFilter }: { chartData: ChartPoint[]; ke
     const dyRight = endpointOffsets("right");
     const isHovered = hoveredChart === family.id;
     return (
-      <Frame id="balance-frame" title={family.title} className={`h-[300px] !pt-2 ${family.id === "bal" ? "" : ""}`}>
+      <Frame dataFrame={family.id} title={family.title} className="h-[300px] !pt-2">
         <div className="h-full w-full" onMouseEnter={() => setHoveredChart(family.id)} onMouseLeave={() => setHoveredChart(null)}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} onMouseMove={(state) => { const note = state?.activeLabel; if (typeof note === "number") setHoveredNoteIndex(note); }} onMouseLeave={() => { setHoveredChart(null); setHoveredNoteIndex(null); }} margin={{ top: 5, right: 140, bottom: 15, left: 140 }}>
@@ -413,8 +413,8 @@ export const Route = createFileRoute("/comparer")({
 
 const FRAME_CLASS = "relative rounded-md border-2 border-foreground bg-card p-4 pt-5";
 const FRAME_TITLE_CLASS = "absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black";
-function Frame({ title, className = "", titleClassName, id, children }: { title: ReactNode; className?: string; titleClassName?: string; id?: string | undefined; children: ReactNode }) {
-  return <section id={id} className={`${FRAME_CLASS} ${className}`}><h2 className={titleClassName ?? FRAME_TITLE_CLASS}>{title}</h2>{children}</section>;
+function Frame({ title, className = "", titleClassName, dataFrame, children }: { title: ReactNode; className?: string; titleClassName?: string; dataFrame?: string | undefined; children: ReactNode }) {
+  return <section data-frame={dataFrame} className={`${FRAME_CLASS} ${className}`}><h2 className={titleClassName ?? FRAME_TITLE_CLASS}>{title}</h2>{children}</section>;
 }
 
 const COLUMNS = [
@@ -542,7 +542,7 @@ function Comparer() {
   useEffect(() => {
     if (status !== "ok" || averagesHeight <= 0) return;
     const averages = averagesRef.current;
-    const balance = document.getElementById("balance-frame");
+    const balance = document.querySelector<HTMLElement>('[data-frame="bal"]');
     if (!averages || !balance) return;
 
     const getScrollLimit = () => {
