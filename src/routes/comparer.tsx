@@ -466,9 +466,22 @@ function Comparer() {
   const [usageLevel, setUsageLevel] = useState<UsageLevel>("all");
   const [mine, setMine] = useState<ProfileRecord | null>(null);
   const [standard, setStandard] = useState<RefProfile>(FACTORY_STANDARD);
-...
-       const current = profileFromRow(mineResult.data as ExternalPianoProfileRow);
-       setMine(current);
+  const [cloudProfile, setCloudProfile] = useState<RefProfile | null>(null);
+  const [cloudSampleCount, setCloudSampleCount] = useState(0);
+  const [imported, setImported] = useState<RefProfile | null>(null);
+  const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadBaseProfiles() {
+      const mineResult = await externalSupabase
+        .from("piano_profiles")
+        .select(PROFILE_FIELDS)
+        .eq("serial_number", MY_PIANO_SERIAL)
+        .single();
+      if (cancelled) return;
+      if (mineResult.error || !mineResult.data) { setStatus("error"); return; }
+      setMine(profileFromRow(mineResult.data as ExternalPianoProfileRow));
       setStatus("ok");
     }
     void loadBaseProfiles();
