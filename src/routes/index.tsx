@@ -12,7 +12,7 @@ export const Route = createFileRoute("/")({
   // Les utilisateurs qui arrivent sur "/" atterrissent directement sur la
   // page Comparer. Pas de boucle : /comparer est une route distincte.
   beforeLoad: () => {
-    throw redirect({ to: "/comparer", status: 302 });
+    throw redirect({ to: "/comparer" });
   },
   head: () => ({
     meta: [
