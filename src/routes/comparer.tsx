@@ -468,7 +468,7 @@ function SidebarPanel(props: SidebarPanelProps) {
           </div>
         </div>
       </Frame>
-  );
+    );
 }
 
 function summaryValue(value: string | number | null | undefined) {
