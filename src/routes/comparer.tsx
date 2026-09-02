@@ -134,7 +134,7 @@ function profileAverage(profile: RefProfile | null, key: keyof RefProfile): stri
   const values = profile?.[key] ?? [];
   const finite = values.filter((value) => typeof value === "number" && Number.isFinite(value));
   if (finite.length === 0) return "—";
-  return (finite.reduce((sum, value) => sum + value, 0) / finite.length).toFixed(1);
+  return (finite.reduce<number>((sum, value) => sum + value, 0) / finite.length).toFixed(1);
 }
 
 function averageProfiles(profiles: ProfileRecord[]): RefProfile | null {
