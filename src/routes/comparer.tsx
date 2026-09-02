@@ -322,9 +322,6 @@ function ComparisonChart({ chartData, keyFilter }: { chartData: ChartPoint[]; ke
 
   return (
     <div className="w-full flex flex-col px-2 pt-2 pb-4">
-      <div className="sticky top-0 z-50 -mx-2 mb-4 flex flex-wrap items-center justify-center gap-2 border-b border-gray-100 bg-white/95 py-3 shadow-sm backdrop-blur-sm">
-        {KEY_FILTERS.map((filter) => <Button key={filter.id} type="button" variant={keyFilter === filter.id ? "default" : "outline"} onClick={() => setKeyFilter(filter.id)} className="rounded-full px-3.5 py-1.5 text-sm font-medium">{filter.label}</Button>)}
-      </div>
       <div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div>
     </div>
   );
