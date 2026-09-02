@@ -298,16 +298,26 @@ function offsetsFor(lines: LineDef[], point: ChartPoint | undefined) {
 
 function currentLinesFor(familyId: string, keyFilter: KeyFilter): LineDef[] {
   const metrics: Record<string, [SeriesKey, SeriesKey, SeriesKey]> = { wa: ["waCur", "waCurW", "waCurB"], wd: ["wdCur", "wdCurW", "wdCurB"], bal: ["balCur", "balCurW", "balCurB"], fric: ["fricCur", "fricCurW", "fricCurB"] };
-  const labels: Record<string, string> = { wa: "Wa", wd: "Wd", bal: "Balance", fric: "Friction" };
   const metric = metrics[familyId];
   if (!metric) return [];
-  const label = labels[familyId] ?? "Wa";
   if (keyFilter === "split") return [
-    { dataKey: metric[1], name: `Mon piano ${label} — blanches`, shortName: `Mon piano ${label}`, color: "#000000", real: true },
-    { dataKey: metric[2], name: `Mon piano ${label} — noires`, shortName: `Mon piano ${label}`, color: "#6b7280", real: true },
+    { dataKey: metric[1], name: "Mon piano — blanches", shortName: "Blanches", color: "#000000", real: true },
+    { dataKey: metric[2], name: "Mon piano — noires", shortName: "Noires", color: "#6b7280", real: true },
   ];
-  return [{ dataKey: metric[0], name: `Mon piano ${label}`, shortName: `Mon piano ${label}`, color: "#000000", real: true }];
+  return [{ dataKey: metric[0], name: "Mon piano", shortName: "Mon piano", color: "#000000", real: true }];
 }
+
+function firstDefinedIndex(data: ChartPoint[], key: SeriesKey) {
+  return data.findIndex((point) => typeof point[key] === "number" && Number.isFinite(point[key] as number));
+}
+function lastDefinedIndex(data: ChartPoint[], key: SeriesKey) {
+  for (let index = data.length - 1; index >= 0; index -= 1) {
+    const value = data[index]?.[key];
+    if (typeof value === "number" && Number.isFinite(value)) return index;
+  }
+  return -1;
+}
+
 
 function ComparisonChart({ chartData, keyFilter }: { chartData: ChartPoint[]; keyFilter: KeyFilter }) {
   const [hoveredChart, setHoveredChart] = useState<string | null>(null);
