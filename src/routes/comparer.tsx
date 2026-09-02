@@ -174,12 +174,16 @@ function normalizeValue(value: string | null | undefined) {
 function matchesCloudFilters(
   profile: ProfileRecord,
   mine: ProfileRecord,
-  filters: { sameClimate: boolean; sameYear: boolean; importantChanges: boolean; usageLevel: UsageLevel },
+  filters: { sameClimate: boolean; sameYear: boolean; importantChanges: boolean; youngOnly: boolean; usageLevel: UsageLevel },
 ) {
   if (profile.model && mine.model && normalizeValue(profile.model) !== normalizeValue(mine.model)) return false;
   if (filters.sameClimate && mine.climate && normalizeValue(profile.climate) !== normalizeValue(mine.climate)) return false;
   if (filters.sameYear && mine.year !== null && profile.year !== mine.year) return false;
   if (filters.importantChanges && normalizeValue(profile.maintenance) !== "modifications importantes") return false;
+  if (filters.youngOnly) {
+    const currentYear = new Date().getFullYear();
+    if (profile.year === null || profile.year < currentYear - 5) return false;
+  }
   if (filters.usageLevel !== "all") {
     // La colonne usage_level n'existe pas encore dans le schéma externe.
     // Ne pas exclure les profils tant que ce critère ne peut pas être évalué.
@@ -233,7 +237,7 @@ type TooltipEntry = { name?: string; value?: number; color?: string };
 function tooltipColorFor(name: string) {
   const lower = name.toLowerCase();
   if (lower.includes("mon piano")) return "#000000";
-  if (lower.startsWith("same model")) return "#f97316";
+  if (lower.startsWith("même modèle") || lower.startsWith("meme modele")) return "#f97316";
   return "#10b981";
 }
 
