@@ -345,8 +345,6 @@ function ComparisonChart({ chartData, keyFilter }: { chartData: ChartPoint[]; ke
   const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
-  const first = chartData[0];
-  const last = chartData[chartData.length - 1];
 
   useEffect(() => {
     const node = containerRef.current;
