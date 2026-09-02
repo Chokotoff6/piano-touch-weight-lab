@@ -632,7 +632,13 @@ function Comparer() {
     setKeyFilter((value) => value === "all" ? "split" : "all");
   }
 
-  const summary = `${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - Mesure (${summaryValue(mine?.measureDate)})`;
+  const importedModel = importedMeta["Modèle"] ?? importedMeta["Modele"] ?? "";
+  const importedYear = importedMeta["Date de fabrication"] ?? "";
+  const importedSerial = importedMeta["Numéro de série"] ?? importedMeta["Numero de serie"] ?? "";
+  const importedDate = importedMeta["Date de mesure"] ?? importedMeta["Date et heure de saisie"] ?? "";
+  const summary = sourceMode === "import"
+    ? `${summaryValue(importedModel)} - (${summaryValue(importedYear)}) - ${summaryValue(importedSerial)} - Mesure (${summaryValue(importedDate)})`
+    : `${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - Mesure (${summaryValue(mine?.measureDate)})`;
   const cloudIsEmpty = sourceMode === "cloud" && cloudSampleCount === 0;
 
   return (
@@ -641,7 +647,7 @@ function Comparer() {
         <>
           <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-stretch gap-6">
             <div className="min-w-0">
-              <div ref={averagesRef} className="sticky top-[127px] z-40 mb-[50px] w-full border-b border-border/60 bg-background pb-2 pt-2">
+              <div ref={averagesRef} className="sticky top-[127px] z-50 mb-[50px] w-full border-b border-border/60 bg-background pb-2 pt-2">
                 <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<><span>Moyennes</span><span className="ml-2 text-sm font-semibold text-muted-foreground">({summary})</span></>} className="h-fit">
                   <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">Piano Actuel</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={current[key]} />)}</div></div>
                   <div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">Cloud</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={sourceMode === "cloud" ? witness[key] : "—"} active />)}</div>{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div>
