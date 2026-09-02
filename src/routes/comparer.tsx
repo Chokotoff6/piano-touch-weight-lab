@@ -27,7 +27,7 @@ const PROFILE_FIELDS = "id,serial_number,brand,model,wa_values,wd_values,frictio
 
 type KeyFilter = "all" | "split";
 const KEY_FILTERS: Array<{ id: KeyFilter; label: string }> = [
-  { id: "all", label: "Toutes les touches (Regroupées)" },
+  { id: "all", label: "Toutes les touches" },
   { id: "split", label: "Vue éclatée" },
 ];
 
