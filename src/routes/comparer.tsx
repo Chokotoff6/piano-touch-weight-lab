@@ -300,10 +300,10 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
 
 type LineDef = { dataKey: SeriesKey; name: string; shortName: string; color: string; real?: boolean; hidden?: boolean };
 const FAMILIES: Array<{ id: string; title: string; domain: [number, number]; lines: LineDef[] }> = [
-  { id: "wa", title: "Poids d'enfoncement (Wa)", domain: [55, 85], lines: [{ dataKey: "sameWa", name: "Même modèle(s)", shortName: "Même modèle(s)", color: "#f97316" }, { dataKey: "stdWa", name: "Std", shortName: "Std", color: "#10b981" }] },
-  { id: "wd", title: "Poids de retour (Wd)", domain: [50, 70], lines: [{ dataKey: "sameWd", name: "Même modèle(s)", shortName: "Même modèle(s)", color: "#f97316" }, { dataKey: "stdWd", name: "Std", shortName: "Std", color: "#10b981" }] },
-  { id: "bal", title: "Balance statique", domain: [55, 75], lines: [{ dataKey: "sameBal", name: "Même modèle(s)", shortName: "Même modèle(s)", color: "#f97316" }, { dataKey: "factoryBal", name: "Factory", shortName: "Factory", color: "#10b981" }] },
-  { id: "fric", title: "Friction mécanique", domain: [-2, 16], lines: [{ dataKey: "sameFric", name: "Même modèle(s)", shortName: "Même modèle(s)", color: "#f97316" }, { dataKey: "factoryFric", name: "Factory", shortName: "Factory", color: "#10b981" }] },
+  { id: "wa", title: "Poids d'enfoncement (Wa)", domain: [55, 85], lines: [{ dataKey: "sameWa", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWa", name: "Std", shortName: "Std", color: "#10b981" }] },
+  { id: "wd", title: "Poids de retour (Wd)", domain: [50, 70], lines: [{ dataKey: "sameWd", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWd", name: "Std", shortName: "Std", color: "#10b981" }] },
+  { id: "bal", title: "Balance statique", domain: [55, 75], lines: [{ dataKey: "sameBal", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryBal", name: "Factory", shortName: "Factory", color: "#10b981" }] },
+  { id: "fric", title: "Friction mécanique", domain: [-2, 16], lines: [{ dataKey: "sameFric", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryFric", name: "Factory", shortName: "Factory", color: "#10b981" }] },
 ];
 const DY_STEPS = [-10, 4, 18, 32];
 function offsetsFor(lines: LineDef[], point: ChartPoint | undefined) {
@@ -321,9 +321,9 @@ function currentLinesFor(familyId: string, keyFilter: KeyFilter): LineDef[] {
   const metric = metrics[familyId];
   if (!metric) return [];
   if (keyFilter === "split") return [
-    { dataKey: metric[1], name: "Mon piano — blanches", shortName: "Blanches", color: "#000000", real: true },
-    { dataKey: metric[2], name: "Mon piano — noires", shortName: "Noires", color: "#6b7280", real: true },
-    { dataKey: metric[3], name: "Mon piano", shortName: "Mon piano", color: "#000000", hidden: true },
+    { dataKey: metric[1], name: "Mon piano blanches", shortName: "Blanches", color: "#6b7280", real: true },
+    { dataKey: metric[2], name: "Mon piano noires", shortName: "Noires", color: "#000000", real: true },
+    { dataKey: metric[3], name: "Mon piano centre", shortName: "Mon piano", color: "#000000", hidden: true },
   ];
   return [{ dataKey: metric[0], name: "Mon piano", shortName: "Mon piano", color: "#000000", real: true }];
 }
