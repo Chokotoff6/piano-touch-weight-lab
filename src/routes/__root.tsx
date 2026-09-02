@@ -399,10 +399,11 @@ function RootComponent() {
                >
                  FR
                </Button>
-             </div>
+              </div>
 
-           </div>
-      </nav>
+            </div>
+          </div>
+       </nav>
 
 
       <a
