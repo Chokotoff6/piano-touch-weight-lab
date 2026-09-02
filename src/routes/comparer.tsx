@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
 import {
@@ -174,12 +173,16 @@ function normalizeValue(value: string | null | undefined) {
 function matchesCloudFilters(
   profile: ProfileRecord,
   mine: ProfileRecord,
-  filters: { sameClimate: boolean; sameYear: boolean; importantChanges: boolean; usageLevel: UsageLevel },
+  filters: { sameClimate: boolean; sameYear: boolean; importantChanges: boolean; youngOnly: boolean; usageLevel: UsageLevel },
 ) {
   if (profile.model && mine.model && normalizeValue(profile.model) !== normalizeValue(mine.model)) return false;
   if (filters.sameClimate && mine.climate && normalizeValue(profile.climate) !== normalizeValue(mine.climate)) return false;
   if (filters.sameYear && mine.year !== null && profile.year !== mine.year) return false;
   if (filters.importantChanges && normalizeValue(profile.maintenance) !== "modifications importantes") return false;
+  if (filters.youngOnly) {
+    const currentYear = new Date().getFullYear();
+    if (profile.year === null || profile.year < currentYear - 5) return false;
+  }
   if (filters.usageLevel !== "all") {
     // La colonne usage_level n'existe pas encore dans le schéma externe.
     // Ne pas exclure les profils tant que ce critère ne peut pas être évalué.
@@ -233,7 +236,7 @@ type TooltipEntry = { name?: string; value?: number; color?: string };
 function tooltipColorFor(name: string) {
   const lower = name.toLowerCase();
   if (lower.includes("mon piano")) return "#000000";
-  if (lower.startsWith("same model")) return "#f97316";
+  if (lower.startsWith("même modèle") || lower.startsWith("meme modele")) return "#f97316";
   return "#10b981";
 }
 
@@ -256,10 +259,10 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
 
 type LineDef = { dataKey: SeriesKey; name: string; shortName: string; color: string; real?: boolean };
 const FAMILIES: Array<{ id: string; title: string; domain: [number, number]; lines: LineDef[] }> = [
-  { id: "wa", title: "Poids d'enfoncement (Wa)", domain: [55, 85], lines: [{ dataKey: "sameWa", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316" }, { dataKey: "stdWa", name: "Std", shortName: "Std", color: "#10b981" }] },
-  { id: "wd", title: "Poids de retour (Wd)", domain: [50, 70], lines: [{ dataKey: "sameWd", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316" }, { dataKey: "stdWd", name: "Std", shortName: "Std", color: "#10b981" }] },
-  { id: "bal", title: "Balance statique", domain: [55, 75], lines: [{ dataKey: "sameBal", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316" }, { dataKey: "factoryBal", name: "Factory", shortName: "Factory", color: "#10b981" }] },
-  { id: "fric", title: "Friction mécanique", domain: [-2, 16], lines: [{ dataKey: "sameFric", name: "Same model(s)", shortName: "Same model(s)", color: "#f97316" }, { dataKey: "factoryFric", name: "Factory", shortName: "Factory", color: "#10b981" }] },
+  { id: "wa", title: "Poids d'enfoncement (Wa)", domain: [55, 85], lines: [{ dataKey: "sameWa", name: "Même modèle(s)", shortName: "Même modèle(s)", color: "#f97316" }, { dataKey: "stdWa", name: "Std", shortName: "Std", color: "#10b981" }] },
+  { id: "wd", title: "Poids de retour (Wd)", domain: [50, 70], lines: [{ dataKey: "sameWd", name: "Même modèle(s)", shortName: "Même modèle(s)", color: "#f97316" }, { dataKey: "stdWd", name: "Std", shortName: "Std", color: "#10b981" }] },
+  { id: "bal", title: "Balance statique", domain: [55, 75], lines: [{ dataKey: "sameBal", name: "Même modèle(s)", shortName: "Même modèle(s)", color: "#f97316" }, { dataKey: "factoryBal", name: "Factory", shortName: "Factory", color: "#10b981" }] },
+  { id: "fric", title: "Friction mécanique", domain: [-2, 16], lines: [{ dataKey: "sameFric", name: "Même modèle(s)", shortName: "Même modèle(s)", color: "#f97316" }, { dataKey: "factoryFric", name: "Factory", shortName: "Factory", color: "#10b981" }] },
 ];
 const DY_STEPS = [0, 10, 20];
 function offsetsFor(lines: LineDef[], point: ChartPoint | undefined) {
@@ -285,8 +288,7 @@ function currentLinesFor(familyId: string, keyFilter: KeyFilter): LineDef[] {
   return [{ dataKey: metric[0], name: `Mon piano ${label}`, shortName: `Mon piano ${label}`, color: "#000000", real: true }];
 }
 
-function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
-  const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
+function ComparisonChart({ chartData, keyFilter }: { chartData: ChartPoint[]; keyFilter: KeyFilter }) {
   const [hoveredChart, setHoveredChart] = useState<string | null>(null);
   const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
   const filteredData = useMemo(() => chartData, [chartData]);
@@ -319,9 +321,6 @@ function ComparisonChart({ chartData }: { chartData: ChartPoint[] }) {
 
   return (
     <div className="w-full flex flex-col px-2 pt-2 pb-4">
-      <div className="sticky top-0 z-50 -mx-2 mb-4 flex flex-wrap items-center justify-center gap-2 border-b border-gray-100 bg-white/95 py-3 shadow-sm backdrop-blur-sm">
-        {KEY_FILTERS.map((filter) => <Button key={filter.id} type="button" variant={keyFilter === filter.id ? "default" : "outline"} onClick={() => setKeyFilter(filter.id)} className="rounded-full px-3.5 py-1.5 text-sm font-medium">{filter.label}</Button>)}
-      </div>
       <div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div>
     </div>
   );
@@ -364,26 +363,89 @@ function averageSet(chartData: ChartPoint[]): Averages {
   return { wa: seriesAverage(chartData, "waCur"), wd: seriesAverage(chartData, "wdCur"), friction: seriesAverage(chartData, "fricCur"), balance: seriesAverage(chartData, "balCur") };
 }
 
-function SummaryBanner() {
-  return <p className="w-full text-center !text-gray-700 text-sm font-medium tracking-wide">Résumé : Comparaison externe • Profils chargés depuis la source Cloud</p>;
-}
+const PILL_BASE = "h-8 flex-1 rounded-full border px-2 text-xs transition-colors whitespace-nowrap";
+const pillClass = (active: boolean) =>
+  `${PILL_BASE} ${active ? "border-gray-300 bg-gray-100 font-semibold text-slate-700" : "border-gray-200 bg-white text-gray-400 hover:border-gray-300 hover:text-gray-500"}`;
 
-function SourceSelector({ sourceMode, standardEnabled, onCloud, onStandard, onImport }: { sourceMode: SourceMode; standardEnabled: boolean; onCloud: () => void; onStandard: () => void; onImport: (file: File) => void }) {
+type SidebarPanelProps = {
+  cloudEnabled: boolean;
+  standardEnabled: boolean;
+  csvActive: boolean;
+  onToggleCloud: () => void;
+  onToggleStandard: () => void;
+  onImport: (file: File) => void;
+  keyFilter: KeyFilter;
+  setKeyFilter: (value: KeyFilter) => void;
+  filtersDisabled: boolean;
+  sameClimate: boolean;
+  sameYear: boolean;
+  importantChanges: boolean;
+  youngOnly: boolean;
+  usageLevel: UsageLevel;
+  setSameClimate: (value: boolean) => void;
+  setSameYear: (value: boolean) => void;
+  setImportantChanges: (value: boolean) => void;
+  setYoungOnly: (value: boolean) => void;
+  cycleUsage: () => void;
+};
+
+function SidebarPanel(props: SidebarPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  return <div className="mb-6 flex flex-wrap items-center gap-2"><span className="mr-1 text-sm font-semibold text-foreground">Comparer avec </span><Button type="button" variant={sourceMode === "cloud" ? "default" : "outline"} aria-pressed={sourceMode === "cloud"} onClick={onCloud}>Cloud</Button><Button type="button" variant={standardEnabled ? "default" : "outline"} aria-pressed={standardEnabled} onClick={onStandard}>Standard</Button><Button type="button" variant={sourceMode === "import" ? "default" : "outline"} onClick={() => inputRef.current?.click()}>Import CSV</Button><input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) onImport(file); event.target.value = ""; }} /></div>;
-}
-
-function RefinementPanel({ disabled, sameClimate, sameYear, importantChanges, usageLevel, setSameClimate, setSameYear, setImportantChanges, cycleUsage }: { disabled: boolean; sameClimate: boolean; sameYear: boolean; importantChanges: boolean; usageLevel: UsageLevel; setSameClimate: (value: boolean) => void; setSameYear: (value: boolean) => void; setImportantChanges: (value: boolean) => void; cycleUsage: () => void }) {
-  const usageLabel = usageLevel === "all" ? "Tous" : usageLevel === "low" ? "Faible" : "Intensif";
-  return <Frame title="Filtres d'affinage" className="sticky top-4 h-full"><div className="space-y-4 pt-2"><label className="flex items-center justify-between gap-3 text-sm font-medium text-foreground"><span>Même zone climatique</span><Switch checked={sameClimate} disabled={disabled} onCheckedChange={setSameClimate} /></label><label className="flex items-center justify-between gap-3 text-sm font-medium text-foreground"><span>Même année de fabrication</span><Switch checked={sameYear} disabled={disabled} onCheckedChange={setSameYear} /></label><label className="flex items-center justify-between gap-3 text-sm font-medium text-foreground"><span>Modifications importantes</span><Switch checked={importantChanges} disabled={disabled} onCheckedChange={setImportantChanges} /></label><Button type="button" variant="outline" className="w-full" disabled={disabled} onClick={cycleUsage} aria-label={`Niveau d'usage : ${usageLabel}`}>Niveau d'usage : {usageLabel}</Button></div></Frame>;
+  const usageLabel = props.usageLevel === "all" ? "Tous" : props.usageLevel === "low" ? "Faible" : "Intensif";
+  const switchRow = (label: string, checked: boolean, onChange: (value: boolean) => void) => (
+    <label className="flex items-center justify-between gap-3 text-xs font-medium text-slate-700">
+      <span>{label}</span>
+      <Switch checked={checked} disabled={props.filtersDisabled} onCheckedChange={onChange} />
+    </label>
+  );
+  return (
+    <Frame title="Filtres d'affinage" className="sticky top-4">
+      <div className="space-y-4 pt-2">
+        <div>
+          <div className="mb-1.5 text-[0.68rem] font-semibold uppercase tracking-wide text-gray-500">Comparer avec</div>
+          <div className="flex items-center gap-1.5">
+            <button type="button" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={pillClass(props.cloudEnabled)}>Cloud</button>
+            <button type="button" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={pillClass(props.standardEnabled)}>Standard</button>
+            <button type="button" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={pillClass(props.csvActive)}>CSV</button>
+            <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
+          </div>
+        </div>
+        <div>
+          <div className="mb-1.5 text-[0.68rem] font-semibold uppercase tracking-wide text-gray-500">Vue clavier</div>
+          <div className="flex items-center gap-1.5">
+            {KEY_FILTERS.map((filter) => (
+              <button key={filter.id} type="button" aria-pressed={props.keyFilter === filter.id} onClick={() => props.setKeyFilter(filter.id)} className={pillClass(props.keyFilter === filter.id)}>{filter.label}</button>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-2.5">
+          {switchRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
+          {switchRow("Même année de fabrication", props.sameYear, props.setSameYear)}
+          {switchRow("Modifications importantes", props.importantChanges, props.setImportantChanges)}
+          {switchRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
+        </div>
+        <button
+          type="button"
+          disabled={props.filtersDisabled}
+          onClick={props.cycleUsage}
+          aria-label={`Niveau d'usage : ${usageLabel}`}
+          className={`${PILL_BASE} w-full border-gray-200 bg-white ${props.filtersDisabled ? "text-gray-300" : "text-slate-700 hover:border-gray-300"}`}
+        >
+          Niveau d'usage : <span className="font-semibold">{usageLabel}</span>
+        </button>
+      </div>
+    </Frame>
+  );
 }
 
 function Comparer() {
   const [sourceMode, setSourceMode] = useState<SourceMode>("cloud");
-  const [standardEnabled, setStandardEnabled] = useState(false);
+  const [standardEnabled, setStandardEnabled] = useState(true);
+  const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
   const [sameClimate, setSameClimate] = useState(true);
   const [sameYear, setSameYear] = useState(false);
   const [importantChanges, setImportantChanges] = useState(false);
+  const [youngOnly, setYoungOnly] = useState(false);
   const [usageLevel, setUsageLevel] = useState<UsageLevel>("all");
   const [mine, setMine] = useState<ProfileRecord | null>(null);
   const [profiles, setProfiles] = useState<ProfileRecord[]>([]);
@@ -411,10 +473,10 @@ function Comparer() {
 
   const cloudProfile = useMemo(() => {
     if (!mine || sourceMode !== "cloud") return null;
-    const filters = { sameClimate, sameYear, importantChanges, usageLevel };
+    const filters = { sameClimate, sameYear, importantChanges, youngOnly, usageLevel };
     const matching = profiles.filter((profile) => profile.serialNumber !== MY_PIANO_SERIAL && !TECHNICAL_SERIAL.test(profile.serialNumber) && matchesCloudFilters(profile, mine, filters));
     return averageProfiles(matching);
-  }, [mine, profiles, sourceMode, sameClimate, sameYear, importantChanges, usageLevel]);
+  }, [mine, profiles, sourceMode, sameClimate, sameYear, importantChanges, youngOnly, usageLevel]);
 
   const activeCurrent = sourceMode === "import" && imported ? imported : mine;
   const chartData = useMemo(() => buildChartData(activeCurrent, cloudProfile, standardEnabled ? standard : null), [activeCurrent, cloudProfile, standard, standardEnabled]);
@@ -436,5 +498,5 @@ function Comparer() {
     setUsageLevel((value) => value === "all" ? "low" : value === "low" ? "intensive" : "all");
   }
 
-  return <main className="mx-auto w-full max-w-[1400px] px-6 py-8"><SourceSelector sourceMode={sourceMode} standardEnabled={standardEnabled} onCloud={() => setSourceMode((value) => value === "cloud" ? "none" : "cloud")} onStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} /><div className="mb-6"><SummaryBanner /></div>{status === "loading" ? <p className="py-16 text-center text-muted-foreground">Chargement des profils externes…</p> : status === "error" ? <div className="flex w-full items-center justify-center py-16"><p className="!text-2xl !font-bold !text-red-600 text-center">ERREUR D'ACCÈS SUPABASE : Impossible de lire MOCK-MON-PIANO. Vérifie les règles RLS de la table.</p></div> : <div className="flex w-full gap-6"><div className="min-w-0 flex-1"><ComparisonChart chartData={chartData} /><Frame title="Moyennes" className="mt-2"><div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">Piano Actuel</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={current[key]} />)}</div></div><div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">Piano Témoin</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={sourceMode === "cloud" ? witness[key] : "—"} active />)}</div></div></Frame></div><aside className="hidden w-[260px] shrink-0 lg:block"><RefinementPanel disabled={sourceMode !== "cloud"} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} cycleUsage={cycleUsage} /></aside></div>}</main>;
+  return <main className="mx-auto w-full max-w-[1400px] px-6 py-8">{status === "loading" ? <p className="py-16 text-center text-muted-foreground">Chargement des profils externes…</p> : status === "error" ? <div className="flex w-full items-center justify-center py-16"><p className="!text-2xl !font-bold !text-red-600 text-center">ERREUR D'ACCÈS SUPABASE : Impossible de lire MOCK-MON-PIANO. Vérifie les règles RLS de la table.</p></div> : <div className="flex w-full gap-6"><div className="min-w-0 flex-1"><ComparisonChart chartData={chartData} keyFilter={keyFilter} /><Frame title="Moyennes" className="mt-2"><div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">Piano Actuel</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={current[key]} />)}</div></div><div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">Piano Témoin</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={sourceMode === "cloud" ? witness[key] : "—"} active />)}</div></div></Frame></div><aside className="hidden w-[300px] shrink-0 lg:block"><SidebarPanel cloudEnabled={sourceMode === "cloud"} standardEnabled={standardEnabled} csvActive={sourceMode === "import"} onToggleCloud={() => setSourceMode((value) => value === "cloud" ? "none" : "cloud")} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} keyFilter={keyFilter} setKeyFilter={setKeyFilter} filtersDisabled={sourceMode !== "cloud"} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></aside></div>}</main>;
 }
