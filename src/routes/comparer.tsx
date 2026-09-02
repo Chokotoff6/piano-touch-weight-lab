@@ -445,9 +445,8 @@ function SidebarPanel(props: SidebarPanelProps) {
     </label>
   );
   return (
-    <div className="sticky top-[100px] z-40 h-fit">
-      <Frame title="Filtres" className="h-fit">
-        <div className="flex flex-col gap-4 pt-2">
+    <Frame title="Filtres" className="h-fit">
+      <div className="flex flex-col gap-4 pt-2">
           <div>
             <div className="mb-1.5 !text-base !font-bold !text-black">Comparer avec</div>
             <div className="flex items-center gap-1.5">
