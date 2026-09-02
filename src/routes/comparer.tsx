@@ -468,7 +468,6 @@ function SidebarPanel(props: SidebarPanelProps) {
           </div>
         </div>
       </Frame>
-    </div>
   );
 }
 
