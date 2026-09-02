@@ -79,7 +79,8 @@ type SeriesKey = keyof Omit<ChartPoint, "key" | "isBlack">;
 const n1 = (value: number) => Number(value.toFixed(1));
 
 function valueAt(values: number[] | undefined, noteIndex: number, sampleIndex: number) {
-  const raw = values?.length >= 88 ? values[noteIndex - 1] : values?.[sampleIndex];
+  const source = values ?? [];
+  const raw = source.length >= 88 ? source[noteIndex - 1] : source[sampleIndex];
   return typeof raw === "number" && Number.isFinite(raw) ? n1(raw) : undefined;
 }
 
