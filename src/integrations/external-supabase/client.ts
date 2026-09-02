@@ -29,12 +29,17 @@ function externalFetch(input: RequestInfo | URL, init?: RequestInit) {
 export type ExternalPianoProfileRow = {
   id: string;
   serial_number: string;
+  brand?: string | null;
+  model?: string | null;
   wa_values: number[];
   wd_values: number[];
   friction_values: number[];
   balance_values: number[];
   remarques: string | null;
   annee_fabrication: number | null;
+  zone_climatique?: string | null;
+  type_entretien?: string | null;
+  usage_level?: string | null;
   created_at: string;
 };
 
