@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      piano_actuel: {
+        Row: {
+          balance_values: number[]
+          brand: string | null
+          climate_zone: string | null
+          created_at: string
+          friction_values: number[]
+          id: string
+          maintenance_type: string | null
+          manufacture_year: number | null
+          mesure_date: string | null
+          model: string | null
+          pays: string | null
+          remarques: string | null
+          serial_number: string | null
+          type_piano: string | null
+          updated_at: string
+          usage_level: string | null
+          ville: string | null
+          wa_values: number[]
+          wd_values: number[]
+        }
+        Insert: {
+          balance_values?: number[]
+          brand?: string | null
+          climate_zone?: string | null
+          created_at?: string
+          friction_values?: number[]
+          id: string
+          maintenance_type?: string | null
+          manufacture_year?: number | null
+          mesure_date?: string | null
+          model?: string | null
+          pays?: string | null
+          remarques?: string | null
+          serial_number?: string | null
+          type_piano?: string | null
+          updated_at?: string
+          usage_level?: string | null
+          ville?: string | null
+          wa_values?: number[]
+          wd_values?: number[]
+        }
+        Update: {
+          balance_values?: number[]
+          brand?: string | null
+          climate_zone?: string | null
+          created_at?: string
+          friction_values?: number[]
+          id?: string
+          maintenance_type?: string | null
+          manufacture_year?: number | null
+          mesure_date?: string | null
+          model?: string | null
+          pays?: string | null
+          remarques?: string | null
+          serial_number?: string | null
+          type_piano?: string | null
+          updated_at?: string
+          usage_level?: string | null
+          ville?: string | null
+          wa_values?: number[]
+          wd_values?: number[]
+        }
+        Relationships: []
+      }
       piano_profiles: {
         Row: {
           balance_values: number[]
