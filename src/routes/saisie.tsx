@@ -398,6 +398,8 @@ function Index() {
   const savedSerialRef = useRef<string>("");
   // Consentement RGPD : jamais persisté, toujours décoché quand le numéro change.
   const [consent, setConsent] = useState(false);
+  // Le consentement se coche désormais uniquement dans l'alerte jaune contextuelle.
+  const [consentPrompt, setConsentPrompt] = useState(false);
   const consentSerialRef = useRef("");
   // Photographie des 88 touches et du jour du dernier envoi cloud (seuil des 5 touches).
   const savedRowsRef = useRef<Row[]>([]);
