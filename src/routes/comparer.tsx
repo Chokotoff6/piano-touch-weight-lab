@@ -710,14 +710,8 @@ function Comparer() {
     setKeyFilter((value) => value === "all" ? "split" : "all");
   }
 
-  const importedModel = importedMeta["Modèle"] ?? importedMeta["Modele"] ?? "";
-  const importedYear = importedMeta["Date de fabrication"] ?? "";
-  const importedSerial = importedMeta["Numéro de série"] ?? importedMeta["Numero de serie"] ?? "";
-  const importedDate = importedMeta["Date de mesure"] ?? importedMeta["Date et heure de saisie"] ?? "";
-  const summary = sourceMode === "import"
-    ? `${summaryValue(importedModel)} - (${summaryValue(importedYear)}) - ${summaryValue(importedSerial)} - Mesure (${summaryValue(importedDate)})`
-    : `${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - Mesure (${summaryValue(mine?.measureDate)})`;
-  const cloudIsEmpty = sourceMode === "cloud" && cloudSampleCount === 0;
+  const summary = `${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - Mesure (${summaryValue(mine?.measureDate)})`;
+  const cloudIsEmpty = !comparedPiano && sourceMode === "cloud" && cloudSampleCount === 0;
 
   return (
     <main className="mx-auto w-full max-w-[1400px] px-6 py-8">
