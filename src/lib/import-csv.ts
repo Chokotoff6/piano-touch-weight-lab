@@ -1,8 +1,14 @@
 export type ImportedDiagnostic = {
+  /** Métadonnées brutes telles qu'écrites dans le fichier. */
   meta: Record<string, string>;
+  /** Métadonnées normalisées sur les colonnes de la base (brand, model, ...). */
+  fields: Record<string, string>;
   /** Toujours 88 emplacements, indexés directement par touche 1 à 88. */
   rows: { wa: string; wd: string }[];
+  /** Friction lue dans le fichier (valeur absolue), NaN si absente. */
+  friction: number[];
 };
+
 
 const unquote = (value: string) => {
   const trimmed = value.trim();
