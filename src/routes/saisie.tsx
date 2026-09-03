@@ -1978,11 +1978,12 @@ Moyennes{" "}
       >
         <AlertDialogContent className="w-full max-w-xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Un diagnostic existe déjà pour cette session</AlertDialogTitle>
+            <AlertDialogTitle>Un envoi existe déjà pour ce numéro de série</AlertDialogTitle>
             <AlertDialogDescription>
-              Souhaitez-vous corriger le diagnostic enregistré ou créer un nouveau point
-              d'historique ?
+              Option A — Correction : met à jour la fiche déjà envoyée.
+              Option B — Nouvelle régulation : crée un nouveau point d'historique.
             </AlertDialogDescription>
+
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
