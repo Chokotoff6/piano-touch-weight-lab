@@ -26,6 +26,7 @@ import { buildCsv, buildExportFilename, downloadCsv, formatLocalDateTime } from 
 import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { generateLandscapeReport } from "@/lib/pdf-report";
 import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
+import { buildCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud } from "@/lib/current-piano";
 
 const INVALID_CSV_MESSAGE =
   "⚠️ Fichier non valide. Veuillez importer un fichier CSV généré par l'application Piano Touch Analyzer.";
@@ -385,14 +386,12 @@ function Index() {
   const [honeypot, setHoneypot] = useState("");
   const [currentDbId, setCurrentDbId] = useState<string | null>(null);
   const [askUpdate, setAskUpdate] = useState(false);
-  const [askCompare, setAskCompare] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const pdfInfoRef = useRef<HTMLDivElement | null>(null);
   const pdfChartRef = useRef<HTMLDivElement | null>(null);
   const moyennesRef = useRef<HTMLElement | null>(null);
   const mesuresRef = useRef<HTMLElement | null>(null);
-  const goCompareAfterSave = useRef(false);
 
 
   const navigate = useNavigate();
