@@ -221,6 +221,9 @@ export async function findHistoryProfileId(serialNumber: string): Promise<string
 /** Ancien numéro de série pivot (héritage : remplacé par la colonne booléenne is_buffer). */
 export const CURRENT_PIANO_BUFFER_ID = "PIANO_ACTUEL";
 
+/** UUID fixe de la ligne tampon unique (buffer cloud du piano en cours). */
+export const CURRENT_PIANO_BUFFER_UUID = "00000000-0000-0000-0000-000000000000";
+
 /** Colonnes de la ligne tampon (métadonnées + 4 tableaux au format PostgreSQL {...}). */
 function bufferPayload(piano: CurrentPiano) {
   return {
@@ -254,24 +257,12 @@ function bufferPayload(piano: CurrentPiano) {
 export async function upsertCurrentPianoBuffer(
   piano: CurrentPiano,
 ): Promise<{ ok: boolean; error?: string }> {
-  const payload = bufferPayload(piano);
+  // Épinglage sur l'UUID fixe : 1 seul .upsert(), pas de recherche préalable fragile.
+  const payload = { id: CURRENT_PIANO_BUFFER_UUID, ...bufferPayload(piano) };
   try {
-    const { data: existing, error: readError } = await externalSupabase
-      .from("piano_profiles")
-      .select("id")
-      .eq("is_buffer", true)
-      .maybeSingle();
-    if (readError) return { ok: false, error: readError.message };
-    if (existing?.id) {
-      const { error } = await externalSupabase
-        .from("piano_profiles")
-        .update(payload as never)
-        .eq("id", existing.id);
-      return error ? { ok: false, error: error.message } : { ok: true };
-    }
     const { error } = await externalSupabase
       .from("piano_profiles")
-      .insert(payload as never);
+      .upsert(payload as never);
     return error ? { ok: false, error: error.message } : { ok: true };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "Erreur réseau" };
