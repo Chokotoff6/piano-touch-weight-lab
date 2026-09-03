@@ -393,7 +393,6 @@ function Index() {
   const moyennesRef = useRef<HTMLElement | null>(null);
   const mesuresRef = useRef<HTMLElement | null>(null);
 
-
   const navigate = useNavigate();
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
@@ -1146,13 +1145,7 @@ function Index() {
       markSubmission();
       setIsDirty(false);
       showTopbarAlert("save", mode === "update" ? SAVE_UPDATE_MESSAGE : SAVE_NEW_MESSAGE);
-      if (goCompareAfterSave.current) {
-        goCompareAfterSave.current = false;
-        void navigate({ to: "/comparer" });
-      }
     } catch {
-      goCompareAfterSave.current = false;
-      setIsDirty(false);
       showMessage("La synchronisation cloud a échoué. Les données locales restent disponibles dans Comparer.");
     } finally {
       setIsExporting(false);
