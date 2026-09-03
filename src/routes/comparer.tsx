@@ -307,7 +307,7 @@ function tooltipColorFor(name: string) {
   if (lower.includes("noires")) return "#000000";
   if (lower.includes("blanches")) return "#6b7280";
   if (lower.includes("mon piano")) return "#000000";
-  if (lower.startsWith("cloud")) return "#f97316";
+  if (lower.startsWith("cloud") || lower.startsWith("référence")) return "#f97316";
   return "#10b981";
 }
 
@@ -371,7 +371,7 @@ function lastDefinedIndex(data: ChartPoint[], key: SeriesKey) {
 }
 
 
-function ComparisonChart({ chartData, keyFilter }: { chartData: ChartPoint[]; keyFilter: KeyFilter }) {
+function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string }) {
   const [hoveredChart, setHoveredChart] = useState<string | null>(null);
   const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -391,7 +391,11 @@ function ComparisonChart({ chartData, keyFilter }: { chartData: ChartPoint[]; ke
   const tooltipPosition = { x: Math.max(containerWidth - 200, 0), y: 8 };
 
   function SubChart({ family }: { family: (typeof FAMILIES)[number] }) {
-    const lines = [...currentLinesFor(family.id, keyFilter), ...family.lines];
+    // Renommage dynamique de la courbe orange : "Référence : [Marque] [Modèle] (CSV)" ou "Cloud".
+    const familyLines = family.lines.map((line) =>
+      line.name === "Cloud" ? { ...line, name: comparisonLabel, shortName: comparisonShort } : line,
+    );
+    const lines = [...currentLinesFor(family.id, keyFilter), ...familyLines];
     // Chaque courbe est ancrée sur SON propre premier / dernier point défini
     // (indispensable en vue éclatée où blanches et noires ne partagent pas les mêmes index).
     const endpointOffsets = (side: "left" | "right") => new Map(
