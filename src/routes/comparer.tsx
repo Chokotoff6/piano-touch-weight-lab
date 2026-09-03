@@ -697,7 +697,7 @@ function Comparer() {
 
   return (
     <main className="mx-auto w-full max-w-[1400px] px-6 py-8">
-      {status === "loading" ? <p className="py-16 text-center text-muted-foreground">Chargement des profils externes…</p> : status === "error" ? <div className="flex w-full items-center justify-center py-16"><p className="!text-2xl !font-bold !text-red-600 text-center">ERREUR D’ACCÈS : Impossible de lire le profil du piano mesuré.</p></div> : (
+      {status === "loading" ? <p className="py-16 text-center text-muted-foreground">Chargement des profils externes…</p> : (
         <>
           <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-stretch gap-6">
             <div className="min-w-0">
