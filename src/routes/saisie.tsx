@@ -1184,6 +1184,19 @@ function Index() {
     showTopbarAlert("import", "Fiche restaurée depuis l'historique en ligne.");
   };
 
+  /** Génère et télécharge le fichier local demandé (après l'action cloud). */
+  const runLocalExport = (kind: "csv" | "pdf") => {
+    pendingExport.current = null;
+    if (kind === "csv") {
+      exportCsvFile();
+      return;
+    }
+    setIsExporting(true);
+    void exportPdfFile()
+      .catch(() => showTopbarAlert("export", "⚠️ La génération du rapport PDF a échoué."))
+      .finally(() => setIsExporting(false));
+  };
+
   const syncAndFinish = async (mode: "insert" | "update") => {
     setIsExporting(true);
     const payload = buildPayload();
