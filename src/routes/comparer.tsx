@@ -62,27 +62,36 @@ type ChartPoint = {
   waCurW: number | undefined;
   waCurB: number | undefined;
   sameWa: number | undefined;
+  sameWaW: number | undefined;
+  sameWaB: number | undefined;
   stdWa: number | undefined;
   wdCur: number | undefined;
   wdCurW: number | undefined;
   wdCurB: number | undefined;
   sameWd: number | undefined;
+  sameWdW: number | undefined;
+  sameWdB: number | undefined;
   stdWd: number | undefined;
   balCur: number | undefined;
   balCurW: number | undefined;
   balCurB: number | undefined;
   sameBal: number | undefined;
+  sameBalW: number | undefined;
+  sameBalB: number | undefined;
   factoryBal: number | undefined;
   fricCur: number | undefined;
   fricCurW: number | undefined;
   fricCurB: number | undefined;
   sameFric: number | undefined;
+  sameFricW: number | undefined;
+  sameFricB: number | undefined;
   factoryFric: number | undefined;
   waMid: number | undefined;
   wdMid: number | undefined;
   balMid: number | undefined;
   fricMid: number | undefined;
 };
+
 
 type SeriesKey = keyof Omit<ChartPoint, "key" | "isBlack">;
 const n1 = (value: number) => Number(value.toFixed(1));
@@ -104,34 +113,47 @@ function buildChartData(
     const wdCur = valueAt(mine?.wd, noteIndex, sampleIndex);
     const balCur = valueAt(mine?.balance, noteIndex, sampleIndex);
     const fricCur = valueAt(mine?.friction, noteIndex, sampleIndex);
+    const sameWa = valueAt(cloud?.wa, noteIndex, sampleIndex);
+    const sameWd = valueAt(cloud?.wd, noteIndex, sampleIndex);
+    const sameBal = valueAt(cloud?.balance, noteIndex, sampleIndex);
+    const sameFric = valueAt(cloud?.friction, noteIndex, sampleIndex);
     return {
       key: noteIndex,
       isBlack: black,
       waCur,
       waCurW: black ? undefined : waCur,
       waCurB: black ? waCur : undefined,
-      sameWa: valueAt(cloud?.wa, noteIndex, sampleIndex),
+      sameWa,
+      sameWaW: black ? undefined : sameWa,
+      sameWaB: black ? sameWa : undefined,
       stdWa: valueAt(standard?.wa, noteIndex, sampleIndex),
       wdCur,
       wdCurW: black ? undefined : wdCur,
       wdCurB: black ? wdCur : undefined,
-      sameWd: valueAt(cloud?.wd, noteIndex, sampleIndex),
+      sameWd,
+      sameWdW: black ? undefined : sameWd,
+      sameWdB: black ? sameWd : undefined,
       stdWd: valueAt(standard?.wd, noteIndex, sampleIndex),
       balCur,
       balCurW: black ? undefined : balCur,
       balCurB: black ? balCur : undefined,
-      sameBal: valueAt(cloud?.balance, noteIndex, sampleIndex),
+      sameBal,
+      sameBalW: black ? undefined : sameBal,
+      sameBalB: black ? sameBal : undefined,
       factoryBal: valueAt(standard?.balance, noteIndex, sampleIndex),
       fricCur,
       fricCurW: black ? undefined : fricCur,
       fricCurB: black ? fricCur : undefined,
-      sameFric: valueAt(cloud?.friction, noteIndex, sampleIndex),
+      sameFric,
+      sameFricW: black ? undefined : sameFric,
+      sameFricB: black ? sameFric : undefined,
       factoryFric: valueAt(standard?.friction, noteIndex, sampleIndex),
       waMid: undefined,
       wdMid: undefined,
       balMid: undefined,
       fricMid: undefined,
     };
+
   });
   // Ligne fantôme servant uniquement à ancrer l'étiquette "Mon piano" à mi-hauteur
   // entre la courbe des blanches et celle des noires en vue éclatée.
@@ -308,10 +330,11 @@ function CustomTickTop(props: { x?: number; y?: number; dy?: number; payload?: {
 type TooltipEntry = { name?: string; value?: number; color?: string };
 function tooltipColorFor(name: string) {
   const lower = name.toLowerCase();
+  const isReference = lower.startsWith("cloud") || lower.startsWith("référence");
+  if (isReference) return lower.includes("blanches") ? "#fdba74" : "#f97316";
   if (lower.includes("noires")) return "#000000";
   if (lower.includes("blanches")) return "#6b7280";
   if (lower.includes("mon piano")) return "#000000";
-  if (lower.startsWith("cloud") || lower.startsWith("référence")) return "#f97316";
   return "#10b981";
 }
 
@@ -363,6 +386,19 @@ function currentLinesFor(familyId: string, keyFilter: KeyFilter): LineDef[] {
   return [{ dataKey: metric[0], name: "Mon piano", shortName: "Mon piano", color: "#000000", real: true }];
 }
 
+// La vue clavier pilote aussi la courbe de référence (Cloud ou CSV) : en vue éclatée
+// elle est scindée en blanches / noires exactement comme la courbe Live noire.
+function comparisonLinesFor(familyId: string, keyFilter: KeyFilter, name: string, short: string): LineDef[] {
+  const metrics: Record<string, [SeriesKey, SeriesKey, SeriesKey]> = { wa: ["sameWa", "sameWaW", "sameWaB"], wd: ["sameWd", "sameWdW", "sameWdB"], bal: ["sameBal", "sameBalW", "sameBalB"], fric: ["sameFric", "sameFricW", "sameFricB"] };
+  const metric = metrics[familyId];
+  if (!metric) return [];
+  if (keyFilter === "split") return [
+    { dataKey: metric[1], name: `${name} blanches`, shortName: `${short} blanches`, color: "#fdba74" },
+    { dataKey: metric[2], name: `${name} noires`, shortName: `${short} noires`, color: "#f97316" },
+  ];
+  return [{ dataKey: metric[0], name, shortName: short, color: "#f97316" }];
+}
+
 function firstDefinedIndex(data: ChartPoint[], key: SeriesKey) {
   return data.findIndex((point) => typeof point[key] === "number" && Number.isFinite(point[key] as number));
 }
@@ -395,11 +431,11 @@ function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShor
   const tooltipPosition = { x: Math.max(containerWidth - 200, 0), y: 8 };
 
   function SubChart({ family }: { family: (typeof FAMILIES)[number] }) {
-    // Renommage dynamique de la courbe orange : "Référence : [Marque] [Modèle] (CSV)" ou "Cloud".
-    const familyLines = family.lines.map((line) =>
-      line.name === "Cloud" ? { ...line, name: comparisonLabel, shortName: comparisonShort } : line,
-    );
-    const lines = [...currentLinesFor(family.id, keyFilter), ...familyLines];
+    // Renommage dynamique de la courbe orange : "Référence : ... (CSV)" ou "Cloud",
+    // scindée en blanches / noires quand la vue éclatée est active.
+    const referenceLines = comparisonLinesFor(family.id, keyFilter, comparisonLabel, comparisonShort);
+    const otherLines = family.lines.filter((line) => line.name !== "Cloud");
+    const lines = [...currentLinesFor(family.id, keyFilter), ...referenceLines, ...otherLines];
     // Chaque courbe est ancrée sur SON propre premier / dernier point défini
     // (indispensable en vue éclatée où blanches et noires ne partagent pas les mêmes index).
     const endpointOffsets = (side: "left" | "right") => new Map(
@@ -685,7 +721,7 @@ function Comparer() {
   const comparisonProfile = comparedPiano ?? (sourceMode === "cloud" ? cloudProfile : null);
   const comparedTime = comparedPiano?.measureTime ? ` - ${comparedPiano.measureTime}` : "";
   const comparisonLabel = comparedPiano
-    ? `Référence : (CSV) ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - ${summaryValue(comparedPiano.year)} - ${summaryValue(comparedPiano.serialNumber)} - Mesure ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime}`
+    ? `Référence : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - ${summaryValue(comparedPiano.year)} - SN ${summaryValue(comparedPiano.serialNumber)} - Mesure ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime} (CSV)`
     : "Cloud";
   const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
   const current = averageSet(chartData);
@@ -735,7 +771,7 @@ function Comparer() {
   }
 
   const mineTime = mine?.measureTime ? ` - ${mine.measureTime}` : "";
-  const summary = `${summaryValue(mine?.brand)}\u00A0\u00A0${summaryValue(mine?.model)} - ${summaryValue(mine?.year)} - ${summaryValue(mine?.serialNumber)} - Mesure ${formatMeasureDate(mine?.measureDate)}${mineTime}`;
+  const summary = `${summaryValue(mine?.brand)}\u00A0\u00A0${summaryValue(mine?.model)} - ${summaryValue(mine?.year)} - SN ${summaryValue(mine?.serialNumber)} - Mesure ${formatMeasureDate(mine?.measureDate)}${mineTime}`;
   const cloudIsEmpty = !comparedPiano && sourceMode === "cloud" && cloudSampleCount === 0;
   const cloudCounterText = cloudLoading
     ? "Calcul de la moyenne cloud…"

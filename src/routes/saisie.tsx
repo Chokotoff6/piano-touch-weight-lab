@@ -398,6 +398,8 @@ function Index() {
   const savedSerialRef = useRef<string>("");
   // Consentement RGPD : jamais persisté, toujours décoché quand le numéro change.
   const [consent, setConsent] = useState(false);
+  // Le consentement se coche désormais uniquement dans l'alerte jaune contextuelle.
+  const [consentPrompt, setConsentPrompt] = useState(false);
   const consentSerialRef = useRef("");
   // Photographie des 88 touches et du jour du dernier envoi cloud (seuil des 5 touches).
   const savedRowsRef = useRef<Row[]>([]);
@@ -837,10 +839,13 @@ function Index() {
         count: valid.length,
       };
     };
+    // Séparation stricte par couleur de touche sur l'intégralité des 88 notes.
+    const blackModulos = new Set([2, 5, 7, 10, 0]);
+    const isBlack = (index: number) => blackModulos.has((index + 1) % 12);
     return {
       global: calc(rows),
-      first: calc(rows.slice(0, 44)),
-      second: calc(rows.slice(44, 88)),
+      first: calc(rows.filter((_, index) => !isBlack(index))),
+      second: calc(rows.filter((_, index) => isBlack(index))),
     };
   }, [rows]);
 
@@ -962,6 +967,7 @@ function Index() {
     if (serial !== consentSerialRef.current) {
       consentSerialRef.current = serial;
       setConsent(false);
+      setConsentPrompt(false);
     }
     if (currentDbId && serial && serial !== savedSerialRef.current) {
       setCurrentDbId(null);
@@ -997,14 +1003,12 @@ function Index() {
       showTopbarAlert(anchor, OCTAVE_RULE_MESSAGE);
       return false;
     }
-    // Un numéro jamais envoyé dans cette session exige un consentement explicite.
+    // Un numéro jamais envoyé dans cette session exige un consentement explicite,
+    // coché directement dans l'alerte jaune contextuelle.
     const serial = (info["sn_num"] ?? "").trim();
     const known = Boolean(currentDbId) && serial.length > 0 && serial === savedSerialRef.current;
     if (!known && !consent) {
-      showTopbarAlert(
-        anchor,
-        "Action requise : Vous devez cocher la case de consentement RGPD pour partager anonymement ce nouveau piano et accéder au comparateur.",
-      );
+      setConsentPrompt(true);
       return false;
     }
     return true;
@@ -1830,18 +1834,8 @@ function Index() {
               />
             </label>
 
-            <label className="mt-4 flex items-start gap-2 sm:col-span-2 md:col-span-4">
-              <input
-                type="checkbox"
-                checked={consent}
-                onChange={(e) => setConsent(e.target.checked)}
-                className="mt-1 h-4 w-4"
-              />
-              <span className="text-sm font-medium text-black">
-                J'accepte de partager anonymement les mesures de ce piano pour alimenter la base
-                collaborative (RGPD).
-              </span>
-            </label>
+
+
 
             <input
               type="text"
@@ -1869,6 +1863,33 @@ function Index() {
           </div>
         </Frame>
       </div>
+      )}
+
+      {consentPrompt && (
+        <div
+          className="fixed left-1/2 top-24 w-[min(90vw,32rem)] -translate-x-1/2 rounded-md border border-yellow-300 px-4 py-3 text-sm font-medium text-gray-950 shadow-lg"
+          style={{ zIndex: 99999, backgroundColor: "rgba(254, 240, 138, 0.95)" }}
+        >
+          <p className="mb-2">
+            Action requise : ce numéro de série est nouveau. Cochez la case ci-dessous pour
+            autoriser le partage anonyme et accéder au comparateur.
+          </p>
+          <label className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => {
+                setConsent(e.target.checked);
+                if (e.target.checked) setConsentPrompt(false);
+              }}
+              className="mt-1 h-4 w-4"
+            />
+            <span>
+              J'accepte de partager anonymement les mesures de ce piano pour alimenter la base
+              collaborative (RGPD).
+            </span>
+          </label>
+        </div>
       )}
 
       {blockMessage && (
@@ -1960,9 +1981,9 @@ Moyennes{" "}
                 </span>
               </div>
               <div className="flex justify-center gap-2 text-[0.55rem] text-muted-foreground tabular-nums">
-                <span className="!text-xs font-medium">1-44</span>
+                <span className="!text-xs font-medium">Blanches</span>
                 <span className="invisible">/</span>
-                <span className="!text-xs font-medium">45-88</span>
+                <span className="!text-xs font-medium">Noires</span>
               </div>
             </div>
           ))}
