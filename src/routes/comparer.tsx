@@ -179,12 +179,6 @@ function seriesAverage(data: ChartPoint[], key: SeriesKey): string {
   return (values.reduce<number>((sum, value) => sum + value, 0) / values.length).toFixed(1);
 }
 
-function profileAverage(profile: RefProfile | null, key: keyof RefProfile): string {
-  const values = profile?.[key] ?? [];
-  const finite = values.filter((value) => typeof value === "number" && Number.isFinite(value));
-  if (finite.length === 0) return "—";
-  return (finite.reduce<number>((sum, value) => sum + value, 0) / finite.length).toFixed(1);
-}
 
 function averageProfiles(profiles: ProfileRecord[]): RefProfile | null {
   if (profiles.length === 0) return null;
@@ -494,39 +488,54 @@ const COLUMNS = [
   { key: "balance", label: "Balance" },
 ] as const;
 type MetricKey = (typeof COLUMNS)[number]["key"];
-type Averages = Record<MetricKey, string>;
 
-function MetricCell({ label, value, active = false }: { label: string; value: string; active?: boolean }) {
-  return <div className="rounded bg-muted px-2 py-1.5 text-center"><div className="!text-[1.1rem] font-bold tracking-wide text-muted-foreground">{label}</div><div className={`mt-1 !text-2xl !font-bold tabular-nums ${active ? "!text-orange-600" : ""}`} style={active ? { color: "#f97316" } : undefined}>{value === "—" ? <span className={active ? "" : "text-muted-foreground"}>—</span> : <>{value}<span className="!text-xs !font-medium"> g.</span></>}</div></div>;
-}
 
-function averageSet(chartData: ChartPoint[]): Averages {
-  return { wa: seriesAverage(chartData, "waCur"), wd: seriesAverage(chartData, "wdCur"), friction: seriesAverage(chartData, "fricCur"), balance: seriesAverage(chartData, "balCur") };
-}
-
-// Détail des moyennes par couleur de touche (calculées sur les 88 notes).
-const SPLIT_KEYS: Record<MetricKey, { cur: [SeriesKey, SeriesKey]; ref: [SeriesKey, SeriesKey] }> = {
-  wa: { cur: ["waCurW", "waCurB"], ref: ["sameWaW", "sameWaB"] },
-  wd: { cur: ["wdCurW", "wdCurB"], ref: ["sameWdW", "sameWdB"] },
-  friction: { cur: ["fricCurW", "fricCurB"], ref: ["sameFricW", "sameFricB"] },
-  balance: { cur: ["balCurW", "balCurB"], ref: ["sameBalW", "sameBalB"] },
-};
-
-function ColorAverageRows({ chartData, source, active = false }: { chartData: ChartPoint[]; source: "cur" | "ref"; active?: boolean }) {
-  const row = (label: string, pick: (keys: [SeriesKey, SeriesKey]) => SeriesKey) => (
-    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-1 text-[0.68rem]">
-      <span className={`font-bold uppercase tracking-wide ${active ? "text-orange-600" : "text-gray-600"}`}>{label}</span>
-      {COLUMNS.map(({ key, label: metricLabel }) => (
-        <span key={key} className="tabular-nums text-slate-600">
-          {metricLabel} <span className="font-semibold">{seriesAverage(chartData, pick(SPLIT_KEYS[key][source]))} g.</span>
-        </span>
-      ))}
+// Bloc de moyenne façon page Saisie : moyenne globale en grand + détail Blanches/Noires.
+function AverageBlock({ label, global, white, black, active = false }: { label: string; global: string; white: string; black: string; active?: boolean }) {
+  const val = (v: string) => v === "—" ? <span className="text-muted-foreground">—</span> : <>{v}<span className="!text-xs !font-medium"> gr.</span></>;
+  const sub = (v: string) => v === "—" ? "—" : <>{v}<span className="text-muted-foreground"> gr.</span></>;
+  return (
+    <div className="rounded bg-muted px-2 py-1.5 text-center">
+      <div className="!text-[1.1rem] font-bold tracking-wide text-muted-foreground">{label}</div>
+      <div className={`mt-1 !text-2xl !font-bold tabular-nums ${active ? "!text-orange-600" : ""}`} style={active ? { color: "#f97316" } : undefined}>{val(global)}</div>
+      <div className="mt-0.5 flex justify-center gap-2 text-[0.65rem] text-muted-foreground tabular-nums">
+        <span>{sub(white)}</span>
+        <span className="text-muted-foreground">/</span>
+        <span>{sub(black)}</span>
+      </div>
+      <div className="flex justify-center gap-2 text-[0.55rem] text-muted-foreground tabular-nums">
+        <span className="!text-xs font-medium">Blanches</span>
+        <span className="invisible">/</span>
+        <span className="!text-xs font-medium">Noires</span>
+      </div>
     </div>
   );
+}
+
+// Clés de séries par métrique : globale + blanches/noires pour chaque source.
+const AVG_KEYS: Record<MetricKey, { cur: [SeriesKey, SeriesKey, SeriesKey]; ref: [SeriesKey, SeriesKey, SeriesKey] }> = {
+  wa: { cur: ["waCur", "waCurW", "waCurB"], ref: ["sameWa", "sameWaW", "sameWaB"] },
+  wd: { cur: ["wdCur", "wdCurW", "wdCurB"], ref: ["sameWd", "sameWdW", "sameWdB"] },
+  friction: { cur: ["fricCur", "fricCurW", "fricCurB"], ref: ["sameFric", "sameFricW", "sameFricB"] },
+  balance: { cur: ["balCur", "balCurW", "balCurB"], ref: ["sameBal", "sameBalW", "sameBalB"] },
+};
+
+function AverageRow({ chartData, source, hasData, active = false }: { chartData: ChartPoint[]; source: "cur" | "ref"; hasData: boolean; active?: boolean }) {
   return (
-    <div className="mt-1.5 space-y-0.5">
-      {row("Blanches", (keys) => keys[0])}
-      {row("Noires", (keys) => keys[1])}
+    <div className="grid grid-cols-4 gap-3">
+      {COLUMNS.map(({ key, label }) => {
+        const [globalKey, whiteKey, blackKey] = AVG_KEYS[key][source];
+        return (
+          <AverageBlock
+            key={key}
+            label={label}
+            active={active}
+            global={hasData ? seriesAverage(chartData, globalKey) : "—"}
+            white={hasData ? seriesAverage(chartData, whiteKey) : "—"}
+            black={hasData ? seriesAverage(chartData, blackKey) : "—"}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -749,8 +758,6 @@ function Comparer() {
     ? `Référence : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - ${summaryValue(comparedPiano.year)} - SN ${summaryValue(comparedPiano.serialNumber)} - Mesure ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime} (CSV)`
     : "Cloud";
   const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
-  const current = averageSet(chartData);
-  const witness: Averages = { wa: profileAverage(comparisonProfile, "wa"), wd: profileAverage(comparisonProfile, "wd"), friction: profileAverage(comparisonProfile, "friction"), balance: profileAverage(comparisonProfile, "balance") };
 
   async function handleImport(file: File) {
     try {
@@ -812,8 +819,8 @@ function Comparer() {
             <div className="min-w-0">
               <div ref={averagesRef} className="sticky top-[127px] z-50 mb-[50px] w-full border-b border-border/60 bg-background pb-2 pt-2">
                 <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span>Moyennes</span>} className="h-fit">
-                  <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">Piano actuel : <span className="normal-case">{summary}</span></div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={current[key]} />)}</div><ColorAverageRows chartData={chartData} source="cur" /></div>
-                  <div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">{comparisonLabel}{!comparedPiano && <span className="ml-2 normal-case text-slate-500">{cloudCounterText}</span>}</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={comparisonProfile ? witness[key] : "—"} active />)}</div>{comparisonProfile && <ColorAverageRows chartData={chartData} source="ref" active />}{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div>
+                  <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">Piano actuel : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
+                  <div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">{comparisonLabel}{!comparedPiano && <span className="ml-2 normal-case text-slate-500">{cloudCounterText}</span>}</div><AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} active />{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div>
                 </Frame>
               </div>
               <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparisonLabel} comparisonShort={comparedPiano ? "Référence" : "Cloud"} />
