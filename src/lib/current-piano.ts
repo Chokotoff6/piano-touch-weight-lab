@@ -10,6 +10,8 @@ export type CurrentPiano = {
   serial_number: string;
   type_piano: string;
   mesure_date: string; // YYYY-MM-DD
+  /** Horodatage complet (ISO ou litéral DB) servant à afficher l'heure de saisie. */
+  created_at?: string | undefined;
   manufacture_year: number | null;
   climate_zone: string;
   maintenance_type: string;
@@ -31,6 +33,20 @@ const num = (value: string | number | null | undefined) => {
 
 const round1 = (value: number) => Number(value.toFixed(1));
 
+/**
+ * Extrait date (YYYY-MM-DD) et heure (hh:mm) d'un littéral de date/heure.
+ * Accepte : YYYY-MM-DD, YYYY-MM-DDTHH:mm(:ss)Z, YYYY-MM-DD HH:mm,
+ * DD-MM-YYYY, DD-MM-YYYY HH:mm.
+ */
+export function parseMeasureDateTime(raw: string | null | undefined): { date: string; time: string | null } {
+  const s = (raw ?? "").trim();
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if (m) return { date: `${m[1]}-${m[2]}-${m[3]}`, time: m[4] ? `${m[4]}:${m[5]}` : null };
+  m = s.match(/^(\d{2})-(\d{2})-(\d{4})(?: (\d{2}):(\d{2}))?/);
+  if (m) return { date: `${m[3]}-${m[2]}-${m[1]}`, time: m[4] ? `${m[4]}:${m[5]}` : null };
+  return { date: s, time: null };
+}
+
 /** Construit l'objet current_piano à partir des mesures brutes (88 lignes Wa/Wd). */
 export function buildCurrentPiano(input: {
   brand: string;
@@ -47,6 +63,8 @@ export function buildCurrentPiano(input: {
   wa: Array<string | number>;
   wd: Array<string | number>;
   mesureDate?: Date;
+  /** Littéral date/heure du fichier source (CSV) : sert à dater et horodater. */
+  mesureDateRaw?: string | undefined;
 }): CurrentPiano {
   const wa = input.wa.map(num);
   const wd = input.wd.map(num);
@@ -63,12 +81,20 @@ export function buildCurrentPiano(input: {
       : Number.NaN;
   });
   const date = input.mesureDate ?? new Date();
+  let mesure_date = date.toISOString().slice(0, 10);
+  let created_at: string | undefined;
+  if (input.mesureDateRaw) {
+    const parsed = parseMeasureDateTime(input.mesureDateRaw);
+    if (parsed.date) mesure_date = parsed.date;
+    if (parsed.time) created_at = `${parsed.date}T${parsed.time}`;
+  }
   return {
     brand: input.brand,
     model: input.model,
     serial_number: input.serial_number,
     type_piano: input.type_piano,
-    mesure_date: date.toISOString().slice(0, 10),
+    mesure_date,
+    created_at,
     manufacture_year: input.manufacture_year,
     climate_zone: input.climate_zone,
     maintenance_type: input.maintenance_type,
@@ -235,6 +261,7 @@ export async function loadCurrentPianoFromCloud(): Promise<CurrentPiano | null> 
       serial_number: String(row["serial_number"] ?? ""),
       type_piano: String(row["type_piano"] ?? ""),
       mesure_date: String(row["mesure_date"] ?? new Date().toISOString().slice(0, 10)),
+      created_at: row["created_at"] ? String(row["created_at"]) : undefined,
       manufacture_year:
         row["manufacture_year"] === null || row["manufacture_year"] === undefined
           ? null
