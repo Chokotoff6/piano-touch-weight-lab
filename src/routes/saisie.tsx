@@ -1401,6 +1401,11 @@ function Index() {
       return savedDateRef.current !== today || changedWeightCount() >= 5;
     };
     const startAction = (kind: "csv" | "pdf" | "compare") => {
+      // Priorité absolue : la ligne pivot 'PIANO_ACTUEL' est toujours actualisée
+      // dès le clic, avant l'arbitrage RGPD / modale.
+      if (canEnterWeights && orphanKeys.length === 0 && octaveGaps.length === 0) {
+        void pushBuffer();
+      }
       if (!guardExport(kind === "compare" ? "export" : "export")) return;
       if (requiresChoice()) {
         pendingExport.current = kind === "compare" ? null : kind;
