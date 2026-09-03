@@ -1252,10 +1252,6 @@ function Index() {
   }, [exportReady, requiredSheetFieldsComplete, badgeVisible, info, isExporting, isDirty, currentDbId]);
 
   useEffect(() => {
-    const exportCsvOnly = () => {
-      if (!guardExport("export")) return;
-      exportCsvFile();
-    };
     const saveCloud = () => {
       if (!guardExport()) return;
       if (currentDbId && isDirty) {
@@ -1268,23 +1264,20 @@ function Index() {
       if (!guardExport()) return;
       void syncAndFinish(currentDbId ? "update" : "insert");
     };
-    const onExport = () => {
-      exportCsvOnly();
-      saveCloud();
-    };
-    const onPdf = () => {
+    // Exporter = même algorithme de décision cloud que Comparer, puis
+    // téléchargement local du fichier une fois l'action cloud terminée.
+    const startExport = (kind: "csv" | "pdf") => {
       if (!guardExport("export")) return;
-      setIsExporting(true);
-      void exportPdfFile()
-        .catch(() => showTopbarAlert("export", "⚠️ La génération du rapport PDF a échoué."))
-        .finally(() => setIsExporting(false));
-      // Sauvegarde cloud simultanée (UPDATE ou INSERT selon l'état de la fiche).
       if (currentDbId && isDirty) {
+        pendingExport.current = kind;
         setAskUpdate(true);
         return;
       }
-      void syncAndFinish(currentDbId ? "update" : "insert");
+      void syncAndFinish(currentDbId ? "update" : "insert").finally(() => runLocalExport(kind));
     };
+    const exportCsvOnly = () => startExport("csv");
+    const onExport = () => startExport("csv");
+    const onPdf = () => startExport("pdf");
     const onCompareGuard = () => void navigate({ to: "/comparer" });
     const onReset = () => setConfirmReset("rows");
 
