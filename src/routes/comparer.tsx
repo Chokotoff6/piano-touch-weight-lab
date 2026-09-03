@@ -747,7 +747,7 @@ function Comparer() {
   }
 
   const mineTime = mine?.measureTime ? ` à ${mine.measureTime}` : "";
-  const summary = `${summaryValue(mine?.brand)}  ${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - Mesure du ${formatMeasureDate(mine?.measureDate)}${mineTime}`;
+  const summary = `${summaryValue(mine?.brand)}\u00A0\u00A0${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - Mesure du ${formatMeasureDate(mine?.measureDate)}${mineTime}`;
   const cloudIsEmpty = !comparedPiano && sourceMode === "cloud" && cloudSampleCount === 0;
 
   return (
