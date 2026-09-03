@@ -691,7 +691,9 @@ function Comparer() {
       const frame = document.querySelector('[data-frame="fric"]');
       if (!frame) return;
       const frameTop = frame.getBoundingClientRect().top + window.scrollY;
-      const limit = Math.max(0, Math.round(frameTop - (127 + averagesHeight)));
+      // -5 : laisse un fin filet d'air de 5 px entre le cadre « Moyennes »
+      // et le cadre « Friction mécanique ».
+      const limit = Math.max(0, Math.round(frameTop - (127 + averagesHeight) - 5));
       if (window.scrollY > limit) window.scrollTo(0, limit);
     };
     clamp();
