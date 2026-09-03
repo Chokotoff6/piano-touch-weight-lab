@@ -158,7 +158,7 @@ export function fromPgArray(value: unknown): number[] {
 export async function saveCurrentPianoToCloud(
   piano: CurrentPiano,
   historyId?: string | null,
-): Promise<{ ok: boolean; error?: string; id?: string }> {
+): Promise<{ ok: boolean; error?: string; id?: string | undefined }> {
   const payload = {
     brand: piano.brand,
     model: piano.model,
