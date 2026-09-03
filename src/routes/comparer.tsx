@@ -9,6 +9,7 @@ import {
   loadCurrentPianoFromCloud,
   saveCurrentPiano,
   upsertCurrentPianoBuffer,
+  CURRENT_PIANO_BUFFER_ID,
   fromPgArray,
   type CurrentPiano,
 } from "@/lib/current-piano";
@@ -634,7 +635,8 @@ function Comparer() {
         .from("piano_profiles")
         .select(PROFILE_FIELDS)
         .eq("model", mine.model)
-        .neq("serial_number", mine.serialNumber);
+        .neq("serial_number", mine.serialNumber)
+        .neq("serial_number", CURRENT_PIANO_BUFFER_ID);
       const climate = databaseClimate(mine.climate);
       if (sameClimate && climate) query = query.eq("climate_zone", climate);
       if (sameYear && mine.year !== null) query = query.eq("manufacture_year", mine.year);

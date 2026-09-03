@@ -1,7 +1,6 @@
 // Entité globale "current_piano" : source de vérité locale du piano mesuré.
 // Elle est écrite à la sauvegarde (page Saisie) et lue en priorité par /comparer.
 import { externalSupabase } from "@/integrations/external-supabase/client";
-import { supabase } from "@/integrations/supabase/client";
 
 export const CURRENT_PIANO_KEY = "current_piano";
 
