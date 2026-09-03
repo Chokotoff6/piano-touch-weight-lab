@@ -594,14 +594,11 @@ function Comparer() {
 
   useEffect(() => {
     const currentPiano = loadCurrentPiano();
-    if (currentPiano) {
-      setMine(profileFromCurrentPiano(currentPiano));
-      setStatus("ok");
-      return;
-    }
-    // Aucun profil de démonstration : Comparer attend une saisie locale validée.
-    setStatus("error");
+    if (currentPiano) setMine(profileFromCurrentPiano(currentPiano));
+    // La page reste accessible même sans mesure locale : l'import CSV peut la fournir.
+    setStatus("ok");
   }, []);
+
 
   useEffect(() => {
     let cancelled = false;
