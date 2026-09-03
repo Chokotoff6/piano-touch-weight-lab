@@ -396,8 +396,9 @@ function Index() {
   const pendingCompare = useRef(false);
   // Numéro de série effectivement enregistré : sert au CRITÈRE 1 (série inconnue → INSERT).
   const savedSerialRef = useRef<string>("");
-  // Consentement RGPD : jamais persisté, toujours décoché pour un nouveau numéro de série.
+  // Consentement RGPD : jamais persisté, toujours décoché quand le numéro change.
   const [consent, setConsent] = useState(false);
+  const consentSerialRef = useRef("");
   // Photographie des 88 touches et du jour du dernier envoi cloud (seuil des 5 touches).
   const savedRowsRef = useRef<Row[]>([]);
   const savedDateRef = useRef<string>("");
@@ -941,6 +942,10 @@ function Index() {
   // CRITÈRE 1 : un numéro de série inconnu pour la session force un INSERT propre.
   useEffect(() => {
     const serial = (info["sn_num"] ?? "").trim();
+    if (serial !== consentSerialRef.current) {
+      consentSerialRef.current = serial;
+      setConsent(false);
+    }
     if (currentDbId && serial && serial !== savedSerialRef.current) {
       setCurrentDbId(null);
     }
@@ -963,19 +968,26 @@ function Index() {
     const formIncomplete =
       !canEnterWeights ||
       (info["entretien"] === "Modifications importantes" && !(info["remarques"] ?? "").trim());
-    // PRIORITÉ 1 : fiche d'informations incomplète.
     if (formIncomplete) {
       showTopbarAlert(anchor, FORM_INCOMPLETE_MESSAGE);
       return false;
     }
-    // PRIORITÉ 2 : paire Wa/Wd incomplète sur au moins une touche.
     if (orphanKeys.length > 0) {
       showOrphanPopover(orphanKeys[0]!);
       return false;
     }
-    // PRIORITÉ 3 : règle d'octave non remplie (fiche complète uniquement).
     if (octaveGaps.length > 0) {
       showTopbarAlert(anchor, OCTAVE_RULE_MESSAGE);
+      return false;
+    }
+    // Un numéro jamais envoyé dans cette session exige un consentement explicite.
+    const serial = (info["sn_num"] ?? "").trim();
+    const known = Boolean(currentDbId) && serial.length > 0 && serial === savedSerialRef.current;
+    if (!known && !consent) {
+      showTopbarAlert(
+        anchor,
+        "Action requise : Vous devez cocher la case de consentement RGPD pour partager anonymement ce nouveau piano et accéder au comparateur.",
+      );
       return false;
     }
     return true;
@@ -1269,6 +1281,8 @@ function Index() {
         setCurrentDbId(id);
       }
       savedSerialRef.current = payload.numero_central ?? "";
+      savedDateRef.current = currentPiano.mesure_date;
+      savedRowsRef.current = rows.map((row) => ({ ...row }));
       markSubmission();
       setIsDirty(false);
       showTopbarAlert("save", mode === "update" ? SAVE_UPDATE_MESSAGE : SAVE_NEW_MESSAGE);
@@ -1307,42 +1321,46 @@ function Index() {
   }, [exportReady, requiredSheetFieldsComplete, badgeVisible, info, isExporting, isDirty, currentDbId]);
 
   useEffect(() => {
-    // Exporter = même algorithme de décision cloud que Comparer, puis
-    // téléchargement local du fichier une fois l'action cloud terminée.
-    // Critère 1 : aucun envoi connu pour ce numéro de série -> INSERT direct.
-    // Critères 2/3 : un envoi existe déjà -> la modale de choix est BLOQUANTE.
+    // Comparer et Exporter partagent exactement la même décision cloud.
     const alreadySent = () => {
       const serial = (info["sn_num"] ?? "").trim();
       return Boolean(currentDbId) && serial.length > 0 && serial === savedSerialRef.current;
     };
-    const startExport = (kind: "csv" | "pdf") => {
-      if (!guardExport("export")) return;
-      if (alreadySent()) {
-        pendingExport.current = kind;
-        pendingCompare.current = false;
+    const changedWeightCount = () => {
+      if (savedRowsRef.current.length !== 88) return 88;
+      return rows.reduce((count, row, index) => {
+        const saved = savedRowsRef.current[index];
+        if (!saved) return count + 1;
+        const waChanged = parseWeight(row.wa) !== parseWeight(saved.wa);
+        const wdChanged = parseWeight(row.wd) !== parseWeight(saved.wd);
+        return count + (waChanged || wdChanged ? 1 : 0);
+      }, 0);
+    };
+    const requiresChoice = () => {
+      if (!alreadySent()) return false;
+      const today = new Date().toISOString().slice(0, 10);
+      // Hors du même jour, on ne peut pas assimiler l'envoi à une simple correction.
+      return savedDateRef.current !== today || changedWeightCount() >= 5;
+    };
+    const startAction = (kind: "csv" | "pdf" | "compare") => {
+      if (!guardExport(kind === "compare" ? "export" : "export")) return;
+      if (requiresChoice()) {
+        pendingExport.current = kind === "compare" ? null : kind;
+        pendingCompare.current = kind === "compare";
         setAskUpdate(true);
         return;
       }
-      void syncAndFinish("insert").finally(() => runLocalExport(kind));
+      const mode = alreadySent() ? "update" : "insert";
+      void syncAndFinish(mode).finally(() => {
+        if (kind === "csv" || kind === "pdf") runLocalExport(kind);
+        if (kind === "compare") void navigate({ to: "/comparer" });
+      });
     };
-    const exportCsvOnly = () => startExport("csv");
-    const onExport = () => startExport("csv");
-    const onPdf = () => startExport("pdf");
-    const onCompareGuard = () => {
-      // Comparer applique le même arbitrage cloud, puis navigue avec le
-      // current_piano fraîchement reconstruit depuis l'écran.
-      if (!guardExport("export")) {
-        void navigate({ to: "/comparer" });
-        return;
-      }
-      if (alreadySent()) {
-        pendingExport.current = null;
-        pendingCompare.current = true;
-        setAskUpdate(true);
-        return;
-      }
-      void syncAndFinish("insert").finally(() => navigate({ to: "/comparer" }));
-    };
+    const onExport = () => startAction("csv");
+    const onPdf = () => startAction("pdf");
+    const onCompareGuard = () => startAction("compare");
+    const exportCsvOnly = () => startAction("csv");
+
 
 
     const onReset = () => setConfirmReset("rows");
@@ -2005,8 +2023,8 @@ Moyennes{" "}
           <AlertDialogHeader>
             <AlertDialogTitle>Un envoi existe déjà pour ce numéro de série</AlertDialogTitle>
             <AlertDialogDescription>
-              Option A — Correction : met à jour la fiche déjà envoyée.
-              Option B — Nouvelle régulation : crée un nouveau point d'historique.
+              Option A : Écraser la fiche actuelle (Correction de saisie).
+              Option B : Valider comme un nouvel état mécanique (Pensez à exporter votre CSV local).
             </AlertDialogDescription>
 
           </AlertDialogHeader>
@@ -2023,7 +2041,7 @@ Moyennes{" "}
                 });
               }}
             >
-              Option A — Correction (mise à jour)
+              Option A : Écraser la fiche actuelle (Correction de saisie)
             </AlertDialogAction>
             <AlertDialogAction
               onClick={() => {
@@ -2037,7 +2055,7 @@ Moyennes{" "}
                 });
               }}
             >
-              Option B — Nouvelle régulation (nouvel enregistrement)
+              Option B : Valider comme un nouvel état mécanique (Pensez à exporter votre CSV local)
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
