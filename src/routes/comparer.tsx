@@ -727,7 +727,8 @@ function Comparer() {
     setKeyFilter((value) => value === "all" ? "split" : "all");
   }
 
-  const summary = `${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - Mesure du ${formatMeasureDate(mine?.measureDate)}`;
+  const mineTime = mine?.measureTime ? ` à ${mine.measureTime}` : "";
+  const summary = `${summaryValue(mine?.brand)}  ${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - Mesure du ${formatMeasureDate(mine?.measureDate)}${mineTime}`;
   const cloudIsEmpty = !comparedPiano && sourceMode === "cloud" && cloudSampleCount === 0;
 
   return (
