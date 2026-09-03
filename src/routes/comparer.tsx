@@ -598,24 +598,29 @@ function Comparer() {
   }, [averagesHeight, status]);
 
   useEffect(() => {
-    // Source unique de la courbe Live (noire) : l'objet current_piano local.
-    // Aucun mockup de secours : si l'objet change (nouveau modèle / nouveau SN),
-    // l'écran se recale immédiatement.
-    const sync = () => {
-      const currentPiano = loadCurrentPiano();
-      setMine(currentPiano ? profileFromCurrentPiano(currentPiano) : null);
+    // Priorité absolue : la table cloud 'piano_actuel' (tampon de transfert).
+    // Le LocalStorage n'est qu'un secours hors ligne.
+    let cancelled = false;
+    const sync = async () => {
+      const cloudPiano = await loadCurrentPianoFromCloud();
+      if (cancelled) return;
+      const piano = cloudPiano ?? loadCurrentPiano();
+      setMine(piano ? profileFromCurrentPiano(piano) : null);
       setStatus("ok");
     };
-    sync();
-    window.addEventListener("focus", sync);
-    window.addEventListener("storage", sync);
-    document.addEventListener("visibilitychange", sync);
+    void sync();
+    const onEvent = () => void sync();
+    window.addEventListener("focus", onEvent);
+    window.addEventListener("storage", onEvent);
+    document.addEventListener("visibilitychange", onEvent);
     return () => {
-      window.removeEventListener("focus", sync);
-      window.removeEventListener("storage", sync);
-      document.removeEventListener("visibilitychange", sync);
+      cancelled = true;
+      window.removeEventListener("focus", onEvent);
+      window.removeEventListener("storage", onEvent);
+      document.removeEventListener("visibilitychange", onEvent);
     };
   }, []);
+
 
 
 
