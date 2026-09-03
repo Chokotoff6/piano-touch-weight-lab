@@ -7,8 +7,6 @@ import {
   buildCurrentPiano,
   loadCurrentPiano,
   loadCurrentPianoFromCloud,
-  saveCurrentPiano,
-  upsertCurrentPianoBuffer,
   CURRENT_PIANO_BUFFER_ID,
   fromPgArray,
   type CurrentPiano,
@@ -34,7 +32,7 @@ const isBlackKey = (noteIndex: number) => BLACK_MODULOS.has(noteIndex % 12);
 const PROFILE_FIELDS = "id,serial_number,brand,model,type_piano,mesure_date,manufacture_year,climate_zone,maintenance_type,ville,pays,remarques,wa_values,wd_values,friction_values,balance_values,usage_level,created_at";
 
 type KeyFilter = "all" | "split";
-type SourceMode = "none" | "cloud" | "import";
+type SourceMode = "none" | "cloud";
 type UsageLevel = "all" | "low" | "intensive";
 
 type RefProfile = {
