@@ -1002,14 +1002,12 @@ function Index() {
       showTopbarAlert(anchor, OCTAVE_RULE_MESSAGE);
       return false;
     }
-    // Un numéro jamais envoyé dans cette session exige un consentement explicite.
+    // Un numéro jamais envoyé dans cette session exige un consentement explicite,
+    // coché directement dans l'alerte jaune contextuelle.
     const serial = (info["sn_num"] ?? "").trim();
     const known = Boolean(currentDbId) && serial.length > 0 && serial === savedSerialRef.current;
     if (!known && !consent) {
-      showTopbarAlert(
-        anchor,
-        "Action requise : Vous devez cocher la case de consentement RGPD pour partager anonymement ce nouveau piano et accéder au comparateur.",
-      );
+      setConsentPrompt(true);
       return false;
     }
     return true;
