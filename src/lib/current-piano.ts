@@ -275,7 +275,7 @@ export async function loadCurrentPianoFromCloud(): Promise<CurrentPiano | null> 
     const { data, error } = await externalSupabase
       .from("piano_profiles")
       .select("*")
-      .eq("is_buffer", true)
+      .eq("id", CURRENT_PIANO_BUFFER_UUID)
       .maybeSingle();
     if (error || !data) return null;
     const row = data as Record<string, unknown>;
