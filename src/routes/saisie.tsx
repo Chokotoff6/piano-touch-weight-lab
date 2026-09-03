@@ -1998,7 +1998,7 @@ Moyennes{" "}
                 });
               }}
             >
-              Mettre à jour le diagnostic existant
+              Option A — Correction (mise à jour)
             </AlertDialogAction>
             <AlertDialogAction
               onClick={() => {
@@ -2012,7 +2012,7 @@ Moyennes{" "}
                 });
               }}
             >
-              Créer un nouveau point d'historique (Nouvelle pesée)
+              Option B — Nouvelle régulation (nouvel enregistrement)
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
