@@ -385,6 +385,19 @@ function currentLinesFor(familyId: string, keyFilter: KeyFilter): LineDef[] {
   return [{ dataKey: metric[0], name: "Mon piano", shortName: "Mon piano", color: "#000000", real: true }];
 }
 
+// La vue clavier pilote aussi la courbe de référence (Cloud ou CSV) : en vue éclatée
+// elle est scindée en blanches / noires exactement comme la courbe Live noire.
+function comparisonLinesFor(familyId: string, keyFilter: KeyFilter, name: string, short: string): LineDef[] {
+  const metrics: Record<string, [SeriesKey, SeriesKey, SeriesKey]> = { wa: ["sameWa", "sameWaW", "sameWaB"], wd: ["sameWd", "sameWdW", "sameWdB"], bal: ["sameBal", "sameBalW", "sameBalB"], fric: ["sameFric", "sameFricW", "sameFricB"] };
+  const metric = metrics[familyId];
+  if (!metric) return [];
+  if (keyFilter === "split") return [
+    { dataKey: metric[1], name: `${name} blanches`, shortName: `${short} blanches`, color: "#fdba74" },
+    { dataKey: metric[2], name: `${name} noires`, shortName: `${short} noires`, color: "#f97316" },
+  ];
+  return [{ dataKey: metric[0], name, shortName: short, color: "#f97316" }];
+}
+
 function firstDefinedIndex(data: ChartPoint[], key: SeriesKey) {
   return data.findIndex((point) => typeof point[key] === "number" && Number.isFinite(point[key] as number));
 }
