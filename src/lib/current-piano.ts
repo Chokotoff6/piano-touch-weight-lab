@@ -64,7 +64,7 @@ export function buildCurrentPiano(input: {
   wd: Array<string | number>;
   mesureDate?: Date;
   /** Littéral date/heure du fichier source (CSV) : sert à dater et horodater. */
-  mesureDateRaw?: string;
+  mesureDateRaw?: string | undefined;
 }): CurrentPiano {
   const wa = input.wa.map(num);
   const wd = input.wd.map(num);
