@@ -721,7 +721,7 @@ function Comparer() {
   const comparisonProfile = comparedPiano ?? (sourceMode === "cloud" ? cloudProfile : null);
   const comparedTime = comparedPiano?.measureTime ? ` - ${comparedPiano.measureTime}` : "";
   const comparisonLabel = comparedPiano
-    ? `Référence : (CSV) ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - ${summaryValue(comparedPiano.year)} - ${summaryValue(comparedPiano.serialNumber)} - Mesure ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime}`
+    ? `Référence : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - ${summaryValue(comparedPiano.year)} - SN ${summaryValue(comparedPiano.serialNumber)} - Mesure ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime} (CSV)`
     : "Cloud";
   const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
   const current = averageSet(chartData);
