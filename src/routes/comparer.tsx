@@ -658,8 +658,10 @@ function Comparer() {
       if (!mine || sourceMode !== "cloud") {
         setCloudProfile(null);
         setCloudSampleCount(0);
+        setCloudLoading(false);
         return;
       }
+      setCloudLoading(true);
       let query = externalSupabase
         .from("piano_profiles")
         .select(PROFILE_FIELDS)
