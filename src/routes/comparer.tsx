@@ -62,27 +62,36 @@ type ChartPoint = {
   waCurW: number | undefined;
   waCurB: number | undefined;
   sameWa: number | undefined;
+  sameWaW: number | undefined;
+  sameWaB: number | undefined;
   stdWa: number | undefined;
   wdCur: number | undefined;
   wdCurW: number | undefined;
   wdCurB: number | undefined;
   sameWd: number | undefined;
+  sameWdW: number | undefined;
+  sameWdB: number | undefined;
   stdWd: number | undefined;
   balCur: number | undefined;
   balCurW: number | undefined;
   balCurB: number | undefined;
   sameBal: number | undefined;
+  sameBalW: number | undefined;
+  sameBalB: number | undefined;
   factoryBal: number | undefined;
   fricCur: number | undefined;
   fricCurW: number | undefined;
   fricCurB: number | undefined;
   sameFric: number | undefined;
+  sameFricW: number | undefined;
+  sameFricB: number | undefined;
   factoryFric: number | undefined;
   waMid: number | undefined;
   wdMid: number | undefined;
   balMid: number | undefined;
   fricMid: number | undefined;
 };
+
 
 type SeriesKey = keyof Omit<ChartPoint, "key" | "isBlack">;
 const n1 = (value: number) => Number(value.toFixed(1));
