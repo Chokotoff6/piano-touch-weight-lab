@@ -52,6 +52,7 @@ type ProfileRecord = RefProfile & {
   maintenance: string | null;
   usageLevel: string | null;
   measureDate: string | null;
+  measureTime: string | null;
 };
 
 type ChartPoint = {
