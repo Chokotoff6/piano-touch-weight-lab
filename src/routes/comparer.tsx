@@ -3,7 +3,12 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
-import { loadCurrentPiano, type CurrentPiano } from "@/lib/current-piano";
+import {
+  buildCurrentPiano,
+  loadCurrentPiano,
+  saveCurrentPiano,
+  type CurrentPiano,
+} from "@/lib/current-piano";
 import {
   externalSupabase,
   type ExternalPianoProfileRow,
