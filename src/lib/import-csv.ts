@@ -38,56 +38,115 @@ const parseLine = (line: string) => {
   return values.map(unquote);
 };
 
-const REQUIRED_EXPORT_HEADERS = ["Touche", "Wa (g)", "Wd (g)"];
-const REQUIRED_TECH_HEADERS = ["note_index", "wa", "wd"];
+const normalize = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
 
-function looksLikeExportHeader(values: string[]) {
-  return REQUIRED_EXPORT_HEADERS.every((h) => values.includes(h));
+/** Retire les suffixes entre parenthèses : "Wa (g)" -> "wa". */
+const headerKey = (value: string) => normalize(value.replace(/\(.*?\)/g, ""));
+
+const startsWithAny = (value: string, prefixes: string[]) =>
+  prefixes.some((prefix) => value.startsWith(prefix));
+
+const findColumn = (headers: string[], prefixes: string[]) =>
+  headers.findIndex((header) => startsWithAny(header, prefixes));
+
+const INDEX_PREFIXES = ["touche", "note"];
+const WA_PREFIXES = ["wa", "poids descendant"];
+const WD_PREFIXES = ["wd", "poids ascendant"];
+const FRICTION_PREFIXES = ["friction"];
+
+type Columns = { index: number; wa: number; wd: number; friction: number };
+
+function detectColumns(values: string[]): Columns | null {
+  const headers = values.map(headerKey);
+  const index = findColumn(headers, INDEX_PREFIXES);
+  const wa = findColumn(headers, WA_PREFIXES);
+  const wd = findColumn(headers, WD_PREFIXES);
+  if (index === -1 || wa === -1 || wd === -1) return null;
+  return { index, wa, wd, friction: findColumn(headers, FRICTION_PREFIXES) };
 }
 
-function looksLikeTechnicalHeader(values: string[]) {
-  return REQUIRED_TECH_HEADERS.every((h) => values.includes(h));
+/** Clés canoniques des métadonnées, repérées par mots-clés. */
+const META_ALIASES: { key: string; match: string[] }[] = [
+  { key: "brand", match: ["marque", "brand"] },
+  { key: "model", match: ["modele", "model"] },
+  { key: "serial_number", match: ["numero de serie", "serial"] },
+  { key: "manufacture_year", match: ["date de fabrication", "annee de fabrication", "manufacture"] },
+  { key: "maintenance_type", match: ["type d'entretien", "type dentretien", "maintenance"] },
+  { key: "type_piano", match: ["type de piano"] },
+  { key: "climate_zone", match: ["zone climatique", "climate"] },
+  { key: "ville", match: ["ville", "city"] },
+  { key: "pays", match: ["pays", "country"] },
+  { key: "remarques", match: ["remarque"] },
+  { key: "mesure_date", match: ["date et heure de saisie", "date de mesure"] },
+];
+
+function canonicalMetaKey(label: string): string | null {
+  const normalized = normalize(label);
+  for (const alias of META_ALIASES) {
+    if (alias.match.some((needle) => normalized.startsWith(needle))) return alias.key;
+  }
+  return null;
 }
+
+const toNumber = (value: string | undefined) => {
+  const raw = (value ?? "").trim().replace(",", ".");
+  if (raw === "") return Number.NaN;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
+};
 
 export function parseDiagnosticCsv(content: string): ImportedDiagnostic {
   const lines = content.replace(/^\uFEFF/, "").split(/\r?\n/);
   const meta: Record<string, string> = {};
+  const fields: Record<string, string> = {};
   let headerIndex = -1;
-  let headerType: "export" | "technical" | null = null;
+  let columns: Columns | null = null;
 
   for (let index = 0; index < lines.length; index += 1) {
     const values = parseLine(lines[index] ?? "");
-    if (!headerType && values.length >= 3) {
-      if (looksLikeExportHeader(values)) {
+    if (!columns && values.length >= 3) {
+      const detected = detectColumns(values);
+      if (detected) {
         headerIndex = index;
-        headerType = "export";
-      } else if (looksLikeTechnicalHeader(values)) {
-        headerIndex = index;
-        headerType = "technical";
+        columns = detected;
+        continue;
       }
     }
     if (headerIndex === -1 && values[0]?.trim() && values.length >= 2) {
-      meta[values[0]] = values.slice(1).join(";");
+      const label = values[0].trim();
+      const value = values.slice(1).join(";").trim();
+      meta[label] = value;
+      const canonical = canonicalMetaKey(label);
+      if (canonical && value) fields[canonical] = value;
     }
   }
 
-  if (headerIndex === -1 || headerType === null) throw new Error("INVALID_CSV");
-
-  const headerValues = parseLine(lines[headerIndex] ?? "");
-  const indexCol = headerType === "export" ? headerValues.indexOf("Touche") : headerValues.indexOf("note_index");
-  const waCol = headerType === "export" ? headerValues.indexOf("Wa (g)") : headerValues.indexOf("wa");
-  const wdCol = headerType === "export" ? headerValues.indexOf("Wd (g)") : headerValues.indexOf("wd");
-  if (indexCol === -1 || waCol === -1 || wdCol === -1) throw new Error("INVALID_CSV");
+  if (headerIndex === -1 || !columns) throw new Error("INVALID_CSV");
 
   // Pas de filtrage par couleur de touche : les 88 lignes sont toutes importées.
   const rows = Array.from({ length: 88 }, () => ({ wa: "", wd: "" }));
+  const friction = Array.from({ length: 88 }, () => Number.NaN);
+  let count = 0;
   for (const rawLine of lines.slice(headerIndex + 1)) {
     const values = parseLine(rawLine);
-    if (values.length <= Math.max(indexCol, waCol, wdCol)) continue;
-    const key = Number(values[indexCol]?.trim());
+    if (values.length <= Math.max(columns.index, columns.wa, columns.wd)) continue;
+    const key = Number((values[columns.index] ?? "").trim());
     if (!Number.isInteger(key) || key < 1 || key > 88) continue;
-    rows[key - 1] = { wa: values[waCol] ?? "", wd: values[wdCol] ?? "" };
+    rows[key - 1] = { wa: (values[columns.wa] ?? "").trim(), wd: (values[columns.wd] ?? "").trim() };
+    if (columns.friction !== -1) {
+      const value = toNumber(values[columns.friction]);
+      friction[key - 1] = Number.isFinite(value) ? Math.abs(value) : Number.NaN;
+    }
+    count += 1;
   }
 
-  return { meta, rows };
+  if (count === 0) throw new Error("INVALID_CSV");
+
+  return { meta, fields, rows, friction };
 }
+
