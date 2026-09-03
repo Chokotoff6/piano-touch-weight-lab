@@ -155,9 +155,6 @@ function RootComponent() {
     window.dispatchEvent(new CustomEvent(type, { bubbles: true }));
   };
 
-  /** Le bouton Sauver reste visuellement actif : blanc au repos, sombre dès qu'il y a des modifications. */
-  const saveDisabled = !isSaisie || topbar.isExporting;
-
   return (
     <QueryClientProvider client={queryClient}>
       <nav className="!sticky !top-0 !z-[50] !bg-white !shadow-md border-b border-border">
