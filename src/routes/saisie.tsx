@@ -967,6 +967,7 @@ function Index() {
     if (serial !== consentSerialRef.current) {
       consentSerialRef.current = serial;
       setConsent(false);
+      setConsentPrompt(false);
     }
     if (currentDbId && serial && serial !== savedSerialRef.current) {
       setCurrentDbId(null);
