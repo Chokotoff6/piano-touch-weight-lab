@@ -783,9 +783,11 @@ function Comparer() {
   const cloudIsEmpty = cloudActive && cloudSampleCount === 0;
   const cloudCounterText = cloudLoading
     ? "Calcul de la moyenne cloud…"
-    : cloudSampleCount <= 1
-      ? "Aucun instrument similaire enregistré"
-      : `Moyennes sur ${cloudSampleCount} pianos de modèle identique enregistré(s) par les utilisateurs`;
+    : cloudSampleCount === 0
+      ? ""
+      : cloudSampleCount === 1
+        ? "Moyennes d'un 1 piano de modèle identique enregistré par les utilisateurs"
+        : `Moyennes sur ${cloudSampleCount} pianos de modèle identique enregistrés par les utilisateurs`;
 
 
   return (
@@ -799,7 +801,7 @@ function Comparer() {
           <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-stretch gap-6">
             <div className="min-w-0">
               
-              <div ref={averagesRef} className="sticky top-[77px] z-50 mb-[50px] w-full border-b border-border/60 bg-background pb-2 pt-[50px]">
+              <div ref={averagesRef} className="sticky top-[127px] z-50 mb-[50px] w-full border-b border-border/60 bg-background pb-2">
                 <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span>Moyennes</span>} className="h-fit">
                   <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-black">Piano actuel : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
                   <div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">{comparisonLabel}{cloudActive && <span className="ml-2 normal-case text-orange-600">{cloudCounterText}</span>}</div><AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} active />{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div>
