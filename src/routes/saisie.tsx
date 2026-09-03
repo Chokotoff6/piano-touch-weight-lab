@@ -1237,8 +1237,12 @@ function Index() {
     try {
       const cloudResult = await saveCurrentPianoToCloud(currentPiano);
       if (!cloudResult.ok) {
-        toast.error(`Échec de l'enregistrement cloud : ${cloudResult.error ?? "erreur réseau"}`, { id: toastId });
-        showMessage("La sauvegarde cloud a échoué. Les données locales restent disponibles dans Comparer.");
+        toast.error(`Erreur de base de données : ${cloudResult.error ?? "erreur réseau"}`, {
+          id: toastId,
+          duration: 12000,
+        });
+        showMessage(`Erreur de base de données : ${cloudResult.error ?? "erreur réseau"}`);
+
       } else {
         toast.success(
           mode === "update"
