@@ -402,6 +402,7 @@ function Index() {
   // Photographie des 88 touches et du jour du dernier envoi cloud (seuil des 5 touches).
   const savedRowsRef = useRef<Row[]>([]);
   const savedDateRef = useRef<string>("");
+  const CLOUD_SESSION_STATE_KEY = "ptw_cloud_session_state";
 
   const [isExporting, setIsExporting] = useState(false);
   const importInputRef = useRef<HTMLInputElement | null>(null);
@@ -454,6 +455,22 @@ function Index() {
           usage_level: saved.usage_level ?? "",
           remarques: saved.remarques ?? "",
         });
+      }
+    } catch {
+      /* stockage indisponible */
+    }
+    // Le consentement n'est jamais restauré. Seul l'état technique de l'envoi
+    // du numéro courant est conservé pour appliquer le seuil lors d'un retour depuis Comparer.
+    try {
+      const rawCloudState = window.sessionStorage.getItem(CLOUD_SESSION_STATE_KEY);
+      const cloudState = rawCloudState
+        ? (JSON.parse(rawCloudState) as { id?: string; serial?: string; date?: string; rows?: Row[] })
+        : null;
+      if (cloudState?.id && cloudState.serial) {
+        setCurrentDbId(cloudState.id);
+        savedSerialRef.current = cloudState.serial;
+        savedDateRef.current = cloudState.date ?? "";
+        savedRowsRef.current = Array.isArray(cloudState.rows) ? cloudState.rows : [];
       }
     } catch {
       /* stockage indisponible */
@@ -1283,6 +1300,19 @@ function Index() {
       savedSerialRef.current = payload.numero_central ?? "";
       savedDateRef.current = currentPiano.mesure_date;
       savedRowsRef.current = rows.map((row) => ({ ...row }));
+      try {
+        window.sessionStorage.setItem(
+          CLOUD_SESSION_STATE_KEY,
+          JSON.stringify({
+            id: mode === "update" ? currentDbId : getFingerprint(),
+            serial: savedSerialRef.current,
+            date: savedDateRef.current,
+            rows: savedRowsRef.current,
+          }),
+        );
+      } catch {
+        /* stockage indisponible */
+      }
       markSubmission();
       setIsDirty(false);
       showTopbarAlert("save", mode === "update" ? SAVE_UPDATE_MESSAGE : SAVE_NEW_MESSAGE);
@@ -1380,7 +1410,7 @@ function Index() {
     Object.entries(handlers).forEach(([type, fn]) => window.addEventListener(type, fn));
     return () =>
       Object.entries(handlers).forEach(([type, fn]) => window.removeEventListener(type, fn));
-  }, [rows, info, currentDbId, isDirty, honeypot, climateZone, profile]);
+  }, [rows, info, currentDbId, isDirty, honeypot, climateZone, profile, consent]);
 
   // --- Rendu : champ de saisie d'un poids (Wa ou Wd) ------------------------------
 
