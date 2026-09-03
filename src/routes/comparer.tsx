@@ -488,6 +488,8 @@ type SidebarPanelProps = {
   cloudEnabled: boolean;
   standardEnabled: boolean;
   csvActive: boolean;
+  cloudSampleCount: number;
+  cloudLoading: boolean;
   onToggleCloud: () => void;
   onToggleStandard: () => void;
   onImport: (file: File) => void;
