@@ -26,7 +26,7 @@ import { buildCsv, buildExportFilename, downloadCsv, formatLocalDateTime } from 
 import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { generateLandscapeReport } from "@/lib/pdf-report";
 import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
-import { buildCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud } from "@/lib/current-piano";
+import { buildCurrentPiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, CURRENT_PIANO_KEY } from "@/lib/current-piano";
 
 const INVALID_CSV_MESSAGE =
   "⚠️ Fichier non valide. Veuillez importer un fichier CSV généré par l'application Piano Touch Analyzer.";
@@ -70,6 +70,7 @@ type Row = { wa: string; wd: string };
 const EMPTY: Row[] = Array.from({ length: 88 }, () => ({ wa: "", wd: "" }));
 
 const DRAFT_ROWS_KEY = "ptw_draft_rows";
+const DRAFT_INFO_KEY = "ptw_draft_info";
 
 const FORM_INCOMPLETE_MESSAGE =
   "⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de sauver.";
@@ -403,11 +404,42 @@ function Index() {
 
   const draftLoaded = useRef(false);
   useEffect(() => {
+    // Hydratation au démarrage : le brouillon local prime, sinon current_piano.
+    const saved = loadCurrentPiano();
     try {
       const raw = window.localStorage.getItem(DRAFT_ROWS_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Row[];
-        if (Array.isArray(parsed) && parsed.length === 88) setRows(parsed);
+      const parsed = raw ? (JSON.parse(raw) as Row[]) : null;
+      if (Array.isArray(parsed) && parsed.length === 88 && parsed.some((r) => r.wa || r.wd)) {
+        setRows(parsed);
+      } else if (saved && Array.isArray(saved.wa_values) && saved.wa_values.length === 88) {
+        setRows(
+          saved.wa_values.map((wa, i) => ({
+            wa: Number.isFinite(wa) ? String(wa) : "",
+            wd: Number.isFinite(saved.wd_values?.[i]) ? String(saved.wd_values[i]) : "",
+          })),
+        );
+      }
+    } catch {
+      /* stockage indisponible */
+    }
+    try {
+      const rawInfo = window.localStorage.getItem(DRAFT_INFO_KEY);
+      const parsedInfo = rawInfo ? (JSON.parse(rawInfo) as Record<string, string>) : null;
+      if (parsedInfo && typeof parsedInfo === "object" && Object.keys(parsedInfo).length > 0) {
+        setInfo(parsedInfo);
+      } else if (saved) {
+        setInfo({
+          marque: saved.brand ?? "",
+          modele: saved.model ?? "",
+          type_piano: saved.type_piano ?? "",
+          sn_num: saved.serial_number ?? "",
+          fabrication: saved.manufacture_year ? String(saved.manufacture_year) : "",
+          pays: saved.pays ?? "",
+          ville: saved.ville ?? "",
+          entretien: saved.maintenance_type ?? "",
+          usage_level: saved.usage_level ?? "",
+          remarques: saved.remarques ?? "",
+        });
       }
     } catch {
       /* stockage indisponible */
@@ -423,6 +455,16 @@ function Index() {
       /* stockage indisponible */
     }
   }, [rows]);
+
+  // Miroir continu des métadonnées : chaque frappe est persistée immédiatement.
+  useEffect(() => {
+    if (!draftLoaded.current) return;
+    try {
+      window.localStorage.setItem(DRAFT_INFO_KEY, JSON.stringify(info));
+    } catch {
+      /* stockage indisponible */
+    }
+  }, [info]);
 
   // --- États dérivés ---------------------------------------------------------
 
@@ -590,6 +632,11 @@ function Index() {
 
   /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
   const resetInfo = () => {
+    try {
+      window.localStorage.removeItem(DRAFT_INFO_KEY);
+    } catch {
+      /* stockage indisponible */
+    }
     setInfo({});
     setClimateZone(null);
     setCurrentDbId(null);
@@ -1814,7 +1861,7 @@ Moyennes{" "}
           {confirmReset === "rows" && (
             <div className="absolute bottom-full left-1/2 mb-2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-yellow-300 !bg-[#fef08a] px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
               <span>Voulez-vous effacer toutes les données de poids saisies ?</span>
-              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { setRows(EMPTY); setConfirmReset(null); }}>Oui</button>
+              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setConfirmReset(null); }}>Oui</button>
               <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
             </div>
           )}
