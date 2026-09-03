@@ -39,6 +39,7 @@ import {
   type DiagnosticHistoryRow,
 } from "@/lib/diagnostics";
 import { getTopbarState, setTopbarState, showTopbarAlert } from "@/lib/topbar-store";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -930,6 +931,14 @@ function Index() {
       </span>
     );
   };
+
+  // CRITÈRE 1 : un numéro de série inconnu pour la session force un INSERT propre.
+  useEffect(() => {
+    const serial = (info["sn_num"] ?? "").trim();
+    if (currentDbId && serial && serial !== savedSerialRef.current) {
+      setCurrentDbId(null);
+    }
+  }, [info, currentDbId]);
 
   // --- Gate global (navigation Comparer) ----------------------------------------
 
