@@ -169,6 +169,8 @@ const MAINTENANCE_OPTIONS = [
   "Modifications importantes",
 ] as const;
 
+const USAGE_OPTIONS = ["Low", "Medium", "Intensive"] as const;
+
 const BLACK_RATIO = 0.605;
 
 // décalages réels des touches noires (en largeur de touche blanche),
@@ -946,6 +948,7 @@ function Index() {
       "Zone climatique": climateZone !== null ? String(climateZone) : "",
       "Profil d'usine": profile.label,
       "Type d'entretien": info["entretien"] ?? "",
+      usage_level: info["usage_level"] ?? "",
       Remarques: info["remarques"] ?? "",
       "Date et heure de saisie": new Date().toISOString(),
     };
