@@ -1914,7 +1914,13 @@ Moyennes{" "}
       </div>
 
 
-      <AlertDialog open={askUpdate} onOpenChange={setAskUpdate}>
+      <AlertDialog
+        open={askUpdate}
+        onOpenChange={(open) => {
+          setAskUpdate(open);
+          if (!open) pendingExport.current = null;
+        }}
+      >
         <AlertDialogContent className="w-full max-w-xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Un diagnostic existe déjà pour cette session</AlertDialogTitle>
