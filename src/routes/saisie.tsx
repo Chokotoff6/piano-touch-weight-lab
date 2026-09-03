@@ -26,7 +26,7 @@ import { buildCsv, buildExportFilename, downloadCsv, formatLocalDateTime } from 
 import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { generateLandscapeReport } from "@/lib/pdf-report";
 import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
-import { buildCurrentPiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, CURRENT_PIANO_KEY } from "@/lib/current-piano";
+import { buildCurrentPiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, findHistoryProfileId, CURRENT_PIANO_KEY } from "@/lib/current-piano";
 
 const INVALID_CSV_MESSAGE =
   "⚠️ Fichier non valide. Veuillez importer un fichier CSV généré par l'application Piano Touch Analyzer.";
@@ -2105,7 +2105,8 @@ Moyennes{" "}
                 const kind = pendingExport.current;
                 const compare = pendingCompare.current;
                 pendingCompare.current = false;
-                void syncAndFinish("update").finally(() => {
+                void syncAndFinish("update").then((ok) => {
+                  if (!ok) return;
                   if (kind) runLocalExport(kind);
                   if (compare) void navigate({ to: "/comparer" });
                 });
@@ -2119,7 +2120,8 @@ Moyennes{" "}
                 const compare = pendingCompare.current;
                 pendingCompare.current = false;
                 setCurrentDbId(null);
-                void syncAndFinish("insert").finally(() => {
+                void syncAndFinish("insert").then((ok) => {
+                  if (!ok) return;
                   if (kind) runLocalExport(kind);
                   if (compare) void navigate({ to: "/comparer" });
                 });
