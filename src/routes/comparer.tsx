@@ -540,6 +540,32 @@ function AverageRow({ chartData, source, hasData, active = false }: { chartData:
   );
 }
 
+// Rangée Standard : valeur globale théorique centrée, sans détail Blanches/Noires.
+const STD_KEYS: { key: MetricKey; globalKey: SeriesKey }[] = [
+  { key: "wa", globalKey: "stdWa" },
+  { key: "wd", globalKey: "stdWd" },
+  { key: "friction", globalKey: "factoryFric" },
+  { key: "balance", globalKey: "factoryBal" },
+];
+function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
+  return (
+    <div className="grid grid-cols-4 gap-3">
+      {STD_KEYS.map(({ key, globalKey }) => {
+        const { label } = COLUMNS.find((col) => col.key === key)!;
+        const value = seriesAverage(chartData, globalKey);
+        return (
+          <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
+            <div className="!text-[1.1rem] font-bold tracking-wide text-muted-foreground">{label}</div>
+            <div className="mt-1 !text-2xl !font-bold tabular-nums" style={{ color: "#10b981" }}>
+              {value === "—" ? <span className="text-muted-foreground">—</span> : <>{value}<span className="!text-xs !font-medium"> gr.</span></>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 const PILL_BASE = "h-7 min-w-0 flex-1 rounded-full border px-1.5 text-[0.68rem] leading-tight transition-colors whitespace-nowrap";
 const pillClass = (active: boolean) => `${PILL_BASE} ${active ? "border-gray-300 bg-gray-100 font-semibold text-slate-700" : "border-gray-200 bg-white text-gray-400 hover:border-gray-300 hover:text-gray-500"}`;
 
