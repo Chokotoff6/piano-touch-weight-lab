@@ -657,32 +657,6 @@ function Comparer() {
     return () => observer.disconnect();
   }, [status]);
 
-  useEffect(() => {
-    if (status !== "ok" || averagesHeight <= 0) return;
-    const averages = averagesRef.current;
-    const balance = document.querySelector<HTMLElement>('[data-frame="bal"]');
-    if (!averages || !balance) return;
-
-    const getScrollLimit = () => {
-      const balanceBottom = balance.getBoundingClientRect().bottom + window.scrollY;
-      const averagesBottom = averages.getBoundingClientRect().bottom;
-      return Math.max(0, balanceBottom - averagesBottom);
-    };
-    const clampScroll = () => {
-      const limit = getScrollLimit();
-      if (window.scrollY > limit) window.scrollTo({ top: limit, behavior: "auto" });
-    };
-    const stopPastBalance = (event: WheelEvent) => {
-      if (event.deltaY > 0 && window.scrollY >= getScrollLimit() - 1) event.preventDefault();
-    };
-    window.addEventListener("scroll", clampScroll, { passive: true });
-    window.addEventListener("wheel", stopPastBalance, { passive: false });
-    clampScroll();
-    return () => {
-      window.removeEventListener("scroll", clampScroll);
-      window.removeEventListener("wheel", stopPastBalance);
-    };
-  }, [averagesHeight, status]);
 
   useEffect(() => {
     // Priorité absolue : la ligne pivot 'PIANO_ACTUEL' de piano_profiles (tampon cloud).
