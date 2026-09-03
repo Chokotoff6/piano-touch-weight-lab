@@ -1298,27 +1298,34 @@ function Index() {
     saveCurrentPiano(currentPiano);
     const toastId = toast.loading("Enregistrement en cours dans Supabase…");
     try {
-      // Tampon de transfert universel : toujours mis à jour, indépendant du navigateur.
+      // Étape 1 — Buffer unique : écrasement de la ligne is_buffer=true. Tout échec bloque la suite.
       const bufferResult = await upsertCurrentPianoBuffer(currentPiano);
       if (!bufferResult.ok) {
+        toast.error(`Erreur de base de données (buffer) : ${bufferResult.error ?? "erreur réseau"}`, {
+          id: toastId,
+          duration: 12000,
+        });
         showMessage(`Erreur de base de données (PIANO_ACTUEL) : ${bufferResult.error ?? "erreur réseau"}`);
+        return false;
       }
-      const cloudResult = await saveCurrentPianoToCloud(currentPiano);
+      // Étape 2 — Historique : fiche is_buffer=false, avec son propre ID (update si déjà archivée).
+      const historyId =
+        mode === "update" ? await findHistoryProfileId(currentPiano.serial_number) : null;
+      const cloudResult = await saveCurrentPianoToCloud(currentPiano, historyId);
       if (!cloudResult.ok) {
         toast.error(`Erreur de base de données : ${cloudResult.error ?? "erreur réseau"}`, {
           id: toastId,
           duration: 12000,
         });
         showMessage(`Erreur de base de données : ${cloudResult.error ?? "erreur réseau"}`);
-
-      } else {
-        toast.success(
-          mode === "update"
-            ? "Profil mis à jour dans piano_profiles."
-            : "Nouveau profil inséré dans piano_profiles.",
-          { id: toastId },
-        );
+        return false;
       }
+      toast.success(
+        historyId
+          ? "Profil mis à jour dans piano_profiles."
+          : "Nouveau profil inséré dans piano_profiles.",
+        { id: toastId },
+      );
       if (mode === "update" && currentDbId) {
         await updateDiagnostic(currentDbId, payload);
       } else {
