@@ -748,8 +748,13 @@ function Comparer() {
   }
 
   const mineTime = mine?.measureTime ? ` - ${mine.measureTime}` : "";
-  const summary = `${summaryValue(mine?.brand)}\u00A0\u00A0${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - mesure ${formatMeasureDate(mine?.measureDate)}${mineTime}`;
+  const summary = `${summaryValue(mine?.brand)}\u00A0\u00A0${summaryValue(mine?.model)} - ${summaryValue(mine?.year)} - ${summaryValue(mine?.serialNumber)} - Mesure ${formatMeasureDate(mine?.measureDate)}${mineTime}`;
   const cloudIsEmpty = !comparedPiano && sourceMode === "cloud" && cloudSampleCount === 0;
+  const cloudCounterText = cloudLoading
+    ? "Calcul de la moyenne cloud…"
+    : cloudSampleCount === 0
+      ? "Aucun piano correspondant"
+      : `Résultat cloud sur ${cloudSampleCount} ${cloudSampleCount === 1 ? "piano" : "pianos"}`;
 
   return (
     <main className="mx-auto w-full max-w-[1400px] px-6 py-8">
