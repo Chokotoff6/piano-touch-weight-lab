@@ -816,6 +816,10 @@ function Comparer() {
 
   return (
     <main className="mx-auto w-full max-w-[1400px] px-6 py-8">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-x-0 top-[77px] z-40 h-[50px] bg-white"
+      />
       {status === "loading" ? <p className="py-16 text-center text-muted-foreground">Chargement des profils externes…</p> : (
         <>
           <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-stretch gap-6">
