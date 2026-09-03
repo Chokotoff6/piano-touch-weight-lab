@@ -487,6 +487,7 @@ type SidebarPanelProps = {
   onToggleCloud: () => void;
   onToggleStandard: () => void;
   onImport: (file: File) => void;
+  onResetComparison: () => void;
   keyFilter: KeyFilter;
   cycleKeyFilter: () => void;
   filtersDisabled: boolean;
@@ -522,6 +523,9 @@ function SidebarPanel(props: SidebarPanelProps) {
               <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={pillClass(props.csvActive)}>CSV</Button>
               <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
             </div>
+            {props.csvActive && (
+              <Button type="button" variant="outline" onClick={props.onResetComparison} className={`${PILL_BASE} mt-1.5 flex w-full items-center justify-center gap-2 border-orange-200 bg-white font-semibold text-orange-600 hover:border-orange-300`}><CycleIcon /><span>Revenir au Cloud</span></Button>
+            )}
           </div>
           <div className="space-y-2 border-t border-gray-200 pt-3">
             <Button type="button" variant="outline" onClick={props.cycleKeyFilter} aria-label={`Vue clavier : ${props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Vue clavier : <span className="font-semibold">{props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}</span></span></Button>
