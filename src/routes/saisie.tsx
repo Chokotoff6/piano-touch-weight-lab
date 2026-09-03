@@ -1114,8 +1114,29 @@ function Index() {
 
   const syncAndFinish = async (mode: "insert" | "update") => {
     setIsExporting(true);
+    const payload = buildPayload();
+    const year = payload.annee_fabrication;
+    const currentPiano = buildCurrentPiano({
+      brand: payload.marque,
+      model: payload.modele,
+      serial_number: payload.numero_central,
+      type_piano: payload.type_piano,
+      manufacture_year: year,
+      climate_zone: payload.zone_climatique,
+      maintenance_type: payload.type_entretien,
+      ville: payload.ville,
+      pays: payload.pays,
+      remarques: payload.remarques,
+      wa: payload.mesures_wa,
+      wd: payload.mesures_wd,
+    });
+    // La copie locale est disponible immédiatement, même si le réseau est indisponible.
+    saveCurrentPiano(currentPiano);
     try {
-      const payload = buildPayload();
+      const cloudResult = await saveCurrentPianoToCloud(currentPiano);
+      if (!cloudResult.ok) {
+        showMessage("La sauvegarde cloud a échoué. Les données locales restent disponibles dans Comparer.");
+      }
       if (mode === "update" && currentDbId) {
         await updateDiagnostic(currentDbId, payload);
       } else {
@@ -1127,11 +1148,12 @@ function Index() {
       showTopbarAlert("save", mode === "update" ? SAVE_UPDATE_MESSAGE : SAVE_NEW_MESSAGE);
       if (goCompareAfterSave.current) {
         goCompareAfterSave.current = false;
-        void navigate({ to: "/resultats" });
+        void navigate({ to: "/comparer" });
       }
     } catch {
       goCompareAfterSave.current = false;
-      showMessage("La synchronisation cloud a échoué. Les données restent enregistrées localement.");
+      setIsDirty(false);
+      showMessage("La synchronisation cloud a échoué. Les données locales restent disponibles dans Comparer.");
     } finally {
       setIsExporting(false);
     }
@@ -1196,7 +1218,7 @@ function Index() {
       }
       void syncAndFinish(currentDbId ? "update" : "insert");
     };
-    const onCompareGuard = () => setAskCompare(true);
+    const onCompareGuard = () => void navigate({ to: "/comparer" });
     const onReset = () => setConfirmReset("rows");
 
     const handlers: Record<string, EventListener> = {
@@ -1818,36 +1840,6 @@ Moyennes{" "}
         </div>
       </div>
 
-      <AlertDialog open={askCompare} onOpenChange={setAskCompare}>
-        <AlertDialogContent className="w-full max-w-xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Modifications non sauvegardées</AlertDialogTitle>
-            <AlertDialogDescription>
-              ⚠️ Vos modifications actuelles ne sont pas sauvegardées. Pour intégrer ces mesures
-              dans vos graphiques, une sauvegarde est nécessaire.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Continuer la saisie</AlertDialogCancel>
-            <AlertDialogAction onClick={() => void navigate({ to: "/resultats" })}>
-              Ignorer et accéder aux graphiques
-            </AlertDialogAction>
-            <AlertDialogAction
-              onClick={() => {
-                if (!guardExport()) return;
-                goCompareAfterSave.current = true;
-                if (currentDbId && isDirty) {
-                  setAskUpdate(true);
-                  return;
-                }
-                void syncAndFinish(currentDbId ? "update" : "insert");
-              }}
-            >
-              Sauvegarder d'abord
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <AlertDialog open={askUpdate} onOpenChange={setAskUpdate}>
         <AlertDialogContent className="w-full max-w-xl">
