@@ -695,9 +695,9 @@ function Comparer() {
 
   // Arbitrage de la courbe orange : CSV importé en priorité, sinon moyenne Cloud.
   const comparisonProfile = comparedPiano ?? (sourceMode === "cloud" ? cloudProfile : null);
-  const comparedTime = comparedPiano?.measureTime ? ` à ${comparedPiano.measureTime}` : "";
+  const comparedTime = comparedPiano?.measureTime ? ` - ${comparedPiano.measureTime}` : "";
   const comparisonLabel = comparedPiano
-    ? `Référence : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - (${summaryValue(comparedPiano.year)}) - ${summaryValue(comparedPiano.serialNumber)} - Mesure du ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime} (CSV)`
+    ? `Référence : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - (${summaryValue(comparedPiano.year)}) - ${summaryValue(comparedPiano.serialNumber)} - mesure ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime} (CSV)`
     : "Cloud";
   const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
   const current = averageSet(chartData);
@@ -746,8 +746,8 @@ function Comparer() {
     setKeyFilter((value) => value === "all" ? "split" : "all");
   }
 
-  const mineTime = mine?.measureTime ? ` à ${mine.measureTime}` : "";
-  const summary = `${summaryValue(mine?.brand)}\u00A0\u00A0${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - Mesure du ${formatMeasureDate(mine?.measureDate)}${mineTime}`;
+  const mineTime = mine?.measureTime ? ` - ${mine.measureTime}` : "";
+  const summary = `${summaryValue(mine?.brand)}\u00A0\u00A0${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - mesure ${formatMeasureDate(mine?.measureDate)}${mineTime}`;
   const cloudIsEmpty = !comparedPiano && sourceMode === "cloud" && cloudSampleCount === 0;
 
   return (
@@ -757,8 +757,8 @@ function Comparer() {
           <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-stretch gap-6">
             <div className="min-w-0">
               <div ref={averagesRef} className="sticky top-[127px] z-50 mb-[50px] w-full border-b border-border/60 bg-background pb-2 pt-2">
-                <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<><span>Moyennes</span><span className="ml-2 text-sm font-semibold text-muted-foreground">{summary}</span></>} className="h-fit">
-                  <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">Piano Actuel</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={current[key]} />)}</div></div>
+                <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span>Moyennes</span>} className="h-fit">
+                  <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">Piano Actuel</div><div className="mb-2 px-1 text-sm font-semibold text-muted-foreground">{summary}</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={current[key]} />)}</div></div>
                   <div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">{comparisonLabel}</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={comparisonProfile ? witness[key] : "—"} active />)}</div>{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div>
                 </Frame>
               </div>
