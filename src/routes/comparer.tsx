@@ -7,7 +7,7 @@ import {
   buildCurrentPiano,
   loadCurrentPiano,
   loadCurrentPianoFromCloud,
-  CURRENT_PIANO_BUFFER_ID,
+  
   fromPgArray,
   parseMeasureDateTime,
   type CurrentPiano,
@@ -517,23 +517,10 @@ function SidebarPanel(props: SidebarPanelProps) {
       <Switch checked={checked} disabled={props.filtersDisabled} onCheckedChange={onChange} className="data-[state=checked]:bg-slate-500 data-[state=unchecked]:bg-gray-200" />
     </label>
   );
-  const cloudCounterText = props.csvActive
-    ? "Comparaison locale avec le fichier CSV"
-    : props.cloudLoading
-      ? "Calcul de la moyenne cloud…"
-      : props.cloudSampleCount === 0
-        ? "Aucun piano correspondant"
-        : `Résultat cloud sur ${props.cloudSampleCount} ${props.cloudSampleCount === 1 ? "piano" : "pianos"}`;
-  const cloudCounterClass = props.csvActive
-    ? "text-slate-400"
-    : props.cloudSampleCount === 0 && !props.cloudLoading
-      ? "text-slate-500"
-      : "text-slate-700";
   return (
     <Frame title="Réglages" className="h-fit">
       <div className="flex flex-col gap-4 pt-2">
           <div>
-            <div className={`mb-1 whitespace-nowrap !text-[0.7rem] !font-semibold ${cloudCounterClass}`}>{cloudCounterText}</div>
             <div className="mb-1.5 whitespace-nowrap !text-xs !font-bold !text-black">Comparer piano avec :</div>
             <div className="flex items-center gap-1.5">
               <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={pillClass(props.cloudEnabled)}>Cloud</Button>
@@ -668,7 +655,8 @@ function Comparer() {
         .select(PROFILE_FIELDS)
         .eq("model", mine.model)
         .neq("serial_number", mine.serialNumber)
-        .neq("serial_number", CURRENT_PIANO_BUFFER_ID);
+        // Exclusion de la ligne tampon (état écran) de la moyenne globale.
+        .neq("is_buffer", true);
       const climate = databaseClimate(mine.climate);
       if (sameClimate && climate) query = query.eq("climate_zone", climate);
       if (sameYear && mine.year !== null) query = query.eq("manufacture_year", mine.year);
@@ -697,7 +685,7 @@ function Comparer() {
   const comparisonProfile = comparedPiano ?? (sourceMode === "cloud" ? cloudProfile : null);
   const comparedTime = comparedPiano?.measureTime ? ` - ${comparedPiano.measureTime}` : "";
   const comparisonLabel = comparedPiano
-    ? `Référence : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - (${summaryValue(comparedPiano.year)}) - ${summaryValue(comparedPiano.serialNumber)} - mesure ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime} (CSV)`
+    ? `Référence : (CSV) ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - ${summaryValue(comparedPiano.year)} - ${summaryValue(comparedPiano.serialNumber)} - Mesure ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime}`
     : "Cloud";
   const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
   const current = averageSet(chartData);
@@ -747,8 +735,13 @@ function Comparer() {
   }
 
   const mineTime = mine?.measureTime ? ` - ${mine.measureTime}` : "";
-  const summary = `${summaryValue(mine?.brand)}\u00A0\u00A0${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - mesure ${formatMeasureDate(mine?.measureDate)}${mineTime}`;
+  const summary = `${summaryValue(mine?.brand)}\u00A0\u00A0${summaryValue(mine?.model)} - ${summaryValue(mine?.year)} - ${summaryValue(mine?.serialNumber)} - Mesure ${formatMeasureDate(mine?.measureDate)}${mineTime}`;
   const cloudIsEmpty = !comparedPiano && sourceMode === "cloud" && cloudSampleCount === 0;
+  const cloudCounterText = cloudLoading
+    ? "Calcul de la moyenne cloud…"
+    : cloudSampleCount === 0
+      ? "Aucun piano correspondant"
+      : `Résultat cloud sur ${cloudSampleCount} ${cloudSampleCount === 1 ? "piano" : "pianos"}`;
 
   return (
     <main className="mx-auto w-full max-w-[1400px] px-6 py-8">
@@ -758,8 +751,8 @@ function Comparer() {
             <div className="min-w-0">
               <div ref={averagesRef} className="sticky top-[127px] z-50 mb-[50px] w-full border-b border-border/60 bg-background pb-2 pt-2">
                 <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span>Moyennes</span>} className="h-fit">
-                  <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">Piano Actuel</div><div className="mb-2 px-1 text-sm font-semibold text-muted-foreground">{summary}</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={current[key]} />)}</div></div>
-                  <div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">{comparisonLabel}</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={comparisonProfile ? witness[key] : "—"} active />)}</div>{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div>
+                  <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">Piano actuel : <span className="normal-case">{summary}</span></div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={current[key]} />)}</div></div>
+                  <div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">{comparisonLabel}{!comparedPiano && <span className="ml-2 normal-case text-slate-500">{cloudCounterText}</span>}</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={comparisonProfile ? witness[key] : "—"} active />)}</div>{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div>
                 </Frame>
               </div>
               <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparisonLabel} comparisonShort={comparedPiano ? "Référence" : "Cloud"} />
