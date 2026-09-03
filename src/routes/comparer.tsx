@@ -598,11 +598,25 @@ function Comparer() {
   }, [averagesHeight, status]);
 
   useEffect(() => {
-    const currentPiano = loadCurrentPiano();
-    if (currentPiano) setMine(profileFromCurrentPiano(currentPiano));
-    // La page reste accessible même sans mesure locale : l'import CSV peut la fournir.
-    setStatus("ok");
+    // Source unique de la courbe Live (noire) : l'objet current_piano local.
+    // Aucun mockup de secours : si l'objet change (nouveau modèle / nouveau SN),
+    // l'écran se recale immédiatement.
+    const sync = () => {
+      const currentPiano = loadCurrentPiano();
+      setMine(currentPiano ? profileFromCurrentPiano(currentPiano) : null);
+      setStatus("ok");
+    };
+    sync();
+    window.addEventListener("focus", sync);
+    window.addEventListener("storage", sync);
+    document.addEventListener("visibilitychange", sync);
+    return () => {
+      window.removeEventListener("focus", sync);
+      window.removeEventListener("storage", sync);
+      document.removeEventListener("visibilitychange", sync);
+    };
   }, []);
+
 
 
   useEffect(() => {

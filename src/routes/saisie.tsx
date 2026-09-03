@@ -39,6 +39,7 @@ import {
   type DiagnosticHistoryRow,
 } from "@/lib/diagnostics";
 import { getTopbarState, setTopbarState, showTopbarAlert } from "@/lib/topbar-store";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -391,6 +392,10 @@ function Index() {
   const [askUpdate, setAskUpdate] = useState(false);
   // Export demandé en attente de la décision cloud (modale INSERT/UPSERT).
   const pendingExport = useRef<"csv" | "pdf" | null>(null);
+  // Navigation "Comparer" en attente de la décision cloud (modale INSERT/UPSERT).
+  const pendingCompare = useRef(false);
+  // Numéro de série effectivement enregistré : sert au CRITÈRE 1 (série inconnue → INSERT).
+  const savedSerialRef = useRef<string>("");
   const [isExporting, setIsExporting] = useState(false);
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const pdfInfoRef = useRef<HTMLDivElement | null>(null);
@@ -927,6 +932,14 @@ function Index() {
     );
   };
 
+  // CRITÈRE 1 : un numéro de série inconnu pour la session force un INSERT propre.
+  useEffect(() => {
+    const serial = (info["sn_num"] ?? "").trim();
+    if (currentDbId && serial && serial !== savedSerialRef.current) {
+      setCurrentDbId(null);
+    }
+  }, [info, currentDbId]);
+
   // --- Gate global (navigation Comparer) ----------------------------------------
 
   useEffect(() => {
@@ -1220,10 +1233,19 @@ function Index() {
     });
     // La copie locale est disponible immédiatement, même si le réseau est indisponible.
     saveCurrentPiano(currentPiano);
+    const toastId = toast.loading("Enregistrement en cours dans Supabase…");
     try {
       const cloudResult = await saveCurrentPianoToCloud(currentPiano);
       if (!cloudResult.ok) {
+        toast.error(`Échec de l'enregistrement cloud : ${cloudResult.error ?? "erreur réseau"}`, { id: toastId });
         showMessage("La sauvegarde cloud a échoué. Les données locales restent disponibles dans Comparer.");
+      } else {
+        toast.success(
+          mode === "update"
+            ? "Profil mis à jour dans piano_profiles."
+            : "Nouveau profil inséré dans piano_profiles.",
+          { id: toastId },
+        );
       }
       if (mode === "update" && currentDbId) {
         await updateDiagnostic(currentDbId, payload);
@@ -1231,15 +1253,18 @@ function Index() {
         const id = await insertDiagnostic(payload);
         setCurrentDbId(id);
       }
+      savedSerialRef.current = payload.numero_central ?? "";
       markSubmission();
       setIsDirty(false);
       showTopbarAlert("save", mode === "update" ? SAVE_UPDATE_MESSAGE : SAVE_NEW_MESSAGE);
     } catch {
+      toast.error("La synchronisation cloud a échoué.", { id: toastId });
       showMessage("La synchronisation cloud a échoué. Les données locales restent disponibles dans Comparer.");
     } finally {
       setIsExporting(false);
     }
   };
+
 
   // --- Synchronisation avec la barre supérieure -----------------------------------
 
@@ -1281,7 +1306,24 @@ function Index() {
     const exportCsvOnly = () => startExport("csv");
     const onExport = () => startExport("csv");
     const onPdf = () => startExport("pdf");
-    const onCompareGuard = () => void navigate({ to: "/comparer" });
+    const onCompareGuard = () => {
+      // Comparer applique le même arbitrage cloud, puis navigue avec le
+      // current_piano fraîchement reconstruit depuis l'écran.
+      if (!guardExport("export")) {
+        void navigate({ to: "/comparer" });
+        return;
+      }
+      if (currentDbId && isDirty) {
+        pendingExport.current = null;
+        pendingCompare.current = true;
+        setAskUpdate(true);
+        return;
+      }
+      void syncAndFinish(currentDbId ? "update" : "insert").finally(() =>
+        navigate({ to: "/comparer" }),
+      );
+    };
+
     const onReset = () => setConfirmReset("rows");
 
     const handlers: Record<string, EventListener> = {
@@ -1918,7 +1960,10 @@ Moyennes{" "}
         open={askUpdate}
         onOpenChange={(open) => {
           setAskUpdate(open);
-          if (!open) pendingExport.current = null;
+          if (!open) {
+            pendingExport.current = null;
+            pendingCompare.current = false;
+          }
         }}
       >
         <AlertDialogContent className="w-full max-w-xl">
@@ -1934,8 +1979,11 @@ Moyennes{" "}
             <AlertDialogAction
               onClick={() => {
                 const kind = pendingExport.current;
+                const compare = pendingCompare.current;
+                pendingCompare.current = false;
                 void syncAndFinish("update").finally(() => {
                   if (kind) runLocalExport(kind);
+                  if (compare) void navigate({ to: "/comparer" });
                 });
               }}
             >
@@ -1944,9 +1992,12 @@ Moyennes{" "}
             <AlertDialogAction
               onClick={() => {
                 const kind = pendingExport.current;
+                const compare = pendingCompare.current;
+                pendingCompare.current = false;
                 setCurrentDbId(null);
                 void syncAndFinish("insert").finally(() => {
                   if (kind) runLocalExport(kind);
+                  if (compare) void navigate({ to: "/comparer" });
                 });
               }}
             >
@@ -1954,6 +2005,7 @@ Moyennes{" "}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
+
       </AlertDialog>
     </main>
   );
