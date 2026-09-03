@@ -1351,9 +1351,11 @@ function Index() {
       markSubmission();
       setIsDirty(false);
       showTopbarAlert("save", mode === "update" ? SAVE_UPDATE_MESSAGE : SAVE_NEW_MESSAGE);
+      return true;
     } catch {
       toast.error("La synchronisation cloud a échoué.", { id: toastId });
       showMessage("La synchronisation cloud a échoué. Les données locales restent disponibles dans Comparer.");
+      return false;
     } finally {
       setIsExporting(false);
     }
