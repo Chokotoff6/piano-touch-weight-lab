@@ -184,51 +184,6 @@ function RootComponent() {
 
             <div className="mx-10 h-6 w-[2px] bg-gray-400" aria-hidden="true" />
 
-            <div className="relative">
-              <DropdownMenu>
-                <div className="flex items-center">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className={`${topbar.hasSaved ? "rounded-r-none" : ""} border border-gray-300 bg-white text-lg ${topbar.measuresReady ? "!text-muted-foreground" : "text-gray-400"} hover:bg-accent`}
-                    onClick={() => {
-                      if (saveDisabled) return;
-                      dispatchAction("piano-save");
-                    }}
-                  >
-                    Sauver
-                  </Button>
-                  {topbar.hasSaved && (
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className={`rounded-l-none border border-l-0 border-gray-300 bg-white px-2 ${topbar.measuresReady ? "!text-muted-foreground" : "text-gray-400"} hover:bg-accent`}
-                      >
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                  )}
-                </div>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem onClick={() => dispatchAction("piano-save-cloud")}>
-                    Enregistrer les modifications (Mettre à jour la fiche en cours)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => dispatchAction("piano-save-quick")}>
-                    Créer une nouvelle fiche (Faire une autre pesée à une date différente)
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              {topbar.alert?.anchor === "save" && (
-                <div
-                  className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
-                  style={{ position: "absolute", zIndex: 99999, backgroundColor: "rgba(254, 240, 138, 0.7)" }}
-                >
-                  {topbar.alert.message}
-                </div>
-              )}
-            </div>
-
             {topbar.measuresReady ? (
               <DropdownMenu>
                 <div className="relative flex items-center">
