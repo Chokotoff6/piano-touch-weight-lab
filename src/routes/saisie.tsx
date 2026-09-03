@@ -1235,6 +1235,11 @@ function Index() {
     saveCurrentPiano(currentPiano);
     const toastId = toast.loading("Enregistrement en cours dans Supabase…");
     try {
+      // Tampon de transfert universel : toujours mis à jour, indépendant du navigateur.
+      const bufferResult = await upsertCurrentPianoBuffer(currentPiano);
+      if (!bufferResult.ok) {
+        showMessage(`Erreur de base de données (piano_actuel) : ${bufferResult.error ?? "erreur réseau"}`);
+      }
       const cloudResult = await saveCurrentPianoToCloud(currentPiano);
       if (!cloudResult.ok) {
         toast.error(`Erreur de base de données : ${cloudResult.error ?? "erreur réseau"}`, {
