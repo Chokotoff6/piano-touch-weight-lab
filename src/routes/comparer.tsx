@@ -458,7 +458,7 @@ function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShor
     );
   }
 
-  return <div ref={containerRef} className="w-full px-2 pb-4 pt-2"><div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div></div>;
+  return <div ref={containerRef} className="w-full px-2 pb-[80vh] pt-2"><div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div></div>;
 }
 
 export const Route = createFileRoute("/comparer")({
