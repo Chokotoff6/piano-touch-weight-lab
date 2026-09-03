@@ -487,7 +487,6 @@ type SidebarPanelProps = {
   onToggleCloud: () => void;
   onToggleStandard: () => void;
   onImport: (file: File) => void;
-  onResetComparison: () => void;
   keyFilter: KeyFilter;
   cycleKeyFilter: () => void;
   filtersDisabled: boolean;
@@ -523,9 +522,6 @@ function SidebarPanel(props: SidebarPanelProps) {
               <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={pillClass(props.csvActive)}>CSV</Button>
               <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
             </div>
-            {props.csvActive && (
-              <Button type="button" variant="outline" onClick={props.onResetComparison} className={`${PILL_BASE} mt-1.5 flex w-full items-center justify-center gap-2 border-orange-200 bg-white font-semibold text-orange-600 hover:border-orange-300`}><CycleIcon /><span>Revenir au Cloud</span></Button>
-            )}
           </div>
           <div className="space-y-2 border-t border-gray-200 pt-3">
             <Button type="button" variant="outline" onClick={props.cycleKeyFilter} aria-label={`Vue clavier : ${props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Vue clavier : <span className="font-semibold">{props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}</span></span></Button>
@@ -540,6 +536,13 @@ function SidebarPanel(props: SidebarPanelProps) {
         </div>
       </Frame>
     );
+}
+
+function formatMeasureDate(value: string | null | undefined) {
+  const raw = (value ?? "").trim();
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return `${match[3]}-${match[2]}-${match[1]}`;
+  return summaryValue(raw);
 }
 
 function summaryValue(value: string | number | null | undefined) {
@@ -670,7 +673,7 @@ function Comparer() {
   // Arbitrage de la courbe orange : CSV importé en priorité, sinon moyenne Cloud.
   const comparisonProfile = comparedPiano ?? (sourceMode === "cloud" ? cloudProfile : null);
   const comparisonLabel = comparedPiano
-    ? `Référence : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ")} (CSV)`
+    ? `Référence : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - (${summaryValue(comparedPiano.year)}) - ${summaryValue(comparedPiano.serialNumber)} - Mesure du ${formatMeasureDate(comparedPiano.measureDate)} (CSV)`
     : "Cloud";
   const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
   const current = averageSet(chartData);
@@ -718,7 +721,7 @@ function Comparer() {
     setKeyFilter((value) => value === "all" ? "split" : "all");
   }
 
-  const summary = `${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - Mesure (${summaryValue(mine?.measureDate)})`;
+  const summary = `${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - Mesure du ${formatMeasureDate(mine?.measureDate)}`;
   const cloudIsEmpty = !comparedPiano && sourceMode === "cloud" && cloudSampleCount === 0;
 
   return (
@@ -728,14 +731,14 @@ function Comparer() {
           <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-stretch gap-6">
             <div className="min-w-0">
               <div ref={averagesRef} className="sticky top-[127px] z-50 mb-[50px] w-full border-b border-border/60 bg-background pb-2 pt-2">
-                <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<><span>Moyennes</span><span className="ml-2 text-sm font-semibold text-muted-foreground">({summary})</span></>} className="h-fit">
+                <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<><span>Moyennes</span><span className="ml-2 text-sm font-semibold text-muted-foreground">{summary}</span></>} className="h-fit">
                   <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">Piano Actuel</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={current[key]} />)}</div></div>
                   <div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">{comparisonLabel}</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={comparisonProfile ? witness[key] : "—"} active />)}</div>{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div>
                 </Frame>
               </div>
               <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparisonLabel} comparisonShort={comparedPiano ? "Référence" : "Cloud"} />
             </div>
-            <aside className="min-w-0"><div className="sticky z-40 mt-[200px] h-fit" style={{ top: averagesHeight > 0 ? `${averagesHeight + 177}px` : "400px" }}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} onToggleCloud={() => setSourceMode((value) => value === "cloud" ? "none" : "cloud")} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onResetComparison={resetComparison} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
+            <aside className="min-w-0"><div className="sticky z-40 mt-[200px] h-fit" style={{ top: averagesHeight > 0 ? `${averagesHeight + 177}px` : "400px" }}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
           </div>
           <div className="h-[70vh]" aria-hidden="true" />
         </>
