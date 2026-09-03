@@ -683,6 +683,7 @@ function Comparer() {
         wd: parsed.rows.map((row) => row.wd),
       });
       saveCurrentPiano(piano);
+      void upsertCurrentPianoBuffer(piano);
       const record = profileFromCurrentPiano(piano);
       setMine(record);
       setImported(record);
