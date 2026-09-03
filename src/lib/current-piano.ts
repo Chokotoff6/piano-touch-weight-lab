@@ -13,6 +13,7 @@ export type CurrentPiano = {
   manufacture_year: number | null;
   climate_zone: string;
   maintenance_type: string;
+  usage_level: string;
   ville: string;
   pays: string;
   remarques: string;
@@ -39,6 +40,7 @@ export function buildCurrentPiano(input: {
   manufacture_year: number | null;
   climate_zone: string;
   maintenance_type: string;
+  usage_level: string;
   ville: string;
   pays: string;
   remarques: string;
@@ -70,6 +72,7 @@ export function buildCurrentPiano(input: {
     manufacture_year: input.manufacture_year,
     climate_zone: input.climate_zone,
     maintenance_type: input.maintenance_type,
+    usage_level: input.usage_level,
     ville: input.ville,
     pays: input.pays,
     remarques: input.remarques,
@@ -118,6 +121,7 @@ export async function saveCurrentPianoToCloud(
     manufacture_year: piano.manufacture_year,
     climate_zone: piano.climate_zone,
     maintenance_type: piano.maintenance_type,
+    usage_level: piano.usage_level,
     ville: piano.ville,
     pays: piano.pays,
     remarques: piano.remarques,

@@ -83,6 +83,7 @@ const META_ALIASES: { key: string; match: string[] }[] = [
   { key: "serial_number", match: ["numero de serie", "serial"] },
   { key: "manufacture_year", match: ["date de fabrication", "annee de fabrication", "manufacture"] },
   { key: "maintenance_type", match: ["type d'entretien", "type dentretien", "maintenance"] },
+  { key: "usage_level", match: ["usage_level", "niveau d'usage", "niveau dusage", "usage"] },
   { key: "type_piano", match: ["type de piano"] },
   { key: "climate_zone", match: ["zone climatique", "climate"] },
   { key: "ville", match: ["ville", "city"] },
