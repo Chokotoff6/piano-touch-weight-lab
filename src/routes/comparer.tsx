@@ -661,10 +661,14 @@ function Comparer() {
     return () => { cancelled = true; };
   }, [mine, sourceMode, sameClimate, sameYear, importantChanges, youngOnly, usageLevel]);
 
-  const activeCurrent = sourceMode === "import" && imported ? imported : mine;
-  const chartData = useMemo(() => buildChartData(activeCurrent, sourceMode === "cloud" ? cloudProfile : null, standardEnabled ? standard : null), [activeCurrent, cloudProfile, sourceMode, standard, standardEnabled]);
+  // Arbitrage de la courbe orange : CSV importé en priorité, sinon moyenne Cloud.
+  const comparisonProfile = comparedPiano ?? (sourceMode === "cloud" ? cloudProfile : null);
+  const comparisonLabel = comparedPiano
+    ? `Référence : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ")} (CSV)`
+    : "Cloud";
+  const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
   const current = averageSet(chartData);
-  const witness: Averages = { wa: profileAverage(cloudProfile, "wa"), wd: profileAverage(cloudProfile, "wd"), friction: profileAverage(cloudProfile, "friction"), balance: profileAverage(cloudProfile, "balance") };
+  const witness: Averages = { wa: profileAverage(comparisonProfile, "wa"), wd: profileAverage(comparisonProfile, "wd"), friction: profileAverage(comparisonProfile, "friction"), balance: profileAverage(comparisonProfile, "balance") };
 
   async function handleImport(file: File) {
     try {
@@ -685,18 +689,18 @@ function Comparer() {
         wa: parsed.rows.map((row) => row.wa),
         wd: parsed.rows.map((row) => row.wd),
       });
-      saveCurrentPiano(piano);
-      void upsertCurrentPianoBuffer(piano);
-      const record = profileFromCurrentPiano(piano);
-      setMine(record);
-      setImported(record);
-      setImportedMeta(parsed.meta);
-      setSourceMode("import");
+      // Aucun accès à current_piano ni au buffer PIANO_ACTUEL :
+      // le CSV devient seulement la référence orange de comparaison.
+      setComparedPiano(profileFromCurrentPiano(piano));
       setStatus("ok");
     } catch {
-      setImported(null);
-      setImportedMeta({});
+      setComparedPiano(null);
     }
+  }
+
+  function resetComparison() {
+    setComparedPiano(null);
+    setSourceMode("cloud");
   }
 
 
