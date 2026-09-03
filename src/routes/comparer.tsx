@@ -540,6 +540,32 @@ function AverageRow({ chartData, source, hasData, active = false }: { chartData:
   );
 }
 
+// Rangée Standard : valeur globale théorique centrée, sans détail Blanches/Noires.
+const STD_KEYS: { key: MetricKey; globalKey: SeriesKey }[] = [
+  { key: "wa", globalKey: "stdWa" },
+  { key: "wd", globalKey: "stdWd" },
+  { key: "friction", globalKey: "factoryFric" },
+  { key: "balance", globalKey: "factoryBal" },
+];
+function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
+  return (
+    <div className="grid grid-cols-4 gap-3">
+      {STD_KEYS.map(({ key, globalKey }) => {
+        const { label } = COLUMNS.find((col) => col.key === key)!;
+        const value = seriesAverage(chartData, globalKey);
+        return (
+          <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
+            <div className="!text-[1.1rem] font-bold tracking-wide text-muted-foreground">{label}</div>
+            <div className="mt-1 !text-2xl !font-bold tabular-nums" style={{ color: "#10b981" }}>
+              {value === "—" ? <span className="text-muted-foreground">—</span> : <>{value}<span className="!text-xs !font-medium"> gr.</span></>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 const PILL_BASE = "h-7 min-w-0 flex-1 rounded-full border px-1.5 text-[0.68rem] leading-tight transition-colors whitespace-nowrap";
 const pillClass = (active: boolean) => `${PILL_BASE} ${active ? "border-gray-300 bg-gray-100 font-semibold text-slate-700" : "border-gray-200 bg-white text-gray-400 hover:border-gray-300 hover:text-gray-500"}`;
 
@@ -665,7 +691,9 @@ function Comparer() {
       const frame = document.querySelector('[data-frame="fric"]');
       if (!frame) return;
       const frameTop = frame.getBoundingClientRect().top + window.scrollY;
-      const limit = Math.max(0, Math.round(frameTop - (127 + averagesHeight)));
+      // -5 : laisse un fin filet d'air de 5 px entre le cadre « Moyennes »
+      // et le cadre « Friction mécanique ».
+      const limit = Math.max(0, Math.round(frameTop - (127 + averagesHeight) - 5));
       if (window.scrollY > limit) window.scrollTo(0, limit);
     };
     clamp();
@@ -825,7 +853,19 @@ function Comparer() {
               <div ref={averagesRef} className="sticky top-[127px] z-40 mb-[50px] w-full bg-background pb-2">
                 <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span>Moyennes</span>} className="h-fit">
                   <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-black">Piano actuel : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
-                  <div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">{comparisonLabel}{cloudActive && <span className="ml-2 normal-case text-orange-600">{cloudCounterText}</span>}</div><AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} active />{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div>
+                  {(comparedPiano !== null || sourceMode === "cloud") && (
+                    <div className={standardEnabled ? "mb-3" : ""}>
+                      <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">{comparisonLabel}{cloudActive && <span className="ml-2 normal-case text-orange-600">{cloudCounterText}</span>}</div>
+                      <AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} active />
+                      {cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}
+                    </div>
+                  )}
+                  {standardEnabled && (
+                    <div>
+                      <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide" style={{ color: "#10b981" }}>Standard</div>
+                      <StandardRow chartData={chartData} />
+                    </div>
+                  )}
                 </Frame>
               </div>
 
