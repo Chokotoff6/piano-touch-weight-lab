@@ -1237,8 +1237,12 @@ function Index() {
     try {
       const cloudResult = await saveCurrentPianoToCloud(currentPiano);
       if (!cloudResult.ok) {
-        toast.error(`Échec de l'enregistrement cloud : ${cloudResult.error ?? "erreur réseau"}`, { id: toastId });
-        showMessage("La sauvegarde cloud a échoué. Les données locales restent disponibles dans Comparer.");
+        toast.error(`Erreur de base de données : ${cloudResult.error ?? "erreur réseau"}`, {
+          id: toastId,
+          duration: 12000,
+        });
+        showMessage(`Erreur de base de données : ${cloudResult.error ?? "erreur réseau"}`);
+
       } else {
         toast.success(
           mode === "update"
@@ -1294,14 +1298,21 @@ function Index() {
   useEffect(() => {
     // Exporter = même algorithme de décision cloud que Comparer, puis
     // téléchargement local du fichier une fois l'action cloud terminée.
+    // Critère 1 : aucun envoi connu pour ce numéro de série -> INSERT direct.
+    // Critères 2/3 : un envoi existe déjà -> la modale de choix est BLOQUANTE.
+    const alreadySent = () => {
+      const serial = (info["sn_num"] ?? "").trim();
+      return Boolean(currentDbId) && serial.length > 0 && serial === savedSerialRef.current;
+    };
     const startExport = (kind: "csv" | "pdf") => {
       if (!guardExport("export")) return;
-      if (currentDbId && isDirty) {
+      if (alreadySent()) {
         pendingExport.current = kind;
+        pendingCompare.current = false;
         setAskUpdate(true);
         return;
       }
-      void syncAndFinish(currentDbId ? "update" : "insert").finally(() => runLocalExport(kind));
+      void syncAndFinish("insert").finally(() => runLocalExport(kind));
     };
     const exportCsvOnly = () => startExport("csv");
     const onExport = () => startExport("csv");
@@ -1313,16 +1324,15 @@ function Index() {
         void navigate({ to: "/comparer" });
         return;
       }
-      if (currentDbId && isDirty) {
+      if (alreadySent()) {
         pendingExport.current = null;
         pendingCompare.current = true;
         setAskUpdate(true);
         return;
       }
-      void syncAndFinish(currentDbId ? "update" : "insert").finally(() =>
-        navigate({ to: "/comparer" }),
-      );
+      void syncAndFinish("insert").finally(() => navigate({ to: "/comparer" }));
     };
+
 
     const onReset = () => setConfirmReset("rows");
 
@@ -1968,11 +1978,12 @@ Moyennes{" "}
       >
         <AlertDialogContent className="w-full max-w-xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Un diagnostic existe déjà pour cette session</AlertDialogTitle>
+            <AlertDialogTitle>Un envoi existe déjà pour ce numéro de série</AlertDialogTitle>
             <AlertDialogDescription>
-              Souhaitez-vous corriger le diagnostic enregistré ou créer un nouveau point
-              d'historique ?
+              Option A — Correction : met à jour la fiche déjà envoyée.
+              Option B — Nouvelle régulation : crée un nouveau point d'historique.
             </AlertDialogDescription>
+
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
@@ -1987,7 +1998,7 @@ Moyennes{" "}
                 });
               }}
             >
-              Mettre à jour le diagnostic existant
+              Option A — Correction (mise à jour)
             </AlertDialogAction>
             <AlertDialogAction
               onClick={() => {
@@ -2001,7 +2012,7 @@ Moyennes{" "}
                 });
               }}
             >
-              Créer un nouveau point d'historique (Nouvelle pesée)
+              Option B — Nouvelle régulation (nouvel enregistrement)
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

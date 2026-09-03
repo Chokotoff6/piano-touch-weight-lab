@@ -167,9 +167,21 @@ function RootComponent() {
                 Saisie
               </Link>
               <div className="relative">
-                <Link to="/comparer" className={linkClass} activeProps={{ className: activeLinkClass }}>
+                <Link
+                  to="/comparer"
+                  className={linkClass}
+                  activeProps={{ className: activeLinkClass }}
+                  onClick={(event) => {
+                    // Depuis la Saisie : l'arbitrage cloud doit s'exécuter AVANT toute navigation.
+                    if (pathname === "/saisie") {
+                      event.preventDefault();
+                      dispatchAction("piano-compare-guard");
+                    }
+                  }}
+                >
                   Comparer
                 </Link>
+
                 {topbar.alert?.anchor === "compare" && (
                   <div
                     className="absolute left-0 top-full !z-[99999] mt-2 w-72 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
