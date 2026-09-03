@@ -3,7 +3,12 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
-import { loadCurrentPiano, type CurrentPiano } from "@/lib/current-piano";
+import {
+  buildCurrentPiano,
+  loadCurrentPiano,
+  saveCurrentPiano,
+  type CurrentPiano,
+} from "@/lib/current-piano";
 import {
   externalSupabase,
   type ExternalPianoProfileRow,
@@ -594,14 +599,11 @@ function Comparer() {
 
   useEffect(() => {
     const currentPiano = loadCurrentPiano();
-    if (currentPiano) {
-      setMine(profileFromCurrentPiano(currentPiano));
-      setStatus("ok");
-      return;
-    }
-    // Aucun profil de démonstration : Comparer attend une saisie locale validée.
-    setStatus("error");
+    if (currentPiano) setMine(profileFromCurrentPiano(currentPiano));
+    // La page reste accessible même sans mesure locale : l'import CSV peut la fournir.
+    setStatus("ok");
   }, []);
+
 
   useEffect(() => {
     let cancelled = false;
@@ -647,29 +649,34 @@ function Comparer() {
   async function handleImport(file: File) {
     try {
       const parsed = parseDiagnosticCsv(await file.text());
-      const toNumber = (value: string) => {
-        const normalized = value.trim().replace(",", ".");
-        const number = Number(normalized);
-        return normalized === "" || !Number.isFinite(number) ? Number.NaN : number;
-      };
-      const wa = parsed.rows.map((row) => toNumber(row.wa));
-      const wd = parsed.rows.map((row) => toNumber(row.wd));
-      const friction = wa.map((value, index) => {
-        const down = wd[index];
-        return typeof down === "number" && Number.isFinite(value) && Number.isFinite(down) ? n1(Math.abs((value - down) / 2)) : Number.NaN;
+      const year = Number(parsed.fields["manufacture_year"]);
+      const piano = buildCurrentPiano({
+        brand: parsed.fields["brand"] ?? "",
+        model: parsed.fields["model"] ?? "",
+        serial_number: parsed.fields["serial_number"] ?? "",
+        type_piano: parsed.fields["type_piano"] ?? "",
+        manufacture_year: Number.isFinite(year) ? year : null,
+        climate_zone: parsed.fields["climate_zone"] ?? "",
+        maintenance_type: parsed.fields["maintenance_type"] ?? "",
+        ville: parsed.fields["ville"] ?? "",
+        pays: parsed.fields["pays"] ?? "",
+        remarques: parsed.fields["remarques"] ?? "",
+        wa: parsed.rows.map((row) => row.wa),
+        wd: parsed.rows.map((row) => row.wd),
       });
-      const balance = wa.map((value, index) => {
-        const down = wd[index];
-        return typeof down === "number" && Number.isFinite(value) && Number.isFinite(down) ? n1((value + down) / 2) : Number.NaN;
-      });
-      setImported({ wa, wd, friction, balance });
+      saveCurrentPiano(piano);
+      const record = profileFromCurrentPiano(piano);
+      setMine(record);
+      setImported(record);
       setImportedMeta(parsed.meta);
       setSourceMode("import");
+      setStatus("ok");
     } catch {
       setImported(null);
       setImportedMeta({});
     }
   }
+
 
   function cycleUsage() {
     setUsageLevel((value) => value === "all" ? "low" : value === "low" ? "intensive" : "all");
@@ -690,7 +697,7 @@ function Comparer() {
 
   return (
     <main className="mx-auto w-full max-w-[1400px] px-6 py-8">
-      {status === "loading" ? <p className="py-16 text-center text-muted-foreground">Chargement des profils externes…</p> : status === "error" ? <div className="flex w-full items-center justify-center py-16"><p className="!text-2xl !font-bold !text-red-600 text-center">ERREUR D’ACCÈS : Impossible de lire le profil du piano mesuré.</p></div> : (
+      {status === "loading" ? <p className="py-16 text-center text-muted-foreground">Chargement des profils externes…</p> : (
         <>
           <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-stretch gap-6">
             <div className="min-w-0">

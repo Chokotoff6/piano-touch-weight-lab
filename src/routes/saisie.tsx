@@ -1003,21 +1003,42 @@ function Index() {
   /** Applique un fichier CSV Touchweight au formulaire et aux 88 pesées. */
   const importCsvContent = (content: string) => {
     try {
-      const { meta, rows: imported } = parseDiagnosticCsv(content);
+      const parsed = parseDiagnosticCsv(content);
+      const { fields, rows: imported } = parsed;
+      const brand = fields["brand"] ?? "";
+      const model = fields["model"] ?? "";
+      const serial = fields["serial_number"] ?? "";
+      const typePiano = fields["type_piano"] ?? "";
+      const manufactureYear = Number(fields["manufacture_year"]);
+      const piano = buildCurrentPiano({
+        brand,
+        model,
+        serial_number: serial,
+        type_piano: typePiano,
+        manufacture_year: Number.isInteger(manufactureYear) ? manufactureYear : null,
+        climate_zone: fields["climate_zone"] ?? "",
+        maintenance_type: fields["maintenance_type"] ?? "",
+        ville: fields["ville"] ?? "",
+        pays: fields["pays"] ?? "",
+        remarques: fields["remarques"] ?? "",
+        wa: imported.map((row) => row.wa),
+        wd: imported.map((row) => row.wd),
+      });
+      saveCurrentPiano(piano);
       setRows(imported.map((r) => ({ wa: cleanWeight(r.wa), wd: cleanWeight(r.wd) })));
       setInfo((prev) => ({
         ...prev,
-        marque: meta["Marque"] ?? prev["marque"] ?? "",
-        type_piano: meta["Type de piano"] ?? prev["type_piano"] ?? "",
-        modele: meta["Modèle"] ?? prev["modele"] ?? "",
-        sn_prefix: meta["Préfixe lettre"] ?? prev["sn_prefix"] ?? "",
-        sn_num: meta["Numéro de série"] ?? prev["sn_num"] ?? "",
-        sn_suffix: meta["Suffixe lettre"] ?? prev["sn_suffix"] ?? "",
-        fabrication: meta["Date de fabrication"] ?? prev["fabrication"] ?? "",
-        pays: meta["Pays"] ?? prev["pays"] ?? "",
-        ville: meta["Ville"] ?? prev["ville"] ?? "",
-        entretien: meta["Type d'entretien"] ?? prev["entretien"] ?? "",
-        remarques: meta["Remarques"] ?? prev["remarques"] ?? "",
+        marque: brand || prev["marque"] || "",
+        type_piano: typePiano || prev["type_piano"] || "",
+        modele: model || prev["modele"] || "",
+        sn_prefix: prev["sn_prefix"] ?? "",
+        sn_num: serial || prev["sn_num"] || "",
+        sn_suffix: prev["sn_suffix"] ?? "",
+        fabrication: fields["manufacture_year"] ?? prev["fabrication"] ?? "",
+        pays: fields["pays"] ?? prev["pays"] ?? "",
+        ville: fields["ville"] ?? prev["ville"] ?? "",
+        entretien: fields["maintenance_type"] ?? prev["entretien"] ?? "",
+        remarques: fields["remarques"] ?? prev["remarques"] ?? "",
       }));
       fabricationTouched.current = true;
       setCurrentDbId(null);
