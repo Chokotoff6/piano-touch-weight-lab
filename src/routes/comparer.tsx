@@ -605,6 +605,7 @@ function SidebarPanel(props: SidebarPanelProps) {
             <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left ${props.importantChanges ? "font-semibold text-slate-700" : "text-slate-500"}`}><CycleIcon /><span>Modifications importantes : <span className="font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></span></Button>
           </div>
           <div className="space-y-2.5 border-t border-gray-200 pt-3">
+            <div className="font-bold text-black">Filtres Cloud</div>
             {switchRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
             {switchRow("Même année de fabrication", props.sameYear, props.setSameYear)}
             {switchRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
