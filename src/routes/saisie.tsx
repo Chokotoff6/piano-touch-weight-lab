@@ -396,6 +396,12 @@ function Index() {
   const pendingCompare = useRef(false);
   // Numéro de série effectivement enregistré : sert au CRITÈRE 1 (série inconnue → INSERT).
   const savedSerialRef = useRef<string>("");
+  // Consentement RGPD : jamais persisté, toujours décoché pour un nouveau numéro de série.
+  const [consent, setConsent] = useState(false);
+  // Photographie des 88 touches et du jour du dernier envoi cloud (seuil des 5 touches).
+  const savedRowsRef = useRef<Row[]>([]);
+  const savedDateRef = useRef<string>("");
+
   const [isExporting, setIsExporting] = useState(false);
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const pdfInfoRef = useRef<HTMLDivElement | null>(null);
