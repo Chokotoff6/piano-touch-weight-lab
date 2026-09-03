@@ -391,6 +391,10 @@ function Index() {
   const [askUpdate, setAskUpdate] = useState(false);
   // Export demandé en attente de la décision cloud (modale INSERT/UPSERT).
   const pendingExport = useRef<"csv" | "pdf" | null>(null);
+  // Navigation "Comparer" en attente de la décision cloud (modale INSERT/UPSERT).
+  const pendingCompare = useRef(false);
+  // Numéro de série effectivement enregistré : sert au CRITÈRE 1 (série inconnue → INSERT).
+  const savedSerialRef = useRef<string>("");
   const [isExporting, setIsExporting] = useState(false);
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const pdfInfoRef = useRef<HTMLDivElement | null>(null);
