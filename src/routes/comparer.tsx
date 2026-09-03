@@ -668,7 +668,8 @@ function Comparer() {
         .select(PROFILE_FIELDS)
         .eq("model", mine.model)
         .neq("serial_number", mine.serialNumber)
-        .neq("serial_number", CURRENT_PIANO_BUFFER_ID);
+        // Exclusion de la ligne tampon (état écran) de la moyenne globale.
+        .neq("is_buffer", true);
       const climate = databaseClimate(mine.climate);
       if (sameClimate && climate) query = query.eq("climate_zone", climate);
       if (sameYear && mine.year !== null) query = query.eq("manufacture_year", mine.year);
