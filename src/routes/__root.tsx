@@ -1,5 +1,4 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { EMPTY_DATA_MESSAGE, saisieGate } from "@/lib/required-keys";
 import { initLang, setLang, useLang } from "@/data/translations";
 import { setTopbarState, showTopbarAlert, useTopbarState } from "@/lib/topbar-store";
 import {

@@ -593,20 +593,14 @@ function Comparer() {
   }, [averagesHeight, status]);
 
   useEffect(() => {
-    let cancelled = false;
-    async function loadBaseProfiles() {
-      const mineResult = await externalSupabase
-        .from("piano_profiles")
-        .select(PROFILE_FIELDS)
-        .eq("serial_number", MY_PIANO_SERIAL)
-        .single();
-      if (cancelled) return;
-      if (mineResult.error || !mineResult.data) { setStatus("error"); return; }
-      setMine(profileFromRow(mineResult.data as ExternalPianoProfileRow));
+    const currentPiano = loadCurrentPiano();
+    if (currentPiano) {
+      setMine(profileFromCurrentPiano(currentPiano));
       setStatus("ok");
+      return;
     }
-    void loadBaseProfiles();
-    return () => { cancelled = true; };
+    // Aucun profil de démonstration : Comparer attend une saisie locale validée.
+    setStatus("error");
   }, []);
 
   useEffect(() => {
