@@ -837,10 +837,13 @@ function Index() {
         count: valid.length,
       };
     };
+    // Séparation stricte par couleur de touche sur l'intégralité des 88 notes.
+    const blackModulos = new Set([2, 5, 7, 10, 0]);
+    const isBlack = (index: number) => blackModulos.has((index + 1) % 12);
     return {
       global: calc(rows),
-      first: calc(rows.slice(0, 44)),
-      second: calc(rows.slice(44, 88)),
+      first: calc(rows.filter((_, index) => !isBlack(index))),
+      second: calc(rows.filter((_, index) => isBlack(index))),
     };
   }, [rows]);
 
