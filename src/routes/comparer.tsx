@@ -581,6 +581,7 @@ function Comparer() {
   const [standard, setStandard] = useState<RefProfile>(FACTORY_STANDARD);
   const [cloudProfile, setCloudProfile] = useState<RefProfile | null>(null);
   const [cloudSampleCount, setCloudSampleCount] = useState(0);
+  const [cloudLoading, setCloudLoading] = useState(false);
   // État indépendant : le CSV importé alimente UNIQUEMENT la courbe orange.
   // current_piano (courbe Live noire) et le buffer PIANO_ACTUEL ne sont jamais touchés.
   const [comparedPiano, setComparedPiano] = useState<ProfileRecord | null>(null);
