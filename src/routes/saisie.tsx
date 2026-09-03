@@ -1247,6 +1247,34 @@ function Index() {
       .finally(() => setIsExporting(false));
   };
 
+  /**
+   * Tampon cloud prioritaire : injecte l'état écran dans la ligne pivot
+   * 'PIANO_ACTUEL' de piano_profiles, avant tout arbitrage décisionnel.
+   */
+  const pushBuffer = async () => {
+    const payload = buildPayload();
+    const currentPiano = buildCurrentPiano({
+      brand: payload.marque,
+      model: payload.modele,
+      serial_number: payload.numero_central,
+      type_piano: payload.type_piano,
+      manufacture_year: payload.annee_fabrication,
+      climate_zone: payload.zone_climatique,
+      maintenance_type: payload.type_entretien,
+      usage_level: info["usage_level"] ?? "",
+      ville: payload.ville,
+      pays: payload.pays,
+      remarques: payload.remarques,
+      wa: payload.mesures_wa,
+      wd: payload.mesures_wd,
+    });
+    saveCurrentPiano(currentPiano);
+    const result = await upsertCurrentPianoBuffer(currentPiano);
+    if (!result.ok) {
+      showMessage(`Erreur de base de données (PIANO_ACTUEL) : ${result.error ?? "erreur réseau"}`);
+    }
+  };
+
   const syncAndFinish = async (mode: "insert" | "update") => {
     setIsExporting(true);
     const payload = buildPayload();
