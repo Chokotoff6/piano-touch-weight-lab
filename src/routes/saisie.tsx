@@ -1410,12 +1410,7 @@ function Index() {
       return savedDateRef.current !== today || changedWeightCount() >= 5;
     };
     const startAction = (kind: "csv" | "pdf" | "compare") => {
-      // Priorité absolue : la ligne pivot 'PIANO_ACTUEL' est toujours actualisée
-      // dès le clic, avant l'arbitrage RGPD / modale.
-      if (canEnterWeights && orphanKeys.length === 0 && octaveGaps.length === 0) {
-        void pushBuffer();
-      }
-      if (!guardExport(kind === "compare" ? "export" : "export")) return;
+      if (!guardExport("export")) return;
       if (requiresChoice()) {
         pendingExport.current = kind === "compare" ? null : kind;
         pendingCompare.current = kind === "compare";
@@ -1423,7 +1418,10 @@ function Index() {
         return;
       }
       const mode = alreadySent() ? "update" : "insert";
-      void syncAndFinish(mode).finally(() => {
+      // Navigation verrouillée : on n'exporte / ne navigue QUE si les deux
+      // écritures cloud (buffer + historique) ont abouti.
+      void syncAndFinish(mode).then((ok) => {
+        if (!ok) return;
         if (kind === "csv" || kind === "pdf") runLocalExport(kind);
         if (kind === "compare") void navigate({ to: "/comparer" });
       });
