@@ -157,11 +157,13 @@ export function fromPgArray(value: unknown): number[] {
  */
 export async function saveCurrentPianoToCloud(
   piano: CurrentPiano,
-): Promise<{ ok: boolean; error?: string }> {
+  historyId?: string | null,
+): Promise<{ ok: boolean; error?: string; id?: string }> {
   const payload = {
     brand: piano.brand,
     model: piano.model,
     serial_number: piano.serial_number,
+    is_buffer: false,
     type_piano: piano.type_piano,
     mesure_date: piano.mesure_date,
     manufacture_year: piano.manufacture_year,
@@ -177,10 +179,42 @@ export async function saveCurrentPianoToCloud(
     balance_values: toPgArray(piano.balance_values),
   };
   try {
-    const { error } = await externalSupabase.from("piano_profiles").insert(payload as never);
-    return error ? { ok: false, error: error.message } : { ok: true };
+    // UPDATE de la fiche historique existante (son propre ID, is_buffer=false)...
+    if (historyId) {
+      const { error } = await externalSupabase
+        .from("piano_profiles")
+        .update(payload as never)
+        .eq("id", historyId);
+      return error ? { ok: false, error: error.message } : { ok: true, id: historyId };
+    }
+    // ...sinon INSERT d'une nouvelle fiche historique indépendante du buffer.
+    const { data, error } = await externalSupabase
+      .from("piano_profiles")
+      .insert(payload as never)
+      .select("id")
+      .single();
+    if (error) return { ok: false, error: error.message };
+    return { ok: true, id: data ? String((data as { id?: unknown }).id ?? "") : undefined };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "Erreur réseau" };
+  }
+}
+
+/** Recherche l'ID de la fiche historique (is_buffer=false) d'un numéro de série. */
+export async function findHistoryProfileId(serialNumber: string): Promise<string | null> {
+  try {
+    const { data, error } = await externalSupabase
+      .from("piano_profiles")
+      .select("id")
+      .eq("serial_number", serialNumber)
+      .eq("is_buffer", false)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error || !data) return null;
+    return String((data as { id?: unknown }).id ?? "") || null;
+  } catch {
+    return null;
   }
 }
 
