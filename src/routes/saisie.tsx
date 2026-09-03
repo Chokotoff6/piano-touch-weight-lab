@@ -1941,13 +1941,23 @@ Moyennes{" "}
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={() => void syncAndFinish("update")}>
+            <AlertDialogAction
+              onClick={() => {
+                const kind = pendingExport.current;
+                void syncAndFinish("update").finally(() => {
+                  if (kind) runLocalExport(kind);
+                });
+              }}
+            >
               Mettre à jour le diagnostic existant
             </AlertDialogAction>
             <AlertDialogAction
               onClick={() => {
+                const kind = pendingExport.current;
                 setCurrentDbId(null);
-                void syncAndFinish("insert");
+                void syncAndFinish("insert").finally(() => {
+                  if (kind) runLocalExport(kind);
+                });
               }}
             >
               Créer un nouveau point d'historique (Nouvelle pesée)
