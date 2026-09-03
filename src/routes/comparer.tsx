@@ -605,6 +605,7 @@ function SidebarPanel(props: SidebarPanelProps) {
             <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left ${props.importantChanges ? "font-semibold text-slate-700" : "text-slate-500"}`}><CycleIcon /><span>Modifications importantes : <span className="font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></span></Button>
           </div>
           <div className="space-y-2.5 border-t border-gray-200 pt-3">
+            <div className="font-bold text-black">Filtres Cloud</div>
             {switchRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
             {switchRow("Même année de fabrication", props.sameYear, props.setSameYear)}
             {switchRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
@@ -819,8 +820,8 @@ function Comparer() {
             <div className="min-w-0">
               <div ref={averagesRef} className="sticky top-[127px] z-50 mb-[50px] w-full border-b border-border/60 bg-background pb-2 pt-2">
                 <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span>Moyennes</span>} className="h-fit">
-                  <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">Piano actuel : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
-                  <div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">{comparisonLabel}{!comparedPiano && <span className="ml-2 normal-case text-slate-500">{cloudCounterText}</span>}</div><AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} active />{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div>
+                  <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-black">Piano actuel : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
+                  <div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">{comparisonLabel}{!comparedPiano && <span className="ml-2 normal-case text-orange-500">{cloudCounterText}</span>}</div><AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} active />{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div>
                 </Frame>
               </div>
               <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparisonLabel} comparisonShort={comparedPiano ? "Référence" : "Cloud"} />
