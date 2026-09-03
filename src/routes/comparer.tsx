@@ -658,6 +658,7 @@ function Comparer() {
         manufacture_year: Number.isFinite(year) ? year : null,
         climate_zone: parsed.fields["climate_zone"] ?? "",
         maintenance_type: parsed.fields["maintenance_type"] ?? "",
+        usage_level: parsed.fields["usage_level"] ?? "",
         ville: parsed.fields["ville"] ?? "",
         pays: parsed.fields["pays"] ?? "",
         remarques: parsed.fields["remarques"] ?? "",
