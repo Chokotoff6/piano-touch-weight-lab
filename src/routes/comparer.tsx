@@ -597,7 +597,7 @@ function Comparer() {
   }, [averagesHeight, status]);
 
   useEffect(() => {
-    // Priorité absolue : la table cloud 'piano_actuel' (tampon de transfert).
+    // Priorité absolue : la ligne pivot 'PIANO_ACTUEL' de piano_profiles (tampon cloud).
     // Le LocalStorage n'est qu'un secours hors ligne.
     let cancelled = false;
     const sync = async () => {
