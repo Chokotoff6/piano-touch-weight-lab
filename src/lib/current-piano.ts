@@ -11,7 +11,7 @@ export type CurrentPiano = {
   type_piano: string;
   mesure_date: string; // YYYY-MM-DD
   /** Horodatage complet (ISO ou litéral DB) servant à afficher l'heure de saisie. */
-  created_at?: string;
+  created_at?: string | undefined;
   manufacture_year: number | null;
   climate_zone: string;
   maintenance_type: string;
