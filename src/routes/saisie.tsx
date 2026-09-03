@@ -389,6 +389,8 @@ function Index() {
   const [honeypot, setHoneypot] = useState("");
   const [currentDbId, setCurrentDbId] = useState<string | null>(null);
   const [askUpdate, setAskUpdate] = useState(false);
+  // Export demandé en attente de la décision cloud (modale INSERT/UPSERT).
+  const pendingExport = useRef<"csv" | "pdf" | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const pdfInfoRef = useRef<HTMLDivElement | null>(null);
