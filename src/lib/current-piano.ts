@@ -1,6 +1,7 @@
 // Entité globale "current_piano" : source de vérité locale du piano mesuré.
 // Elle est écrite à la sauvegarde (page Saisie) et lue en priorité par /comparer.
 import { externalSupabase } from "@/integrations/external-supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 
 export const CURRENT_PIANO_KEY = "current_piano";
 
@@ -104,9 +105,29 @@ export function loadCurrentPiano(): CurrentPiano | null {
   }
 }
 
+/** Conversion d'un tableau JS vers un littéral de tableau PostgreSQL : {1,2,3}. */
+export function toPgArray(values: Array<number | null | undefined>): string {
+  const cells = values.map((value) =>
+    typeof value === "number" && Number.isFinite(value) ? String(value) : "NULL",
+  );
+  return `{${cells.join(",")}}`;
+}
+
+/** Décodage d'un littéral PostgreSQL {1,2,3} (ou d'un tableau déjà parsé). */
+export function fromPgArray(value: unknown): number[] {
+  if (Array.isArray(value)) return value.map((cell) => Number(cell));
+  if (typeof value !== "string") return [];
+  const body = value.trim().replace(/^[{[]/, "").replace(/[}\]]$/, "");
+  if (!body) return [];
+  return body.split(",").map((cell) => {
+    const clean = cell.trim().replace(/^"|"$/g, "");
+    return clean === "" || clean.toUpperCase() === "NULL" ? Number.NaN : Number(clean);
+  });
+}
+
 /**
  * Envoi cloud vers la table 'piano_profiles' (colonnes réelles de la base).
- * Les 88 notes partent en chaînes JSON textuelles de tableaux.
+ * Les 88 notes partent en littéraux de tableaux PostgreSQL ({...}).
  * Ne lève jamais : renvoie { ok, error } pour ne pas bloquer la navigation.
  */
 export async function saveCurrentPianoToCloud(
@@ -125,10 +146,10 @@ export async function saveCurrentPianoToCloud(
     ville: piano.ville,
     pays: piano.pays,
     remarques: piano.remarques,
-    wa_values: JSON.stringify(piano.wa_values),
-    wd_values: JSON.stringify(piano.wd_values),
-    friction_values: JSON.stringify(piano.friction_values),
-    balance_values: JSON.stringify(piano.balance_values),
+    wa_values: toPgArray(piano.wa_values),
+    wd_values: toPgArray(piano.wd_values),
+    friction_values: toPgArray(piano.friction_values),
+    balance_values: toPgArray(piano.balance_values),
   };
   try {
     const { error } = await externalSupabase.from("piano_profiles").insert(payload as never);
@@ -137,3 +158,81 @@ export async function saveCurrentPianoToCloud(
     return { ok: false, error: error instanceof Error ? error.message : "Erreur réseau" };
   }
 }
+
+/** Identifiant unique du tampon de transfert cloud (fiche courante partagée). */
+export const CURRENT_PIANO_BUFFER_ID = "current";
+
+/**
+ * UPSERT systématique de l'état écran dans la table tampon 'piano_actuel'.
+ * C'est cette table que /comparer lit en priorité absolue.
+ */
+export async function upsertCurrentPianoBuffer(
+  piano: CurrentPiano,
+): Promise<{ ok: boolean; error?: string }> {
+  const payload = {
+    id: CURRENT_PIANO_BUFFER_ID,
+    brand: piano.brand,
+    model: piano.model,
+    serial_number: piano.serial_number,
+    type_piano: piano.type_piano,
+    mesure_date: piano.mesure_date,
+    manufacture_year: piano.manufacture_year,
+    climate_zone: piano.climate_zone,
+    maintenance_type: piano.maintenance_type,
+    usage_level: piano.usage_level,
+    ville: piano.ville,
+    pays: piano.pays,
+    remarques: piano.remarques,
+    wa_values: toPgArray(piano.wa_values),
+    wd_values: toPgArray(piano.wd_values),
+    friction_values: toPgArray(piano.friction_values),
+    balance_values: toPgArray(piano.balance_values),
+  };
+  try {
+    const { error } = await supabase
+      .from("piano_actuel")
+      .upsert(payload as never, { onConflict: "id" });
+    return error ? { ok: false, error: error.message } : { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Erreur réseau" };
+  }
+}
+
+/** Lecture du tampon cloud 'piano_actuel' (priorité absolue sur /comparer). */
+export async function loadCurrentPianoFromCloud(): Promise<CurrentPiano | null> {
+  try {
+    const { data, error } = await supabase
+      .from("piano_actuel")
+      .select("*")
+      .eq("id", CURRENT_PIANO_BUFFER_ID)
+      .maybeSingle();
+    if (error || !data) return null;
+    const row = data as Record<string, unknown>;
+    const wa = fromPgArray(row["wa_values"]);
+    if (wa.length === 0) return null;
+    return {
+      brand: String(row["brand"] ?? ""),
+      model: String(row["model"] ?? ""),
+      serial_number: String(row["serial_number"] ?? ""),
+      type_piano: String(row["type_piano"] ?? ""),
+      mesure_date: String(row["mesure_date"] ?? new Date().toISOString().slice(0, 10)),
+      manufacture_year:
+        row["manufacture_year"] === null || row["manufacture_year"] === undefined
+          ? null
+          : Number(row["manufacture_year"]),
+      climate_zone: String(row["climate_zone"] ?? ""),
+      maintenance_type: String(row["maintenance_type"] ?? ""),
+      usage_level: String(row["usage_level"] ?? ""),
+      ville: String(row["ville"] ?? ""),
+      pays: String(row["pays"] ?? ""),
+      remarques: String(row["remarques"] ?? ""),
+      wa_values: wa,
+      wd_values: fromPgArray(row["wd_values"]),
+      friction_values: fromPgArray(row["friction_values"]),
+      balance_values: fromPgArray(row["balance_values"]),
+    };
+  } catch {
+    return null;
+  }
+}
+

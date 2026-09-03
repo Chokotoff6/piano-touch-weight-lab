@@ -26,7 +26,7 @@ import { buildCsv, buildExportFilename, downloadCsv, formatLocalDateTime } from 
 import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { generateLandscapeReport } from "@/lib/pdf-report";
 import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
-import { buildCurrentPiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, CURRENT_PIANO_KEY } from "@/lib/current-piano";
+import { buildCurrentPiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, CURRENT_PIANO_KEY } from "@/lib/current-piano";
 
 const INVALID_CSV_MESSAGE =
   "⚠️ Fichier non valide. Veuillez importer un fichier CSV généré par l'application Piano Touch Analyzer.";
@@ -1235,6 +1235,11 @@ function Index() {
     saveCurrentPiano(currentPiano);
     const toastId = toast.loading("Enregistrement en cours dans Supabase…");
     try {
+      // Tampon de transfert universel : toujours mis à jour, indépendant du navigateur.
+      const bufferResult = await upsertCurrentPianoBuffer(currentPiano);
+      if (!bufferResult.ok) {
+        showMessage(`Erreur de base de données (piano_actuel) : ${bufferResult.error ?? "erreur réseau"}`);
+      }
       const cloudResult = await saveCurrentPianoToCloud(currentPiano);
       if (!cloudResult.ok) {
         toast.error(`Erreur de base de données : ${cloudResult.error ?? "erreur réseau"}`, {
