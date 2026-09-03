@@ -179,12 +179,6 @@ function seriesAverage(data: ChartPoint[], key: SeriesKey): string {
   return (values.reduce<number>((sum, value) => sum + value, 0) / values.length).toFixed(1);
 }
 
-function profileAverage(profile: RefProfile | null, key: keyof RefProfile): string {
-  const values = profile?.[key] ?? [];
-  const finite = values.filter((value) => typeof value === "number" && Number.isFinite(value));
-  if (finite.length === 0) return "—";
-  return (finite.reduce<number>((sum, value) => sum + value, 0) / finite.length).toFixed(1);
-}
 
 function averageProfiles(profiles: ProfileRecord[]): RefProfile | null {
   if (profiles.length === 0) return null;
@@ -494,7 +488,7 @@ const COLUMNS = [
   { key: "balance", label: "Balance" },
 ] as const;
 type MetricKey = (typeof COLUMNS)[number]["key"];
-type Averages = Record<MetricKey, string>;
+
 
 // Bloc de moyenne façon page Saisie : moyenne globale en grand + détail Blanches/Noires.
 function AverageBlock({ label, global, white, black, active = false }: { label: string; global: string; white: string; black: string; active?: boolean }) {
