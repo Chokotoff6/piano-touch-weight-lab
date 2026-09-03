@@ -184,15 +184,17 @@ export async function saveCurrentPianoToCloud(
   }
 }
 
-/** Numéro de série pivot du tampon de transfert cloud (ligne dédiée dans piano_profiles). */
+/** Ancien numéro de série pivot (héritage : remplacé par la colonne booléenne is_buffer). */
 export const CURRENT_PIANO_BUFFER_ID = "PIANO_ACTUEL";
 
-/** Colonnes de la ligne pivot (métadonnées + 4 tableaux au format PostgreSQL {...}). */
+/** Colonnes de la ligne tampon (métadonnées + 4 tableaux au format PostgreSQL {...}). */
 function bufferPayload(piano: CurrentPiano) {
   return {
     brand: piano.brand,
     model: piano.model,
-    serial_number: CURRENT_PIANO_BUFFER_ID,
+    // Le VRAI numéro de série est stocké ; le marqueur de tampon est is_buffer.
+    serial_number: piano.serial_number,
+    is_buffer: true,
     type_piano: piano.type_piano,
     mesure_date: piano.mesure_date,
     manufacture_year: piano.manufacture_year,
@@ -210,10 +212,9 @@ function bufferPayload(piano: CurrentPiano) {
 }
 
 /**
- * UPSERT systématique de l'état écran dans la ligne pivot 'PIANO_ACTUEL'
- * de la table unique 'piano_profiles'. C'est cette ligne que /comparer lit
- * en priorité absolue pour la courbe Live noire.
- * Stratégie sans contrainte d'unicité : UPDATE si la ligne pivot existe,
+ * UPSERT systématique de l'état écran dans la ligne unique où is_buffer = true.
+ * C'est cette ligne que /comparer lit en priorité absolue (courbe Live noire).
+ * Stratégie sans contrainte d'unicité : UPDATE si la ligne tampon existe,
  * sinon INSERT.
  */
 export async function upsertCurrentPianoBuffer(
@@ -224,7 +225,7 @@ export async function upsertCurrentPianoBuffer(
     const { data: existing, error: readError } = await externalSupabase
       .from("piano_profiles")
       .select("id")
-      .eq("serial_number", CURRENT_PIANO_BUFFER_ID)
+      .eq("is_buffer", true)
       .maybeSingle();
     if (readError) return { ok: false, error: readError.message };
     if (existing?.id) {
@@ -243,13 +244,13 @@ export async function upsertCurrentPianoBuffer(
   }
 }
 
-/** Lecture de la ligne pivot 'PIANO_ACTUEL' (priorité absolue sur /comparer). */
+/** Lecture de la ligne tampon (is_buffer = true) : priorité absolue sur /comparer. */
 export async function loadCurrentPianoFromCloud(): Promise<CurrentPiano | null> {
   try {
     const { data, error } = await externalSupabase
       .from("piano_profiles")
       .select("*")
-      .eq("serial_number", CURRENT_PIANO_BUFFER_ID)
+      .eq("is_buffer", true)
       .maybeSingle();
     if (error || !data) return null;
     const row = data as Record<string, unknown>;
