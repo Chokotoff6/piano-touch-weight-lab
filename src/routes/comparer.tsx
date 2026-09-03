@@ -342,7 +342,6 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
   const { active, payload, label } = props;
   if (!active || !payload || payload.length === 0) return null;
   const valid = [...payload]
-    .filter((entry) => entry.name !== "Mon piano centre")
     .filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value))
     .sort((a, b) => Number(b.value) - Number(a.value));
   return (
@@ -381,7 +380,6 @@ function currentLinesFor(familyId: string, keyFilter: KeyFilter): LineDef[] {
   if (keyFilter === "split") return [
     { dataKey: metric[1], name: "Mon piano blanches", shortName: "Blanches", color: "#6b7280", real: true },
     { dataKey: metric[2], name: "Mon piano noires", shortName: "Noires", color: "#000000", real: true },
-    { dataKey: metric[3], name: "Mon piano centre", shortName: "Mon piano", color: "#000000", hidden: true },
   ];
   return [{ dataKey: metric[0], name: "Mon piano", shortName: "Mon piano", color: "#000000", real: true }];
 }
@@ -506,6 +504,33 @@ function averageSet(chartData: ChartPoint[]): Averages {
   return { wa: seriesAverage(chartData, "waCur"), wd: seriesAverage(chartData, "wdCur"), friction: seriesAverage(chartData, "fricCur"), balance: seriesAverage(chartData, "balCur") };
 }
 
+// Détail des moyennes par couleur de touche (calculées sur les 88 notes).
+const SPLIT_KEYS: Record<MetricKey, { cur: [SeriesKey, SeriesKey]; ref: [SeriesKey, SeriesKey] }> = {
+  wa: { cur: ["waCurW", "waCurB"], ref: ["sameWaW", "sameWaB"] },
+  wd: { cur: ["wdCurW", "wdCurB"], ref: ["sameWdW", "sameWdB"] },
+  friction: { cur: ["fricCurW", "fricCurB"], ref: ["sameFricW", "sameFricB"] },
+  balance: { cur: ["balCurW", "balCurB"], ref: ["sameBalW", "sameBalB"] },
+};
+
+function ColorAverageRows({ chartData, source, active = false }: { chartData: ChartPoint[]; source: "cur" | "ref"; active?: boolean }) {
+  const row = (label: string, pick: (keys: [SeriesKey, SeriesKey]) => SeriesKey) => (
+    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-1 text-[0.68rem]">
+      <span className={`font-bold uppercase tracking-wide ${active ? "text-orange-600" : "text-gray-600"}`}>{label}</span>
+      {COLUMNS.map(({ key, label: metricLabel }) => (
+        <span key={key} className="tabular-nums text-slate-600">
+          {metricLabel} <span className="font-semibold">{seriesAverage(chartData, pick(SPLIT_KEYS[key][source]))} g.</span>
+        </span>
+      ))}
+    </div>
+  );
+  return (
+    <div className="mt-1.5 space-y-0.5">
+      {row("Blanches", (keys) => keys[0])}
+      {row("Noires", (keys) => keys[1])}
+    </div>
+  );
+}
+
 const PILL_BASE = "h-7 min-w-0 flex-1 rounded-full border px-1.5 text-[0.68rem] leading-tight transition-colors whitespace-nowrap";
 const pillClass = (active: boolean) => `${PILL_BASE} ${active ? "border-gray-300 bg-gray-100 font-semibold text-slate-700" : "border-gray-200 bg-white text-gray-400 hover:border-gray-300 hover:text-gray-500"}`;
 
@@ -561,13 +586,13 @@ function SidebarPanel(props: SidebarPanelProps) {
             <div className="flex items-center gap-1.5">
               <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={pillClass(props.cloudEnabled)}>Cloud</Button>
               <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={pillClass(props.standardEnabled)}>Standard</Button>
-              <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={pillClass(props.csvActive)}>CSV</Button>
+              <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={pillClass(props.csvActive)}>Importer CSV</Button>
               <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
             </div>
           </div>
           <div className="space-y-2 border-t border-gray-200 pt-3">
             <Button type="button" variant="outline" onClick={props.cycleKeyFilter} aria-label={`Vue clavier : ${props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Vue clavier : <span className="font-semibold">{props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}</span></span></Button>
-            <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Niveau d'usage instrument : <span className="font-semibold">{usageLabel}</span> ↻</span></Button>
+            <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Niveau d'usage instrument : <span className="font-semibold">{usageLabel}</span></span></Button>
             <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left ${props.importantChanges ? "font-semibold text-slate-700" : "text-slate-500"}`}><CycleIcon /><span>Modifications importantes : <span className="font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></span></Button>
           </div>
           <div className="space-y-2.5 border-t border-gray-200 pt-3">
@@ -775,9 +800,9 @@ function Comparer() {
   const cloudIsEmpty = !comparedPiano && sourceMode === "cloud" && cloudSampleCount === 0;
   const cloudCounterText = cloudLoading
     ? "Calcul de la moyenne cloud…"
-    : cloudSampleCount === 0
-      ? "Aucun piano correspondant"
-      : `Résultat cloud sur ${cloudSampleCount} ${cloudSampleCount === 1 ? "piano" : "pianos"}`;
+    : cloudSampleCount <= 1
+      ? "Aucun instrument similaire enregistré"
+      : `Moyennes sur ${cloudSampleCount} pianos de modèle identique enregistré(s) par les utilisateurs`;
 
   return (
     <main className="mx-auto w-full max-w-[1400px] px-6 py-8">
@@ -787,8 +812,8 @@ function Comparer() {
             <div className="min-w-0">
               <div ref={averagesRef} className="sticky top-[127px] z-50 mb-[50px] w-full border-b border-border/60 bg-background pb-2 pt-2">
                 <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span>Moyennes</span>} className="h-fit">
-                  <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">Piano actuel : <span className="normal-case">{summary}</span></div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={current[key]} />)}</div></div>
-                  <div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">{comparisonLabel}{!comparedPiano && <span className="ml-2 normal-case text-slate-500">{cloudCounterText}</span>}</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={comparisonProfile ? witness[key] : "—"} active />)}</div>{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div>
+                  <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">Piano actuel : <span className="normal-case">{summary}</span></div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={current[key]} />)}</div><ColorAverageRows chartData={chartData} source="cur" /></div>
+                  <div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">{comparisonLabel}{!comparedPiano && <span className="ml-2 normal-case text-slate-500">{cloudCounterText}</span>}</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={comparisonProfile ? witness[key] : "—"} active />)}</div>{comparisonProfile && <ColorAverageRows chartData={chartData} source="ref" active />}{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div>
                 </Frame>
               </div>
               <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparisonLabel} comparisonShort={comparedPiano ? "Référence" : "Cloud"} />
