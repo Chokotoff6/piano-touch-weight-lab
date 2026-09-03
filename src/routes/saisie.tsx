@@ -1275,7 +1275,7 @@ function Index() {
     }
   };
 
-  const syncAndFinish = async (mode: "insert" | "update") => {
+  const syncAndFinish = async (mode: "insert" | "update"): Promise<boolean> => {
     setIsExporting(true);
     const payload = buildPayload();
     const year = payload.annee_fabrication;
