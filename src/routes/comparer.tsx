@@ -805,12 +805,14 @@ function Comparer() {
 
   const mineTime = mine?.measureTime ? ` - ${mine.measureTime}` : "";
   const summary = `${summaryValue(mine?.brand)}\u00A0\u00A0${summaryValue(mine?.model)} - ${summaryValue(mine?.year)} - SN ${summaryValue(mine?.serialNumber)} - Mesure ${formatMeasureDate(mine?.measureDate)}${mineTime}`;
-  const cloudIsEmpty = !comparedPiano && sourceMode === "cloud" && cloudSampleCount === 0;
+  const cloudActive = !comparedPiano && sourceMode === "cloud";
+  const cloudIsEmpty = cloudActive && cloudSampleCount === 0;
   const cloudCounterText = cloudLoading
     ? "Calcul de la moyenne cloud…"
     : cloudSampleCount <= 1
       ? "Aucun instrument similaire enregistré"
       : `Moyennes sur ${cloudSampleCount} pianos de modèle identique enregistré(s) par les utilisateurs`;
+
 
   return (
     <main className="mx-auto w-full max-w-[1400px] px-6 py-8">
