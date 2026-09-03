@@ -678,6 +678,7 @@ function Comparer() {
 
       const result = await query;
       if (cancelled) return;
+      setCloudLoading(false);
       if (result.error || !result.data) {
         setCloudProfile(null);
         setCloudSampleCount(0);
