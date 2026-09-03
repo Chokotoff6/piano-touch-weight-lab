@@ -198,7 +198,7 @@ function profileFromCurrentPiano(piano: CurrentPiano): ProfileRecord {
     year: piano.manufacture_year,
     climate: piano.climate_zone,
     maintenance: piano.maintenance_type,
-    usageLevel: null,
+    usageLevel: piano.usage_level ?? null,
     measureDate: piano.mesure_date,
   };
 }
@@ -658,6 +658,7 @@ function Comparer() {
         manufacture_year: Number.isFinite(year) ? year : null,
         climate_zone: parsed.fields["climate_zone"] ?? "",
         maintenance_type: parsed.fields["maintenance_type"] ?? "",
+        usage_level: parsed.fields["usage_level"] ?? "",
         ville: parsed.fields["ville"] ?? "",
         pays: parsed.fields["pays"] ?? "",
         remarques: parsed.fields["remarques"] ?? "",
