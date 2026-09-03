@@ -145,7 +145,6 @@ function RootComponent() {
   useEffect(() => {
     initLang();
   }, []);
-  const isSaisie = pathname === "/saisie";
   const isComparer = pathname === "/comparer";
 
   const linkClass = "rounded-md px-3 py-2 text-base font-semibold text-muted-foreground transition-colors hover:bg-background hover:text-foreground sm:px-4 sm:text-lg";

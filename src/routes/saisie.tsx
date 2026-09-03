@@ -1267,18 +1267,6 @@ function Index() {
   }, [exportReady, requiredSheetFieldsComplete, badgeVisible, info, isExporting, isDirty, currentDbId]);
 
   useEffect(() => {
-    const saveCloud = () => {
-      if (!guardExport()) return;
-      if (currentDbId && isDirty) {
-        setAskUpdate(true);
-        return;
-      }
-      void syncAndFinish(currentDbId ? "update" : "insert");
-    };
-    const quickSave = () => {
-      if (!guardExport()) return;
-      void syncAndFinish(currentDbId ? "update" : "insert");
-    };
     // Exporter = même algorithme de décision cloud que Comparer, puis
     // téléchargement local du fichier une fois l'action cloud terminée.
     const startExport = (kind: "csv" | "pdf") => {
@@ -1300,10 +1288,6 @@ function Index() {
       "piano-export": onExport,
       "piano-export-csv": exportCsvOnly,
       "piano-export-pdf": onPdf,
-      "piano-export-cloud": saveCloud,
-      "piano-save-cloud": saveCloud,
-      "piano-save": saveCloud,
-      "piano-save-quick": quickSave,
       "piano-compare-guard": onCompareGuard,
       "piano-reset": onReset,
       "piano-import-csv": () => importInputRef.current?.click(),
