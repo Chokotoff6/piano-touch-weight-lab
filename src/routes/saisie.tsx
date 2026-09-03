@@ -1947,7 +1947,10 @@ Moyennes{" "}
         open={askUpdate}
         onOpenChange={(open) => {
           setAskUpdate(open);
-          if (!open) pendingExport.current = null;
+          if (!open) {
+            pendingExport.current = null;
+            pendingCompare.current = false;
+          }
         }}
       >
         <AlertDialogContent className="w-full max-w-xl">
@@ -1963,8 +1966,11 @@ Moyennes{" "}
             <AlertDialogAction
               onClick={() => {
                 const kind = pendingExport.current;
+                const compare = pendingCompare.current;
+                pendingCompare.current = false;
                 void syncAndFinish("update").finally(() => {
                   if (kind) runLocalExport(kind);
+                  if (compare) void navigate({ to: "/comparer" });
                 });
               }}
             >
@@ -1973,9 +1979,12 @@ Moyennes{" "}
             <AlertDialogAction
               onClick={() => {
                 const kind = pendingExport.current;
+                const compare = pendingCompare.current;
+                pendingCompare.current = false;
                 setCurrentDbId(null);
                 void syncAndFinish("insert").finally(() => {
                   if (kind) runLocalExport(kind);
+                  if (compare) void navigate({ to: "/comparer" });
                 });
               }}
             >
@@ -1983,6 +1992,7 @@ Moyennes{" "}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
+
       </AlertDialog>
     </main>
   );
