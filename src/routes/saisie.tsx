@@ -1293,7 +1293,24 @@ function Index() {
     const exportCsvOnly = () => startExport("csv");
     const onExport = () => startExport("csv");
     const onPdf = () => startExport("pdf");
-    const onCompareGuard = () => void navigate({ to: "/comparer" });
+    const onCompareGuard = () => {
+      // Comparer applique le même arbitrage cloud, puis navigue avec le
+      // current_piano fraîchement reconstruit depuis l'écran.
+      if (!guardExport("export")) {
+        void navigate({ to: "/comparer" });
+        return;
+      }
+      if (currentDbId && isDirty) {
+        pendingExport.current = null;
+        pendingCompare.current = true;
+        setAskUpdate(true);
+        return;
+      }
+      void syncAndFinish(currentDbId ? "update" : "insert").finally(() =>
+        navigate({ to: "/comparer" }),
+      );
+    };
+
     const onReset = () => setConfirmReset("rows");
 
     const handlers: Record<string, EventListener> = {
