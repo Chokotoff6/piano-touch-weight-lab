@@ -538,6 +538,13 @@ function SidebarPanel(props: SidebarPanelProps) {
     );
 }
 
+function formatMeasureDate(value: string | null | undefined) {
+  const raw = (value ?? "").trim();
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return `${match[3]}-${match[2]}-${match[1]}`;
+  return summaryValue(raw);
+}
+
 function summaryValue(value: string | number | null | undefined) {
   return value === null || value === undefined || value === "" ? "-" : String(value);
 }
