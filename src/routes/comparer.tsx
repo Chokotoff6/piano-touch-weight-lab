@@ -676,8 +676,9 @@ function Comparer() {
 
   // Arbitrage de la courbe orange : CSV importé en priorité, sinon moyenne Cloud.
   const comparisonProfile = comparedPiano ?? (sourceMode === "cloud" ? cloudProfile : null);
+  const comparedTime = comparedPiano?.measureTime ? ` à ${comparedPiano.measureTime}` : "";
   const comparisonLabel = comparedPiano
-    ? `Référence : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - (${summaryValue(comparedPiano.year)}) - ${summaryValue(comparedPiano.serialNumber)} - Mesure du ${formatMeasureDate(comparedPiano.measureDate)} (CSV)`
+    ? `Référence : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - (${summaryValue(comparedPiano.year)}) - ${summaryValue(comparedPiano.serialNumber)} - Mesure du ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime} (CSV)`
     : "Cloud";
   const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
   const current = averageSet(chartData);
@@ -701,6 +702,7 @@ function Comparer() {
         remarques: parsed.fields["remarques"] ?? "",
         wa: parsed.rows.map((row) => row.wa),
         wd: parsed.rows.map((row) => row.wd),
+        mesureDateRaw: parsed.fields["mesure_date"] || undefined,
       });
       // Aucun accès à current_piano ni au buffer PIANO_ACTUEL :
       // le CSV devient seulement la référence orange de comparaison.
