@@ -673,7 +673,7 @@ function Comparer() {
   // Arbitrage de la courbe orange : CSV importé en priorité, sinon moyenne Cloud.
   const comparisonProfile = comparedPiano ?? (sourceMode === "cloud" ? cloudProfile : null);
   const comparisonLabel = comparedPiano
-    ? `Référence : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ")} (CSV)`
+    ? `Référence : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - (${summaryValue(comparedPiano.year)}) - ${summaryValue(comparedPiano.serialNumber)} - Mesure du ${formatMeasureDate(comparedPiano.measureDate)} (CSV)`
     : "Cloud";
   const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
   const current = averageSet(chartData);
@@ -721,7 +721,7 @@ function Comparer() {
     setKeyFilter((value) => value === "all" ? "split" : "all");
   }
 
-  const summary = `${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - Mesure (${summaryValue(mine?.measureDate)})`;
+  const summary = `${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - Mesure du ${formatMeasureDate(mine?.measureDate)}`;
   const cloudIsEmpty = !comparedPiano && sourceMode === "cloud" && cloudSampleCount === 0;
 
   return (
