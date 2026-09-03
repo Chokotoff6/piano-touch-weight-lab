@@ -764,8 +764,6 @@ function Comparer() {
     ? `Référence : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - ${summaryValue(comparedPiano.year)} - SN ${summaryValue(comparedPiano.serialNumber)} - Mesure ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime} (CSV)`
     : "Cloud";
   const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
-  const current = averageSet(chartData);
-  const witness: Averages = { wa: profileAverage(comparisonProfile, "wa"), wd: profileAverage(comparisonProfile, "wd"), friction: profileAverage(comparisonProfile, "friction"), balance: profileAverage(comparisonProfile, "balance") };
 
   async function handleImport(file: File) {
     try {
