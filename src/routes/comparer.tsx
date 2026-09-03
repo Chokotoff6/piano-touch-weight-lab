@@ -7,8 +7,6 @@ import {
   buildCurrentPiano,
   loadCurrentPiano,
   loadCurrentPianoFromCloud,
-  saveCurrentPiano,
-  upsertCurrentPianoBuffer,
   CURRENT_PIANO_BUFFER_ID,
   fromPgArray,
   type CurrentPiano,
@@ -34,7 +32,7 @@ const isBlackKey = (noteIndex: number) => BLACK_MODULOS.has(noteIndex % 12);
 const PROFILE_FIELDS = "id,serial_number,brand,model,type_piano,mesure_date,manufacture_year,climate_zone,maintenance_type,ville,pays,remarques,wa_values,wd_values,friction_values,balance_values,usage_level,created_at";
 
 type KeyFilter = "all" | "split";
-type SourceMode = "none" | "cloud" | "import";
+type SourceMode = "none" | "cloud";
 type UsageLevel = "all" | "low" | "intensive";
 
 type RefProfile = {
@@ -309,7 +307,7 @@ function tooltipColorFor(name: string) {
   if (lower.includes("noires")) return "#000000";
   if (lower.includes("blanches")) return "#6b7280";
   if (lower.includes("mon piano")) return "#000000";
-  if (lower.startsWith("cloud")) return "#f97316";
+  if (lower.startsWith("cloud") || lower.startsWith("référence")) return "#f97316";
   return "#10b981";
 }
 
@@ -373,7 +371,7 @@ function lastDefinedIndex(data: ChartPoint[], key: SeriesKey) {
 }
 
 
-function ComparisonChart({ chartData, keyFilter }: { chartData: ChartPoint[]; keyFilter: KeyFilter }) {
+function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string }) {
   const [hoveredChart, setHoveredChart] = useState<string | null>(null);
   const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -393,7 +391,11 @@ function ComparisonChart({ chartData, keyFilter }: { chartData: ChartPoint[]; ke
   const tooltipPosition = { x: Math.max(containerWidth - 200, 0), y: 8 };
 
   function SubChart({ family }: { family: (typeof FAMILIES)[number] }) {
-    const lines = [...currentLinesFor(family.id, keyFilter), ...family.lines];
+    // Renommage dynamique de la courbe orange : "Référence : [Marque] [Modèle] (CSV)" ou "Cloud".
+    const familyLines = family.lines.map((line) =>
+      line.name === "Cloud" ? { ...line, name: comparisonLabel, shortName: comparisonShort } : line,
+    );
+    const lines = [...currentLinesFor(family.id, keyFilter), ...familyLines];
     // Chaque courbe est ancrée sur SON propre premier / dernier point défini
     // (indispensable en vue éclatée où blanches et noires ne partagent pas les mêmes index).
     const endpointOffsets = (side: "left" | "right") => new Map(
@@ -485,6 +487,7 @@ type SidebarPanelProps = {
   onToggleCloud: () => void;
   onToggleStandard: () => void;
   onImport: (file: File) => void;
+  onResetComparison: () => void;
   keyFilter: KeyFilter;
   cycleKeyFilter: () => void;
   filtersDisabled: boolean;
@@ -520,6 +523,9 @@ function SidebarPanel(props: SidebarPanelProps) {
               <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={pillClass(props.csvActive)}>CSV</Button>
               <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
             </div>
+            {props.csvActive && (
+              <Button type="button" variant="outline" onClick={props.onResetComparison} className={`${PILL_BASE} mt-1.5 flex w-full items-center justify-center gap-2 border-orange-200 bg-white font-semibold text-orange-600 hover:border-orange-300`}><CycleIcon /><span>Revenir au Cloud</span></Button>
+            )}
           </div>
           <div className="space-y-2 border-t border-gray-200 pt-3">
             <Button type="button" variant="outline" onClick={props.cycleKeyFilter} aria-label={`Vue clavier : ${props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Vue clavier : <span className="font-semibold">{props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}</span></span></Button>
@@ -553,8 +559,9 @@ function Comparer() {
   const [standard, setStandard] = useState<RefProfile>(FACTORY_STANDARD);
   const [cloudProfile, setCloudProfile] = useState<RefProfile | null>(null);
   const [cloudSampleCount, setCloudSampleCount] = useState(0);
-  const [imported, setImported] = useState<RefProfile | null>(null);
-  const [importedMeta, setImportedMeta] = useState<Record<string, string>>({});
+  // État indépendant : le CSV importé alimente UNIQUEMENT la courbe orange.
+  // current_piano (courbe Live noire) et le buffer PIANO_ACTUEL ne sont jamais touchés.
+  const [comparedPiano, setComparedPiano] = useState<ProfileRecord | null>(null);
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
   const averagesRef = useRef<HTMLDivElement>(null);
   const [averagesHeight, setAveragesHeight] = useState(0);
@@ -660,10 +667,14 @@ function Comparer() {
     return () => { cancelled = true; };
   }, [mine, sourceMode, sameClimate, sameYear, importantChanges, youngOnly, usageLevel]);
 
-  const activeCurrent = sourceMode === "import" && imported ? imported : mine;
-  const chartData = useMemo(() => buildChartData(activeCurrent, sourceMode === "cloud" ? cloudProfile : null, standardEnabled ? standard : null), [activeCurrent, cloudProfile, sourceMode, standard, standardEnabled]);
+  // Arbitrage de la courbe orange : CSV importé en priorité, sinon moyenne Cloud.
+  const comparisonProfile = comparedPiano ?? (sourceMode === "cloud" ? cloudProfile : null);
+  const comparisonLabel = comparedPiano
+    ? `Référence : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ")} (CSV)`
+    : "Cloud";
+  const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
   const current = averageSet(chartData);
-  const witness: Averages = { wa: profileAverage(cloudProfile, "wa"), wd: profileAverage(cloudProfile, "wd"), friction: profileAverage(cloudProfile, "friction"), balance: profileAverage(cloudProfile, "balance") };
+  const witness: Averages = { wa: profileAverage(comparisonProfile, "wa"), wd: profileAverage(comparisonProfile, "wd"), friction: profileAverage(comparisonProfile, "friction"), balance: profileAverage(comparisonProfile, "balance") };
 
   async function handleImport(file: File) {
     try {
@@ -684,18 +695,18 @@ function Comparer() {
         wa: parsed.rows.map((row) => row.wa),
         wd: parsed.rows.map((row) => row.wd),
       });
-      saveCurrentPiano(piano);
-      void upsertCurrentPianoBuffer(piano);
-      const record = profileFromCurrentPiano(piano);
-      setMine(record);
-      setImported(record);
-      setImportedMeta(parsed.meta);
-      setSourceMode("import");
+      // Aucun accès à current_piano ni au buffer PIANO_ACTUEL :
+      // le CSV devient seulement la référence orange de comparaison.
+      setComparedPiano(profileFromCurrentPiano(piano));
       setStatus("ok");
     } catch {
-      setImported(null);
-      setImportedMeta({});
+      setComparedPiano(null);
     }
+  }
+
+  function resetComparison() {
+    setComparedPiano(null);
+    setSourceMode("cloud");
   }
 
 
@@ -707,14 +718,8 @@ function Comparer() {
     setKeyFilter((value) => value === "all" ? "split" : "all");
   }
 
-  const importedModel = importedMeta["Modèle"] ?? importedMeta["Modele"] ?? "";
-  const importedYear = importedMeta["Date de fabrication"] ?? "";
-  const importedSerial = importedMeta["Numéro de série"] ?? importedMeta["Numero de serie"] ?? "";
-  const importedDate = importedMeta["Date de mesure"] ?? importedMeta["Date et heure de saisie"] ?? "";
-  const summary = sourceMode === "import"
-    ? `${summaryValue(importedModel)} - (${summaryValue(importedYear)}) - ${summaryValue(importedSerial)} - Mesure (${summaryValue(importedDate)})`
-    : `${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - Mesure (${summaryValue(mine?.measureDate)})`;
-  const cloudIsEmpty = sourceMode === "cloud" && cloudSampleCount === 0;
+  const summary = `${summaryValue(mine?.model)} - (${summaryValue(mine?.year)}) - ${summaryValue(mine?.serialNumber)} - Mesure (${summaryValue(mine?.measureDate)})`;
+  const cloudIsEmpty = !comparedPiano && sourceMode === "cloud" && cloudSampleCount === 0;
 
   return (
     <main className="mx-auto w-full max-w-[1400px] px-6 py-8">
@@ -725,12 +730,12 @@ function Comparer() {
               <div ref={averagesRef} className="sticky top-[127px] z-50 mb-[50px] w-full border-b border-border/60 bg-background pb-2 pt-2">
                 <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<><span>Moyennes</span><span className="ml-2 text-sm font-semibold text-muted-foreground">({summary})</span></>} className="h-fit">
                   <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500">Piano Actuel</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={current[key]} />)}</div></div>
-                  <div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">Cloud</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={sourceMode === "cloud" ? witness[key] : "—"} active />)}</div>{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div>
+                  <div><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-orange-600">{comparisonLabel}</div><div className="grid grid-cols-4 gap-3">{COLUMNS.map(({ key, label }) => <MetricCell key={key} label={label} value={comparisonProfile ? witness[key] : "—"} active />)}</div>{cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}</div>
                 </Frame>
               </div>
-              <ComparisonChart chartData={chartData} keyFilter={keyFilter} />
+              <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparisonLabel} comparisonShort={comparedPiano ? "Référence" : "Cloud"} />
             </div>
-            <aside className="min-w-0"><div className="sticky z-40 mt-[200px] h-fit" style={{ top: averagesHeight > 0 ? `${averagesHeight + 177}px` : "400px" }}><SidebarPanel cloudEnabled={sourceMode === "cloud"} standardEnabled={standardEnabled} csvActive={sourceMode === "import"} onToggleCloud={() => setSourceMode((value) => value === "cloud" ? "none" : "cloud")} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} filtersDisabled={sourceMode !== "cloud"} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
+            <aside className="min-w-0"><div className="sticky z-40 mt-[200px] h-fit" style={{ top: averagesHeight > 0 ? `${averagesHeight + 177}px` : "400px" }}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} onToggleCloud={() => setSourceMode((value) => value === "cloud" ? "none" : "cloud")} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onResetComparison={resetComparison} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
           </div>
           <div className="h-[70vh]" aria-hidden="true" />
         </>
