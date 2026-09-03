@@ -261,6 +261,7 @@ export async function loadCurrentPianoFromCloud(): Promise<CurrentPiano | null> 
       serial_number: String(row["serial_number"] ?? ""),
       type_piano: String(row["type_piano"] ?? ""),
       mesure_date: String(row["mesure_date"] ?? new Date().toISOString().slice(0, 10)),
+      created_at: row["created_at"] ? String(row["created_at"]) : undefined,
       manufacture_year:
         row["manufacture_year"] === null || row["manufacture_year"] === undefined
           ? null
