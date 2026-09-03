@@ -1,5 +1,4 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { EMPTY_DATA_MESSAGE, saisieGate } from "@/lib/required-keys";
 import { initLang, setLang, useLang } from "@/data/translations";
 import { setTopbarState, showTopbarAlert, useTopbarState } from "@/lib/topbar-store";
 import {
@@ -172,23 +171,7 @@ function RootComponent() {
                 Saisie
               </Link>
               <div className="relative">
-                <Link
-                  to="/comparer"
-                  className={topbar.measuresReady || isComparer ? linkClass : "cursor-not-allowed rounded-md px-3 py-2 text-base font-semibold !text-gray-300 sm:px-4 sm:text-lg"}
-                  activeProps={{ className: activeLinkClass }}
-                  onClick={(e) => {
-                    const hasData = (saisieGate.hasData?.() ?? false) || topbar.measuresReady;
-                    if (!hasData) {
-                      e.preventDefault();
-                      showTopbarAlert("compare", EMPTY_DATA_MESSAGE);
-                      return;
-                    }
-                    if (isSaisie && topbar.isDirty) {
-                      e.preventDefault();
-                      dispatchAction("piano-compare-guard");
-                    }
-                  }}
-                >
+                <Link to="/comparer" className={linkClass} activeProps={{ className: activeLinkClass }}>
                   Comparer
                 </Link>
                 {topbar.alert?.anchor === "compare" && (

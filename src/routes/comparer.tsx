@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
+import { loadCurrentPiano, type CurrentPiano } from "@/lib/current-piano";
 import {
   externalSupabase,
   type ExternalPianoProfileRow,
@@ -21,9 +22,7 @@ const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];
 const SAMPLE_NOTES = [4, 10, 16, 22, 28, 34, 40, 46, 52, 58, 64, 70, 76, 82, 88] as const;
 const BLACK_MODULOS = new Set([2, 5, 7, 10, 0]);
 const isBlackKey = (noteIndex: number) => BLACK_MODULOS.has(noteIndex % 12);
-const MY_PIANO_SERIAL = "MOCK-MON-PIANO";
-const STANDARD_SERIAL = "FACTORY-UPRIGHT-SPEC";
-const PROFILE_FIELDS = "id,serial_number,brand,model,wa_values,wd_values,friction_values,balance_values,manufacture_year,climate_zone,maintenance_type,usage_level,mesure_date,created_at";
+const PROFILE_FIELDS = "id,serial_number,brand,model,type_piano,mesure_date,manufacture_year,climate_zone,maintenance_type,ville,pays,remarques,wa_values,wd_values,friction_values,balance_values,usage_level,created_at";
 
 type KeyFilter = "all" | "split";
 type SourceMode = "none" | "cloud" | "import";
@@ -172,12 +171,39 @@ function averageProfiles(profiles: ProfileRecord[]): RefProfile | null {
   return { wa: average("wa"), wd: average("wd"), balance: average("balance"), friction: average("friction") };
 }
 
+function profileValues(value: number[] | string): number[] {
+  if (Array.isArray(value)) return value;
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Array.isArray(parsed) ? parsed.map((item) => Number(item)) : [];
+  } catch {
+    return [];
+  }
+}
+
+function profileFromCurrentPiano(piano: CurrentPiano): ProfileRecord {
+  return {
+    wa: piano.wa_values,
+    wd: piano.wd_values,
+    friction: piano.friction_values,
+    balance: piano.balance_values,
+    serialNumber: piano.serial_number,
+    brand: piano.brand,
+    model: piano.model,
+    year: piano.manufacture_year,
+    climate: piano.climate_zone,
+    maintenance: piano.maintenance_type,
+    usageLevel: null,
+    measureDate: piano.mesure_date,
+  };
+}
+
 function profileFromRow(row: ExternalPianoProfileRow): ProfileRecord {
   return {
-    wa: row.wa_values,
-    wd: row.wd_values,
-    friction: row.friction_values,
-    balance: row.balance_values,
+    wa: profileValues(row.wa_values),
+    wd: profileValues(row.wd_values),
+    friction: profileValues(row.friction_values),
+    balance: profileValues(row.balance_values),
     serialNumber: row.serial_number,
     brand: row.brand ?? "",
     model: row.model ?? "",
@@ -567,20 +593,14 @@ function Comparer() {
   }, [averagesHeight, status]);
 
   useEffect(() => {
-    let cancelled = false;
-    async function loadBaseProfiles() {
-      const mineResult = await externalSupabase
-        .from("piano_profiles")
-        .select(PROFILE_FIELDS)
-        .eq("serial_number", MY_PIANO_SERIAL)
-        .single();
-      if (cancelled) return;
-      if (mineResult.error || !mineResult.data) { setStatus("error"); return; }
-      setMine(profileFromRow(mineResult.data as ExternalPianoProfileRow));
+    const currentPiano = loadCurrentPiano();
+    if (currentPiano) {
+      setMine(profileFromCurrentPiano(currentPiano));
       setStatus("ok");
+      return;
     }
-    void loadBaseProfiles();
-    return () => { cancelled = true; };
+    // Aucun profil de démonstration : Comparer attend une saisie locale validée.
+    setStatus("error");
   }, []);
 
   useEffect(() => {

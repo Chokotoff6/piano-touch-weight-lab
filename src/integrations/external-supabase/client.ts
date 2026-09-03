@@ -29,21 +29,21 @@ function externalFetch(input: RequestInfo | URL, init?: RequestInit) {
 export type ExternalPianoProfileRow = {
   id: string;
   serial_number: string;
-  brand?: string | null;
-  model?: string | null;
-  wa_values: number[];
-  wd_values: number[];
-  friction_values: number[];
-  balance_values: number[];
+  brand: string | null;
+  model: string | null;
+  type_piano: string | null;
+  mesure_date: string | null;
+  manufacture_year: number | null;
+  climate_zone: string | null;
+  maintenance_type: string | null;
+  ville: string | null;
+  pays: string | null;
   remarques: string | null;
-  annee_fabrication: number | null;
-  manufacture_year?: number | null;
-  mesure_date?: string | null;
-  zone_climatique?: string | null;
-  type_entretien?: string | null;
-  climate_zone?: string | null;
-  maintenance_type?: string | null;
-  usage_level?: string | null;
+  wa_values: number[] | string;
+  wd_values: number[] | string;
+  friction_values: number[] | string;
+  balance_values: number[] | string;
+  usage_level: string | null;
   created_at: string;
 };
 
