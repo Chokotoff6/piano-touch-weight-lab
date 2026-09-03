@@ -389,6 +389,8 @@ function Index() {
   const [honeypot, setHoneypot] = useState("");
   const [currentDbId, setCurrentDbId] = useState<string | null>(null);
   const [askUpdate, setAskUpdate] = useState(false);
+  // Export demandé en attente de la décision cloud (modale INSERT/UPSERT).
+  const pendingExport = useRef<"csv" | "pdf" | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const pdfInfoRef = useRef<HTMLDivElement | null>(null);
@@ -1184,6 +1186,19 @@ function Index() {
     showTopbarAlert("import", "Fiche restaurée depuis l'historique en ligne.");
   };
 
+  /** Génère et télécharge le fichier local demandé (après l'action cloud). */
+  const runLocalExport = (kind: "csv" | "pdf") => {
+    pendingExport.current = null;
+    if (kind === "csv") {
+      exportCsvFile();
+      return;
+    }
+    setIsExporting(true);
+    void exportPdfFile()
+      .catch(() => showTopbarAlert("export", "⚠️ La génération du rapport PDF a échoué."))
+      .finally(() => setIsExporting(false));
+  };
+
   const syncAndFinish = async (mode: "insert" | "update") => {
     setIsExporting(true);
     const payload = buildPayload();
@@ -1252,39 +1267,20 @@ function Index() {
   }, [exportReady, requiredSheetFieldsComplete, badgeVisible, info, isExporting, isDirty, currentDbId]);
 
   useEffect(() => {
-    const exportCsvOnly = () => {
+    // Exporter = même algorithme de décision cloud que Comparer, puis
+    // téléchargement local du fichier une fois l'action cloud terminée.
+    const startExport = (kind: "csv" | "pdf") => {
       if (!guardExport("export")) return;
-      exportCsvFile();
-    };
-    const saveCloud = () => {
-      if (!guardExport()) return;
       if (currentDbId && isDirty) {
+        pendingExport.current = kind;
         setAskUpdate(true);
         return;
       }
-      void syncAndFinish(currentDbId ? "update" : "insert");
+      void syncAndFinish(currentDbId ? "update" : "insert").finally(() => runLocalExport(kind));
     };
-    const quickSave = () => {
-      if (!guardExport()) return;
-      void syncAndFinish(currentDbId ? "update" : "insert");
-    };
-    const onExport = () => {
-      exportCsvOnly();
-      saveCloud();
-    };
-    const onPdf = () => {
-      if (!guardExport("export")) return;
-      setIsExporting(true);
-      void exportPdfFile()
-        .catch(() => showTopbarAlert("export", "⚠️ La génération du rapport PDF a échoué."))
-        .finally(() => setIsExporting(false));
-      // Sauvegarde cloud simultanée (UPDATE ou INSERT selon l'état de la fiche).
-      if (currentDbId && isDirty) {
-        setAskUpdate(true);
-        return;
-      }
-      void syncAndFinish(currentDbId ? "update" : "insert");
-    };
+    const exportCsvOnly = () => startExport("csv");
+    const onExport = () => startExport("csv");
+    const onPdf = () => startExport("pdf");
     const onCompareGuard = () => void navigate({ to: "/comparer" });
     const onReset = () => setConfirmReset("rows");
 
@@ -1292,10 +1288,6 @@ function Index() {
       "piano-export": onExport,
       "piano-export-csv": exportCsvOnly,
       "piano-export-pdf": onPdf,
-      "piano-export-cloud": saveCloud,
-      "piano-save-cloud": saveCloud,
-      "piano-save": saveCloud,
-      "piano-save-quick": quickSave,
       "piano-compare-guard": onCompareGuard,
       "piano-reset": onReset,
       "piano-import-csv": () => importInputRef.current?.click(),
@@ -1922,7 +1914,13 @@ Moyennes{" "}
       </div>
 
 
-      <AlertDialog open={askUpdate} onOpenChange={setAskUpdate}>
+      <AlertDialog
+        open={askUpdate}
+        onOpenChange={(open) => {
+          setAskUpdate(open);
+          if (!open) pendingExport.current = null;
+        }}
+      >
         <AlertDialogContent className="w-full max-w-xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Un diagnostic existe déjà pour cette session</AlertDialogTitle>
@@ -1933,13 +1931,23 @@ Moyennes{" "}
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={() => void syncAndFinish("update")}>
+            <AlertDialogAction
+              onClick={() => {
+                const kind = pendingExport.current;
+                void syncAndFinish("update").finally(() => {
+                  if (kind) runLocalExport(kind);
+                });
+              }}
+            >
               Mettre à jour le diagnostic existant
             </AlertDialogAction>
             <AlertDialogAction
               onClick={() => {
+                const kind = pendingExport.current;
                 setCurrentDbId(null);
-                void syncAndFinish("insert");
+                void syncAndFinish("insert").finally(() => {
+                  if (kind) runLocalExport(kind);
+                });
               }}
             >
               Créer un nouveau point d'historique (Nouvelle pesée)
