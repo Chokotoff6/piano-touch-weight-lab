@@ -113,34 +113,47 @@ function buildChartData(
     const wdCur = valueAt(mine?.wd, noteIndex, sampleIndex);
     const balCur = valueAt(mine?.balance, noteIndex, sampleIndex);
     const fricCur = valueAt(mine?.friction, noteIndex, sampleIndex);
+    const sameWa = valueAt(cloud?.wa, noteIndex, sampleIndex);
+    const sameWd = valueAt(cloud?.wd, noteIndex, sampleIndex);
+    const sameBal = valueAt(cloud?.balance, noteIndex, sampleIndex);
+    const sameFric = valueAt(cloud?.friction, noteIndex, sampleIndex);
     return {
       key: noteIndex,
       isBlack: black,
       waCur,
       waCurW: black ? undefined : waCur,
       waCurB: black ? waCur : undefined,
-      sameWa: valueAt(cloud?.wa, noteIndex, sampleIndex),
+      sameWa,
+      sameWaW: black ? undefined : sameWa,
+      sameWaB: black ? sameWa : undefined,
       stdWa: valueAt(standard?.wa, noteIndex, sampleIndex),
       wdCur,
       wdCurW: black ? undefined : wdCur,
       wdCurB: black ? wdCur : undefined,
-      sameWd: valueAt(cloud?.wd, noteIndex, sampleIndex),
+      sameWd,
+      sameWdW: black ? undefined : sameWd,
+      sameWdB: black ? sameWd : undefined,
       stdWd: valueAt(standard?.wd, noteIndex, sampleIndex),
       balCur,
       balCurW: black ? undefined : balCur,
       balCurB: black ? balCur : undefined,
-      sameBal: valueAt(cloud?.balance, noteIndex, sampleIndex),
+      sameBal,
+      sameBalW: black ? undefined : sameBal,
+      sameBalB: black ? sameBal : undefined,
       factoryBal: valueAt(standard?.balance, noteIndex, sampleIndex),
       fricCur,
       fricCurW: black ? undefined : fricCur,
       fricCurB: black ? fricCur : undefined,
-      sameFric: valueAt(cloud?.friction, noteIndex, sampleIndex),
+      sameFric,
+      sameFricW: black ? undefined : sameFric,
+      sameFricB: black ? sameFric : undefined,
       factoryFric: valueAt(standard?.friction, noteIndex, sampleIndex),
       waMid: undefined,
       wdMid: undefined,
       balMid: undefined,
       fricMid: undefined,
     };
+
   });
   // Ligne fantôme servant uniquement à ancrer l'étiquette "Mon piano" à mi-hauteur
   // entre la courbe des blanches et celle des noires en vue éclatée.
