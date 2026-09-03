@@ -1021,6 +1021,7 @@ function Index() {
         manufacture_year: Number.isInteger(manufactureYear) ? manufactureYear : null,
         climate_zone: fields["climate_zone"] ?? "",
         maintenance_type: fields["maintenance_type"] ?? "",
+        usage_level: fields["usage_level"] ?? "",
         ville: fields["ville"] ?? "",
         pays: fields["pays"] ?? "",
         remarques: fields["remarques"] ?? "",
@@ -1041,6 +1042,7 @@ function Index() {
         pays: fields["pays"] ?? prev["pays"] ?? "",
         ville: fields["ville"] ?? prev["ville"] ?? "",
         entretien: fields["maintenance_type"] ?? prev["entretien"] ?? "",
+        usage_level: fields["usage_level"] ?? prev["usage_level"] ?? "",
         remarques: fields["remarques"] ?? prev["remarques"] ?? "",
       }));
       fabricationTouched.current = true;
@@ -1147,6 +1149,7 @@ function Index() {
       manufacture_year: year,
       climate_zone: payload.zone_climatique,
       maintenance_type: payload.type_entretien,
+      usage_level: info["usage_level"] ?? "",
       ville: payload.ville,
       pays: payload.pays,
       remarques: payload.remarques,
@@ -1622,6 +1625,20 @@ function Index() {
                 </label>
               ))}
             </div>
+
+            <label className={`mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
+              <span className="inline-flex items-center">Niveau d'usage</span>
+              <select
+                value={info["usage_level"] ?? ""}
+                onChange={(e) => updateInfo("usage_level", e.target.value)}
+                className={`${INPUT_CLASS} !bg-white`}
+              >
+                <option value="">— Sélectionner —</option>
+                {USAGE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            </label>
 
             <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
               <span className="inline-flex items-center">
