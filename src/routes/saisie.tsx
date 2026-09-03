@@ -1963,9 +1963,9 @@ Moyennes{" "}
                 </span>
               </div>
               <div className="flex justify-center gap-2 text-[0.55rem] text-muted-foreground tabular-nums">
-                <span className="!text-xs font-medium">1-44</span>
+                <span className="!text-xs font-medium">Blanches</span>
                 <span className="invisible">/</span>
-                <span className="!text-xs font-medium">45-88</span>
+                <span className="!text-xs font-medium">Noires</span>
               </div>
             </div>
           ))}
