@@ -177,13 +177,8 @@ function averageProfiles(profiles: ProfileRecord[]): RefProfile | null {
 }
 
 function profileValues(value: number[] | string): number[] {
-  if (Array.isArray(value)) return value;
-  try {
-    const parsed = JSON.parse(value) as unknown;
-    return Array.isArray(parsed) ? parsed.map((item) => Number(item)) : [];
-  } catch {
-    return [];
-  }
+  // Accepte les tableaux natifs, les littéraux PostgreSQL {1,2,3} et le JSON [1,2,3].
+  return fromPgArray(value);
 }
 
 function profileFromCurrentPiano(piano: CurrentPiano): ProfileRecord {
