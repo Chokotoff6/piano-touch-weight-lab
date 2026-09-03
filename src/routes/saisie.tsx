@@ -26,7 +26,7 @@ import { buildCsv, buildExportFilename, downloadCsv, formatLocalDateTime } from 
 import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { generateLandscapeReport } from "@/lib/pdf-report";
 import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
-import { buildCurrentPiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, CURRENT_PIANO_KEY } from "@/lib/current-piano";
+import { buildCurrentPiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, findHistoryProfileId, CURRENT_PIANO_KEY } from "@/lib/current-piano";
 
 const INVALID_CSV_MESSAGE =
   "⚠️ Fichier non valide. Veuillez importer un fichier CSV généré par l'application Piano Touch Analyzer.";
@@ -1247,35 +1247,8 @@ function Index() {
       .finally(() => setIsExporting(false));
   };
 
-  /**
-   * Tampon cloud prioritaire : injecte l'état écran dans la ligne pivot
-   * 'PIANO_ACTUEL' de piano_profiles, avant tout arbitrage décisionnel.
-   */
-  const pushBuffer = async () => {
-    const payload = buildPayload();
-    const currentPiano = buildCurrentPiano({
-      brand: payload.marque,
-      model: payload.modele,
-      serial_number: payload.numero_central,
-      type_piano: payload.type_piano,
-      manufacture_year: payload.annee_fabrication,
-      climate_zone: payload.zone_climatique,
-      maintenance_type: payload.type_entretien,
-      usage_level: info["usage_level"] ?? "",
-      ville: payload.ville,
-      pays: payload.pays,
-      remarques: payload.remarques,
-      wa: payload.mesures_wa,
-      wd: payload.mesures_wd,
-    });
-    saveCurrentPiano(currentPiano);
-    const result = await upsertCurrentPianoBuffer(currentPiano);
-    if (!result.ok) {
-      showMessage(`Erreur de base de données (PIANO_ACTUEL) : ${result.error ?? "erreur réseau"}`);
-    }
-  };
 
-  const syncAndFinish = async (mode: "insert" | "update") => {
+  const syncAndFinish = async (mode: "insert" | "update"): Promise<boolean> => {
     setIsExporting(true);
     const payload = buildPayload();
     const year = payload.annee_fabrication;
@@ -1298,27 +1271,34 @@ function Index() {
     saveCurrentPiano(currentPiano);
     const toastId = toast.loading("Enregistrement en cours dans Supabase…");
     try {
-      // Tampon de transfert universel : toujours mis à jour, indépendant du navigateur.
+      // Étape 1 — Buffer unique : écrasement de la ligne is_buffer=true. Tout échec bloque la suite.
       const bufferResult = await upsertCurrentPianoBuffer(currentPiano);
       if (!bufferResult.ok) {
+        toast.error(`Erreur de base de données (buffer) : ${bufferResult.error ?? "erreur réseau"}`, {
+          id: toastId,
+          duration: 12000,
+        });
         showMessage(`Erreur de base de données (PIANO_ACTUEL) : ${bufferResult.error ?? "erreur réseau"}`);
+        return false;
       }
-      const cloudResult = await saveCurrentPianoToCloud(currentPiano);
+      // Étape 2 — Historique : fiche is_buffer=false, avec son propre ID (update si déjà archivée).
+      const historyId =
+        mode === "update" ? await findHistoryProfileId(currentPiano.serial_number) : null;
+      const cloudResult = await saveCurrentPianoToCloud(currentPiano, historyId);
       if (!cloudResult.ok) {
         toast.error(`Erreur de base de données : ${cloudResult.error ?? "erreur réseau"}`, {
           id: toastId,
           duration: 12000,
         });
         showMessage(`Erreur de base de données : ${cloudResult.error ?? "erreur réseau"}`);
-
-      } else {
-        toast.success(
-          mode === "update"
-            ? "Profil mis à jour dans piano_profiles."
-            : "Nouveau profil inséré dans piano_profiles.",
-          { id: toastId },
-        );
+        return false;
       }
+      toast.success(
+        historyId
+          ? "Profil mis à jour dans piano_profiles."
+          : "Nouveau profil inséré dans piano_profiles.",
+        { id: toastId },
+      );
       if (mode === "update" && currentDbId) {
         await updateDiagnostic(currentDbId, payload);
       } else {
@@ -1344,9 +1324,11 @@ function Index() {
       markSubmission();
       setIsDirty(false);
       showTopbarAlert("save", mode === "update" ? SAVE_UPDATE_MESSAGE : SAVE_NEW_MESSAGE);
+      return true;
     } catch {
       toast.error("La synchronisation cloud a échoué.", { id: toastId });
       showMessage("La synchronisation cloud a échoué. Les données locales restent disponibles dans Comparer.");
+      return false;
     } finally {
       setIsExporting(false);
     }
@@ -1401,12 +1383,7 @@ function Index() {
       return savedDateRef.current !== today || changedWeightCount() >= 5;
     };
     const startAction = (kind: "csv" | "pdf" | "compare") => {
-      // Priorité absolue : la ligne pivot 'PIANO_ACTUEL' est toujours actualisée
-      // dès le clic, avant l'arbitrage RGPD / modale.
-      if (canEnterWeights && orphanKeys.length === 0 && octaveGaps.length === 0) {
-        void pushBuffer();
-      }
-      if (!guardExport(kind === "compare" ? "export" : "export")) return;
+      if (!guardExport("export")) return;
       if (requiresChoice()) {
         pendingExport.current = kind === "compare" ? null : kind;
         pendingCompare.current = kind === "compare";
@@ -1414,7 +1391,10 @@ function Index() {
         return;
       }
       const mode = alreadySent() ? "update" : "insert";
-      void syncAndFinish(mode).finally(() => {
+      // Navigation verrouillée : on n'exporte / ne navigue QUE si les deux
+      // écritures cloud (buffer + historique) ont abouti.
+      void syncAndFinish(mode).then((ok) => {
+        if (!ok) return;
         if (kind === "csv" || kind === "pdf") runLocalExport(kind);
         if (kind === "compare") void navigate({ to: "/comparer" });
       });
@@ -2098,7 +2078,8 @@ Moyennes{" "}
                 const kind = pendingExport.current;
                 const compare = pendingCompare.current;
                 pendingCompare.current = false;
-                void syncAndFinish("update").finally(() => {
+                void syncAndFinish("update").then((ok) => {
+                  if (!ok) return;
                   if (kind) runLocalExport(kind);
                   if (compare) void navigate({ to: "/comparer" });
                 });
@@ -2112,7 +2093,8 @@ Moyennes{" "}
                 const compare = pendingCompare.current;
                 pendingCompare.current = false;
                 setCurrentDbId(null);
-                void syncAndFinish("insert").finally(() => {
+                void syncAndFinish("insert").then((ok) => {
+                  if (!ok) return;
                   if (kind) runLocalExport(kind);
                   if (compare) void navigate({ to: "/comparer" });
                 });
