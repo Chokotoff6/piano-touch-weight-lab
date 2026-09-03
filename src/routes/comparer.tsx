@@ -504,6 +504,33 @@ function averageSet(chartData: ChartPoint[]): Averages {
   return { wa: seriesAverage(chartData, "waCur"), wd: seriesAverage(chartData, "wdCur"), friction: seriesAverage(chartData, "fricCur"), balance: seriesAverage(chartData, "balCur") };
 }
 
+// Détail des moyennes par couleur de touche (calculées sur les 88 notes).
+const SPLIT_KEYS: Record<MetricKey, { cur: [SeriesKey, SeriesKey]; ref: [SeriesKey, SeriesKey] }> = {
+  wa: { cur: ["waCurW", "waCurB"], ref: ["sameWaW", "sameWaB"] },
+  wd: { cur: ["wdCurW", "wdCurB"], ref: ["sameWdW", "sameWdB"] },
+  friction: { cur: ["fricCurW", "fricCurB"], ref: ["sameFricW", "sameFricB"] },
+  balance: { cur: ["balCurW", "balCurB"], ref: ["sameBalW", "sameBalB"] },
+};
+
+function ColorAverageRows({ chartData, source, active = false }: { chartData: ChartPoint[]; source: "cur" | "ref"; active?: boolean }) {
+  const row = (label: string, pick: (keys: [SeriesKey, SeriesKey]) => SeriesKey) => (
+    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-1 text-[0.68rem]">
+      <span className={`font-bold uppercase tracking-wide ${active ? "text-orange-600" : "text-gray-600"}`}>{label}</span>
+      {COLUMNS.map(({ key, label: metricLabel }) => (
+        <span key={key} className="tabular-nums text-slate-600">
+          {metricLabel} <span className="font-semibold">{seriesAverage(chartData, pick(SPLIT_KEYS[key][source]))} g.</span>
+        </span>
+      ))}
+    </div>
+  );
+  return (
+    <div className="mt-1.5 space-y-0.5">
+      {row("Blanches", (keys) => keys[0])}
+      {row("Noires", (keys) => keys[1])}
+    </div>
+  );
+}
+
 const PILL_BASE = "h-7 min-w-0 flex-1 rounded-full border px-1.5 text-[0.68rem] leading-tight transition-colors whitespace-nowrap";
 const pillClass = (active: boolean) => `${PILL_BASE} ${active ? "border-gray-300 bg-gray-100 font-semibold text-slate-700" : "border-gray-200 bg-white text-gray-400 hover:border-gray-300 hover:text-gray-500"}`;
 
@@ -773,9 +800,9 @@ function Comparer() {
   const cloudIsEmpty = !comparedPiano && sourceMode === "cloud" && cloudSampleCount === 0;
   const cloudCounterText = cloudLoading
     ? "Calcul de la moyenne cloud…"
-    : cloudSampleCount === 0
-      ? "Aucun piano correspondant"
-      : `Résultat cloud sur ${cloudSampleCount} ${cloudSampleCount === 1 ? "piano" : "pianos"}`;
+    : cloudSampleCount <= 1
+      ? "Aucun instrument similaire enregistré"
+      : `Moyennes sur ${cloudSampleCount} pianos de modèle identique enregistré(s) par les utilisateurs`;
 
   return (
     <main className="mx-auto w-full max-w-[1400px] px-6 py-8">
