@@ -63,6 +63,8 @@ export function buildCurrentPiano(input: {
   wa: Array<string | number>;
   wd: Array<string | number>;
   mesureDate?: Date;
+  /** Littéral date/heure du fichier source (CSV) : sert à dater et horodater. */
+  mesureDateRaw?: string;
 }): CurrentPiano {
   const wa = input.wa.map(num);
   const wd = input.wd.map(num);
@@ -79,12 +81,20 @@ export function buildCurrentPiano(input: {
       : Number.NaN;
   });
   const date = input.mesureDate ?? new Date();
+  let mesure_date = date.toISOString().slice(0, 10);
+  let created_at: string | undefined;
+  if (input.mesureDateRaw) {
+    const parsed = parseMeasureDateTime(input.mesureDateRaw);
+    if (parsed.date) mesure_date = parsed.date;
+    if (parsed.time) created_at = `${parsed.date}T${parsed.time}`;
+  }
   return {
     brand: input.brand,
     model: input.model,
     serial_number: input.serial_number,
     type_piano: input.type_piano,
-    mesure_date: date.toISOString().slice(0, 10),
+    mesure_date,
+    created_at,
     manufacture_year: input.manufacture_year,
     climate_zone: input.climate_zone,
     maintenance_type: input.maintenance_type,
