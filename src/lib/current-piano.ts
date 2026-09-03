@@ -1,7 +1,6 @@
 // Entité globale "current_piano" : source de vérité locale du piano mesuré.
 // Elle est écrite à la sauvegarde (page Saisie) et lue en priorité par /comparer.
 import { externalSupabase } from "@/integrations/external-supabase/client";
-import { supabase } from "@/integrations/supabase/client";
 
 export const CURRENT_PIANO_KEY = "current_piano";
 
@@ -159,21 +158,15 @@ export async function saveCurrentPianoToCloud(
   }
 }
 
-/** Identifiant unique du tampon de transfert cloud (fiche courante partagée). */
-export const CURRENT_PIANO_BUFFER_ID = "current";
+/** Numéro de série pivot du tampon de transfert cloud (ligne dédiée dans piano_profiles). */
+export const CURRENT_PIANO_BUFFER_ID = "PIANO_ACTUEL";
 
-/**
- * UPSERT systématique de l'état écran dans la table tampon 'piano_actuel'.
- * C'est cette table que /comparer lit en priorité absolue.
- */
-export async function upsertCurrentPianoBuffer(
-  piano: CurrentPiano,
-): Promise<{ ok: boolean; error?: string }> {
-  const payload = {
-    id: CURRENT_PIANO_BUFFER_ID,
+/** Colonnes de la ligne pivot (métadonnées + 4 tableaux au format PostgreSQL {...}). */
+function bufferPayload(piano: CurrentPiano) {
+  return {
     brand: piano.brand,
     model: piano.model,
-    serial_number: piano.serial_number,
+    serial_number: CURRENT_PIANO_BUFFER_ID,
     type_piano: piano.type_piano,
     mesure_date: piano.mesure_date,
     manufacture_year: piano.manufacture_year,
@@ -188,23 +181,49 @@ export async function upsertCurrentPianoBuffer(
     friction_values: toPgArray(piano.friction_values),
     balance_values: toPgArray(piano.balance_values),
   };
+}
+
+/**
+ * UPSERT systématique de l'état écran dans la ligne pivot 'PIANO_ACTUEL'
+ * de la table unique 'piano_profiles'. C'est cette ligne que /comparer lit
+ * en priorité absolue pour la courbe Live noire.
+ * Stratégie sans contrainte d'unicité : UPDATE si la ligne pivot existe,
+ * sinon INSERT.
+ */
+export async function upsertCurrentPianoBuffer(
+  piano: CurrentPiano,
+): Promise<{ ok: boolean; error?: string }> {
+  const payload = bufferPayload(piano);
   try {
-    const { error } = await supabase
-      .from("piano_actuel")
-      .upsert(payload as never, { onConflict: "id" });
+    const { data: existing, error: readError } = await externalSupabase
+      .from("piano_profiles")
+      .select("id")
+      .eq("serial_number", CURRENT_PIANO_BUFFER_ID)
+      .maybeSingle();
+    if (readError) return { ok: false, error: readError.message };
+    if (existing?.id) {
+      const { error } = await externalSupabase
+        .from("piano_profiles")
+        .update(payload as never)
+        .eq("id", existing.id);
+      return error ? { ok: false, error: error.message } : { ok: true };
+    }
+    const { error } = await externalSupabase
+      .from("piano_profiles")
+      .insert(payload as never);
     return error ? { ok: false, error: error.message } : { ok: true };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "Erreur réseau" };
   }
 }
 
-/** Lecture du tampon cloud 'piano_actuel' (priorité absolue sur /comparer). */
+/** Lecture de la ligne pivot 'PIANO_ACTUEL' (priorité absolue sur /comparer). */
 export async function loadCurrentPianoFromCloud(): Promise<CurrentPiano | null> {
   try {
-    const { data, error } = await supabase
-      .from("piano_actuel")
+    const { data, error } = await externalSupabase
+      .from("piano_profiles")
       .select("*")
-      .eq("id", CURRENT_PIANO_BUFFER_ID)
+      .eq("serial_number", CURRENT_PIANO_BUFFER_ID)
       .maybeSingle();
     if (error || !data) return null;
     const row = data as Record<string, unknown>;

@@ -1247,6 +1247,34 @@ function Index() {
       .finally(() => setIsExporting(false));
   };
 
+  /**
+   * Tampon cloud prioritaire : injecte l'état écran dans la ligne pivot
+   * 'PIANO_ACTUEL' de piano_profiles, avant tout arbitrage décisionnel.
+   */
+  const pushBuffer = async () => {
+    const payload = buildPayload();
+    const currentPiano = buildCurrentPiano({
+      brand: payload.marque,
+      model: payload.modele,
+      serial_number: payload.numero_central,
+      type_piano: payload.type_piano,
+      manufacture_year: payload.annee_fabrication,
+      climate_zone: payload.zone_climatique,
+      maintenance_type: payload.type_entretien,
+      usage_level: info["usage_level"] ?? "",
+      ville: payload.ville,
+      pays: payload.pays,
+      remarques: payload.remarques,
+      wa: payload.mesures_wa,
+      wd: payload.mesures_wd,
+    });
+    saveCurrentPiano(currentPiano);
+    const result = await upsertCurrentPianoBuffer(currentPiano);
+    if (!result.ok) {
+      showMessage(`Erreur de base de données (PIANO_ACTUEL) : ${result.error ?? "erreur réseau"}`);
+    }
+  };
+
   const syncAndFinish = async (mode: "insert" | "update") => {
     setIsExporting(true);
     const payload = buildPayload();
@@ -1273,7 +1301,7 @@ function Index() {
       // Tampon de transfert universel : toujours mis à jour, indépendant du navigateur.
       const bufferResult = await upsertCurrentPianoBuffer(currentPiano);
       if (!bufferResult.ok) {
-        showMessage(`Erreur de base de données (piano_actuel) : ${bufferResult.error ?? "erreur réseau"}`);
+        showMessage(`Erreur de base de données (PIANO_ACTUEL) : ${bufferResult.error ?? "erreur réseau"}`);
       }
       const cloudResult = await saveCurrentPianoToCloud(currentPiano);
       if (!cloudResult.ok) {
@@ -1373,6 +1401,11 @@ function Index() {
       return savedDateRef.current !== today || changedWeightCount() >= 5;
     };
     const startAction = (kind: "csv" | "pdf" | "compare") => {
+      // Priorité absolue : la ligne pivot 'PIANO_ACTUEL' est toujours actualisée
+      // dès le clic, avant l'arbitrage RGPD / modale.
+      if (canEnterWeights && orphanKeys.length === 0 && octaveGaps.length === 0) {
+        void pushBuffer();
+      }
       if (!guardExport(kind === "compare" ? "export" : "export")) return;
       if (requiresChoice()) {
         pendingExport.current = kind === "compare" ? null : kind;
