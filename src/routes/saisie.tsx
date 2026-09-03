@@ -1220,10 +1220,19 @@ function Index() {
     });
     // La copie locale est disponible immédiatement, même si le réseau est indisponible.
     saveCurrentPiano(currentPiano);
+    const toastId = toast.loading("Enregistrement en cours dans Supabase…");
     try {
       const cloudResult = await saveCurrentPianoToCloud(currentPiano);
       if (!cloudResult.ok) {
+        toast.error(`Échec de l'enregistrement cloud : ${cloudResult.error ?? "erreur réseau"}`, { id: toastId });
         showMessage("La sauvegarde cloud a échoué. Les données locales restent disponibles dans Comparer.");
+      } else {
+        toast.success(
+          mode === "update"
+            ? "Profil mis à jour dans piano_profiles."
+            : "Nouveau profil inséré dans piano_profiles.",
+          { id: toastId },
+        );
       }
       if (mode === "update" && currentDbId) {
         await updateDiagnostic(currentDbId, payload);
@@ -1231,15 +1240,18 @@ function Index() {
         const id = await insertDiagnostic(payload);
         setCurrentDbId(id);
       }
+      savedSerialRef.current = payload.numero_central ?? "";
       markSubmission();
       setIsDirty(false);
       showTopbarAlert("save", mode === "update" ? SAVE_UPDATE_MESSAGE : SAVE_NEW_MESSAGE);
     } catch {
+      toast.error("La synchronisation cloud a échoué.", { id: toastId });
       showMessage("La synchronisation cloud a échoué. Les données locales restent disponibles dans Comparer.");
     } finally {
       setIsExporting(false);
     }
   };
+
 
   // --- Synchronisation avec la barre supérieure -----------------------------------
 
