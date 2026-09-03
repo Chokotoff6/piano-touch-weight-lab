@@ -198,7 +198,7 @@ function profileFromCurrentPiano(piano: CurrentPiano): ProfileRecord {
     year: piano.manufacture_year,
     climate: piano.climate_zone,
     maintenance: piano.maintenance_type,
-    usageLevel: null,
+    usageLevel: piano.usage_level ?? null,
     measureDate: piano.mesure_date,
   };
 }
