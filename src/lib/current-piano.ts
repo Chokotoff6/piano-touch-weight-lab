@@ -33,6 +33,20 @@ const num = (value: string | number | null | undefined) => {
 
 const round1 = (value: number) => Number(value.toFixed(1));
 
+/**
+ * Extrait date (YYYY-MM-DD) et heure (hh:mm) d'un littéral de date/heure.
+ * Accepte : YYYY-MM-DD, YYYY-MM-DDTHH:mm(:ss)Z, YYYY-MM-DD HH:mm,
+ * DD-MM-YYYY, DD-MM-YYYY HH:mm.
+ */
+export function parseMeasureDateTime(raw: string | null | undefined): { date: string; time: string | null } {
+  const s = (raw ?? "").trim();
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if (m) return { date: `${m[1]}-${m[2]}-${m[3]}`, time: m[4] ? `${m[4]}:${m[5]}` : null };
+  m = s.match(/^(\d{2})-(\d{2})-(\d{4})(?: (\d{2}):(\d{2}))?/);
+  if (m) return { date: `${m[3]}-${m[2]}-${m[1]}`, time: m[4] ? `${m[4]}:${m[5]}` : null };
+  return { date: s, time: null };
+}
+
 /** Construit l'objet current_piano à partir des mesures brutes (88 lignes Wa/Wd). */
 export function buildCurrentPiano(input: {
   brand: string;
