@@ -647,29 +647,34 @@ function Comparer() {
   async function handleImport(file: File) {
     try {
       const parsed = parseDiagnosticCsv(await file.text());
-      const toNumber = (value: string) => {
-        const normalized = value.trim().replace(",", ".");
-        const number = Number(normalized);
-        return normalized === "" || !Number.isFinite(number) ? Number.NaN : number;
-      };
-      const wa = parsed.rows.map((row) => toNumber(row.wa));
-      const wd = parsed.rows.map((row) => toNumber(row.wd));
-      const friction = wa.map((value, index) => {
-        const down = wd[index];
-        return typeof down === "number" && Number.isFinite(value) && Number.isFinite(down) ? n1(Math.abs((value - down) / 2)) : Number.NaN;
+      const year = Number(parsed.fields["manufacture_year"]);
+      const piano = buildCurrentPiano({
+        brand: parsed.fields["brand"] ?? "",
+        model: parsed.fields["model"] ?? "",
+        serial_number: parsed.fields["serial_number"] ?? "",
+        type_piano: parsed.fields["type_piano"] ?? "",
+        manufacture_year: Number.isFinite(year) ? year : null,
+        climate_zone: parsed.fields["climate_zone"] ?? "",
+        maintenance_type: parsed.fields["maintenance_type"] ?? "",
+        ville: parsed.fields["ville"] ?? "",
+        pays: parsed.fields["pays"] ?? "",
+        remarques: parsed.fields["remarques"] ?? "",
+        wa: parsed.rows.map((row) => row.wa),
+        wd: parsed.rows.map((row) => row.wd),
       });
-      const balance = wa.map((value, index) => {
-        const down = wd[index];
-        return typeof down === "number" && Number.isFinite(value) && Number.isFinite(down) ? n1((value + down) / 2) : Number.NaN;
-      });
-      setImported({ wa, wd, friction, balance });
+      saveCurrentPiano(piano);
+      const record = profileFromCurrentPiano(piano);
+      setMine(record);
+      setImported(record);
       setImportedMeta(parsed.meta);
       setSourceMode("import");
+      setStatus("ok");
     } catch {
       setImported(null);
       setImportedMeta({});
     }
   }
+
 
   function cycleUsage() {
     setUsageLevel((value) => value === "all" ? "low" : value === "low" ? "intensive" : "all");
