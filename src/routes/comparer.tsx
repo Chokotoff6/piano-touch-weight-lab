@@ -431,11 +431,11 @@ function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShor
   const tooltipPosition = { x: Math.max(containerWidth - 200, 0), y: 8 };
 
   function SubChart({ family }: { family: (typeof FAMILIES)[number] }) {
-    // Renommage dynamique de la courbe orange : "Référence : [Marque] [Modèle] (CSV)" ou "Cloud".
-    const familyLines = family.lines.map((line) =>
-      line.name === "Cloud" ? { ...line, name: comparisonLabel, shortName: comparisonShort } : line,
-    );
-    const lines = [...currentLinesFor(family.id, keyFilter), ...familyLines];
+    // Renommage dynamique de la courbe orange : "Référence : ... (CSV)" ou "Cloud",
+    // scindée en blanches / noires quand la vue éclatée est active.
+    const referenceLines = comparisonLinesFor(family.id, keyFilter, comparisonLabel, comparisonShort);
+    const otherLines = family.lines.filter((line) => line.name !== "Cloud");
+    const lines = [...currentLinesFor(family.id, keyFilter), ...referenceLines, ...otherLines];
     // Chaque courbe est ancrée sur SON propre premier / dernier point défini
     // (indispensable en vue éclatée où blanches et noires ne partagent pas les mêmes index).
     const endpointOffsets = (side: "left" | "right") => new Map(
