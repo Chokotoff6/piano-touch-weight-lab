@@ -1833,18 +1833,8 @@ function Index() {
               />
             </label>
 
-            <label className="mt-4 flex items-start gap-2 sm:col-span-2 md:col-span-4">
-              <input
-                type="checkbox"
-                checked={consent}
-                onChange={(e) => setConsent(e.target.checked)}
-                className="mt-1 h-4 w-4"
-              />
-              <span className="text-sm font-medium text-black">
-                J'accepte de partager anonymement les mesures de ce piano pour alimenter la base
-                collaborative (RGPD).
-              </span>
-            </label>
+
+
 
             <input
               type="text"
