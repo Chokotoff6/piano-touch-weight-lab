@@ -330,10 +330,11 @@ function CustomTickTop(props: { x?: number; y?: number; dy?: number; payload?: {
 type TooltipEntry = { name?: string; value?: number; color?: string };
 function tooltipColorFor(name: string) {
   const lower = name.toLowerCase();
+  const isReference = lower.startsWith("cloud") || lower.startsWith("référence");
+  if (isReference) return lower.includes("blanches") ? "#fdba74" : "#f97316";
   if (lower.includes("noires")) return "#000000";
   if (lower.includes("blanches")) return "#6b7280";
   if (lower.includes("mon piano")) return "#000000";
-  if (lower.startsWith("cloud") || lower.startsWith("référence")) return "#f97316";
   return "#10b981";
 }
 
