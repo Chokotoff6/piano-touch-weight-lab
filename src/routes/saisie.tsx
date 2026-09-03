@@ -1294,14 +1294,21 @@ function Index() {
   useEffect(() => {
     // Exporter = même algorithme de décision cloud que Comparer, puis
     // téléchargement local du fichier une fois l'action cloud terminée.
+    // Critère 1 : aucun envoi connu pour ce numéro de série -> INSERT direct.
+    // Critères 2/3 : un envoi existe déjà -> la modale de choix est BLOQUANTE.
+    const alreadySent = () => {
+      const serial = (info["sn_num"] ?? "").trim();
+      return Boolean(currentDbId) && serial.length > 0 && serial === savedSerialRef.current;
+    };
     const startExport = (kind: "csv" | "pdf") => {
       if (!guardExport("export")) return;
-      if (currentDbId && isDirty) {
+      if (alreadySent()) {
         pendingExport.current = kind;
+        pendingCompare.current = false;
         setAskUpdate(true);
         return;
       }
-      void syncAndFinish(currentDbId ? "update" : "insert").finally(() => runLocalExport(kind));
+      void syncAndFinish("insert").finally(() => runLocalExport(kind));
     };
     const exportCsvOnly = () => startExport("csv");
     const onExport = () => startExport("csv");
@@ -1313,16 +1320,15 @@ function Index() {
         void navigate({ to: "/comparer" });
         return;
       }
-      if (currentDbId && isDirty) {
+      if (alreadySent()) {
         pendingExport.current = null;
         pendingCompare.current = true;
         setAskUpdate(true);
         return;
       }
-      void syncAndFinish(currentDbId ? "update" : "insert").finally(() =>
-        navigate({ to: "/comparer" }),
-      );
+      void syncAndFinish("insert").finally(() => navigate({ to: "/comparer" }));
     };
+
 
     const onReset = () => setConfirmReset("rows");
 
