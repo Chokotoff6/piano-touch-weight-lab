@@ -582,7 +582,7 @@ function SidebarPanel(props: SidebarPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const usageLabel = props.usageLevel === "all" ? "Tous" : props.usageLevel === "low" ? "Faible" : "Intensif";
   const switchRow = (label: string, checked: boolean, onChange: (value: boolean) => void) => (
-    <label className="flex min-w-0 items-center justify-between gap-3 text-xs font-medium text-slate-700">
+    <label className="flex min-w-0 items-center justify-between gap-3 text-xs font-medium text-black">
       <span className="min-w-0">{label}</span>
       <Switch checked={checked} disabled={props.filtersDisabled} onCheckedChange={onChange} className="data-[state=checked]:bg-slate-500 data-[state=unchecked]:bg-gray-200" />
     </label>
