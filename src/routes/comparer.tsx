@@ -517,10 +517,23 @@ function SidebarPanel(props: SidebarPanelProps) {
       <Switch checked={checked} disabled={props.filtersDisabled} onCheckedChange={onChange} className="data-[state=checked]:bg-slate-500 data-[state=unchecked]:bg-gray-200" />
     </label>
   );
+  const cloudCounterText = props.csvActive
+    ? "Comparaison locale avec le fichier CSV"
+    : props.cloudLoading
+      ? "Calcul de la moyenne cloud…"
+      : props.cloudSampleCount === 0
+        ? "Aucun piano correspondant"
+        : `Résultat cloud sur ${props.cloudSampleCount} ${props.cloudSampleCount === 1 ? "piano" : "pianos"}`;
+  const cloudCounterClass = props.csvActive
+    ? "text-slate-400"
+    : props.cloudSampleCount === 0 && !props.cloudLoading
+      ? "text-slate-500"
+      : "text-slate-700";
   return (
     <Frame title="Réglages" className="h-fit">
       <div className="flex flex-col gap-4 pt-2">
           <div>
+            <div className={`mb-1 whitespace-nowrap !text-[0.7rem] !font-semibold ${cloudCounterClass}`}>{cloudCounterText}</div>
             <div className="mb-1.5 whitespace-nowrap !text-xs !font-bold !text-black">Comparer piano avec :</div>
             <div className="flex items-center gap-1.5">
               <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={pillClass(props.cloudEnabled)}>Cloud</Button>
