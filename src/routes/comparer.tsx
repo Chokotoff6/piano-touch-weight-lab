@@ -458,7 +458,7 @@ function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShor
     );
   }
 
-  return <div ref={containerRef} className="w-full px-2 pb-4 pt-2"><div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div></div>;
+  return <div ref={containerRef} className="w-full px-2 pb-[80vh] pt-2"><div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div></div>;
 }
 
 export const Route = createFileRoute("/comparer")({
@@ -656,6 +656,27 @@ function Comparer() {
     observer.observe(node);
     return () => observer.disconnect();
   }, [status]);
+
+  // Scroll lock : le défilement s'arrête quand la bordure supérieure du cadre
+  // « Friction mécanique » touche la bordure inférieure du cadre sticky « Moyennes ».
+  useEffect(() => {
+    if (status !== "ok") return;
+    const clamp = () => {
+      const frame = document.querySelector('[data-frame="fric"]');
+      if (!frame) return;
+      const frameTop = frame.getBoundingClientRect().top + window.scrollY;
+      const limit = Math.max(0, Math.round(frameTop - (127 + averagesHeight)));
+      if (window.scrollY > limit) window.scrollTo(0, limit);
+    };
+    clamp();
+    window.addEventListener("scroll", clamp, { passive: true });
+    window.addEventListener("resize", clamp);
+    return () => {
+      window.removeEventListener("scroll", clamp);
+      window.removeEventListener("resize", clamp);
+    };
+  }, [status, averagesHeight]);
+
 
 
   useEffect(() => {
