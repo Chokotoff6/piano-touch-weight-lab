@@ -258,7 +258,15 @@ export async function upsertCurrentPianoBuffer(
   piano: CurrentPiano,
 ): Promise<{ ok: boolean; error?: string }> {
   // Épinglage sur l'UUID fixe : 1 seul .upsert(), pas de recherche préalable fragile.
-  const payload = { id: CURRENT_PIANO_BUFFER_UUID, ...bufferPayload(piano) };
+  // Horodatage forcé côté écran : la ligne pivot prend instantanément la
+  // date/heure de la pesée en cours (ne dépend pas des valeurs par défaut SQL).
+  const now = new Date();
+  const payload = {
+    id: CURRENT_PIANO_BUFFER_UUID,
+    ...bufferPayload(piano),
+    mesure_date: now.toISOString().slice(0, 10),
+    created_at: now.toISOString(),
+  };
   try {
     const { error } = await externalSupabase
       .from("piano_profiles")
