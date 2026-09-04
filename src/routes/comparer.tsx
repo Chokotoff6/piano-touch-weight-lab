@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { useLang } from "@/data/translations";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
 import {
   buildCurrentPiano,
@@ -329,7 +330,9 @@ type EndLabelOptions = {
   showAverage?: boolean;
 };
 
-const LABEL_MIN_Y = 14;
+// Marge haute de sécurité : les étiquettes de courbes ne doivent jamais
+// chevaucher les repères DO (4, 16, 28...) affichés en haut du graphique.
+const LABEL_MIN_Y = 38;
 const LABEL_MAX_Y = 248;
 const clampLabelY = (y: number, dy: number) => Math.min(Math.max(y + dy, LABEL_MIN_Y), LABEL_MAX_Y) - y;
 
@@ -485,7 +488,7 @@ function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShor
       <Frame dataFrame={family.id} title={family.title} className="h-[300px] !pt-2">
         <div className="h-full w-full" onMouseEnter={() => setHoveredChart(family.id)} onMouseLeave={() => setHoveredChart(null)}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} onMouseMove={(state) => { const note = state?.activeLabel; if (typeof note === "number") setHoveredNoteIndex(note); }} onMouseLeave={() => { setHoveredChart(null); setHoveredNoteIndex(null); }} margin={{ top: 5, right: 140, bottom: 15, left: 140 }}>
+            <LineChart data={chartData} onMouseMove={(state) => { const note = state?.activeLabel; if (typeof note === "number") setHoveredNoteIndex(note); }} onMouseLeave={() => { setHoveredChart(null); setHoveredNoteIndex(null); }} margin={{ top: 22, right: 140, bottom: 15, left: 140 }}>
               <XAxis xAxisId="main" dataKey="key" type="number" domain={[1, 88]} hide allowDuplicatedCategory={false} />
               <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={[1, 88]} orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
@@ -599,6 +602,15 @@ const STD_KEYS: { key: MetricKey; globalKey: SeriesKey }[] = [
   { key: "balance", globalKey: "factoryBal" },
 ];
 function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
+  const lang = useLang();
+  const lowLabel = lang === "en" ? "A0" : "La0";
+  const highLabel = lang === "en" ? "C8" : "Do8";
+  const extremeValue = (globalKey: SeriesKey, side: "first" | "last") => {
+    const points = side === "first" ? chartData : [...chartData].reverse();
+    const found = points.find((point) => typeof point[globalKey] === "number" && Number.isFinite(point[globalKey] as number));
+    const value = found?.[globalKey];
+    return typeof value === "number" ? value.toFixed(1) : "—";
+  };
   return (
     <div className="grid grid-cols-4 gap-3">
       {STD_KEYS.map(({ key, globalKey }) => {
@@ -610,8 +622,17 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
             <div className="mt-1 !text-2xl !font-bold tabular-nums !text-green-600">
               {value === "—" ? <span className="!text-green-600">—</span> : <>{value}<span className="!text-xs !font-medium"> gr.</span></>}
             </div>
-            {/* Zone volontairement vide : pas de détail Blanches/Noires en rangée 3. */}
-            <div className="invisible flex justify-center gap-2 text-[0.55rem] tabular-nums"><span className="!text-xs font-medium">Blanches</span><span>/</span><span className="!text-xs font-medium">Noires</span></div>
+            {/* Rangée 3 : valeurs extrêmes de la droite théorique (touche 1 / touche 88). */}
+            <div className="flex justify-center gap-2 tabular-nums !text-green-600">
+              <span className="!text-xs font-medium">{extremeValue(globalKey, "first")} gr.</span>
+              <span className="!text-xs font-medium">/</span>
+              <span className="!text-xs font-medium">{extremeValue(globalKey, "last")} gr.</span>
+            </div>
+            <div className="flex justify-center gap-2 tabular-nums !text-green-600">
+              <span className="!text-xs font-medium">{lowLabel}</span>
+              <span className="invisible">/</span>
+              <span className="!text-xs font-medium">{highLabel}</span>
+            </div>
           </div>
 
         );
@@ -680,10 +701,10 @@ function SidebarPanel(props: SidebarPanelProps) {
             </div>
           </div>
           <div className="space-y-2 border-t border-gray-200 pt-3">
-            <div className="font-bold text-black">Filtres</div>
-            <Button type="button" variant="outline" onClick={props.cycleKeyFilter} aria-label={`Touches blanches/noires : ${props.keyFilter === "all" ? "groupées" : "séparées"}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Touches blanches/noires : <span className="font-semibold">{props.keyFilter === "all" ? "groupées" : "séparées"}</span></span></Button>
-            <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Niveau d'usage instrument : <span className="font-semibold">{usageLabel}</span></span></Button>
-            <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left`}><CycleIcon /><span className="text-black font-medium">Modifications importantes : <span className="text-gray-400 font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></span></Button>
+            <div className="font-bold !text-black">Filtres</div>
+            <Button type="button" variant="outline" onClick={props.cycleKeyFilter} aria-label={`Touches blanches/noires : ${props.keyFilter === "all" ? "groupées" : "séparées"}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black font-medium hover:border-gray-300`}><CycleIcon /><span className="!text-black font-medium">Touches blanches/noires : <span className="!text-black font-semibold">{props.keyFilter === "all" ? "groupées" : "séparées"}</span></span></Button>
+            <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black font-medium hover:border-gray-300`}><CycleIcon /><span className="!text-black font-medium">Niveau d'usage instrument : <span className="!text-black font-semibold">{usageLabel}</span></span></Button>
+            <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left`}><CycleIcon /><span className="!text-black font-medium">Modifications importantes : <span className="!text-black font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></span></Button>
           </div>
           <div className="space-y-2.5 pt-1">
             {switchRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
