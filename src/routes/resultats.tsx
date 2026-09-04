@@ -238,6 +238,19 @@ function Resultats() {
           </div>
 
           <div className="relative">
+              <div className="pointer-events-none absolute right-4 top-2 z-[60] -translate-y-1/2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setKeyFilter((value) => (value === "all" ? "split" : "all"))}
+                  className="h-8 rounded-full border-2 border-black bg-white px-3 text-xs !text-black hover:bg-gray-100"
+                >
+                  Touches blanches/noires :{" "}
+                  <span className="ml-1 font-semibold !text-black">
+                    {keyFilter === "all" ? "groupées" : "séparées"}
+                  </span>
+                </Button>
+              </div>
             <div className={unlocked ? "" : "pointer-events-none select-none blur-md"}>
               <ComparisonChart
                 chartData={chartData}
@@ -249,7 +262,7 @@ function Resultats() {
             </div>
 
             {!unlocked && (
-              <div className="absolute inset-x-0 top-0 flex justify-center p-4">
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 p-4">
                 <div className="w-full max-w-3xl rounded-md border border-gray-300 bg-white p-5 shadow-lg">
                   <label className="flex items-start gap-2 text-sm font-medium !text-gray-900">
                     <input
