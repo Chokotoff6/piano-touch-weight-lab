@@ -488,7 +488,7 @@ function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShor
       <Frame dataFrame={family.id} title={family.title} className="h-[300px] !pt-2">
         <div className="h-full w-full" onMouseEnter={() => setHoveredChart(family.id)} onMouseLeave={() => setHoveredChart(null)}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} onMouseMove={(state) => { const note = state?.activeLabel; if (typeof note === "number") setHoveredNoteIndex(note); }} onMouseLeave={() => { setHoveredChart(null); setHoveredNoteIndex(null); }} margin={{ top: 5, right: 140, bottom: 15, left: 140 }}>
+            <LineChart data={chartData} onMouseMove={(state) => { const note = state?.activeLabel; if (typeof note === "number") setHoveredNoteIndex(note); }} onMouseLeave={() => { setHoveredChart(null); setHoveredNoteIndex(null); }} margin={{ top: 22, right: 140, bottom: 15, left: 140 }}>
               <XAxis xAxisId="main" dataKey="key" type="number" domain={[1, 88]} hide allowDuplicatedCategory={false} />
               <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={[1, 88]} orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
