@@ -373,7 +373,7 @@ function tooltipColorFor(name: string) {
   if (isReference) return lower.includes("blanches") ? "#fdba74" : "#f97316";
   if (lower.includes("noires")) return "#000000";
   if (lower.includes("blanches")) return "#6b7280";
-  if (lower.includes("piano actuel")) return "#000000";
+  if (lower.includes("piano actuel") || lower.trim() === "") return "#000000";
   return "#10b981";
 }
 
@@ -412,15 +412,17 @@ function offsetsFor(lines: LineDef[], point: ChartPoint | undefined) {
   return map;
 }
 
-function currentLinesFor(familyId: string, keyFilter: KeyFilter): LineDef[] {
+function currentLinesFor(familyId: string, keyFilter: KeyFilter, baseName = "Piano actuel"): LineDef[] {
   const metrics: Record<string, [SeriesKey, SeriesKey, SeriesKey, SeriesKey]> = { wa: ["waCur", "waCurW", "waCurB", "waMid"], wd: ["wdCur", "wdCurW", "wdCurB", "wdMid"], bal: ["balCur", "balCurW", "balCurB", "balMid"], fric: ["fricCur", "fricCurW", "fricCurB", "fricMid"] };
   const metric = metrics[familyId];
   if (!metric) return [];
+  const white = baseName ? `${baseName} blanches` : "blanches";
+  const black = baseName ? `${baseName} noires` : "noires";
   if (keyFilter === "split") return [
-    { dataKey: metric[1], name: "Piano actuel blanches", shortName: "Piano actuel blanches", color: "#6b7280", real: true },
-    { dataKey: metric[2], name: "Piano actuel noires", shortName: "Piano actuel noires", color: "#000000", real: true },
+    { dataKey: metric[1], name: white, shortName: white, color: "#6b7280", real: true },
+    { dataKey: metric[2], name: black, shortName: black, color: "#000000", real: true },
   ];
-  return [{ dataKey: metric[0], name: "Piano actuel", shortName: "Piano actuel", color: "#000000", real: true }];
+  return [{ dataKey: metric[0], name: baseName, shortName: baseName, color: "#000000", real: true }];
 }
 
 // La vue clavier pilote aussi la courbe de référence (Cloud ou CSV) : en vue éclatée
@@ -448,7 +450,7 @@ function lastDefinedIndex(data: ChartPoint[], key: SeriesKey) {
 }
 
 
-export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string }) {
+export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel" }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string }) {
   const [hoveredChart, setHoveredChart] = useState<string | null>(null);
   const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -472,7 +474,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     // scindée en blanches / noires quand la vue éclatée est active.
     const referenceLines = comparisonLinesFor(family.id, keyFilter, comparisonLabel, comparisonShort);
     const otherLines = family.lines.filter((line) => line.name !== "Cloud");
-    const lines = [...currentLinesFor(family.id, keyFilter), ...referenceLines, ...otherLines];
+    const lines = [...currentLinesFor(family.id, keyFilter, currentBaseName), ...referenceLines, ...otherLines];
     // Chaque courbe est ancrée sur SON propre premier / dernier point défini
     // (indispensable en vue éclatée où blanches et noires ne partagent pas les mêmes index).
     const endpointOffsets = (side: "left" | "right") => new Map(

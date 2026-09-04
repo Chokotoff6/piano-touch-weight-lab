@@ -181,7 +181,8 @@ function Resultats() {
   };
 
   const unlock = async () => {
-    if (!consent || busy) return;
+    if (busy || unlocked) return;
+    setConsent(true);
     setBusy(true);
     const toastId = toast.loading("Partage collaboratif en cours…");
     try {
@@ -219,29 +220,31 @@ function Resultats() {
           <div ref={averagesRef} className="sticky top-[127px] z-40 mb-[50px] w-full bg-background pb-2">
             <Frame
               titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground"
-              title={<span>Moyennes</span>}
+              title={
+                <span className="flex items-baseline gap-3">
+                  Moyennes
+                  <span className="text-[0.7rem] font-semibold uppercase tracking-wide !text-black">
+                    Piano actuel : <span className="normal-case">{summary}</span>
+                  </span>
+                </span>
+              }
               className="h-fit"
             >
-              <div className="mb-3">
-                <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">
-                  Piano actuel : <span className="normal-case">{summary}</span>
-                </div>
-                <AverageRow chartData={chartData} source="cur" hasData={hasData} />
-              </div>
-              <div className="flex justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setKeyFilter((value) => (value === "all" ? "split" : "all"))}
-                  className="h-8 rounded-full border-2 border-black bg-white px-3 text-xs !text-black hover:bg-gray-100"
-                >
-                  Touches blanches/noires :{" "}
-                  <span className="ml-1 font-semibold !text-black">
-                    {keyFilter === "all" ? "groupées" : "séparées"}
-                  </span>
-                </Button>
-              </div>
+              <AverageRow chartData={chartData} source="cur" hasData={hasData} />
             </Frame>
+            <div className="relative z-50 -mb-9 flex justify-end pr-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setKeyFilter((value) => (value === "all" ? "split" : "all"))}
+                className="h-8 rounded-full border-2 border-black bg-white px-3 text-xs !text-black hover:bg-gray-100"
+              >
+                Touches blanches/noires :{" "}
+                <span className="ml-1 font-semibold !text-black">
+                  {keyFilter === "all" ? "groupées" : "séparées"}
+                </span>
+              </Button>
+            </div>
           </div>
 
           <div className="relative">
@@ -251,22 +254,21 @@ function Resultats() {
                 keyFilter={keyFilter}
                 comparisonLabel=""
                 comparisonShort=""
+                currentBaseName=""
               />
             </div>
 
             {!unlocked && (
               <div className="absolute inset-x-0 top-0 flex justify-center p-4">
                 <div className="w-full max-w-3xl rounded-md border border-gray-300 bg-white p-5 shadow-lg">
-                  <p className="text-base font-semibold !text-gray-900">
-                    📊 Débloquer l&apos;analyse graphique du clavier : Vos chiffres bruts sont calculés !
-                    Pour afficher la courbe d&apos;équilibre visuelle de ce piano et détecter les
-                    irrégularités touche par touche, validez le partage collaboratif.
-                  </p>
-                  <label className="mt-4 flex items-start gap-2 text-sm font-medium !text-gray-900">
+                  <label className="flex items-start gap-2 text-sm font-medium !text-gray-900">
                     <input
                       type="checkbox"
                       checked={consent}
-                      onChange={(e) => setConsent(e.target.checked)}
+                      disabled={busy}
+                      onChange={(e) => {
+                        if (e.target.checked) void unlock();
+                      }}
                       className="mt-1 h-4 w-4"
                     />
                     <span>
@@ -274,14 +276,11 @@ function Resultats() {
                       Friction) pour enrichir la base de données mondiale des techniciens.
                     </span>
                   </label>
-                  <button
-                    type="button"
-                    disabled={!consent || busy}
-                    onClick={() => void unlock()}
-                    className="mt-4 rounded-md border border-gray-900/40 bg-white px-5 py-2 text-sm font-bold !text-gray-900 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Débloquer le graphique du piano
-                  </button>
+                  {busy && (
+                    <p className="mt-3 text-sm font-medium !text-gray-900">
+                      Partage collaboratif en cours…
+                    </p>
+                  )}
                 </div>
               </div>
             )}
