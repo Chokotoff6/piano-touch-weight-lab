@@ -233,6 +233,16 @@ function profileFromCurrentPiano(piano: CurrentPiano): ProfileRecord {
   };
 }
 
+/** Convertit un timestamp cloud (timestamptz, UTC) en heure locale "hh:mm" de l'écran. */
+function localMeasureTime(createdAt: string | null | undefined): string | null {
+  if (!createdAt) return null;
+  const d = new Date(createdAt);
+  if (Number.isNaN(d.getTime())) return null;
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
 function profileFromRow(row: ExternalPianoProfileRow): ProfileRecord {
   return {
     wa: profileValues(row.wa_values),
