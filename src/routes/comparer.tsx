@@ -222,6 +222,8 @@ function profileFromCurrentPiano(piano: CurrentPiano): ProfileRecord {
     serialNumber: piano.serial_number,
     brand: piano.brand,
     model: piano.model,
+    typePiano: piano.type_piano ?? "",
+
     year: piano.manufacture_year,
     climate: piano.climate_zone,
     maintenance: piano.maintenance_type,
@@ -240,6 +242,8 @@ function profileFromRow(row: ExternalPianoProfileRow): ProfileRecord {
     serialNumber: row.serial_number,
     brand: row.brand ?? "",
     model: row.model ?? "",
+    typePiano: row.type_piano ?? "",
+
     year: row.manufacture_year ?? null,
     climate: row.climate_zone ?? null,
     maintenance: row.maintenance_type ?? null,
@@ -284,6 +288,20 @@ function makeFactoryStandard(): RefProfile {
   };
 }
 const FACTORY_STANDARD: RefProfile = makeFactoryStandard();
+
+// Convertit une ligne de spécifications usine en 88 valeurs théoriques :
+// pente linéaire continue de wa_bass (touche 1) à wa_treble (touche 88),
+// friction cible constante, Wd = Wa - 2*friction, Balance = Wa - friction.
+function profileFromSpec(spec: FactorySpecRow): RefProfile {
+  const wa = Array.from({ length: 88 }, (_, index) =>
+    n1(spec.wa_bass + ((spec.wa_treble - spec.wa_bass) * index) / 87),
+  );
+  const friction = wa.map(() => n1(spec.friction_cible));
+  const wd = wa.map((value) => n1(value - 2 * spec.friction_cible));
+  const balance = wa.map((value) => n1(value - spec.friction_cible));
+  return { wa, wd, friction, balance };
+}
+
 
 const SAMPLE_DOT_CONFIG = { r: 2, fill: "#000000", strokeWidth: 0 };
 
