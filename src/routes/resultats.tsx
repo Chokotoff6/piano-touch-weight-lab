@@ -169,7 +169,7 @@ function Resultats() {
     return {
       main: `${brand} ${model} (${year}) - SN ${sn}`,
       time: `Mesure ${dd}-${mm}-${now.getFullYear()} - ${hh}:${mi}`,
-      count: ` - Nombre de touches mesurées : ${white} Blanches / ${black} Noires`,
+      count: ` - ${white} Blanches / ${black} Noires`,
     };
   }, [info, rows]);
 
