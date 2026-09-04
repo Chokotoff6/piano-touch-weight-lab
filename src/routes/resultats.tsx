@@ -157,11 +157,21 @@ function Resultats() {
     const model = info["modele"] ?? "";
     const year = info["fabrication"]?.trim() || "—";
     const sn = `${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`;
+    const BLACK = new Set([2, 5, 7, 10, 0]);
+    let white = 0;
+    let black = 0;
+    rows.forEach((row, index) => {
+      const filled = String(row.wa ?? "").trim() !== "" || String(row.wd ?? "").trim() !== "";
+      if (!filled) return;
+      if (BLACK.has((index + 1) % 12)) black += 1;
+      else white += 1;
+    });
     return {
       main: `${brand} ${model} (${year}) - SN ${sn}`,
       time: `Mesure ${dd}-${mm}-${now.getFullYear()} - ${hh}:${mi}`,
+      count: ` - Nombre de touches mesurées : ${white} Blanches / ${black} Noires`,
     };
-  }, [info]);
+  }, [info, rows]);
 
   const buildPiano = (): CurrentPiano => {
     const pays = info["pays"] ?? "";
@@ -229,6 +239,7 @@ function Resultats() {
                     <span className="text-slate-400">-</span>
                     <span className="text-lg font-semibold !text-black">{summary.main}</span>
                     <span className="text-xs font-medium !text-black">{summary.time}</span>
+                    <span className="text-xs font-medium !text-black">{summary.count}</span>
                   </span>
                 }
                 className="h-fit"
@@ -262,6 +273,7 @@ function Resultats() {
                 comparisonShort=""
                 currentBaseName=""
                 autoDomain
+                sideMargin={60}
               />
             </div>
 
