@@ -881,7 +881,7 @@ function Comparer() {
   const comparisonProfile = comparedPiano ?? (sourceMode === "cloud" ? cloudProfile : null);
   const comparedTime = comparedPiano?.measureTime ? ` - ${comparedPiano.measureTime}` : "";
   const comparisonLabel = comparedPiano
-    ? `IMPORT CSV : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - ${summaryValue(comparedPiano.year)} - SN ${summaryValue(comparedPiano.serialNumber)} - Mesure ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime} `
+    ? `IMPORT CSV : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - ${summaryValue(comparedPiano.year)} - SN ${summaryValue(comparedPiano.serialNumber)} - Mesure ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime}`
     : "Cloud";
   const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
 
