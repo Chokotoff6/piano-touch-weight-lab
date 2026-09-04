@@ -219,12 +219,12 @@ function Resultats() {
         <div className="min-w-0">
           <div ref={averagesRef} className="sticky top-[127px] z-40 mb-[50px] w-full bg-background pb-2">
             <Frame
-              titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground"
+              titleClassName="absolute -top-4 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground"
               title={
                 <span className="flex items-baseline gap-3">
                   Moyennes
-                  <span className="text-[0.7rem] font-semibold uppercase tracking-wide !text-black">
-                    Piano actuel : <span className="normal-case">{summary}</span>
+                  <span className="text-lg font-semibold !text-black">
+                    {summary}
                   </span>
                 </span>
               }
@@ -232,7 +232,7 @@ function Resultats() {
             >
               <AverageRow chartData={chartData} source="cur" hasData={hasData} />
             </Frame>
-            <div className="relative z-50 -mb-9 flex justify-end pr-4">
+            <div className="relative z-50 -mb-9 mt-[10px] flex justify-end pr-4">
               <Button
                 type="button"
                 variant="outline"
