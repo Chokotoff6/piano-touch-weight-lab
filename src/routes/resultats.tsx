@@ -129,7 +129,14 @@ function Resultats() {
       rows.map((r, i) => {
         const wa = parseWeight(r.wa);
         const wd = parseWeight(r.wd);
-        return { key: i + 1, wa, wd };
+        const black = isBlackIndex(i);
+        return {
+          key: i + 1,
+          wa,
+          wd,
+          waWhite: black ? null : wa,
+          waBlack: black ? wa : null,
+        };
       }),
     [rows],
   );
