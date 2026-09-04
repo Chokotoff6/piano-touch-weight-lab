@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { initLang, setLang, useLang } from "@/data/translations";
-import { setTopbarState, showTopbarAlert, useTopbarState } from "@/lib/topbar-store";
+import { initJourneyFlags, useTopbarState } from "@/lib/topbar-store";
 import {
   ChevronDown,
 } from "lucide-react";
@@ -144,6 +144,7 @@ function RootComponent() {
   const lang = useLang();
   useEffect(() => {
     initLang();
+    initJourneyFlags();
   }, []);
   const isComparer = pathname === "/comparer";
 
