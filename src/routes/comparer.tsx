@@ -47,6 +47,7 @@ type ProfileRecord = RefProfile & {
   serialNumber: string;
   brand: string;
   model: string;
+  typePiano: string;
   year: number | null;
   climate: string | null;
   maintenance: string | null;
@@ -54,6 +55,17 @@ type ProfileRecord = RefProfile & {
   measureDate: string | null;
   measureTime: string | null;
 };
+
+// Ligne de spécifications constructeur (table externe piano_specs_usine).
+type FactorySpecRow = {
+  brand: string;
+  model: string;
+  type_piano: string;
+  wa_bass: number;
+  wa_treble: number;
+  friction_cible: number;
+};
+
 
 type ChartPoint = {
   key: number;
@@ -210,6 +222,8 @@ function profileFromCurrentPiano(piano: CurrentPiano): ProfileRecord {
     serialNumber: piano.serial_number,
     brand: piano.brand,
     model: piano.model,
+    typePiano: piano.type_piano ?? "",
+
     year: piano.manufacture_year,
     climate: piano.climate_zone,
     maintenance: piano.maintenance_type,
@@ -228,6 +242,8 @@ function profileFromRow(row: ExternalPianoProfileRow): ProfileRecord {
     serialNumber: row.serial_number,
     brand: row.brand ?? "",
     model: row.model ?? "",
+    typePiano: row.type_piano ?? "",
+
     year: row.manufacture_year ?? null,
     climate: row.climate_zone ?? null,
     maintenance: row.maintenance_type ?? null,
@@ -272,6 +288,20 @@ function makeFactoryStandard(): RefProfile {
   };
 }
 const FACTORY_STANDARD: RefProfile = makeFactoryStandard();
+
+// Convertit une ligne de spécifications usine en 88 valeurs théoriques :
+// pente linéaire continue de wa_bass (touche 1) à wa_treble (touche 88),
+// friction cible constante, Wd = Wa - 2*friction, Balance = Wa - friction.
+function profileFromSpec(spec: FactorySpecRow): RefProfile {
+  const wa = Array.from({ length: 88 }, (_, index) =>
+    n1(spec.wa_bass + ((spec.wa_treble - spec.wa_bass) * index) / 87),
+  );
+  const friction = wa.map(() => n1(spec.friction_cible));
+  const wd = wa.map((value) => n1(value - 2 * spec.friction_cible));
+  const balance = wa.map((value) => n1(value - spec.friction_cible));
+  return { wa, wd, friction, balance };
+}
+
 
 const SAMPLE_DOT_CONFIG = { r: 2, fill: "#000000", strokeWidth: 0 };
 
@@ -556,10 +586,13 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
         return (
           <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
             <div className="!text-[1.1rem] font-bold tracking-wide text-muted-foreground">{label}</div>
-            <div className="mt-1 !text-2xl !font-bold tabular-nums" style={{ color: "#10b981" }}>
+            <div className="mt-1 !text-2xl !font-bold tabular-nums text-muted-foreground">
               {value === "—" ? <span className="text-muted-foreground">—</span> : <>{value}<span className="!text-xs !font-medium"> gr.</span></>}
             </div>
+            {/* Zone volontairement vide : pas de détail Blanches/Noires en rangée 3. */}
+            <div className="invisible flex justify-center gap-2 text-[0.55rem] tabular-nums"><span className="!text-xs font-medium">Blanches</span><span>/</span><span className="!text-xs font-medium">Noires</span></div>
           </div>
+
         );
       })}
     </div>
@@ -663,6 +696,8 @@ function Comparer() {
   const [usageLevel, setUsageLevel] = useState<UsageLevel>("all");
   const [mine, setMine] = useState<ProfileRecord | null>(null);
   const [standard, setStandard] = useState<RefProfile>(FACTORY_STANDARD);
+  const [standardLabel, setStandardLabel] = useState("Standard (Internet)");
+
   const [cloudProfile, setCloudProfile] = useState<RefProfile | null>(null);
   const [cloudSampleCount, setCloudSampleCount] = useState(0);
   const [cloudLoading, setCloudLoading] = useState(false);
@@ -731,7 +766,53 @@ function Comparer() {
     };
   }, []);
 
+  // Rangée 3 : spécifications d'usine (table externe piano_specs_usine).
+  // Recherche marque + type de piano, sinon repli STANDARD / UNIVERSEL.
+  useEffect(() => {
+    let cancelled = false;
+    async function loadFactorySpec() {
+      // Les types saisis varient ("Droit", "Piano Droit", "À queue"…) :
+      // on les ramène aux deux libellés canoniques de la table.
+      const rawType = normalizeValue(mine?.typePiano);
+      const canonicalType = rawType.includes("queue") || rawType.includes("grand")
+        ? "piano à queue"
+        : rawType.includes("droit") || rawType.includes("upright")
+          ? "piano droit"
+          : "";
+      const brand = (mine?.brand ?? "").trim();
+      const result = await externalSupabase
+        .from("piano_specs_usine")
+        .select("brand,model,type_piano,wa_bass,wa_treble,friction_cible");
+      if (cancelled) return;
+      const allRows = (result.data ?? []) as FactorySpecRow[];
+      const typed = canonicalType
+        ? allRows.filter((row) => normalizeValue(row.type_piano) === canonicalType)
+        : allRows;
+      const rows = typed.length > 0 ? typed : allRows;
 
+      if (rows.length === 0) {
+        setStandard(FACTORY_STANDARD);
+        setStandardLabel("Standard (Internet)");
+        return;
+      }
+      const match = brand
+        ? rows.find((row) => (row.brand ?? "").trim().toLocaleLowerCase() === brand.toLocaleLowerCase())
+        : undefined;
+      const fallback = rows.find(
+        (row) => row.brand === "STANDARD" && row.model === "UNIVERSEL",
+      );
+      const spec = match ?? fallback ?? rows[0];
+      if (!spec) return;
+      setStandard(profileFromSpec(spec));
+      setStandardLabel(
+        spec.brand === "STANDARD"
+          ? "Standard (Internet)"
+          : `Usine - Générique ${spec.brand.toLocaleUpperCase()}`,
+      );
+    }
+    void loadFactorySpec();
+    return () => { cancelled = true; };
+  }, [mine]);
 
 
   useEffect(() => {
@@ -862,7 +943,7 @@ function Comparer() {
                   )}
                   {standardEnabled && (
                     <div>
-                      <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground">Standard (Internet)</div>
+                      <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground">{standardLabel}</div>
                       <StandardRow chartData={chartData} />
                     </div>
                   )}
