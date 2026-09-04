@@ -237,13 +237,16 @@ function Resultats() {
               </Frame>
           </div>
 
-          <div className="relative">
-              <div className="pointer-events-none absolute right-4 top-2 z-[60] -translate-y-1/2">
+          <div className="relative mx-auto w-4/5">
+              <div
+                className="pointer-events-none sticky z-[60] flex h-0 justify-end pr-4"
+                style={{ top: 127 + averagesHeight + 10 }}
+              >
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setKeyFilter((value) => (value === "all" ? "split" : "all"))}
-                  className="h-8 rounded-full border-2 border-black bg-white px-3 text-xs !text-black hover:bg-gray-100"
+                  className="pointer-events-auto h-8 -translate-y-1/2 rounded-full border-2 border-black bg-white px-3 text-xs !text-black hover:bg-gray-100"
                 >
                   Touches blanches/noires :{" "}
                   <span className="ml-1 font-semibold !text-black">
@@ -258,8 +261,10 @@ function Resultats() {
                 comparisonLabel=""
                 comparisonShort=""
                 currentBaseName=""
+                autoDomain
               />
             </div>
+
 
             {!unlocked && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 p-4">
