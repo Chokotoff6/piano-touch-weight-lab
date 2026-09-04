@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   AverageRow,
   ComparisonChart,
+  CycleIcon,
   Frame,
   buildChartData,
   type KeyFilter,
