@@ -692,7 +692,7 @@ function SidebarPanel(props: SidebarPanelProps) {
     </label>
   );
   return (
-    <Frame title="Réglages" className="h-fit">
+    <Frame title="Réglages" className="flex-1">
       <div className="flex flex-col gap-4 pt-2">
           <div>
             <div className="mb-1.5 whitespace-nowrap !text-xs !font-bold !text-black">Comparer piano avec :</div>
