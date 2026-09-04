@@ -771,15 +771,25 @@ function Comparer() {
   useEffect(() => {
     let cancelled = false;
     async function loadFactorySpec() {
-      const typePiano = (mine?.typePiano ?? "").trim();
+      // Les types saisis varient ("Droit", "Piano Droit", "À queue"…) :
+      // on les ramène aux deux libellés canoniques de la table.
+      const rawType = normalizeValue(mine?.typePiano);
+      const canonicalType = rawType.includes("queue") || rawType.includes("grand")
+        ? "piano à queue"
+        : rawType.includes("droit") || rawType.includes("upright")
+          ? "piano droit"
+          : "";
       const brand = (mine?.brand ?? "").trim();
-      let query = externalSupabase
+      const result = await externalSupabase
         .from("piano_specs_usine")
         .select("brand,model,type_piano,wa_bass,wa_treble,friction_cible");
-      if (typePiano) query = query.eq("type_piano", typePiano);
-      const result = await query;
       if (cancelled) return;
-      const rows = (result.data ?? []) as FactorySpecRow[];
+      const allRows = (result.data ?? []) as FactorySpecRow[];
+      const typed = canonicalType
+        ? allRows.filter((row) => normalizeValue(row.type_piano) === canonicalType)
+        : allRows;
+      const rows = typed.length > 0 ? typed : allRows;
+
       if (rows.length === 0) {
         setStandard(FACTORY_STANDARD);
         setStandardLabel("Standard (Internet)");
