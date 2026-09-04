@@ -181,7 +181,8 @@ function Resultats() {
   };
 
   const unlock = async () => {
-    if (!consent || busy) return;
+    if (busy || unlocked) return;
+    setConsent(true);
     setBusy(true);
     const toastId = toast.loading("Partage collaboratif en cours…");
     try {
