@@ -1,17 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ReferenceLine,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { CompareFaq } from "@/components/CompareFaq";
+import { Button } from "@/components/ui/button";
+import {
+  AverageRow,
+  ComparisonChart,
+  Frame,
+  buildChartData,
+  type KeyFilter,
+  type RefProfile,
+} from "@/routes/comparer";
 import { setCompareUnlocked, useTopbarState } from "@/lib/topbar-store";
 import {
   buildCurrentPiano,
@@ -48,10 +46,6 @@ export const Route = createFileRoute("/resultats")({
 const DRAFT_ROWS_KEY = "ptw_draft_rows";
 const DRAFT_INFO_KEY = "ptw_draft_info";
 
-const C_KEYS = [4, 16, 28, 40, 52, 64, 76, 88];
-const BLACK_MODULOS = new Set([2, 5, 7, 10, 0]);
-const isBlackIndex = (index: number) => BLACK_MODULOS.has((index + 1) % 12);
-
 type Row = { wa: string; wd: string };
 type Info = Record<string, string>;
 
@@ -82,30 +76,25 @@ const parseWeight = (value: string): number | null => {
   return Number.isFinite(n) && n > 0 ? n : null;
 };
 
-function averages(rows: Row[]) {
-  const calc = (slice: Row[]) => {
-    const valid = slice
-      .map((r) => ({ wa: parseWeight(r.wa), wd: parseWeight(r.wd) }))
-      .filter(
-        (entry): entry is { wa: number; wd: number } =>
-          entry.wa !== null && entry.wd !== null && entry.wa > entry.wd,
-      );
-    if (valid.length === 0) return { wa: "—", wd: "—", friction: "—", balance: "—" };
-    const avgWa = valid.reduce((s, e) => s + e.wa, 0) / valid.length;
-    const avgWd = valid.reduce((s, e) => s + e.wd, 0) / valid.length;
-    return {
-      wa: avgWa.toFixed(1),
-      wd: avgWd.toFixed(1),
-      friction: ((avgWa - avgWd) / 2).toFixed(1),
-      balance: ((avgWa + avgWd) / 2).toFixed(1),
-    };
-  };
-  return {
-    global: calc(rows),
-    white: calc(rows.filter((_, i) => !isBlackIndex(i))),
-    black: calc(rows.filter((_, i) => isBlackIndex(i))),
-  };
+/** Construit le profil 88 touches du piano actuel à partir du brouillon de saisie. */
+function profileFromRows(rows: Row[]): RefProfile {
+  const wa: number[] = [];
+  const wd: number[] = [];
+  const friction: number[] = [];
+  const balance: number[] = [];
+  rows.forEach((row) => {
+    const a = parseWeight(row.wa);
+    const d = parseWeight(row.wd);
+    const valid = a !== null && d !== null && a > d;
+    wa.push(valid ? a : Number.NaN);
+    wd.push(valid ? d : Number.NaN);
+    friction.push(valid ? (a - d) / 2 : Number.NaN);
+    balance.push(valid ? (a + d) / 2 : Number.NaN);
+  });
+  return { wa, wd, friction, balance };
 }
+
+const hasAnyValue = (profile: RefProfile) => profile.wa.some((value) => Number.isFinite(value));
 
 function Resultats() {
   const topbar = useTopbarState();
@@ -114,32 +103,49 @@ function Resultats() {
     info: {},
   }));
   const [consent, setConsent] = useState(false);
-  const [separated, setSeparated] = useState(false);
+  const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
   const [busy, setBusy] = useState(false);
+  const averagesRef = useRef<HTMLDivElement>(null);
+  const [averagesHeight, setAveragesHeight] = useState(0);
 
   useEffect(() => {
     setDraft(readDraft());
   }, []);
 
-  const { rows, info } = draft;
-  const avg = useMemo(() => averages(rows), [rows]);
+  useEffect(() => {
+    const node = averagesRef.current;
+    if (!node) return;
+    const update = () => setAveragesHeight(node.offsetHeight);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
-  const chartData = useMemo(
-    () =>
-      rows.map((r, i) => {
-        const wa = parseWeight(r.wa);
-        const wd = parseWeight(r.wd);
-        const black = isBlackIndex(i);
-        return {
-          key: i + 1,
-          wa,
-          wd,
-          waWhite: black ? null : wa,
-          waBlack: black ? wa : null,
-        };
-      }),
-    [rows],
-  );
+  // Scroll lock identique à la page Comparer : arrêt du défilement quand le cadre
+  // « Friction mécanique » atteint la bordure basse du cadre sticky « Moyennes ».
+  useEffect(() => {
+    const clamp = () => {
+      const frame = document.querySelector('[data-frame="fric"]');
+      if (!frame) return;
+      const frameTop = frame.getBoundingClientRect().top + window.scrollY;
+      const limit = Math.max(0, Math.round(frameTop - (127 + averagesHeight) - 5));
+      if (window.scrollY > limit) window.scrollTo(0, limit);
+    };
+    clamp();
+    window.addEventListener("scroll", clamp, { passive: true });
+    window.addEventListener("resize", clamp);
+    return () => {
+      window.removeEventListener("scroll", clamp);
+      window.removeEventListener("resize", clamp);
+    };
+  }, [averagesHeight]);
+
+  const { rows, info } = draft;
+  const mine = useMemo(() => profileFromRows(rows), [rows]);
+  const hasData = hasAnyValue(mine);
+  // Épuration : ni Cloud (orange) ni Usine (vert) sur cette page.
+  const chartData = useMemo(() => buildChartData(hasData ? mine : null, null, null), [mine, hasData]);
 
   const summary = useMemo(() => {
     const now = new Date();
@@ -203,166 +209,84 @@ function Resultats() {
   const unlocked = topbar.compareUnlocked;
 
   return (
-    <main className="mx-auto max-w-[1400px] px-6 py-10">
-      <h1 className="text-2xl font-bold !text-black">Diagnostic de votre instrument</h1>
+    <main className="mx-auto w-full max-w-[1400px] px-6 py-8">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-x-0 top-[77px] z-40 h-[50px] bg-white"
+      />
+      <div className="w-full">
+        <div className="min-w-0">
+          <div ref={averagesRef} className="sticky top-[127px] z-40 mb-[50px] w-full bg-background pb-2">
+            <Frame
+              titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground"
+              title={<span>Moyennes</span>}
+              className="h-fit"
+            >
+              <div className="mb-3">
+                <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">
+                  Piano actuel : <span className="normal-case">{summary}</span>
+                </div>
+                <AverageRow chartData={chartData} source="cur" hasData={hasData} />
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setKeyFilter((value) => (value === "all" ? "split" : "all"))}
+                  className="h-8 rounded-full border-2 border-black bg-white px-3 text-xs !text-black hover:bg-gray-100"
+                >
+                  Touches blanches/noires :{" "}
+                  <span className="ml-1 font-semibold !text-black">
+                    {keyFilter === "all" ? "groupées" : "séparées"}
+                  </span>
+                </Button>
+              </div>
+            </Frame>
+          </div>
 
-      <section className="relative mt-6 rounded-md border-2 border-foreground bg-card p-4 pt-6">
-        <h2 className="absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold !text-black">
-          Moyennes
-        </h2>
-        <p className="!text-black font-semibold">
-          Piano actuel : <span className="font-normal">{summary}</span>
-        </p>
-        <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
-          {(
-            [
-              { key: "wa", label: "Poids descendant (Wa)" },
-              { key: "wd", label: "Poids ascendant (Wd)" },
-              { key: "friction", label: "Friction mécanique" },
-              { key: "balance", label: "Balance statique" },
-            ] as const
-          ).map(({ key, label }) => (
-            <div key={key} className="rounded bg-muted px-2 py-2 text-center">
-              <div className="text-[1.05rem] font-bold !text-black">{label}</div>
-              <div className="mt-1 text-2xl font-semibold tabular-nums !text-black">
-                {avg.global[key]}
-                {avg.global[key] !== "—" && <span className="text-xs font-medium"> gr.</span>}
-              </div>
-              <div className="mt-0.5 flex justify-center gap-2 text-sm tabular-nums !text-black">
-                <span>{avg.white[key]}</span>
-                <span>/</span>
-                <span>{avg.black[key]}</span>
-              </div>
-              <div className="flex justify-center gap-2 text-xs font-medium !text-black">
-                <span>Blanches</span>
-                <span className="invisible">/</span>
-                <span>Noires</span>
-              </div>
+          <div className="relative">
+            <div className={unlocked ? "" : "pointer-events-none select-none blur-md"}>
+              <ComparisonChart
+                chartData={chartData}
+                keyFilter={keyFilter}
+                comparisonLabel=""
+                comparisonShort=""
+              />
             </div>
-          ))}
-        </div>
-      </section>
 
-      <section className="relative mt-8 rounded-md border-2 border-foreground bg-card p-4 pt-6">
-        <h2 className="absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold !text-black">
-          Courbe d&apos;équilibre du clavier
-        </h2>
-        <div className="mb-3 flex justify-end">
-          <button
-            type="button"
-            onClick={() => setSeparated((v) => !v)}
-            className="rounded-md border-2 border-black bg-white px-3 py-1.5 text-sm font-bold !text-black transition-colors hover:bg-muted"
-          >
-            Touches blanches/noires : {separated ? "séparées" : "groupées"}
-          </button>
-        </div>
-        <div className={unlocked ? "" : "pointer-events-none select-none blur-md"}>
-          <div className="h-[340px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 20, right: 20, bottom: 10, left: 0 }}>
-                <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="key"
-                  type="number"
-                  domain={[1, 88]}
-                  ticks={C_KEYS}
-                  allowDuplicatedCategory={false}
-                  tick={{ fontSize: 11 }}
-                />
-                <YAxis domain={["auto", "auto"]} tick={{ fontSize: 11 }} width={40} />
-                <Tooltip />
-                {C_KEYS.map((k) => (
-                  <ReferenceLine key={k} x={k} stroke="#d1d5db" />
-                ))}
-                {separated ? (
-                  <>
-                    <Line
-                      type="monotone"
-                      dataKey="waWhite"
-                      name="Piano actuel blanches"
-                      stroke="#000000"
-                      strokeWidth={2}
-                      dot={false}
-                      connectNulls
-                      isAnimationActive={false}
+            {!unlocked && (
+              <div className="absolute inset-x-0 top-0 flex justify-center p-4">
+                <div className="w-full max-w-3xl rounded-md border border-gray-300 bg-white p-5 shadow-lg">
+                  <p className="text-base font-semibold !text-gray-900">
+                    📊 Débloquer l&apos;analyse graphique du clavier : Vos chiffres bruts sont calculés !
+                    Pour afficher la courbe d&apos;équilibre visuelle de ce piano et détecter les
+                    irrégularités touche par touche, validez le partage collaboratif.
+                  </p>
+                  <label className="mt-4 flex items-start gap-2 text-sm font-medium !text-gray-900">
+                    <input
+                      type="checkbox"
+                      checked={consent}
+                      onChange={(e) => setConsent(e.target.checked)}
+                      className="mt-1 h-4 w-4"
                     />
-                    <Line
-                      type="monotone"
-                      dataKey="waBlack"
-                      name="Piano actuel noires"
-                      stroke="#6b7280"
-                      strokeWidth={2}
-                      dot={false}
-                      connectNulls
-                      isAnimationActive={false}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <Line
-                      type="monotone"
-                      dataKey="wa"
-                      name="Piano actuel"
-                      stroke="#000000"
-                      strokeWidth={2}
-                      dot={false}
-                      connectNulls
-                      isAnimationActive={false}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="wd"
-                      name="Piano actuel (Wd)"
-                      stroke="#000000"
-                      strokeWidth={1.5}
-                      strokeDasharray="4 3"
-                      dot={false}
-                      connectNulls
-                      isAnimationActive={false}
-                    />
-                  </>
-                )}
-              </LineChart>
-            </ResponsiveContainer>
+                    <span>
+                      J&apos;accepte de partager anonymement ces mesures (Marque, Modèle, N° de série,
+                      Friction) pour enrichir la base de données mondiale des techniciens.
+                    </span>
+                  </label>
+                  <button
+                    type="button"
+                    disabled={!consent || busy}
+                    onClick={() => void unlock()}
+                    className="mt-4 rounded-md border border-gray-900/40 bg-white px-5 py-2 text-sm font-bold !text-gray-900 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Débloquer le graphique du piano
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-
-
-        {!unlocked && (
-          <div className="absolute inset-0 flex items-center justify-center p-4">
-            <div className="w-full max-w-3xl rounded-md border border-yellow-300 bg-[#fef08a] p-5 shadow-lg">
-              <p className="text-base font-semibold !text-gray-950">
-                📊 Débloquer l&apos;analyse graphique du clavier : Vos chiffres bruts sont calculés !
-                Pour afficher la courbe d&apos;équilibre visuelle de ce piano et détecter les
-                irrégularités touche par touche, validez le partage collaboratif.
-              </p>
-              <label className="mt-4 flex items-start gap-2 text-sm font-medium !text-gray-950">
-                <input
-                  type="checkbox"
-                  checked={consent}
-                  onChange={(e) => setConsent(e.target.checked)}
-                  className="mt-1 h-4 w-4"
-                />
-                <span>
-                  J&apos;accepte de partager anonymement ces mesures (Marque, Modèle, N° de série,
-                  Friction) pour enrichir la base de données mondiale des techniciens.
-                </span>
-              </label>
-              <button
-                type="button"
-                disabled={!consent || busy}
-                onClick={() => void unlock()}
-                className="mt-4 rounded-md border border-gray-950/40 bg-white px-5 py-2 text-sm font-bold !text-gray-950 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Débloquer le graphique du piano
-              </button>
-            </div>
-          </div>
-        )}
-      </section>
-
-      <div className="mt-10">
-        <CompareFaq />
       </div>
     </main>
   );
