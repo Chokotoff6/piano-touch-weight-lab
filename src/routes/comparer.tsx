@@ -28,7 +28,8 @@ import {
 } from "recharts";
 
 const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];
-const SAMPLE_NOTES = [1, 4, 10, 16, 22, 28, 34, 40, 46, 52, 58, 64, 70, 76, 82, 88] as const;
+// Toutes les notes pesées portent une pastille : le tracé couvre les 88 touches.
+const SAMPLE_NOTES = Array.from({ length: 88 }, (_, index) => index + 1);
 const BLACK_MODULOS = new Set([2, 5, 7, 10, 0]);
 const isBlackKey = (noteIndex: number) => BLACK_MODULOS.has(noteIndex % 12);
 const PROFILE_FIELDS = "id,serial_number,brand,model,type_piano,mesure_date,manufacture_year,climate_zone,maintenance_type,ville,pays,remarques,wa_values,wd_values,friction_values,balance_values,usage_level,created_at";
