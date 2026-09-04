@@ -693,6 +693,8 @@ function Comparer() {
   const [usageLevel, setUsageLevel] = useState<UsageLevel>("all");
   const [mine, setMine] = useState<ProfileRecord | null>(null);
   const [standard, setStandard] = useState<RefProfile>(FACTORY_STANDARD);
+  const [standardLabel, setStandardLabel] = useState("Standard (Internet)");
+
   const [cloudProfile, setCloudProfile] = useState<RefProfile | null>(null);
   const [cloudSampleCount, setCloudSampleCount] = useState(0);
   const [cloudLoading, setCloudLoading] = useState(false);
@@ -892,7 +894,7 @@ function Comparer() {
                   )}
                   {standardEnabled && (
                     <div>
-                      <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground">Standard (Internet)</div>
+                      <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground">{standardLabel}</div>
                       <StandardRow chartData={chartData} />
                     </div>
                   )}
