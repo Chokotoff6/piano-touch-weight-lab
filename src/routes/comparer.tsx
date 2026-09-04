@@ -530,20 +530,29 @@ const COLUMNS = [
 type MetricKey = (typeof COLUMNS)[number]["key"];
 
 
+// Charte couleur stricte : rangée 1 noire, rangée 2 orange, rangée 3 verte.
+type Tone = "cur" | "ref" | "std";
+const TONE_CLASS: Record<Tone, string> = {
+  cur: "!text-black",
+  ref: "!text-orange-600",
+  std: "!text-green-600",
+};
+
 // Bloc de moyenne façon page Saisie : moyenne globale en grand + détail Blanches/Noires.
-function AverageBlock({ label, global, white, black, active = false }: { label: string; global: string; white: string; black: string; active?: boolean }) {
-  const val = (v: string) => v === "—" ? <span className="text-muted-foreground">—</span> : <>{v}<span className="!text-xs !font-medium"> gr.</span></>;
-  const sub = (v: string) => v === "—" ? "—" : <>{v}<span className="text-muted-foreground"> gr.</span></>;
+function AverageBlock({ label, global, white, black, tone }: { label: string; global: string; white: string; black: string; tone: Tone }) {
+  const toneClass = TONE_CLASS[tone];
+  const val = (v: string) => v === "—" ? <span className={toneClass}>—</span> : <>{v}<span className="!text-xs !font-medium"> gr.</span></>;
+  const sub = (v: string) => v === "—" ? "—" : <>{v}<span className={toneClass}> gr.</span></>;
   return (
     <div className="rounded bg-muted px-2 py-1.5 text-center">
-      <div className="!text-[1.1rem] font-bold tracking-wide text-muted-foreground">{label}</div>
-      <div className={`mt-1 !text-2xl !font-bold tabular-nums ${active ? "!text-orange-600" : ""}`} style={active ? { color: "#f97316" } : undefined}>{val(global)}</div>
-      <div className="mt-0.5 flex justify-center gap-2 text-[0.65rem] text-muted-foreground tabular-nums">
+      <div className={`!text-[1.1rem] font-bold tracking-wide ${toneClass}`}>{label}</div>
+      <div className={`mt-1 !text-2xl !font-bold tabular-nums ${toneClass}`}>{val(global)}</div>
+      <div className={`mt-0.5 flex justify-center gap-2 text-[0.65rem] tabular-nums ${toneClass}`}>
         <span>{sub(white)}</span>
-        <span className="text-muted-foreground">/</span>
+        <span className={toneClass}>/</span>
         <span>{sub(black)}</span>
       </div>
-      <div className="flex justify-center gap-2 text-[0.55rem] text-muted-foreground tabular-nums">
+      <div className={`flex justify-center gap-2 text-[0.55rem] tabular-nums ${toneClass}`}>
         <span className="!text-xs font-medium">Blanches</span>
         <span className="invisible">/</span>
         <span className="!text-xs font-medium">Noires</span>
@@ -560,7 +569,7 @@ const AVG_KEYS: Record<MetricKey, { cur: [SeriesKey, SeriesKey, SeriesKey]; ref:
   balance: { cur: ["balCur", "balCurW", "balCurB"], ref: ["sameBal", "sameBalW", "sameBalB"] },
 };
 
-function AverageRow({ chartData, source, hasData, active = false }: { chartData: ChartPoint[]; source: "cur" | "ref"; hasData: boolean; active?: boolean }) {
+function AverageRow({ chartData, source, hasData }: { chartData: ChartPoint[]; source: "cur" | "ref"; hasData: boolean }) {
   return (
     <div className="grid grid-cols-4 gap-3">
       {COLUMNS.map(({ key, label }) => {
@@ -569,7 +578,7 @@ function AverageRow({ chartData, source, hasData, active = false }: { chartData:
           <AverageBlock
             key={key}
             label={label}
-            active={active}
+            tone={source}
             global={hasData ? seriesAverage(chartData, globalKey) : "—"}
             white={hasData ? seriesAverage(chartData, whiteKey) : "—"}
             black={hasData ? seriesAverage(chartData, blackKey) : "—"}
