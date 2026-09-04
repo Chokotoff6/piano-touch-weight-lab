@@ -155,7 +155,7 @@ function Resultats() {
       serial_number: `${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`,
       type_piano: info["type_piano"] ?? "",
       manufacture_year: Number(info["fabrication"]) || null,
-      climate_zone: saved?.climate_zone || fallbackZone(pays),
+      climate_zone: String(saved?.climate_zone || fallbackZone(pays)),
       maintenance_type: info["entretien"] ?? "",
       usage_level: info["usage_level"] ?? "",
       ville: info["ville"] ?? "",
