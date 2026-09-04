@@ -147,8 +147,9 @@ function RootComponent() {
   }, []);
   const isComparer = pathname === "/comparer";
 
-  const linkClass = "rounded-md px-3 py-2 text-base font-semibold text-muted-foreground transition-colors hover:bg-background hover:text-foreground sm:px-4 sm:text-lg";
-  const activeLinkClass = "rounded-md bg-background px-3 py-2 text-base font-semibold text-foreground shadow-sm sm:px-4 sm:text-lg";
+  const linkClass = "rounded-md px-3 py-2 text-base font-semibold !text-black transition-colors hover:bg-background sm:px-4 sm:text-lg";
+  const activeLinkClass = "rounded-md bg-background px-3 py-2 text-base font-semibold !text-black shadow-sm sm:px-4 sm:text-lg";
+  const lockedLinkClass = "cursor-not-allowed rounded-md px-3 py-2 text-base font-semibold !text-gray-300 sm:px-4 sm:text-lg";
 
   const dispatchAction = (type: string) => {
     window.dispatchEvent(new CustomEvent(type, { bubbles: true }));
@@ -166,21 +167,37 @@ function RootComponent() {
               <Link to="/saisie" className={linkClass} activeProps={{ className: activeLinkClass }}>
                 Saisie
               </Link>
-              <div className="relative">
-                <Link
-                  to="/comparer"
-                  className={linkClass}
-                  activeProps={{ className: activeLinkClass }}
-                  onClick={(event) => {
-                    // Depuis la Saisie : l'arbitrage cloud doit s'exécuter AVANT toute navigation.
-                    if (pathname === "/saisie") {
-                      event.preventDefault();
-                      dispatchAction("piano-compare-guard");
-                    }
-                  }}
-                >
-                  Comparer
+              {topbar.gateReady ? (
+                <Link to="/resultats" className={linkClass} activeProps={{ className: activeLinkClass }}>
+                  Résultats
                 </Link>
+              ) : (
+                <span
+                  className={lockedLinkClass}
+                  aria-disabled="true"
+                  title="Complétez le seuil minimal de pesée sur la page Saisie."
+                >
+                  Résultats
+                </span>
+              )}
+              <div className="relative">
+                {topbar.compareUnlocked ? (
+                  <Link
+                    to="/comparer"
+                    className={linkClass}
+                    activeProps={{ className: activeLinkClass }}
+                  >
+                    Comparer
+                  </Link>
+                ) : (
+                  <span
+                    className={lockedLinkClass}
+                    aria-disabled="true"
+                    title="Validez le partage collaboratif sur la page Résultats."
+                  >
+                    Comparer
+                  </span>
+                )}
 
                 {topbar.alert?.anchor === "compare" && (
                   <div
@@ -192,6 +209,7 @@ function RootComponent() {
                 )}
               </div>
             </div>
+
 
             <div className="mx-10 h-6 w-[2px] bg-gray-400" aria-hidden="true" />
 
