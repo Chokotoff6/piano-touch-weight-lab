@@ -328,7 +328,7 @@ function tooltipColorFor(name: string) {
   if (isReference) return lower.includes("blanches") ? "#fdba74" : "#f97316";
   if (lower.includes("noires")) return "#000000";
   if (lower.includes("blanches")) return "#6b7280";
-  if (lower.includes("mon piano")) return "#000000";
+  if (lower.includes("piano actuel")) return "#000000";
   return "#10b981";
 }
 
@@ -356,7 +356,7 @@ const FAMILIES: Array<{ id: string; title: string; domain: [number, number]; lin
   { id: "bal", title: "Balance statique", domain: [55, 75], lines: [{ dataKey: "sameBal", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryBal", name: "Factory", shortName: "Factory", color: "#10b981" }] },
   { id: "fric", title: "Friction mécanique", domain: [-2, 16], lines: [{ dataKey: "sameFric", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryFric", name: "Factory", shortName: "Factory", color: "#10b981" }] },
 ];
-const DY_STEPS = [-10, 4, 18, 32];
+const DY_STEPS = [-12, 2, 16, 30, 44];
 function offsetsFor(lines: LineDef[], point: ChartPoint | undefined) {
   const map = new Map<SeriesKey, number>();
   [...lines].sort((a, b) => {
@@ -372,10 +372,10 @@ function currentLinesFor(familyId: string, keyFilter: KeyFilter): LineDef[] {
   const metric = metrics[familyId];
   if (!metric) return [];
   if (keyFilter === "split") return [
-    { dataKey: metric[1], name: "Mon piano blanches", shortName: "Blanches", color: "#6b7280", real: true },
-    { dataKey: metric[2], name: "Mon piano noires", shortName: "Noires", color: "#000000", real: true },
+    { dataKey: metric[1], name: "Piano actuel blanches", shortName: "Blanches", color: "#6b7280", real: true },
+    { dataKey: metric[2], name: "Piano actuel noires", shortName: "Noires", color: "#000000", real: true },
   ];
-  return [{ dataKey: metric[0], name: "Mon piano", shortName: "Mon piano", color: "#000000", real: true }];
+  return [{ dataKey: metric[0], name: "Piano actuel", shortName: "Piano actuel", color: "#000000", real: true }];
 }
 
 // La vue clavier pilote aussi la courbe de référence (Cloud ou CSV) : en vue éclatée
@@ -444,8 +444,8 @@ function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShor
         <div className="h-full w-full" onMouseEnter={() => setHoveredChart(family.id)} onMouseLeave={() => setHoveredChart(null)}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} onMouseMove={(state) => { const note = state?.activeLabel; if (typeof note === "number") setHoveredNoteIndex(note); }} onMouseLeave={() => { setHoveredChart(null); setHoveredNoteIndex(null); }} margin={{ top: 5, right: 140, bottom: 15, left: 140 }}>
-              <XAxis xAxisId="main" dataKey="key" type="number" domain={[1, 88]} hide />
-              <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={[1, 88]} orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} />
+              <XAxis xAxisId="main" dataKey="key" type="number" domain={[1, 88]} hide allowDuplicatedCategory={false} />
+              <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={[1, 88]} orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
               {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#e5e7eb" strokeWidth={1} />)}
               {hoveredNoteIndex !== null && <ReferenceLine xAxisId="main" x={hoveredNoteIndex} stroke="#94a3b8" strokeWidth={1} />}
@@ -626,8 +626,8 @@ function SidebarPanel(props: SidebarPanelProps) {
             </div>
           </div>
           <div className="space-y-2 border-t border-gray-200 pt-3">
-            <div className="font-bold text-black">Filtres Cloud</div>
-            <Button type="button" variant="outline" onClick={props.cycleKeyFilter} aria-label={`Vue clavier : ${props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Vue clavier : <span className="font-semibold">{props.keyFilter === "all" ? "Toutes les touches" : "Vue éclatée"}</span></span></Button>
+            <div className="font-bold text-black">Filtres</div>
+            <Button type="button" variant="outline" onClick={props.cycleKeyFilter} aria-label={`Touches blanches/noires : ${props.keyFilter === "all" ? "groupées" : "séparées"}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Touches blanches/noires : <span className="font-semibold">{props.keyFilter === "all" ? "groupées" : "séparées"}</span></span></Button>
             <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-slate-700 hover:border-gray-300`}><CycleIcon /><span>Niveau d'usage instrument : <span className="font-semibold">{usageLabel}</span></span></Button>
             <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left`}><CycleIcon /><span className="text-black font-medium">Modifications importantes : <span className="text-gray-400 font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></span></Button>
           </div>
@@ -862,7 +862,7 @@ function Comparer() {
                   )}
                   {standardEnabled && (
                     <div>
-                      <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide" style={{ color: "#10b981" }}>Standard</div>
+                      <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground">Standard (Internet)</div>
                       <StandardRow chartData={chartData} />
                     </div>
                   )}
