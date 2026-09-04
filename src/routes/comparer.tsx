@@ -474,7 +474,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     // scindée en blanches / noires quand la vue éclatée est active.
     const referenceLines = comparisonLinesFor(family.id, keyFilter, comparisonLabel, comparisonShort);
     const otherLines = family.lines.filter((line) => line.name !== "Cloud");
-    const lines = [...currentLinesFor(family.id, keyFilter), ...referenceLines, ...otherLines];
+    const lines = [...currentLinesFor(family.id, keyFilter, currentBaseName), ...referenceLines, ...otherLines];
     // Chaque courbe est ancrée sur SON propre premier / dernier point défini
     // (indispensable en vue éclatée où blanches et noires ne partagent pas les mêmes index).
     const endpointOffsets = (side: "left" | "right") => new Map(
