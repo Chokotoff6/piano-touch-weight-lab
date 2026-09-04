@@ -391,12 +391,12 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
 
 type LineDef = { dataKey: SeriesKey; name: string; shortName: string; color: string; real?: boolean; hidden?: boolean };
 const FAMILIES: Array<{ id: string; title: string; domain: [number, number]; lines: LineDef[] }> = [
-  { id: "wa", title: "Poids d'enfoncement (Wa)", domain: [55, 85], lines: [{ dataKey: "sameWa", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWa", name: "Std", shortName: "Std", color: "#10b981" }] },
-  { id: "wd", title: "Poids de retour (Wd)", domain: [50, 70], lines: [{ dataKey: "sameWd", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWd", name: "Std", shortName: "Std", color: "#10b981" }] },
-  { id: "bal", title: "Balance statique", domain: [55, 75], lines: [{ dataKey: "sameBal", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryBal", name: "Factory", shortName: "Factory", color: "#10b981" }] },
-  { id: "fric", title: "Friction mécanique", domain: [-2, 16], lines: [{ dataKey: "sameFric", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryFric", name: "Factory", shortName: "Factory", color: "#10b981" }] },
+  { id: "wa", title: "Poids d'enfoncement (Wa)", domain: [55, 85], lines: [{ dataKey: "sameWa", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWa", name: "Usine", shortName: "Usine", color: "#10b981" }] },
+  { id: "wd", title: "Poids de retour (Wd)", domain: [50, 70], lines: [{ dataKey: "sameWd", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWd", name: "Usine", shortName: "Usine", color: "#10b981" }] },
+  { id: "bal", title: "Balance statique", domain: [55, 75], lines: [{ dataKey: "sameBal", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryBal", name: "Usine", shortName: "Usine", color: "#10b981" }] },
+  { id: "fric", title: "Friction mécanique", domain: ["dataMin - 1.5", "dataMax + 1.5"] as unknown as [number, number], lines: [{ dataKey: "sameFric", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryFric", name: "Usine", shortName: "Usine", color: "#10b981" }] },
 ];
-const DY_STEPS = [-12, 2, 16, 30, 44];
+const DY_STEPS = [-18, 0, 18, 36, 54];
 function offsetsFor(lines: LineDef[], point: ChartPoint | undefined) {
   const map = new Map<SeriesKey, number>();
   [...lines].sort((a, b) => {
@@ -412,8 +412,8 @@ function currentLinesFor(familyId: string, keyFilter: KeyFilter): LineDef[] {
   const metric = metrics[familyId];
   if (!metric) return [];
   if (keyFilter === "split") return [
-    { dataKey: metric[1], name: "Piano actuel blanches", shortName: "Blanches", color: "#6b7280", real: true },
-    { dataKey: metric[2], name: "Piano actuel noires", shortName: "Noires", color: "#000000", real: true },
+    { dataKey: metric[1], name: "Piano actuel blanches", shortName: "Piano actuel blanches", color: "#6b7280", real: true },
+    { dataKey: metric[2], name: "Piano actuel noires", shortName: "Piano actuel noires", color: "#000000", real: true },
   ];
   return [{ dataKey: metric[0], name: "Piano actuel", shortName: "Piano actuel", color: "#000000", real: true }];
 }
