@@ -131,9 +131,9 @@ function SvgTooltip({ x, y, text }: { x: number; y: number; text: string }) {
           width={width}
           height={height}
           rx="4"
-          fill="#fef08a"
+          fill="#ffffff"
           opacity="1"
-          stroke="#fde047"
+          stroke="#d1d5db"
         />
         {lines.map((line, i) => (
           <text
@@ -1581,7 +1581,7 @@ function Index() {
         <Frame title="Informations piano" className="mt-10 [&_input]:border-foreground/60">
           <div className="absolute right-10 top-10 z-10">
             {confirmReset === "info" && (
-              <div className="absolute bottom-full right-0 mb-2 flex min-w-max items-center gap-2 !rounded-md !border !border-yellow-300 !bg-[#fef08a] px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
+              <div className="absolute bottom-full right-0 mb-2 flex min-w-max items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
                 <span>Voulez-vous effacer toutes les infos piano saisies ?</span>
                 <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { resetInfo(); setConfirmReset(null); }}>Oui</button>
                 <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
@@ -1869,8 +1869,8 @@ function Index() {
 
       {consentPrompt && (
         <div
-          className="fixed left-1/2 top-24 w-[min(90vw,32rem)] -translate-x-1/2 rounded-md border border-yellow-300 px-4 py-3 text-sm font-medium text-gray-950 shadow-lg"
-          style={{ zIndex: 99999, backgroundColor: "rgba(254, 240, 138, 0.95)" }}
+          className="fixed left-1/2 top-24 w-[min(90vw,32rem)] -translate-x-1/2 rounded-md border border-gray-300 px-4 py-3 text-sm font-medium text-gray-950 shadow-lg"
+          style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
         >
           <p className="mb-2">
             Action requise : ce numéro de série est nouveau. Cochez la case ci-dessous pour
@@ -1896,8 +1896,8 @@ function Index() {
 
       {blockMessage && (
         <div
-          className="fixed left-1/2 top-24 w-[min(90vw,32rem)] -translate-x-1/2 rounded-md border border-yellow-300 px-4 py-3 text-sm font-medium text-gray-950 shadow-lg"
-          style={{ zIndex: 99999, backgroundColor: "rgba(254, 240, 138, 0.7)" }}
+          className="fixed left-1/2 top-24 w-[min(90vw,32rem)] -translate-x-1/2 rounded-md border border-gray-300 px-4 py-3 text-sm font-medium text-gray-950 shadow-lg"
+          style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
         >
           {blockMessage}
         </div>
@@ -1935,7 +1935,7 @@ function Index() {
       >
         <div className="absolute left-[calc(1rem+4rem)] top-12 z-10 -translate-x-1/2 -translate-y-1/2">
           {confirmReset === "rows" && (
-            <div className="absolute bottom-full left-1/2 mb-2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-yellow-300 !bg-[#fef08a] px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
+            <div className="absolute bottom-full left-1/2 mb-2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
               <span>Voulez-vous effacer toutes les données de poids saisies ?</span>
               <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setConfirmReset(null); }}>Oui</button>
               <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>

@@ -33,11 +33,11 @@ const BLACK_MODULOS = new Set([2, 5, 7, 10, 0]);
 const isBlackKey = (noteIndex: number) => BLACK_MODULOS.has(noteIndex % 12);
 const PROFILE_FIELDS = "id,serial_number,brand,model,type_piano,mesure_date,manufacture_year,climate_zone,maintenance_type,ville,pays,remarques,wa_values,wd_values,friction_values,balance_values,usage_level,created_at";
 
-type KeyFilter = "all" | "split";
+export type KeyFilter = "all" | "split";
 type SourceMode = "none" | "cloud";
 type UsageLevel = "all" | "low" | "intensive";
 
-type RefProfile = {
+export type RefProfile = {
   wa: number[];
   wd: number[];
   friction: number[];
@@ -68,7 +68,7 @@ type FactorySpecRow = {
 };
 
 
-type ChartPoint = {
+export type ChartPoint = {
   key: number;
   isBlack: boolean;
   waCur: number | undefined;
@@ -117,7 +117,7 @@ function valueAt(values: number[] | undefined, noteIndex: number, sampleIndex: n
   return typeof raw === "number" && Number.isFinite(raw) ? n1(raw) : undefined;
 }
 
-function buildChartData(
+export function buildChartData(
   mine: RefProfile | null,
   cloud: RefProfile | null,
   standard: RefProfile | null,
@@ -448,7 +448,7 @@ function lastDefinedIndex(data: ChartPoint[], key: SeriesKey) {
 }
 
 
-function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string }) {
+export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string }) {
   const [hoveredChart, setHoveredChart] = useState<string | null>(null);
   const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -522,7 +522,7 @@ export const Route = createFileRoute("/comparer")({
 
 const FRAME_CLASS = "relative rounded-md border-2 border-foreground bg-card p-4 pt-5";
 const FRAME_TITLE_CLASS = "absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black";
-function Frame({ title, className = "", titleClassName, dataFrame, children }: { title: ReactNode; className?: string; titleClassName?: string; dataFrame?: string | undefined; children: ReactNode }) {
+export function Frame({ title, className = "", titleClassName, dataFrame, children }: { title: ReactNode; className?: string; titleClassName?: string; dataFrame?: string | undefined; children: ReactNode }) {
   return <section data-frame={dataFrame} className={`${FRAME_CLASS} ${className}`}><h2 className={titleClassName ?? FRAME_TITLE_CLASS}>{title}</h2>{children}</section>;
 }
 
@@ -574,7 +574,7 @@ const AVG_KEYS: Record<MetricKey, { cur: [SeriesKey, SeriesKey, SeriesKey]; ref:
   balance: { cur: ["balCur", "balCurW", "balCurB"], ref: ["sameBal", "sameBalW", "sameBalB"] },
 };
 
-function AverageRow({ chartData, source, hasData }: { chartData: ChartPoint[]; source: "cur" | "ref"; hasData: boolean }) {
+export function AverageRow({ chartData, source, hasData }: { chartData: ChartPoint[]; source: "cur" | "ref"; hasData: boolean }) {
   return (
     <div className="grid grid-cols-4 gap-3">
       {COLUMNS.map(({ key, label }) => {
