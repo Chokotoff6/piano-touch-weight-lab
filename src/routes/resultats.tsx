@@ -157,7 +157,10 @@ function Resultats() {
     const model = info["modele"] ?? "";
     const year = info["fabrication"]?.trim() || "—";
     const sn = `${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`;
-    return `${brand} ${model} (${year}) - SN ${sn} - Mesure ${dd}-${mm}-${now.getFullYear()} - ${hh}:${mi}`;
+    return {
+      main: `${brand} ${model} (${year}) - SN ${sn}`,
+      time: `Mesure ${dd}-${mm}-${now.getFullYear()} - ${hh}:${mi}`,
+    };
   }, [info]);
 
   const buildPiano = (): CurrentPiano => {
@@ -218,33 +221,20 @@ function Resultats() {
       <div className="w-full">
         <div className="min-w-0">
           <div ref={averagesRef} className="sticky top-[127px] z-40 mb-[50px] w-full bg-background pb-2">
-            <Frame
-              titleClassName="absolute -top-4 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground"
-              title={
-                <span className="flex items-baseline gap-3">
-                  Moyennes
-                  <span className="text-lg font-semibold !text-black">
-                    {summary}
+              <Frame
+                titleClassName="absolute -top-4 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground"
+                title={
+                  <span className="flex items-baseline gap-2">
+                    <span>Moyennes</span>
+                    <span className="text-slate-400">-</span>
+                    <span className="text-lg font-semibold !text-black">{summary.main}</span>
+                    <span className="text-xs font-medium !text-black">{summary.time}</span>
                   </span>
-                </span>
-              }
-              className="h-fit"
-            >
-              <AverageRow chartData={chartData} source="cur" hasData={hasData} />
-            </Frame>
-            <div className="relative z-50 -mb-9 mt-[10px] flex justify-end pr-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setKeyFilter((value) => (value === "all" ? "split" : "all"))}
-                className="h-8 rounded-full border-2 border-black bg-white px-3 text-xs !text-black hover:bg-gray-100"
+                }
+                className="h-fit"
               >
-                Touches blanches/noires :{" "}
-                <span className="ml-1 font-semibold !text-black">
-                  {keyFilter === "all" ? "groupées" : "séparées"}
-                </span>
-              </Button>
-            </div>
+                <AverageRow chartData={chartData} source="cur" hasData={hasData} />
+              </Frame>
           </div>
 
           <div className="relative">
