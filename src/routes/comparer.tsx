@@ -599,6 +599,15 @@ const STD_KEYS: { key: MetricKey; globalKey: SeriesKey }[] = [
   { key: "balance", globalKey: "factoryBal" },
 ];
 function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
+  const lang = useLang();
+  const lowLabel = lang === "en" ? "A0" : "La0";
+  const highLabel = lang === "en" ? "C8" : "Do8";
+  const extremeValue = (globalKey: SeriesKey, side: "first" | "last") => {
+    const points = side === "first" ? chartData : [...chartData].reverse();
+    const found = points.find((point) => typeof point[globalKey] === "number" && Number.isFinite(point[globalKey] as number));
+    const value = found?.[globalKey];
+    return typeof value === "number" ? value.toFixed(1) : "—";
+  };
   return (
     <div className="grid grid-cols-4 gap-3">
       {STD_KEYS.map(({ key, globalKey }) => {
@@ -610,8 +619,17 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
             <div className="mt-1 !text-2xl !font-bold tabular-nums !text-green-600">
               {value === "—" ? <span className="!text-green-600">—</span> : <>{value}<span className="!text-xs !font-medium"> gr.</span></>}
             </div>
-            {/* Zone volontairement vide : pas de détail Blanches/Noires en rangée 3. */}
-            <div className="invisible flex justify-center gap-2 text-[0.55rem] tabular-nums"><span className="!text-xs font-medium">Blanches</span><span>/</span><span className="!text-xs font-medium">Noires</span></div>
+            {/* Rangée 3 : valeurs extrêmes de la droite théorique (touche 1 / touche 88). */}
+            <div className="flex justify-center gap-2 tabular-nums !text-green-600">
+              <span className="!text-xs font-medium">{extremeValue(globalKey, "first")} gr.</span>
+              <span className="!text-xs font-medium">/</span>
+              <span className="!text-xs font-medium">{extremeValue(globalKey, "last")} gr.</span>
+            </div>
+            <div className="flex justify-center gap-2 tabular-nums !text-green-600">
+              <span className="!text-xs font-medium">{lowLabel}</span>
+              <span className="invisible">/</span>
+              <span className="!text-xs font-medium">{highLabel}</span>
+            </div>
           </div>
 
         );
