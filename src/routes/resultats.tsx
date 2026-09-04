@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   AverageRow,
   ComparisonChart,
+  CycleIcon,
   Frame,
   buildChartData,
   type KeyFilter,
@@ -169,7 +170,7 @@ function Resultats() {
     return {
       main: `${brand} ${model} (${year}) - SN ${sn}`,
       time: `Mesure ${dd}-${mm}-${now.getFullYear()} - ${hh}:${mi}`,
-      count: ` - Nombre de touches mesurées : ${white} Blanches / ${black} Noires`,
+      count: ` - ${white} Blanches / ${black} Noires`,
     };
   }, [info, rows]);
 
@@ -248,22 +249,27 @@ function Resultats() {
               </Frame>
           </div>
 
-          <div className="relative mx-auto w-4/5">
+          <div className="relative mx-auto w-full">
               <div
-                className="pointer-events-none sticky z-[60] flex h-0 justify-end pr-4"
-                style={{ top: 127 + averagesHeight + 10 }}
+                className="pointer-events-none fixed inset-x-0 z-[60]"
+                style={{ top: 127 + averagesHeight - 40 }}
               >
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setKeyFilter((value) => (value === "all" ? "split" : "all"))}
-                  className="pointer-events-auto h-8 -translate-y-1/2 rounded-full border-2 border-black bg-white px-3 text-xs !text-black hover:bg-gray-100"
-                >
-                  Touches blanches/noires :{" "}
-                  <span className="ml-1 font-semibold !text-black">
-                    {keyFilter === "all" ? "groupées" : "séparées"}
-                  </span>
-                </Button>
+                <div className="mx-auto flex w-full max-w-[1400px] justify-end px-6 pr-10">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setKeyFilter((value) => (value === "all" ? "split" : "all"))}
+                    className="pointer-events-auto flex h-8 items-center gap-2 rounded-full border-2 border-black bg-white px-3 text-xs !text-black hover:bg-gray-100"
+                  >
+                    <CycleIcon />
+                    <span>
+                      Touches blanches/noires :{" "}
+                      <span className="font-semibold !text-black">
+                        {keyFilter === "all" ? "groupées" : "séparées"}
+                      </span>
+                    </span>
+                  </Button>
+                </div>
               </div>
             <div className={unlocked ? "" : "pointer-events-none select-none blur-md"}>
               <ComparisonChart

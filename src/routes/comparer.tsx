@@ -654,7 +654,7 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
 const PILL_BASE = "h-7 min-w-0 flex-1 rounded-full border px-1.5 text-[0.68rem] leading-tight transition-colors whitespace-nowrap";
 const pillClass = (active: boolean) => `${PILL_BASE} ${active ? "border-gray-300 bg-gray-100 font-semibold text-slate-700" : "border-gray-200 bg-white text-gray-400 hover:border-gray-300 hover:text-gray-500"}`;
 
-function CycleIcon() {
+export function CycleIcon() {
   return (
     <svg aria-hidden="true" className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round">
       <path d="M5.1 6.5A6.6 6.6 0 0 1 15.8 5l1.1 1.3" />
@@ -674,8 +674,6 @@ type SidebarPanelProps = {
   onToggleCloud: () => void;
   onToggleStandard: () => void;
   onImport: (file: File) => void;
-  keyFilter: KeyFilter;
-  cycleKeyFilter: () => void;
   filtersDisabled: boolean;
   sameClimate: boolean;
   sameYear: boolean;
@@ -712,7 +710,6 @@ function SidebarPanel(props: SidebarPanelProps) {
           </div>
           <div className="space-y-2 border-t border-gray-200 pt-3">
             <div className="font-bold !text-black">Filtres</div>
-            <Button type="button" variant="outline" onClick={props.cycleKeyFilter} aria-label={`Touches blanches/noires : ${props.keyFilter === "all" ? "groupées" : "séparées"}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black font-medium hover:border-gray-300`}><CycleIcon /><span className="!text-black font-medium">Touches blanches/noires : <span className="!text-black font-semibold">{props.keyFilter === "all" ? "groupées" : "séparées"}</span></span></Button>
             <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black font-medium hover:border-gray-300`}><CycleIcon /><span className="!text-black font-medium">Niveau d'usage instrument : <span className="!text-black font-semibold">{usageLabel}</span></span></Button>
             <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left`}><CycleIcon /><span className="!text-black font-medium">Modifications importantes : <span className="!text-black font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></span></Button>
           </div>
@@ -978,6 +975,24 @@ function Comparer() {
         aria-hidden="true"
         className="pointer-events-none fixed inset-x-0 top-[77px] z-40 h-[50px] bg-white"
       />
+      {status !== "loading" && (
+        <div className="pointer-events-none fixed inset-x-0 z-[60]" style={{ top: 127 + averagesHeight - 32 }}>
+          <div className="mx-auto flex w-full max-w-[1400px] justify-end px-6" style={{ paddingRight: 340 }}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={cycleKeyFilter}
+              className="pointer-events-auto flex h-8 items-center gap-2 rounded-full border-2 border-black bg-white px-3 text-xs !text-black hover:bg-gray-100"
+            >
+              <CycleIcon />
+              <span>
+                Touches blanches/noires :{" "}
+                <span className="font-semibold !text-black">{keyFilter === "all" ? "groupées" : "séparées"}</span>
+              </span>
+            </Button>
+          </div>
+        </div>
+      )}
       {status === "loading" ? <p className="py-16 text-center text-muted-foreground">Chargement des profils externes…</p> : (
         <>
           <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-stretch gap-6">
@@ -1004,7 +1019,7 @@ function Comparer() {
 
               <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} />
             </div>
-            <aside className="min-w-0"><div className="sticky top-[127px] z-40 flex h-fit flex-col" style={{ minHeight: averagesHeight > 0 ? averagesHeight - 8 : undefined }}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
+            <aside className="min-w-0"><div className="sticky top-[127px] z-40 flex h-fit flex-col" style={{ minHeight: averagesHeight > 0 ? averagesHeight - 8 : undefined }}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
           </div>
         </>
       )}
