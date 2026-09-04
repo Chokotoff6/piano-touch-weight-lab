@@ -586,10 +586,13 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
         return (
           <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
             <div className="!text-[1.1rem] font-bold tracking-wide text-muted-foreground">{label}</div>
-            <div className="mt-1 !text-2xl !font-bold tabular-nums" style={{ color: "#10b981" }}>
+            <div className="mt-1 !text-2xl !font-bold tabular-nums text-muted-foreground">
               {value === "—" ? <span className="text-muted-foreground">—</span> : <>{value}<span className="!text-xs !font-medium"> gr.</span></>}
             </div>
+            {/* Zone volontairement vide : pas de détail Blanches/Noires en rangée 3. */}
+            <div className="invisible flex justify-center gap-2 text-[0.55rem] tabular-nums"><span className="!text-xs font-medium">Blanches</span><span>/</span><span className="!text-xs font-medium">Noires</span></div>
           </div>
+
         );
       })}
     </div>
