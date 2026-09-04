@@ -202,7 +202,7 @@ function RootComponent() {
 
                 {topbar.alert?.anchor === "compare" && (
                   <div
-                    className="absolute left-0 top-full !z-[99999] mt-2 w-72 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
+                    className="absolute left-0 top-full !z-[99999] mt-2 w-72 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
                     style={{ position: "absolute", zIndex: 99999, backgroundColor: "rgba(254, 240, 138, 0.7)" }}
                   >
                     {topbar.alert.message}
@@ -236,7 +236,7 @@ function RootComponent() {
                   </DropdownMenuTrigger>
                   {topbar.alert?.anchor === "export" && (
                     <div
-                      className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
+                      className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
                       style={{ position: "absolute", zIndex: 99999, backgroundColor: "rgba(254, 240, 138, 0.7)" }}
                     >
                       {topbar.alert.message}
@@ -264,7 +264,7 @@ function RootComponent() {
                 </Button>
                 {topbar.alert?.anchor === "export" && (
                   <div
-                    className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
+                    className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
                     style={{ position: "absolute", zIndex: 99999, backgroundColor: "rgba(254, 240, 138, 0.7)" }}
                   >
                     {topbar.alert.message}
@@ -337,7 +337,7 @@ function RootComponent() {
               )}
               {topbar.alert?.anchor === "import" && (
                 <div
-                  className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-yellow-300 !bg-[rgba(254,240,138,0.7)] px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
+                  className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
                   style={{ position: "absolute", zIndex: 99999, backgroundColor: "rgba(254, 240, 138, 0.7)" }}
                 >
                   {topbar.alert.message}
