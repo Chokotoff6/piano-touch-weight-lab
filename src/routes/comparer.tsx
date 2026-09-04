@@ -27,7 +27,7 @@ import {
 } from "recharts";
 
 const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];
-const SAMPLE_NOTES = [4, 10, 16, 22, 28, 34, 40, 46, 52, 58, 64, 70, 76, 82, 88] as const;
+const SAMPLE_NOTES = [1, 4, 10, 16, 22, 28, 34, 40, 46, 52, 58, 64, 70, 76, 82, 88] as const;
 const BLACK_MODULOS = new Set([2, 5, 7, 10, 0]);
 const isBlackKey = (noteIndex: number) => BLACK_MODULOS.has(noteIndex % 12);
 const PROFILE_FIELDS = "id,serial_number,brand,model,type_piano,mesure_date,manufacture_year,climate_zone,maintenance_type,ville,pays,remarques,wa_values,wd_values,friction_values,balance_values,usage_level,created_at";
@@ -110,7 +110,9 @@ const n1 = (value: number) => Number(value.toFixed(1));
 
 function valueAt(values: number[] | undefined, noteIndex: number, sampleIndex: number) {
   const source = values ?? [];
-  const raw = source.length >= 88 ? source[noteIndex - 1] : source[sampleIndex];
+  const raw = source.length >= 88
+    ? source[noteIndex - 1]
+    : source[Math.min(Math.max(sampleIndex - 1, 0), source.length - 1)];
   return typeof raw === "number" && Number.isFinite(raw) ? n1(raw) : undefined;
 }
 
@@ -364,7 +366,7 @@ function CustomTickTop(props: { x?: number; y?: number; dy?: number; payload?: {
 type TooltipEntry = { name?: string; value?: number; color?: string };
 function tooltipColorFor(name: string) {
   const lower = name.toLowerCase();
-  const isReference = lower.startsWith("cloud") || lower.startsWith("référence");
+  const isReference = lower.startsWith("cloud") || lower.startsWith("référence") || lower.startsWith("import csv");
   if (isReference) return lower.includes("blanches") ? "#fdba74" : "#f97316";
   if (lower.includes("noires")) return "#000000";
   if (lower.includes("blanches")) return "#6b7280";
@@ -396,7 +398,7 @@ const FAMILIES: Array<{ id: string; title: string; domain: [number, number]; lin
   { id: "bal", title: "Balance statique", domain: [55, 75], lines: [{ dataKey: "sameBal", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryBal", name: "Usine", shortName: "Usine", color: "#10b981" }] },
   { id: "fric", title: "Friction mécanique", domain: ["dataMin - 1.5", "dataMax + 1.5"] as unknown as [number, number], lines: [{ dataKey: "sameFric", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryFric", name: "Usine", shortName: "Usine", color: "#10b981" }] },
 ];
-const DY_STEPS = [-18, 0, 18, 36, 54];
+const DY_STEPS = [-24, 0, 24, 48, 72];
 function offsetsFor(lines: LineDef[], point: ChartPoint | undefined) {
   const map = new Map<SeriesKey, number>();
   [...lines].sort((a, b) => {
@@ -524,8 +526,8 @@ function Frame({ title, className = "", titleClassName, dataFrame, children }: {
 const COLUMNS = [
   { key: "wa", label: "Poids descendant (Wa)" },
   { key: "wd", label: "Poids ascendant (Wd)" },
-  { key: "friction", label: "Friction" },
-  { key: "balance", label: "Balance" },
+  { key: "friction", label: "Friction mécanique" },
+  { key: "balance", label: "Balance statique" },
 ] as const;
 type MetricKey = (typeof COLUMNS)[number]["key"];
 
@@ -545,7 +547,7 @@ function AverageBlock({ label, global, white, black, tone }: { label: string; gl
   const sub = (v: string) => v === "—" ? "—" : <>{v}<span className={toneClass}> gr.</span></>;
   return (
     <div className="rounded bg-muted px-2 py-1.5 text-center">
-      <div className={`!text-[1.1rem] font-bold tracking-wide ${toneClass}`}>{label}</div>
+      <div className="!text-[1.1rem] font-bold tracking-wide !text-black">{label}</div>
       <div className={`mt-1 !text-2xl !font-bold tabular-nums ${toneClass}`}>{val(global)}</div>
       <div className={`mt-0.5 flex justify-center gap-2 text-[0.65rem] tabular-nums ${toneClass}`}>
         <span>{sub(white)}</span>
@@ -604,7 +606,7 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
         const value = seriesAverage(chartData, globalKey);
         return (
           <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
-            <div className="!text-[1.1rem] font-bold tracking-wide !text-green-600">{label}</div>
+            <div className="!text-[1.1rem] font-bold tracking-wide !text-black">{label}</div>
             <div className="mt-1 !text-2xl !font-bold tabular-nums !text-green-600">
               {value === "—" ? <span className="!text-green-600">—</span> : <>{value}<span className="!text-xs !font-medium"> gr.</span></>}
             </div>
@@ -879,7 +881,7 @@ function Comparer() {
   const comparisonProfile = comparedPiano ?? (sourceMode === "cloud" ? cloudProfile : null);
   const comparedTime = comparedPiano?.measureTime ? ` - ${comparedPiano.measureTime}` : "";
   const comparisonLabel = comparedPiano
-    ? `Référence : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - ${summaryValue(comparedPiano.year)} - SN ${summaryValue(comparedPiano.serialNumber)} - Mesure ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime} (CSV)`
+    ? `IMPORT CSV : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - ${summaryValue(comparedPiano.year)} - SN ${summaryValue(comparedPiano.serialNumber)} - Mesure ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime} `
     : "Cloud";
   const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
 
@@ -969,7 +971,7 @@ function Comparer() {
                 </Frame>
               </div>
 
-              <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparisonLabel} comparisonShort={comparedPiano ? "Référence" : "Cloud"} />
+              <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} />
             </div>
             <aside className="min-w-0"><div className="sticky z-40 mt-[200px] h-fit" style={{ top: averagesHeight > 0 ? `${averagesHeight + 127}px` : "400px" }}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
           </div>
