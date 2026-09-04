@@ -763,7 +763,43 @@ function Comparer() {
     };
   }, []);
 
-
+  // Rangée 3 : spécifications d'usine (table externe piano_specs_usine).
+  // Recherche marque + type de piano, sinon repli STANDARD / UNIVERSEL.
+  useEffect(() => {
+    let cancelled = false;
+    async function loadFactorySpec() {
+      const typePiano = (mine?.typePiano ?? "").trim();
+      const brand = (mine?.brand ?? "").trim();
+      let query = externalSupabase
+        .from("piano_specs_usine")
+        .select("brand,model,type_piano,wa_bass,wa_treble,friction_cible");
+      if (typePiano) query = query.eq("type_piano", typePiano);
+      const result = await query;
+      if (cancelled) return;
+      const rows = (result.data ?? []) as FactorySpecRow[];
+      if (rows.length === 0) {
+        setStandard(FACTORY_STANDARD);
+        setStandardLabel("Standard (Internet)");
+        return;
+      }
+      const match = brand
+        ? rows.find((row) => (row.brand ?? "").trim().toLocaleLowerCase() === brand.toLocaleLowerCase())
+        : undefined;
+      const fallback = rows.find(
+        (row) => row.brand === "STANDARD" && row.model === "UNIVERSEL",
+      );
+      const spec = match ?? fallback ?? rows[0];
+      if (!spec) return;
+      setStandard(profileFromSpec(spec));
+      setStandardLabel(
+        spec.brand === "STANDARD"
+          ? "Standard (Internet)"
+          : `Usine - Générique ${spec.brand.toLocaleUpperCase()}`,
+      );
+    }
+    void loadFactorySpec();
+    return () => { cancelled = true; };
+  }, [mine]);
 
 
   useEffect(() => {
