@@ -47,6 +47,7 @@ type ProfileRecord = RefProfile & {
   serialNumber: string;
   brand: string;
   model: string;
+  typePiano: string;
   year: number | null;
   climate: string | null;
   maintenance: string | null;
@@ -54,6 +55,17 @@ type ProfileRecord = RefProfile & {
   measureDate: string | null;
   measureTime: string | null;
 };
+
+// Ligne de spécifications constructeur (table externe piano_specs_usine).
+type FactorySpecRow = {
+  brand: string;
+  model: string;
+  type_piano: string;
+  wa_bass: number;
+  wa_treble: number;
+  friction_cible: number;
+};
+
 
 type ChartPoint = {
   key: number;
