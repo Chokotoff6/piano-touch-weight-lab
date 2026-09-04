@@ -976,7 +976,7 @@ function Comparer() {
         className="pointer-events-none fixed inset-x-0 top-[77px] z-40 h-[50px] bg-white"
       />
       {status !== "loading" && (
-        <div className="pointer-events-none fixed inset-x-0 z-[60]" style={{ top: 127 + averagesHeight - 40 }}>
+        <div className="pointer-events-none fixed inset-x-0 z-[60]" style={{ top: 127 + averagesHeight - 32 }}>
           <div className="mx-auto flex w-full max-w-[1400px] justify-end px-6" style={{ paddingRight: 340 }}>
             <Button
               type="button"
