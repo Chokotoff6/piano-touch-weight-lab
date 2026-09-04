@@ -330,7 +330,9 @@ type EndLabelOptions = {
   showAverage?: boolean;
 };
 
-const LABEL_MIN_Y = 14;
+// Marge haute de sécurité : les étiquettes de courbes ne doivent jamais
+// chevaucher les repères DO (4, 16, 28...) affichés en haut du graphique.
+const LABEL_MIN_Y = 38;
 const LABEL_MAX_Y = 248;
 const clampLabelY = (y: number, dy: number) => Math.min(Math.max(y + dy, LABEL_MIN_Y), LABEL_MAX_Y) - y;
 
