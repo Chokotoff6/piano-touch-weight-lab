@@ -13,7 +13,14 @@ type TopbarState = {
   hasSaved: boolean;
   alert: TopbarAlert;
   historyRows: HistoryRowRef[];
+  /** Seuil minimal de pesée franchi sur la page Saisie (débloque "Résultats"). */
+  gateReady: boolean;
+  /** Consentement RGPD validé sur la page Résultats (débloque "Comparer"). */
+  compareUnlocked: boolean;
 };
+
+const GATE_KEY = "ptw_gate_ready";
+const UNLOCK_KEY = "ptw_compare_unlocked";
 
 let state: TopbarState = {
   exportReady: false,
@@ -24,6 +31,8 @@ let state: TopbarState = {
   hasSaved: false,
   alert: null,
   historyRows: [],
+  gateReady: false,
+  compareUnlocked: false,
 };
 const listeners = new Set<() => void>();
 
@@ -34,6 +43,37 @@ function emit() {
 export function setTopbarState(next: Partial<TopbarState>) {
   state = { ...state, ...next };
   emit();
+}
+
+/** Restaure les jalons du parcours depuis le stockage local (appel client). */
+export function initJourneyFlags() {
+  if (typeof window === "undefined") return;
+  try {
+    setTopbarState({
+      gateReady: window.localStorage.getItem(GATE_KEY) === "1",
+      compareUnlocked: window.localStorage.getItem(UNLOCK_KEY) === "1",
+    });
+  } catch {
+    /* stockage indisponible */
+  }
+}
+
+export function setGateReady(ready: boolean) {
+  try {
+    window.localStorage.setItem(GATE_KEY, ready ? "1" : "0");
+  } catch {
+    /* stockage indisponible */
+  }
+  setTopbarState({ gateReady: ready });
+}
+
+export function setCompareUnlocked(unlocked: boolean) {
+  try {
+    window.localStorage.setItem(UNLOCK_KEY, unlocked ? "1" : "0");
+  } catch {
+    /* stockage indisponible */
+  }
+  setTopbarState({ compareUnlocked: unlocked });
 }
 
 let alertTimer: ReturnType<typeof setTimeout> | null = null;

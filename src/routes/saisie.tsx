@@ -38,7 +38,7 @@ import {
   type DiagnosticPayload,
   type DiagnosticHistoryRow,
 } from "@/lib/diagnostics";
-import { getTopbarState, setTopbarState, showTopbarAlert } from "@/lib/topbar-store";
+import { getTopbarState, setGateReady, setTopbarState, showTopbarAlert } from "@/lib/topbar-store";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -1351,6 +1351,8 @@ function Index() {
       hasSaved: Boolean(currentDbId),
       historyRows: info["sn_num"]?.trim() ? getTopbarState().historyRows : [],
     });
+    // Jalon persistant : le seuil minimal de pesée débloque le bouton "Résultats".
+    setGateReady(badgeVisible);
     return () => {
       setTopbarState({
         exportReady: false,
@@ -1916,83 +1918,6 @@ function Index() {
       <Frame
         title={
           <>
-Moyennes{" "}
-            <span
-              data-pdf-hide
-              className="!print:hidden font-normal"
-              style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
-            >
-              (auto)
-            </span>
-          </>
-        }
-        className={weighingMode ? "!mt-[26px] !p-3 !pt-4" : "mt-8 !hidden"}
-        innerRef={(node) => {
-          moyennesRef.current = node;
-        }}
-      >
-        {weighingMode && (
-          <span data-pdf-hide className="!print:hidden !absolute !-top-3.5 !left-1/2 !-translate-x-1/2 !flex !items-center !gap-x-4 !whitespace-nowrap !w-auto !min-w-max !overflow-visible !bg-card !px-2 !text-gray-950 !font-medium">
-            <span className="!whitespace-nowrap !w-auto !min-w-max !overflow-visible" style={{ fontSize: "0.83rem" }}>
-              {info["marque"]} {info["modele"]} ({info["fabrication"]?.trim() || "—"}) -  SN {info["sn_num"]}  /  Mesure {new Date().toISOString().slice(0, 10)}
-            </span>
-            <button
-              type="button"
-              data-pdf-hide
-              onClick={() => setWeighingMode(false)}
-              className="!whitespace-nowrap !w-auto !min-w-max !overflow-visible rounded-md border border-input bg-background px-2.5 py-0.5 !text-xs font-medium !text-gray-950 transition-colors hover:bg-accent"
-            >
-              Modifier infos piano
-            </button>
-          </span>
-        )}
-        <div className={`grid grid-cols-4 ${weighingMode ? "mt-0.5 !gap-2.5" : "mt-2 gap-3"}`}>
-          {(
-            [
-              { key: "wa", label: "Poids descendant (Wa)" },
-              { key: "wd", label: "Poids ascendant (Wd)" },
-              { key: "friction", label: "Friction" },
-              { key: "balance", label: "Balance" },
-            ] as const
-          ).map(({ key, label }) => (
-            <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
-              <div className="!text-[1.1rem] font-bold tracking-wide text-muted-foreground">
-                {label}
-              </div>
-              <div className="mt-1 !text-2xl font-semibold tabular-nums">
-                {formatAverageResult(sectionAverages.global[key])}
-                {sectionAverages.global[key] !== "—" && (
-                  <span className="!text-xs !font-medium"> gr.</span>
-                )}
-              </div>
-              <div className="mt-0.5 flex justify-center gap-2 text-[0.65rem] text-muted-foreground tabular-nums">
-                <span>
-                  {sectionAverages.first[key]}
-                  {sectionAverages.first[key] !== "—" && (
-                    <span className="text-muted-foreground"> gr.</span>
-                  )}
-                </span>
-                <span className="text-muted-foreground">/</span>
-                <span>
-                  {sectionAverages.second[key]}
-                  {sectionAverages.second[key] !== "—" && (
-                    <span className="text-muted-foreground"> gr.</span>
-                  )}
-                </span>
-              </div>
-              <div className="flex justify-center gap-2 text-[0.55rem] text-muted-foreground tabular-nums">
-                <span className="!text-xs font-medium">Blanches</span>
-                <span className="invisible">/</span>
-                <span className="!text-xs font-medium">Noires</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Frame>
-
-      <Frame
-        title={
-          <>
             Mesures poids de touches{" "}
             <span
               data-pdf-hide
@@ -2067,6 +1992,70 @@ Moyennes{" "}
             }}
           />
         </div>
+      <Frame
+        title={
+          <>
+Moyennes{" "}
+            <span
+              data-pdf-hide
+              className="!print:hidden font-normal"
+              style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
+            >
+              (auto)
+            </span>
+          </>
+        }
+        className="!p-3 !pt-4 bg-white"
+        innerRef={(node) => {
+          moyennesRef.current = node;
+        }}
+      >
+        <span className="!absolute !-top-3.5 !left-1/2 !-translate-x-1/2 !whitespace-nowrap !bg-card !px-2 !text-gray-950 !font-medium" style={{ fontSize: "0.83rem" }}>
+          {info["marque"]} {info["modele"]} ({info["fabrication"]?.trim() || "—"}) -  SN {info["sn_num"]}  /  Mesure {new Date().toISOString().slice(0, 10)}
+        </span>
+        <div className="grid grid-cols-4 mt-0.5 !gap-2.5">
+          {(
+            [
+              { key: "wa", label: "Poids descendant (Wa)" },
+              { key: "wd", label: "Poids ascendant (Wd)" },
+              { key: "friction", label: "Friction" },
+              { key: "balance", label: "Balance" },
+            ] as const
+          ).map(({ key, label }) => (
+            <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
+              <div className="!text-[1.1rem] font-bold tracking-wide text-muted-foreground">
+                {label}
+              </div>
+              <div className="mt-1 !text-2xl font-semibold tabular-nums">
+                {formatAverageResult(sectionAverages.global[key])}
+                {sectionAverages.global[key] !== "—" && (
+                  <span className="!text-xs !font-medium"> gr.</span>
+                )}
+              </div>
+              <div className="mt-0.5 flex justify-center gap-2 text-[0.65rem] text-muted-foreground tabular-nums">
+                <span>
+                  {sectionAverages.first[key]}
+                  {sectionAverages.first[key] !== "—" && (
+                    <span className="text-muted-foreground"> gr.</span>
+                  )}
+                </span>
+                <span className="text-muted-foreground">/</span>
+                <span>
+                  {sectionAverages.second[key]}
+                  {sectionAverages.second[key] !== "—" && (
+                    <span className="text-muted-foreground"> gr.</span>
+                  )}
+                </span>
+              </div>
+              <div className="flex justify-center gap-2 text-[0.55rem] text-muted-foreground tabular-nums">
+                <span className="!text-xs font-medium">Blanches</span>
+                <span className="invisible">/</span>
+                <span className="!text-xs font-medium">Noires</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Frame>
         <div ref={pdfChartRef} className="mt-4 bg-white">
           <PdfComparisonChart data={chartData} frictionTarget={profile.frictionTarget} />
         </div>
