@@ -114,6 +114,7 @@ function Resultats() {
     info: {},
   }));
   const [consent, setConsent] = useState(false);
+  const [separated, setSeparated] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -239,6 +240,15 @@ function Resultats() {
         <h2 className="absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold !text-black">
           Courbe d&apos;équilibre du clavier
         </h2>
+        <div className="mb-3 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setSeparated((v) => !v)}
+            className="rounded-md border-2 border-black bg-white px-3 py-1.5 text-sm font-bold !text-black transition-colors hover:bg-muted"
+          >
+            Touches blanches/noires : {separated ? "séparées" : "groupées"}
+          </button>
+        </div>
         <div className={unlocked ? "" : "pointer-events-none select-none blur-md"}>
           <div className="h-[340px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -257,31 +267,59 @@ function Resultats() {
                 {C_KEYS.map((k) => (
                   <ReferenceLine key={k} x={k} stroke="#d1d5db" />
                 ))}
-                <Line
-                  type="monotone"
-                  dataKey="wa"
-                  name="Piano actuel"
-                  stroke="#000000"
-                  strokeWidth={2}
-                  dot={false}
-                  connectNulls
-                  isAnimationActive={false}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="wd"
-                  name="Piano actuel (Wd)"
-                  stroke="#000000"
-                  strokeWidth={1.5}
-                  strokeDasharray="4 3"
-                  dot={false}
-                  connectNulls
-                  isAnimationActive={false}
-                />
+                {separated ? (
+                  <>
+                    <Line
+                      type="monotone"
+                      dataKey="waWhite"
+                      name="Piano actuel blanches"
+                      stroke="#000000"
+                      strokeWidth={2}
+                      dot={false}
+                      connectNulls
+                      isAnimationActive={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="waBlack"
+                      name="Piano actuel noires"
+                      stroke="#6b7280"
+                      strokeWidth={2}
+                      dot={false}
+                      connectNulls
+                      isAnimationActive={false}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Line
+                      type="monotone"
+                      dataKey="wa"
+                      name="Piano actuel"
+                      stroke="#000000"
+                      strokeWidth={2}
+                      dot={false}
+                      connectNulls
+                      isAnimationActive={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="wd"
+                      name="Piano actuel (Wd)"
+                      stroke="#000000"
+                      strokeWidth={1.5}
+                      strokeDasharray="4 3"
+                      dot={false}
+                      connectNulls
+                      isAnimationActive={false}
+                    />
+                  </>
+                )}
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
+
 
         {!unlocked && (
           <div className="absolute inset-0 flex items-center justify-center p-4">
