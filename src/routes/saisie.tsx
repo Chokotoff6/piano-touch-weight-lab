@@ -396,11 +396,8 @@ function Index() {
   const pendingCompare = useRef(false);
   // Numéro de série effectivement enregistré : sert au CRITÈRE 1 (série inconnue → INSERT).
   const savedSerialRef = useRef<string>("");
-  // Consentement RGPD : jamais persisté, toujours décoché quand le numéro change.
-  const [consent, setConsent] = useState(false);
-  // Le consentement se coche désormais uniquement dans l'alerte jaune contextuelle.
-  const [consentPrompt, setConsentPrompt] = useState(false);
-  const consentSerialRef = useRef("");
+  // Le consentement RGPD est confiné à la page Résultats (/resultats) : aucune
+  // case à cocher ni alerte de partage n'existe sur la page Saisie.
   // Photographie des 88 touches et du jour du dernier envoi cloud (seuil des 5 touches).
   const savedRowsRef = useRef<Row[]>([]);
   const savedDateRef = useRef<string>("");
@@ -964,11 +961,6 @@ function Index() {
   // CRITÈRE 1 : un numéro de série inconnu pour la session force un INSERT propre.
   useEffect(() => {
     const serial = (info["sn_num"] ?? "").trim();
-    if (serial !== consentSerialRef.current) {
-      consentSerialRef.current = serial;
-      setConsent(false);
-      setConsentPrompt(false);
-    }
     if (currentDbId && serial && serial !== savedSerialRef.current) {
       setCurrentDbId(null);
     }
@@ -1003,14 +995,8 @@ function Index() {
       showTopbarAlert(anchor, OCTAVE_RULE_MESSAGE);
       return false;
     }
-    // Un numéro jamais envoyé dans cette session exige un consentement explicite,
-    // coché directement dans l'alerte jaune contextuelle.
-    const serial = (info["sn_num"] ?? "").trim();
-    const known = Boolean(currentDbId) && serial.length > 0 && serial === savedSerialRef.current;
-    if (!known && !consent) {
-      setConsentPrompt(true);
-      return false;
-    }
+    // Le consentement RGPD n'est plus contrôlé ici : il est demandé exclusivement
+    // sur la page Résultats, au moment de lever le voile des graphiques.
     return true;
   };
 
@@ -1040,9 +1026,9 @@ function Index() {
       Marque: info["marque"] ?? "",
       "Type de piano": info["type_piano"] ?? "",
       Modèle: info["modele"] ?? "",
-      "Préfixe lettre": info["sn_prefix"] ?? "",
-      "Numéro de série": info["sn_num"] ?? "",
-      "Suffixe lettre": info["sn_suffix"] ?? "",
+      // Numéro de série complet sur une seule paire stricte « Numéro de série;XXXX ».
+      "Numéro de série":
+        `${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`.trim(),
       "Date de fabrication": info["fabrication"] ?? "",
       Pays: info["pays"] ?? "",
       Ville: info["ville"] ?? "",
@@ -1400,6 +1386,12 @@ function Index() {
       return savedDateRef.current !== today || changedWeightCount() >= 5;
     };
     const startAction = (kind: "csv" | "pdf" | "compare") => {
+      // Export CSV : fonctionnalité 100 % locale et gratuite. Aucun consentement,
+      // aucune validation bloquante, aucune synchronisation cloud ne peut le retarder.
+      if (kind === "csv") {
+        runLocalExport("csv");
+        return;
+      }
       if (!guardExport("export")) return;
       if (requiresChoice()) {
         pendingExport.current = kind === "compare" ? null : kind;
@@ -1412,7 +1404,7 @@ function Index() {
       // écritures cloud (buffer + historique) ont abouti.
       void syncAndFinish(mode).then((ok) => {
         // L'export local n'est jamais bloqué par un incident cloud.
-        if (kind === "csv" || kind === "pdf") runLocalExport(kind);
+        if (kind === "pdf") runLocalExport("pdf");
         if (ok && kind === "compare") void navigate({ to: "/comparer" });
       });
     };
@@ -1440,7 +1432,7 @@ function Index() {
     Object.entries(handlers).forEach(([type, fn]) => window.addEventListener(type, fn));
     return () =>
       Object.entries(handlers).forEach(([type, fn]) => window.removeEventListener(type, fn));
-  }, [rows, info, currentDbId, isDirty, honeypot, climateZone, profile, consent]);
+  }, [rows, info, currentDbId, isDirty, honeypot, climateZone, profile]);
 
   // --- Rendu : champ de saisie d'un poids (Wa ou Wd) ------------------------------
 
@@ -1876,33 +1868,6 @@ function Index() {
           </div>
         </Frame>
       </div>
-      )}
-
-      {consentPrompt && (
-        <div
-          className="fixed left-1/2 top-24 w-[min(90vw,32rem)] -translate-x-1/2 rounded-md border border-gray-300 px-4 py-3 text-sm font-medium text-gray-950 shadow-lg"
-          style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
-        >
-          <p className="mb-2">
-            Action requise : ce numéro de série est nouveau. Cochez la case ci-dessous pour
-            autoriser le partage anonyme et accéder au comparateur.
-          </p>
-          <label className="flex items-start gap-2">
-            <input
-              type="checkbox"
-              checked={consent}
-              onChange={(e) => {
-                setConsent(e.target.checked);
-                if (e.target.checked) setConsentPrompt(false);
-              }}
-              className="mt-1 h-4 w-4"
-            />
-            <span>
-              J'accepte de partager anonymement les mesures de ce piano pour alimenter la base
-              collaborative (RGPD).
-            </span>
-          </label>
-        </div>
       )}
 
       {blockMessage && (
