@@ -678,6 +678,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           </div>
         )}
         <div
+          ref={zoomed ? plotRef : undefined}
           className="h-full w-full"
           onMouseEnter={() => setHoveredFamily(family.id)}
           onMouseMoveCapture={(event) => {
@@ -686,13 +687,28 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
             lastMouse.current = { x: event.clientX, y: event.clientY };
             if (!moved) return;
             interactionMode.current = "mouse";
-            // Découpage mathématique de la hauteur réellement rendue du tracé.
+            // Reconstruction de l'échelle réellement rendue puis choix de la courbe
+            // la plus proche verticalement du pointeur, à l'index X survolé.
             const rect = event.currentTarget.getBoundingClientRect();
             const plotTop = rect.top + 22;
             const plotHeight = Math.max(rect.height - 22 - 15, 1);
-            const relY = Math.min(Math.max((event.clientY - plotTop) / plotHeight, 0), 0.999);
-            const zoneIndex = Math.min(Math.max(Math.floor(relY * zoneOrder.length), 0), zoneOrder.length - 1);
-            setHoveredLine(zoneOrder[zoneIndex] ?? null);
+            const relY = Math.min(Math.max((event.clientY - plotTop) / plotHeight, 0), 1);
+            const pointerValue = yMax - relY * (yMax - yMin);
+            const plotLeft = rect.left + sideMargin;
+            const plotWidth = Math.max(rect.width - sideMargin * 2, 1);
+            const relX = Math.min(Math.max((event.clientX - plotLeft) / plotWidth, 0), 1);
+            const note = Math.round(domainX[0] + relX * (domainX[1] - domainX[0]));
+            let best: { key: string; distance: number } | null = null;
+            visibleLines.forEach((line) => {
+              const nearest = chartData
+                .filter((point) => typeof point[line.dataKey] === "number" && Number.isFinite(point[line.dataKey] as number))
+                .sort((a, b) => Math.abs(a.key - note) - Math.abs(b.key - note))[0];
+              const value = nearest?.[line.dataKey];
+              if (typeof value !== "number") return;
+              const distance = Math.abs(value - pointerValue);
+              if (!best || distance < best.distance) best = { key: line.dataKey as string, distance };
+            });
+            setHoveredLine((best as { key: string } | null)?.key ?? null);
           }}
         >
           <ResponsiveContainer width="100%" height="100%">
