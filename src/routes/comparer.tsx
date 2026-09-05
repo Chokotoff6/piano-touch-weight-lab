@@ -384,7 +384,7 @@ function CustomTickTop(props: { x?: number; y?: number; dy?: number; payload?: {
   );
 }
 
-type TooltipEntry = { name?: string; value?: number; color?: string };
+type TooltipEntry = { name?: string; value?: number; color?: string; dataKey?: string };
 function tooltipColorFor(name: string) {
   const lower = name.toLowerCase();
   // Identité bleue exclusive de l'import CSV.
@@ -398,14 +398,21 @@ function tooltipColorFor(name: string) {
 }
 
 
-function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number }) {
-  const { active, payload, label } = props;
+function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; pickKey?: string | null }) {
+  const { active, payload, label, pickKey } = props;
   if (!active || !payload || payload.length === 0) return null;
-  const valid = [...payload]
+  let valid = [...payload]
     .filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value))
     .sort((a, b) => Number(b.value) - Number(a.value));
+  // Détection spatiale verticale : une seule courbe affichée quand le pointeur
+  // désigne clairement la moitié haute ou basse du cadre.
+  if (pickKey) {
+    const picked = valid.filter((entry) => entry.dataKey === pickKey);
+    if (picked.length > 0) valid = picked;
+  }
+  if (valid.length === 0) return null;
   return (
-    <div className="pointer-events-none rounded-md border border-gray-200 bg-white/95 px-3 py-2 text-xs shadow-md">
+    <div className="pointer-events-none rounded-md border border-gray-200 bg-white px-3 py-2 text-xs shadow-md">
       <div className="mb-1 font-bold text-gray-800">Touche {label}</div>
       {valid.map((entry) => {
         const color = tooltipColorFor(entry.name ?? "");
@@ -414,6 +421,7 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
     </div>
   );
 }
+
 
 type LineDef = { dataKey: SeriesKey; name: string; shortName: string; color: string; real?: boolean; hidden?: boolean };
 const FAMILIES: Array<{ id: string; title: string; domain: [number, number]; lines: LineDef[] }> = [
@@ -509,6 +517,8 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const [hoveredChart, setHoveredChart] = useState<string | null>(null);
   const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
   const [hoveredLine, setHoveredLine] = useState<string | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
+
   const [zoomId, setZoomId] = useState<string | null>(null);
   const [zoomStart, setZoomStart] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -556,20 +566,39 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     const DotComp = zoomed ? ZoomDot : SampleDot;
     return (
       <Frame dataFrame={family.id} title={family.title} className={zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"}>
-        <div className="absolute right-3 top-2 z-10 flex items-center gap-2">
+        <div className="absolute right-3 top-2 z-10 flex flex-col items-end gap-2">
           {zoomed && <button type="button" aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>}
+          {zoomed && <WheelHintIcon />}
           {!zoomed && <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>}
         </div>
-        {zoomed && <div className="absolute left-4 top-2 z-10"><WheelHintIcon /></div>}
         <div className="h-full w-full" onMouseEnter={() => setHoveredChart(family.id)} onMouseLeave={() => setHoveredChart(null)}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} onMouseMove={(state) => { const note = state?.activeLabel; if (typeof note === "number") setHoveredNoteIndex(note); }} onMouseLeave={() => { setHoveredChart(null); setHoveredNoteIndex(null); setHoveredLine(null); }} margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}>
+            <LineChart
+              data={chartData}
+              onMouseMove={(state: { activeLabel?: unknown; chartX?: number; chartY?: number; activePayload?: TooltipEntry[] }, event?: React.MouseEvent<HTMLElement>) => {
+                const note = state?.activeLabel;
+                if (typeof note === "number") setHoveredNoteIndex(note);
+                if (typeof state?.chartX === "number" && typeof state?.chartY === "number") setTooltipPos({ x: state.chartX, y: state.chartY });
+                // Détection spatiale verticale stable : moitié haute -> courbe la plus haute,
+                // moitié basse -> courbe la plus basse. Aucun clignotement possible.
+                const target = event?.currentTarget as HTMLElement | undefined;
+                const rect = target?.getBoundingClientRect();
+                const valid = (state?.activePayload ?? []).filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value));
+                if (!rect || valid.length === 0) { setHoveredLine(null); return; }
+                const relY = (event!.clientY - rect.top) / Math.max(rect.height, 1);
+                const sorted = [...valid].sort((a, b) => Number(b.value) - Number(a.value));
+                const picked = relY < 0.5 ? sorted[0] : sorted[sorted.length - 1];
+                setHoveredLine(picked?.dataKey ?? null);
+              }}
+              onMouseLeave={() => { setHoveredChart(null); setHoveredNoteIndex(null); setHoveredLine(null); setTooltipPos(null); }}
+              margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}
+            >
               <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
               <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={autoDomain ? ["auto", "auto"] : family.domain} />
               {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#e5e7eb" strokeWidth={1} />)}
               {hoveredNoteIndex !== null && <ReferenceLine xAxisId="main" x={hoveredNoteIndex} stroke="#94a3b8" strokeWidth={1} />}
-              {isHovered && <Tooltip content={<CustomTooltipContent />} offset={16} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ pointerEvents: "none", transition: "transform 60ms linear" }} isAnimationActive={false} />}
+              {isHovered && tooltipPos && <Tooltip content={<CustomTooltipContent pickKey={hoveredLine} />} position={{ x: tooltipPos.x + 18, y: tooltipPos.y - 12 }} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ pointerEvents: "none" }} isAnimationActive={false} />}
               {lines.map((line) => {
                 const active = hoveredLine === line.dataKey;
                 return (
@@ -581,10 +610,9 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
                     name={line.name}
                     stroke={line.hidden ? "transparent" : line.color}
                     strokeWidth={active ? 4 : 2}
-                    style={active ? { filter: "drop-shadow(0 0 4px rgba(255,255,255,0.95))" } : {}}
-                    className={active ? "animate-pulse" : ""}
-                    onMouseEnter={() => { if (!line.hidden) setHoveredLine(line.dataKey); }}
-                    onMouseLeave={() => setHoveredLine(null)}
+                    style={active ? { filter: "drop-shadow(0 0 5px rgba(255,255,255,0.95))", transition: "stroke-width 120ms ease-out" } : { transition: "stroke-width 120ms ease-out" }}
+                    activeDot={false}
+
                     dot={line.real ? <DotComp /> : false}
                     connectNulls={true}
                     isAnimationActive={false}
