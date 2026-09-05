@@ -385,7 +385,7 @@ function CustomTickTop(props: { x?: number; y?: number; dy?: number; payload?: {
 }
 
 type TooltipEntry = { name?: string; value?: number; color?: string; dataKey?: string };
-type TooltipCache = { label?: number; entries: TooltipEntry[]; pickKey?: string | null };
+type TooltipCache = { label: number | undefined; entries: TooltipEntry[]; pickKey: string | null | undefined };
 function tooltipColorFor(name: string) {
   const lower = name.toLowerCase();
   // Identité bleue exclusive de l'import CSV.
