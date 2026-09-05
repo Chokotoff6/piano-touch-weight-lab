@@ -514,10 +514,8 @@ function WheelHintIcon() {
 }
 
 export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean }) {
-  const [hoveredChart, setHoveredChart] = useState<string | null>(null);
   const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
   const [hoveredLine, setHoveredLine] = useState<string | null>(null);
-  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
   const [zoomId, setZoomId] = useState<string | null>(null);
   const [zoomStart, setZoomStart] = useState(1);
@@ -560,7 +558,6 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     );
     const dyLeft = endpointOffsets("left");
     const dyRight = endpointOffsets("right");
-    const isHovered = hoveredChart === family.id;
     const start = zoomed ? zoomStart : 1;
     const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [1, 88];
     const DotComp = zoomed ? ZoomDot : SampleDot;
@@ -571,14 +568,13 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           {zoomed && <WheelHintIcon />}
           {!zoomed && <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>}
         </div>
-        <div className="h-full w-full" onMouseEnter={() => setHoveredChart(family.id)} onMouseLeave={() => setHoveredChart(null)}>
+        <div className="h-full w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
               onMouseMove={(state: { activeLabel?: unknown; chartX?: number; chartY?: number; activePayload?: TooltipEntry[] }, event?: React.MouseEvent<HTMLElement>) => {
                 const note = state?.activeLabel;
                 if (typeof note === "number") setHoveredNoteIndex(note);
-                if (typeof state?.chartX === "number" && typeof state?.chartY === "number") setTooltipPos({ x: state.chartX, y: state.chartY });
                 // Détection spatiale verticale stable : moitié haute -> courbe la plus haute,
                 // moitié basse -> courbe la plus basse. Aucun clignotement possible.
                 const target = event?.currentTarget as HTMLElement | undefined;
@@ -590,7 +586,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
                 const picked = relY < 0.5 ? sorted[0] : sorted[sorted.length - 1];
                 setHoveredLine(picked?.dataKey ?? null);
               }}
-              onMouseLeave={() => { setHoveredChart(null); setHoveredNoteIndex(null); setHoveredLine(null); setTooltipPos(null); }}
+              onMouseLeave={() => { setHoveredNoteIndex(null); setHoveredLine(null); }}
               margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}
             >
               <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
@@ -598,9 +594,13 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={autoDomain ? ["auto", "auto"] : family.domain} />
               {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#e5e7eb" strokeWidth={1} />)}
               {hoveredNoteIndex !== null && <ReferenceLine xAxisId="main" x={hoveredNoteIndex} stroke="#94a3b8" strokeWidth={1} />}
-              {isHovered && tooltipPos && <Tooltip content={<CustomTooltipContent pickKey={hoveredLine} />} position={{ x: tooltipPos.x + 18, y: tooltipPos.y - 12 }} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ pointerEvents: "none" }} isAnimationActive={false} />}
+              {/* Tooltip natif : suit le pointeur en continu, collé à sa droite,
+                  fond blanc / texte noir / bordure nette (CustomTooltipContent). */}
+              <Tooltip content={<CustomTooltipContent pickKey={hoveredLine} />} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ pointerEvents: "none" }} isAnimationActive={false} offset={24} />
               {lines.map((line) => {
-                const active = hoveredLine === line.dataKey;
+                // La courbe reste parfaitement stable au survol : seule la pastille
+                // active (la note sous le curseur) s'agrandit avec un liseré blanc.
+                const picked = hoveredLine === line.dataKey;
                 return (
                   <Line
                     key={line.dataKey}
@@ -609,9 +609,8 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
                     dataKey={line.dataKey}
                     name={line.name}
                     stroke={line.hidden ? "transparent" : line.color}
-                    strokeWidth={active ? 4 : 2}
-                    style={active ? { filter: "drop-shadow(0 0 5px rgba(255,255,255,0.95))", transition: "stroke-width 120ms ease-out" } : { transition: "stroke-width 120ms ease-out" }}
-                    activeDot={false}
+                    strokeWidth={2}
+                    activeDot={picked && !line.hidden ? { r: 6, fill: line.color, stroke: "#ffffff", strokeWidth: 2.5 } : false}
 
                     dot={line.real ? <DotComp /> : false}
                     connectNulls={true}
