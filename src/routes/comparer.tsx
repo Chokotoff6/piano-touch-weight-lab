@@ -826,7 +826,7 @@ function SidebarPanel(props: SidebarPanelProps) {
     <Frame title="Réglages" className="flex flex-1 flex-col">
       <div className="flex h-full flex-col gap-4 pt-2">
           <div>
-            <div className="mb-1.5 whitespace-nowrap !text-xs !font-bold !text-black">Comparer piano avec :</div>
+            <div className="mb-1.5 whitespace-nowrap !text-xs !font-bold !text-black">Comparer piano actuel avec :</div>
             <div className="flex items-center gap-1.5">
               <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={`${pillClass(props.cloudEnabled)} !text-orange-600`}>CLOUD</Button>
               <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={`${pillClass(props.standardEnabled)} !text-green-600`}>CIBLE</Button>
