@@ -158,6 +158,11 @@ export function parseDiagnosticCsv(content: string): ImportedDiagnostic {
 
   if (count === 0) throw new Error("INVALID_CSV");
 
+  // Numéro de série complet : préfixe + numéro central + suffixe (sans espace parasite).
+  const full = `${fields["serial_prefix"] ?? ""}${fields["serial_number"] ?? ""}${fields["serial_suffix"] ?? ""}`.trim();
+  if (full) fields["serial_number"] = full;
+  else delete fields["serial_number"];
+
   return { meta, fields, rows, friction };
 }
 
