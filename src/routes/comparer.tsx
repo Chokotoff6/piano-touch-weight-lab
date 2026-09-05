@@ -436,15 +436,17 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
   // Mode courbe unique : affichage ultra-épuré, sans pastille ni nom technique.
   const solo = valid.length === 1;
 
+  const soloColor = valid[0]?.color ?? tooltipColorFor(valid[0]?.name ?? "");
+
   return (
     <div className="pointer-events-none rounded-md border border-gray-200 bg-white px-3 py-2 text-xs shadow-md">
-      <div className="mb-1 font-bold text-gray-800">Touche {shownLabel}</div>
+      <div className="mb-1 font-bold" style={{ color: solo ? soloColor : "#1f2937" }}>Touche {shownLabel}</div>
       {solo ? (
-        <div className="font-semibold tabular-nums text-gray-800">Moy: {valid[0]?.value?.toFixed(1)} gr.</div>
+        <div className="font-semibold tabular-nums" style={{ color: soloColor }}>{Math.round(Number(valid[0]?.value ?? 0))} gr.</div>
       ) : (
         valid.map((entry) => {
-          const color = tooltipColorFor(entry.name ?? "");
-          return <div key={entry.name} className="flex items-center justify-between gap-4"><span className="flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} /><span style={{ color }}>{entry.name}</span></span><span className="font-semibold tabular-nums text-gray-800">{entry.value?.toFixed(1)} g.</span></div>;
+          const color = entry.color ?? tooltipColorFor(entry.name ?? "");
+          return <div key={entry.name} className="flex items-center justify-between gap-4"><span style={{ color }}>{entry.name}</span><span className="font-semibold tabular-nums" style={{ color }}>{Math.round(Number(entry.value ?? 0))} gr.</span></div>;
         })
       )}
     </div>
@@ -564,6 +566,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const [zoomStart, setZoomStart] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<HTMLDivElement>(null);
+  const plotRef = useRef<HTMLDivElement>(null);
   // Arbitrage clavier / souris : le clavier prend la main tant que la souris ne bouge
   // pas réellement (plus de 5 px), ce qui supprime tout clignotement de la bulle.
   const interactionMode = useRef<"mouse" | "keyboard">("mouse");
@@ -583,6 +586,26 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     return () => node.removeEventListener("wheel", onWheel);
   }, [zoomId]);
 
+  // Miroirs pour la navigation clavier (valeurs fraîches sans redéclencher l'effet).
+  const noteRef = useRef<number | null>(null);
+  noteRef.current = hoveredNoteIndex;
+  const startRef = useRef(zoomStart);
+  startRef.current = zoomStart;
+
+  // Le clavier pilote la bulle en repositionnant le pointeur virtuel sur la pastille visée :
+  // la fenêtre flottante et la pastille active suivent instantanément et de façon synchrone.
+  const syncPointerToNote = (note: number, start: number) => {
+    const node = plotRef.current;
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    const left = rect.left + sideMargin;
+    const width = Math.max(rect.width - sideMargin * 2, 1);
+    const ratio = (note - start) / Math.max(ZOOM_WINDOW - 1, 1);
+    const x = left + Math.min(Math.max(ratio, 0), 1) * width;
+    const y = lastMouse.current?.y ?? rect.top + rect.height / 2;
+    node.dispatchEvent(new MouseEvent("mousemove", { clientX: x, clientY: y, bubbles: true }));
+  };
+
   useEffect(() => {
     if (!zoomId) return;
     const onKey = (event: KeyboardEvent) => {
@@ -590,24 +613,22 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       // Navigation clavier : saut instantané à la pastille mesurée précédente / suivante.
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
       event.preventDefault();
-      interactionMode.current = "keyboard";
       const step = event.key === "ArrowRight" ? 2 : -2;
-
-      setHoveredNoteIndex((current) => {
-        const base = current ?? Math.round(zoomStart);
-        const next = Math.min(Math.max(base + step, 1), 88);
-        setZoomStart((start) => {
-          const from = Math.round(start);
-          if (next < from) return Math.max(next, 1);
-          if (next > from + ZOOM_WINDOW - 1) return Math.min(next - ZOOM_WINDOW + 1, 88 - ZOOM_WINDOW + 1);
-          return start;
-        });
-        return next;
-      });
+      const base = noteRef.current ?? Math.round(startRef.current);
+      const next = Math.min(Math.max(base + step, 1), 88);
+      const from = Math.round(startRef.current);
+      let nextStart = startRef.current;
+      if (next < from) nextStart = Math.max(next, 1);
+      else if (next > from + ZOOM_WINDOW - 1) nextStart = Math.min(next - ZOOM_WINDOW + 1, 88 - ZOOM_WINDOW + 1);
+      startRef.current = nextStart;
+      noteRef.current = next;
+      setZoomStart(nextStart);
+      setHoveredNoteIndex(next);
+      requestAnimationFrame(() => syncPointerToNote(next, nextStart));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [zoomId, zoomStart]);
+  }, [zoomId]);
 
   function SubChart({ family, zoomed = false }: { family: (typeof FAMILIES)[number]; zoomed?: boolean }) {
     // Renommage dynamique de la courbe de référence : "Import CSV" (bleu) ou "Cloud" (orange),
@@ -625,17 +646,17 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     );
     const dyLeft = endpointOffsets("left");
     const dyRight = endpointOffsets("right");
-    // Zonage vertical DÉFINITIF : l'ordre des bandes est figé par la hauteur du tout
-    // premier pixel de chaque courbe (touche 1). Il ne change jamais, même au croisement.
-    const zoneOrder = lines
-      .filter((line) => !line.hidden)
-      .map((line) => {
-        const index = firstDefinedIndex(chartData, line.dataKey);
-        const value = index >= 0 ? (chartData[index]?.[line.dataKey] as number | undefined) : undefined;
-        return { dataKey: line.dataKey as string, value: typeof value === "number" ? value : Number.NEGATIVE_INFINITY };
-      })
-      .sort((a, b) => b.value - a.value)
-      .map((entry) => entry.dataKey);
+    // Zonage par AMPLITUDE RÉELLE : on reconstruit l'échelle verticale du tracé puis on
+    // retient, à l'index survolé, la courbe dont la valeur est la plus proche du pointeur.
+    const visibleLines = lines.filter((line) => !line.hidden);
+    const allValues = chartData.flatMap((point) =>
+      visibleLines.map((line) => point[line.dataKey]).filter((value): value is number => typeof value === "number" && Number.isFinite(value)),
+    );
+    const dataMin = allValues.length > 0 ? Math.min(...allValues) : 0;
+    const dataMax = allValues.length > 0 ? Math.max(...allValues) : 1;
+    const numericDomain = !autoDomain && typeof family.domain[0] === "number" && typeof family.domain[1] === "number";
+    const yMin = numericDomain ? (family.domain[0] as number) : dataMin - 1.5;
+    const yMax = numericDomain ? (family.domain[1] as number) : dataMax + 1.5;
     const start = zoomed ? zoomStart : 1;
     const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [1, 88];
     const DotComp = zoomed ? ZoomDot : SampleDot;
@@ -657,6 +678,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           </div>
         )}
         <div
+          ref={zoomed ? plotRef : undefined}
           className="h-full w-full"
           onMouseEnter={() => setHoveredFamily(family.id)}
           onMouseMoveCapture={(event) => {
@@ -665,13 +687,28 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
             lastMouse.current = { x: event.clientX, y: event.clientY };
             if (!moved) return;
             interactionMode.current = "mouse";
-            // Découpage mathématique de la hauteur réellement rendue du tracé.
+            // Reconstruction de l'échelle réellement rendue puis choix de la courbe
+            // la plus proche verticalement du pointeur, à l'index X survolé.
             const rect = event.currentTarget.getBoundingClientRect();
             const plotTop = rect.top + 22;
             const plotHeight = Math.max(rect.height - 22 - 15, 1);
-            const relY = Math.min(Math.max((event.clientY - plotTop) / plotHeight, 0), 0.999);
-            const zoneIndex = Math.min(Math.max(Math.floor(relY * zoneOrder.length), 0), zoneOrder.length - 1);
-            setHoveredLine(zoneOrder[zoneIndex] ?? null);
+            const relY = Math.min(Math.max((event.clientY - plotTop) / plotHeight, 0), 1);
+            const pointerValue = yMax - relY * (yMax - yMin);
+            const plotLeft = rect.left + sideMargin;
+            const plotWidth = Math.max(rect.width - sideMargin * 2, 1);
+            const relX = Math.min(Math.max((event.clientX - plotLeft) / plotWidth, 0), 1);
+            const note = Math.round(domainX[0] + relX * (domainX[1] - domainX[0]));
+            let best: { key: string; distance: number } | null = null;
+            visibleLines.forEach((line) => {
+              const nearest = chartData
+                .filter((point) => typeof point[line.dataKey] === "number" && Number.isFinite(point[line.dataKey] as number))
+                .sort((a, b) => Math.abs(a.key - note) - Math.abs(b.key - note))[0];
+              const value = nearest?.[line.dataKey];
+              if (typeof value !== "number") return;
+              const distance = Math.abs(value - pointerValue);
+              if (!best || distance < best.distance) best = { key: line.dataKey as string, distance };
+            });
+            setHoveredLine((best as { key: string } | null)?.key ?? null);
           }}
         >
           <ResponsiveContainer width="100%" height="100%">
@@ -690,7 +727,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
               <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={autoDomain ? ["auto", "auto"] : family.domain} />
               {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#e5e7eb" strokeWidth={1} />)}
-              {hoveredNoteIndex !== null && <ReferenceLine xAxisId="main" x={hoveredNoteIndex} stroke="#94a3b8" strokeWidth={1} />}
+              
               {/* Tooltip natif : premier plan absolu, jamais éteint entre deux pastilles. */}
               <Tooltip
                 content={<CustomTooltipContent pickKey={hoveredLine} cache={tooltipCache} chartData={chartData} lines={lines} />}
@@ -1281,7 +1318,7 @@ function Comparer() {
 
               <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} />
             </div>
-            <aside className="min-w-0"><div className="sticky top-[127px] z-50 flex h-full min-h-[400px] flex-col" style={{ minHeight: averagesHeight > 0 ? averagesHeight - 8 : undefined }}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} /></div></aside>
+            <aside className="min-w-0"><div className="sticky top-[127px] z-50 flex flex-col overflow-hidden" style={averagesHeight > 0 ? { height: `${averagesHeight - 8}px` } : undefined}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} /></div></aside>
           </div>
         </>
       )}
