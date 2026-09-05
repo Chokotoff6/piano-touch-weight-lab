@@ -81,6 +81,8 @@ const META_ALIASES: { key: string; match: string[] }[] = [
   { key: "brand", match: ["marque", "brand"] },
   { key: "model", match: ["modele", "model"] },
   { key: "serial_number", match: ["numero de serie", "serial"] },
+  { key: "serial_prefix", match: ["prefixe lettre", "prefixe"] },
+  { key: "serial_suffix", match: ["suffixe lettre", "suffixe"] },
   { key: "manufacture_year", match: ["date de fabrication", "annee de fabrication", "manufacture"] },
   { key: "maintenance_type", match: ["type d'entretien", "type dentretien", "maintenance"] },
   { key: "usage_level", match: ["usage_level", "niveau d'usage", "niveau dusage", "usage"] },
