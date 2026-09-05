@@ -398,10 +398,9 @@ function tooltipColorFor(name: string) {
 }
 
 
-function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; pickKey?: string | null }) {
-  const { active, payload, label, pickKey } = props;
-  if (!active || !payload || payload.length === 0) return null;
-  let valid = [...payload]
+function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; pickKey?: string | null; cache?: { current: { label?: number; entries: TooltipEntry[] } | null } }) {
+  const { active, payload, label, pickKey, cache } = props;
+  let valid = [...(payload ?? [])]
     .filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value))
     .sort((a, b) => Number(b.value) - Number(a.value));
   // Détection spatiale verticale : une seule courbe affichée quand le pointeur
@@ -410,17 +409,31 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
     const picked = valid.filter((entry) => entry.dataKey === pickKey);
     if (picked.length > 0) valid = picked;
   }
+  let shownLabel = label;
+  if (active && valid.length > 0 && cache) cache.current = { label, entries: valid };
+  // Persistance absolue : entre deux pastilles on réaffiche la dernière note quittée.
+  if (valid.length === 0 && cache?.current) {
+    valid = cache.current.entries;
+    shownLabel = cache.current.label;
+  }
   if (valid.length === 0) return null;
+  // Mode courbe unique (piano actuel seul) : affichage ultra-épuré.
+  const solo = valid.length === 1 && !(valid[0]?.name ?? "").trim();
   return (
     <div className="pointer-events-none rounded-md border border-gray-200 bg-white px-3 py-2 text-xs shadow-md">
-      <div className="mb-1 font-bold text-gray-800">Touche {label}</div>
-      {valid.map((entry) => {
-        const color = tooltipColorFor(entry.name ?? "");
-        return <div key={entry.name} className="flex items-center justify-between gap-4"><span className="flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} /><span style={{ color }}>{entry.name}</span></span><span className="font-semibold tabular-nums text-gray-800">{entry.value?.toFixed(1)} g.</span></div>;
-      })}
+      <div className="mb-1 font-bold text-gray-800">Touche {shownLabel}</div>
+      {solo ? (
+        <div className="font-semibold tabular-nums text-gray-800">Moy: {valid[0]?.value?.toFixed(1)} gr.</div>
+      ) : (
+        valid.map((entry) => {
+          const color = tooltipColorFor(entry.name ?? "");
+          return <div key={entry.name} className="flex items-center justify-between gap-4"><span className="flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} /><span style={{ color }}>{entry.name}</span></span><span className="font-semibold tabular-nums text-gray-800">{entry.value?.toFixed(1)} g.</span></div>;
+        })
+      )}
     </div>
   );
 }
+
 
 
 type LineDef = { dataKey: SeriesKey; name: string; shortName: string; color: string; real?: boolean; hidden?: boolean };
