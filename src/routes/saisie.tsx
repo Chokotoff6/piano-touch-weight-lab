@@ -961,11 +961,6 @@ function Index() {
   // CRITÈRE 1 : un numéro de série inconnu pour la session force un INSERT propre.
   useEffect(() => {
     const serial = (info["sn_num"] ?? "").trim();
-    if (serial !== consentSerialRef.current) {
-      consentSerialRef.current = serial;
-      setConsent(false);
-      setConsentPrompt(false);
-    }
     if (currentDbId && serial && serial !== savedSerialRef.current) {
       setCurrentDbId(null);
     }
