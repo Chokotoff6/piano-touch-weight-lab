@@ -598,9 +598,13 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={autoDomain ? ["auto", "auto"] : family.domain} />
               {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#e5e7eb" strokeWidth={1} />)}
               {hoveredNoteIndex !== null && <ReferenceLine xAxisId="main" x={hoveredNoteIndex} stroke="#94a3b8" strokeWidth={1} />}
-              {isHovered && tooltipPos && <Tooltip content={<CustomTooltipContent pickKey={hoveredLine} />} position={{ x: tooltipPos.x + 18, y: tooltipPos.y - 12 }} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ pointerEvents: "none" }} isAnimationActive={false} />}
+              {/* Tooltip natif : suit le pointeur en continu, collé à sa droite,
+                  fond blanc / texte noir / bordure nette (CustomTooltipContent). */}
+              <Tooltip content={<CustomTooltipContent pickKey={hoveredLine} />} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ pointerEvents: "none" }} isAnimationActive={false} offset={24} />
               {lines.map((line) => {
-                const active = hoveredLine === line.dataKey;
+                // La courbe reste parfaitement stable au survol : seule la pastille
+                // active (la note sous le curseur) s'agrandit avec un liseré blanc.
+                const picked = hoveredLine === line.dataKey;
                 return (
                   <Line
                     key={line.dataKey}
@@ -609,9 +613,8 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
                     dataKey={line.dataKey}
                     name={line.name}
                     stroke={line.hidden ? "transparent" : line.color}
-                    strokeWidth={active ? 4 : 2}
-                    style={active ? { filter: "drop-shadow(0 0 5px rgba(255,255,255,0.95))", transition: "stroke-width 120ms ease-out" } : { transition: "stroke-width 120ms ease-out" }}
-                    activeDot={false}
+                    strokeWidth={2}
+                    activeDot={picked && !line.hidden ? { r: 6, fill: line.color, stroke: "#ffffff", strokeWidth: 2.5 } : false}
 
                     dot={line.real ? <DotComp /> : false}
                     connectNulls={true}
