@@ -836,15 +836,15 @@ function SidebarPanel(props: SidebarPanelProps) {
           </div>
           <div className="space-y-2 border-t border-gray-200 pt-3">
             <div className="font-bold !text-black">Filtres</div>
-            <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black font-medium hover:border-gray-300`}><CycleIcon /><span className="!text-black font-medium">Niveau d'usage instrument : <span className="!text-black font-semibold">{usageLabel}</span></span></Button>
-            <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left`}><CycleIcon /><span className="!text-black font-medium">Modifications importantes : <span className="!text-black font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></span></Button>
+            <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black !opacity-100 disabled:!opacity-100 font-medium hover:border-gray-300 [&_svg]:!text-black [&_svg]:!opacity-100`}><CycleIcon /><span className="!text-black font-medium">Niveau d'usage instrument : <span className="!text-black font-semibold">{usageLabel}</span></span></Button>
+            <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left !text-black !opacity-100 disabled:!opacity-100 [&_svg]:!text-black [&_svg]:!opacity-100`}><CycleIcon /><span className="!text-black font-medium">Modifications importantes : <span className="!text-black font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></span></Button>
           </div>
           <div className="space-y-2.5 pt-1">
             {switchRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
             {switchRow("Même année de fabrication", props.sameYear, props.setSameYear)}
             {switchRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
           </div>
-          <div className="mt-auto border-t border-gray-200 pt-3">
+          <div className="mt-auto mb-3 border-t border-gray-200 pt-3">
             <Button
               type="button"
               variant="outline"
@@ -872,6 +872,18 @@ function formatMeasureDate(value: string | null | undefined) {
 
 function summaryValue(value: string | number | null | undefined) {
   return value === null || value === undefined || value === "" ? "-" : String(value);
+}
+
+/** Comptage compact des touches mesurées : " - xx Blanches / yy Noires". */
+function countKeys(values: number[] | undefined) {
+  let white = 0;
+  let black = 0;
+  (values ?? []).forEach((value, index) => {
+    if (typeof value !== "number" || !Number.isFinite(value)) return;
+    if (isBlackKey(index + 1)) black += 1;
+    else white += 1;
+  });
+  return ` - ${white} Blanches / ${black} Noires`;
 }
 
 function Comparer() {
@@ -1049,7 +1061,7 @@ function Comparer() {
   const comparisonProfile = comparedPiano ?? (sourceMode === "cloud" ? cloudProfile : null);
   const comparedTime = comparedPiano?.measureTime ? ` - ${comparedPiano.measureTime}` : "";
   const comparisonLabel = comparedPiano
-    ? `IMPORT CSV : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - ${summaryValue(comparedPiano.year)} - SN ${summaryValue(comparedPiano.serialNumber)} - Mesure ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime}`
+    ? `IMPORT CSV : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - ${summaryValue(comparedPiano.year)} - SN ${summaryValue(comparedPiano.serialNumber)} - Mesure ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime}${countKeys(comparedPiano.wa)}`
     : "Cloud";
   const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
 
@@ -1097,16 +1109,7 @@ function Comparer() {
   }
 
   const mineTime = mine?.measureTime ? ` - ${mine.measureTime}` : "";
-  const keyCounts = (() => {
-    let white = 0;
-    let black = 0;
-    (mine?.wa ?? []).forEach((value, index) => {
-      if (typeof value !== "number" || !Number.isFinite(value)) return;
-      if (isBlackKey(index + 1)) black += 1;
-      else white += 1;
-    });
-    return ` - ${white} Blanches / ${black} Noires`;
-  })();
+  const keyCounts = countKeys(mine?.wa);
   const summary = `${summaryValue(mine?.brand)}\u00A0\u00A0${summaryValue(mine?.model)} - ${summaryValue(mine?.year)} - SN ${summaryValue(mine?.serialNumber)} - Mesure ${formatMeasureDate(mine?.measureDate)}${mineTime}${keyCounts}`;
   const cloudActive = !comparedPiano && sourceMode === "cloud";
   const cloudIsEmpty = cloudActive && cloudSampleCount === 0;
