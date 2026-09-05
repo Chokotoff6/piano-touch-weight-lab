@@ -386,13 +386,16 @@ function CustomTickTop(props: { x?: number; y?: number; dy?: number; payload?: {
 type TooltipEntry = { name?: string; value?: number; color?: string };
 function tooltipColorFor(name: string) {
   const lower = name.toLowerCase();
-  const isReference = lower.startsWith("cloud") || lower.startsWith("référence") || lower.startsWith("import csv");
+  // Identité bleue exclusive de l'import CSV.
+  if (lower.startsWith("import csv")) return lower.includes("blanches") ? "#93c5fd" : "#2563EB";
+  const isReference = lower.startsWith("cloud") || lower.startsWith("référence");
   if (isReference) return lower.includes("blanches") ? "#fdba74" : "#f97316";
   if (lower.includes("noires")) return "#000000";
   if (lower.includes("blanches")) return "#6b7280";
   if (lower.includes("piano actuel") || lower.trim() === "") return "#000000";
   return "#10b981";
 }
+
 
 function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number }) {
   const { active, payload, label } = props;
