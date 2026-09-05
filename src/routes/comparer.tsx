@@ -512,10 +512,23 @@ function WheelHintIcon() {
     </span>
   );
 }
+// Guide visuel : touches fléchées du clavier (saut de pastille en pastille).
+function ArrowHintIcon() {
+  return (
+    <span className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 text-[0.65rem] font-medium !text-black shadow-sm">
+      <span className="flex items-center gap-1">
+        <span className="flex h-4 w-4 items-center justify-center rounded border border-gray-400 text-[0.6rem] leading-none">◄</span>
+        <span className="flex h-4 w-4 items-center justify-center rounded border border-gray-400 text-[0.6rem] leading-none">►</span>
+      </span>
+      <span>Flèches : note précédente / suivante</span>
+    </span>
+  );
+}
 
 export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean }) {
   const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
   const [hoveredLine, setHoveredLine] = useState<string | null>(null);
+  const [hoveredFamily, setHoveredFamily] = useState<string | null>(null);
 
   const [zoomId, setZoomId] = useState<string | null>(null);
   const [zoomStart, setZoomStart] = useState(1);
@@ -537,10 +550,27 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
 
   useEffect(() => {
     if (!zoomId) return;
-    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setZoomId(null); };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { setZoomId(null); return; }
+      // Navigation clavier : saut instantané à la pastille mesurée précédente / suivante.
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      const step = event.key === "ArrowRight" ? 2 : -2;
+      setHoveredNoteIndex((current) => {
+        const base = current ?? Math.round(zoomStart);
+        const next = Math.min(Math.max(base + step, 1), 88);
+        setZoomStart((start) => {
+          const from = Math.round(start);
+          if (next < from) return Math.max(next, 1);
+          if (next > from + ZOOM_WINDOW - 1) return Math.min(next - ZOOM_WINDOW + 1, 88 - ZOOM_WINDOW + 1);
+          return start;
+        });
+        return next;
+      });
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [zoomId]);
+  }, [zoomId, zoomStart]);
 
   function SubChart({ family, zoomed = false }: { family: (typeof FAMILIES)[number]; zoomed?: boolean }) {
     // Renommage dynamique de la courbe de référence : "Import CSV" (bleu) ou "Cloud" (orange),
@@ -558,35 +588,59 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     );
     const dyLeft = endpointOffsets("left");
     const dyRight = endpointOffsets("right");
+    // Zonage vertical DÉFINITIF : l'ordre des bandes est figé par la hauteur du tout
+    // premier pixel de chaque courbe (touche 1). Il ne change jamais, même au croisement.
+    const zoneOrder = lines
+      .filter((line) => !line.hidden)
+      .map((line) => {
+        const index = firstDefinedIndex(chartData, line.dataKey);
+        const value = index >= 0 ? (chartData[index]?.[line.dataKey] as number | undefined) : undefined;
+        return { dataKey: line.dataKey as string, value: typeof value === "number" ? value : Number.NEGATIVE_INFINITY };
+      })
+      .sort((a, b) => b.value - a.value)
+      .map((entry) => entry.dataKey);
     const start = zoomed ? zoomStart : 1;
     const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [1, 88];
     const DotComp = zoomed ? ZoomDot : SampleDot;
     return (
-      <Frame dataFrame={family.id} title={family.title} className={zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"}>
-        <div className="absolute right-3 top-2 z-10 flex flex-col items-end gap-2">
-          {zoomed && <button type="button" aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>}
-          {zoomed && <WheelHintIcon />}
-          {!zoomed && <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>}
-        </div>
-        <div className="h-full w-full">
+      <Frame dataFrame={family.id} title={family.title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-50" : "z-0"}`}>
+        {zoomed ? (
+          <>
+            <div className="absolute right-3 top-2 z-20">
+              <button type="button" aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
+            </div>
+            <div className="pointer-events-none absolute inset-x-0 top-2 z-10 flex flex-col items-center gap-1">
+              <WheelHintIcon />
+              <ArrowHintIcon />
+            </div>
+          </>
+        ) : (
+          <div className="absolute right-3 top-2 z-10 flex flex-col items-end gap-2">
+            <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
+          </div>
+        )}
+        <div className="h-full w-full" onMouseEnter={() => setHoveredFamily(family.id)}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
               onMouseMove={(state: { activeLabel?: unknown; chartX?: number; chartY?: number; activePayload?: TooltipEntry[] }, event?: React.MouseEvent<HTMLElement>) => {
                 const note = state?.activeLabel;
                 if (typeof note === "number") setHoveredNoteIndex(note);
-                // Détection spatiale verticale stable : moitié haute -> courbe la plus haute,
-                // moitié basse -> courbe la plus basse. Aucun clignotement possible.
+                // Zonage vertical figé : la hauteur du cadre est découpée en autant de bandes
+                // que de courbes, chaque bande appartenant définitivement à une courbe.
                 const target = event?.currentTarget as HTMLElement | undefined;
                 const rect = target?.getBoundingClientRect();
                 const valid = (state?.activePayload ?? []).filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value));
-                if (!rect || valid.length === 0) { setHoveredLine(null); return; }
+                if (!rect || valid.length === 0 || zoneOrder.length === 0) { setHoveredLine(null); return; }
                 const relY = (event!.clientY - rect.top) / Math.max(rect.height, 1);
-                const sorted = [...valid].sort((a, b) => Number(b.value) - Number(a.value));
-                const picked = relY < 0.5 ? sorted[0] : sorted[sorted.length - 1];
-                setHoveredLine(picked?.dataKey ?? null);
+                const zoneIndex = Math.min(Math.max(Math.floor(relY * zoneOrder.length), 0), zoneOrder.length - 1);
+                const wanted = zoneOrder[zoneIndex];
+                const available = valid.some((entry) => entry.dataKey === wanted)
+                  ? wanted
+                  : zoneOrder.find((key) => valid.some((entry) => entry.dataKey === key)) ?? null;
+                setHoveredLine(available ?? null);
               }}
-              onMouseLeave={() => { setHoveredNoteIndex(null); setHoveredLine(null); }}
+              onMouseLeave={() => { setHoveredNoteIndex(null); setHoveredLine(null); setHoveredFamily(null); }}
               margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}
             >
               <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
@@ -594,9 +648,9 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={autoDomain ? ["auto", "auto"] : family.domain} />
               {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#e5e7eb" strokeWidth={1} />)}
               {hoveredNoteIndex !== null && <ReferenceLine xAxisId="main" x={hoveredNoteIndex} stroke="#94a3b8" strokeWidth={1} />}
-              {/* Tooltip natif : suit le pointeur en continu, collé à sa droite,
-                  fond blanc / texte noir / bordure nette (CustomTooltipContent). */}
-              <Tooltip content={<CustomTooltipContent pickKey={hoveredLine} />} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ pointerEvents: "none" }} isAnimationActive={false} offset={24} />
+              {/* Tooltip natif : premier plan absolu (z-index 100), suit le pointeur
+                  en continu et reste affiché jusqu'à la pastille suivante. */}
+              <Tooltip content={<CustomTooltipContent pickKey={hoveredLine} />} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ pointerEvents: "none", zIndex: 100 }} isAnimationActive={false} offset={24} />
               {lines.map((line) => {
                 // La courbe reste parfaitement stable au survol : seule la pastille
                 // active (la note sous le curseur) s'agrandit avec un liseré blanc.
@@ -628,6 +682,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
 
   const zoomFamily = FAMILIES.find((family) => family.id === zoomId);
   if (zoomFamily) {
+    // Mode zoom : le cadre isolé occupe 100 % de la largeur de l'écran.
     return (
       <div ref={zoomRef} className="fixed inset-0 z-[70] overflow-hidden bg-white p-6">
         <SubChart family={zoomFamily} zoomed />
@@ -639,6 +694,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   return <div ref={containerRef} className="mx-auto w-4/5 px-2 pb-[80vh] pt-2"><div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div></div>;
 
 }
+
 
 export const Route = createFileRoute("/comparer")({
   head: () => ({
@@ -836,8 +892,8 @@ function SidebarPanel(props: SidebarPanelProps) {
           </div>
           <div className="space-y-2 border-t border-gray-200 pt-3">
             <div className="font-bold !text-black">Filtres</div>
-            <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black !opacity-100 disabled:!opacity-100 font-medium hover:border-gray-300 [&_svg]:!text-black [&_svg]:!opacity-100`}><CycleIcon /><span className="!text-black font-medium">Niveau d'usage instrument : <span className="!text-black font-semibold">{usageLabel}</span></span></Button>
-            <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left !text-black !opacity-100 disabled:!opacity-100 [&_svg]:!text-black [&_svg]:!opacity-100`}><CycleIcon /><span className="!text-black font-medium">Modifications importantes : <span className="!text-black font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></span></Button>
+            <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black !opacity-100 disabled:!opacity-100 font-medium hover:border-gray-300 [&_svg]:!text-black [&_svg]:!opacity-100`}><CycleIcon /><span className="!text-black font-bold">Niveau d'usage instrument : <span className="!text-black font-semibold">{usageLabel}</span></span></Button>
+            <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left !text-black !opacity-100 disabled:!opacity-100 [&_svg]:!text-black [&_svg]:!opacity-100`}><CycleIcon /><span className="!text-black font-bold">Modifications importantes : <span className="!text-black font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></span></Button>
           </div>
           <div className="space-y-2.5 pt-1">
             {switchRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
@@ -1060,9 +1116,15 @@ function Comparer() {
   // Arbitrage de la courbe orange : CSV importé en priorité, sinon moyenne Cloud.
   const comparisonProfile = comparedPiano ?? (sourceMode === "cloud" ? cloudProfile : null);
   const comparedTime = comparedPiano?.measureTime ? ` - ${comparedPiano.measureTime}` : "";
-  const comparisonLabel = comparedPiano
-    ? `IMPORT CSV : ${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - ${summaryValue(comparedPiano.year)} - SN ${summaryValue(comparedPiano.serialNumber)} - Mesure ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime}${countKeys(comparedPiano.wa)}`
-    : "Cloud";
+  // Résumé IMPORT CSV scindé : identité du fichier puis portion statistique/temporelle
+  // formatée exactement comme la première ligne (casse normale).
+  const csvIdentity = comparedPiano
+    ? `${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - ${summaryValue(comparedPiano.year)} - SN ${summaryValue(comparedPiano.serialNumber)}`
+    : "";
+  const csvStats = comparedPiano
+    ? ` - Mesure ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime}${countKeys(comparedPiano.wa)}`
+    : "";
+
   const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
 
   async function handleImport(file: File) {
@@ -1138,7 +1200,7 @@ function Comparer() {
                   <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">Piano actuel : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
                   {(comparedPiano !== null || sourceMode === "cloud") && (
                     <div className={standardEnabled ? "mb-3" : ""}>
-                      <div className={`mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide ${comparedPiano ? "!text-blue-600" : "!text-orange-600"}`}>{comparisonLabel}{cloudActive && <span className="ml-2 normal-case text-orange-600">{cloudCounterText}</span>}</div>
+                      <div className={`mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide ${comparedPiano ? "!text-blue-600" : "!text-orange-600"}`}>{comparedPiano ? <>IMPORT CSV : <span className="normal-case">{csvIdentity}{csvStats}</span></> : <>Cloud</>}{cloudActive && <span className="ml-2 normal-case text-orange-600">{cloudCounterText}</span>}</div>
                       <AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} />
                       {cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}
                     </div>
