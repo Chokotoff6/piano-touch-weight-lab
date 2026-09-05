@@ -560,7 +560,6 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     );
     const dyLeft = endpointOffsets("left");
     const dyRight = endpointOffsets("right");
-    const isHovered = hoveredChart === family.id;
     const start = zoomed ? zoomStart : 1;
     const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [1, 88];
     const DotComp = zoomed ? ZoomDot : SampleDot;
