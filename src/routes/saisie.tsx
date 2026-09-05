@@ -24,6 +24,7 @@ import {
 import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
 import { buildCsv, buildExportFilename, downloadCsv, formatLocalDateTime } from "@/lib/export-csv";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
+import { getLang } from "@/data/translations";
 import { generateLandscapeReport } from "@/lib/pdf-report";
 import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
 import { buildCurrentPiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, findHistoryProfileId, CURRENT_PIANO_KEY } from "@/lib/current-piano";
@@ -1022,12 +1023,14 @@ function Index() {
   };
 
   const exportCsvFile = () => {
+    // Clés d'en-tête adaptées strictement à la langue active du site (FR/EN).
+    const en = getLang() === "en";
     const meta: Record<string, string> = {
-      Marque: info["marque"] ?? "",
+      [en ? "Brand" : "Marque"]: info["marque"] ?? "",
       "Type de piano": info["type_piano"] ?? "",
-      Modèle: info["modele"] ?? "",
-      // Numéro de série complet sur une seule paire stricte « Numéro de série;XXXX ».
-      "Numéro de série":
+      [en ? "Model" : "Modèle"]: info["modele"] ?? "",
+      // Numéro de série complet sur une seule paire stricte (« Numéro de série;XXXX » / « Serial number;XXXX »).
+      [en ? "Serial number" : "Numéro de série"]:
         `${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`.trim(),
       "Date de fabrication": info["fabrication"] ?? "",
       Pays: info["pays"] ?? "",
