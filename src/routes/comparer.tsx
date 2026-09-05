@@ -585,6 +585,26 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     return () => node.removeEventListener("wheel", onWheel);
   }, [zoomId]);
 
+  // Miroirs pour la navigation clavier (valeurs fraîches sans redéclencher l'effet).
+  const noteRef = useRef<number | null>(null);
+  noteRef.current = hoveredNoteIndex;
+  const startRef = useRef(zoomStart);
+  startRef.current = zoomStart;
+
+  // Le clavier pilote la bulle en repositionnant le pointeur virtuel sur la pastille visée :
+  // la fenêtre flottante et la pastille active suivent instantanément et de façon synchrone.
+  const syncPointerToNote = (note: number, start: number) => {
+    const node = plotRef.current;
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    const left = rect.left + sideMargin;
+    const width = Math.max(rect.width - sideMargin * 2, 1);
+    const ratio = (note - start) / Math.max(ZOOM_WINDOW - 1, 1);
+    const x = left + Math.min(Math.max(ratio, 0), 1) * width;
+    const y = lastMouse.current?.y ?? rect.top + rect.height / 2;
+    node.dispatchEvent(new MouseEvent("mousemove", { clientX: x, clientY: y, bubbles: true }));
+  };
+
   useEffect(() => {
     if (!zoomId) return;
     const onKey = (event: KeyboardEvent) => {
@@ -592,24 +612,22 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       // Navigation clavier : saut instantané à la pastille mesurée précédente / suivante.
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
       event.preventDefault();
-      interactionMode.current = "keyboard";
       const step = event.key === "ArrowRight" ? 2 : -2;
-
-      setHoveredNoteIndex((current) => {
-        const base = current ?? Math.round(zoomStart);
-        const next = Math.min(Math.max(base + step, 1), 88);
-        setZoomStart((start) => {
-          const from = Math.round(start);
-          if (next < from) return Math.max(next, 1);
-          if (next > from + ZOOM_WINDOW - 1) return Math.min(next - ZOOM_WINDOW + 1, 88 - ZOOM_WINDOW + 1);
-          return start;
-        });
-        return next;
-      });
+      const base = noteRef.current ?? Math.round(startRef.current);
+      const next = Math.min(Math.max(base + step, 1), 88);
+      const from = Math.round(startRef.current);
+      let nextStart = startRef.current;
+      if (next < from) nextStart = Math.max(next, 1);
+      else if (next > from + ZOOM_WINDOW - 1) nextStart = Math.min(next - ZOOM_WINDOW + 1, 88 - ZOOM_WINDOW + 1);
+      startRef.current = nextStart;
+      noteRef.current = next;
+      setZoomStart(nextStart);
+      setHoveredNoteIndex(next);
+      requestAnimationFrame(() => syncPointerToNote(next, nextStart));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [zoomId, zoomStart]);
+  }, [zoomId]);
 
   function SubChart({ family, zoomed = false }: { family: (typeof FAMILIES)[number]; zoomed?: boolean }) {
     // Renommage dynamique de la courbe de référence : "Import CSV" (bleu) ou "Cloud" (orange),
