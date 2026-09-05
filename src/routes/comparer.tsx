@@ -447,16 +447,20 @@ function currentLinesFor(familyId: string, keyFilter: KeyFilter, baseName = "Pia
 
 // La vue clavier pilote aussi la courbe de référence (Cloud ou CSV) : en vue éclatée
 // elle est scindée en blanches / noires exactement comme la courbe Live noire.
-function comparisonLinesFor(familyId: string, keyFilter: KeyFilter, name: string, short: string): LineDef[] {
+function comparisonLinesFor(familyId: string, keyFilter: KeyFilter, name: string, short: string, isCsv = false): LineDef[] {
   const metrics: Record<string, [SeriesKey, SeriesKey, SeriesKey]> = { wa: ["sameWa", "sameWaW", "sameWaB"], wd: ["sameWd", "sameWdW", "sameWdB"], bal: ["sameBal", "sameBalW", "sameBalB"], fric: ["sameFric", "sameFricW", "sameFricB"] };
   const metric = metrics[familyId];
   if (!metric) return [];
+  // Bleu intense pour l'import CSV, orange pour la moyenne Cloud.
+  const strong = isCsv ? "#2563EB" : "#f97316";
+  const light = isCsv ? "#93c5fd" : "#fdba74";
   if (keyFilter === "split") return [
-    { dataKey: metric[1], name: `${name} blanches`, shortName: `${short} blanches`, color: "#fdba74" },
-    { dataKey: metric[2], name: `${name} noires`, shortName: `${short} noires`, color: "#f97316" },
+    { dataKey: metric[1], name: `${name} blanches`, shortName: `${short} blanches`, color: light },
+    { dataKey: metric[2], name: `${name} noires`, shortName: `${short} noires`, color: strong },
   ];
-  return [{ dataKey: metric[0], name, shortName: short, color: "#f97316" }];
+  return [{ dataKey: metric[0], name, shortName: short, color: strong }];
 }
+
 
 function firstDefinedIndex(data: ChartPoint[], key: SeriesKey) {
   return data.findIndex((point) => typeof point[key] === "number" && Number.isFinite(point[key] as number));
