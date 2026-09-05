@@ -76,6 +76,26 @@ function detectColumns(values: string[]): Columns | null {
   return { index, wa, wd, friction: findColumn(headers, FRICTION_PREFIXES) };
 }
 
+/**
+ * Lecture d'un fichier CSV importé : UTF-8 strict d'abord, sinon Windows-1252
+ * (fichiers réenregistrés par Excel, où « Modèle » devient « Mod?le »).
+ */
+export async function readCsvFileContent(file: File): Promise<string> {
+  const buffer = await file.arrayBuffer();
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(buffer);
+  } catch {
+    return new TextDecoder("windows-1252").decode(buffer);
+  }
+}
+
+/** Clés exactes de l'export officiel (accents français stricts), lues en priorité. */
+const EXACT_META_KEYS: Record<string, string> = {
+  Marque: "brand",
+  Modèle: "model",
+  "Numéro de série": "serial_number",
+};
+
 /** Clés canoniques des métadonnées, repérées par mots-clés. */
 const META_ALIASES: { key: string; match: string[] }[] = [
   { key: "brand", match: ["marque", "brand"] },
