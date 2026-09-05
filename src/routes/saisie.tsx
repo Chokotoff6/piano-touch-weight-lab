@@ -1432,7 +1432,7 @@ function Index() {
     Object.entries(handlers).forEach(([type, fn]) => window.addEventListener(type, fn));
     return () =>
       Object.entries(handlers).forEach(([type, fn]) => window.removeEventListener(type, fn));
-  }, [rows, info, currentDbId, isDirty, honeypot, climateZone, profile, consent]);
+  }, [rows, info, currentDbId, isDirty, honeypot, climateZone, profile]);
 
   // --- Rendu : champ de saisie d'un poids (Wa ou Wd) ------------------------------
 
