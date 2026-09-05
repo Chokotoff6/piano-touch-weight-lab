@@ -1165,8 +1165,15 @@ function Comparer() {
   const comparedTime = comparedPiano?.measureTime ? ` - ${comparedPiano.measureTime}` : "";
   // Résumé IMPORT CSV scindé : identité du fichier puis portion statistique/temporelle
   // formatée exactement comme la première ligne (casse normale).
+  // Identité du CSV : aucun tiret vide, aucune mention "SN" orpheline.
   const csvIdentity = comparedPiano
-    ? `${[comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" ") || "—"} - ${summaryValue(comparedPiano.year)} - SN ${summaryValue(comparedPiano.serialNumber)}`
+    ? [
+        [comparedPiano.brand, comparedPiano.model].filter(Boolean).join(" "),
+        comparedPiano.year ? String(comparedPiano.year) : "",
+        comparedPiano.serialNumber ? `SN ${comparedPiano.serialNumber}` : "",
+      ]
+        .filter(Boolean)
+        .join(" - ")
     : "";
   const csvStats = comparedPiano
     ? ` - Mesure ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime}${countKeys(comparedPiano.wa)}`
