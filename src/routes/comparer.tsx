@@ -404,10 +404,10 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
 
 type LineDef = { dataKey: SeriesKey; name: string; shortName: string; color: string; real?: boolean; hidden?: boolean };
 const FAMILIES: Array<{ id: string; title: string; domain: [number, number]; lines: LineDef[] }> = [
-  { id: "wa", title: "Poids d'enfoncement (Wa)", domain: [55, 85], lines: [{ dataKey: "sameWa", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWa", name: "Usine", shortName: "Usine", color: "#10b981" }] },
-  { id: "wd", title: "Poids de retour (Wd)", domain: [50, 70], lines: [{ dataKey: "sameWd", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWd", name: "Usine", shortName: "Usine", color: "#10b981" }] },
-  { id: "bal", title: "Balance statique", domain: [55, 75], lines: [{ dataKey: "sameBal", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryBal", name: "Usine", shortName: "Usine", color: "#10b981" }] },
-  { id: "fric", title: "Friction mécanique", domain: ["dataMin - 1.5", "dataMax + 1.5"] as unknown as [number, number], lines: [{ dataKey: "sameFric", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryFric", name: "Usine", shortName: "Usine", color: "#10b981" }] },
+  { id: "wa", title: "Poids d'enfoncement (Wa)", domain: [55, 85], lines: [{ dataKey: "sameWa", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWa", name: "Cible", shortName: "Cible", color: "#10b981" }] },
+  { id: "wd", title: "Poids de retour (Wd)", domain: [50, 70], lines: [{ dataKey: "sameWd", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWd", name: "Cible", shortName: "Cible", color: "#10b981" }] },
+  { id: "bal", title: "Balance statique", domain: [55, 75], lines: [{ dataKey: "sameBal", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryBal", name: "Cible", shortName: "Cible", color: "#10b981" }] },
+  { id: "fric", title: "Friction mécanique", domain: ["dataMin - 1.5", "dataMax + 1.5"] as unknown as [number, number], lines: [{ dataKey: "sameFric", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryFric", name: "Cible", shortName: "Cible", color: "#10b981" }] },
 ];
 const DY_STEPS = [-24, 0, 24, 48, 72];
 function offsetsFor(lines: LineDef[], point: ChartPoint | undefined) {
@@ -685,6 +685,8 @@ type SidebarPanelProps = {
   setImportantChanges: (value: boolean) => void;
   setYoungOnly: (value: boolean) => void;
   cycleUsage: () => void;
+  keyFilter: KeyFilter;
+  cycleKeyFilter: () => void;
 };
 
 function SidebarPanel(props: SidebarPanelProps) {
@@ -697,14 +699,14 @@ function SidebarPanel(props: SidebarPanelProps) {
     </label>
   );
   return (
-    <Frame title="Réglages" className="flex-1">
-      <div className="flex flex-col gap-4 pt-2">
+    <Frame title="Réglages" className="flex flex-1 flex-col">
+      <div className="flex h-full flex-col gap-4 pt-2">
           <div>
             <div className="mb-1.5 whitespace-nowrap !text-xs !font-bold !text-black">Comparer piano avec :</div>
             <div className="flex items-center gap-1.5">
-              <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={pillClass(props.cloudEnabled)}>Cloud</Button>
-              <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={pillClass(props.standardEnabled)}>Standard</Button>
-              <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={pillClass(props.csvActive)}>Importer CSV</Button>
+              <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={`${pillClass(props.cloudEnabled)} !text-orange-600`}>Cloud</Button>
+              <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={`${pillClass(props.standardEnabled)} !text-green-600`}>CIBLE</Button>
+              <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={`${pillClass(props.csvActive)} !text-orange-600`}>Importer CSV</Button>
               <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
             </div>
           </div>
@@ -717,6 +719,20 @@ function SidebarPanel(props: SidebarPanelProps) {
             {switchRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
             {switchRow("Même année de fabrication", props.sameYear, props.setSameYear)}
             {switchRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
+          </div>
+          <div className="mt-auto border-t border-gray-200 pt-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={props.cycleKeyFilter}
+              className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-2 border-black bg-white !text-black hover:bg-gray-100`}
+            >
+              <CycleIcon />
+              <span className="!text-black font-medium">
+                Touches blanches/noires :{" "}
+                <span className="font-semibold !text-black">{props.keyFilter === "all" ? "groupées" : "séparées"}</span>
+              </span>
+            </Button>
           </div>
         </div>
       </Frame>
@@ -745,7 +761,7 @@ function Comparer() {
   const [usageLevel, setUsageLevel] = useState<UsageLevel>("all");
   const [mine, setMine] = useState<ProfileRecord | null>(null);
   const [standard, setStandard] = useState<RefProfile>(FACTORY_STANDARD);
-  const [standardLabel, setStandardLabel] = useState("Standard (Internet)");
+  const [standardLabel, setStandardLabel] = useState("CIBLE (Internet)");
 
   const [cloudProfile, setCloudProfile] = useState<RefProfile | null>(null);
   const [cloudSampleCount, setCloudSampleCount] = useState(0);
@@ -841,7 +857,7 @@ function Comparer() {
 
       if (rows.length === 0) {
         setStandard(FACTORY_STANDARD);
-        setStandardLabel("Standard (Internet)");
+        setStandardLabel("CIBLE (Internet)");
         return;
       }
       const match = brand
@@ -855,8 +871,8 @@ function Comparer() {
       setStandard(profileFromSpec(spec));
       setStandardLabel(
         spec.brand === "STANDARD"
-          ? "Standard (Internet)"
-          : `USINE - CIBLE GÉNÉRIQUE ${spec.brand.toLocaleUpperCase()}`,
+          ? "CIBLE (Internet)"
+          : `CIBLE : GÉNÉRIQUE ${spec.brand.toLocaleUpperCase()}`,
       );
     }
     void loadFactorySpec();
@@ -957,7 +973,17 @@ function Comparer() {
   }
 
   const mineTime = mine?.measureTime ? ` - ${mine.measureTime}` : "";
-  const summary = `${summaryValue(mine?.brand)}\u00A0\u00A0${summaryValue(mine?.model)} - ${summaryValue(mine?.year)} - SN ${summaryValue(mine?.serialNumber)} - Mesure ${formatMeasureDate(mine?.measureDate)}${mineTime}`;
+  const keyCounts = (() => {
+    let white = 0;
+    let black = 0;
+    (mine?.wa ?? []).forEach((value, index) => {
+      if (typeof value !== "number" || !Number.isFinite(value)) return;
+      if (isBlackKey(index + 1)) black += 1;
+      else white += 1;
+    });
+    return ` - ${white} Blanches / ${black} Noires`;
+  })();
+  const summary = `${summaryValue(mine?.brand)}\u00A0\u00A0${summaryValue(mine?.model)} - ${summaryValue(mine?.year)} - SN ${summaryValue(mine?.serialNumber)} - Mesure ${formatMeasureDate(mine?.measureDate)}${mineTime}${keyCounts}`;
   const cloudActive = !comparedPiano && sourceMode === "cloud";
   const cloudIsEmpty = cloudActive && cloudSampleCount === 0;
   const cloudCounterText = cloudLoading
@@ -975,24 +1001,6 @@ function Comparer() {
         aria-hidden="true"
         className="pointer-events-none fixed inset-x-0 top-[77px] z-40 h-[50px] bg-white"
       />
-      {status !== "loading" && (
-        <div className="pointer-events-none fixed inset-x-0 z-[60]" style={{ top: 127 + averagesHeight - 32 }}>
-          <div className="mx-auto flex w-full max-w-[1400px] justify-end px-6" style={{ paddingRight: 340 }}>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={cycleKeyFilter}
-              className="pointer-events-auto flex h-8 items-center gap-2 rounded-full border-2 border-black bg-white px-3 text-xs !text-black hover:bg-gray-100"
-            >
-              <CycleIcon />
-              <span>
-                Touches blanches/noires :{" "}
-                <span className="font-semibold !text-black">{keyFilter === "all" ? "groupées" : "séparées"}</span>
-              </span>
-            </Button>
-          </div>
-        </div>
-      )}
       {status === "loading" ? <p className="py-16 text-center text-muted-foreground">Chargement des profils externes…</p> : (
         <>
           <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-stretch gap-6">
@@ -1019,7 +1027,7 @@ function Comparer() {
 
               <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} />
             </div>
-            <aside className="min-w-0"><div className="sticky top-[127px] z-40 flex h-fit flex-col" style={{ minHeight: averagesHeight > 0 ? averagesHeight - 8 : undefined }}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
+            <aside className="min-w-0"><div className="sticky top-[127px] z-40 flex h-fit flex-col" style={{ minHeight: averagesHeight > 0 ? averagesHeight - 8 : undefined }}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} /></div></aside>
           </div>
         </>
       )}
