@@ -566,6 +566,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const [zoomStart, setZoomStart] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<HTMLDivElement>(null);
+  const plotRef = useRef<HTMLDivElement>(null);
   // Arbitrage clavier / souris : le clavier prend la main tant que la souris ne bouge
   // pas réellement (plus de 5 px), ce qui supprime tout clignotement de la bulle.
   const interactionMode = useRef<"mouse" | "keyboard">("mouse");
