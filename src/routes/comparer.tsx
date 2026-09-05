@@ -646,17 +646,17 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     );
     const dyLeft = endpointOffsets("left");
     const dyRight = endpointOffsets("right");
-    // Zonage vertical DÉFINITIF : l'ordre des bandes est figé par la hauteur du tout
-    // premier pixel de chaque courbe (touche 1). Il ne change jamais, même au croisement.
-    const zoneOrder = lines
-      .filter((line) => !line.hidden)
-      .map((line) => {
-        const index = firstDefinedIndex(chartData, line.dataKey);
-        const value = index >= 0 ? (chartData[index]?.[line.dataKey] as number | undefined) : undefined;
-        return { dataKey: line.dataKey as string, value: typeof value === "number" ? value : Number.NEGATIVE_INFINITY };
-      })
-      .sort((a, b) => b.value - a.value)
-      .map((entry) => entry.dataKey);
+    // Zonage par AMPLITUDE RÉELLE : on reconstruit l'échelle verticale du tracé puis on
+    // retient, à l'index survolé, la courbe dont la valeur est la plus proche du pointeur.
+    const visibleLines = lines.filter((line) => !line.hidden);
+    const allValues = chartData.flatMap((point) =>
+      visibleLines.map((line) => point[line.dataKey]).filter((value): value is number => typeof value === "number" && Number.isFinite(value)),
+    );
+    const dataMin = allValues.length > 0 ? Math.min(...allValues) : 0;
+    const dataMax = allValues.length > 0 ? Math.max(...allValues) : 1;
+    const numericDomain = !autoDomain && typeof family.domain[0] === "number" && typeof family.domain[1] === "number";
+    const yMin = numericDomain ? (family.domain[0] as number) : dataMin - 1.5;
+    const yMax = numericDomain ? (family.domain[1] as number) : dataMax + 1.5;
     const start = zoomed ? zoomStart : 1;
     const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [1, 88];
     const DotComp = zoomed ? ZoomDot : SampleDot;
