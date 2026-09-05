@@ -574,7 +574,9 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       // Navigation clavier : saut instantané à la pastille mesurée précédente / suivante.
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
       event.preventDefault();
+      interactionMode.current = "keyboard";
       const step = event.key === "ArrowRight" ? 2 : -2;
+
       setHoveredNoteIndex((current) => {
         const base = current ?? Math.round(zoomStart);
         const next = Math.min(Math.max(base + step, 1), 88);
