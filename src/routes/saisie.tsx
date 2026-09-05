@@ -1026,9 +1026,9 @@ function Index() {
       Marque: info["marque"] ?? "",
       "Type de piano": info["type_piano"] ?? "",
       Modèle: info["modele"] ?? "",
-      "Préfixe lettre": info["sn_prefix"] ?? "",
-      "Numéro de série": info["sn_num"] ?? "",
-      "Suffixe lettre": info["sn_suffix"] ?? "",
+      // Numéro de série complet sur une seule paire stricte « Numéro de série;XXXX ».
+      "Numéro de série":
+        `${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`.trim(),
       "Date de fabrication": info["fabrication"] ?? "",
       Pays: info["pays"] ?? "",
       Ville: info["ville"] ?? "",
