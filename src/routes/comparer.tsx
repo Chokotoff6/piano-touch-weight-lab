@@ -546,6 +546,8 @@ function ArrowHintIcon() {
 
 export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean }) {
   const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
+  // Mémoire de la dernière pastille survolée : la bulle ne s'éteint jamais entre deux notes.
+  const tooltipCache = useRef<{ label?: number; entries: TooltipEntry[] } | null>(null);
   const [hoveredLine, setHoveredLine] = useState<string | null>(null);
   const [hoveredFamily, setHoveredFamily] = useState<string | null>(null);
 
