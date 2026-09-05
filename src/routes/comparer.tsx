@@ -318,13 +318,23 @@ function profileFromSpec(spec: FactorySpecRow): RefProfile {
 
 
 // Pastilles épurées : une tous les 6 demi-tons à partir de la touche 4 (Do et Fa#).
+// En mode zoom chirurgical la granularité passe à une touche sur deux.
 const DOT_NOTES = new Set(Array.from({ length: 15 }, (_, i) => 4 + i * 6));
-const SampleDot = (props: { cx?: number; cy?: number; payload?: { key?: number } }) => {
-  const { cx, cy, payload } = props;
-  if (typeof cx !== "number" || typeof cy !== "number") return null;
-  if (!payload || !DOT_NOTES.has(payload.key as number)) return null;
-  return <circle cx={cx} cy={cy} r={2} fill="#000000" />;
+const makeSampleDot = (step: number) => {
+  const Dot = (props: { cx?: number; cy?: number; payload?: { key?: number } }) => {
+    const { cx, cy, payload } = props;
+    if (typeof cx !== "number" || typeof cy !== "number") return null;
+    const note = payload?.key;
+    if (typeof note !== "number") return null;
+    const visible = step === 2 ? note % 2 === 0 : DOT_NOTES.has(note);
+    if (!visible) return null;
+    return <circle cx={cx} cy={cy} r={2} fill="#000000" />;
+  };
+  return Dot;
 };
+const SampleDot = makeSampleDot(6);
+const ZoomDot = makeSampleDot(2);
+
 
 type EndLabelOptions = {
   shortName: string;
@@ -377,13 +387,16 @@ function CustomTickTop(props: { x?: number; y?: number; dy?: number; payload?: {
 type TooltipEntry = { name?: string; value?: number; color?: string };
 function tooltipColorFor(name: string) {
   const lower = name.toLowerCase();
-  const isReference = lower.startsWith("cloud") || lower.startsWith("référence") || lower.startsWith("import csv");
+  // Identité bleue exclusive de l'import CSV.
+  if (lower.startsWith("import csv")) return lower.includes("blanches") ? "#93c5fd" : "#2563EB";
+  const isReference = lower.startsWith("cloud") || lower.startsWith("référence");
   if (isReference) return lower.includes("blanches") ? "#fdba74" : "#f97316";
   if (lower.includes("noires")) return "#000000";
   if (lower.includes("blanches")) return "#6b7280";
   if (lower.includes("piano actuel") || lower.trim() === "") return "#000000";
   return "#10b981";
 }
+
 
 function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number }) {
   const { active, payload, label } = props;
@@ -435,16 +448,20 @@ function currentLinesFor(familyId: string, keyFilter: KeyFilter, baseName = "Pia
 
 // La vue clavier pilote aussi la courbe de référence (Cloud ou CSV) : en vue éclatée
 // elle est scindée en blanches / noires exactement comme la courbe Live noire.
-function comparisonLinesFor(familyId: string, keyFilter: KeyFilter, name: string, short: string): LineDef[] {
+function comparisonLinesFor(familyId: string, keyFilter: KeyFilter, name: string, short: string, isCsv = false): LineDef[] {
   const metrics: Record<string, [SeriesKey, SeriesKey, SeriesKey]> = { wa: ["sameWa", "sameWaW", "sameWaB"], wd: ["sameWd", "sameWdW", "sameWdB"], bal: ["sameBal", "sameBalW", "sameBalB"], fric: ["sameFric", "sameFricW", "sameFricB"] };
   const metric = metrics[familyId];
   if (!metric) return [];
+  // Bleu intense pour l'import CSV, orange pour la moyenne Cloud.
+  const strong = isCsv ? "#2563EB" : "#f97316";
+  const light = isCsv ? "#93c5fd" : "#fdba74";
   if (keyFilter === "split") return [
-    { dataKey: metric[1], name: `${name} blanches`, shortName: `${short} blanches`, color: "#fdba74" },
-    { dataKey: metric[2], name: `${name} noires`, shortName: `${short} noires`, color: "#f97316" },
+    { dataKey: metric[1], name: `${name} blanches`, shortName: `${short} blanches`, color: light },
+    { dataKey: metric[2], name: `${name} noires`, shortName: `${short} noires`, color: strong },
   ];
-  return [{ dataKey: metric[0], name, shortName: short, color: "#f97316" }];
+  return [{ dataKey: metric[0], name, shortName: short, color: strong }];
 }
+
 
 function firstDefinedIndex(data: ChartPoint[], key: SeriesKey) {
   return data.findIndex((point) => typeof point[key] === "number" && Number.isFinite(point[key] as number));
@@ -458,29 +475,69 @@ function lastDefinedIndex(data: ChartPoint[], key: SeriesKey) {
 }
 
 
-export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140 }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number }) {
+const ZOOM_WINDOW = 44;
+
+function MagnifyIcon() {
+  return (
+    <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+      <circle cx="9" cy="9" r="5.5" />
+      <path d="m13.5 13.5 3.5 3.5M7 9h4M9 7v4" />
+    </svg>
+  );
+}
+function CloseIcon() {
+  return (
+    <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+      <path d="m5 5 10 10M15 5 5 15" />
+    </svg>
+  );
+}
+// Guide visuel : souris avec molette animée (indique le défilement horizontal).
+function WheelHintIcon() {
+  return (
+    <span className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 text-[0.65rem] font-medium !text-black shadow-sm">
+      <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+        <rect x="5.5" y="2.5" width="9" height="15" rx="4.5" />
+        <path className="animate-pulse" d="M10 5.5v3.5" stroke="#2563EB" strokeWidth="2.4" />
+      </svg>
+      <span>Molette : faire glisser le clavier</span>
+    </span>
+  );
+}
+
+export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean }) {
   const [hoveredChart, setHoveredChart] = useState<string | null>(null);
   const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
+  const [hoveredLine, setHoveredLine] = useState<string | null>(null);
+  const [zoomId, setZoomId] = useState<string | null>(null);
+  const [zoomStart, setZoomStart] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(0);
+  const zoomRef = useRef<HTMLDivElement>(null);
+
+  // Capture de la molette en mode zoom : glissement continu de la fenêtre de 44 touches.
+  useEffect(() => {
+    const node = zoomRef.current;
+    if (!node || !zoomId) return;
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const delta = event.deltaY !== 0 ? event.deltaY : event.deltaX;
+      setZoomStart((value) => Math.min(Math.max(value + delta * 0.05, 1), 88 - ZOOM_WINDOW + 1));
+    };
+    node.addEventListener("wheel", onWheel, { passive: false });
+    return () => node.removeEventListener("wheel", onWheel);
+  }, [zoomId]);
 
   useEffect(() => {
-    const node = containerRef.current;
-    if (!node) return;
-    const update = () => setContainerWidth(node.clientWidth);
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
+    if (!zoomId) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setZoomId(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [zoomId]);
 
-  // Ancrage fixe du tooltip sur le flanc droit du graphique.
-  const tooltipPosition = { x: Math.max(containerWidth - 200, 0), y: 8 };
-
-  function SubChart({ family }: { family: (typeof FAMILIES)[number] }) {
-    // Renommage dynamique de la courbe orange : "Référence : ... (CSV)" ou "Cloud",
+  function SubChart({ family, zoomed = false }: { family: (typeof FAMILIES)[number]; zoomed?: boolean }) {
+    // Renommage dynamique de la courbe de référence : "Import CSV" (bleu) ou "Cloud" (orange),
     // scindée en blanches / noires quand la vue éclatée est active.
-    const referenceLines = comparisonLinesFor(family.id, keyFilter, comparisonLabel, comparisonShort);
+    const referenceLines = comparisonLinesFor(family.id, keyFilter, comparisonLabel, comparisonShort, csvActive);
     const otherLines = family.lines.filter((line) => line.name !== "Cloud");
     const lines = [...currentLinesFor(family.id, keyFilter, currentBaseName), ...referenceLines, ...otherLines];
     // Chaque courbe est ancrée sur SON propre premier / dernier point défini
@@ -494,18 +551,47 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     const dyLeft = endpointOffsets("left");
     const dyRight = endpointOffsets("right");
     const isHovered = hoveredChart === family.id;
+    const start = zoomed ? zoomStart : 1;
+    const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [1, 88];
+    const DotComp = zoomed ? ZoomDot : SampleDot;
     return (
-      <Frame dataFrame={family.id} title={family.title} className="h-[300px] !pt-2">
+      <Frame dataFrame={family.id} title={family.title} className={zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"}>
+        <div className="absolute right-3 top-2 z-10 flex items-center gap-2">
+          {zoomed && <button type="button" aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>}
+          {!zoomed && <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>}
+        </div>
+        {zoomed && <div className="absolute left-4 top-2 z-10"><WheelHintIcon /></div>}
         <div className="h-full w-full" onMouseEnter={() => setHoveredChart(family.id)} onMouseLeave={() => setHoveredChart(null)}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} onMouseMove={(state) => { const note = state?.activeLabel; if (typeof note === "number") setHoveredNoteIndex(note); }} onMouseLeave={() => { setHoveredChart(null); setHoveredNoteIndex(null); }} margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}>
-              <XAxis xAxisId="main" dataKey="key" type="number" domain={[1, 88]} hide allowDuplicatedCategory={false} />
-              <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={[1, 88]} orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
+            <LineChart data={chartData} onMouseMove={(state) => { const note = state?.activeLabel; if (typeof note === "number") setHoveredNoteIndex(note); }} onMouseLeave={() => { setHoveredChart(null); setHoveredNoteIndex(null); setHoveredLine(null); }} margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}>
+              <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
+              <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={autoDomain ? ["auto", "auto"] : family.domain} />
               {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#e5e7eb" strokeWidth={1} />)}
               {hoveredNoteIndex !== null && <ReferenceLine xAxisId="main" x={hoveredNoteIndex} stroke="#94a3b8" strokeWidth={1} />}
-              {isHovered && <Tooltip content={<CustomTooltipContent />} position={tooltipPosition} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ pointerEvents: "none" }} isAnimationActive={false} />}
-              {lines.map((line) => <Line key={line.dataKey} xAxisId="main" type="monotone" dataKey={line.dataKey} name={line.name} stroke={line.hidden ? "transparent" : line.color} strokeWidth={2} dot={line.real ? <SampleDot /> : false} connectNulls={true} isAnimationActive={false} label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color: line.color, firstIndex: firstDefinedIndex(chartData, line.dataKey), lastIndex: lastDefinedIndex(chartData, line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden })} />)}
+              {isHovered && <Tooltip content={<CustomTooltipContent />} offset={16} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ pointerEvents: "none", transition: "transform 60ms linear" }} isAnimationActive={false} />}
+              {lines.map((line) => {
+                const active = hoveredLine === line.dataKey;
+                return (
+                  <Line
+                    key={line.dataKey}
+                    xAxisId="main"
+                    type="monotone"
+                    dataKey={line.dataKey}
+                    name={line.name}
+                    stroke={line.hidden ? "transparent" : line.color}
+                    strokeWidth={active ? 4 : 2}
+                    style={active ? { filter: "drop-shadow(0 0 4px rgba(255,255,255,0.95))" } : {}}
+                    className={active ? "animate-pulse" : ""}
+                    onMouseEnter={() => { if (!line.hidden) setHoveredLine(line.dataKey); }}
+                    onMouseLeave={() => setHoveredLine(null)}
+                    dot={line.real ? <DotComp /> : false}
+                    connectNulls={true}
+                    isAnimationActive={false}
+                    label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color: line.color, firstIndex: firstDefinedIndex(chartData, line.dataKey), lastIndex: lastDefinedIndex(chartData, line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden })}
+                  />
+                );
+              })}
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -513,7 +599,18 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     );
   }
 
-  return <div ref={containerRef} className="w-full px-2 pb-[80vh] pt-2"><div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div></div>;
+  const zoomFamily = FAMILIES.find((family) => family.id === zoomId);
+  if (zoomFamily) {
+    return (
+      <div ref={zoomRef} className="fixed inset-0 z-[70] overflow-hidden bg-white p-6">
+        <SubChart family={zoomFamily} zoomed />
+      </div>
+    );
+  }
+
+  // Largeur normale : 80 % de la page, centrée.
+  return <div ref={containerRef} className="mx-auto w-4/5 px-2 pb-[80vh] pt-2"><div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div></div>;
+
 }
 
 export const Route = createFileRoute("/comparer")({
@@ -706,7 +803,7 @@ function SidebarPanel(props: SidebarPanelProps) {
             <div className="flex items-center gap-1.5">
               <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={`${pillClass(props.cloudEnabled)} !text-orange-600`}>Cloud</Button>
               <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={`${pillClass(props.standardEnabled)} !text-green-600`}>CIBLE</Button>
-              <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={`${pillClass(props.csvActive)} !text-orange-600`}>Importer CSV</Button>
+              <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={`${pillClass(props.csvActive)} !text-blue-600`}>Importer CSV</Button>
               <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
             </div>
           </div>
@@ -1011,7 +1108,7 @@ function Comparer() {
                   <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">Piano actuel : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
                   {(comparedPiano !== null || sourceMode === "cloud") && (
                     <div className={standardEnabled ? "mb-3" : ""}>
-                      <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-orange-600">{comparisonLabel}{cloudActive && <span className="ml-2 normal-case text-orange-600">{cloudCounterText}</span>}</div>
+                      <div className={`mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide ${comparedPiano ? "!text-blue-600" : "!text-orange-600"}`}>{comparisonLabel}{cloudActive && <span className="ml-2 normal-case text-orange-600">{cloudCounterText}</span>}</div>
                       <AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} />
                       {cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}
                     </div>
@@ -1025,7 +1122,7 @@ function Comparer() {
                 </Frame>
               </div>
 
-              <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} />
+              <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} />
             </div>
             <aside className="min-w-0"><div className="sticky top-[127px] z-40 flex h-fit flex-col" style={{ minHeight: averagesHeight > 0 ? averagesHeight - 8 : undefined }}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} /></div></aside>
           </div>
