@@ -652,8 +652,11 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
                 const target = event?.currentTarget as HTMLElement | undefined;
                 const rect = target?.getBoundingClientRect();
                 const valid = (state?.activePayload ?? []).filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value));
-                if (!rect || valid.length === 0 || zoneOrder.length === 0) { setHoveredLine(null); return; }
-                const relY = (event!.clientY - rect.top) / Math.max(rect.height, 1);
+                if (!rect || valid.length === 0 || zoneOrder.length === 0) return;
+                // Hauteur UTILE réelle du tracé : marges et axe supérieur exclus.
+                const plotTop = rect.top + 22 + 15;
+                const plotHeight = Math.max(rect.height - 22 - 15 - 15, 1);
+                const relY = Math.min(Math.max((event!.clientY - plotTop) / plotHeight, 0), 0.999);
                 const zoneIndex = Math.min(Math.max(Math.floor(relY * zoneOrder.length), 0), zoneOrder.length - 1);
                 const wanted = zoneOrder[zoneIndex];
                 const available = valid.some((entry) => entry.dataKey === wanted)
@@ -661,7 +664,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
                   : zoneOrder.find((key) => valid.some((entry) => entry.dataKey === key)) ?? null;
                 setHoveredLine(available ?? null);
               }}
-              onMouseLeave={() => { setHoveredNoteIndex(null); setHoveredLine(null); setHoveredFamily(null); }}
+              onMouseLeave={() => { setHoveredFamily(null); }}
               margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}
             >
               <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
@@ -669,9 +672,17 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={autoDomain ? ["auto", "auto"] : family.domain} />
               {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#e5e7eb" strokeWidth={1} />)}
               {hoveredNoteIndex !== null && <ReferenceLine xAxisId="main" x={hoveredNoteIndex} stroke="#94a3b8" strokeWidth={1} />}
-              {/* Tooltip natif : premier plan absolu (z-index 100), suit le pointeur
-                  en continu et reste affiché jusqu'à la pastille suivante. */}
-              <Tooltip content={<CustomTooltipContent pickKey={hoveredLine} />} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ pointerEvents: "none", zIndex: 100 }} isAnimationActive={false} offset={24} />
+              {/* Tooltip natif : premier plan absolu, jamais éteint entre deux pastilles. */}
+              <Tooltip
+                content={<CustomTooltipContent pickKey={hoveredLine} cache={tooltipCache} />}
+                allowEscapeViewBox={{ x: true, y: true }}
+                wrapperStyle={{ pointerEvents: "none", zIndex: 100 }}
+                isAnimationActive={false}
+                offset={24}
+                active={hoveredNoteIndex !== null}
+                {...(zoomed && hoveredNoteIndex !== null ? { defaultIndex: hoveredNoteIndex - 1 } : {})}
+              />
+
               {lines.map((line) => {
                 // La courbe reste parfaitement stable au survol : seule la pastille
                 // active (la note sous le curseur) s'agrandit avec un liseré blanc.
