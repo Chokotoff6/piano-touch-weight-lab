@@ -637,7 +637,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           </>
         ) : (
           <div className="absolute right-3 top-2 z-10 flex flex-col items-end gap-2">
-            <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
+            <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setHoveredNoteIndex(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
           </div>
         )}
         <div className="h-full w-full" onMouseEnter={() => setHoveredFamily(family.id)}>
