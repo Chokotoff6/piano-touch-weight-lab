@@ -29,6 +29,7 @@ export type Database = {
           pays: string | null
           remarques: string | null
           serial_number: string | null
+          session_token: string
           type_piano: string | null
           updated_at: string
           usage_level: string | null
@@ -50,6 +51,7 @@ export type Database = {
           pays?: string | null
           remarques?: string | null
           serial_number?: string | null
+          session_token?: string
           type_piano?: string | null
           updated_at?: string
           usage_level?: string | null
@@ -71,6 +73,7 @@ export type Database = {
           pays?: string | null
           remarques?: string | null
           serial_number?: string | null
+          session_token?: string
           type_piano?: string | null
           updated_at?: string
           usage_level?: string | null
@@ -187,6 +190,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      current_workshop_token: { Args: never; Returns: string }
       get_own_diagnostics: {
         Args: { _numero_central: string; _user_fingerprint: string }
         Returns: {
