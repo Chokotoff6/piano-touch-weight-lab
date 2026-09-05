@@ -1411,9 +1411,9 @@ function Index() {
       // Navigation verrouillée : on n'exporte / ne navigue QUE si les deux
       // écritures cloud (buffer + historique) ont abouti.
       void syncAndFinish(mode).then((ok) => {
-        if (!ok) return;
+        // L'export local n'est jamais bloqué par un incident cloud.
         if (kind === "csv" || kind === "pdf") runLocalExport(kind);
-        if (kind === "compare") void navigate({ to: "/comparer" });
+        if (ok && kind === "compare") void navigate({ to: "/comparer" });
       });
     };
     const onExport = () => startAction("csv");
