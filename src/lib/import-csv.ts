@@ -135,10 +135,53 @@ const toNumber = (value: string | undefined) => {
   return Number.isFinite(parsed) ? parsed : Number.NaN;
 };
 
+/**
+ * Mots-clés structurels de notre architecture CSV : si un fichier compressé ou
+ * copié-collé arrive sur une seule ligne (espaces au lieu de retours à la ligne),
+ * on réinjecte un saut de ligne juste avant chacun de ces repères.
+ */
+const STRUCT_KEYS = [
+  "# ID:",
+  "Marque;",
+  "Brand;",
+  "Type de piano;",
+  "Modèle;",
+  "Model;",
+  "Préfixe lettre;",
+  "Numéro de série;",
+  "Serial number;",
+  "Suffixe lettre;",
+  "Date de fabrication;",
+  "Pays;",
+  "Ville;",
+  "Zone climatique;",
+  "Profil d'usine;",
+  "Type d'entretien;",
+  "usage_level;",
+  "Remarques;",
+  "Date et heure de saisie;",
+  "Touche;",
+  "Note;",
+];
+
+function restructureFlatContent(content: string): string {
+  // Fichier déjà multi-lignes : rien à restructurer.
+  if (content.split(/\r?\n/).length > 2) return content;
+  let out = content;
+  for (const key of STRUCT_KEYS) {
+    out = out.split(key).join(`\n${key}`);
+  }
+  // Lignes de touches du tableau : « 12;52.1;… » précédées d'un espace.
+  out = out.replace(/ (?=\d{1,2};)/g, "\n");
+  return out.replace(/^\n+/, "");
+}
+
 export function parseDiagnosticCsv(content: string): ImportedDiagnostic {
   // Suppression du BOM UTF-8 (FEFF/FFFE) et espaces parasites avant tout parsing,
   // y compris sur la ligne de signature « # ID: CLAVIER_EXPERT_GENUINE_EXPORT ».
-  const lines = content.replace(/^[\uFEFF\uFFFE]/, "").split(/\r?\n/);
+  // Restructuration ensuite des fichiers aplatis sur une seule ligne.
+  const cleaned = restructureFlatContent(content.replace(/^[\uFEFF\uFFFE]/, "").trimStart());
+  const lines = cleaned.split(/\r?\n/);
   const meta: Record<string, string> = {};
   const fields: Record<string, string> = {};
   let headerIndex = -1;
