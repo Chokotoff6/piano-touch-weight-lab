@@ -663,7 +663,15 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
             const previous = lastMouse.current;
             const moved = !previous || Math.hypot(event.clientX - previous.x, event.clientY - previous.y) > 5;
             lastMouse.current = { x: event.clientX, y: event.clientY };
-            if (moved) interactionMode.current = "mouse";
+            if (!moved) return;
+            interactionMode.current = "mouse";
+            // Découpage mathématique de la hauteur réellement rendue du tracé.
+            const rect = event.currentTarget.getBoundingClientRect();
+            const plotTop = rect.top + 22;
+            const plotHeight = Math.max(rect.height - 22 - 15, 1);
+            const relY = Math.min(Math.max((event.clientY - plotTop) / plotHeight, 0), 0.999);
+            const zoneIndex = Math.min(Math.max(Math.floor(relY * zoneOrder.length), 0), zoneOrder.length - 1);
+            setHoveredLine(zoneOrder[zoneIndex] ?? null);
           }}
         >
           <ResponsiveContainer width="100%" height="100%">
@@ -674,17 +682,6 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
                 const note = state?.activeLabel;
                 if (typeof note === "number") setHoveredNoteIndex(note);
 
-                // Zonage vertical strict calculé depuis chartY, coordonnée interne du tracé.
-                // Recharts ne participe jamais au choix de la série affichée.
-                const chartY = state?.chartY;
-                const chartHeight = zoomed ? window.innerHeight - 140 : 300;
-                if (typeof chartY !== "number" || zoneOrder.length === 0) return;
-                const plotTop = 22;
-                const plotHeight = Math.max(chartHeight - plotTop - 15, 1);
-                const relY = Math.min(Math.max((chartY - plotTop) / plotHeight, 0), 0.999);
-                const zoneIndex = Math.min(Math.max(Math.floor(relY * zoneOrder.length), 0), zoneOrder.length - 1);
-                const wanted = zoneOrder[zoneIndex];
-                setHoveredLine(wanted ?? null);
               }}
               onMouseLeave={() => { setHoveredFamily(null); }}
               margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}
