@@ -398,10 +398,9 @@ function tooltipColorFor(name: string) {
 }
 
 
-function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; pickKey?: string | null }) {
-  const { active, payload, label, pickKey } = props;
-  if (!active || !payload || payload.length === 0) return null;
-  let valid = [...payload]
+function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; pickKey?: string | null; cache?: { current: { label?: number | undefined; entries: TooltipEntry[] } | null } }) {
+  const { active, payload, label, pickKey, cache } = props;
+  let valid = [...(payload ?? [])]
     .filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value))
     .sort((a, b) => Number(b.value) - Number(a.value));
   // Détection spatiale verticale : une seule courbe affichée quand le pointeur
@@ -410,17 +409,31 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
     const picked = valid.filter((entry) => entry.dataKey === pickKey);
     if (picked.length > 0) valid = picked;
   }
+  let shownLabel = label;
+  if (active && valid.length > 0 && cache) cache.current = { label, entries: valid };
+  // Persistance absolue : entre deux pastilles on réaffiche la dernière note quittée.
+  if (valid.length === 0 && cache?.current) {
+    valid = cache.current.entries;
+    shownLabel = cache.current.label;
+  }
   if (valid.length === 0) return null;
+  // Mode courbe unique (piano actuel seul) : affichage ultra-épuré.
+  const solo = valid.length === 1 && !(valid[0]?.name ?? "").trim();
   return (
     <div className="pointer-events-none rounded-md border border-gray-200 bg-white px-3 py-2 text-xs shadow-md">
-      <div className="mb-1 font-bold text-gray-800">Touche {label}</div>
-      {valid.map((entry) => {
-        const color = tooltipColorFor(entry.name ?? "");
-        return <div key={entry.name} className="flex items-center justify-between gap-4"><span className="flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} /><span style={{ color }}>{entry.name}</span></span><span className="font-semibold tabular-nums text-gray-800">{entry.value?.toFixed(1)} g.</span></div>;
-      })}
+      <div className="mb-1 font-bold text-gray-800">Touche {shownLabel}</div>
+      {solo ? (
+        <div className="font-semibold tabular-nums text-gray-800">Moy: {valid[0]?.value?.toFixed(1)} gr.</div>
+      ) : (
+        valid.map((entry) => {
+          const color = tooltipColorFor(entry.name ?? "");
+          return <div key={entry.name} className="flex items-center justify-between gap-4"><span className="flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} /><span style={{ color }}>{entry.name}</span></span><span className="font-semibold tabular-nums text-gray-800">{entry.value?.toFixed(1)} g.</span></div>;
+        })
+      )}
     </div>
   );
 }
+
 
 
 type LineDef = { dataKey: SeriesKey; name: string; shortName: string; color: string; real?: boolean; hidden?: boolean };
@@ -508,25 +521,33 @@ function WheelHintIcon() {
         <rect x="5.5" y="2.5" width="9" height="15" rx="4.5" />
         <path className="animate-pulse" d="M10 5.5v3.5" stroke="#2563EB" strokeWidth="2.4" />
       </svg>
-      <span>Molette : faire glisser le clavier</span>
+      <span>Molette : déplace courbe ◄ ►</span>
     </span>
   );
 }
-// Guide visuel : touches fléchées du clavier (saut de pastille en pastille).
+// Guide visuel : deux triangles identiques (gauche / droite) de grande taille.
 function ArrowHintIcon() {
+  const Triangle = ({ left }: { left: boolean }) => (
+    <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+      <polygon points={left ? "14,3 14,17 3,10" : "6,3 6,17 17,10"} />
+    </svg>
+  );
   return (
     <span className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 text-[0.65rem] font-medium !text-black shadow-sm">
       <span className="flex items-center gap-1">
-        <span className="flex h-4 w-4 items-center justify-center rounded border border-gray-400 text-[0.6rem] leading-none">◄</span>
-        <span className="flex h-4 w-4 items-center justify-center rounded border border-gray-400 text-[0.6rem] leading-none">►</span>
+        <Triangle left />
+        <Triangle left={false} />
       </span>
-      <span>Flèches : note précédente / suivante</span>
+      <span>Clavier ◄ ► = note préc./suiv.</span>
     </span>
   );
 }
 
+
 export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean }) {
   const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
+  // Mémoire de la dernière pastille survolée : la bulle ne s'éteint jamais entre deux notes.
+  const tooltipCache = useRef<{ label?: number | undefined; entries: TooltipEntry[] } | null>(null);
   const [hoveredLine, setHoveredLine] = useState<string | null>(null);
   const [hoveredFamily, setHoveredFamily] = useState<string | null>(null);
 
@@ -616,7 +637,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           </>
         ) : (
           <div className="absolute right-3 top-2 z-10 flex flex-col items-end gap-2">
-            <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
+            <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setHoveredNoteIndex(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
           </div>
         )}
         <div className="h-full w-full" onMouseEnter={() => setHoveredFamily(family.id)}>
@@ -631,8 +652,11 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
                 const target = event?.currentTarget as HTMLElement | undefined;
                 const rect = target?.getBoundingClientRect();
                 const valid = (state?.activePayload ?? []).filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value));
-                if (!rect || valid.length === 0 || zoneOrder.length === 0) { setHoveredLine(null); return; }
-                const relY = (event!.clientY - rect.top) / Math.max(rect.height, 1);
+                if (!rect || valid.length === 0 || zoneOrder.length === 0) return;
+                // Hauteur UTILE réelle du tracé : marges et axe supérieur exclus.
+                const plotTop = rect.top + 22 + 15;
+                const plotHeight = Math.max(rect.height - 22 - 15 - 15, 1);
+                const relY = Math.min(Math.max((event!.clientY - plotTop) / plotHeight, 0), 0.999);
                 const zoneIndex = Math.min(Math.max(Math.floor(relY * zoneOrder.length), 0), zoneOrder.length - 1);
                 const wanted = zoneOrder[zoneIndex];
                 const available = valid.some((entry) => entry.dataKey === wanted)
@@ -640,7 +664,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
                   : zoneOrder.find((key) => valid.some((entry) => entry.dataKey === key)) ?? null;
                 setHoveredLine(available ?? null);
               }}
-              onMouseLeave={() => { setHoveredNoteIndex(null); setHoveredLine(null); setHoveredFamily(null); }}
+              onMouseLeave={() => { setHoveredFamily(null); }}
               margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}
             >
               <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
@@ -648,9 +672,17 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={autoDomain ? ["auto", "auto"] : family.domain} />
               {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#e5e7eb" strokeWidth={1} />)}
               {hoveredNoteIndex !== null && <ReferenceLine xAxisId="main" x={hoveredNoteIndex} stroke="#94a3b8" strokeWidth={1} />}
-              {/* Tooltip natif : premier plan absolu (z-index 100), suit le pointeur
-                  en continu et reste affiché jusqu'à la pastille suivante. */}
-              <Tooltip content={<CustomTooltipContent pickKey={hoveredLine} />} allowEscapeViewBox={{ x: true, y: true }} wrapperStyle={{ pointerEvents: "none", zIndex: 100 }} isAnimationActive={false} offset={24} />
+              {/* Tooltip natif : premier plan absolu, jamais éteint entre deux pastilles. */}
+              <Tooltip
+                content={<CustomTooltipContent pickKey={hoveredLine} cache={tooltipCache} />}
+                allowEscapeViewBox={{ x: true, y: true }}
+                wrapperStyle={{ pointerEvents: "none", zIndex: 100 }}
+                isAnimationActive={false}
+                offset={24}
+                active={hoveredNoteIndex !== null}
+                {...(zoomed && hoveredNoteIndex !== null ? { defaultIndex: hoveredNoteIndex - 1 } : {})}
+              />
+
               {lines.map((line) => {
                 // La courbe reste parfaitement stable au survol : seule la pastille
                 // active (la note sous le curseur) s'agrandit avec un liseré blanc.
