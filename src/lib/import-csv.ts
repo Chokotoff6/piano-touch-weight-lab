@@ -136,7 +136,9 @@ const toNumber = (value: string | undefined) => {
 };
 
 export function parseDiagnosticCsv(content: string): ImportedDiagnostic {
-  const lines = content.replace(/^\uFEFF/, "").split(/\r?\n/);
+  // Suppression du BOM UTF-8 (FEFF/FFFE) et espaces parasites avant tout parsing,
+  // y compris sur la ligne de signature « # ID: CLAVIER_EXPERT_GENUINE_EXPORT ».
+  const lines = content.replace(/^[\uFEFF\uFFFE]/, "").split(/\r?\n/);
   const meta: Record<string, string> = {};
   const fields: Record<string, string> = {};
   let headerIndex = -1;
