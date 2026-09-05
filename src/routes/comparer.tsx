@@ -844,7 +844,7 @@ function SidebarPanel(props: SidebarPanelProps) {
             {switchRow("Même année de fabrication", props.sameYear, props.setSameYear)}
             {switchRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
           </div>
-          <div className="mt-auto border-t border-gray-200 pt-3">
+          <div className="mt-auto mb-3 border-t border-gray-200 pt-3">
             <Button
               type="button"
               variant="outline"
