@@ -1183,7 +1183,7 @@ function Comparer() {
 
   async function handleImport(file: File) {
     try {
-      const parsed = parseDiagnosticCsv(await file.text());
+      const parsed = parseDiagnosticCsv(await readCsvFileContent(file));
       const year = Number(parsed.fields["manufacture_year"]);
       const piano = buildCurrentPiano({
         brand: parsed.fields["brand"] ?? "",
