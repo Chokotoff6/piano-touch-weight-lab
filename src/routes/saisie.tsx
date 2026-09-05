@@ -1329,9 +1329,20 @@ function Index() {
       setIsDirty(false);
       showTopbarAlert("save", mode === "update" ? SAVE_UPDATE_MESSAGE : SAVE_NEW_MESSAGE);
       return true;
-    } catch {
-      toast.error("La synchronisation cloud a échoué.", { id: toastId });
-      showMessage("La synchronisation cloud a échoué. Les données locales restent disponibles dans Comparer.");
+    } catch (error) {
+      // Détail complet en console pour diagnostiquer l'échec (contrainte, RLS, réseau…).
+      console.error("[Sync cloud] échec de l'enregistrement :", error);
+      const detail =
+        error && typeof error === "object" && "message" in error
+          ? String((error as { message?: unknown }).message ?? "")
+          : String(error ?? "");
+      toast.error(`La synchronisation cloud a échoué${detail ? ` : ${detail}` : ""}.`, {
+        id: toastId,
+        duration: 12000,
+      });
+      showMessage(
+        `La synchronisation cloud a échoué${detail ? ` : ${detail}` : ""}. Les données locales restent disponibles dans Comparer.`,
+      );
       return false;
     } finally {
       setIsExporting(false);
