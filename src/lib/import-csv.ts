@@ -89,11 +89,14 @@ export async function readCsvFileContent(file: File): Promise<string> {
   }
 }
 
-/** Clés exactes de l'export officiel (accents français stricts), lues en priorité. */
+/** Clés exactes de l'export officiel (FR avec accents stricts + EN), lues en priorité. */
 const EXACT_META_KEYS: Record<string, string> = {
   Marque: "brand",
+  Brand: "brand",
   Modèle: "model",
+  Model: "model",
   "Numéro de série": "serial_number",
+  "Serial number": "serial_number",
 };
 
 /** Clés canoniques des métadonnées, repérées par mots-clés. */
