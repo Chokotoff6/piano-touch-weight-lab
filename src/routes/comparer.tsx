@@ -514,10 +514,8 @@ function WheelHintIcon() {
 }
 
 export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean }) {
-  const [hoveredChart, setHoveredChart] = useState<string | null>(null);
   const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
   const [hoveredLine, setHoveredLine] = useState<string | null>(null);
-  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
   const [zoomId, setZoomId] = useState<string | null>(null);
   const [zoomStart, setZoomStart] = useState(1);
@@ -570,14 +568,13 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           {zoomed && <WheelHintIcon />}
           {!zoomed && <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>}
         </div>
-        <div className="h-full w-full" onMouseEnter={() => setHoveredChart(family.id)} onMouseLeave={() => setHoveredChart(null)}>
+        <div className="h-full w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
               onMouseMove={(state: { activeLabel?: unknown; chartX?: number; chartY?: number; activePayload?: TooltipEntry[] }, event?: React.MouseEvent<HTMLElement>) => {
                 const note = state?.activeLabel;
                 if (typeof note === "number") setHoveredNoteIndex(note);
-                if (typeof state?.chartX === "number" && typeof state?.chartY === "number") setTooltipPos({ x: state.chartX, y: state.chartY });
                 // Détection spatiale verticale stable : moitié haute -> courbe la plus haute,
                 // moitié basse -> courbe la plus basse. Aucun clignotement possible.
                 const target = event?.currentTarget as HTMLElement | undefined;
@@ -589,7 +586,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
                 const picked = relY < 0.5 ? sorted[0] : sorted[sorted.length - 1];
                 setHoveredLine(picked?.dataKey ?? null);
               }}
-              onMouseLeave={() => { setHoveredChart(null); setHoveredNoteIndex(null); setHoveredLine(null); setTooltipPos(null); }}
+              onMouseLeave={() => { setHoveredNoteIndex(null); setHoveredLine(null); }}
               margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}
             >
               <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
