@@ -396,11 +396,8 @@ function Index() {
   const pendingCompare = useRef(false);
   // Numéro de série effectivement enregistré : sert au CRITÈRE 1 (série inconnue → INSERT).
   const savedSerialRef = useRef<string>("");
-  // Consentement RGPD : jamais persisté, toujours décoché quand le numéro change.
-  const [consent, setConsent] = useState(false);
-  // Le consentement se coche désormais uniquement dans l'alerte jaune contextuelle.
-  const [consentPrompt, setConsentPrompt] = useState(false);
-  const consentSerialRef = useRef("");
+  // Le consentement RGPD est confiné à la page Résultats (/resultats) : aucune
+  // case à cocher ni alerte de partage n'existe sur la page Saisie.
   // Photographie des 88 touches et du jour du dernier envoi cloud (seuil des 5 touches).
   const savedRowsRef = useRef<Row[]>([]);
   const savedDateRef = useRef<string>("");
