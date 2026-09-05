@@ -2100,9 +2100,8 @@ Moyennes{" "}
                 const compare = pendingCompare.current;
                 pendingCompare.current = false;
                 void syncAndFinish("update").then((ok) => {
-                  if (!ok) return;
                   if (kind) runLocalExport(kind);
-                  if (compare) void navigate({ to: "/comparer" });
+                  if (ok && compare) void navigate({ to: "/comparer" });
                 });
               }}
             >
