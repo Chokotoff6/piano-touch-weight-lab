@@ -346,7 +346,7 @@ function RootComponent() {
              </div>
              )}
 
-             <div className="ml-auto mr-[112px] flex items-center gap-1 text-sm font-semibold">
+             <div className="ml-auto mr-[152px] flex items-center gap-1 text-sm font-semibold">
                <Button
                  variant="ghost"
                  size="sm"
