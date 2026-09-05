@@ -965,7 +965,7 @@ function Comparer() {
     : cloudSampleCount === 0
       ? ""
       : cloudSampleCount === 1
-        ? "Moyennes d'un 1 piano de modèle identique enregistré par les utilisateurs"
+        ? "- Moyennes d'un 1 piano de modèle identique enregistré par les utilisateurs"
         : `Moyennes sur ${cloudSampleCount} pianos de modèle identique enregistrés par les utilisateurs`;
 
 
