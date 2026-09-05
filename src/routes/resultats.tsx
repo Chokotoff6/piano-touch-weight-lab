@@ -231,7 +231,7 @@ function Resultats() {
       />
       <div className="w-full">
         <div className="min-w-0">
-          <div ref={averagesRef} className="sticky top-[127px] z-40 mb-[50px] w-full bg-background pb-2">
+          <div ref={averagesRef} className="sticky top-[127px] z-50 mb-[50px] w-full bg-white pb-2 relative">
               <Frame
                 titleClassName="absolute -top-4 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground"
                 title={
