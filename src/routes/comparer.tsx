@@ -521,22 +521,28 @@ function WheelHintIcon() {
         <rect x="5.5" y="2.5" width="9" height="15" rx="4.5" />
         <path className="animate-pulse" d="M10 5.5v3.5" stroke="#2563EB" strokeWidth="2.4" />
       </svg>
-      <span>Molette : faire glisser le clavier</span>
+      <span>Molette : déplace courbe ◄ ►</span>
     </span>
   );
 }
-// Guide visuel : touches fléchées du clavier (saut de pastille en pastille).
+// Guide visuel : deux triangles identiques (gauche / droite) de grande taille.
 function ArrowHintIcon() {
+  const Triangle = ({ left }: { left: boolean }) => (
+    <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+      <polygon points={left ? "14,3 14,17 3,10" : "6,3 6,17 17,10"} />
+    </svg>
+  );
   return (
     <span className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 text-[0.65rem] font-medium !text-black shadow-sm">
       <span className="flex items-center gap-1">
-        <span className="flex h-4 w-4 items-center justify-center rounded border border-gray-400 text-[0.6rem] leading-none">◄</span>
-        <span className="flex h-4 w-4 items-center justify-center rounded border border-gray-400 text-[0.6rem] leading-none">►</span>
+        <Triangle left />
+        <Triangle left={false} />
       </span>
-      <span>Flèches : note précédente / suivante</span>
+      <span>Clavier ◄ ► = note préc./suiv.</span>
     </span>
   );
 }
+
 
 export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean }) {
   const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
