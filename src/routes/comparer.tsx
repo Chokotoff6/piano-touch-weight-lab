@@ -581,8 +581,8 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
                     name={line.name}
                     stroke={line.hidden ? "transparent" : line.color}
                     strokeWidth={active ? 4 : 2}
-                    style={active ? { filter: "drop-shadow(0 0 4px rgba(255,255,255,0.95))" } : undefined}
-                    className={active ? "animate-pulse" : undefined}
+                    style={active ? { filter: "drop-shadow(0 0 4px rgba(255,255,255,0.95))" } : {}}
+                    className={active ? "animate-pulse" : ""}
                     onMouseEnter={() => { if (!line.hidden) setHoveredLine(line.dataKey); }}
                     onMouseLeave={() => setHoveredLine(null)}
                     dot={line.real ? <DotComp /> : false}
