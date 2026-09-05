@@ -874,6 +874,18 @@ function summaryValue(value: string | number | null | undefined) {
   return value === null || value === undefined || value === "" ? "-" : String(value);
 }
 
+/** Comptage compact des touches mesurées : " - xx Blanches / yy Noires". */
+function countKeys(values: number[] | undefined) {
+  let white = 0;
+  let black = 0;
+  (values ?? []).forEach((value, index) => {
+    if (typeof value !== "number" || !Number.isFinite(value)) return;
+    if (isBlackKey(index + 1)) black += 1;
+    else white += 1;
+  });
+  return ` - ${white} Blanches / ${black} Noires`;
+}
+
 function Comparer() {
   const [sourceMode, setSourceMode] = useState<SourceMode>("cloud");
   const [standardEnabled, setStandardEnabled] = useState(true);
