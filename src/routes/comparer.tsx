@@ -436,15 +436,17 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
   // Mode courbe unique : affichage ultra-épuré, sans pastille ni nom technique.
   const solo = valid.length === 1;
 
+  const soloColor = valid[0]?.color ?? tooltipColorFor(valid[0]?.name ?? "");
+
   return (
     <div className="pointer-events-none rounded-md border border-gray-200 bg-white px-3 py-2 text-xs shadow-md">
-      <div className="mb-1 font-bold text-gray-800">Touche {shownLabel}</div>
+      <div className="mb-1 font-bold" style={{ color: solo ? soloColor : "#1f2937" }}>Touche {shownLabel}</div>
       {solo ? (
-        <div className="font-semibold tabular-nums text-gray-800">Moy: {valid[0]?.value?.toFixed(1)} gr.</div>
+        <div className="font-semibold tabular-nums" style={{ color: soloColor }}>{Math.round(Number(valid[0]?.value ?? 0))} gr.</div>
       ) : (
         valid.map((entry) => {
-          const color = tooltipColorFor(entry.name ?? "");
-          return <div key={entry.name} className="flex items-center justify-between gap-4"><span className="flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} /><span style={{ color }}>{entry.name}</span></span><span className="font-semibold tabular-nums text-gray-800">{entry.value?.toFixed(1)} g.</span></div>;
+          const color = entry.color ?? tooltipColorFor(entry.name ?? "");
+          return <div key={entry.name} className="flex items-center justify-between gap-4"><span style={{ color }}>{entry.name}</span><span className="font-semibold tabular-nums" style={{ color }}>{Math.round(Number(entry.value ?? 0))} gr.</span></div>;
         })
       )}
     </div>
