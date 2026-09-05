@@ -417,8 +417,9 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
     shownLabel = cache.current.label;
   }
   if (valid.length === 0) return null;
-  // Mode courbe unique (piano actuel seul) : affichage ultra-épuré.
-  const solo = valid.length === 1 && !(valid[0]?.name ?? "").trim();
+  // Mode courbe unique : affichage ultra-épuré, sans pastille ni nom technique.
+  const solo = valid.length === 1;
+
   return (
     <div className="pointer-events-none rounded-md border border-gray-200 bg-white px-3 py-2 text-xs shadow-md">
       <div className="mb-1 font-bold text-gray-800">Touche {shownLabel}</div>
@@ -525,23 +526,15 @@ function WheelHintIcon() {
     </span>
   );
 }
-// Guide visuel : deux triangles identiques (gauche / droite) de grande taille.
+// Guide visuel : rappel clavier, sans icône.
 function ArrowHintIcon() {
-  const Triangle = ({ left }: { left: boolean }) => (
-    <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-      <polygon points={left ? "14,3 14,17 3,10" : "6,3 6,17 17,10"} />
-    </svg>
-  );
   return (
     <span className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 text-[0.65rem] font-medium !text-black shadow-sm">
-      <span className="flex items-center gap-1">
-        <Triangle left />
-        <Triangle left={false} />
-      </span>
-      <span>Clavier ◄ ► = note préc./suiv.</span>
+      <span>{"Clavier <> : note préc./suiv."}</span>
     </span>
   );
 }
+
 
 
 export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean }) {
