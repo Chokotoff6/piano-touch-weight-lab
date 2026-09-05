@@ -2114,9 +2114,8 @@ Moyennes{" "}
                 pendingCompare.current = false;
                 setCurrentDbId(null);
                 void syncAndFinish("insert").then((ok) => {
-                  if (!ok) return;
                   if (kind) runLocalExport(kind);
-                  if (compare) void navigate({ to: "/comparer" });
+                  if (ok && compare) void navigate({ to: "/comparer" });
                 });
               }}
             >
