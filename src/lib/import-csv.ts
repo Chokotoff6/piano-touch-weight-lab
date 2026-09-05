@@ -117,6 +117,8 @@ export function parseDiagnosticCsv(content: string): ImportedDiagnostic {
   let columns: Columns | null = null;
 
   for (let index = 0; index < lines.length; index += 1) {
+    // Ligne de signature / commentaire technique : ignorée par le parseur.
+    if ((lines[index] ?? "").trimStart().startsWith("#")) continue;
     const values = parseLine(lines[index] ?? "");
     if (!columns && values.length >= 3) {
       const detected = detectColumns(values);
