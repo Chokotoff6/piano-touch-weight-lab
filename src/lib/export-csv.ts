@@ -21,8 +21,11 @@ export function computeRow(r: ExportRow) {
   };
 }
 
+/** Signature technique placée en première ligne de chaque export (clé d'authenticité). */
+export const CSV_SIGNATURE = "# ID: CLAVIER_EXPERT_GENUINE_EXPORT";
+
 export function buildCsv(meta: ExportMeta, rows: ExportRow[]): string {
-  const lines: string[] = [];
+  const lines: string[] = [CSV_SIGNATURE];
   for (const [label, value] of Object.entries(meta)) {
     lines.push(line([label, value ?? ""]));
   }

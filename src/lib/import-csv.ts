@@ -81,6 +81,8 @@ const META_ALIASES: { key: string; match: string[] }[] = [
   { key: "brand", match: ["marque", "brand"] },
   { key: "model", match: ["modele", "model"] },
   { key: "serial_number", match: ["numero de serie", "serial"] },
+  { key: "serial_prefix", match: ["prefixe lettre", "prefixe"] },
+  { key: "serial_suffix", match: ["suffixe lettre", "suffixe"] },
   { key: "manufacture_year", match: ["date de fabrication", "annee de fabrication", "manufacture"] },
   { key: "maintenance_type", match: ["type d'entretien", "type dentretien", "maintenance"] },
   { key: "usage_level", match: ["usage_level", "niveau d'usage", "niveau dusage", "usage"] },
@@ -115,6 +117,8 @@ export function parseDiagnosticCsv(content: string): ImportedDiagnostic {
   let columns: Columns | null = null;
 
   for (let index = 0; index < lines.length; index += 1) {
+    // Ligne de signature / commentaire technique : ignorée par le parseur.
+    if ((lines[index] ?? "").trimStart().startsWith("#")) continue;
     const values = parseLine(lines[index] ?? "");
     if (!columns && values.length >= 3) {
       const detected = detectColumns(values);
@@ -153,6 +157,11 @@ export function parseDiagnosticCsv(content: string): ImportedDiagnostic {
   }
 
   if (count === 0) throw new Error("INVALID_CSV");
+
+  // Numéro de série complet : préfixe + numéro central + suffixe (sans espace parasite).
+  const full = `${fields["serial_prefix"] ?? ""}${fields["serial_number"] ?? ""}${fields["serial_suffix"] ?? ""}`.trim();
+  if (full) fields["serial_number"] = full;
+  else delete fields["serial_number"];
 
   return { meta, fields, rows, friction };
 }

@@ -1329,9 +1329,20 @@ function Index() {
       setIsDirty(false);
       showTopbarAlert("save", mode === "update" ? SAVE_UPDATE_MESSAGE : SAVE_NEW_MESSAGE);
       return true;
-    } catch {
-      toast.error("La synchronisation cloud a échoué.", { id: toastId });
-      showMessage("La synchronisation cloud a échoué. Les données locales restent disponibles dans Comparer.");
+    } catch (error) {
+      // Détail complet en console pour diagnostiquer l'échec (contrainte, RLS, réseau…).
+      console.error("[Sync cloud] échec de l'enregistrement :", error);
+      const detail =
+        error && typeof error === "object" && "message" in error
+          ? String((error as { message?: unknown }).message ?? "")
+          : String(error ?? "");
+      toast.error(`La synchronisation cloud a échoué${detail ? ` : ${detail}` : ""}.`, {
+        id: toastId,
+        duration: 12000,
+      });
+      showMessage(
+        `La synchronisation cloud a échoué${detail ? ` : ${detail}` : ""}. Les données locales restent disponibles dans Comparer.`,
+      );
       return false;
     } finally {
       setIsExporting(false);
@@ -1400,9 +1411,9 @@ function Index() {
       // Navigation verrouillée : on n'exporte / ne navigue QUE si les deux
       // écritures cloud (buffer + historique) ont abouti.
       void syncAndFinish(mode).then((ok) => {
-        if (!ok) return;
+        // L'export local n'est jamais bloqué par un incident cloud.
         if (kind === "csv" || kind === "pdf") runLocalExport(kind);
-        if (kind === "compare") void navigate({ to: "/comparer" });
+        if (ok && kind === "compare") void navigate({ to: "/comparer" });
       });
     };
     const onExport = () => startAction("csv");
@@ -2089,9 +2100,8 @@ Moyennes{" "}
                 const compare = pendingCompare.current;
                 pendingCompare.current = false;
                 void syncAndFinish("update").then((ok) => {
-                  if (!ok) return;
                   if (kind) runLocalExport(kind);
-                  if (compare) void navigate({ to: "/comparer" });
+                  if (ok && compare) void navigate({ to: "/comparer" });
                 });
               }}
             >
@@ -2104,9 +2114,8 @@ Moyennes{" "}
                 pendingCompare.current = false;
                 setCurrentDbId(null);
                 void syncAndFinish("insert").then((ok) => {
-                  if (!ok) return;
                   if (kind) runLocalExport(kind);
-                  if (compare) void navigate({ to: "/comparer" });
+                  if (ok && compare) void navigate({ to: "/comparer" });
                 });
               }}
             >
