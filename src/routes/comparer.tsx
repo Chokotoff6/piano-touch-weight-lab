@@ -645,8 +645,17 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
             <LineChart
               data={chartData}
               onMouseMove={(state: { activeLabel?: unknown; chartX?: number; chartY?: number; activePayload?: TooltipEntry[] }, event?: React.MouseEvent<HTMLElement>) => {
+                // Un vrai déplacement de plus de 5 px rend la main à la souris.
+                if (event) {
+                  const previous = lastMouse.current;
+                  const moved = !previous || Math.hypot(event.clientX - previous.x, event.clientY - previous.y) > 5;
+                  lastMouse.current = { x: event.clientX, y: event.clientY };
+                  if (moved) interactionMode.current = "mouse";
+                }
+                if (interactionMode.current === "keyboard") return;
                 const note = state?.activeLabel;
                 if (typeof note === "number") setHoveredNoteIndex(note);
+
                 // Zonage vertical figé : la hauteur du cadre est découpée en autant de bandes
                 // que de courbes, chaque bande appartenant définitivement à une courbe.
                 const target = event?.currentTarget as HTMLElement | undefined;
