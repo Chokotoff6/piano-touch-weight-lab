@@ -252,7 +252,7 @@ function Resultats() {
           <div className="relative mx-auto w-full">
               <div
                 className="pointer-events-none fixed inset-x-0 z-[60]"
-                style={{ top: 127 + averagesHeight - 40 }}
+                style={{ top: 127 + averagesHeight + 9 }}
               >
                 <div className="mx-auto flex w-full max-w-[1400px] justify-end px-6 pr-10">
                   <Button
