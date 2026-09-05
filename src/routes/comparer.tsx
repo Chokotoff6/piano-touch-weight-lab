@@ -624,7 +624,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [1, 88];
     const DotComp = zoomed ? ZoomDot : SampleDot;
     return (
-      <Frame dataFrame={family.id} title={family.title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-50" : "z-0"}`}>
+      <Frame dataFrame={family.id} title={family.title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}>
         {zoomed ? (
           <>
             <div className="absolute right-3 top-2 z-20">
@@ -732,7 +732,13 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   }
 
   // Largeur normale : 80 % de la page, centrée.
-  return <div ref={containerRef} className="mx-auto w-4/5 px-2 pb-[80vh] pt-2"><div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div></div>;
+  // Largeur normale : 80 % de la largeur de la page web (et non de la colonne),
+  // les cadres sont extraits de la grille via une bande pleine largeur centrée.
+  return (
+    <div ref={containerRef} className="relative left-1/2 w-screen -translate-x-1/2 pb-[80vh] pt-2">
+      <div className="mx-auto flex w-[80%] max-w-5xl flex-col gap-4 px-2">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div>
+    </div>
+  );
 
 }
 
