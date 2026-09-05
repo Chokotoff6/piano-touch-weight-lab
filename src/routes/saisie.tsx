@@ -995,14 +995,8 @@ function Index() {
       showTopbarAlert(anchor, OCTAVE_RULE_MESSAGE);
       return false;
     }
-    // Un numéro jamais envoyé dans cette session exige un consentement explicite,
-    // coché directement dans l'alerte jaune contextuelle.
-    const serial = (info["sn_num"] ?? "").trim();
-    const known = Boolean(currentDbId) && serial.length > 0 && serial === savedSerialRef.current;
-    if (!known && !consent) {
-      setConsentPrompt(true);
-      return false;
-    }
+    // Le consentement RGPD n'est plus contrôlé ici : il est demandé exclusivement
+    // sur la page Résultats, au moment de lever le voile des graphiques.
     return true;
   };
 
