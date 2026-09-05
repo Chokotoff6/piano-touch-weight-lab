@@ -1870,33 +1870,6 @@ function Index() {
       </div>
       )}
 
-      {consentPrompt && (
-        <div
-          className="fixed left-1/2 top-24 w-[min(90vw,32rem)] -translate-x-1/2 rounded-md border border-gray-300 px-4 py-3 text-sm font-medium text-gray-950 shadow-lg"
-          style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
-        >
-          <p className="mb-2">
-            Action requise : ce numéro de série est nouveau. Cochez la case ci-dessous pour
-            autoriser le partage anonyme et accéder au comparateur.
-          </p>
-          <label className="flex items-start gap-2">
-            <input
-              type="checkbox"
-              checked={consent}
-              onChange={(e) => {
-                setConsent(e.target.checked);
-                if (e.target.checked) setConsentPrompt(false);
-              }}
-              className="mt-1 h-4 w-4"
-            />
-            <span>
-              J'accepte de partager anonymement les mesures de ce piano pour alimenter la base
-              collaborative (RGPD).
-            </span>
-          </label>
-        </div>
-      )}
-
       {blockMessage && (
         <div
           className="fixed left-1/2 top-24 w-[min(90vw,32rem)] -translate-x-1/2 rounded-md border border-gray-300 px-4 py-3 text-sm font-medium text-gray-950 shadow-lg"
