@@ -385,6 +385,7 @@ function CustomTickTop(props: { x?: number; y?: number; dy?: number; payload?: {
 }
 
 type TooltipEntry = { name?: string; value?: number; color?: string; dataKey?: string };
+type TooltipCache = { label?: number; entries: TooltipEntry[]; pickKey?: string | null };
 function tooltipColorFor(name: string) {
   const lower = name.toLowerCase();
   // Identité bleue exclusive de l'import CSV.
@@ -398,21 +399,36 @@ function tooltipColorFor(name: string) {
 }
 
 
-function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; pickKey?: string | null; cache?: { current: { label?: number | undefined; entries: TooltipEntry[] } | null } }) {
-  const { active, payload, label, pickKey, cache } = props;
+function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; pickKey?: string | null; cache?: { current: TooltipCache | null }; chartData?: ChartPoint[]; lines?: LineDef[] }) {
+  const { active, payload, label, pickKey, cache, chartData, lines } = props;
   let valid = [...(payload ?? [])]
     .filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value))
     .sort((a, b) => Number(b.value) - Number(a.value));
-  // Détection spatiale verticale : une seule courbe affichée quand le pointeur
-  // désigne clairement la moitié haute ou basse du cadre.
+  let shownLabel = label;
+  // En mode éclaté, l'étage vertical est souverain : aucune autre série issue
+  // de la détection de proximité Recharts ne peut remplacer la série choisie.
   if (pickKey) {
     const picked = valid.filter((entry) => entry.dataKey === pickKey);
-    if (picked.length > 0) valid = picked;
+    valid = picked;
+    // Si la note verticale courante ne porte pas de point pour cette série
+    // (alternance touches blanches/noires), sélectionner sa pastille la plus proche.
+    if (valid.length === 0 && chartData && lines) {
+      const requestedKey = typeof label === "number" ? label : 1;
+      const nearest = chartData
+        .map((point) => ({ point, distance: Math.abs(point.key - requestedKey) }))
+        .filter(({ point }) => typeof point[pickKey as SeriesKey] === "number" && Number.isFinite(point[pickKey as SeriesKey] as number))
+        .sort((a, b) => a.distance - b.distance)[0]?.point;
+      const definition = lines.find((line) => line.dataKey === pickKey);
+      const value = nearest?.[pickKey as SeriesKey];
+      if (nearest && definition && typeof value === "number") {
+        valid = [{ dataKey: pickKey, name: definition.name, color: definition.color, value }];
+        shownLabel = nearest.key;
+      }
+    }
   }
-  let shownLabel = label;
-  if (active && valid.length > 0 && cache) cache.current = { label, entries: valid };
+  if (active && valid.length > 0 && cache) cache.current = { label: shownLabel, entries: valid, pickKey };
   // Persistance absolue : entre deux pastilles on réaffiche la dernière note quittée.
-  if (valid.length === 0 && cache?.current) {
+  if (valid.length === 0 && cache?.current && cache.current.pickKey === pickKey) {
     valid = cache.current.entries;
     shownLabel = cache.current.label;
   }
@@ -540,7 +556,7 @@ function ArrowHintIcon() {
 export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean }) {
   const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
   // Mémoire de la dernière pastille survolée : la bulle ne s'éteint jamais entre deux notes.
-  const tooltipCache = useRef<{ label?: number | undefined; entries: TooltipEntry[] } | null>(null);
+  const tooltipCache = useRef<TooltipCache | null>(null);
   const [hoveredLine, setHoveredLine] = useState<string | null>(null);
   const [hoveredFamily, setHoveredFamily] = useState<string | null>(null);
 
@@ -640,38 +656,35 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
             <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setHoveredNoteIndex(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
           </div>
         )}
-        <div className="h-full w-full" onMouseEnter={() => setHoveredFamily(family.id)}>
+        <div
+          className="h-full w-full"
+          onMouseEnter={() => setHoveredFamily(family.id)}
+          onMouseMoveCapture={(event) => {
+            const previous = lastMouse.current;
+            const moved = !previous || Math.hypot(event.clientX - previous.x, event.clientY - previous.y) > 5;
+            lastMouse.current = { x: event.clientX, y: event.clientY };
+            if (moved) interactionMode.current = "mouse";
+          }}
+        >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
-              onMouseMove={(state: { activeLabel?: unknown; chartX?: number; chartY?: number; activePayload?: TooltipEntry[] }, event?: React.MouseEvent<HTMLElement>) => {
-                // Un vrai déplacement de plus de 5 px rend la main à la souris.
-                if (event) {
-                  const previous = lastMouse.current;
-                  const moved = !previous || Math.hypot(event.clientX - previous.x, event.clientY - previous.y) > 5;
-                  lastMouse.current = { x: event.clientX, y: event.clientY };
-                  if (moved) interactionMode.current = "mouse";
-                }
+              onMouseMove={(state: { activeLabel?: unknown; chartX?: number; chartY?: number; activePayload?: TooltipEntry[] }) => {
                 if (interactionMode.current === "keyboard") return;
                 const note = state?.activeLabel;
                 if (typeof note === "number") setHoveredNoteIndex(note);
 
-                // Zonage vertical figé : la hauteur du cadre est découpée en autant de bandes
-                // que de courbes, chaque bande appartenant définitivement à une courbe.
-                const target = event?.currentTarget as HTMLElement | undefined;
-                const rect = target?.getBoundingClientRect();
-                const valid = (state?.activePayload ?? []).filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value));
-                if (!rect || valid.length === 0 || zoneOrder.length === 0) return;
-                // Hauteur UTILE réelle du tracé : marges et axe supérieur exclus.
-                const plotTop = rect.top + 22 + 15;
-                const plotHeight = Math.max(rect.height - 22 - 15 - 15, 1);
-                const relY = Math.min(Math.max((event!.clientY - plotTop) / plotHeight, 0), 0.999);
+                // Zonage vertical strict calculé depuis chartY, coordonnée interne du tracé.
+                // Recharts ne participe jamais au choix de la série affichée.
+                const chartY = state?.chartY;
+                const chartHeight = zoomed ? window.innerHeight - 140 : 300;
+                if (typeof chartY !== "number" || zoneOrder.length === 0) return;
+                const plotTop = 22;
+                const plotHeight = Math.max(chartHeight - plotTop - 15, 1);
+                const relY = Math.min(Math.max((chartY - plotTop) / plotHeight, 0), 0.999);
                 const zoneIndex = Math.min(Math.max(Math.floor(relY * zoneOrder.length), 0), zoneOrder.length - 1);
                 const wanted = zoneOrder[zoneIndex];
-                const available = valid.some((entry) => entry.dataKey === wanted)
-                  ? wanted
-                  : zoneOrder.find((key) => valid.some((entry) => entry.dataKey === key)) ?? null;
-                setHoveredLine(available ?? null);
+                setHoveredLine(wanted ?? null);
               }}
               onMouseLeave={() => { setHoveredFamily(null); }}
               margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}
@@ -683,7 +696,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
               {hoveredNoteIndex !== null && <ReferenceLine xAxisId="main" x={hoveredNoteIndex} stroke="#94a3b8" strokeWidth={1} />}
               {/* Tooltip natif : premier plan absolu, jamais éteint entre deux pastilles. */}
               <Tooltip
-                content={<CustomTooltipContent pickKey={hoveredLine} cache={tooltipCache} />}
+                content={<CustomTooltipContent pickKey={hoveredLine} cache={tooltipCache} chartData={chartData} lines={lines} />}
                 allowEscapeViewBox={{ x: true, y: true }}
                 wrapperStyle={{ pointerEvents: "none", zIndex: 100 }}
                 isAnimationActive={false}
@@ -773,10 +786,11 @@ type MetricKey = (typeof COLUMNS)[number]["key"];
 
 
 // Charte couleur stricte : rangée 1 noire, rangée 2 orange, rangée 3 verte.
-type Tone = "cur" | "ref" | "std";
+type Tone = "cur" | "ref" | "csv" | "std";
 const TONE_CLASS: Record<Tone, string> = {
   cur: "!text-black",
   ref: "!text-orange-600",
+  csv: "!text-blue-600",
   std: "!text-green-600",
 };
 
@@ -811,7 +825,7 @@ const AVG_KEYS: Record<MetricKey, { cur: [SeriesKey, SeriesKey, SeriesKey]; ref:
   balance: { cur: ["balCur", "balCurW", "balCurB"], ref: ["sameBal", "sameBalW", "sameBalB"] },
 };
 
-export function AverageRow({ chartData, source, hasData }: { chartData: ChartPoint[]; source: "cur" | "ref"; hasData: boolean }) {
+export function AverageRow({ chartData, source, hasData, csv = false }: { chartData: ChartPoint[]; source: "cur" | "ref"; hasData: boolean; csv?: boolean }) {
   return (
     <div className="grid grid-cols-4 gap-3">
       {COLUMNS.map(({ key, label }) => {
@@ -820,7 +834,7 @@ export function AverageRow({ chartData, source, hasData }: { chartData: ChartPoi
           <AverageBlock
             key={key}
             label={label}
-            tone={source}
+            tone={source === "ref" && csv ? "csv" : source}
             global={hasData ? seriesAverage(chartData, globalKey) : "—"}
             white={hasData ? seriesAverage(chartData, whiteKey) : "—"}
             black={hasData ? seriesAverage(chartData, blackKey) : "—"}
@@ -879,7 +893,7 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
 }
 
 const PILL_BASE = "h-7 min-w-0 flex-1 rounded-full border px-1.5 text-[0.68rem] leading-tight transition-colors whitespace-nowrap";
-const pillClass = (active: boolean) => `${PILL_BASE} ${active ? "border-gray-300 bg-gray-100 font-semibold text-slate-700" : "border-gray-200 bg-white text-gray-400 hover:border-gray-300 hover:text-gray-500"}`;
+const pillClass = (active: boolean) => `${PILL_BASE} ${active ? "border-black bg-gray-100 font-semibold text-slate-700" : "border-gray-200 bg-white text-gray-400 hover:border-gray-300 hover:text-gray-500"}`;
 
 export function CycleIcon() {
   return (
@@ -1255,7 +1269,7 @@ function Comparer() {
                   {(comparedPiano !== null || sourceMode === "cloud") && (
                     <div className={standardEnabled ? "mb-3" : ""}>
                       <div className={`mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide ${comparedPiano ? "!text-blue-600" : "!text-orange-600"}`}>{comparedPiano ? <>IMPORT CSV : <span className="normal-case">{csvIdentity}{csvStats}</span></> : <>Cloud</>}{cloudActive && <span className="ml-2 normal-case text-orange-600">{cloudCounterText}{countKeys(cloudProfile?.wa)}</span>}</div>
-                      <AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} />
+                      <AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} csv={comparedPiano !== null} />
                       {cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}
                     </div>
                   )}
