@@ -333,6 +333,7 @@ const makeSampleDot = (step: number) => {
   return Dot;
 };
 const SampleDot = makeSampleDot(6);
+const ZoomDot = makeSampleDot(2);
 
 
 type EndLabelOptions = {
@@ -552,8 +553,6 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     const isHovered = hoveredChart === family.id;
     const start = zoomed ? zoomStart : 1;
     const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [1, 88];
-    const dotNode = zoomed ? makeSampleDot(2)({}) === null ? undefined : undefined : undefined;
-    void dotNode;
     const DotComp = zoomed ? ZoomDot : SampleDot;
     return (
       <Frame dataFrame={family.id} title={family.title} className={zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"}>
