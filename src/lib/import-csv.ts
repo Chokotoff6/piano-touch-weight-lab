@@ -115,6 +115,9 @@ const META_ALIASES: { key: string; match: string[] }[] = [
 ];
 
 function canonicalMetaKey(label: string): string | null {
+  // Priorité absolue aux clés exactes de l'export officiel (accents stricts).
+  const exact = EXACT_META_KEYS[label.trim()];
+  if (exact) return exact;
   const normalized = normalize(label);
   for (const alias of META_ALIASES) {
     if (alias.match.some((needle) => normalized.startsWith(needle))) return alias.key;
