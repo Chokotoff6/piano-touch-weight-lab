@@ -1404,7 +1404,7 @@ function Index() {
       // écritures cloud (buffer + historique) ont abouti.
       void syncAndFinish(mode).then((ok) => {
         // L'export local n'est jamais bloqué par un incident cloud.
-        if (kind === "csv" || kind === "pdf") runLocalExport(kind);
+        if (kind === "pdf") runLocalExport("pdf");
         if (ok && kind === "compare") void navigate({ to: "/comparer" });
       });
     };
