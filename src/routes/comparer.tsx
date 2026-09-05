@@ -803,7 +803,7 @@ function SidebarPanel(props: SidebarPanelProps) {
             <div className="flex items-center gap-1.5">
               <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={`${pillClass(props.cloudEnabled)} !text-orange-600`}>Cloud</Button>
               <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={`${pillClass(props.standardEnabled)} !text-green-600`}>CIBLE</Button>
-              <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={`${pillClass(props.csvActive)} !text-orange-600`}>Importer CSV</Button>
+              <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={`${pillClass(props.csvActive)} !text-blue-600`}>Importer CSV</Button>
               <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
             </div>
           </div>
@@ -1122,7 +1122,7 @@ function Comparer() {
                 </Frame>
               </div>
 
-              <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} />
+              <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} />
             </div>
             <aside className="min-w-0"><div className="sticky top-[127px] z-40 flex h-fit flex-col" style={{ minHeight: averagesHeight > 0 ? averagesHeight - 8 : undefined }}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} /></div></aside>
           </div>
