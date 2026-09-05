@@ -548,6 +548,11 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const [zoomStart, setZoomStart] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<HTMLDivElement>(null);
+  // Arbitrage clavier / souris : le clavier prend la main tant que la souris ne bouge
+  // pas réellement (plus de 5 px), ce qui supprime tout clignotement de la bulle.
+  const interactionMode = useRef<"mouse" | "keyboard">("mouse");
+  const lastMouse = useRef<{ x: number; y: number } | null>(null);
+
 
   // Capture de la molette en mode zoom : glissement continu de la fenêtre de 44 touches.
   useEffect(() => {
