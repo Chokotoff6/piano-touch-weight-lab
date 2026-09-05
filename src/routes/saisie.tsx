@@ -1386,6 +1386,12 @@ function Index() {
       return savedDateRef.current !== today || changedWeightCount() >= 5;
     };
     const startAction = (kind: "csv" | "pdf" | "compare") => {
+      // Export CSV : fonctionnalité 100 % locale et gratuite. Aucun consentement,
+      // aucune validation bloquante, aucune synchronisation cloud ne peut le retarder.
+      if (kind === "csv") {
+        runLocalExport("csv");
+        return;
+      }
       if (!guardExport("export")) return;
       if (requiresChoice()) {
         pendingExport.current = kind === "compare" ? null : kind;
