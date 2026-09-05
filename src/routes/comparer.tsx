@@ -856,7 +856,7 @@ function Comparer() {
       setStandardLabel(
         spec.brand === "STANDARD"
           ? "Standard (Internet)"
-          : `Usine - Générique ${spec.brand.toLocaleUpperCase()}`,
+          : `USINE - CIBLE GÉNÉRIQUE ${spec.brand.toLocaleUpperCase()}`,
       );
     }
     void loadFactorySpec();
