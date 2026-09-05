@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useLang } from "@/data/translations";
-import { parseDiagnosticCsv } from "@/lib/import-csv";
+import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
 import {
   buildCurrentPiano,
   loadCurrentPiano,
@@ -1183,7 +1183,7 @@ function Comparer() {
 
   async function handleImport(file: File) {
     try {
-      const parsed = parseDiagnosticCsv(await file.text());
+      const parsed = parseDiagnosticCsv(await readCsvFileContent(file));
       const year = Number(parsed.fields["manufacture_year"]);
       const piano = buildCurrentPiano({
         brand: parsed.fields["brand"] ?? "",
