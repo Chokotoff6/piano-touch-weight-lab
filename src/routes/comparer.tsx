@@ -417,8 +417,9 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
     shownLabel = cache.current.label;
   }
   if (valid.length === 0) return null;
-  // Mode courbe unique (piano actuel seul) : affichage ultra-épuré.
-  const solo = valid.length === 1 && !(valid[0]?.name ?? "").trim();
+  // Mode courbe unique : affichage ultra-épuré, sans pastille ni nom technique.
+  const solo = valid.length === 1;
+
   return (
     <div className="pointer-events-none rounded-md border border-gray-200 bg-white px-3 py-2 text-xs shadow-md">
       <div className="mb-1 font-bold text-gray-800">Touche {shownLabel}</div>
@@ -525,23 +526,15 @@ function WheelHintIcon() {
     </span>
   );
 }
-// Guide visuel : deux triangles identiques (gauche / droite) de grande taille.
+// Guide visuel : rappel clavier, sans icône.
 function ArrowHintIcon() {
-  const Triangle = ({ left }: { left: boolean }) => (
-    <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-      <polygon points={left ? "14,3 14,17 3,10" : "6,3 6,17 17,10"} />
-    </svg>
-  );
   return (
     <span className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 text-[0.65rem] font-medium !text-black shadow-sm">
-      <span className="flex items-center gap-1">
-        <Triangle left />
-        <Triangle left={false} />
-      </span>
-      <span>Clavier ◄ ► = note préc./suiv.</span>
+      <span>{"Clavier <> : note préc./suiv."}</span>
     </span>
   );
 }
+
 
 
 export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean }) {
@@ -555,6 +548,11 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const [zoomStart, setZoomStart] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<HTMLDivElement>(null);
+  // Arbitrage clavier / souris : le clavier prend la main tant que la souris ne bouge
+  // pas réellement (plus de 5 px), ce qui supprime tout clignotement de la bulle.
+  const interactionMode = useRef<"mouse" | "keyboard">("mouse");
+  const lastMouse = useRef<{ x: number; y: number } | null>(null);
+
 
   // Capture de la molette en mode zoom : glissement continu de la fenêtre de 44 touches.
   useEffect(() => {
@@ -576,7 +574,9 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       // Navigation clavier : saut instantané à la pastille mesurée précédente / suivante.
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
       event.preventDefault();
+      interactionMode.current = "keyboard";
       const step = event.key === "ArrowRight" ? 2 : -2;
+
       setHoveredNoteIndex((current) => {
         const base = current ?? Math.round(zoomStart);
         const next = Math.min(Math.max(base + step, 1), 88);
@@ -624,7 +624,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [1, 88];
     const DotComp = zoomed ? ZoomDot : SampleDot;
     return (
-      <Frame dataFrame={family.id} title={family.title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-50" : "z-0"}`}>
+      <Frame dataFrame={family.id} title={family.title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}>
         {zoomed ? (
           <>
             <div className="absolute right-3 top-2 z-20">
@@ -645,8 +645,17 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
             <LineChart
               data={chartData}
               onMouseMove={(state: { activeLabel?: unknown; chartX?: number; chartY?: number; activePayload?: TooltipEntry[] }, event?: React.MouseEvent<HTMLElement>) => {
+                // Un vrai déplacement de plus de 5 px rend la main à la souris.
+                if (event) {
+                  const previous = lastMouse.current;
+                  const moved = !previous || Math.hypot(event.clientX - previous.x, event.clientY - previous.y) > 5;
+                  lastMouse.current = { x: event.clientX, y: event.clientY };
+                  if (moved) interactionMode.current = "mouse";
+                }
+                if (interactionMode.current === "keyboard") return;
                 const note = state?.activeLabel;
                 if (typeof note === "number") setHoveredNoteIndex(note);
+
                 // Zonage vertical figé : la hauteur du cadre est découpée en autant de bandes
                 // que de courbes, chaque bande appartenant définitivement à une courbe.
                 const target = event?.currentTarget as HTMLElement | undefined;
@@ -723,7 +732,13 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   }
 
   // Largeur normale : 80 % de la page, centrée.
-  return <div ref={containerRef} className="mx-auto w-4/5 px-2 pb-[80vh] pt-2"><div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div></div>;
+  // Largeur normale : 80 % de la largeur de la page web (et non de la colonne),
+  // les cadres sont extraits de la grille via une bande pleine largeur centrée.
+  return (
+    <div ref={containerRef} className="relative left-1/2 w-screen -translate-x-1/2 pb-[80vh] pt-2">
+      <div className="mx-auto flex w-[80%] max-w-5xl flex-col gap-4 px-2">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div>
+    </div>
+  );
 
 }
 
@@ -1227,12 +1242,12 @@ function Comparer() {
           <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-stretch gap-6">
             <div className="min-w-0">
               
-              <div ref={averagesRef} className="sticky top-[127px] z-40 mb-[50px] w-full bg-background pb-2">
+              <div ref={averagesRef} className="sticky top-[127px] z-50 mb-[50px] w-full bg-white pb-2 relative">
                 <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span>Moyennes</span>} className="h-fit">
                   <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">Piano actuel : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
                   {(comparedPiano !== null || sourceMode === "cloud") && (
                     <div className={standardEnabled ? "mb-3" : ""}>
-                      <div className={`mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide ${comparedPiano ? "!text-blue-600" : "!text-orange-600"}`}>{comparedPiano ? <>IMPORT CSV : <span className="normal-case">{csvIdentity}{csvStats}</span></> : <>Cloud</>}{cloudActive && <span className="ml-2 normal-case text-orange-600">{cloudCounterText}</span>}</div>
+                      <div className={`mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide ${comparedPiano ? "!text-blue-600" : "!text-orange-600"}`}>{comparedPiano ? <>IMPORT CSV : <span className="normal-case">{csvIdentity}{csvStats}</span></> : <>Cloud</>}{cloudActive && <span className="ml-2 normal-case text-orange-600">{cloudCounterText}{countKeys(cloudProfile?.wa)}</span>}</div>
                       <AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} />
                       {cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}
                     </div>
@@ -1248,7 +1263,7 @@ function Comparer() {
 
               <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} />
             </div>
-            <aside className="min-w-0"><div className="sticky top-[127px] z-40 flex h-fit flex-col" style={{ minHeight: averagesHeight > 0 ? averagesHeight - 8 : undefined }}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} /></div></aside>
+            <aside className="min-w-0"><div className="sticky top-[127px] z-50 flex h-full min-h-[400px] flex-col" style={{ minHeight: averagesHeight > 0 ? averagesHeight - 8 : undefined }}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} /></div></aside>
           </div>
         </>
       )}
