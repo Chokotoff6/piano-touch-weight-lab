@@ -384,7 +384,7 @@ function CustomTickTop(props: { x?: number; y?: number; dy?: number; payload?: {
   );
 }
 
-type TooltipEntry = { name?: string; value?: number; color?: string };
+type TooltipEntry = { name?: string; value?: number; color?: string; dataKey?: string };
 function tooltipColorFor(name: string) {
   const lower = name.toLowerCase();
   // Identité bleue exclusive de l'import CSV.
@@ -398,14 +398,21 @@ function tooltipColorFor(name: string) {
 }
 
 
-function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number }) {
-  const { active, payload, label } = props;
+function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; pickKey?: string | null }) {
+  const { active, payload, label, pickKey } = props;
   if (!active || !payload || payload.length === 0) return null;
-  const valid = [...payload]
+  let valid = [...payload]
     .filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value))
     .sort((a, b) => Number(b.value) - Number(a.value));
+  // Détection spatiale verticale : une seule courbe affichée quand le pointeur
+  // désigne clairement la moitié haute ou basse du cadre.
+  if (pickKey) {
+    const picked = valid.filter((entry) => entry.dataKey === pickKey);
+    if (picked.length > 0) valid = picked;
+  }
+  if (valid.length === 0) return null;
   return (
-    <div className="pointer-events-none rounded-md border border-gray-200 bg-white/95 px-3 py-2 text-xs shadow-md">
+    <div className="pointer-events-none rounded-md border border-gray-200 bg-white px-3 py-2 text-xs shadow-md">
       <div className="mb-1 font-bold text-gray-800">Touche {label}</div>
       {valid.map((entry) => {
         const color = tooltipColorFor(entry.name ?? "");
@@ -414,6 +421,7 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
     </div>
   );
 }
+
 
 type LineDef = { dataKey: SeriesKey; name: string; shortName: string; color: string; real?: boolean; hidden?: boolean };
 const FAMILIES: Array<{ id: string; title: string; domain: [number, number]; lines: LineDef[] }> = [
