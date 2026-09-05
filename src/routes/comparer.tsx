@@ -727,7 +727,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
               <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={autoDomain ? ["auto", "auto"] : family.domain} />
               {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#e5e7eb" strokeWidth={1} />)}
-              {hoveredNoteIndex !== null && <ReferenceLine xAxisId="main" x={hoveredNoteIndex} stroke="#94a3b8" strokeWidth={1} />}
+              
               {/* Tooltip natif : premier plan absolu, jamais éteint entre deux pastilles. */}
               <Tooltip
                 content={<CustomTooltipContent pickKey={hoveredLine} cache={tooltipCache} chartData={chartData} lines={lines} />}
