@@ -599,6 +599,8 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       const step = event.key === "ArrowRight" ? 1 : -1;
       setKeyboardMode(true);
       mouseAnchor.current = null;
+      // Neutralisation de la souris pendant 300 ms : évite la boucle de survol parasite.
+      kbLockUntil.current = Date.now() + 300;
       setKbNote((previous) => {
         const base = previous ?? lastMouseNote.current ?? Math.round(zoomStart + ZOOM_WINDOW / 2);
         const next = Math.min(Math.max(base + step, 1), 88);
