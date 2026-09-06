@@ -554,6 +554,8 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const mouseAnchor = useRef<{ x: number; y: number } | null>(null);
   // Dernière hauteur (Y) décidée par la souris : la FF pilotée au clavier y reste figée.
   const lastMouseY = useRef<number>(96);
+  // Dernière note (index X) survolée par la souris : point de départ du pilotage clavier.
+  const lastMouseNote = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<HTMLDivElement>(null);
 
@@ -586,7 +588,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       setKeyboardMode(true);
       mouseAnchor.current = null;
       setKbNote((previous) => {
-        const base = previous ?? Math.round(zoomStart + ZOOM_WINDOW / 2);
+        const base = previous ?? lastMouseNote.current ?? Math.round(zoomStart + ZOOM_WINDOW / 2);
         const next = Math.min(Math.max(base + step, 1), 88);
         // La fenêtre suit la pastille active.
         setZoomStart((start) => {
@@ -608,7 +610,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       const anchor = mouseAnchor.current;
       if (!anchor) { mouseAnchor.current = { x: event.clientX, y: event.clientY }; return; }
       const distance = Math.hypot(event.clientX - anchor.x, event.clientY - anchor.y);
-      if (distance > 30) setKeyboardMode(false);
+      if (distance > 30) { setKeyboardMode(false); setKbNote(null); }
     };
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
@@ -644,16 +646,18 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           {zoomed && (
             <button type="button" aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
           )}
-          <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
+          {!zoomed && (
+            <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1.5 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
+          )}
           {onCycleKeyFilter && (
             <button
               type="button"
-              aria-label={`Touches ${keyFilter === "all" ? "groupées" : "séparées"}`}
+              aria-label={bwLabel}
               onClick={onCycleKeyFilter}
               className="flex items-center gap-1 rounded-full border border-gray-300 bg-white px-2 py-0.5 text-[0.68rem] font-medium !text-black hover:bg-gray-100"
             >
               <PianoKeysIcon />
-              <span className="!text-black">{keyFilter === "all" ? "groupé" : "séparé"}</span>
+              <span className="!text-black">{bwLabel}</span>
             </button>
           )}
         </div>
@@ -674,6 +678,10 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
+              onMouseMove={(state: { activeLabel?: string | number }) => {
+                const note = Number(state?.activeLabel);
+                if (Number.isFinite(note)) lastMouseNote.current = note;
+              }}
               onMouseLeave={() => { setHoveredFamily(null); }}
               margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}
             >
