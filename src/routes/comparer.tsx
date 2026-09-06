@@ -545,6 +545,10 @@ function ArrowHintIcon() {
 
 
 export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible", onCycleKeyFilter }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void }) {
+  const lang = useLang();
+  const bwLabel = lang === "en"
+    ? (keyFilter === "all" ? "B/W: grouped" : "B/W: separated")
+    : (keyFilter === "all" ? "B/N : groupées" : "B/N : séparées");
   const [hoveredFamily, setHoveredFamily] = useState<string | null>(null);
 
   const [zoomId, setZoomId] = useState<string | null>(null);
