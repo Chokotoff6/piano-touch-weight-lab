@@ -609,10 +609,11 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     return () => window.removeEventListener("keydown", onKey);
   }, [zoomId, zoomStart]);
 
-  // La souris ne reprend la main qu'après un déplacement réel de plus de 30 px.
+  // La souris ne reprend la main qu'après un déplacement réel (physique) de plus de 30 px.
   useEffect(() => {
     if (!zoomId || !keyboardMode) return;
     const onMove = (event: MouseEvent) => {
+      if (!event.isTrusted) return;
       const anchor = mouseAnchor.current;
       if (!anchor) { mouseAnchor.current = { x: event.clientX, y: event.clientY }; return; }
       const distance = Math.hypot(event.clientX - anchor.x, event.clientY - anchor.y);
@@ -621,6 +622,24 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
   }, [zoomId, keyboardMode]);
+
+  // Pilotage clavier : on rejoue un vrai survol à la position de la note active pour que
+  // les pastilles s'allument et que la bulle native suive, à la hauteur fixée par la souris.
+  useEffect(() => {
+    if (!zoomId || !keyboardMode || kbNote === null) return;
+    const node = plotRef.current;
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    const fraction = Math.min(Math.max((kbNote - zoomStart) / (ZOOM_WINDOW - 1), 0), 1);
+    const x = rect.left + sideMargin + (rect.width - sideMargin * 2) * fraction;
+    const y = rect.top + Math.min(Math.max(lastMouseY.current, 10), rect.height - 10);
+    const target = document.elementFromPoint(x, y) ?? node;
+    const init: MouseEventInit = { clientX: x, clientY: y, bubbles: true, cancelable: true, view: window };
+    target.dispatchEvent(new MouseEvent("mouseover", init));
+    target.dispatchEvent(new MouseEvent("mousemove", init));
+  }, [zoomId, keyboardMode, kbNote, zoomStart, sideMargin]);
+
+
 
 
 
