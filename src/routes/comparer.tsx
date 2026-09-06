@@ -430,7 +430,11 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
       <div className="mb-1 font-bold !text-black">Touche {label}</div>
       {valid.map((entry) => {
         const color = entry.color ?? tooltipColorFor(entry.name ?? "");
-        const name = entry.name?.trim() ? entry.name : "Piano actuel";
+        // Sur /resultats les courbes n'ont pas de nom : Recharts retombe sur la clé
+        // technique ("waCur"). On affiche alors "Blanche" / "Noire" selon la note.
+        const rawName = entry.name?.trim() ?? "";
+        const isRawKey = rawName === "" || rawName === String(entry.dataKey ?? "");
+        const name = isRawKey ? (isBlackKey(Number(label)) ? "Noire" : "Blanche") : rawName;
         return (
           <div key={entry.dataKey} className="flex items-center justify-between gap-4 whitespace-nowrap" style={{ color }}>
             <span>{name}</span>
@@ -1093,9 +1097,11 @@ function SidebarPanel(props: SidebarPanelProps) {
     >
       {/* Espaceur invisible de même largeur que l'icône RefreshCw (16px) pour aligner le début du texte sur les boutons du haut. */}
       <span className="w-4 shrink-0" aria-hidden="true" />
-      <span className="font-bold uppercase text-black">
+      <span className="flex items-center font-bold uppercase text-black">
         {label}
-        {checked ? <span className="ml-[10px] font-bold text-black text-[0.884rem]">V</span> : null}
+        {checked
+          ? <SquareX size={18} strokeWidth={2.6} className="ml-[10px] shrink-0 !text-black" />
+          : <Square size={18} strokeWidth={1.4} className="ml-[10px] shrink-0 !text-black" />}
       </span>
     </Button>
   );
@@ -1106,12 +1112,12 @@ function SidebarPanel(props: SidebarPanelProps) {
   return (
     <Frame title="Réglages" className="flex flex-1 flex-col">
       <div className="flex h-full flex-col items-stretch justify-start gap-2 pt-2">
-          <div className="text-sm font-bold !text-black">Comparer piano actuel avec :</div>
+          <div className="text-sm font-bold !text-black">Comparer piano actuel avec CLOUD :</div>
           <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={sourceButtonClass(props.cloudEnabled, "!text-orange-600")}><CycleIcon /><span className="font-bold uppercase">Cloud</span></Button>
           <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><CycleIcon /><span className="font-bold uppercase">Cible</span></Button>
-          <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={sourceButtonClass(props.csvActive, "!text-blue-600")}><CycleIcon /><span className="font-bold uppercase">Importer CSV</span></Button>
+          <Button type="button" variant="outline" title="Importez un fichier CSV depuis votre stockage local." aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} !text-blue-700 [&_svg]:!text-blue-700 ${props.csvActive ? "" : "border-blue-600"}`}><CycleIcon /><span className="font-bold uppercase">Importer CSV</span></Button>
           <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
-          <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold !text-black">Filtres</div>
+          <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold !text-black">Filtres CLOUD</div>
           <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black !opacity-100 disabled:!opacity-100 font-medium hover:border-gray-300 [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.usageLevel !== "low" ? 2.5 : 1.2} className="shrink-0" /><span className="!text-black font-bold uppercase">Usage instrument : <span className="!text-black font-semibold uppercase">{usageLabel}</span></span></Button>
           <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left !text-black !opacity-100 disabled:!opacity-100 [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.importantChanges !== "excluded" ? 2.5 : 1.2} className="shrink-0" /><span className="!text-black font-bold uppercase">Modifications importantes : <span className="!text-black font-semibold uppercase">{changesLabel}</span></span></Button>
           {cycleRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
