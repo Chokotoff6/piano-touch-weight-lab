@@ -544,7 +544,7 @@ function ArrowHintIcon() {
 
 
 
-export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible" }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string }) {
+export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible", onCycleKeyFilter }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void }) {
   const [hoveredFamily, setHoveredFamily] = useState<string | null>(null);
 
   const [zoomId, setZoomId] = useState<string | null>(null);
@@ -552,8 +552,11 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const [kbNote, setKbNote] = useState<number | null>(null);
   const [keyboardMode, setKeyboardMode] = useState(false);
   const mouseAnchor = useRef<{ x: number; y: number } | null>(null);
+  // Dernière hauteur (Y) décidée par la souris : la FF pilotée au clavier y reste figée.
+  const lastMouseY = useRef<number>(96);
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<HTMLDivElement>(null);
+
 
   // Capture de la molette en mode zoom : glissement continu de la fenêtre de 44 touches.
   useEffect(() => {
