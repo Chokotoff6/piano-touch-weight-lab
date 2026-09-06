@@ -1057,7 +1057,7 @@ function FastTip({ text, children }: { text: string; children: ReactNode }) {
     >
       {children}
       {open && (
-        <div className="pointer-events-none absolute right-full top-1/2 z-50 mr-[30px] w-60 -translate-y-1/2 rounded-md border border-gray-300 bg-white px-2 py-1 text-[0.7rem] font-medium !text-black shadow-lg">{text}</div>
+        <div className="pointer-events-none absolute right-full top-1/2 z-50 mr-[-30px] w-60 -translate-y-1/2 rounded-md border border-gray-300 bg-white px-2 py-1 text-[0.7rem] font-medium !text-black shadow-lg">{text}</div>
       )}
     </div>
   );
