@@ -549,6 +549,9 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
 
   const [zoomId, setZoomId] = useState<string | null>(null);
   const [zoomStart, setZoomStart] = useState(1);
+  const [kbNote, setKbNote] = useState<number | null>(null);
+  const [keyboardMode, setKeyboardMode] = useState(false);
+  const mouseAnchor = useRef<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<HTMLDivElement>(null);
 
