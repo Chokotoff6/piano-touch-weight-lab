@@ -533,7 +533,7 @@ function ArrowHintIcon() {
 
 
 
-export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean }) {
+export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible" }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string }) {
   const [hoveredFamily, setHoveredFamily] = useState<string | null>(null);
 
   const [zoomId, setZoomId] = useState<string | null>(null);
@@ -569,7 +569,10 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     // Renommage dynamique de la courbe de référence : "Import CSV" (bleu) ou "Cloud" (orange),
     // scindée en blanches / noires quand la vue éclatée est active.
     const referenceLines = comparisonLinesFor(family.id, keyFilter, comparisonLabel, comparisonShort, csvActive);
-    const otherLines = family.lines.filter((line) => line.name !== "Cloud");
+    // Le libellé de la courbe verte reprend l'identité complète de la cible sélectionnée.
+    const otherLines = family.lines
+      .filter((line) => line.name !== "Cloud")
+      .map((line) => (line.name === "Cible" ? { ...line, name: targetLabel } : line));
     const lines = [...currentLinesFor(family.id, keyFilter, currentBaseName), ...referenceLines, ...otherLines];
     // Chaque courbe est ancrée sur SON propre premier / dernier point défini
     // (indispensable en vue éclatée où blanches et noires ne partagent pas les mêmes index).
@@ -666,7 +669,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   // les cadres sont extraits de la grille via une bande pleine largeur centrée.
   return (
     <div ref={containerRef} className="relative left-1/2 w-screen -translate-x-1/2 pb-[80vh] pt-2">
-      <div className="mx-auto flex w-[80%] max-w-5xl flex-col gap-4 px-2">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div>
+      <div className="mx-auto flex w-[80vw] max-w-5xl flex-col gap-4 px-2" style={{ width: "80vw", marginLeft: "auto", marginRight: "auto" }}>{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div>
     </div>
   );
 
@@ -1182,9 +1185,10 @@ function Comparer() {
               
               <div ref={averagesRef} className="sticky top-[127px] z-50 mb-[50px] w-full bg-white pb-2 relative">
                 <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span>Moyennes</span>} className="h-fit">
-                  <div className="mb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">Piano actuel : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
+                  {/* Fines lignes de séparation entre chaque source de données. */}
+                  <div className="mb-3 border-b border-gray-200 pb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">Piano actuel : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
                   {(comparedPiano !== null || sourceMode === "cloud") && (
-                    <div className={standardEnabled ? "mb-3" : ""}>
+                    <div className={standardEnabled ? "mb-3 border-b border-gray-200 pb-3" : ""}>
                       <div className={`mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide ${comparedPiano ? "!text-blue-600" : "!text-orange-600"}`}>{comparedPiano ? <>IMPORT CSV : <span className="normal-case">{csvIdentity}{csvStats}</span></> : <>Cloud</>}{cloudActive && <span className="ml-2 normal-case text-orange-600">{cloudCounterText}{countKeys(cloudProfile?.wa)}</span>}</div>
                       <AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} csv={comparedPiano !== null} />
                       {cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}
@@ -1199,9 +1203,9 @@ function Comparer() {
                 </Frame>
               </div>
 
-              <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} />
+              <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible"} />
             </div>
-            <aside className="min-w-0"><div className="sticky top-[127px] z-50 flex flex-col overflow-hidden" style={averagesHeight > 0 ? { height: `${averagesHeight - 8}px` } : undefined}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} /></div></aside>
+            <aside className="min-w-0"><div className="sticky top-[127px] z-50 flex flex-col overflow-visible" style={averagesHeight > 0 ? { height: `${averagesHeight - 8}px` } : undefined}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} /></div></aside>
           </div>
         </>
       )}
