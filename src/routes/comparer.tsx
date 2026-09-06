@@ -663,11 +663,9 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   useEffect(() => {
     if (!zoomId || !keyboardMode || kbNote === null) return;
     const node = zoomRef.current ?? plotRef.current;
-    if (!node) return;
-    const surface = node.querySelector(".recharts-surface") as HTMLElement | null;
-    const svg = node.querySelector("svg.recharts-surface") as HTMLElement | null;
-    console.log("[KB][disp3]", "surf=", !!surface, "svg=", !!svg, "docCount=", document.querySelectorAll(".recharts-surface").length);
-    const target = (svg ?? surface) as HTMLElement | null;
+    const docSurf = document.querySelectorAll(".recharts-surface");
+    console.log("[KB][disp4]", "zoomRef=", !!zoomRef.current, "plotRef=", !!plotRef.current, "nodeTag=", node?.tagName, "docSurf=", docSurf.length, "nodeSvg=", node?.querySelectorAll("svg").length);
+    const target = (docSurf[0] ?? node?.querySelector("svg")) as HTMLElement | null;
     if (!target) return;
     const rect = target.getBoundingClientRect();
     const fraction = Math.min(Math.max((kbNote - zoomStart) / (ZOOM_WINDOW - 1), 0), 1);
