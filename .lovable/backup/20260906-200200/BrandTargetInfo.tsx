@@ -2,38 +2,13 @@ import { useState } from "react";
 import { Info, X } from "lucide-react";
 import { useLang } from "@/data/translations";
 
-export type TargetVariant = "standard" | "brand";
-
-/** Contenu bilingue partagé (overlay graphiques et bas de page d'accueil). */
-export function BrandTargetInfoContent({ variant = "brand" }: { variant?: TargetVariant }) {
+/** Contenu bilingue partagé (overlay /comparer et bas de page d'accueil). */
+export function BrandTargetInfoContent() {
   const en = useLang() === "en";
-  if (variant === "standard") {
-    return (
-      <div className="text-sm leading-relaxed text-foreground">
-        <h3 className="mb-3 text-base font-bold uppercase">
-          {en ? "About Generic Target Curves" : "À propos des courbes Cibles Génériques"}
-        </h3>
-        <ul className="list-disc space-y-2 pl-5">
-          <li>
-            <span className="font-semibold">{en ? "Reference Benchmarks:" : "Valeurs de Référence :"}</span>{" "}
-            {en
-              ? "These theoretical dataset values represent standard industry guidelines for optimal key downweight and action friction."
-              : "Ces données théoriques représentent les standards de laboratoire et de facture généralement constatés dans l'industrie pour un confort de jeu optimal (poids d'abaissement linéaire et friction cible)."}
-          </li>
-          <li>
-            <span className="font-semibold">{en ? "Generic Nature:" : "Nature Générique :"}</span>{" "}
-            {en
-              ? "This curve is purely benchmark-driven, universal, and generic. It does not map to any specific commercial brand, piano model, or production year."
-              : "Cette courbe est purement indicative, universelle et générique. Elle ne correspond à aucun modèle précis, aucune marque commerciale, ni aucune année de fabrication spécifique."}
-          </li>
-        </ul>
-      </div>
-    );
-  }
   return (
     <div className="text-sm leading-relaxed text-foreground">
-      <h3 className="mb-3 text-base font-bold uppercase">
-        {en ? "About Generic Brand Target Curves" : "À propos des courbes Cibles Génériques de marques"}
+      <h3 className="mb-3 text-base font-bold">
+        {en ? "About Generic Target Curves" : "À propos des courbes Cibles Génériques"}
       </h3>
       <ul className="list-disc space-y-2 pl-5">
         <li>
@@ -53,8 +28,8 @@ export function BrandTargetInfoContent({ variant = "brand" }: { variant?: Target
   );
 }
 
-/** Petite icône "i" verte ouvrant l'overlay d'information juridique. */
-export function BrandTargetInfoIcon({ variant = "brand" }: { variant?: TargetVariant }) {
+/** Petite icône "i" ouvrant l'overlay d'information juridique. */
+export function BrandTargetInfoIcon() {
   const [open, setOpen] = useState(false);
   const en = useLang() === "en";
   return (
@@ -63,14 +38,14 @@ export function BrandTargetInfoIcon({ variant = "brand" }: { variant?: TargetVar
         type="button"
         aria-label={en ? "About generic target curves" : "À propos des cibles génériques"}
         onClick={(event) => { event.stopPropagation(); setOpen(true); }}
-        className="ml-1 inline-flex translate-y-[-5px] align-middle !text-emerald-500"
+        className="ml-1 inline-flex align-middle text-gray-400 transition-colors hover:!text-black"
       >
         <Info size={14} />
       </button>
       {open && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4"
-          onClick={(event) => event.stopPropagation()}
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setOpen(false)}
         >
           <div
             className="relative w-full max-w-lg rounded-lg border border-black bg-white p-6 shadow-xl"
@@ -84,7 +59,7 @@ export function BrandTargetInfoIcon({ variant = "brand" }: { variant?: TargetVar
             >
               <X size={18} />
             </button>
-            <BrandTargetInfoContent variant={variant} />
+            <BrandTargetInfoContent />
           </div>
         </div>
       )}

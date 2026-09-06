@@ -1492,7 +1492,7 @@ function Comparer() {
                   )}
                   {standardEnabled && (
                     <div>
-                      <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-green-600">{standardLabel}<BrandTargetInfoIcon variant={/standard/i.test(standardLabel) ? "standard" : "brand"} /></div>
+                      <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-green-600">{standardLabel}<BrandTargetInfoIcon /></div>
                       <StandardRow chartData={chartData} />
                     </div>
                   )}
