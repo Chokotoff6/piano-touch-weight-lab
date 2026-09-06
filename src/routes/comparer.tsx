@@ -561,6 +561,9 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const lastMouseNote = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<HTMLDivElement>(null);
+  // Zone de tracé du cadre zoomé : sert à rejouer un survol réel à la note pilotée au clavier.
+  const plotRef = useRef<HTMLDivElement>(null);
+
 
 
   // Capture de la molette en mode zoom : glissement continu de la fenêtre de 44 touches.
