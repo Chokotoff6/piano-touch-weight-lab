@@ -1252,10 +1252,10 @@ function Comparer() {
               
               <div ref={averagesRef} className="sticky top-[127px] z-50 mb-[50px] w-full bg-white pb-2 relative">
                 <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span>Moyennes</span>} className="h-fit">
-                  {/* Fines lignes de séparation entre chaque source de données. */}
-                  <div className="mb-3 border-b border-gray-200 pb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">Piano actuel : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
+                  {/* Séparateurs affichés uniquement si au moins deux sources sont présentes. */}
+                  <div className={(comparedPiano !== null || sourceMode === "cloud" || standardEnabled) ? "mb-3 border-b border-gray-400 pb-3" : ""}><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">Piano actuel : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
                   {(comparedPiano !== null || sourceMode === "cloud") && (
-                    <div className={standardEnabled ? "mb-3 border-b border-gray-200 pb-3" : ""}>
+                    <div className={standardEnabled ? "mb-3 border-b border-gray-400 pb-3" : ""}>
                       <div className={`mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide ${comparedPiano ? "!text-blue-600" : "!text-orange-600"}`}>{comparedPiano ? <>IMPORT CSV : <span className="normal-case">{csvIdentity}{csvStats}</span></> : <>Cloud</>}{cloudActive && <span className="ml-2 normal-case text-orange-600">{cloudCounterText}{countKeys(cloudProfile?.wa)}</span>}</div>
                       <AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} csv={comparedPiano !== null} />
                       {cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}
