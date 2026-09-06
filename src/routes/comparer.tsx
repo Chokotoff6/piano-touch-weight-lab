@@ -556,7 +556,14 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const [zoomStart, setZoomStart] = useState(1);
   const [kbNote, setKbNote] = useState<number | null>(null);
   const [keyboardMode, setKeyboardMode] = useState(false);
+  const keyboardModeRef = useRef(false);
+  const kbNoteRef = useRef<number | null>(null);
+  const zoomStartRef = useRef(1);
+  keyboardModeRef.current = keyboardMode;
+  kbNoteRef.current = kbNote;
+  zoomStartRef.current = zoomStart;
   const mouseAnchor = useRef<{ x: number; y: number } | null>(null);
+
   // Dernière hauteur (Y) décidée par la souris : la FF pilotée au clavier y reste figée.
   const lastMouseY = useRef<number>(96);
   // Dernière note (index X) survolée par la souris : point de départ du pilotage clavier.
