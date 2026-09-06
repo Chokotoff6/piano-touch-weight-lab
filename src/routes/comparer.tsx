@@ -725,9 +725,10 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           const fraction = Math.min(Math.max((kbNote - start) / (ZOOM_WINDOW - 1), 0), 1);
           return (
             <div
-              className="pointer-events-none absolute top-24 z-[120]"
-              style={{ left: `calc(${sideMargin}px + (100% - ${sideMargin * 2}px) * ${fraction})`, transform: "translateX(-50%)" }}
+              className="pointer-events-none absolute z-[120]"
+              style={{ top: `${lastMouseY.current}px`, left: `calc(${sideMargin}px + (100% - ${sideMargin * 2}px) * ${fraction})`, transform: "translate(-50%, -50%)" }}
             >
+
               <CustomTooltipContent active payload={payload as TooltipEntry[]} label={kbNote} chartData={chartData} />
             </div>
           );
