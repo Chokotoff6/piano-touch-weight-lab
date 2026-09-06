@@ -666,7 +666,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   // les cadres sont extraits de la grille via une bande pleine largeur centrée.
   return (
     <div ref={containerRef} className="relative left-1/2 w-screen -translate-x-1/2 pb-[80vh] pt-2">
-      <div className="mx-auto flex w-[80%] max-w-5xl flex-col gap-4 px-2">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div>
+      <div className="mx-auto flex w-[80vw] max-w-5xl flex-col gap-4 px-2" style={{ width: "80vw", marginLeft: "auto", marginRight: "auto" }}>{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div>
     </div>
   );
 
