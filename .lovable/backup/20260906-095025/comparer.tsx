@@ -565,7 +565,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const mouseAnchor = useRef<{ x: number; y: number } | null>(null);
 
   // Dernière hauteur (Y) décidée par la souris : la FF pilotée au clavier y reste figée.
-  const lastMouseY = useRef<number | null>(null);
+  const lastMouseY = useRef<number>(96);
   // Dernière note (index X) survolée par la souris : point de départ du pilotage clavier.
   const lastMouseNote = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -657,22 +657,17 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
 
   // Pilotage clavier : survol synthétique à la note active pour allumer les pastilles
   // et faire suivre la bulle native, à la hauteur Y mémorisée de la souris.
-  // Pilotage clavier : on rejoue un survol synthétique sur la surface Recharts à la
-  // note active, à la hauteur Y mémorisée de la souris. La bulle native suit à ce Y
-  // (Recharts positionne la FF sur le clientY du survol) et la pastille s'allume.
   useEffect(() => {
     if (!zoomId || !keyboardMode || kbNote === null) return;
     const node = plotRef.current;
     if (!node) return;
     const rect = node.getBoundingClientRect();
-    const surface = node.querySelector(".recharts-surface") as HTMLElement | null;
     const fraction = Math.min(Math.max((kbNote - zoomStart) / (ZOOM_WINDOW - 1), 0), 1);
     const x = rect.left + sideMargin + (rect.width - sideMargin * 2) * fraction;
-    const mouseY = lastMouseY.current ?? rect.height / 2;
-    const y = rect.top + Math.min(Math.max(mouseY, 10), rect.height - 10);
-    const target = surface ?? node;
-    console.log("[KB][disp2]", kbNote, "surface=", !!surface, "html0=", node.outerHTML.slice(0,200), "child=", node.firstElementChild?.tagName);
+    const y = rect.top + Math.min(Math.max(lastMouseY.current, 10), rect.height - 10);
+    const target = document.elementFromPoint(x, y) ?? node;
     const init: MouseEventInit = { clientX: x, clientY: y, bubbles: true, cancelable: true, view: window };
+    target.dispatchEvent(new MouseEvent("mouseover", init));
     target.dispatchEvent(new MouseEvent("mousemove", init));
   }, [zoomId, keyboardMode, kbNote, zoomStart, sideMargin]);
 
@@ -736,8 +731,6 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           onMouseEnter={() => setHoveredFamily(family.id)}
           onMouseMove={(event) => {
             if (!event.nativeEvent.isTrusted) return;
-            // En mode clavier, la hauteur Y est figée : on ignore les micro-mouvements.
-            if (keyboardModeRef.current) return;
             const rect = event.currentTarget.getBoundingClientRect();
             lastMouseY.current = Math.round(event.clientY - rect.top);
           }}
