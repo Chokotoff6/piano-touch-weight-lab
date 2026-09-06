@@ -1044,23 +1044,25 @@ const pillClass = (active: boolean) => `${PILL_BASE} ${active ? "border-black bg
 const cyclePillClass = (active: boolean) =>
   `${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !opacity-100 hover:border-gray-300 [&_svg]:!opacity-100`;
 
-/** Infobulle maison : apparition très rapide (125 ms), éjectée à gauche du bouton. */
+/** Infobulle maison : rapide au 1er survol, délai doublé ensuite, décalée de 30 px du bouton. */
 function FastTip({ text, children }: { text: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const seen = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   return (
     <div
       className="relative w-full"
-      onMouseEnter={() => { timer.current = setTimeout(() => setOpen(true), 125); }}
+      onMouseEnter={() => { const d = seen.current ? 250 : 125; timer.current = setTimeout(() => { seen.current = true; setOpen(true); }, d); }}
       onMouseLeave={() => { if (timer.current) clearTimeout(timer.current); setOpen(false); }}
     >
       {children}
       {open && (
-        <div className="pointer-events-none absolute right-full top-1/2 z-50 mr-2 w-60 -translate-y-1/2 rounded-md border border-gray-300 bg-white px-2 py-1 text-[0.7rem] font-medium !text-black shadow-lg">{text}</div>
+        <div className="pointer-events-none absolute right-full top-1/2 z-50 mr-[30px] w-60 -translate-y-1/2 rounded-md border border-gray-300 bg-white px-2 py-1 text-[0.7rem] font-medium !text-black shadow-lg">{text}</div>
       )}
     </div>
   );
 }
+
 
 export function CycleIcon() {
   return (
