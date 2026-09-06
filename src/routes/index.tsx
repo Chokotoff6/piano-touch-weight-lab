@@ -505,6 +505,10 @@ function Accueil() {
           </AccordionItem>
         </Accordion>
       </section>
+
+      <section className="mx-auto mt-10 w-full max-w-3xl rounded-lg border border-black bg-white p-6">
+        <BrandTargetInfoContent />
+      </section>
     </main>
   );
 }
