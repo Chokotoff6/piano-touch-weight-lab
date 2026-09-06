@@ -556,7 +556,14 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const [zoomStart, setZoomStart] = useState(1);
   const [kbNote, setKbNote] = useState<number | null>(null);
   const [keyboardMode, setKeyboardMode] = useState(false);
+  const keyboardModeRef = useRef(false);
+  const kbNoteRef = useRef<number | null>(null);
+  const zoomStartRef = useRef(1);
+  keyboardModeRef.current = keyboardMode;
+  kbNoteRef.current = kbNote;
+  zoomStartRef.current = zoomStart;
   const mouseAnchor = useRef<{ x: number; y: number } | null>(null);
+
   // Dernière hauteur (Y) décidée par la souris : la FF pilotée au clavier y reste figée.
   const lastMouseY = useRef<number>(96);
   // Dernière note (index X) survolée par la souris : point de départ du pilotage clavier.
@@ -581,13 +588,42 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     return () => node.removeEventListener("wheel", onWheel);
   }, [zoomId]);
 
-  // Priorité hybride clavier / souris en mode zoom.
+  // ---------------------------------------------------------------------------
+  // Arbitrage clavier / souris en mode zoom (logique unique, remise à plat).
+  // Règles : une flèche ◄ ► donne le contrôle absolu au clavier à partir de la
+  // note active ; la FF reste à la hauteur Y fixée par la souris ; la souris ne
+  // reprend la main qu'après un déplacement physique de plus de 30 px, et repart
+  // alors de la dernière note du clavier.
+  // ---------------------------------------------------------------------------
+  const pointerPos = useRef<{ x: number; y: number } | null>(null);
+
   useEffect(() => {
     if (!zoomId) {
       setKbNote(null);
       setKeyboardMode(false);
+      mouseAnchor.current = null;
       return;
     }
+
+    const onPointer = (event: MouseEvent) => {
+      if (!event.isTrusted) return;
+      pointerPos.current = { x: event.clientX, y: event.clientY };
+      if (!keyboardModeRef.current) return;
+      const anchor = mouseAnchor.current;
+      if (!anchor) {
+        mouseAnchor.current = { x: event.clientX, y: event.clientY };
+        return;
+      }
+      if (Math.hypot(event.clientX - anchor.x, event.clientY - anchor.y) > 30) {
+        // La souris reprend la détection depuis la dernière note du clavier.
+        if (kbNoteRef.current !== null) lastMouseNote.current = kbNoteRef.current;
+        keyboardModeRef.current = false;
+        mouseAnchor.current = null;
+        setKeyboardMode(false);
+        setKbNote(null);
+      }
+    };
+
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
@@ -595,48 +631,34 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
       event.preventDefault();
       const step = event.key === "ArrowRight" ? 1 : -1;
+      // Le clavier prend la main immédiatement, ancré sur la position réelle du pointeur.
+      keyboardModeRef.current = true;
+      mouseAnchor.current = pointerPos.current;
       setKeyboardMode(true);
-      mouseAnchor.current = null;
-      setKbNote((previous) => {
-        const base = previous ?? lastMouseNote.current ?? Math.round(zoomStart + ZOOM_WINDOW / 2);
-        const next = Math.min(Math.max(base + step, 1), 88);
-        // La fenêtre suit la pastille active.
-        setZoomStart((start) => {
-          if (next < start) return Math.max(next, 1);
-          if (next > start + ZOOM_WINDOW - 1) return Math.min(next - ZOOM_WINDOW + 1, 88 - ZOOM_WINDOW + 1);
-          return start;
-        });
-        return next;
+      const base = kbNoteRef.current ?? lastMouseNote.current ?? Math.round(zoomStartRef.current + ZOOM_WINDOW / 2);
+      const next = Math.min(Math.max(base + step, 1), 88);
+      kbNoteRef.current = next;
+      lastMouseNote.current = next;
+      setKbNote(next);
+      setZoomStart((start) => {
+        if (next < start) return Math.max(next, 1);
+        if (next > start + ZOOM_WINDOW - 1) return Math.min(next - ZOOM_WINDOW + 1, 88 - ZOOM_WINDOW + 1);
+        return start;
       });
     };
+
     window.addEventListener("keydown", onKey, true);
-    return () => window.removeEventListener("keydown", onKey, true);
-  }, [zoomId, zoomStart]);
-
-  // La souris ne reprend la main qu'après un déplacement réel (physique) de plus de 30 px.
-  useEffect(() => {
-    if (!zoomId || !keyboardMode) return;
-    const onMove = (event: MouseEvent) => {
-      if (!event.isTrusted) return;
-      const anchor = mouseAnchor.current;
-      if (!anchor) { mouseAnchor.current = { x: event.clientX, y: event.clientY }; return; }
-      const distance = Math.hypot(event.clientX - anchor.x, event.clientY - anchor.y);
-      if (distance > 30) {
-        // La souris reprend la détection à partir de la dernière note validée au clavier.
-        if (kbNote !== null) lastMouseNote.current = kbNote;
-        setKeyboardMode(false);
-        setKbNote(null);
-      }
+    window.addEventListener("mousemove", onPointer, true);
+    return () => {
+      window.removeEventListener("keydown", onKey, true);
+      window.removeEventListener("mousemove", onPointer, true);
     };
-    window.addEventListener("mousemove", onMove);
-    return () => window.removeEventListener("mousemove", onMove);
-  }, [zoomId, keyboardMode, kbNote]);
+  }, [zoomId]);
 
-  // Pilotage clavier : on rejoue un vrai survol à la position de la note active pour que
-  // les pastilles s'allument et que la bulle native suive, à la hauteur fixée par la souris.
+  // Pilotage clavier : survol synthétique à la note active pour allumer les pastilles
+  // et faire suivre la bulle native, à la hauteur Y mémorisée de la souris.
   useEffect(() => {
     if (!zoomId || !keyboardMode || kbNote === null) return;
-    lastMouseNote.current = kbNote;
     const node = plotRef.current;
     if (!node) return;
     const rect = node.getBoundingClientRect();
@@ -648,6 +670,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     target.dispatchEvent(new MouseEvent("mouseover", init));
     target.dispatchEvent(new MouseEvent("mousemove", init));
   }, [zoomId, keyboardMode, kbNote, zoomStart, sideMargin]);
+
 
 
 
@@ -697,7 +720,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           )}
         </div>
         {zoomed && (
-          <div className="pointer-events-none absolute inset-x-0 top-[38px] z-10 flex flex-col items-center gap-1">
+          <div className="pointer-events-none absolute inset-x-0 top-[58px] z-10 flex flex-col items-center gap-1">
             <WheelHintIcon />
             <ArrowHintIcon />
           </div>
@@ -993,7 +1016,7 @@ function SidebarPanel(props: SidebarPanelProps) {
       className={`${cyclePillClass(checked)} disabled:!opacity-100 !text-black [&_svg]:!text-black`}
     >
       <CycleIcon />
-      <span className="font-bold">{label} : <span className="font-semibold">{checked ? "Oui" : "Non"}</span></span>
+      <span className="font-bold uppercase">{label} : <span className="font-semibold uppercase">{checked ? "Oui" : "Non"}</span></span>
     </Button>
   );
 
@@ -1003,17 +1026,19 @@ function SidebarPanel(props: SidebarPanelProps) {
   return (
     <Frame title="Réglages" className="flex flex-1 flex-col">
       <div className="flex h-full flex-col items-stretch justify-start gap-2 pt-2">
+          <div className="text-sm font-bold !text-black">Comparer piano actuel avec :</div>
           <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={sourceButtonClass(props.cloudEnabled, "!text-orange-600")}><CycleIcon /><span className="font-bold uppercase">Cloud</span></Button>
           <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><CycleIcon /><span className="font-bold uppercase">Cible</span></Button>
           <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={sourceButtonClass(props.csvActive, "!text-blue-600")}><CycleIcon /><span className="font-bold uppercase">Importer CSV</span></Button>
           <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
-          <div className="mt-5 border-t border-gray-400 pt-5 font-bold !text-black">Comparer piano actuel avec :</div>
-          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black !opacity-100 disabled:!opacity-100 font-medium hover:border-gray-300 [&_svg]:!text-black [&_svg]:!opacity-100`}><CycleIcon /><span className="!text-black font-bold">Usage instrument : <span className="!text-black font-semibold">{usageLabel}</span></span></Button>
-          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left !text-black !opacity-100 disabled:!opacity-100 [&_svg]:!text-black [&_svg]:!opacity-100`}><CycleIcon /><span className="!text-black font-bold">Modifications importantes : <span className="!text-black font-semibold">{changesLabel}</span></span></Button>
+          <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold !text-black">Filtres</div>
+          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black !opacity-100 disabled:!opacity-100 font-medium hover:border-gray-300 [&_svg]:!text-black [&_svg]:!opacity-100`}><CycleIcon /><span className="!text-black font-bold uppercase">Usage instrument : <span className="!text-black font-semibold uppercase">{usageLabel}</span></span></Button>
+          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left !text-black !opacity-100 disabled:!opacity-100 [&_svg]:!text-black [&_svg]:!opacity-100`}><CycleIcon /><span className="!text-black font-bold uppercase">Modifications importantes : <span className="!text-black font-semibold uppercase">{changesLabel}</span></span></Button>
           {cycleRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
           {cycleRow("Même année de fabrication", props.sameYear, props.setSameYear)}
           {cycleRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
         </div>
+
 
 
       </Frame>
