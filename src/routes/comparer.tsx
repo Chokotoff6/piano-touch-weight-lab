@@ -589,6 +589,8 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       return;
     }
     const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
       if (event.key === "Escape") { setZoomId(null); return; }
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
       event.preventDefault();
@@ -607,8 +609,8 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
         return next;
       });
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, [zoomId, zoomStart]);
 
   // La souris ne reprend la main qu'après un déplacement réel (physique) de plus de 30 px.
