@@ -1102,8 +1102,19 @@ type SidebarPanelProps = {
 
 function SidebarPanel(props: SidebarPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const lang = useLang();
+  const en = lang === "en";
   const usageLabel = props.usageLevel === "low" ? "FAIBLE" : props.usageLevel === "medium" ? "MOYEN" : "INTENSIF";
   const changesLabel = props.importantChanges === "included" ? "INCLUS" : props.importantChanges === "excluded" ? "EXCLUS" : "SEULS";
+  const tipCloud = en
+    ? "Compare your piano with the same model shared by other users."
+    : "Comparez votre piano avec ceux du même modèle partagés par d'autres utilisateurs.";
+  const tipTarget = en
+    ? "Generic values generally expected for a piano keyboard."
+    : "Valeurs génériques généralement attendues pour un clavier de piano.";
+  const tipCsv = en
+    ? "Import your measurement files in CSV format from your local storage."
+    : "Importez vos fichiers de mesures format CSV depuis votre stockage local.";
   // Filtres du bas : bascule ON/OFF. Aucune icône, aucune bordure noire.
   // État ON signalé par un "V" majuscule noir juste après le titre en CAPITALES.
   const cycleRow = (label: string, checked: boolean, onChange: (value: boolean) => void) => (
