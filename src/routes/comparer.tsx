@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { useLang } from "@/data/translations";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
 import {
@@ -562,6 +561,9 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const lastMouseNote = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<HTMLDivElement>(null);
+  // Zone de tracé du cadre zoomé : sert à rejouer un survol réel à la note pilotée au clavier.
+  const plotRef = useRef<HTMLDivElement>(null);
+
 
 
   // Capture de la molette en mode zoom : glissement continu de la fenêtre de 44 touches.
@@ -607,10 +609,11 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     return () => window.removeEventListener("keydown", onKey);
   }, [zoomId, zoomStart]);
 
-  // La souris ne reprend la main qu'après un déplacement réel de plus de 30 px.
+  // La souris ne reprend la main qu'après un déplacement réel (physique) de plus de 30 px.
   useEffect(() => {
     if (!zoomId || !keyboardMode) return;
     const onMove = (event: MouseEvent) => {
+      if (!event.isTrusted) return;
       const anchor = mouseAnchor.current;
       if (!anchor) { mouseAnchor.current = { x: event.clientX, y: event.clientY }; return; }
       const distance = Math.hypot(event.clientX - anchor.x, event.clientY - anchor.y);
@@ -619,6 +622,24 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
   }, [zoomId, keyboardMode]);
+
+  // Pilotage clavier : on rejoue un vrai survol à la position de la note active pour que
+  // les pastilles s'allument et que la bulle native suive, à la hauteur fixée par la souris.
+  useEffect(() => {
+    if (!zoomId || !keyboardMode || kbNote === null) return;
+    const node = plotRef.current;
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    const fraction = Math.min(Math.max((kbNote - zoomStart) / (ZOOM_WINDOW - 1), 0), 1);
+    const x = rect.left + sideMargin + (rect.width - sideMargin * 2) * fraction;
+    const y = rect.top + Math.min(Math.max(lastMouseY.current, 10), rect.height - 10);
+    const target = document.elementFromPoint(x, y) ?? node;
+    const init: MouseEventInit = { clientX: x, clientY: y, bubbles: true, cancelable: true, view: window };
+    target.dispatchEvent(new MouseEvent("mouseover", init));
+    target.dispatchEvent(new MouseEvent("mousemove", init));
+  }, [zoomId, keyboardMode, kbNote, zoomStart, sideMargin]);
+
+
 
 
 
@@ -646,7 +667,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     const DotComp = zoomed ? ZoomDot : SampleDot;
     return (
       <Frame dataFrame={family.id} title={family.title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}>
-        <div className="absolute right-3 top-2 z-20 flex flex-col items-end gap-1.5">
+        <div className="absolute right-3 top-7 z-20 flex flex-col items-end gap-1.5">
           {zoomed && (
             <button type="button" aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
           )}
@@ -672,13 +693,16 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           </div>
         )}
         <div
+          ref={zoomed ? plotRef : undefined}
           className="h-full w-full"
           onMouseEnter={() => setHoveredFamily(family.id)}
           onMouseMove={(event) => {
+            if (!event.nativeEvent.isTrusted) return;
             const rect = event.currentTarget.getBoundingClientRect();
             lastMouseY.current = Math.round(event.clientY - rect.top);
           }}
         >
+
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
@@ -701,7 +725,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
                 content={<CustomTooltipContent chartData={chartData} />}
                 cursor={{ stroke: "#d1d5db", strokeWidth: 1 }}
                 allowEscapeViewBox={{ x: true, y: true }}
-                wrapperStyle={{ pointerEvents: "none", zIndex: 100, ...(zoomed && keyboardMode ? { display: "none" } : {}) }}
+                wrapperStyle={{ pointerEvents: "none", zIndex: 100 }}
                 isAnimationActive={false}
                 offset={24}
               />
@@ -726,25 +750,6 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
             </LineChart>
           </ResponsiveContainer>
         </div>
-        {zoomed && keyboardMode && kbNote !== null && (() => {
-          const point = chartData[kbNote - 1];
-          if (!point) return null;
-          const payload = lines
-            .filter((line) => !line.hidden)
-            .map((line) => ({ dataKey: line.dataKey as string, name: line.name, value: point[line.dataKey], color: line.color }))
-            .filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value));
-          if (payload.length === 0) return null;
-          const fraction = Math.min(Math.max((kbNote - start) / (ZOOM_WINDOW - 1), 0), 1);
-          return (
-            <div
-              className="pointer-events-none absolute z-[120]"
-              style={{ top: `${lastMouseY.current}px`, left: `calc(${sideMargin}px + (100% - ${sideMargin * 2}px) * ${fraction})`, transform: "translate(-50%, -50%)" }}
-            >
-
-              <CustomTooltipContent active payload={payload as TooltipEntry[]} label={kbNote} chartData={chartData} />
-            </div>
-          );
-        })()}
       </Frame>
 
     );
@@ -965,12 +970,21 @@ type SidebarPanelProps = {
 function SidebarPanel(props: SidebarPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const usageLabel = props.usageLevel === "all" ? "Tous" : props.usageLevel === "low" ? "Faible" : "Intensif";
-  const switchRow = (label: string, checked: boolean, onChange: (value: boolean) => void) => (
-    <label className="flex min-w-0 items-center justify-between gap-3 text-xs font-medium text-black">
-      <span className="min-w-0">{label}</span>
-      <Switch checked={checked} disabled={props.filtersDisabled} onCheckedChange={onChange} className="data-[state=checked]:bg-slate-500 data-[state=unchecked]:bg-gray-200" />
-    </label>
+  // Filtres du bas : bascule cyclique Oui/Non (bordure noire quand actif).
+  const cycleRow = (label: string, checked: boolean, onChange: (value: boolean) => void) => (
+    <Button
+      type="button"
+      variant="outline"
+      disabled={props.filtersDisabled}
+      aria-pressed={checked}
+      onClick={() => onChange(!checked)}
+      className={`${cyclePillClass(checked)} disabled:!opacity-100 ${checked ? "!text-black" : "!text-gray-400"}`}
+    >
+      <CycleIcon />
+      <span className="font-bold">{label} : <span className="font-semibold">{checked ? "Oui" : "Non"}</span></span>
+    </Button>
   );
+
   return (
     <Frame title="Réglages" className="flex flex-1 flex-col">
       <div className="flex h-full flex-col gap-4 pt-2">
@@ -989,11 +1003,12 @@ function SidebarPanel(props: SidebarPanelProps) {
             <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black !opacity-100 disabled:!opacity-100 font-medium hover:border-gray-300 [&_svg]:!text-black [&_svg]:!opacity-100`}><CycleIcon /><span className="!text-black font-bold">Niveau d'usage instrument : <span className="!text-black font-semibold">{usageLabel}</span></span></Button>
             <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left !text-black !opacity-100 disabled:!opacity-100 [&_svg]:!text-black [&_svg]:!opacity-100`}><CycleIcon /><span className="!text-black font-bold">Modifications importantes : <span className="!text-black font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></span></Button>
           </div>
-          <div className="space-y-2.5 pt-1">
-            {switchRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
-            {switchRow("Même année de fabrication", props.sameYear, props.setSameYear)}
-            {switchRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
+          <div className="space-y-1.5 border-t border-gray-400 pt-3">
+            {cycleRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
+            {cycleRow("Même année de fabrication", props.sameYear, props.setSameYear)}
+            {cycleRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
           </div>
+
         </div>
       </Frame>
     );
