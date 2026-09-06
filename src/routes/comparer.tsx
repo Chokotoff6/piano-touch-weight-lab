@@ -1036,7 +1036,7 @@ function SidebarPanel(props: SidebarPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const usageLabel = props.usageLevel === "low" ? "FAIBLE" : props.usageLevel === "medium" ? "MOYEN" : "INTENSIF";
   const changesLabel = props.importantChanges === "included" ? "INCLUS" : props.importantChanges === "excluded" ? "EXCLUS" : "SEULS";
-  // Filtres du bas : bascule cyclique Oui/Non (bordure noire quand actif).
+  // Filtres du bas : bascule ON/OFF. Bordure noire à l'état ON, icône jamais en gras, libellé seul en CAPITALES.
   const cycleRow = (label: string, checked: boolean, onChange: (value: boolean) => void) => (
     <Button
       type="button"
@@ -1044,10 +1044,10 @@ function SidebarPanel(props: SidebarPanelProps) {
       disabled={props.filtersDisabled}
       aria-pressed={checked}
       onClick={() => onChange(!checked)}
-      className={`${cyclePillClass(checked)} disabled:!opacity-100 !text-black [&_svg]:!text-black`}
+      className={`${PILL_BASE} flex w-full items-center justify-start gap-2 ${checked ? "border-black bg-gray-100" : "border-gray-200 bg-white"} !opacity-100 hover:border-gray-300 disabled:!opacity-100 [&_svg]:!opacity-100`}
     >
-      <PianoKeysIcon bold={checked} />
-      <span className="font-bold uppercase">{label} : <span className="font-semibold uppercase">{checked ? "Oui" : "Non"}</span></span>
+      <PianoKeysIcon />
+      <span className="font-bold uppercase">{label}</span>
     </Button>
   );
 
