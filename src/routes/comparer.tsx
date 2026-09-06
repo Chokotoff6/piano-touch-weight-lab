@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, ty
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/data/translations";
 import { RefreshCw, Square, SquareX } from "lucide-react";
+import { BrandTargetInfoIcon } from "@/components/BrandTargetInfo";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
 import {
   buildCurrentPiano,
