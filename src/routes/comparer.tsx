@@ -993,7 +993,7 @@ function SidebarPanel(props: SidebarPanelProps) {
       className={`${cyclePillClass(checked)} disabled:!opacity-100 !text-black [&_svg]:!text-black`}
     >
       <CycleIcon />
-      <span className="font-bold">{label} : <span className="font-semibold">{checked ? "Oui" : "Non"}</span></span>
+      <span className="font-bold uppercase">{label} : <span className="font-semibold uppercase">{checked ? "Oui" : "Non"}</span></span>
     </Button>
   );
 
