@@ -641,6 +641,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   // les pastilles s'allument et que la bulle native suive, à la hauteur fixée par la souris.
   useEffect(() => {
     if (!zoomId || !keyboardMode || kbNote === null) return;
+    lastMouseNote.current = kbNote;
     const node = plotRef.current;
     if (!node) return;
     const rect = node.getBoundingClientRect();
