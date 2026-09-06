@@ -580,17 +580,6 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     );
     const dyLeft = endpointOffsets("left");
     const dyRight = endpointOffsets("right");
-    // Zonage par AMPLITUDE RÉELLE : on reconstruit l'échelle verticale du tracé puis on
-    // retient, à l'index survolé, la courbe dont la valeur est la plus proche du pointeur.
-    const visibleLines = lines.filter((line) => !line.hidden);
-    const allValues = chartData.flatMap((point) =>
-      visibleLines.map((line) => point[line.dataKey]).filter((value): value is number => typeof value === "number" && Number.isFinite(value)),
-    );
-    const dataMin = allValues.length > 0 ? Math.min(...allValues) : 0;
-    const dataMax = allValues.length > 0 ? Math.max(...allValues) : 1;
-    const numericDomain = !autoDomain && typeof family.domain[0] === "number" && typeof family.domain[1] === "number";
-    const yMin = numericDomain ? (family.domain[0] as number) : dataMin - 1.5;
-    const yMax = numericDomain ? (family.domain[1] as number) : dataMax + 1.5;
     const start = zoomed ? zoomStart : 1;
     const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [1, 88];
     const DotComp = zoomed ? ZoomDot : SampleDot;
@@ -608,52 +597,16 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           </>
         ) : (
           <div className="absolute right-3 top-2 z-10 flex flex-col items-end gap-2">
-            <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setHoveredNoteIndex(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
+            <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
           </div>
         )}
         <div
-          ref={zoomed ? plotRef : undefined}
           className="h-full w-full"
           onMouseEnter={() => setHoveredFamily(family.id)}
-          onMouseMoveCapture={(event) => {
-            const previous = lastMouse.current;
-            const moved = !previous || Math.hypot(event.clientX - previous.x, event.clientY - previous.y) > 5;
-            lastMouse.current = { x: event.clientX, y: event.clientY };
-            if (!moved) return;
-            interactionMode.current = "mouse";
-            // Reconstruction de l'échelle réellement rendue puis choix de la courbe
-            // la plus proche verticalement du pointeur, à l'index X survolé.
-            const rect = event.currentTarget.getBoundingClientRect();
-            const plotTop = rect.top + 22;
-            const plotHeight = Math.max(rect.height - 22 - 15, 1);
-            const relY = Math.min(Math.max((event.clientY - plotTop) / plotHeight, 0), 1);
-            const pointerValue = yMax - relY * (yMax - yMin);
-            const plotLeft = rect.left + sideMargin;
-            const plotWidth = Math.max(rect.width - sideMargin * 2, 1);
-            const relX = Math.min(Math.max((event.clientX - plotLeft) / plotWidth, 0), 1);
-            const note = Math.round(domainX[0] + relX * (domainX[1] - domainX[0]));
-            let best: { key: string; distance: number } | null = null;
-            visibleLines.forEach((line) => {
-              const nearest = chartData
-                .filter((point) => typeof point[line.dataKey] === "number" && Number.isFinite(point[line.dataKey] as number))
-                .sort((a, b) => Math.abs(a.key - note) - Math.abs(b.key - note))[0];
-              const value = nearest?.[line.dataKey];
-              if (typeof value !== "number") return;
-              const distance = Math.abs(value - pointerValue);
-              if (!best || distance < best.distance) best = { key: line.dataKey as string, distance };
-            });
-            setHoveredLine((best as { key: string } | null)?.key ?? null);
-          }}
         >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
-              onMouseMove={(state: { activeLabel?: unknown; chartX?: number; chartY?: number; activePayload?: TooltipEntry[] }) => {
-                if (interactionMode.current === "keyboard") return;
-                const note = state?.activeLabel;
-                if (typeof note === "number") setHoveredNoteIndex(note);
-
-              }}
               onMouseLeave={() => { setHoveredFamily(null); }}
               margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}
             >
@@ -661,40 +614,35 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
               <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={autoDomain ? ["auto", "auto"] : family.domain} />
               {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#e5e7eb" strokeWidth={1} />)}
-              
-              {/* Tooltip natif : premier plan absolu, jamais éteint entre deux pastilles. */}
+
+              {/* Fenêtre flottante native : une seule bulle par touche, toutes courbes confondues. */}
               <Tooltip
-                content={<CustomTooltipContent pickKey={hoveredLine} cache={tooltipCache} chartData={chartData} lines={lines} />}
+                trigger="hover"
+                content={<CustomTooltipContent chartData={chartData} />}
+                cursor={{ stroke: "#d1d5db", strokeWidth: 1 }}
                 allowEscapeViewBox={{ x: true, y: true }}
                 wrapperStyle={{ pointerEvents: "none", zIndex: 100 }}
                 isAnimationActive={false}
                 offset={24}
-                active={hoveredNoteIndex !== null}
-                {...(zoomed && hoveredNoteIndex !== null ? { defaultIndex: hoveredNoteIndex - 1 } : {})}
               />
 
-              {lines.map((line) => {
-                // La courbe reste parfaitement stable au survol : seule la pastille
-                // active (la note sous le curseur) s'agrandit avec un liseré blanc.
-                const picked = hoveredLine === line.dataKey;
-                return (
-                  <Line
-                    key={line.dataKey}
-                    xAxisId="main"
-                    type="monotone"
-                    dataKey={line.dataKey}
-                    name={line.name}
-                    stroke={line.hidden ? "transparent" : line.color}
-                    strokeWidth={2}
-                    activeDot={picked && !line.hidden ? { r: 6, fill: line.color, stroke: "#ffffff", strokeWidth: 2.5 } : false}
+              {lines.map((line) => (
+                <Line
+                  key={line.dataKey}
+                  xAxisId="main"
+                  type="monotone"
+                  dataKey={line.dataKey}
+                  name={line.name}
+                  stroke={line.hidden ? "transparent" : line.color}
+                  strokeWidth={2}
+                  activeDot={line.hidden ? false : { r: 5, fill: line.color, stroke: "#ffffff", strokeWidth: 2 }}
+                  dot={line.real ? <DotComp /> : false}
+                  connectNulls={true}
+                  isAnimationActive={false}
+                  label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color: line.color, firstIndex: firstDefinedIndex(chartData, line.dataKey), lastIndex: lastDefinedIndex(chartData, line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden })}
+                />
+              ))}
 
-                    dot={line.real ? <DotComp /> : false}
-                    connectNulls={true}
-                    isAnimationActive={false}
-                    label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color: line.color, firstIndex: firstDefinedIndex(chartData, line.dataKey), lastIndex: lastDefinedIndex(chartData, line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden })}
-                  />
-                );
-              })}
             </LineChart>
           </ResponsiveContainer>
         </div>
