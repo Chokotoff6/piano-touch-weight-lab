@@ -621,11 +621,16 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       const anchor = mouseAnchor.current;
       if (!anchor) { mouseAnchor.current = { x: event.clientX, y: event.clientY }; return; }
       const distance = Math.hypot(event.clientX - anchor.x, event.clientY - anchor.y);
-      if (distance > 30) { setKeyboardMode(false); setKbNote(null); }
+      if (distance > 30) {
+        // La souris reprend la détection à partir de la dernière note validée au clavier.
+        if (kbNote !== null) lastMouseNote.current = kbNote;
+        setKeyboardMode(false);
+        setKbNote(null);
+      }
     };
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
-  }, [zoomId, keyboardMode]);
+  }, [zoomId, keyboardMode, kbNote]);
 
   // Pilotage clavier : on rejoue un vrai survol à la position de la note active pour que
   // les pastilles s'allument et que la bulle native suive, à la hauteur fixée par la souris.
@@ -922,9 +927,6 @@ const pillClass = (active: boolean) => `${PILL_BASE} ${active ? "border-black bg
 // Boutons cycliques Oui/Non (CLOUD, CIBLE, IMPORT CSV) : bordure noire quand actif.
 const cyclePillClass = (active: boolean) =>
   `${PILL_BASE} flex w-full items-center justify-start gap-2 bg-white !opacity-100 ${active ? "border-black" : "border-gray-200 hover:border-gray-300"} [&_svg]:!opacity-100`;
-// Boutons de sources (CLOUD, CIBLE, IMPORTER CSV) : capitales, fond coloré à 40 % quand actif.
-const sourcePillClass = (active: boolean, activeBg: string) =>
-  `${PILL_BASE} flex w-full items-center justify-start gap-2 !opacity-100 ${active ? `border-black ${activeBg}` : "border-transparent bg-gray-100 hover:bg-gray-200"} [&_svg]:!opacity-100`;
 
 export function CycleIcon() {
   return (
