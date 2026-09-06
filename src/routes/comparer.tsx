@@ -673,7 +673,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
                 content={<CustomTooltipContent chartData={chartData} />}
                 cursor={{ stroke: "#d1d5db", strokeWidth: 1 }}
                 allowEscapeViewBox={{ x: true, y: true }}
-                wrapperStyle={{ pointerEvents: "none", zIndex: 100 }}
+                wrapperStyle={{ pointerEvents: "none", zIndex: 100, ...(zoomed && keyboardMode ? { display: "none" } : {}) }}
                 isAnimationActive={false}
                 offset={24}
               />
