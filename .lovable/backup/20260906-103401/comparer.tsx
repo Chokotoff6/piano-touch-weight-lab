@@ -1036,7 +1036,7 @@ function SidebarPanel(props: SidebarPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const usageLabel = props.usageLevel === "low" ? "FAIBLE" : props.usageLevel === "medium" ? "MOYEN" : "INTENSIF";
   const changesLabel = props.importantChanges === "included" ? "INCLUS" : props.importantChanges === "excluded" ? "EXCLUS" : "SEULS";
-  // Filtres du bas : bascule ON/OFF. Bordure noire à l'état ON, icône jamais en gras, libellé seul en CAPITALES.
+  // Filtres du bas : bascule cyclique Oui/Non (bordure noire quand actif).
   const cycleRow = (label: string, checked: boolean, onChange: (value: boolean) => void) => (
     <Button
       type="button"
@@ -1044,10 +1044,10 @@ function SidebarPanel(props: SidebarPanelProps) {
       disabled={props.filtersDisabled}
       aria-pressed={checked}
       onClick={() => onChange(!checked)}
-      className={`${PILL_BASE} flex w-full items-center justify-start gap-2 ${checked ? "border-black bg-gray-100" : "border-gray-200 bg-white"} !opacity-100 hover:border-gray-300 disabled:!opacity-100 [&_svg]:!opacity-100`}
+      className={`${cyclePillClass(checked)} disabled:!opacity-100 !text-black [&_svg]:!text-black`}
     >
-      <PianoKeysIcon />
-      <span className="font-bold uppercase">{label}</span>
+      <PianoKeysIcon bold={checked} />
+      <span className="font-bold uppercase">{label} : <span className="font-semibold uppercase">{checked ? "Oui" : "Non"}</span></span>
     </Button>
   );
 
@@ -1064,7 +1064,7 @@ function SidebarPanel(props: SidebarPanelProps) {
           <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
           <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold !text-black">Filtres</div>
           <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black !opacity-100 disabled:!opacity-100 font-medium hover:border-gray-300 [&_svg]:!text-black [&_svg]:!opacity-100`}><PianoKeysIcon bold={props.usageLevel !== "low"} /><span className="!text-black font-bold uppercase">Usage instrument : <span className="!text-black font-semibold uppercase">{usageLabel}</span></span></Button>
-          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left !text-black !opacity-100 disabled:!opacity-100 [&_svg]:!text-black [&_svg]:!opacity-100`}><PianoKeysIcon bold={props.importantChanges !== "excluded"} /><span className="!text-black font-bold uppercase">Modifications importantes : <span className="!text-black font-semibold uppercase">{changesLabel}</span></span></Button>
+          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left !text-black !opacity-100 disabled:!opacity-100 [&_svg]:!text-black [&_svg]:!opacity-100`}><PianoKeysIcon bold={props.importantChanges !== "included"} /><span className="!text-black font-bold uppercase">Modifications importantes : <span className="!text-black font-semibold uppercase">{changesLabel}</span></span></Button>
           {cycleRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
           {cycleRow("Même année de fabrication", props.sameYear, props.setSameYear)}
           {cycleRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
@@ -1105,7 +1105,7 @@ function Comparer() {
   const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
   const [sameClimate, setSameClimate] = useState(true);
   const [sameYear, setSameYear] = useState(false);
-  const [importantChanges, setImportantChanges] = useState<ChangesFilter>("excluded");
+  const [importantChanges, setImportantChanges] = useState<ChangesFilter>("included");
   const [youngOnly, setYoungOnly] = useState(false);
   const [usageLevel, setUsageLevel] = useState<UsageLevel>("low");
   const [mine, setMine] = useState<ProfileRecord | null>(null);
