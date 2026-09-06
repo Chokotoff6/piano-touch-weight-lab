@@ -592,7 +592,9 @@ type SubChartCtx = {
   csvActive: boolean;
   targetLabel: string;
   onCycleKeyFilter: (() => void) | undefined;
-  bwLabel: string;
+  filters: Record<string, KeyFilter>;
+  cycleFor: (familyId: string) => void;
+  lang: string;
   zoomStart: number;
   setZoomStart: Dispatch<SetStateAction<number>>;
   setZoomId: Dispatch<SetStateAction<string | null>>;
@@ -610,7 +612,10 @@ type SubChartCtx = {
 // remontage détruit le SVG Recharts au moment exact du dispatch synthétique, ce qui
 // empêchait les flèches ◄ ► d'allumer la pastille.
 function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[number]; zoomed?: boolean; ctx: SubChartCtx }) {
-  const { chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, bwLabel, zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode, plotRef, lastMouseY, keyboardModeRef, lastMouseNote } = ctx;
+  const { chartData, keyFilter: baseKeyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, filters, cycleFor, lang, zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode, plotRef, lastMouseY, keyboardModeRef, lastMouseNote } = ctx;
+  // Réglage N/B strictement indépendant pour chaque cadre graphique.
+  const keyFilter = filters[family.id] ?? baseKeyFilter;
+  const bwLabel = bwLabelFor(keyFilter, lang);
   // Renommage dynamique de la courbe de référence : "Import CSV" (bleu) ou "Cloud" (orange),
   // scindée en blanches / noires quand la vue éclatée est active.
   const referenceLines = comparisonLinesFor(family.id, keyFilter, comparisonLabel, comparisonShort, csvActive);
@@ -621,16 +626,18 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   const lines = [...currentLinesFor(family.id, keyFilter, currentBaseName), ...referenceLines, ...otherLines];
   // Chaque courbe est ancrée sur SON propre premier / dernier point défini
   // (indispensable en vue éclatée où blanches et noires ne partagent pas les mêmes index).
+  const start = zoomed ? zoomStart : 1;
+  const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [1, 88];
+  const firstIn = (key: SeriesKey) => firstDefinedIndexIn(chartData, key, domainX[0], domainX[1]);
+  const lastIn = (key: SeriesKey) => lastDefinedIndexIn(chartData, key, domainX[0], domainX[1]);
   const endpointOffsets = (side: "left" | "right") => new Map(
     lines.map((line) => {
-      const index = side === "left" ? firstDefinedIndex(chartData, line.dataKey) : lastDefinedIndex(chartData, line.dataKey);
+      const index = side === "left" ? firstIn(line.dataKey) : lastIn(line.dataKey);
       return [line.dataKey, offsetsFor(lines, chartData[index]).get(line.dataKey) ?? 0] as const;
     }),
   );
   const dyLeft = endpointOffsets("left");
   const dyRight = endpointOffsets("right");
-  const start = zoomed ? zoomStart : 1;
-  const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [1, 88];
   const DotComp = zoomed ? ZoomDot : SampleDot;
   return (
     <Frame dataFrame={family.id} title={family.title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}>
@@ -645,7 +652,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           <button
             type="button"
             aria-label={bwLabel}
-            onClick={onCycleKeyFilter}
+            onClick={() => cycleFor(family.id)}
             className="flex items-center gap-1 rounded-full border border-gray-300 bg-white px-2 py-0.5 text-[0.68rem] font-medium !text-black hover:bg-gray-100"
           >
             <PianoKeysIcon />
@@ -685,7 +692,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
             <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
             <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={autoDomain ? ["auto", "auto"] : family.domain} />
-            {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#e5e7eb" strokeWidth={1} />)}
+            {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#9ca3af" strokeWidth={1.4} />)}
 
             {/* Fenêtre flottante native : une seule bulle par touche, toutes courbes confondues. */}
             <Tooltip
@@ -711,7 +718,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
                 dot={line.real ? <DotComp /> : false}
                 connectNulls={true}
                 isAnimationActive={false}
-                label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color: line.color, firstIndex: firstDefinedIndex(chartData, line.dataKey), lastIndex: lastDefinedIndex(chartData, line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden })}
+                label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color: line.color, firstIndex: firstIn(line.dataKey), lastIndex: lastIn(line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden })}
               />
             ))}
 
@@ -724,9 +731,10 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
 
 export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible", onCycleKeyFilter }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void }) {
   const lang = useLang();
-  const bwLabel = lang === "en"
-    ? (keyFilter === "all" ? "B/W: grouped" : "B/W: separated")
-    : (keyFilter === "all" ? "N/B : groupées" : "N/B : séparées");
+  // Chaque cadre graphique garde son propre réglage N/B (4 états cycliques).
+  const [filters, setFilters] = useState<Record<string, KeyFilter>>({});
+  const cycleFor = (familyId: string) =>
+    setFilters((current) => ({ ...current, [familyId]: nextKeyFilter(current[familyId] ?? keyFilter) }));
   const [hoveredFamily, setHoveredFamily] = useState<string | null>(null);
 
   const [zoomId, setZoomId] = useState<string | null>(null);
@@ -753,7 +761,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   // Contexte stable passé au SubChart (déclaré au niveau module) : évite le
   // démontage/remontage du graphique Recharts à chaque changement d'état clavier.
   const subCtx: SubChartCtx = {
-    chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, bwLabel,
+    chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, filters, cycleFor, lang,
     zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode,
     plotRef, lastMouseY, keyboardModeRef, lastMouseNote,
   };
