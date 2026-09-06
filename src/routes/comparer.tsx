@@ -690,7 +690,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const lang = useLang();
   const bwLabel = lang === "en"
     ? (keyFilter === "all" ? "B/W: grouped" : "B/W: separated")
-    : (keyFilter === "all" ? "B/N : groupées" : "B/N : séparées");
+    : (keyFilter === "all" ? "N/B : groupées" : "N/B : séparées");
   const [hoveredFamily, setHoveredFamily] = useState<string | null>(null);
 
   const [zoomId, setZoomId] = useState<string | null>(null);
