@@ -544,7 +544,7 @@ function ArrowHintIcon() {
 
 
 
-export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible" }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string }) {
+export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible", onCycleKeyFilter }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void }) {
   const [hoveredFamily, setHoveredFamily] = useState<string | null>(null);
 
   const [zoomId, setZoomId] = useState<string | null>(null);
@@ -552,8 +552,11 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const [kbNote, setKbNote] = useState<number | null>(null);
   const [keyboardMode, setKeyboardMode] = useState(false);
   const mouseAnchor = useRef<{ x: number; y: number } | null>(null);
+  // Dernière hauteur (Y) décidée par la souris : la FF pilotée au clavier y reste figée.
+  const lastMouseY = useRef<number>(96);
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<HTMLDivElement>(null);
+
 
   // Capture de la molette en mode zoom : glissement continu de la fenêtre de 44 touches.
   useEffect(() => {
@@ -637,24 +640,36 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     const DotComp = zoomed ? ZoomDot : SampleDot;
     return (
       <Frame dataFrame={family.id} title={family.title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}>
-        {zoomed ? (
-          <>
-            <div className="absolute right-3 top-2 z-20">
-              <button type="button" aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
-            </div>
-            <div className="pointer-events-none absolute inset-x-0 top-2 z-10 flex flex-col items-center gap-1">
-              <WheelHintIcon />
-              <ArrowHintIcon />
-            </div>
-          </>
-        ) : (
-          <div className="absolute right-3 top-2 z-10 flex flex-col items-end gap-2">
-            <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
+        <div className="absolute right-3 top-2 z-20 flex flex-col items-end gap-1.5">
+          {zoomed && (
+            <button type="button" aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
+          )}
+          <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
+          {onCycleKeyFilter && (
+            <button
+              type="button"
+              aria-label={`Touches ${keyFilter === "all" ? "groupées" : "séparées"}`}
+              onClick={onCycleKeyFilter}
+              className="flex items-center gap-1 rounded-full border border-gray-300 bg-white px-2 py-0.5 text-[0.68rem] font-medium !text-black hover:bg-gray-100"
+            >
+              <PianoKeysIcon />
+              <span className="!text-black">{keyFilter === "all" ? "groupé" : "séparé"}</span>
+            </button>
+          )}
+        </div>
+        {zoomed && (
+          <div className="pointer-events-none absolute inset-x-0 top-2 z-10 flex flex-col items-center gap-1">
+            <WheelHintIcon />
+            <ArrowHintIcon />
           </div>
         )}
         <div
           className="h-full w-full"
           onMouseEnter={() => setHoveredFamily(family.id)}
+          onMouseMove={(event) => {
+            const rect = event.currentTarget.getBoundingClientRect();
+            lastMouseY.current = Math.round(event.clientY - rect.top);
+          }}
         >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
@@ -662,6 +677,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
               onMouseLeave={() => { setHoveredFamily(null); }}
               margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}
             >
+
               <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
               <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={autoDomain ? ["auto", "auto"] : family.domain} />
@@ -709,9 +725,10 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           const fraction = Math.min(Math.max((kbNote - start) / (ZOOM_WINDOW - 1), 0), 1);
           return (
             <div
-              className="pointer-events-none absolute top-24 z-[120]"
-              style={{ left: `calc(${sideMargin}px + (100% - ${sideMargin * 2}px) * ${fraction})`, transform: "translateX(-50%)" }}
+              className="pointer-events-none absolute z-[120]"
+              style={{ top: `${lastMouseY.current}px`, left: `calc(${sideMargin}px + (100% - ${sideMargin * 2}px) * ${fraction})`, transform: "translate(-50%, -50%)" }}
             >
+
               <CustomTooltipContent active payload={payload as TooltipEntry[]} label={kbNote} chartData={chartData} />
             </div>
           );
@@ -893,6 +910,19 @@ export function CycleIcon() {
   );
 }
 
+/** Petit clavier de piano épuré (touches blanches + noires). */
+export function PianoKeysIcon() {
+  return (
+    <svg aria-hidden="true" className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round">
+      <rect x="2" y="4" width="16" height="12" rx="1.2" />
+      <path d="M6.5 4v12M10 4v12M13.5 4v12" />
+      <rect x="5" y="4" width="3" height="6.5" fill="currentColor" stroke="none" />
+      <rect x="12" y="4" width="3" height="6.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+
 type SidebarPanelProps = {
   cloudEnabled: boolean;
   standardEnabled: boolean;
@@ -913,8 +943,7 @@ type SidebarPanelProps = {
   setImportantChanges: (value: boolean) => void;
   setYoungOnly: (value: boolean) => void;
   cycleUsage: () => void;
-  keyFilter: KeyFilter;
-  cycleKeyFilter: () => void;
+
 };
 
 function SidebarPanel(props: SidebarPanelProps) {
@@ -947,20 +976,6 @@ function SidebarPanel(props: SidebarPanelProps) {
             {switchRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
             {switchRow("Même année de fabrication", props.sameYear, props.setSameYear)}
             {switchRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
-          </div>
-          <div className="mt-auto mb-3 border-t border-gray-200 pt-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={props.cycleKeyFilter}
-              className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-2 border-black bg-white !text-black hover:bg-gray-100`}
-            >
-              <CycleIcon />
-              <span className="!text-black font-medium">
-                Touches blanches/noires :{" "}
-                <span className="font-semibold !text-black">{props.keyFilter === "all" ? "groupées" : "séparées"}</span>
-              </span>
-            </Button>
           </div>
         </div>
       </Frame>
@@ -1270,9 +1285,9 @@ function Comparer() {
                 </Frame>
               </div>
 
-              <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible"} />
+              <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible"} onCycleKeyFilter={cycleKeyFilter} />
             </div>
-            <aside className="min-w-0"><div className="sticky top-[127px] z-50 flex flex-col overflow-visible" style={averagesHeight > 0 ? { height: `${averagesHeight - 8}px` } : undefined}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} keyFilter={keyFilter} cycleKeyFilter={cycleKeyFilter} /></div></aside>
+            <aside className="min-w-0"><div className="sticky top-[127px] z-50 flex flex-col overflow-visible" style={averagesHeight > 0 ? { height: `${averagesHeight - 8}px` } : undefined}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
           </div>
         </>
       )}
