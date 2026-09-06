@@ -622,6 +622,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     if (!zoomId || !keyboardMode) return;
     const onMove = (event: MouseEvent) => {
       if (!event.isTrusted) return;
+      if (Date.now() < kbLockUntil.current) { mouseAnchor.current = null; return; }
       const anchor = mouseAnchor.current;
       if (!anchor) { mouseAnchor.current = { x: event.clientX, y: event.clientY }; return; }
       const distance = Math.hypot(event.clientX - anchor.x, event.clientY - anchor.y);
