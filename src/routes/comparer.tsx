@@ -400,6 +400,10 @@ function tooltipColorFor(name: string) {
 // Fenêtre flottante native (trigger "axis") : une seule bulle listant toutes les
 // courbes actives de la touche survolée. L'ordre suit la valeur de chaque courbe
 // à la touche 1 (premier pixel), du plus haut au plus bas.
+function isCurrentKey(dataKey?: string) {
+  return String(dataKey ?? "").includes("Cur");
+}
+
 function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; chartData?: ChartPoint[] }) {
   const { active, payload, label, chartData } = props;
   if (!active) return null;
@@ -411,7 +415,13 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
   const valid = [...(payload ?? [])]
     .filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value))
     .filter((entry) => !String(entry.dataKey ?? "").endsWith("Mid"))
-    .sort((a, b) => rankOf(b.dataKey) - rankOf(a.dataKey));
+    // "Piano actuel" (blanches puis noires) toujours en tête, le reste trié par la valeur à la touche 1.
+    .sort((a, b) => {
+      const aCur = isCurrentKey(a.dataKey) ? 1 : 0;
+      const bCur = isCurrentKey(b.dataKey) ? 1 : 0;
+      if (aCur !== bCur) return bCur - aCur;
+      return rankOf(b.dataKey) - rankOf(a.dataKey);
+    });
   if (valid.length === 0) return null;
   return (
     <div className="pointer-events-none !z-50 rounded-md border border-black bg-white px-3 py-2 text-xs">
@@ -420,7 +430,7 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
         const color = entry.color ?? tooltipColorFor(entry.name ?? "");
         const name = entry.name?.trim() ? entry.name : "Piano actuel";
         return (
-          <div key={entry.dataKey} className="flex items-center justify-between gap-4" style={{ color }}>
+          <div key={entry.dataKey} className="flex items-center justify-between gap-4 whitespace-nowrap" style={{ color }}>
             <span>{name}</span>
             <span className="font-semibold tabular-nums">{Math.round(Number(entry.value ?? 0))} gr.</span>
           </div>
@@ -429,6 +439,7 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
     </div>
   );
 }
+
 
 
 
