@@ -385,7 +385,6 @@ function CustomTickTop(props: { x?: number; y?: number; dy?: number; payload?: {
 }
 
 type TooltipEntry = { name?: string; value?: number; color?: string; dataKey?: string };
-type TooltipCache = { label: number | undefined; entries: TooltipEntry[]; pickKey: string | null | undefined };
 function tooltipColorFor(name: string) {
   const lower = name.toLowerCase();
   // Identité bleue exclusive de l'import CSV.
@@ -398,60 +397,38 @@ function tooltipColorFor(name: string) {
   return "#10b981";
 }
 
-
-function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; pickKey?: string | null; cache?: { current: TooltipCache | null }; chartData?: ChartPoint[]; lines?: LineDef[] }) {
-  const { active, payload, label, pickKey, cache, chartData, lines } = props;
-  let valid = [...(payload ?? [])]
+// Fenêtre flottante native (trigger "axis") : une seule bulle listant toutes les
+// courbes actives de la touche survolée. L'ordre suit la valeur de chaque courbe
+// à la touche 1 (premier pixel), du plus haut au plus bas.
+function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; chartData?: ChartPoint[] }) {
+  const { active, payload, label, chartData } = props;
+  if (!active) return null;
+  const first = chartData?.[0];
+  const rankOf = (dataKey?: string) => {
+    const value = first && dataKey ? first[dataKey as SeriesKey] : undefined;
+    return typeof value === "number" && Number.isFinite(value) ? value : -Infinity;
+  };
+  const valid = [...(payload ?? [])]
     .filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value))
-    .sort((a, b) => Number(b.value) - Number(a.value));
-  let shownLabel = label;
-  // En mode éclaté, l'étage vertical est souverain : aucune autre série issue
-  // de la détection de proximité Recharts ne peut remplacer la série choisie.
-  if (pickKey) {
-    const picked = valid.filter((entry) => entry.dataKey === pickKey);
-    valid = picked;
-    // Si la note verticale courante ne porte pas de point pour cette série
-    // (alternance touches blanches/noires), sélectionner sa pastille la plus proche.
-    if (valid.length === 0 && chartData && lines) {
-      const requestedKey = typeof label === "number" ? label : 1;
-      const nearest = chartData
-        .map((point) => ({ point, distance: Math.abs(point.key - requestedKey) }))
-        .filter(({ point }) => typeof point[pickKey as SeriesKey] === "number" && Number.isFinite(point[pickKey as SeriesKey] as number))
-        .sort((a, b) => a.distance - b.distance)[0]?.point;
-      const definition = lines.find((line) => line.dataKey === pickKey);
-      const value = nearest?.[pickKey as SeriesKey];
-      if (nearest && definition && typeof value === "number") {
-        valid = [{ dataKey: pickKey, name: definition.name, color: definition.color, value }];
-        shownLabel = nearest.key;
-      }
-    }
-  }
-  if (active && valid.length > 0 && cache) cache.current = { label: shownLabel, entries: valid, pickKey };
-  // Persistance absolue : entre deux pastilles on réaffiche la dernière note quittée.
-  if (valid.length === 0 && cache?.current && cache.current.pickKey === pickKey) {
-    valid = cache.current.entries;
-    shownLabel = cache.current.label;
-  }
+    .sort((a, b) => rankOf(b.dataKey) - rankOf(a.dataKey));
   if (valid.length === 0) return null;
-  // Mode courbe unique : affichage ultra-épuré, sans pastille ni nom technique.
-  const solo = valid.length === 1;
-
-  const soloColor = valid[0]?.color ?? tooltipColorFor(valid[0]?.name ?? "");
-
   return (
-    <div className="pointer-events-none rounded-md border border-gray-200 bg-white px-3 py-2 text-xs shadow-md">
-      <div className="mb-1 font-bold" style={{ color: solo ? soloColor : "#1f2937" }}>Touche {shownLabel}</div>
-      {solo ? (
-        <div className="font-semibold tabular-nums" style={{ color: soloColor }}>{Math.round(Number(valid[0]?.value ?? 0))} gr.</div>
-      ) : (
-        valid.map((entry) => {
-          const color = entry.color ?? tooltipColorFor(entry.name ?? "");
-          return <div key={entry.name} className="flex items-center justify-between gap-4"><span style={{ color }}>{entry.name}</span><span className="font-semibold tabular-nums" style={{ color }}>{Math.round(Number(entry.value ?? 0))} gr.</span></div>;
-        })
-      )}
+    <div className="pointer-events-none !z-50 rounded-md border border-black bg-white px-3 py-2 text-xs">
+      <div className="mb-1 font-bold !text-black">Touche {label}</div>
+      {valid.map((entry) => {
+        const color = entry.color ?? tooltipColorFor(entry.name ?? "");
+        const name = entry.name?.trim() ? entry.name : "Piano actuel";
+        return (
+          <div key={entry.dataKey} className="flex items-center justify-between gap-4" style={{ color }}>
+            <span>{name}</span>
+            <span className="font-semibold tabular-nums">{Math.round(Number(entry.value ?? 0))} gr.</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
+
 
 
 
