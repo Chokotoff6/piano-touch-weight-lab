@@ -703,7 +703,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   keyboardModeRef.current = keyboardMode;
   kbNoteRef.current = kbNote;
   zoomStartRef.current = zoomStart;
-  const mouseAnchor = useRef<{ x: number; y: number } | null>(null);
+  
 
   // Dernière hauteur (Y) décidée par la souris : la FF pilotée au clavier y reste figée.
   const lastMouseY = useRef<number | null>(null);
@@ -742,34 +742,24 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   // reprend la main qu'après un déplacement physique de plus de 30 px, et repart
   // alors de la dernière note du clavier.
   // ---------------------------------------------------------------------------
-  const pointerPos = useRef<{ x: number; y: number } | null>(null);
+  // ---------------------------------------------------------------------------
+  // Verrou clavier / souris en mode zoom (logique de lock brute).
+  // Une flèche ◄ ► active le verrou (isKeyboardActive = true) et déplace la
+  // pastille de ±1. Tant que le verrou est actif, la souris n'a aucun droit de
+  // lecture ni d'écriture (return immédiat dans onMouseMove). Le verrou retombe
+  // tout seul après 400 ms sans appui. La FF reste figée à la hauteur Y
+  // (lastMouseY) mémorisée par la souris, via le survol synthétique rejoué.
+  // ---------------------------------------------------------------------------
+  const kbLockTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!zoomId) {
       setKbNote(null);
       setKeyboardMode(false);
-      mouseAnchor.current = null;
+      keyboardModeRef.current = false;
+      if (kbLockTimer.current) { clearTimeout(kbLockTimer.current); kbLockTimer.current = null; }
       return;
     }
-
-    const onPointer = (event: MouseEvent) => {
-      if (!event.isTrusted) return;
-      pointerPos.current = { x: event.clientX, y: event.clientY };
-      if (!keyboardModeRef.current) return;
-      const anchor = mouseAnchor.current;
-      if (!anchor) {
-        mouseAnchor.current = { x: event.clientX, y: event.clientY };
-        return;
-      }
-      if (Math.hypot(event.clientX - anchor.x, event.clientY - anchor.y) > 30) {
-        // La souris reprend la détection depuis la dernière note du clavier.
-        if (kbNoteRef.current !== null) lastMouseNote.current = kbNoteRef.current;
-        keyboardModeRef.current = false;
-        mouseAnchor.current = null;
-        setKeyboardMode(false);
-        setKbNote(null);
-      }
-    };
 
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
@@ -778,9 +768,8 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
       event.preventDefault();
       const step = event.key === "ArrowRight" ? 1 : -1;
-      // Le clavier prend la main immédiatement, ancré sur la position réelle du pointeur.
+      // Le clavier prend la main : verrou immédiat.
       keyboardModeRef.current = true;
-      mouseAnchor.current = pointerPos.current;
       setKeyboardMode(true);
       const base = kbNoteRef.current ?? lastMouseNote.current ?? Math.round(zoomStartRef.current + ZOOM_WINDOW / 2);
       const next = Math.min(Math.max(base + step, 1), 88);
@@ -792,13 +781,19 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
         if (next > start + ZOOM_WINDOW - 1) return Math.min(next - ZOOM_WINDOW + 1, 88 - ZOOM_WINDOW + 1);
         return start;
       });
+      // Minuteur de 400 ms : la souris reste interdite pendant ce délai.
+      if (kbLockTimer.current) clearTimeout(kbLockTimer.current);
+      kbLockTimer.current = setTimeout(() => {
+        keyboardModeRef.current = false;
+        setKeyboardMode(false);
+        kbLockTimer.current = null;
+      }, 400);
     };
 
     window.addEventListener("keydown", onKey, true);
-    window.addEventListener("mousemove", onPointer, true);
     return () => {
       window.removeEventListener("keydown", onKey, true);
-      window.removeEventListener("mousemove", onPointer, true);
+      if (kbLockTimer.current) { clearTimeout(kbLockTimer.current); kbLockTimer.current = null; }
     };
   }, [zoomId]);
 
@@ -824,121 +819,6 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
 
 
 
-  function SubChart({ family, zoomed = false }: { family: (typeof FAMILIES)[number]; zoomed?: boolean }) {
-    // Renommage dynamique de la courbe de référence : "Import CSV" (bleu) ou "Cloud" (orange),
-    // scindée en blanches / noires quand la vue éclatée est active.
-    const referenceLines = comparisonLinesFor(family.id, keyFilter, comparisonLabel, comparisonShort, csvActive);
-    // Le libellé de la courbe verte reprend l'identité complète de la cible sélectionnée.
-    const otherLines = family.lines
-      .filter((line) => line.name !== "Cloud")
-      .map((line) => (line.name === "Cible" ? { ...line, name: targetLabel } : line));
-    const lines = [...currentLinesFor(family.id, keyFilter, currentBaseName), ...referenceLines, ...otherLines];
-    // Chaque courbe est ancrée sur SON propre premier / dernier point défini
-    // (indispensable en vue éclatée où blanches et noires ne partagent pas les mêmes index).
-    const endpointOffsets = (side: "left" | "right") => new Map(
-      lines.map((line) => {
-        const index = side === "left" ? firstDefinedIndex(chartData, line.dataKey) : lastDefinedIndex(chartData, line.dataKey);
-        return [line.dataKey, offsetsFor(lines, chartData[index]).get(line.dataKey) ?? 0] as const;
-      }),
-    );
-    const dyLeft = endpointOffsets("left");
-    const dyRight = endpointOffsets("right");
-    const start = zoomed ? zoomStart : 1;
-    const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [1, 88];
-    const DotComp = zoomed ? ZoomDot : SampleDot;
-    return (
-      <Frame dataFrame={family.id} title={family.title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}>
-        <div className={`absolute right-3 z-20 flex flex-col items-end gap-1.5 ${zoomed ? "top-14" : "top-2"}`}>
-          {zoomed && (
-            <button type="button" aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
-          )}
-          {!zoomed && (
-            <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-2 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
-          )}
-          {onCycleKeyFilter && (
-            <button
-              type="button"
-              aria-label={bwLabel}
-              onClick={onCycleKeyFilter}
-              className="flex items-center gap-1 rounded-full border border-gray-300 bg-white px-2 py-0.5 text-[0.68rem] font-medium !text-black hover:bg-gray-100"
-            >
-              <PianoKeysIcon />
-              <span className="!text-black">{bwLabel}</span>
-            </button>
-          )}
-        </div>
-        {zoomed && (
-          <div className="pointer-events-none absolute inset-x-0 top-[58px] z-10 flex flex-col items-center gap-1">
-            <WheelHintIcon />
-            <ArrowHintIcon />
-          </div>
-        )}
-        <div
-          ref={zoomed ? plotRef : undefined}
-          className="h-full w-full"
-          onMouseEnter={() => setHoveredFamily(family.id)}
-          onMouseMove={(event) => {
-            if (!event.nativeEvent.isTrusted) return;
-            // En mode clavier, la hauteur Y est figée : on ignore les micro-mouvements.
-            if (keyboardModeRef.current) return;
-            const rect = event.currentTarget.getBoundingClientRect();
-            lastMouseY.current = Math.round(event.clientY - rect.top);
-          }}
-        >
-
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={chartData}
-              onMouseMove={(state: { activeLabel?: string | number }) => {
-                console.log("[KB][rcMove]", "label=", state?.activeLabel, "kbMode=", keyboardMode, "kbNote=", kbNoteRef.current);
-                if (keyboardMode) return;
-                const note = Number(state?.activeLabel);
-                if (Number.isFinite(note)) lastMouseNote.current = note;
-              }}
-              onMouseLeave={() => { setHoveredFamily(null); }}
-              margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}
-            >
-
-              <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
-              <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
-              <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={autoDomain ? ["auto", "auto"] : family.domain} />
-              {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#e5e7eb" strokeWidth={1} />)}
-
-              {/* Fenêtre flottante native : une seule bulle par touche, toutes courbes confondues. */}
-              <Tooltip
-                trigger="hover"
-                content={<CustomTooltipContent chartData={chartData} />}
-                cursor={{ stroke: "#d1d5db", strokeWidth: 1 }}
-                allowEscapeViewBox={{ x: true, y: true }}
-                wrapperStyle={{ pointerEvents: "none", zIndex: 100 }}
-                isAnimationActive={false}
-                offset={24}
-              />
-
-              {lines.map((line) => (
-                <Line
-                  key={line.dataKey}
-                  xAxisId="main"
-                  type="monotone"
-                  dataKey={line.dataKey}
-                  name={line.name}
-                  stroke={line.hidden ? "transparent" : line.color}
-                  strokeWidth={2}
-                  activeDot={line.hidden ? false : { r: 5, fill: line.color, stroke: "#ffffff", strokeWidth: 2 }}
-                  dot={line.real ? <DotComp /> : false}
-                  connectNulls={true}
-                  isAnimationActive={false}
-                  label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color: line.color, firstIndex: firstDefinedIndex(chartData, line.dataKey), lastIndex: lastDefinedIndex(chartData, line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden })}
-                />
-              ))}
-
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </Frame>
-
-    );
-  }
 
   const zoomFamily = FAMILIES.find((family) => family.id === zoomId);
   if (zoomFamily) {
