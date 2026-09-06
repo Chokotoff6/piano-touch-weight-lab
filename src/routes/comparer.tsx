@@ -978,20 +978,6 @@ function SidebarPanel(props: SidebarPanelProps) {
             {switchRow("Même année de fabrication", props.sameYear, props.setSameYear)}
             {switchRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
           </div>
-          <div className="mt-auto mb-3 border-t border-gray-200 pt-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={props.cycleKeyFilter}
-              className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-2 border-black bg-white !text-black hover:bg-gray-100`}
-            >
-              <CycleIcon />
-              <span className="!text-black font-medium">
-                Touches blanches/noires :{" "}
-                <span className="font-semibold !text-black">{props.keyFilter === "all" ? "groupées" : "séparées"}</span>
-              </span>
-            </Button>
-          </div>
         </div>
       </Frame>
     );
