@@ -1,4 +1,5 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { BrandTargetInfoContent } from "@/components/BrandTargetInfo";
 
 import {
   Accordion,
