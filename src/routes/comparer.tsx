@@ -664,7 +664,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     if (!zoomId || !keyboardMode || kbNote === null) return;
     const node = zoomRef.current ?? plotRef.current;
     const docSurf = document.querySelectorAll(".recharts-surface");
-    console.log("[KB][disp4]", "zoomRef=", !!zoomRef.current, "plotRef=", !!plotRef.current, "nodeTag=", node?.tagName, "docSurf=", docSurf.length, "nodeSvg=", node?.querySelectorAll("svg").length);
+    console.log("[KB][disp4]", "zoomRef=", !!zoomRef.current, "plotRef=", !!plotRef.current, "nodeTag=", node?.tagName, "docSurf=", docSurf.length, "nodeSvg=", node?.querySelectorAll("svg").length, "svgCls=", Array.from(node?.querySelectorAll("svg") ?? []).map(s=>s.getAttribute("class")).join("|"));
     const target = (docSurf[0] ?? node?.querySelector("svg")) as HTMLElement | null;
     if (!target) return;
     const rect = target.getBoundingClientRect();
