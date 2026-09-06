@@ -439,7 +439,7 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
   if (valid.length === 0) return null;
   return (
     <div className="pointer-events-none !z-50 rounded-md border border-black bg-white px-3 py-2 text-xs">
-      <div className="mb-1 font-bold !text-black">Touche {label}</div>
+      <div className="mb-1 font-bold !text-black">{en ? "Key" : "Touche"} {label} - {noteName(Number(label), en)}</div>
       {valid.map((entry) => {
         const color = entry.color ?? tooltipColorFor(entry.name ?? "");
         // Sur /resultats les courbes n'ont pas de nom : Recharts retombe sur la clé
