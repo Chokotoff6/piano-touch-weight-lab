@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, type SetStateAction, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/data/translations";
-import { RefreshCw, Square, SquareX } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
 import {
   buildCurrentPiano,
@@ -34,7 +34,7 @@ const BLACK_MODULOS = new Set([2, 5, 7, 10, 0]);
 const isBlackKey = (noteIndex: number) => BLACK_MODULOS.has(noteIndex % 12);
 const PROFILE_FIELDS = "id,serial_number,brand,model,type_piano,mesure_date,manufacture_year,climate_zone,maintenance_type,ville,pays,remarques,wa_values,wd_values,friction_values,balance_values,usage_level,created_at";
 
-export type KeyFilter = "all" | "split" | "white" | "black";
+export type KeyFilter = "all" | "split";
 type SourceMode = "none" | "cloud";
 type UsageLevel = "low" | "medium" | "intensive";
 // Filtre modifications importantes : incluses, exclues, ou uniquement celles-ci.
@@ -430,11 +430,7 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
       <div className="mb-1 font-bold !text-black">Touche {label}</div>
       {valid.map((entry) => {
         const color = entry.color ?? tooltipColorFor(entry.name ?? "");
-        // Sur /resultats les courbes n'ont pas de nom : Recharts retombe sur la clé
-        // technique ("waCur"). On affiche alors "Blanche" / "Noire" selon la note.
-        const rawName = entry.name?.trim() ?? "";
-        const isRawKey = rawName === "" || rawName === String(entry.dataKey ?? "");
-        const name = isRawKey ? (isBlackKey(Number(label)) ? "Noire" : "Blanche") : rawName;
+        const name = entry.name?.trim() ? entry.name : "Piano actuel";
         return (
           <div key={entry.dataKey} className="flex items-center justify-between gap-4 whitespace-nowrap" style={{ color }}>
             <span>{name}</span>
@@ -474,11 +470,10 @@ function currentLinesFor(familyId: string, keyFilter: KeyFilter, baseName = "Pia
   if (!metric) return [];
   const white = baseName ? `${baseName} blanches` : "blanches";
   const black = baseName ? `${baseName} noires` : "noires";
-  const whiteLine: LineDef = { dataKey: metric[1], name: white, shortName: white, color: "#6b7280", real: true };
-  const blackLine: LineDef = { dataKey: metric[2], name: black, shortName: black, color: "#000000", real: true };
-  if (keyFilter === "split") return [whiteLine, blackLine];
-  if (keyFilter === "white") return [whiteLine];
-  if (keyFilter === "black") return [blackLine];
+  if (keyFilter === "split") return [
+    { dataKey: metric[1], name: white, shortName: white, color: "#6b7280", real: true },
+    { dataKey: metric[2], name: black, shortName: black, color: "#000000", real: true },
+  ];
   return [{ dataKey: metric[0], name: baseName, shortName: baseName, color: "#000000", real: true }];
 }
 
@@ -491,11 +486,10 @@ function comparisonLinesFor(familyId: string, keyFilter: KeyFilter, name: string
   // Bleu intense pour l'import CSV, orange pour la moyenne Cloud.
   const strong = isCsv ? "#2563EB" : "#f97316";
   const light = isCsv ? "#93c5fd" : "#fdba74";
-  const whiteLine: LineDef = { dataKey: metric[1], name: `${name} blanches`, shortName: `${short} blanches`, color: light };
-  const blackLine: LineDef = { dataKey: metric[2], name: `${name} noires`, shortName: `${short} noires`, color: strong };
-  if (keyFilter === "split") return [whiteLine, blackLine];
-  if (keyFilter === "white") return [whiteLine];
-  if (keyFilter === "black") return [blackLine];
+  if (keyFilter === "split") return [
+    { dataKey: metric[1], name: `${name} blanches`, shortName: `${short} blanches`, color: light },
+    { dataKey: metric[2], name: `${name} noires`, shortName: `${short} noires`, color: strong },
+  ];
   return [{ dataKey: metric[0], name, shortName: short, color: strong }];
 }
 
@@ -513,39 +507,6 @@ function lastDefinedIndex(data: ChartPoint[], key: SeriesKey) {
 
 
 const ZOOM_WINDOW = 44;
-
-// Index du premier / dernier point défini À L'INTÉRIEUR de la fenêtre affichée.
-// En mode zoom, sans cette borne toutes les étiquettes retombaient sur le même
-// point (hors fenêtre) et se chevauchaient en haut du graphique.
-function firstDefinedIndexIn(data: ChartPoint[], key: SeriesKey, min: number, max: number) {
-  for (let index = 0; index < data.length; index += 1) {
-    const point = data[index];
-    if (!point || point.key < min || point.key > max) continue;
-    const value = point[key];
-    if (typeof value === "number" && Number.isFinite(value)) return index;
-  }
-  return -1;
-}
-function lastDefinedIndexIn(data: ChartPoint[], key: SeriesKey, min: number, max: number) {
-  for (let index = data.length - 1; index >= 0; index -= 1) {
-    const point = data[index];
-    if (!point || point.key < min || point.key > max) continue;
-    const value = point[key];
-    if (typeof value === "number" && Number.isFinite(value)) return index;
-  }
-  return -1;
-}
-
-// Libellé bilingue cyclique de la bascule N/B (4 états).
-export function bwLabelFor(keyFilter: KeyFilter, lang: string) {
-  if (lang === "en") {
-    return keyFilter === "all" ? "B/W: grouped" : keyFilter === "split" ? "B/W: separated" : keyFilter === "white" ? "B/W: whites only" : "B/W: blacks only";
-  }
-  return keyFilter === "all" ? "N/B : groupées" : keyFilter === "split" ? "N/B : séparées" : keyFilter === "white" ? "N/B : blanches seules" : "N/B : noires seules";
-}
-export function nextKeyFilter(keyFilter: KeyFilter): KeyFilter {
-  return keyFilter === "all" ? "split" : keyFilter === "split" ? "white" : keyFilter === "white" ? "black" : "all";
-}
 
 function MagnifyIcon() {
   return (
@@ -596,9 +557,7 @@ type SubChartCtx = {
   csvActive: boolean;
   targetLabel: string;
   onCycleKeyFilter: (() => void) | undefined;
-  filters: Record<string, KeyFilter>;
-  cycleFor: (familyId: string) => void;
-  lang: string;
+  bwLabel: string;
   zoomStart: number;
   setZoomStart: Dispatch<SetStateAction<number>>;
   setZoomId: Dispatch<SetStateAction<string | null>>;
@@ -616,10 +575,7 @@ type SubChartCtx = {
 // remontage détruit le SVG Recharts au moment exact du dispatch synthétique, ce qui
 // empêchait les flèches ◄ ► d'allumer la pastille.
 function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[number]; zoomed?: boolean; ctx: SubChartCtx }) {
-  const { chartData, keyFilter: baseKeyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, filters, cycleFor, lang, zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode, plotRef, lastMouseY, keyboardModeRef, lastMouseNote } = ctx;
-  // Réglage N/B strictement indépendant pour chaque cadre graphique.
-  const keyFilter = filters[family.id] ?? baseKeyFilter;
-  const bwLabel = bwLabelFor(keyFilter, lang);
+  const { chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, bwLabel, zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode, plotRef, lastMouseY, keyboardModeRef, lastMouseNote } = ctx;
   // Renommage dynamique de la courbe de référence : "Import CSV" (bleu) ou "Cloud" (orange),
   // scindée en blanches / noires quand la vue éclatée est active.
   const referenceLines = comparisonLinesFor(family.id, keyFilter, comparisonLabel, comparisonShort, csvActive);
@@ -630,18 +586,16 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   const lines = [...currentLinesFor(family.id, keyFilter, currentBaseName), ...referenceLines, ...otherLines];
   // Chaque courbe est ancrée sur SON propre premier / dernier point défini
   // (indispensable en vue éclatée où blanches et noires ne partagent pas les mêmes index).
-  const start = zoomed ? zoomStart : 1;
-  const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [1, 88];
-  const firstIn = (key: SeriesKey) => firstDefinedIndexIn(chartData, key, domainX[0], domainX[1]);
-  const lastIn = (key: SeriesKey) => lastDefinedIndexIn(chartData, key, domainX[0], domainX[1]);
   const endpointOffsets = (side: "left" | "right") => new Map(
     lines.map((line) => {
-      const index = side === "left" ? firstIn(line.dataKey) : lastIn(line.dataKey);
+      const index = side === "left" ? firstDefinedIndex(chartData, line.dataKey) : lastDefinedIndex(chartData, line.dataKey);
       return [line.dataKey, offsetsFor(lines, chartData[index]).get(line.dataKey) ?? 0] as const;
     }),
   );
   const dyLeft = endpointOffsets("left");
   const dyRight = endpointOffsets("right");
+  const start = zoomed ? zoomStart : 1;
+  const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [1, 88];
   const DotComp = zoomed ? ZoomDot : SampleDot;
   return (
     <Frame dataFrame={family.id} title={family.title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}>
@@ -656,7 +610,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           <button
             type="button"
             aria-label={bwLabel}
-            onClick={() => cycleFor(family.id)}
+            onClick={onCycleKeyFilter}
             className="flex items-center gap-1 rounded-full border border-gray-300 bg-white px-2 py-0.5 text-[0.68rem] font-medium !text-black hover:bg-gray-100"
           >
             <PianoKeysIcon />
@@ -696,7 +650,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
             <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
             <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={autoDomain ? ["auto", "auto"] : family.domain} />
-            {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#9ca3af" strokeWidth={1.4} />)}
+            {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#e5e7eb" strokeWidth={1} />)}
 
             {/* Fenêtre flottante native : une seule bulle par touche, toutes courbes confondues. */}
             <Tooltip
@@ -722,7 +676,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
                 dot={line.real ? <DotComp /> : false}
                 connectNulls={true}
                 isAnimationActive={false}
-                label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color: line.color, firstIndex: firstIn(line.dataKey), lastIndex: lastIn(line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden })}
+                label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color: line.color, firstIndex: firstDefinedIndex(chartData, line.dataKey), lastIndex: lastDefinedIndex(chartData, line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden })}
               />
             ))}
 
@@ -735,10 +689,9 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
 
 export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible", onCycleKeyFilter }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void }) {
   const lang = useLang();
-  // Chaque cadre graphique garde son propre réglage N/B (4 états cycliques).
-  const [filters, setFilters] = useState<Record<string, KeyFilter>>({});
-  const cycleFor = (familyId: string) =>
-    setFilters((current) => ({ ...current, [familyId]: nextKeyFilter(current[familyId] ?? keyFilter) }));
+  const bwLabel = lang === "en"
+    ? (keyFilter === "all" ? "B/W: grouped" : "B/W: separated")
+    : (keyFilter === "all" ? "N/B : groupées" : "N/B : séparées");
   const [hoveredFamily, setHoveredFamily] = useState<string | null>(null);
 
   const [zoomId, setZoomId] = useState<string | null>(null);
@@ -765,7 +718,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   // Contexte stable passé au SubChart (déclaré au niveau module) : évite le
   // démontage/remontage du graphique Recharts à chaque changement d'état clavier.
   const subCtx: SubChartCtx = {
-    chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, filters, cycleFor, lang,
+    chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, bwLabel,
     zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode,
     plotRef, lastMouseY, keyboardModeRef, lastMouseNote,
   };
@@ -1097,11 +1050,9 @@ function SidebarPanel(props: SidebarPanelProps) {
     >
       {/* Espaceur invisible de même largeur que l'icône RefreshCw (16px) pour aligner le début du texte sur les boutons du haut. */}
       <span className="w-4 shrink-0" aria-hidden="true" />
-      <span className="flex items-center font-bold uppercase text-black">
+      <span className="font-bold uppercase text-black">
         {label}
-        {checked
-          ? <SquareX size={18} strokeWidth={2.6} className="ml-[10px] shrink-0 !text-black" />
-          : <Square size={18} strokeWidth={1.4} className="ml-[10px] shrink-0 !text-black" />}
+        {checked ? <span className="ml-[10px] font-bold text-black text-[0.884rem]">V</span> : null}
       </span>
     </Button>
   );
@@ -1112,12 +1063,12 @@ function SidebarPanel(props: SidebarPanelProps) {
   return (
     <Frame title="Réglages" className="flex flex-1 flex-col">
       <div className="flex h-full flex-col items-stretch justify-start gap-2 pt-2">
-          <div className="text-sm font-bold !text-black">Comparer piano actuel avec CLOUD :</div>
+          <div className="text-sm font-bold !text-black">Comparer piano actuel avec :</div>
           <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={sourceButtonClass(props.cloudEnabled, "!text-orange-600")}><CycleIcon /><span className="font-bold uppercase">Cloud</span></Button>
           <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><CycleIcon /><span className="font-bold uppercase">Cible</span></Button>
-          <Button type="button" variant="outline" title="Importez un fichier CSV depuis votre stockage local." aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} !text-blue-700 [&_svg]:!text-blue-700 ${props.csvActive ? "" : "border-blue-600"}`}><CycleIcon /><span className="font-bold uppercase">Importer CSV</span></Button>
+          <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={sourceButtonClass(props.csvActive, "!text-blue-600")}><CycleIcon /><span className="font-bold uppercase">Importer CSV</span></Button>
           <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
-          <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold !text-black">Filtres CLOUD</div>
+          <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold !text-black">Filtres</div>
           <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black !opacity-100 disabled:!opacity-100 font-medium hover:border-gray-300 [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.usageLevel !== "low" ? 2.5 : 1.2} className="shrink-0" /><span className="!text-black font-bold uppercase">Usage instrument : <span className="!text-black font-semibold uppercase">{usageLabel}</span></span></Button>
           <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left !text-black !opacity-100 disabled:!opacity-100 [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.importantChanges !== "excluded" ? 2.5 : 1.2} className="shrink-0" /><span className="!text-black font-bold uppercase">Modifications importantes : <span className="!text-black font-semibold uppercase">{changesLabel}</span></span></Button>
           {cycleRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
