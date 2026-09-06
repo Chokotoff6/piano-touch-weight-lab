@@ -385,7 +385,6 @@ function CustomTickTop(props: { x?: number; y?: number; dy?: number; payload?: {
 }
 
 type TooltipEntry = { name?: string; value?: number; color?: string; dataKey?: string };
-type TooltipCache = { label: number | undefined; entries: TooltipEntry[]; pickKey: string | null | undefined };
 function tooltipColorFor(name: string) {
   const lower = name.toLowerCase();
   // Identité bleue exclusive de l'import CSV.
@@ -398,60 +397,39 @@ function tooltipColorFor(name: string) {
   return "#10b981";
 }
 
-
-function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; pickKey?: string | null; cache?: { current: TooltipCache | null }; chartData?: ChartPoint[]; lines?: LineDef[] }) {
-  const { active, payload, label, pickKey, cache, chartData, lines } = props;
-  let valid = [...(payload ?? [])]
+// Fenêtre flottante native (trigger "axis") : une seule bulle listant toutes les
+// courbes actives de la touche survolée. L'ordre suit la valeur de chaque courbe
+// à la touche 1 (premier pixel), du plus haut au plus bas.
+function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; chartData?: ChartPoint[] }) {
+  const { active, payload, label, chartData } = props;
+  if (!active) return null;
+  const first = chartData?.[0];
+  const rankOf = (dataKey?: string) => {
+    const value = first && dataKey ? first[dataKey as SeriesKey] : undefined;
+    return typeof value === "number" && Number.isFinite(value) ? value : -Infinity;
+  };
+  const valid = [...(payload ?? [])]
     .filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value))
-    .sort((a, b) => Number(b.value) - Number(a.value));
-  let shownLabel = label;
-  // En mode éclaté, l'étage vertical est souverain : aucune autre série issue
-  // de la détection de proximité Recharts ne peut remplacer la série choisie.
-  if (pickKey) {
-    const picked = valid.filter((entry) => entry.dataKey === pickKey);
-    valid = picked;
-    // Si la note verticale courante ne porte pas de point pour cette série
-    // (alternance touches blanches/noires), sélectionner sa pastille la plus proche.
-    if (valid.length === 0 && chartData && lines) {
-      const requestedKey = typeof label === "number" ? label : 1;
-      const nearest = chartData
-        .map((point) => ({ point, distance: Math.abs(point.key - requestedKey) }))
-        .filter(({ point }) => typeof point[pickKey as SeriesKey] === "number" && Number.isFinite(point[pickKey as SeriesKey] as number))
-        .sort((a, b) => a.distance - b.distance)[0]?.point;
-      const definition = lines.find((line) => line.dataKey === pickKey);
-      const value = nearest?.[pickKey as SeriesKey];
-      if (nearest && definition && typeof value === "number") {
-        valid = [{ dataKey: pickKey, name: definition.name, color: definition.color, value }];
-        shownLabel = nearest.key;
-      }
-    }
-  }
-  if (active && valid.length > 0 && cache) cache.current = { label: shownLabel, entries: valid, pickKey };
-  // Persistance absolue : entre deux pastilles on réaffiche la dernière note quittée.
-  if (valid.length === 0 && cache?.current && cache.current.pickKey === pickKey) {
-    valid = cache.current.entries;
-    shownLabel = cache.current.label;
-  }
+    .filter((entry) => !String(entry.dataKey ?? "").endsWith("Mid"))
+    .sort((a, b) => rankOf(b.dataKey) - rankOf(a.dataKey));
   if (valid.length === 0) return null;
-  // Mode courbe unique : affichage ultra-épuré, sans pastille ni nom technique.
-  const solo = valid.length === 1;
-
-  const soloColor = valid[0]?.color ?? tooltipColorFor(valid[0]?.name ?? "");
-
   return (
-    <div className="pointer-events-none rounded-md border border-gray-200 bg-white px-3 py-2 text-xs shadow-md">
-      <div className="mb-1 font-bold" style={{ color: solo ? soloColor : "#1f2937" }}>Touche {shownLabel}</div>
-      {solo ? (
-        <div className="font-semibold tabular-nums" style={{ color: soloColor }}>{Math.round(Number(valid[0]?.value ?? 0))} gr.</div>
-      ) : (
-        valid.map((entry) => {
-          const color = entry.color ?? tooltipColorFor(entry.name ?? "");
-          return <div key={entry.name} className="flex items-center justify-between gap-4"><span style={{ color }}>{entry.name}</span><span className="font-semibold tabular-nums" style={{ color }}>{Math.round(Number(entry.value ?? 0))} gr.</span></div>;
-        })
-      )}
+    <div className="pointer-events-none !z-50 rounded-md border border-black bg-white px-3 py-2 text-xs">
+      <div className="mb-1 font-bold !text-black">Touche {label}</div>
+      {valid.map((entry) => {
+        const color = entry.color ?? tooltipColorFor(entry.name ?? "");
+        const name = entry.name?.trim() ? entry.name : "Piano actuel";
+        return (
+          <div key={entry.dataKey} className="flex items-center justify-between gap-4" style={{ color }}>
+            <span>{name}</span>
+            <span className="font-semibold tabular-nums">{Math.round(Number(entry.value ?? 0))} gr.</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
+
 
 
 
@@ -556,22 +534,12 @@ function ArrowHintIcon() {
 
 
 export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean }) {
-  const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
-  // Mémoire de la dernière pastille survolée : la bulle ne s'éteint jamais entre deux notes.
-  const tooltipCache = useRef<TooltipCache | null>(null);
-  const [hoveredLine, setHoveredLine] = useState<string | null>(null);
   const [hoveredFamily, setHoveredFamily] = useState<string | null>(null);
 
   const [zoomId, setZoomId] = useState<string | null>(null);
   const [zoomStart, setZoomStart] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<HTMLDivElement>(null);
-  const plotRef = useRef<HTMLDivElement>(null);
-  // Arbitrage clavier / souris : le clavier prend la main tant que la souris ne bouge
-  // pas réellement (plus de 5 px), ce qui supprime tout clignotement de la bulle.
-  const interactionMode = useRef<"mouse" | "keyboard">("mouse");
-  const lastMouse = useRef<{ x: number; y: number } | null>(null);
-
 
   // Capture de la molette en mode zoom : glissement continu de la fenêtre de 44 touches.
   useEffect(() => {
@@ -586,49 +554,16 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     return () => node.removeEventListener("wheel", onWheel);
   }, [zoomId]);
 
-  // Miroirs pour la navigation clavier (valeurs fraîches sans redéclencher l'effet).
-  const noteRef = useRef<number | null>(null);
-  noteRef.current = hoveredNoteIndex;
-  const startRef = useRef(zoomStart);
-  startRef.current = zoomStart;
-
-  // Le clavier pilote la bulle en repositionnant le pointeur virtuel sur la pastille visée :
-  // la fenêtre flottante et la pastille active suivent instantanément et de façon synchrone.
-  const syncPointerToNote = (note: number, start: number) => {
-    const node = plotRef.current;
-    if (!node) return;
-    const rect = node.getBoundingClientRect();
-    const left = rect.left + sideMargin;
-    const width = Math.max(rect.width - sideMargin * 2, 1);
-    const ratio = (note - start) / Math.max(ZOOM_WINDOW - 1, 1);
-    const x = left + Math.min(Math.max(ratio, 0), 1) * width;
-    const y = lastMouse.current?.y ?? rect.top + rect.height / 2;
-    node.dispatchEvent(new MouseEvent("mousemove", { clientX: x, clientY: y, bubbles: true }));
-  };
-
+  // Sortie du zoom au clavier.
   useEffect(() => {
     if (!zoomId) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { setZoomId(null); return; }
-      // Navigation clavier : saut instantané à la pastille mesurée précédente / suivante.
-      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-      event.preventDefault();
-      const step = event.key === "ArrowRight" ? 2 : -2;
-      const base = noteRef.current ?? Math.round(startRef.current);
-      const next = Math.min(Math.max(base + step, 1), 88);
-      const from = Math.round(startRef.current);
-      let nextStart = startRef.current;
-      if (next < from) nextStart = Math.max(next, 1);
-      else if (next > from + ZOOM_WINDOW - 1) nextStart = Math.min(next - ZOOM_WINDOW + 1, 88 - ZOOM_WINDOW + 1);
-      startRef.current = nextStart;
-      noteRef.current = next;
-      setZoomStart(nextStart);
-      setHoveredNoteIndex(next);
-      requestAnimationFrame(() => syncPointerToNote(next, nextStart));
+      if (event.key === "Escape") setZoomId(null);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [zoomId]);
+
 
   function SubChart({ family, zoomed = false }: { family: (typeof FAMILIES)[number]; zoomed?: boolean }) {
     // Renommage dynamique de la courbe de référence : "Import CSV" (bleu) ou "Cloud" (orange),
@@ -646,17 +581,6 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     );
     const dyLeft = endpointOffsets("left");
     const dyRight = endpointOffsets("right");
-    // Zonage par AMPLITUDE RÉELLE : on reconstruit l'échelle verticale du tracé puis on
-    // retient, à l'index survolé, la courbe dont la valeur est la plus proche du pointeur.
-    const visibleLines = lines.filter((line) => !line.hidden);
-    const allValues = chartData.flatMap((point) =>
-      visibleLines.map((line) => point[line.dataKey]).filter((value): value is number => typeof value === "number" && Number.isFinite(value)),
-    );
-    const dataMin = allValues.length > 0 ? Math.min(...allValues) : 0;
-    const dataMax = allValues.length > 0 ? Math.max(...allValues) : 1;
-    const numericDomain = !autoDomain && typeof family.domain[0] === "number" && typeof family.domain[1] === "number";
-    const yMin = numericDomain ? (family.domain[0] as number) : dataMin - 1.5;
-    const yMax = numericDomain ? (family.domain[1] as number) : dataMax + 1.5;
     const start = zoomed ? zoomStart : 1;
     const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [1, 88];
     const DotComp = zoomed ? ZoomDot : SampleDot;
@@ -674,52 +598,16 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           </>
         ) : (
           <div className="absolute right-3 top-2 z-10 flex flex-col items-end gap-2">
-            <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setHoveredNoteIndex(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
+            <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
           </div>
         )}
         <div
-          ref={zoomed ? plotRef : undefined}
           className="h-full w-full"
           onMouseEnter={() => setHoveredFamily(family.id)}
-          onMouseMoveCapture={(event) => {
-            const previous = lastMouse.current;
-            const moved = !previous || Math.hypot(event.clientX - previous.x, event.clientY - previous.y) > 5;
-            lastMouse.current = { x: event.clientX, y: event.clientY };
-            if (!moved) return;
-            interactionMode.current = "mouse";
-            // Reconstruction de l'échelle réellement rendue puis choix de la courbe
-            // la plus proche verticalement du pointeur, à l'index X survolé.
-            const rect = event.currentTarget.getBoundingClientRect();
-            const plotTop = rect.top + 22;
-            const plotHeight = Math.max(rect.height - 22 - 15, 1);
-            const relY = Math.min(Math.max((event.clientY - plotTop) / plotHeight, 0), 1);
-            const pointerValue = yMax - relY * (yMax - yMin);
-            const plotLeft = rect.left + sideMargin;
-            const plotWidth = Math.max(rect.width - sideMargin * 2, 1);
-            const relX = Math.min(Math.max((event.clientX - plotLeft) / plotWidth, 0), 1);
-            const note = Math.round(domainX[0] + relX * (domainX[1] - domainX[0]));
-            let best: { key: string; distance: number } | null = null;
-            visibleLines.forEach((line) => {
-              const nearest = chartData
-                .filter((point) => typeof point[line.dataKey] === "number" && Number.isFinite(point[line.dataKey] as number))
-                .sort((a, b) => Math.abs(a.key - note) - Math.abs(b.key - note))[0];
-              const value = nearest?.[line.dataKey];
-              if (typeof value !== "number") return;
-              const distance = Math.abs(value - pointerValue);
-              if (!best || distance < best.distance) best = { key: line.dataKey as string, distance };
-            });
-            setHoveredLine((best as { key: string } | null)?.key ?? null);
-          }}
         >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
-              onMouseMove={(state: { activeLabel?: unknown; chartX?: number; chartY?: number; activePayload?: TooltipEntry[] }) => {
-                if (interactionMode.current === "keyboard") return;
-                const note = state?.activeLabel;
-                if (typeof note === "number") setHoveredNoteIndex(note);
-
-              }}
               onMouseLeave={() => { setHoveredFamily(null); }}
               margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}
             >
@@ -727,40 +615,35 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
               <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={autoDomain ? ["auto", "auto"] : family.domain} />
               {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#e5e7eb" strokeWidth={1} />)}
-              
-              {/* Tooltip natif : premier plan absolu, jamais éteint entre deux pastilles. */}
+
+              {/* Fenêtre flottante native : une seule bulle par touche, toutes courbes confondues. */}
               <Tooltip
-                content={<CustomTooltipContent pickKey={hoveredLine} cache={tooltipCache} chartData={chartData} lines={lines} />}
+                trigger="hover"
+                content={<CustomTooltipContent chartData={chartData} />}
+                cursor={{ stroke: "#d1d5db", strokeWidth: 1 }}
                 allowEscapeViewBox={{ x: true, y: true }}
                 wrapperStyle={{ pointerEvents: "none", zIndex: 100 }}
                 isAnimationActive={false}
                 offset={24}
-                active={hoveredNoteIndex !== null}
-                {...(zoomed && hoveredNoteIndex !== null ? { defaultIndex: hoveredNoteIndex - 1 } : {})}
               />
 
-              {lines.map((line) => {
-                // La courbe reste parfaitement stable au survol : seule la pastille
-                // active (la note sous le curseur) s'agrandit avec un liseré blanc.
-                const picked = hoveredLine === line.dataKey;
-                return (
-                  <Line
-                    key={line.dataKey}
-                    xAxisId="main"
-                    type="monotone"
-                    dataKey={line.dataKey}
-                    name={line.name}
-                    stroke={line.hidden ? "transparent" : line.color}
-                    strokeWidth={2}
-                    activeDot={picked && !line.hidden ? { r: 6, fill: line.color, stroke: "#ffffff", strokeWidth: 2.5 } : false}
+              {lines.map((line) => (
+                <Line
+                  key={line.dataKey}
+                  xAxisId="main"
+                  type="monotone"
+                  dataKey={line.dataKey}
+                  name={line.name}
+                  stroke={line.hidden ? "transparent" : line.color}
+                  strokeWidth={2}
+                  activeDot={line.hidden ? false : { r: 5, fill: line.color, stroke: "#ffffff", strokeWidth: 2 }}
+                  dot={line.real ? <DotComp /> : false}
+                  connectNulls={true}
+                  isAnimationActive={false}
+                  label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color: line.color, firstIndex: firstDefinedIndex(chartData, line.dataKey), lastIndex: lastDefinedIndex(chartData, line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden })}
+                />
+              ))}
 
-                    dot={line.real ? <DotComp /> : false}
-                    connectNulls={true}
-                    isAnimationActive={false}
-                    label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color: line.color, firstIndex: firstDefinedIndex(chartData, line.dataKey), lastIndex: lastDefinedIndex(chartData, line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden })}
-                  />
-                );
-              })}
             </LineChart>
           </ResponsiveContainer>
         </div>
