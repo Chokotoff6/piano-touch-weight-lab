@@ -36,6 +36,8 @@ const PROFILE_FIELDS = "id,serial_number,brand,model,type_piano,mesure_date,manu
 export type KeyFilter = "all" | "split";
 type SourceMode = "none" | "cloud";
 type UsageLevel = "all" | "low" | "intensive";
+// Filtre modifications importantes : incluses, exclues, ou uniquement celles-ci.
+type ChangesFilter = "included" | "excluded" | "only";
 
 export type RefProfile = {
   wa: number[];
@@ -587,6 +589,8 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       return;
     }
     const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
       if (event.key === "Escape") { setZoomId(null); return; }
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
       event.preventDefault();
@@ -605,8 +609,8 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
         return next;
       });
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, [zoomId, zoomStart]);
 
   // La souris ne reprend la main qu'après un déplacement réel (physique) de plus de 30 px.
@@ -667,12 +671,12 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     const DotComp = zoomed ? ZoomDot : SampleDot;
     return (
       <Frame dataFrame={family.id} title={family.title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}>
-        <div className="absolute right-3 top-7 z-20 flex flex-col items-end gap-1.5">
+        <div className="absolute right-3 top-14 z-20 flex flex-col items-end gap-1.5">
           {zoomed && (
             <button type="button" aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
           )}
           {!zoomed && (
-            <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1.5 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
+            <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-2 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
           )}
           {onCycleKeyFilter && (
             <button
@@ -770,7 +774,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   // les cadres sont extraits de la grille via une bande pleine largeur centrée.
   return (
     <div ref={containerRef} className="relative left-1/2 w-screen -translate-x-1/2 pb-[80vh] pt-2">
-      <div className="mx-auto flex w-[80vw] max-w-5xl flex-col gap-4 px-2" style={{ width: "80vw", marginLeft: "auto", marginRight: "auto" }}>{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div>
+      <div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div>
     </div>
   );
 
@@ -821,7 +825,7 @@ function AverageBlock({ label, global, white, black, tone }: { label: string; gl
   const val = (v: string) => v === "—" ? <span className={toneClass}>—</span> : <>{v}<span className="!text-xs !font-medium"> gr.</span></>;
   const sub = (v: string) => v === "—" ? "—" : <>{v}<span className={toneClass}> gr.</span></>;
   return (
-    <div className="rounded bg-muted px-2 py-1.5 text-center">
+    <div className="flex h-full flex-col justify-end rounded bg-muted px-2 py-1.5 text-center">
       <div className="!text-[1.1rem] font-bold tracking-wide !text-black">{label}</div>
       <div className={`mt-1 !text-2xl !font-bold tabular-nums ${toneClass}`}>{val(global)}</div>
       <div className={`mt-0.5 flex justify-center gap-2 text-[0.65rem] tabular-nums ${toneClass}`}>
@@ -889,7 +893,7 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
         const { label } = COLUMNS.find((col) => col.key === key)!;
         const value = seriesAverage(chartData, globalKey);
         return (
-          <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
+          <div key={key} className="flex h-full flex-col justify-end rounded bg-muted px-2 py-1.5 text-center">
             <div className="!text-[1.1rem] font-bold tracking-wide !text-black">{label}</div>
             <div className="mt-1 !text-2xl !font-bold tabular-nums !text-green-600">
               {value === "—" ? <span className="!text-green-600">—</span> : <>{value}<span className="!text-xs !font-medium"> gr.</span></>}
@@ -918,6 +922,9 @@ const pillClass = (active: boolean) => `${PILL_BASE} ${active ? "border-black bg
 // Boutons cycliques Oui/Non (CLOUD, CIBLE, IMPORT CSV) : bordure noire quand actif.
 const cyclePillClass = (active: boolean) =>
   `${PILL_BASE} flex w-full items-center justify-start gap-2 bg-white !opacity-100 ${active ? "border-black" : "border-gray-200 hover:border-gray-300"} [&_svg]:!opacity-100`;
+// Boutons de sources (CLOUD, CIBLE, IMPORTER CSV) : capitales, fond coloré à 40 % quand actif.
+const sourcePillClass = (active: boolean, activeBg: string) =>
+  `${PILL_BASE} flex w-full items-center justify-start gap-2 !opacity-100 ${active ? `border-black ${activeBg}` : "border-transparent bg-gray-100 hover:bg-gray-200"} [&_svg]:!opacity-100`;
 
 export function CycleIcon() {
   return (
@@ -956,12 +963,12 @@ type SidebarPanelProps = {
   filtersDisabled: boolean;
   sameClimate: boolean;
   sameYear: boolean;
-  importantChanges: boolean;
+  importantChanges: ChangesFilter;
   youngOnly: boolean;
   usageLevel: UsageLevel;
   setSameClimate: (value: boolean) => void;
   setSameYear: (value: boolean) => void;
-  setImportantChanges: (value: boolean) => void;
+  setImportantChanges: (value: ChangesFilter) => void;
   setYoungOnly: (value: boolean) => void;
   cycleUsage: () => void;
 
@@ -970,6 +977,7 @@ type SidebarPanelProps = {
 function SidebarPanel(props: SidebarPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const usageLabel = props.usageLevel === "all" ? "Tous" : props.usageLevel === "low" ? "Faible" : "Intensif";
+  const changesLabel = props.importantChanges === "included" ? "Inclus" : props.importantChanges === "excluded" ? "Exclus" : "Seuls";
   // Filtres du bas : bascule cyclique Oui/Non (bordure noire quand actif).
   const cycleRow = (label: string, checked: boolean, onChange: (value: boolean) => void) => (
     <Button
@@ -991,9 +999,9 @@ function SidebarPanel(props: SidebarPanelProps) {
           <div>
             <div className="mb-1.5 whitespace-nowrap !text-xs !font-bold !text-black">Comparer piano actuel avec :</div>
             <div className="flex flex-col gap-1.5">
-              <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={`${cyclePillClass(props.cloudEnabled)} ${props.cloudEnabled ? "!text-orange-600" : "!text-gray-400"}`}><CycleIcon /><span className="font-bold">CLOUD : <span className="font-semibold">{props.cloudEnabled ? "Oui" : "Non"}</span></span></Button>
-              <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={`${cyclePillClass(props.standardEnabled)} ${props.standardEnabled ? "!text-green-600" : "!text-gray-400"}`}><CycleIcon /><span className="font-bold">CIBLE : <span className="font-semibold">{props.standardEnabled ? "Oui" : "Non"}</span></span></Button>
-              <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${cyclePillClass(props.csvActive)} ${props.csvActive ? "!text-blue-600" : "!text-gray-400"}`}><CycleIcon /><span className="font-bold">IMPORT CSV : <span className="font-semibold">{props.csvActive ? "Oui" : "Non"}</span></span></Button>
+              <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={`${sourcePillClass(props.cloudEnabled, "bg-orange-400/40")} ${props.cloudEnabled ? "!text-orange-700" : "!text-gray-500"}`}><CycleIcon /><span className="font-bold uppercase">Cloud</span></Button>
+              <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={`${sourcePillClass(props.standardEnabled, "bg-green-400/40")} ${props.standardEnabled ? "!text-green-700" : "!text-gray-500"}`}><CycleIcon /><span className="font-bold uppercase">Cible</span></Button>
+              <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${sourcePillClass(props.csvActive, "bg-blue-400/40")} ${props.csvActive ? "!text-blue-700" : "!text-gray-500"}`}><CycleIcon /><span className="font-bold uppercase">Importer CSV</span></Button>
               <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
             </div>
 
@@ -1001,9 +1009,9 @@ function SidebarPanel(props: SidebarPanelProps) {
           <div className="space-y-2 border-t border-gray-200 pt-3">
             <div className="font-bold !text-black">Filtres</div>
             <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Niveau d'usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black !opacity-100 disabled:!opacity-100 font-medium hover:border-gray-300 [&_svg]:!text-black [&_svg]:!opacity-100`}><CycleIcon /><span className="!text-black font-bold">Niveau d'usage instrument : <span className="!text-black font-semibold">{usageLabel}</span></span></Button>
-            <Button type="button" variant="outline" disabled={props.filtersDisabled} aria-pressed={props.importantChanges} onClick={() => props.setImportantChanges(!props.importantChanges)} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left !text-black !opacity-100 disabled:!opacity-100 [&_svg]:!text-black [&_svg]:!opacity-100`}><CycleIcon /><span className="!text-black font-bold">Modifications importantes : <span className="!text-black font-semibold">{props.importantChanges ? "Inclus" : "Exclus"}</span></span></Button>
+            <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left !text-black !opacity-100 disabled:!opacity-100 [&_svg]:!text-black [&_svg]:!opacity-100`}><CycleIcon /><span className="!text-black font-bold">Modifications importantes : <span className="!text-black font-semibold">{changesLabel}</span></span></Button>
           </div>
-          <div className="space-y-1.5 border-t border-gray-400 pt-3">
+          <div className="space-y-1.5 pt-1">
             {cycleRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
             {cycleRow("Même année de fabrication", props.sameYear, props.setSameYear)}
             {cycleRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
@@ -1043,7 +1051,7 @@ function Comparer() {
   const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
   const [sameClimate, setSameClimate] = useState(true);
   const [sameYear, setSameYear] = useState(false);
-  const [importantChanges, setImportantChanges] = useState(false);
+  const [importantChanges, setImportantChanges] = useState<ChangesFilter>("included");
   const [youngOnly, setYoungOnly] = useState(false);
   const [usageLevel, setUsageLevel] = useState<UsageLevel>("all");
   const [mine, setMine] = useState<ProfileRecord | null>(null);
@@ -1187,7 +1195,8 @@ function Comparer() {
       const climate = databaseClimate(mine.climate);
       if (sameClimate && climate) query = query.eq("climate_zone", climate);
       if (sameYear && mine.year !== null) query = query.eq("manufacture_year", mine.year);
-      if (importantChanges) query = query.eq("maintenance_type", "Major modifications");
+      if (importantChanges === "only") query = query.eq("maintenance_type", "Major modifications");
+      else if (importantChanges === "excluded") query = query.neq("maintenance_type", "Major modifications");
       else query = query.not("maintenance_type", "eq", "Major modifications");
       if (youngOnly) query = query.gte("manufacture_year", new Date().getFullYear() - 5);
       if (usageLevel !== "all") query = query.eq("usage_level", databaseUsage(usageLevel));
