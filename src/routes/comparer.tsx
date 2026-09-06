@@ -1048,8 +1048,8 @@ function SidebarPanel(props: SidebarPanelProps) {
       onClick={() => onChange(!checked)}
       className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !opacity-100 hover:border-gray-300 disabled:!opacity-100`}
     >
-      {/* Espaceur invisible de même largeur que l'icône RefreshCw (14px) pour aligner le début du texte sur les boutons du haut. */}
-      <span className="w-3.5 shrink-0" aria-hidden="true" />
+      {/* Espaceur invisible de même largeur que l'icône RefreshCw (16px) pour aligner le début du texte sur les boutons du haut. */}
+      <span className="w-4 shrink-0" aria-hidden="true" />
       <span className="font-bold uppercase text-black">
         {label}
         {checked ? <span className="ml-[10px] font-bold text-black text-[0.884rem]">V</span> : null}
