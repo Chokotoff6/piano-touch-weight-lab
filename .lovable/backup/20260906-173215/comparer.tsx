@@ -407,19 +407,8 @@ function isCurrentKey(dataKey?: string) {
   return String(dataKey ?? "").includes("Cur");
 }
 
-// Nom de la note pour une touche 1..88 (touche 1 = La0 / A0).
-const NOTE_NAMES_FR = ["Do", "Do#", "Ré", "Ré#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si"];
-const NOTE_NAMES_EN = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-function noteName(keyIndex: number, en: boolean) {
-  if (!Number.isFinite(keyIndex)) return "";
-  const names = en ? NOTE_NAMES_EN : NOTE_NAMES_FR;
-  return names[(((keyIndex + 8) % 12) + 12) % 12] ?? "";
-}
-
 function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; chartData?: ChartPoint[] }) {
   const { active, payload, label, chartData } = props;
-  const lang = useLang();
-  const en = lang === "en";
   if (!active) return null;
   const first = chartData?.[0];
   const rankOf = (dataKey?: string) => {
@@ -439,7 +428,7 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
   if (valid.length === 0) return null;
   return (
     <div className="pointer-events-none !z-50 rounded-md border border-black bg-white px-3 py-2 text-xs">
-      <div className="mb-1 font-bold !text-black">{en ? "Key" : "Touche"} {label} - {noteName(Number(label), en)}</div>
+      <div className="mb-1 font-bold !text-black">Touche {label}</div>
       {valid.map((entry) => {
         const color = entry.color ?? tooltipColorFor(entry.name ?? "");
         // Sur /resultats les courbes n'ont pas de nom : Recharts retombe sur la clé
@@ -1044,19 +1033,19 @@ const pillClass = (active: boolean) => `${PILL_BASE} ${active ? "border-black bg
 const cyclePillClass = (active: boolean) =>
   `${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !opacity-100 hover:border-gray-300 [&_svg]:!opacity-100`;
 
-/** Infobulle maison : apparition très rapide (125 ms), éjectée à gauche du bouton. */
+/** Infobulle maison : apparition 2x plus rapide que le title natif (250 ms). */
 function FastTip({ text, children }: { text: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   return (
     <div
       className="relative w-full"
-      onMouseEnter={() => { timer.current = setTimeout(() => setOpen(true), 125); }}
+      onMouseEnter={() => { timer.current = setTimeout(() => setOpen(true), 250); }}
       onMouseLeave={() => { if (timer.current) clearTimeout(timer.current); setOpen(false); }}
     >
       {children}
       {open && (
-        <div className="pointer-events-none absolute right-full top-1/2 z-50 mr-2 w-60 -translate-y-1/2 rounded-md border border-gray-300 bg-white px-2 py-1 text-[0.7rem] font-medium !text-black shadow-lg">{text}</div>
+        <div className="pointer-events-none absolute left-0 top-full z-50 mt-1 w-60 rounded-md border border-gray-300 bg-white px-2 py-1 text-[0.7rem] font-medium !text-black shadow-lg">{text}</div>
       )}
     </div>
   );
@@ -1113,19 +1102,8 @@ type SidebarPanelProps = {
 
 function SidebarPanel(props: SidebarPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const lang = useLang();
-  const en = lang === "en";
   const usageLabel = props.usageLevel === "low" ? "FAIBLE" : props.usageLevel === "medium" ? "MOYEN" : "INTENSIF";
   const changesLabel = props.importantChanges === "included" ? "INCLUS" : props.importantChanges === "excluded" ? "EXCLUS" : "SEULS";
-  const tipCloud = en
-    ? "Compare your piano with the same model shared by other users."
-    : "Comparez votre piano avec ceux du même modèle partagés par d'autres utilisateurs.";
-  const tipTarget = en
-    ? "Generic values generally expected for a piano keyboard."
-    : "Valeurs génériques généralement attendues pour un clavier de piano.";
-  const tipCsv = en
-    ? "Import your measurement files in CSV format from your local storage."
-    : "Importez vos fichiers de mesures format CSV depuis votre stockage local.";
   // Filtres du bas : bascule ON/OFF. Aucune icône, aucune bordure noire.
   // État ON signalé par un "V" majuscule noir juste après le titre en CAPITALES.
   const cycleRow = (label: string, checked: boolean, onChange: (value: boolean) => void) => (
@@ -1154,18 +1132,18 @@ function SidebarPanel(props: SidebarPanelProps) {
   return (
     <Frame title="Réglages" className="flex flex-1 flex-col">
       <div className="flex h-full flex-col items-stretch justify-start gap-2 pt-2">
-          <div className="text-sm font-bold !text-black">{en ? "Compare current piano with:" : "Comparer piano actuel avec :"}</div>
-          <FastTip text={tipCloud}><Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={sourceButtonClass(props.cloudEnabled, "!text-orange-600")}><span className="w-full text-center font-bold uppercase">Cloud</span></Button></FastTip>
-          <FastTip text={tipTarget}><Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><span className="w-full text-center font-bold uppercase">{en ? "Target" : "Cible"}</span></Button></FastTip>
-          <FastTip text={tipCsv}><Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} !text-blue-700 [&_svg]:!text-blue-700 ${props.csvActive ? "" : "border-blue-600"}`}><span className="w-full text-center font-bold uppercase">{en ? "Imported CSV" : "CSV importé"}</span></Button></FastTip>
+          <div className="text-sm font-bold !text-black">Comparer piano actuel avec CLOUD :</div>
+          <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={sourceButtonClass(props.cloudEnabled, "!text-orange-600")}><span className="w-full text-center font-bold uppercase">Cloud</span></Button>
+          <FastTip text="Valeurs génériques généralement attendues pour un clavier de piano"><Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><span className="w-full text-center font-bold uppercase">Cible</span></Button></FastTip>
+          <FastTip text="Importez un fichier CSV depuis votre stockage local."><Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} !text-blue-700 [&_svg]:!text-blue-700 ${props.csvActive ? "" : "border-blue-600"}`}><span className="w-full text-center font-bold uppercase">Importer CSV</span></Button></FastTip>
           <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
-          <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold" style={{ color: "#f97316" }}>{en ? "CLOUD filters" : "Filtres CLOUD"}</div>
+          <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold !text-black">Filtres CLOUD</div>
           <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black !opacity-100 disabled:!opacity-100 font-medium hover:border-gray-300 [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.usageLevel !== "low" ? 2.5 : 1.2} className="shrink-0" /><span className="!text-black font-bold uppercase">Usage instrument : <span className="!text-black font-semibold uppercase">{usageLabel}</span></span></Button>
           <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left !text-black !opacity-100 disabled:!opacity-100 [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.importantChanges !== "excluded" ? 2.5 : 1.2} className="shrink-0" /><span className="!text-black font-bold uppercase">Modifications importantes : <span className="!text-black font-semibold uppercase">{changesLabel}</span></span></Button>
           {cycleRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
           {cycleRow("Même année de fabrication", props.sameYear, props.setSameYear)}
           {cycleRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
-          <div className="text-center text-base font-bold uppercase" style={{ color: "#f97316", marginTop: "15px" }}>{props.cloudSampleCount}/{props.cloudTotalCount} {en ? "pianos on the Cloud" : "pianos sur le Cloud"}</div>
+          <div className="pt-2 text-[0.7rem] font-medium !text-gray-600">{props.cloudTotalCount} pianos sur le Cloud</div>
         </div>
 
 
