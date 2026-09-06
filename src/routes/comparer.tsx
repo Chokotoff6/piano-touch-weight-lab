@@ -713,6 +713,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           onMouseEnter={() => setHoveredFamily(family.id)}
           onMouseMove={(event) => {
             if (!event.nativeEvent.isTrusted) return;
+            if (Date.now() < kbLockUntil.current) return;
             const rect = event.currentTarget.getBoundingClientRect();
             lastMouseY.current = Math.round(event.clientY - rect.top);
           }}
@@ -722,6 +723,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
             <LineChart
               data={chartData}
               onMouseMove={(state: { activeLabel?: string | number }) => {
+                if (keyboardMode) return;
                 const note = Number(state?.activeLabel);
                 if (Number.isFinite(note)) lastMouseNote.current = note;
               }}
