@@ -1154,7 +1154,7 @@ function SidebarPanel(props: SidebarPanelProps) {
           {cycleRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
           {cycleRow("Même année de fabrication", props.sameYear, props.setSameYear)}
           {cycleRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
-          <div className="pt-2 text-[0.7rem] font-medium !text-gray-600">{props.cloudTotalCount} pianos sur le Cloud</div>
+          <div className="text-center text-base font-bold uppercase" style={{ color: "#f97316", marginTop: "15px" }}>{props.cloudSampleCount}/{props.cloudTotalCount} {en ? "pianos on the Cloud" : "pianos sur le Cloud"}</div>
         </div>
 
 
