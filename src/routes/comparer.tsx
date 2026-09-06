@@ -662,16 +662,18 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   // (Recharts positionne la FF sur le clientY du survol) et la pastille s'allume.
   useEffect(() => {
     if (!zoomId || !keyboardMode || kbNote === null) return;
-    const node = plotRef.current;
+    const node = zoomRef.current ?? plotRef.current;
     if (!node) return;
-    const rect = node.getBoundingClientRect();
     const surface = node.querySelector(".recharts-surface") as HTMLElement | null;
+    const svg = node.querySelector("svg.recharts-surface") as HTMLElement | null;
+    console.log("[KB][disp3]", "surf=", !!surface, "svg=", !!svg, "docCount=", document.querySelectorAll(".recharts-surface").length);
+    const target = (svg ?? surface) as HTMLElement | null;
+    if (!target) return;
+    const rect = target.getBoundingClientRect();
     const fraction = Math.min(Math.max((kbNote - zoomStart) / (ZOOM_WINDOW - 1), 0), 1);
     const x = rect.left + sideMargin + (rect.width - sideMargin * 2) * fraction;
     const mouseY = lastMouseY.current ?? rect.height / 2;
     const y = rect.top + Math.min(Math.max(mouseY, 10), rect.height - 10);
-    const target = surface ?? node;
-    console.log("[KB][disp2]", kbNote, "surface=", !!surface, "html0=", node.outerHTML.slice(0,200), "child=", node.firstElementChild?.tagName);
     const init: MouseEventInit = { clientX: x, clientY: y, bubbles: true, cancelable: true, view: window };
     target.dispatchEvent(new MouseEvent("mousemove", init));
   }, [zoomId, keyboardMode, kbNote, zoomStart, sideMargin]);
