@@ -1168,18 +1168,18 @@ function SidebarPanel(props: SidebarPanelProps) {
           {cycleRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
           {cycleRow("Même année de fabrication", props.sameYear, props.setSameYear)}
           {cycleRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
-          <div className="text-center font-bold leading-tight" style={{ color: "#f97316", marginTop: "15px", fontSize: "0.85rem" }}>
-            {(!Number(props.cloudSampleCount) || !Number(props.cloudTotalCount)) ? (
+          <div className="text-center font-bold uppercase leading-tight" style={{ color: "#f97316", marginTop: "15px", fontSize: "0.85rem" }}>
+            {props.cloudTotalCount === 0 ? (
               <>
                 <div>{en ? "0 pianos of this model on the Cloud yet" : "0 piano de ce modèle pour l'instant"}</div>
-                <div>{en ? "Be the first to contribute" : "Soyez le 1er à contribuer"}</div>
+                <div>{en ? "be the first to contribute" : "soyez le 1er à contribuer"}</div>
                 <div>{en ? "for this model!" : "pour ce modèle !"}</div>
               </>
             ) : (
               <>
-                <div className="uppercase">{props.cloudSampleCount}/{props.cloudTotalCount} pianos</div>
-                <div className="uppercase">{en ? "with identical model" : "modèle identique"}</div>
-                <div className="uppercase">{en ? "on the Cloud" : "sur le Cloud"}</div>
+                <div>{props.cloudSampleCount}/{props.cloudTotalCount} pianos</div>
+                <div>{en ? "with identical model" : "modèle identique"}</div>
+                <div>{en ? "on the Cloud" : "sur le Cloud"}</div>
               </>
             )}
           </div>
