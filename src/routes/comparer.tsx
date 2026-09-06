@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, type SetStateAction, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/data/translations";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Square, SquareX } from "lucide-react";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
 import {
   buildCurrentPiano,
@@ -34,7 +34,7 @@ const BLACK_MODULOS = new Set([2, 5, 7, 10, 0]);
 const isBlackKey = (noteIndex: number) => BLACK_MODULOS.has(noteIndex % 12);
 const PROFILE_FIELDS = "id,serial_number,brand,model,type_piano,mesure_date,manufacture_year,climate_zone,maintenance_type,ville,pays,remarques,wa_values,wd_values,friction_values,balance_values,usage_level,created_at";
 
-export type KeyFilter = "all" | "split";
+export type KeyFilter = "all" | "split" | "white" | "black";
 type SourceMode = "none" | "cloud";
 type UsageLevel = "low" | "medium" | "intensive";
 // Filtre modifications importantes : incluses, exclues, ou uniquement celles-ci.
@@ -470,10 +470,11 @@ function currentLinesFor(familyId: string, keyFilter: KeyFilter, baseName = "Pia
   if (!metric) return [];
   const white = baseName ? `${baseName} blanches` : "blanches";
   const black = baseName ? `${baseName} noires` : "noires";
-  if (keyFilter === "split") return [
-    { dataKey: metric[1], name: white, shortName: white, color: "#6b7280", real: true },
-    { dataKey: metric[2], name: black, shortName: black, color: "#000000", real: true },
-  ];
+  const whiteLine: LineDef = { dataKey: metric[1], name: white, shortName: white, color: "#6b7280", real: true };
+  const blackLine: LineDef = { dataKey: metric[2], name: black, shortName: black, color: "#000000", real: true };
+  if (keyFilter === "split") return [whiteLine, blackLine];
+  if (keyFilter === "white") return [whiteLine];
+  if (keyFilter === "black") return [blackLine];
   return [{ dataKey: metric[0], name: baseName, shortName: baseName, color: "#000000", real: true }];
 }
 
@@ -486,10 +487,11 @@ function comparisonLinesFor(familyId: string, keyFilter: KeyFilter, name: string
   // Bleu intense pour l'import CSV, orange pour la moyenne Cloud.
   const strong = isCsv ? "#2563EB" : "#f97316";
   const light = isCsv ? "#93c5fd" : "#fdba74";
-  if (keyFilter === "split") return [
-    { dataKey: metric[1], name: `${name} blanches`, shortName: `${short} blanches`, color: light },
-    { dataKey: metric[2], name: `${name} noires`, shortName: `${short} noires`, color: strong },
-  ];
+  const whiteLine: LineDef = { dataKey: metric[1], name: `${name} blanches`, shortName: `${short} blanches`, color: light };
+  const blackLine: LineDef = { dataKey: metric[2], name: `${name} noires`, shortName: `${short} noires`, color: strong };
+  if (keyFilter === "split") return [whiteLine, blackLine];
+  if (keyFilter === "white") return [whiteLine];
+  if (keyFilter === "black") return [blackLine];
   return [{ dataKey: metric[0], name, shortName: short, color: strong }];
 }
 
@@ -507,6 +509,39 @@ function lastDefinedIndex(data: ChartPoint[], key: SeriesKey) {
 
 
 const ZOOM_WINDOW = 44;
+
+// Index du premier / dernier point défini À L'INTÉRIEUR de la fenêtre affichée.
+// En mode zoom, sans cette borne toutes les étiquettes retombaient sur le même
+// point (hors fenêtre) et se chevauchaient en haut du graphique.
+function firstDefinedIndexIn(data: ChartPoint[], key: SeriesKey, min: number, max: number) {
+  for (let index = 0; index < data.length; index += 1) {
+    const point = data[index];
+    if (!point || point.key < min || point.key > max) continue;
+    const value = point[key];
+    if (typeof value === "number" && Number.isFinite(value)) return index;
+  }
+  return -1;
+}
+function lastDefinedIndexIn(data: ChartPoint[], key: SeriesKey, min: number, max: number) {
+  for (let index = data.length - 1; index >= 0; index -= 1) {
+    const point = data[index];
+    if (!point || point.key < min || point.key > max) continue;
+    const value = point[key];
+    if (typeof value === "number" && Number.isFinite(value)) return index;
+  }
+  return -1;
+}
+
+// Libellé bilingue cyclique de la bascule N/B (4 états).
+export function bwLabelFor(keyFilter: KeyFilter, lang: string) {
+  if (lang === "en") {
+    return keyFilter === "all" ? "B/W: grouped" : keyFilter === "split" ? "B/W: separated" : keyFilter === "white" ? "B/W: whites only" : "B/W: blacks only";
+  }
+  return keyFilter === "all" ? "N/B : groupées" : keyFilter === "split" ? "N/B : séparées" : keyFilter === "white" ? "N/B : blanches seules" : "N/B : noires seules";
+}
+export function nextKeyFilter(keyFilter: KeyFilter): KeyFilter {
+  return keyFilter === "all" ? "split" : keyFilter === "split" ? "white" : keyFilter === "white" ? "black" : "all";
+}
 
 function MagnifyIcon() {
   return (
