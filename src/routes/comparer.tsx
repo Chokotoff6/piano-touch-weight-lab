@@ -410,6 +410,7 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
   };
   const valid = [...(payload ?? [])]
     .filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value))
+    .filter((entry) => !String(entry.dataKey ?? "").endsWith("Mid"))
     .sort((a, b) => rankOf(b.dataKey) - rankOf(a.dataKey));
   if (valid.length === 0) return null;
   return (
