@@ -1168,7 +1168,7 @@ function SidebarPanel(props: SidebarPanelProps) {
           {cycleRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
           {cycleRow("Même année de fabrication", props.sameYear, props.setSameYear)}
           {cycleRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
-          <div className="text-center font-bold leading-tight" style={{ color: "#f97316", marginTop: " "15px", fontSize: "0.85rem" }}>
+          <div className="text-center font-bold leading-tight" style={{ color: "#f97316", marginTop: "15px", fontSize: "0.85rem" }}>
             {(!Number(props.cloudSampleCount) || !Number(props.cloudTotalCount)) ? (
               <>
                 <div>{en ? "0 pianos of this model on the Cloud yet" : "0 piano de ce modèle pour l'instant"}</div>
