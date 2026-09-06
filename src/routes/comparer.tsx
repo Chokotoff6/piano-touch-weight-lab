@@ -565,15 +565,49 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     return () => node.removeEventListener("wheel", onWheel);
   }, [zoomId]);
 
-  // Sortie du zoom au clavier.
+  // Priorité hybride clavier / souris en mode zoom.
   useEffect(() => {
-    if (!zoomId) return;
+    if (!zoomId) {
+      setKbNote(null);
+      setKeyboardMode(false);
+      return;
+    }
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setZoomId(null);
+      if (event.key === "Escape") { setZoomId(null); return; }
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      const step = event.key === "ArrowRight" ? 1 : -1;
+      setKeyboardMode(true);
+      mouseAnchor.current = null;
+      setKbNote((previous) => {
+        const base = previous ?? Math.round(zoomStart + ZOOM_WINDOW / 2);
+        const next = Math.min(Math.max(base + step, 1), 88);
+        // La fenêtre suit la pastille active.
+        setZoomStart((start) => {
+          if (next < start) return Math.max(next, 1);
+          if (next > start + ZOOM_WINDOW - 1) return Math.min(next - ZOOM_WINDOW + 1, 88 - ZOOM_WINDOW + 1);
+          return start;
+        });
+        return next;
+      });
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [zoomId]);
+  }, [zoomId, zoomStart]);
+
+  // La souris ne reprend la main qu'après un déplacement réel de plus de 30 px.
+  useEffect(() => {
+    if (!zoomId || !keyboardMode) return;
+    const onMove = (event: MouseEvent) => {
+      const anchor = mouseAnchor.current;
+      if (!anchor) { mouseAnchor.current = { x: event.clientX, y: event.clientY }; return; }
+      const distance = Math.hypot(event.clientX - anchor.x, event.clientY - anchor.y);
+      if (distance > 30) setKeyboardMode(false);
+    };
+    window.addEventListener("mousemove", onMove);
+    return () => window.removeEventListener("mousemove", onMove);
+  }, [zoomId, keyboardMode]);
+
 
 
   function SubChart({ family, zoomed = false }: { family: (typeof FAMILIES)[number]; zoomed?: boolean }) {
