@@ -407,8 +407,19 @@ function isCurrentKey(dataKey?: string) {
   return String(dataKey ?? "").includes("Cur");
 }
 
+// Nom de la note pour une touche 1..88 (touche 1 = La0 / A0).
+const NOTE_NAMES_FR = ["Do", "Do#", "Ré", "Ré#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si"];
+const NOTE_NAMES_EN = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+function noteName(keyIndex: number, en: boolean) {
+  if (!Number.isFinite(keyIndex)) return "";
+  const names = en ? NOTE_NAMES_EN : NOTE_NAMES_FR;
+  return names[(((keyIndex + 8) % 12) + 12) % 12] ?? "";
+}
+
 function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; chartData?: ChartPoint[] }) {
   const { active, payload, label, chartData } = props;
+  const lang = useLang();
+  const en = lang === "en";
   if (!active) return null;
   const first = chartData?.[0];
   const rankOf = (dataKey?: string) => {
