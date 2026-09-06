@@ -1057,7 +1057,7 @@ function FastTip({ text, children }: { text: string; children: ReactNode }) {
     >
       {children}
       {open && (
-        <div className="pointer-events-none absolute right-full top-1/2 z-50 mr-[-30px] w-60 -translate-y-1/2 rounded-md border border-gray-300 bg-white px-2 py-1 text-[0.7rem] font-medium !text-black shadow-lg">{text}</div>
+        <div className="pointer-events-none absolute right-full top-1/2 z-50 mr-[30px] w-60 -translate-y-1/2 rounded-md border border-gray-300 bg-white px-2 py-1 text-[0.7rem] font-medium !text-black shadow-lg">{text}</div>
       )}
     </div>
   );
@@ -1159,7 +1159,7 @@ function SidebarPanel(props: SidebarPanelProps) {
           <div className="text-sm font-bold !text-black">{en ? "Compare current piano with:" : "Comparer piano actuel avec :"}</div>
           <FastTip text={tipCloud}><Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={sourceButtonClass(props.cloudEnabled, "!text-orange-600")}><span className="w-full text-center font-bold uppercase">Cloud</span></Button></FastTip>
           <FastTip text={tipTarget}><Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><span className="w-full text-center font-bold uppercase">{en ? "Target" : "Cible"}</span></Button></FastTip>
-          <FastTip text={tipCsv}><Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} ${props.csvActive ? "!border-black !text-blue-700 [&_svg]:!text-blue-700" : "!border-gray-200 !text-black"}`}><span className="w-full text-center font-bold uppercase">{en ? "Imported CSV" : "CSV importé"}</span></Button></FastTip>
+          <FastTip text={tipCsv}><Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} !text-blue-700 [&_svg]:!text-blue-700 ${props.csvActive ? "!border-black" : "!border-blue-600"}`}><span className="w-full text-center font-bold uppercase">{en ? "Imported CSV" : "CSV importé"}</span></Button></FastTip>
           <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
           <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold" style={{ color: "#f97316" }}>{en ? "CLOUD filters" : "Filtres CLOUD"}</div>
           <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black !opacity-100 disabled:!opacity-100 font-medium hover:border-gray-300 [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.usageLevel !== "low" ? 2.5 : 1.2} className="shrink-0" /><span className="!text-black font-bold uppercase">Usage instrument : <span className="!text-black font-semibold uppercase">{usageLabel}</span></span></Button>
@@ -1167,7 +1167,7 @@ function SidebarPanel(props: SidebarPanelProps) {
           {cycleRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
           {cycleRow("Même année de fabrication", props.sameYear, props.setSameYear)}
           {cycleRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
-          <div className="text-center font-bold uppercase leading-tight" style={{ color: "#f97316", marginTop: "15px", fontSize: "0.85rem" }}>
+          <div className="text-center text-base font-bold uppercase leading-tight" style={{ color: "#f97316", marginTop: "15px" }}>
             <div>{props.cloudSampleCount}/{props.cloudTotalCount} pianos</div>
             <div>{en ? "with identical model" : "modèle identique"}</div>
             <div>{en ? "on the Cloud" : "sur le Cloud"}</div>
