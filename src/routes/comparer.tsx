@@ -935,6 +935,7 @@ type SidebarPanelProps = {
   onToggleCloud: () => void;
   onToggleStandard: () => void;
   onImport: (file: File) => void;
+  onClearCsv: () => void;
   filtersDisabled: boolean;
   sameClimate: boolean;
   sameYear: boolean;
