@@ -557,8 +557,6 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const [kbNote, setKbNote] = useState<number | null>(null);
   const [keyboardMode, setKeyboardMode] = useState(false);
   const mouseAnchor = useRef<{ x: number; y: number } | null>(null);
-  // Verrou anti-clignotement : la souris est ignorée pendant 300 ms après une flèche.
-  const kbLockUntil = useRef<number>(0);
   // Dernière hauteur (Y) décidée par la souris : la FF pilotée au clavier y reste figée.
   const lastMouseY = useRef<number>(96);
   // Dernière note (index X) survolée par la souris : point de départ du pilotage clavier.
@@ -599,8 +597,6 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       const step = event.key === "ArrowRight" ? 1 : -1;
       setKeyboardMode(true);
       mouseAnchor.current = null;
-      // Neutralisation de la souris pendant 300 ms : évite la boucle de survol parasite.
-      kbLockUntil.current = Date.now() + 300;
       setKbNote((previous) => {
         const base = previous ?? lastMouseNote.current ?? Math.round(zoomStart + ZOOM_WINDOW / 2);
         const next = Math.min(Math.max(base + step, 1), 88);
@@ -622,7 +618,6 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     if (!zoomId || !keyboardMode) return;
     const onMove = (event: MouseEvent) => {
       if (!event.isTrusted) return;
-      if (Date.now() < kbLockUntil.current) { mouseAnchor.current = null; return; }
       const anchor = mouseAnchor.current;
       if (!anchor) { mouseAnchor.current = { x: event.clientX, y: event.clientY }; return; }
       const distance = Math.hypot(event.clientX - anchor.x, event.clientY - anchor.y);
@@ -682,7 +677,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     const DotComp = zoomed ? ZoomDot : SampleDot;
     return (
       <Frame dataFrame={family.id} title={family.title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}>
-        <div className="absolute right-3 top-14 z-20 flex flex-col items-end gap-1.5">
+        <div className={`absolute right-3 z-20 flex flex-col items-end gap-1.5 ${zoomed ? "top-14" : "top-2"}`}>
           {zoomed && (
             <button type="button" aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
           )}
@@ -713,7 +708,6 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           onMouseEnter={() => setHoveredFamily(family.id)}
           onMouseMove={(event) => {
             if (!event.nativeEvent.isTrusted) return;
-            if (Date.now() < kbLockUntil.current) return;
             const rect = event.currentTarget.getBoundingClientRect();
             lastMouseY.current = Math.round(event.clientY - rect.top);
           }}
@@ -930,7 +924,7 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
   );
 }
 
-const PILL_BASE = "h-auto min-h-0 min-w-0 flex-1 rounded-full border px-1.5 py-1 text-[0.68rem] leading-tight transition-colors whitespace-nowrap";
+const PILL_BASE = "h-[22px] min-h-[22px] max-h-[22px] min-w-0 flex-none shrink-0 rounded-full border px-1.5 py-0 text-[0.68rem] leading-none transition-colors whitespace-nowrap";
 const pillClass = (active: boolean) => `${PILL_BASE} ${active ? "border-black bg-gray-100 font-semibold text-slate-700" : "border-gray-200 bg-white text-gray-400 hover:border-gray-300 hover:text-gray-500"}`;
 // Boutons cycliques Oui/Non (CLOUD, CIBLE, IMPORT CSV) : bordure noire quand actif.
 const cyclePillClass = (active: boolean) =>
@@ -996,7 +990,7 @@ function SidebarPanel(props: SidebarPanelProps) {
       disabled={props.filtersDisabled}
       aria-pressed={checked}
       onClick={() => onChange(!checked)}
-      className={`${cyclePillClass(checked)} disabled:!opacity-100 ${checked ? "!text-black" : "!text-gray-400"}`}
+      className={`${cyclePillClass(checked)} disabled:!opacity-100 !text-black [&_svg]:!text-black`}
     >
       <CycleIcon />
       <span className="font-bold">{label} : <span className="font-semibold">{checked ? "Oui" : "Non"}</span></span>
@@ -1008,12 +1002,12 @@ function SidebarPanel(props: SidebarPanelProps) {
 
   return (
     <Frame title="Réglages" className="flex flex-1 flex-col">
-      <div className="flex h-full flex-col gap-2 pt-2">
+      <div className="flex h-full flex-col items-stretch justify-start gap-2 pt-2">
           <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={sourceButtonClass(props.cloudEnabled, "!text-orange-600")}><CycleIcon /><span className="font-bold uppercase">Cloud</span></Button>
           <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><CycleIcon /><span className="font-bold uppercase">Cible</span></Button>
           <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={sourceButtonClass(props.csvActive, "!text-blue-600")}><CycleIcon /><span className="font-bold uppercase">Importer CSV</span></Button>
           <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
-          <div className="mt-[10px] border-t border-gray-400 pt-2 font-bold !text-black">Comparer piano actuel avec :</div>
+          <div className="mt-5 border-t border-gray-400 pt-5 font-bold !text-black">Comparer piano actuel avec :</div>
           <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black !opacity-100 disabled:!opacity-100 font-medium hover:border-gray-300 [&_svg]:!text-black [&_svg]:!opacity-100`}><CycleIcon /><span className="!text-black font-bold">Usage instrument : <span className="!text-black font-semibold">{usageLabel}</span></span></Button>
           <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left !text-black !opacity-100 disabled:!opacity-100 [&_svg]:!text-black [&_svg]:!opacity-100`}><CycleIcon /><span className="!text-black font-bold">Modifications importantes : <span className="!text-black font-semibold">{changesLabel}</span></span></Button>
           {cycleRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
