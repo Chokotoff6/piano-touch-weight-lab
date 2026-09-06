@@ -747,6 +747,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
             <LineChart
               data={chartData}
               onMouseMove={(state: { activeLabel?: string | number }) => {
+                console.log("[KB][rcMove]", "label=", state?.activeLabel, "kbMode=", keyboardMode, "kbNote=", kbNoteRef.current);
                 if (keyboardMode) return;
                 const note = Number(state?.activeLabel);
                 if (Number.isFinite(note)) lastMouseNote.current = note;
