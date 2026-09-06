@@ -348,14 +348,13 @@ type EndLabelOptions = {
   dyLeft: number;
   dyRight: number;
   showAverage?: boolean;
-  maxY?: number;
 };
 
 // Marge haute de sécurité : les étiquettes de courbes ne doivent jamais
 // chevaucher les repères DO (4, 16, 28...) affichés en haut du graphique.
 const LABEL_MIN_Y = 38;
 const LABEL_MAX_Y = 248;
-const clampLabelY = (y: number, dy: number, maxY: number = LABEL_MAX_Y) => Math.min(Math.max(y + dy, LABEL_MIN_Y), maxY) - y;
+const clampLabelY = (y: number, dy: number) => Math.min(Math.max(y + dy, LABEL_MIN_Y), LABEL_MAX_Y) - y;
 
 function makeEndLabel(opts: EndLabelOptions) {
   const EndLabel = (props: { x?: number; y?: number; index?: number; value?: number }) => {
@@ -365,10 +364,10 @@ function makeEndLabel(opts: EndLabelOptions) {
     const color = opts.labelColor ?? opts.color;
     if (!hasPoint || !hasValue) return <g />;
     if (index === opts.firstIndex) {
-      return <text x={x - 8} y={y} dy={clampLabelY(y, opts.dyLeft, opts.maxY)} textAnchor="end" fontSize={11} fontWeight={600} fill={color}>{opts.shortName}</text>;
+      return <text x={x - 8} y={y} dy={clampLabelY(y, opts.dyLeft)} textAnchor="end" fontSize={11} fontWeight={600} fill={color}>{opts.shortName}</text>;
     }
     if (index === opts.lastIndex && opts.showAverage !== false && opts.avg !== "—") {
-      return <text x={x + 10} y={y} dy={clampLabelY(y, opts.dyRight, opts.maxY)} textAnchor="start" fontSize={11} fontWeight={600} fill={color}>{`Moy: ${opts.avg}g`}</text>;
+      return <text x={x + 10} y={y} dy={clampLabelY(y, opts.dyRight)} textAnchor="start" fontSize={11} fontWeight={600} fill={color}>{`Moy: ${opts.avg}g`}</text>;
     }
     return <g />;
   };
@@ -458,7 +457,7 @@ const FAMILIES: Array<{ id: string; title: string; domain: [number, number]; lin
   { id: "bal", title: "Balance statique", domain: [55, 75], lines: [{ dataKey: "sameBal", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryBal", name: "Cible", shortName: "Cible", color: "#10b981" }] },
   { id: "fric", title: "Friction mécanique", domain: ["dataMin - 1.5", "dataMax + 1.5"] as unknown as [number, number], lines: [{ dataKey: "sameFric", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryFric", name: "Cible", shortName: "Cible", color: "#10b981" }] },
 ];
-const DY_STEPS = [-15, 0, 15, 30, 45];
+const DY_STEPS = [-24, 0, 24, 48, 72];
 function offsetsFor(lines: LineDef[], point: ChartPoint | undefined) {
   const map = new Map<SeriesKey, number>();
   [...lines].sort((a, b) => {
@@ -723,7 +722,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
                 dot={line.real ? <DotComp /> : false}
                 connectNulls={true}
                 isAnimationActive={false}
-                label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color: line.color, firstIndex: firstIn(line.dataKey), lastIndex: lastIn(line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden, maxY: zoomed ? 100000 : LABEL_MAX_Y })}
+                label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color: line.color, firstIndex: firstIn(line.dataKey), lastIndex: lastIn(line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden })}
               />
             ))}
 
@@ -1033,24 +1032,6 @@ const pillClass = (active: boolean) => `${PILL_BASE} ${active ? "border-black bg
 const cyclePillClass = (active: boolean) =>
   `${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !opacity-100 hover:border-gray-300 [&_svg]:!opacity-100`;
 
-/** Infobulle maison : apparition 2x plus rapide que le title natif (250 ms). */
-function FastTip({ text, children }: { text: string; children: ReactNode }) {
-  const [open, setOpen] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  return (
-    <div
-      className="relative w-full"
-      onMouseEnter={() => { timer.current = setTimeout(() => setOpen(true), 250); }}
-      onMouseLeave={() => { if (timer.current) clearTimeout(timer.current); setOpen(false); }}
-    >
-      {children}
-      {open && (
-        <div className="pointer-events-none absolute left-0 top-full z-50 mt-1 w-60 rounded-md border border-gray-300 bg-white px-2 py-1 text-[0.7rem] font-medium !text-black shadow-lg">{text}</div>
-      )}
-    </div>
-  );
-}
-
 export function CycleIcon() {
   return (
     <svg aria-hidden="true" className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round">
@@ -1080,7 +1061,6 @@ type SidebarPanelProps = {
   standardEnabled: boolean;
   csvActive: boolean;
   cloudSampleCount: number;
-  cloudTotalCount: number;
   cloudLoading: boolean;
   onToggleCloud: () => void;
   onToggleStandard: () => void;
@@ -1133,9 +1113,9 @@ function SidebarPanel(props: SidebarPanelProps) {
     <Frame title="Réglages" className="flex flex-1 flex-col">
       <div className="flex h-full flex-col items-stretch justify-start gap-2 pt-2">
           <div className="text-sm font-bold !text-black">Comparer piano actuel avec CLOUD :</div>
-          <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={sourceButtonClass(props.cloudEnabled, "!text-orange-600")}><span className="w-full text-center font-bold uppercase">Cloud</span></Button>
-          <FastTip text="Valeurs génériques généralement attendues pour un clavier de piano"><Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><span className="w-full text-center font-bold uppercase">Cible</span></Button></FastTip>
-          <FastTip text="Importez un fichier CSV depuis votre stockage local."><Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} !text-blue-700 [&_svg]:!text-blue-700 ${props.csvActive ? "" : "border-blue-600"}`}><span className="w-full text-center font-bold uppercase">Importer CSV</span></Button></FastTip>
+          <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={sourceButtonClass(props.cloudEnabled, "!text-orange-600")}><CycleIcon /><span className="font-bold uppercase">Cloud</span></Button>
+          <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><CycleIcon /><span className="font-bold uppercase">Cible</span></Button>
+          <Button type="button" variant="outline" title="Importez un fichier CSV depuis votre stockage local." aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} !text-blue-700 [&_svg]:!text-blue-700 ${props.csvActive ? "" : "border-blue-600"}`}><CycleIcon /><span className="font-bold uppercase">Importer CSV</span></Button>
           <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
           <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold !text-black">Filtres CLOUD</div>
           <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black !opacity-100 disabled:!opacity-100 font-medium hover:border-gray-300 [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.usageLevel !== "low" ? 2.5 : 1.2} className="shrink-0" /><span className="!text-black font-bold uppercase">Usage instrument : <span className="!text-black font-semibold uppercase">{usageLabel}</span></span></Button>
@@ -1143,7 +1123,6 @@ function SidebarPanel(props: SidebarPanelProps) {
           {cycleRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
           {cycleRow("Même année de fabrication", props.sameYear, props.setSameYear)}
           {cycleRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
-          <div className="pt-2 text-[0.7rem] font-medium !text-gray-600">{props.cloudTotalCount} pianos sur le Cloud</div>
         </div>
 
 
@@ -1190,7 +1169,6 @@ function Comparer() {
 
   const [cloudProfile, setCloudProfile] = useState<RefProfile | null>(null);
   const [cloudSampleCount, setCloudSampleCount] = useState(0);
-  const [cloudTotalCount, setCloudTotalCount] = useState(0);
   const [cloudLoading, setCloudLoading] = useState(false);
   // État indépendant : le CSV importé alimente UNIQUEMENT la courbe orange.
   // current_piano (courbe Live noire) et le buffer PIANO_ACTUEL ne sont jamais touchés.
@@ -1305,19 +1283,6 @@ function Comparer() {
     return () => { cancelled = true; };
   }, [mine]);
 
-
-  // Compteur global de fiches pianos publiées sur le Cloud (hors ligne tampon).
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const { count } = await externalSupabase
-        .from("piano_profiles")
-        .select("id", { count: "exact", head: true })
-        .neq("id", CURRENT_PIANO_BUFFER_UUID);
-      if (!cancelled && typeof count === "number") setCloudTotalCount(count);
-    })();
-    return () => { cancelled = true; };
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -1472,7 +1437,7 @@ function Comparer() {
 
               <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible"} onCycleKeyFilter={cycleKeyFilter} />
             </div>
-            <aside className="min-w-0"><div className="sticky top-[127px] z-50 flex flex-col overflow-visible" style={averagesHeight > 0 ? { height: `${averagesHeight - 8}px` } : undefined}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
+            <aside className="min-w-0"><div className="sticky top-[127px] z-50 flex flex-col overflow-visible" style={averagesHeight > 0 ? { height: `${averagesHeight - 8}px` } : undefined}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
           </div>
         </>
       )}
