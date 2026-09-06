@@ -696,7 +696,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           )}
         </div>
         {zoomed && (
-          <div className="pointer-events-none absolute inset-x-0 top-2 z-10 flex flex-col items-center gap-1">
+          <div className="pointer-events-none absolute inset-x-0 top-[38px] z-10 flex flex-col items-center gap-1">
             <WheelHintIcon />
             <ArrowHintIcon />
           </div>
