@@ -693,13 +693,16 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           </div>
         )}
         <div
+          ref={zoomed ? plotRef : undefined}
           className="h-full w-full"
           onMouseEnter={() => setHoveredFamily(family.id)}
           onMouseMove={(event) => {
+            if (!event.nativeEvent.isTrusted) return;
             const rect = event.currentTarget.getBoundingClientRect();
             lastMouseY.current = Math.round(event.clientY - rect.top);
           }}
         >
+
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
