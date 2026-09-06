@@ -945,7 +945,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     // Mode zoom : le cadre isolé occupe 100 % de la largeur de l'écran.
     return (
       <div ref={zoomRef} className="fixed inset-0 z-[70] overflow-hidden bg-white p-6">
-        <SubChart family={zoomFamily} zoomed />
+        <SubChart family={zoomFamily} zoomed ctx={subCtx} />
       </div>
     );
   }
@@ -955,7 +955,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   // les cadres sont extraits de la grille via une bande pleine largeur centrée.
   return (
     <div ref={containerRef} className="relative w-full pb-[80vh] pt-2">
-      <div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div>
+      <div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} ctx={subCtx} />)}</div>
     </div>
   );
 
