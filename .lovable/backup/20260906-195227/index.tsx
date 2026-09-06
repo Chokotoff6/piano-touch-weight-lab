@@ -1,5 +1,4 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { BrandTargetInfoContent } from "@/components/BrandTargetInfo";
 
 import {
   Accordion,
@@ -505,10 +504,6 @@ function Accueil() {
             </AccordionContent>
           </AccordionItem>
         </Accordion>
-      </section>
-
-      <section className="mx-auto mt-10 w-full max-w-3xl rounded-lg border border-black bg-white p-6">
-        <BrandTargetInfoContent />
       </section>
     </main>
   );

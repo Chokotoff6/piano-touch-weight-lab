@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, ty
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/data/translations";
 import { RefreshCw, Square, SquareX } from "lucide-react";
-import { BrandTargetInfoIcon } from "@/components/BrandTargetInfo";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
 import {
   buildCurrentPiano,
@@ -1492,7 +1491,7 @@ function Comparer() {
                   )}
                   {standardEnabled && (
                     <div>
-                      <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-green-600">{standardLabel}<BrandTargetInfoIcon /></div>
+                      <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-green-600">{standardLabel}</div>
                       <StandardRow chartData={chartData} />
                     </div>
                   )}
