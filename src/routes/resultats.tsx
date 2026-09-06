@@ -250,27 +250,6 @@ function Resultats() {
           </div>
 
           <div className="relative mx-auto w-full">
-              <div
-                className="pointer-events-none fixed inset-x-0 z-[60]"
-                style={{ top: 127 + averagesHeight + 9 }}
-              >
-                <div className="mx-auto flex w-full max-w-[1400px] justify-end px-6 pr-10">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setKeyFilter((value) => (value === "all" ? "split" : "all"))}
-                    className="pointer-events-auto flex h-8 items-center gap-2 rounded-full border-2 border-black bg-white px-3 text-xs !text-black hover:bg-gray-100"
-                  >
-                    <CycleIcon />
-                    <span>
-                      Touches blanches/noires :{" "}
-                      <span className="font-semibold !text-black">
-                        {keyFilter === "all" ? "groupées" : "séparées"}
-                      </span>
-                    </span>
-                  </Button>
-                </div>
-              </div>
             <div className={unlocked ? "" : "pointer-events-none select-none blur-md"}>
               <ComparisonChart
                 chartData={chartData}
@@ -280,8 +259,10 @@ function Resultats() {
                 currentBaseName=""
                 autoDomain
                 sideMargin={60}
+                onCycleKeyFilter={() => setKeyFilter((value) => (value === "all" ? "split" : "all"))}
               />
             </div>
+
 
 
             {!unlocked && (
