@@ -555,7 +555,7 @@ type SubChartCtx = {
   sideMargin: number;
   csvActive: boolean;
   targetLabel: string;
-  onCycleKeyFilter?: () => void;
+  onCycleKeyFilter: (() => void) | undefined;
   bwLabel: string;
   zoomStart: number;
   setZoomStart: Dispatch<SetStateAction<number>>;
