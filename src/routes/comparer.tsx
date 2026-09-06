@@ -569,7 +569,10 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     // Renommage dynamique de la courbe de référence : "Import CSV" (bleu) ou "Cloud" (orange),
     // scindée en blanches / noires quand la vue éclatée est active.
     const referenceLines = comparisonLinesFor(family.id, keyFilter, comparisonLabel, comparisonShort, csvActive);
-    const otherLines = family.lines.filter((line) => line.name !== "Cloud");
+    // Le libellé de la courbe verte reprend l'identité complète de la cible sélectionnée.
+    const otherLines = family.lines
+      .filter((line) => line.name !== "Cloud")
+      .map((line) => (line.name === "Cible" ? { ...line, name: targetLabel } : line));
     const lines = [...currentLinesFor(family.id, keyFilter, currentBaseName), ...referenceLines, ...otherLines];
     // Chaque courbe est ancrée sur SON propre premier / dernier point défini
     // (indispensable en vue éclatée où blanches et noires ne partagent pas les mêmes index).
