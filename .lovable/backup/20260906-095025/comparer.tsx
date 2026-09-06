@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, type SetStateAction, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/data/translations";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
@@ -545,147 +545,6 @@ function ArrowHintIcon() {
 
 
 
-type SubChartCtx = {
-  chartData: ChartPoint[];
-  keyFilter: KeyFilter;
-  comparisonLabel: string;
-  comparisonShort: string;
-  currentBaseName: string;
-  autoDomain: boolean;
-  sideMargin: number;
-  csvActive: boolean;
-  targetLabel: string;
-  onCycleKeyFilter: (() => void) | undefined;
-  bwLabel: string;
-  zoomStart: number;
-  setZoomStart: Dispatch<SetStateAction<number>>;
-  setZoomId: Dispatch<SetStateAction<string | null>>;
-  hoveredFamily: string | null;
-  setHoveredFamily: Dispatch<SetStateAction<string | null>>;
-  keyboardMode: boolean;
-  plotRef: RefObject<HTMLDivElement | null>;
-  lastMouseY: RefObject<number | null>;
-  keyboardModeRef: RefObject<boolean>;
-  lastMouseNote: RefObject<number | null>;
-};
-
-// SubChart est déclaré au niveau module (et non imbriqué dans ComparisonChart) pour
-// éviter que React ne le démonte/remonte à chaque changement d'état clavier : un
-// remontage détruit le SVG Recharts au moment exact du dispatch synthétique, ce qui
-// empêchait les flèches ◄ ► d'allumer la pastille.
-function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[number]; zoomed?: boolean; ctx: SubChartCtx }) {
-  const { chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, bwLabel, zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode, plotRef, lastMouseY, keyboardModeRef, lastMouseNote } = ctx;
-  // Renommage dynamique de la courbe de référence : "Import CSV" (bleu) ou "Cloud" (orange),
-  // scindée en blanches / noires quand la vue éclatée est active.
-  const referenceLines = comparisonLinesFor(family.id, keyFilter, comparisonLabel, comparisonShort, csvActive);
-  // Le libellé de la courbe verte reprend l'identité complète de la cible sélectionnée.
-  const otherLines = family.lines
-    .filter((line) => line.name !== "Cloud")
-    .map((line) => (line.name === "Cible" ? { ...line, name: targetLabel } : line));
-  const lines = [...currentLinesFor(family.id, keyFilter, currentBaseName), ...referenceLines, ...otherLines];
-  // Chaque courbe est ancrée sur SON propre premier / dernier point défini
-  // (indispensable en vue éclatée où blanches et noires ne partagent pas les mêmes index).
-  const endpointOffsets = (side: "left" | "right") => new Map(
-    lines.map((line) => {
-      const index = side === "left" ? firstDefinedIndex(chartData, line.dataKey) : lastDefinedIndex(chartData, line.dataKey);
-      return [line.dataKey, offsetsFor(lines, chartData[index]).get(line.dataKey) ?? 0] as const;
-    }),
-  );
-  const dyLeft = endpointOffsets("left");
-  const dyRight = endpointOffsets("right");
-  const start = zoomed ? zoomStart : 1;
-  const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [1, 88];
-  const DotComp = zoomed ? ZoomDot : SampleDot;
-  return (
-    <Frame dataFrame={family.id} title={family.title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}>
-      <div className={`absolute right-3 z-20 flex flex-col items-end gap-1.5 ${zoomed ? "top-14" : "top-2"}`}>
-        {zoomed && (
-          <button type="button" aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
-        )}
-        {!zoomed && (
-          <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-2 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
-        )}
-        {onCycleKeyFilter && (
-          <button
-            type="button"
-            aria-label={bwLabel}
-            onClick={onCycleKeyFilter}
-            className="flex items-center gap-1 rounded-full border border-gray-300 bg-white px-2 py-0.5 text-[0.68rem] font-medium !text-black hover:bg-gray-100"
-          >
-            <PianoKeysIcon />
-            <span className="!text-black">{bwLabel}</span>
-          </button>
-        )}
-      </div>
-      {zoomed && (
-        <div className="pointer-events-none absolute inset-x-0 top-[58px] z-10 flex flex-col items-center gap-1">
-          <WheelHintIcon />
-          <ArrowHintIcon />
-        </div>
-      )}
-      <div
-        ref={zoomed ? plotRef : undefined}
-        className="h-full w-full"
-        onMouseEnter={() => setHoveredFamily(family.id)}
-        onMouseMove={(event) => {
-          if (!event.nativeEvent.isTrusted) return;
-          // En mode clavier, la hauteur Y est figée : on ignore les micro-mouvements.
-          if (keyboardModeRef.current) return;
-          const rect = event.currentTarget.getBoundingClientRect();
-          lastMouseY.current = Math.round(event.clientY - rect.top);
-        }}
-      >
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={chartData}
-            onMouseMove={(state: { activeLabel?: string | number }) => {
-              if (keyboardMode) return;
-              const note = Number(state?.activeLabel);
-              if (Number.isFinite(note)) lastMouseNote.current = note;
-            }}
-            onMouseLeave={() => { setHoveredFamily(null); }}
-            margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}
-          >
-            <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
-            <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
-            <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={autoDomain ? ["auto", "auto"] : family.domain} />
-            {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#e5e7eb" strokeWidth={1} />)}
-
-            {/* Fenêtre flottante native : une seule bulle par touche, toutes courbes confondues. */}
-            <Tooltip
-              trigger="hover"
-              content={<CustomTooltipContent chartData={chartData} />}
-              cursor={{ stroke: "#d1d5db", strokeWidth: 1 }}
-              allowEscapeViewBox={{ x: true, y: true }}
-              wrapperStyle={{ pointerEvents: "none", zIndex: 100 }}
-              isAnimationActive={false}
-              offset={24}
-            />
-
-            {lines.map((line) => (
-              <Line
-                key={line.dataKey}
-                xAxisId="main"
-                type="monotone"
-                dataKey={line.dataKey}
-                name={line.name}
-                stroke={line.hidden ? "transparent" : line.color}
-                strokeWidth={2}
-                activeDot={line.hidden ? false : { r: 5, fill: line.color, stroke: "#ffffff", strokeWidth: 2 }}
-                dot={line.real ? <DotComp /> : false}
-                connectNulls={true}
-                isAnimationActive={false}
-                label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color: line.color, firstIndex: firstDefinedIndex(chartData, line.dataKey), lastIndex: lastDefinedIndex(chartData, line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden })}
-              />
-            ))}
-
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </Frame>
-  );
-}
-
 export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible", onCycleKeyFilter }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void }) {
   const lang = useLang();
   const bwLabel = lang === "en"
@@ -706,7 +565,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const mouseAnchor = useRef<{ x: number; y: number } | null>(null);
 
   // Dernière hauteur (Y) décidée par la souris : la FF pilotée au clavier y reste figée.
-  const lastMouseY = useRef<number | null>(null);
+  const lastMouseY = useRef<number>(96);
   // Dernière note (index X) survolée par la souris : point de départ du pilotage clavier.
   const lastMouseNote = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -714,13 +573,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   // Zone de tracé du cadre zoomé : sert à rejouer un survol réel à la note pilotée au clavier.
   const plotRef = useRef<HTMLDivElement>(null);
 
-  // Contexte stable passé au SubChart (déclaré au niveau module) : évite le
-  // démontage/remontage du graphique Recharts à chaque changement d'état clavier.
-  const subCtx: SubChartCtx = {
-    chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, bwLabel,
-    zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode,
-    plotRef, lastMouseY, keyboardModeRef, lastMouseNote,
-  };
+
 
   // Capture de la molette en mode zoom : glissement continu de la fenêtre de 44 touches.
   useEffect(() => {
@@ -802,21 +655,20 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     };
   }, [zoomId]);
 
-  // Pilotage clavier : on rejoue un survol synthétique sur la surface Recharts à la
-  // note active, à la hauteur Y mémorisée de la souris. La bulle native suit à ce Y
-  // (Recharts positionne la FF sur le clientY du survol) et la pastille s'allume.
+  // Pilotage clavier : survol synthétique à la note active pour allumer les pastilles
+  // et faire suivre la bulle native, à la hauteur Y mémorisée de la souris.
   useEffect(() => {
     if (!zoomId || !keyboardMode || kbNote === null) return;
-    const node = zoomRef.current ?? plotRef.current;
+    const node = plotRef.current;
     if (!node) return;
-    const surface = node.querySelector(".recharts-surface") as SVGElement | null;
-    if (!surface) return;
-    const rect = surface.getBoundingClientRect();
+    const rect = node.getBoundingClientRect();
     const fraction = Math.min(Math.max((kbNote - zoomStart) / (ZOOM_WINDOW - 1), 0), 1);
     const x = rect.left + sideMargin + (rect.width - sideMargin * 2) * fraction;
-    const mouseY = lastMouseY.current ?? rect.height / 2;
-    const y = rect.top + Math.min(Math.max(mouseY, 10), rect.height - 10);
-    surface.dispatchEvent(new MouseEvent("mousemove", { clientX: x, clientY: y, bubbles: true, cancelable: true, view: window }));
+    const y = rect.top + Math.min(Math.max(lastMouseY.current, 10), rect.height - 10);
+    const target = document.elementFromPoint(x, y) ?? node;
+    const init: MouseEventInit = { clientX: x, clientY: y, bubbles: true, cancelable: true, view: window };
+    target.dispatchEvent(new MouseEvent("mouseover", init));
+    target.dispatchEvent(new MouseEvent("mousemove", init));
   }, [zoomId, keyboardMode, kbNote, zoomStart, sideMargin]);
 
 
@@ -879,8 +731,6 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           onMouseEnter={() => setHoveredFamily(family.id)}
           onMouseMove={(event) => {
             if (!event.nativeEvent.isTrusted) return;
-            // En mode clavier, la hauteur Y est figée : on ignore les micro-mouvements.
-            if (keyboardModeRef.current) return;
             const rect = event.currentTarget.getBoundingClientRect();
             lastMouseY.current = Math.round(event.clientY - rect.top);
           }}
@@ -890,7 +740,6 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
             <LineChart
               data={chartData}
               onMouseMove={(state: { activeLabel?: string | number }) => {
-                console.log("[KB][rcMove]", "label=", state?.activeLabel, "kbMode=", keyboardMode, "kbNote=", kbNoteRef.current);
                 if (keyboardMode) return;
                 const note = Number(state?.activeLabel);
                 if (Number.isFinite(note)) lastMouseNote.current = note;
@@ -945,7 +794,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     // Mode zoom : le cadre isolé occupe 100 % de la largeur de l'écran.
     return (
       <div ref={zoomRef} className="fixed inset-0 z-[70] overflow-hidden bg-white p-6">
-        <SubChart family={zoomFamily} zoomed ctx={subCtx} />
+        <SubChart family={zoomFamily} zoomed />
       </div>
     );
   }
@@ -955,7 +804,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   // les cadres sont extraits de la grille via une bande pleine largeur centrée.
   return (
     <div ref={containerRef} className="relative w-full pb-[80vh] pt-2">
-      <div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} ctx={subCtx} />)}</div>
+      <div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div>
     </div>
   );
 
