@@ -557,6 +557,8 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const [kbNote, setKbNote] = useState<number | null>(null);
   const [keyboardMode, setKeyboardMode] = useState(false);
   const mouseAnchor = useRef<{ x: number; y: number } | null>(null);
+  // Verrou anti-clignotement : la souris est ignorée pendant 300 ms après une flèche.
+  const kbLockUntil = useRef<number>(0);
   // Dernière hauteur (Y) décidée par la souris : la FF pilotée au clavier y reste figée.
   const lastMouseY = useRef<number>(96);
   // Dernière note (index X) survolée par la souris : point de départ du pilotage clavier.
