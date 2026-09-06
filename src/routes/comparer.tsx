@@ -910,6 +910,19 @@ export function CycleIcon() {
   );
 }
 
+/** Petit clavier de piano épuré (touches blanches + noires). */
+export function PianoKeysIcon() {
+  return (
+    <svg aria-hidden="true" className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round">
+      <rect x="2" y="4" width="16" height="12" rx="1.2" />
+      <path d="M6.5 4v12M10 4v12M13.5 4v12" />
+      <rect x="5" y="4" width="3" height="6.5" fill="currentColor" stroke="none" />
+      <rect x="12" y="4" width="3" height="6.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+
 type SidebarPanelProps = {
   cloudEnabled: boolean;
   standardEnabled: boolean;
