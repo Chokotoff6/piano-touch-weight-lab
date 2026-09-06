@@ -545,6 +545,10 @@ function ArrowHintIcon() {
 
 
 export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible", onCycleKeyFilter }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void }) {
+  const lang = useLang();
+  const bwLabel = lang === "en"
+    ? (keyFilter === "all" ? "B/W: grouped" : "B/W: separated")
+    : (keyFilter === "all" ? "B/N : groupées" : "B/N : séparées");
   const [hoveredFamily, setHoveredFamily] = useState<string | null>(null);
 
   const [zoomId, setZoomId] = useState<string | null>(null);
@@ -554,6 +558,8 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const mouseAnchor = useRef<{ x: number; y: number } | null>(null);
   // Dernière hauteur (Y) décidée par la souris : la FF pilotée au clavier y reste figée.
   const lastMouseY = useRef<number>(96);
+  // Dernière note (index X) survolée par la souris : point de départ du pilotage clavier.
+  const lastMouseNote = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<HTMLDivElement>(null);
 
@@ -586,7 +592,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       setKeyboardMode(true);
       mouseAnchor.current = null;
       setKbNote((previous) => {
-        const base = previous ?? Math.round(zoomStart + ZOOM_WINDOW / 2);
+        const base = previous ?? lastMouseNote.current ?? Math.round(zoomStart + ZOOM_WINDOW / 2);
         const next = Math.min(Math.max(base + step, 1), 88);
         // La fenêtre suit la pastille active.
         setZoomStart((start) => {
@@ -608,7 +614,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       const anchor = mouseAnchor.current;
       if (!anchor) { mouseAnchor.current = { x: event.clientX, y: event.clientY }; return; }
       const distance = Math.hypot(event.clientX - anchor.x, event.clientY - anchor.y);
-      if (distance > 30) setKeyboardMode(false);
+      if (distance > 30) { setKeyboardMode(false); setKbNote(null); }
     };
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
@@ -644,16 +650,18 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           {zoomed && (
             <button type="button" aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
           )}
-          <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
+          {!zoomed && (
+            <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1.5 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
+          )}
           {onCycleKeyFilter && (
             <button
               type="button"
-              aria-label={`Touches ${keyFilter === "all" ? "groupées" : "séparées"}`}
+              aria-label={bwLabel}
               onClick={onCycleKeyFilter}
               className="flex items-center gap-1 rounded-full border border-gray-300 bg-white px-2 py-0.5 text-[0.68rem] font-medium !text-black hover:bg-gray-100"
             >
               <PianoKeysIcon />
-              <span className="!text-black">{keyFilter === "all" ? "groupé" : "séparé"}</span>
+              <span className="!text-black">{bwLabel}</span>
             </button>
           )}
         </div>
@@ -674,6 +682,10 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
+              onMouseMove={(state: { activeLabel?: string | number }) => {
+                const note = Number(state?.activeLabel);
+                if (Number.isFinite(note)) lastMouseNote.current = note;
+              }}
               onMouseLeave={() => { setHoveredFamily(null); }}
               margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}
             >
@@ -898,6 +910,9 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
 
 const PILL_BASE = "h-7 min-w-0 flex-1 rounded-full border px-1.5 text-[0.68rem] leading-tight transition-colors whitespace-nowrap";
 const pillClass = (active: boolean) => `${PILL_BASE} ${active ? "border-black bg-gray-100 font-semibold text-slate-700" : "border-gray-200 bg-white text-gray-400 hover:border-gray-300 hover:text-gray-500"}`;
+// Boutons cycliques Oui/Non (CLOUD, CIBLE, IMPORT CSV) : bordure noire quand actif.
+const cyclePillClass = (active: boolean) =>
+  `${PILL_BASE} flex w-full items-center justify-start gap-2 bg-white !opacity-100 ${active ? "border-black" : "border-gray-200 hover:border-gray-300"} [&_svg]:!opacity-100`;
 
 export function CycleIcon() {
   return (
@@ -932,6 +947,7 @@ type SidebarPanelProps = {
   onToggleCloud: () => void;
   onToggleStandard: () => void;
   onImport: (file: File) => void;
+  onClearCsv: () => void;
   filtersDisabled: boolean;
   sameClimate: boolean;
   sameYear: boolean;
@@ -960,12 +976,13 @@ function SidebarPanel(props: SidebarPanelProps) {
       <div className="flex h-full flex-col gap-4 pt-2">
           <div>
             <div className="mb-1.5 whitespace-nowrap !text-xs !font-bold !text-black">Comparer piano actuel avec :</div>
-            <div className="flex items-center gap-1.5">
-              <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={`${pillClass(props.cloudEnabled)} !text-orange-600`}>CLOUD</Button>
-              <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={`${pillClass(props.standardEnabled)} !text-green-600`}>CIBLE</Button>
-              <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => inputRef.current?.click()} className={`${pillClass(props.csvActive)} !text-blue-600`}>IMPORT CSV</Button>
+            <div className="flex flex-col gap-1.5">
+              <Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={`${cyclePillClass(props.cloudEnabled)} ${props.cloudEnabled ? "!text-orange-600" : "!text-gray-400"}`}><CycleIcon /><span className="font-bold">CLOUD : <span className="font-semibold">{props.cloudEnabled ? "Oui" : "Non"}</span></span></Button>
+              <Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={`${cyclePillClass(props.standardEnabled)} ${props.standardEnabled ? "!text-green-600" : "!text-gray-400"}`}><CycleIcon /><span className="font-bold">CIBLE : <span className="font-semibold">{props.standardEnabled ? "Oui" : "Non"}</span></span></Button>
+              <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${cyclePillClass(props.csvActive)} ${props.csvActive ? "!text-blue-600" : "!text-gray-400"}`}><CycleIcon /><span className="font-bold">IMPORT CSV : <span className="font-semibold">{props.csvActive ? "Oui" : "Non"}</span></span></Button>
               <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
             </div>
+
           </div>
           <div className="space-y-2 border-t border-gray-200 pt-3">
             <div className="font-bold !text-black">Filtres</div>
@@ -1287,7 +1304,7 @@ function Comparer() {
 
               <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible"} onCycleKeyFilter={cycleKeyFilter} />
             </div>
-            <aside className="min-w-0"><div className="sticky top-[127px] z-50 flex flex-col overflow-visible" style={averagesHeight > 0 ? { height: `${averagesHeight - 8}px` } : undefined}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
+            <aside className="min-w-0"><div className="sticky top-[127px] z-50 flex flex-col overflow-visible" style={averagesHeight > 0 ? { height: `${averagesHeight - 8}px` } : undefined}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
           </div>
         </>
       )}
