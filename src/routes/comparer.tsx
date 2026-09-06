@@ -947,7 +947,7 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
   );
 }
 
-const PILL_BASE = "h-[22px] min-h-[22px] max-h-[22px] min-w-0 flex-none shrink-0 rounded-full border px-1.5 py-0 text-[0.68rem] leading-none transition-colors whitespace-nowrap";
+const PILL_BASE = "h-[26px] min-h-[26px] max-h-[26px] min-w-0 flex-none shrink-0 rounded-full border px-1.5 py-0 text-[0.68rem] leading-none transition-colors whitespace-nowrap";
 const pillClass = (active: boolean) => `${PILL_BASE} ${active ? "border-black bg-gray-100 font-semibold text-slate-700" : "border-gray-200 bg-white text-gray-400 hover:border-gray-300 hover:text-gray-500"}`;
 // Boutons cycliques Oui/Non (CLOUD, CIBLE, IMPORT CSV) : bordure noire quand actif.
 const cyclePillClass = (active: boolean) =>
