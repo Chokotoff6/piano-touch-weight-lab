@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, type SetStateAction, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/data/translations";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
@@ -573,7 +573,13 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   // Zone de tracé du cadre zoomé : sert à rejouer un survol réel à la note pilotée au clavier.
   const plotRef = useRef<HTMLDivElement>(null);
 
-
+  // Contexte stable passé au SubChart (déclaré au niveau module) : évite le
+  // démontage/remontage du graphique Recharts à chaque changement d'état clavier.
+  const subCtx: SubChartCtx = {
+    chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, bwLabel,
+    zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode,
+    plotRef, lastMouseY, keyboardModeRef, lastMouseNote,
+  };
 
   // Capture de la molette en mode zoom : glissement continu de la fenêtre de 44 touches.
   useEffect(() => {
@@ -655,25 +661,21 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     };
   }, [zoomId]);
 
-  // Pilotage clavier : survol synthétique à la note active pour allumer les pastilles
-  // et faire suivre la bulle native, à la hauteur Y mémorisée de la souris.
   // Pilotage clavier : on rejoue un survol synthétique sur la surface Recharts à la
   // note active, à la hauteur Y mémorisée de la souris. La bulle native suit à ce Y
   // (Recharts positionne la FF sur le clientY du survol) et la pastille s'allume.
   useEffect(() => {
     if (!zoomId || !keyboardMode || kbNote === null) return;
     const node = zoomRef.current ?? plotRef.current;
-    const docSurf = document.querySelectorAll(".recharts-surface");
-    console.log("[KB][disp4]", "zoomRef=", !!zoomRef.current, "plotRef=", !!plotRef.current, "nodeTag=", node?.tagName, "docSurf=", docSurf.length, "nodeSvg=", node?.querySelectorAll("svg").length, "svgCls=", Array.from(node?.querySelectorAll("svg") ?? []).map(s=>s.getAttribute("class")).join("|"));
-    const target = (docSurf[0] ?? node?.querySelector("svg")) as HTMLElement | null;
-    if (!target) return;
-    const rect = target.getBoundingClientRect();
+    if (!node) return;
+    const surface = node.querySelector(".recharts-surface") as SVGElement | null;
+    if (!surface) return;
+    const rect = surface.getBoundingClientRect();
     const fraction = Math.min(Math.max((kbNote - zoomStart) / (ZOOM_WINDOW - 1), 0), 1);
     const x = rect.left + sideMargin + (rect.width - sideMargin * 2) * fraction;
     const mouseY = lastMouseY.current ?? rect.height / 2;
     const y = rect.top + Math.min(Math.max(mouseY, 10), rect.height - 10);
-    const init: MouseEventInit = { clientX: x, clientY: y, bubbles: true, cancelable: true, view: window };
-    target.dispatchEvent(new MouseEvent("mousemove", init));
+    surface.dispatchEvent(new MouseEvent("mousemove", { clientX: x, clientY: y, bubbles: true, cancelable: true, view: window }));
   }, [zoomId, keyboardMode, kbNote, zoomStart, sideMargin]);
 
 
