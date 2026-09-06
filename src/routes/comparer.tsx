@@ -533,22 +533,12 @@ function ArrowHintIcon() {
 
 
 export function ComparisonChart({ chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean }) {
-  const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null);
-  // Mémoire de la dernière pastille survolée : la bulle ne s'éteint jamais entre deux notes.
-  const tooltipCache = useRef<TooltipCache | null>(null);
-  const [hoveredLine, setHoveredLine] = useState<string | null>(null);
   const [hoveredFamily, setHoveredFamily] = useState<string | null>(null);
 
   const [zoomId, setZoomId] = useState<string | null>(null);
   const [zoomStart, setZoomStart] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<HTMLDivElement>(null);
-  const plotRef = useRef<HTMLDivElement>(null);
-  // Arbitrage clavier / souris : le clavier prend la main tant que la souris ne bouge
-  // pas réellement (plus de 5 px), ce qui supprime tout clignotement de la bulle.
-  const interactionMode = useRef<"mouse" | "keyboard">("mouse");
-  const lastMouse = useRef<{ x: number; y: number } | null>(null);
-
 
   // Capture de la molette en mode zoom : glissement continu de la fenêtre de 44 touches.
   useEffect(() => {
@@ -563,49 +553,16 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     return () => node.removeEventListener("wheel", onWheel);
   }, [zoomId]);
 
-  // Miroirs pour la navigation clavier (valeurs fraîches sans redéclencher l'effet).
-  const noteRef = useRef<number | null>(null);
-  noteRef.current = hoveredNoteIndex;
-  const startRef = useRef(zoomStart);
-  startRef.current = zoomStart;
-
-  // Le clavier pilote la bulle en repositionnant le pointeur virtuel sur la pastille visée :
-  // la fenêtre flottante et la pastille active suivent instantanément et de façon synchrone.
-  const syncPointerToNote = (note: number, start: number) => {
-    const node = plotRef.current;
-    if (!node) return;
-    const rect = node.getBoundingClientRect();
-    const left = rect.left + sideMargin;
-    const width = Math.max(rect.width - sideMargin * 2, 1);
-    const ratio = (note - start) / Math.max(ZOOM_WINDOW - 1, 1);
-    const x = left + Math.min(Math.max(ratio, 0), 1) * width;
-    const y = lastMouse.current?.y ?? rect.top + rect.height / 2;
-    node.dispatchEvent(new MouseEvent("mousemove", { clientX: x, clientY: y, bubbles: true }));
-  };
-
+  // Sortie du zoom au clavier.
   useEffect(() => {
     if (!zoomId) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { setZoomId(null); return; }
-      // Navigation clavier : saut instantané à la pastille mesurée précédente / suivante.
-      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-      event.preventDefault();
-      const step = event.key === "ArrowRight" ? 2 : -2;
-      const base = noteRef.current ?? Math.round(startRef.current);
-      const next = Math.min(Math.max(base + step, 1), 88);
-      const from = Math.round(startRef.current);
-      let nextStart = startRef.current;
-      if (next < from) nextStart = Math.max(next, 1);
-      else if (next > from + ZOOM_WINDOW - 1) nextStart = Math.min(next - ZOOM_WINDOW + 1, 88 - ZOOM_WINDOW + 1);
-      startRef.current = nextStart;
-      noteRef.current = next;
-      setZoomStart(nextStart);
-      setHoveredNoteIndex(next);
-      requestAnimationFrame(() => syncPointerToNote(next, nextStart));
+      if (event.key === "Escape") setZoomId(null);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [zoomId]);
+
 
   function SubChart({ family, zoomed = false }: { family: (typeof FAMILIES)[number]; zoomed?: boolean }) {
     // Renommage dynamique de la courbe de référence : "Import CSV" (bleu) ou "Cloud" (orange),
