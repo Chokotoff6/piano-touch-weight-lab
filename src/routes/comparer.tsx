@@ -747,25 +747,6 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
             </LineChart>
           </ResponsiveContainer>
         </div>
-        {zoomed && keyboardMode && kbNote !== null && (() => {
-          const point = chartData[kbNote - 1];
-          if (!point) return null;
-          const payload = lines
-            .filter((line) => !line.hidden)
-            .map((line) => ({ dataKey: line.dataKey as string, name: line.name, value: point[line.dataKey], color: line.color }))
-            .filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value));
-          if (payload.length === 0) return null;
-          const fraction = Math.min(Math.max((kbNote - start) / (ZOOM_WINDOW - 1), 0), 1);
-          return (
-            <div
-              className="pointer-events-none absolute z-[120]"
-              style={{ top: `${lastMouseY.current}px`, left: `calc(${sideMargin}px + (100% - ${sideMargin * 2}px) * ${fraction})`, transform: "translate(-50%, -50%)" }}
-            >
-
-              <CustomTooltipContent active payload={payload as TooltipEntry[]} label={kbNote} chartData={chartData} />
-            </div>
-          );
-        })()}
       </Frame>
 
     );
