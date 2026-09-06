@@ -642,22 +642,36 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       <Frame dataFrame={family.id} title={family.title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}>
         {zoomed ? (
           <>
-            <div className="absolute right-3 top-2 z-20">
-              <button type="button" aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
-            </div>
-            <div className="pointer-events-none absolute inset-x-0 top-2 z-10 flex flex-col items-center gap-1">
-              <WheelHintIcon />
-              <ArrowHintIcon />
-            </div>
-          </>
-        ) : (
-          <div className="absolute right-3 top-2 z-10 flex flex-col items-end gap-2">
-            <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
+        <div className="absolute right-3 top-2 z-20 flex flex-col items-end gap-1.5">
+          {zoomed && (
+            <button type="button" aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
+          )}
+          <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
+          {onCycleKeyFilter && (
+            <button
+              type="button"
+              aria-label={`Touches ${keyFilter === "all" ? "groupées" : "séparées"}`}
+              onClick={onCycleKeyFilter}
+              className="flex items-center gap-1 rounded-full border border-gray-300 bg-white px-2 py-0.5 text-[0.68rem] font-medium !text-black hover:bg-gray-100"
+            >
+              <PianoKeysIcon />
+              <span className="!text-black">{keyFilter === "all" ? "groupé" : "séparé"}</span>
+            </button>
+          )}
+        </div>
+        {zoomed && (
+          <div className="pointer-events-none absolute inset-x-0 top-2 z-10 flex flex-col items-center gap-1">
+            <WheelHintIcon />
+            <ArrowHintIcon />
           </div>
         )}
         <div
           className="h-full w-full"
           onMouseEnter={() => setHoveredFamily(family.id)}
+          onMouseMove={(event) => {
+            const rect = event.currentTarget.getBoundingClientRect();
+            lastMouseY.current = Math.round(event.clientY - rect.top);
+          }}
         >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
@@ -665,6 +679,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
               onMouseLeave={() => { setHoveredFamily(null); }}
               margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}
             >
+
               <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
               <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={autoDomain ? ["auto", "auto"] : family.domain} />
