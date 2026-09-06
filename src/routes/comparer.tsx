@@ -400,6 +400,10 @@ function tooltipColorFor(name: string) {
 // Fenêtre flottante native (trigger "axis") : une seule bulle listant toutes les
 // courbes actives de la touche survolée. L'ordre suit la valeur de chaque courbe
 // à la touche 1 (premier pixel), du plus haut au plus bas.
+function isCurrentKey(dataKey?: string) {
+  return String(dataKey ?? "").includes("Cur");
+}
+
 function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; chartData?: ChartPoint[] }) {
   const { active, payload, label, chartData } = props;
   if (!active) return null;
@@ -411,7 +415,13 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
   const valid = [...(payload ?? [])]
     .filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value))
     .filter((entry) => !String(entry.dataKey ?? "").endsWith("Mid"))
-    .sort((a, b) => rankOf(b.dataKey) - rankOf(a.dataKey));
+    // "Piano actuel" (blanches puis noires) toujours en tête, le reste trié par la valeur à la touche 1.
+    .sort((a, b) => {
+      const aCur = isCurrentKey(a.dataKey) ? 1 : 0;
+      const bCur = isCurrentKey(b.dataKey) ? 1 : 0;
+      if (aCur !== bCur) return bCur - aCur;
+      return rankOf(b.dataKey) - rankOf(a.dataKey);
+    });
   if (valid.length === 0) return null;
   return (
     <div className="pointer-events-none !z-50 rounded-md border border-black bg-white px-3 py-2 text-xs">
@@ -420,7 +430,7 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
         const color = entry.color ?? tooltipColorFor(entry.name ?? "");
         const name = entry.name?.trim() ? entry.name : "Piano actuel";
         return (
-          <div key={entry.dataKey} className="flex items-center justify-between gap-4" style={{ color }}>
+          <div key={entry.dataKey} className="flex items-center justify-between gap-4 whitespace-nowrap" style={{ color }}>
             <span>{name}</span>
             <span className="font-semibold tabular-nums">{Math.round(Number(entry.value ?? 0))} gr.</span>
           </div>
@@ -429,6 +439,7 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
     </div>
   );
 }
+
 
 
 
@@ -538,6 +549,9 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
 
   const [zoomId, setZoomId] = useState<string | null>(null);
   const [zoomStart, setZoomStart] = useState(1);
+  const [kbNote, setKbNote] = useState<number | null>(null);
+  const [keyboardMode, setKeyboardMode] = useState(false);
+  const mouseAnchor = useRef<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<HTMLDivElement>(null);
 
@@ -554,15 +568,49 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     return () => node.removeEventListener("wheel", onWheel);
   }, [zoomId]);
 
-  // Sortie du zoom au clavier.
+  // Priorité hybride clavier / souris en mode zoom.
   useEffect(() => {
-    if (!zoomId) return;
+    if (!zoomId) {
+      setKbNote(null);
+      setKeyboardMode(false);
+      return;
+    }
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setZoomId(null);
+      if (event.key === "Escape") { setZoomId(null); return; }
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      const step = event.key === "ArrowRight" ? 1 : -1;
+      setKeyboardMode(true);
+      mouseAnchor.current = null;
+      setKbNote((previous) => {
+        const base = previous ?? Math.round(zoomStart + ZOOM_WINDOW / 2);
+        const next = Math.min(Math.max(base + step, 1), 88);
+        // La fenêtre suit la pastille active.
+        setZoomStart((start) => {
+          if (next < start) return Math.max(next, 1);
+          if (next > start + ZOOM_WINDOW - 1) return Math.min(next - ZOOM_WINDOW + 1, 88 - ZOOM_WINDOW + 1);
+          return start;
+        });
+        return next;
+      });
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [zoomId]);
+  }, [zoomId, zoomStart]);
+
+  // La souris ne reprend la main qu'après un déplacement réel de plus de 30 px.
+  useEffect(() => {
+    if (!zoomId || !keyboardMode) return;
+    const onMove = (event: MouseEvent) => {
+      const anchor = mouseAnchor.current;
+      if (!anchor) { mouseAnchor.current = { x: event.clientX, y: event.clientY }; return; }
+      const distance = Math.hypot(event.clientX - anchor.x, event.clientY - anchor.y);
+      if (distance > 30) setKeyboardMode(false);
+    };
+    window.addEventListener("mousemove", onMove);
+    return () => window.removeEventListener("mousemove", onMove);
+  }, [zoomId, keyboardMode]);
+
 
 
   function SubChart({ family, zoomed = false }: { family: (typeof FAMILIES)[number]; zoomed?: boolean }) {
@@ -625,7 +673,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
                 content={<CustomTooltipContent chartData={chartData} />}
                 cursor={{ stroke: "#d1d5db", strokeWidth: 1 }}
                 allowEscapeViewBox={{ x: true, y: true }}
-                wrapperStyle={{ pointerEvents: "none", zIndex: 100 }}
+                wrapperStyle={{ pointerEvents: "none", zIndex: 100, ...(zoomed && keyboardMode ? { display: "none" } : {}) }}
                 isAnimationActive={false}
                 offset={24}
               />
@@ -650,7 +698,26 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
             </LineChart>
           </ResponsiveContainer>
         </div>
+        {zoomed && keyboardMode && kbNote !== null && (() => {
+          const point = chartData[kbNote - 1];
+          if (!point) return null;
+          const payload = lines
+            .filter((line) => !line.hidden)
+            .map((line) => ({ dataKey: line.dataKey as string, name: line.name, value: point[line.dataKey], color: line.color }))
+            .filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value));
+          if (payload.length === 0) return null;
+          const fraction = Math.min(Math.max((kbNote - start) / (ZOOM_WINDOW - 1), 0), 1);
+          return (
+            <div
+              className="pointer-events-none absolute top-24 z-[120]"
+              style={{ left: `calc(${sideMargin}px + (100% - ${sideMargin * 2}px) * ${fraction})`, transform: "translateX(-50%)" }}
+            >
+              <CustomTooltipContent active payload={payload as TooltipEntry[]} label={kbNote} chartData={chartData} />
+            </div>
+          );
+        })()}
       </Frame>
+
     );
   }
 
@@ -1185,10 +1252,10 @@ function Comparer() {
               
               <div ref={averagesRef} className="sticky top-[127px] z-50 mb-[50px] w-full bg-white pb-2 relative">
                 <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span>Moyennes</span>} className="h-fit">
-                  {/* Fines lignes de séparation entre chaque source de données. */}
-                  <div className="mb-3 border-b border-gray-200 pb-3"><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">Piano actuel : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
+                  {/* Séparateurs affichés uniquement si au moins deux sources sont présentes. */}
+                  <div className={(comparedPiano !== null || sourceMode === "cloud" || standardEnabled) ? "mb-3 border-b border-gray-400 pb-3" : ""}><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">Piano actuel : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
                   {(comparedPiano !== null || sourceMode === "cloud") && (
-                    <div className={standardEnabled ? "mb-3 border-b border-gray-200 pb-3" : ""}>
+                    <div className={standardEnabled ? "mb-3 border-b border-gray-400 pb-3" : ""}>
                       <div className={`mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide ${comparedPiano ? "!text-blue-600" : "!text-orange-600"}`}>{comparedPiano ? <>IMPORT CSV : <span className="normal-case">{csvIdentity}{csvStats}</span></> : <>Cloud</>}{cloudActive && <span className="ml-2 normal-case text-orange-600">{cloudCounterText}{countKeys(cloudProfile?.wa)}</span>}</div>
                       <AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} csv={comparedPiano !== null} />
                       {cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}
