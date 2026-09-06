@@ -978,11 +978,11 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
   );
 }
 
-const PILL_BASE = "h-[26px] min-h-[26px] max-h-[26px] min-w-0 flex-none shrink-0 rounded-full border px-1.5 py-0 text-[0.68rem] leading-none transition-colors whitespace-nowrap";
+const PILL_BASE = "h-[31px] min-h-[31px] max-h-[31px] min-w-0 flex-none shrink-0 rounded-full border px-1.5 py-0 text-[0.68rem] leading-none transition-colors whitespace-nowrap";
 const pillClass = (active: boolean) => `${PILL_BASE} ${active ? "border-black bg-gray-100 font-semibold text-slate-700" : "border-gray-200 bg-white text-gray-400 hover:border-gray-300 hover:text-gray-500"}`;
 // Boutons cycliques Oui/Non (CLOUD, CIBLE, IMPORT CSV) : bordure noire quand actif.
 const cyclePillClass = (active: boolean) =>
-  `${PILL_BASE} flex w-full items-center justify-start gap-2 bg-white !opacity-100 ${active ? "border-black" : "border-gray-200 hover:border-gray-300"} [&_svg]:!opacity-100`;
+  `${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !opacity-100 hover:border-gray-300 [&_svg]:!opacity-100`;
 
 export function CycleIcon() {
   return (
@@ -996,9 +996,9 @@ export function CycleIcon() {
 }
 
 /** Petit clavier de piano épuré (touches blanches + noires). */
-export function PianoKeysIcon() {
+export function PianoKeysIcon({ bold = false }: { bold?: boolean }) {
   return (
-    <svg aria-hidden="true" className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round">
+    <svg aria-hidden="true" className={`h-3.5 w-3.5 shrink-0 ${bold ? "font-bold" : ""}`} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={bold ? 2.4 : 1.2} strokeLinejoin="round">
       <rect x="2" y="4" width="16" height="12" rx="1.2" />
       <path d="M6.5 4v12M10 4v12M13.5 4v12" />
       <rect x="5" y="4" width="3" height="6.5" fill="currentColor" stroke="none" />
@@ -1046,13 +1046,13 @@ function SidebarPanel(props: SidebarPanelProps) {
       onClick={() => onChange(!checked)}
       className={`${cyclePillClass(checked)} disabled:!opacity-100 !text-black [&_svg]:!text-black`}
     >
-      <CycleIcon />
+      <PianoKeysIcon bold={checked} />
       <span className="font-bold uppercase">{label} : <span className="font-semibold uppercase">{checked ? "Oui" : "Non"}</span></span>
     </Button>
   );
 
   const sourceButtonClass = (active: boolean, activeText: string) =>
-    `${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !opacity-100 disabled:!opacity-100 hover:border-gray-300 ${active ? activeText : "!text-black"} [&_svg]:!opacity-100`;
+    `${PILL_BASE} flex w-full items-center justify-start gap-2 bg-white !opacity-100 disabled:!opacity-100 hover:border-gray-300 ${active ? `border-black ${activeText}` : "border-gray-200 !text-black"} [&_svg]:!opacity-100`;
 
   return (
     <Frame title="Réglages" className="flex flex-1 flex-col">
@@ -1063,8 +1063,8 @@ function SidebarPanel(props: SidebarPanelProps) {
           <Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={sourceButtonClass(props.csvActive, "!text-blue-600")}><CycleIcon /><span className="font-bold uppercase">Importer CSV</span></Button>
           <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
           <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold !text-black">Filtres</div>
-          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black !opacity-100 disabled:!opacity-100 font-medium hover:border-gray-300 [&_svg]:!text-black [&_svg]:!opacity-100`}><CycleIcon /><span className="!text-black font-bold uppercase">Usage instrument : <span className="!text-black font-semibold uppercase">{usageLabel}</span></span></Button>
-          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left !text-black !opacity-100 disabled:!opacity-100 [&_svg]:!text-black [&_svg]:!opacity-100`}><CycleIcon /><span className="!text-black font-bold uppercase">Modifications importantes : <span className="!text-black font-semibold uppercase">{changesLabel}</span></span></Button>
+          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black !opacity-100 disabled:!opacity-100 font-medium hover:border-gray-300 [&_svg]:!text-black [&_svg]:!opacity-100`}><PianoKeysIcon bold={props.usageLevel !== "low"} /><span className="!text-black font-bold uppercase">Usage instrument : <span className="!text-black font-semibold uppercase">{usageLabel}</span></span></Button>
+          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left !text-black !opacity-100 disabled:!opacity-100 [&_svg]:!text-black [&_svg]:!opacity-100`}><PianoKeysIcon bold={props.importantChanges !== "included"} /><span className="!text-black font-bold uppercase">Modifications importantes : <span className="!text-black font-semibold uppercase">{changesLabel}</span></span></Button>
           {cycleRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
           {cycleRow("Même année de fabrication", props.sameYear, props.setSameYear)}
           {cycleRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
