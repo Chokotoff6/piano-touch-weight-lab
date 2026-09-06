@@ -965,12 +965,21 @@ type SidebarPanelProps = {
 function SidebarPanel(props: SidebarPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const usageLabel = props.usageLevel === "all" ? "Tous" : props.usageLevel === "low" ? "Faible" : "Intensif";
-  const switchRow = (label: string, checked: boolean, onChange: (value: boolean) => void) => (
-    <label className="flex min-w-0 items-center justify-between gap-3 text-xs font-medium text-black">
-      <span className="min-w-0">{label}</span>
-      <Switch checked={checked} disabled={props.filtersDisabled} onCheckedChange={onChange} className="data-[state=checked]:bg-slate-500 data-[state=unchecked]:bg-gray-200" />
-    </label>
+  // Filtres du bas : bascule cyclique Oui/Non (bordure noire quand actif).
+  const cycleRow = (label: string, checked: boolean, onChange: (value: boolean) => void) => (
+    <Button
+      type="button"
+      variant="outline"
+      disabled={props.filtersDisabled}
+      aria-pressed={checked}
+      onClick={() => onChange(!checked)}
+      className={`${cyclePillClass(checked)} disabled:!opacity-100 ${checked ? "!text-black" : "!text-gray-400"}`}
+    >
+      <CycleIcon />
+      <span className="font-bold">{label} : <span className="font-semibold">{checked ? "Oui" : "Non"}</span></span>
+    </Button>
   );
+
   return (
     <Frame title="Réglages" className="flex flex-1 flex-col">
       <div className="flex h-full flex-col gap-4 pt-2">
