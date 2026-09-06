@@ -1033,19 +1033,19 @@ const pillClass = (active: boolean) => `${PILL_BASE} ${active ? "border-black bg
 const cyclePillClass = (active: boolean) =>
   `${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !opacity-100 hover:border-gray-300 [&_svg]:!opacity-100`;
 
-/** Infobulle maison : apparition 2x plus rapide que le title natif (250 ms). */
+/** Infobulle maison : apparition très rapide (125 ms), éjectée à gauche du bouton. */
 function FastTip({ text, children }: { text: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   return (
     <div
       className="relative w-full"
-      onMouseEnter={() => { timer.current = setTimeout(() => setOpen(true), 250); }}
+      onMouseEnter={() => { timer.current = setTimeout(() => setOpen(true), 125); }}
       onMouseLeave={() => { if (timer.current) clearTimeout(timer.current); setOpen(false); }}
     >
       {children}
       {open && (
-        <div className="pointer-events-none absolute left-0 top-full z-50 mt-1 w-60 rounded-md border border-gray-300 bg-white px-2 py-1 text-[0.7rem] font-medium !text-black shadow-lg">{text}</div>
+        <div className="pointer-events-none absolute right-full top-1/2 z-50 mr-2 w-60 -translate-y-1/2 rounded-md border border-gray-300 bg-white px-2 py-1 text-[0.7rem] font-medium !text-black shadow-lg">{text}</div>
       )}
     </div>
   );
