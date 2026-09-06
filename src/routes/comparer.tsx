@@ -1105,7 +1105,7 @@ function Comparer() {
   const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
   const [sameClimate, setSameClimate] = useState(true);
   const [sameYear, setSameYear] = useState(false);
-  const [importantChanges, setImportantChanges] = useState<ChangesFilter>("included");
+  const [importantChanges, setImportantChanges] = useState<ChangesFilter>("excluded");
   const [youngOnly, setYoungOnly] = useState(false);
   const [usageLevel, setUsageLevel] = useState<UsageLevel>("low");
   const [mine, setMine] = useState<ProfileRecord | null>(null);
