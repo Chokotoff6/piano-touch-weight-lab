@@ -667,7 +667,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     const DotComp = zoomed ? ZoomDot : SampleDot;
     return (
       <Frame dataFrame={family.id} title={family.title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}>
-        <div className="absolute right-3 top-2 z-20 flex flex-col items-end gap-1.5">
+        <div className="absolute right-3 top-7 z-20 flex flex-col items-end gap-1.5">
           {zoomed && (
             <button type="button" aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
           )}
