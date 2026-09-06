@@ -35,7 +35,7 @@ const PROFILE_FIELDS = "id,serial_number,brand,model,type_piano,mesure_date,manu
 
 export type KeyFilter = "all" | "split";
 type SourceMode = "none" | "cloud";
-type UsageLevel = "all" | "low" | "intensive";
+type UsageLevel = "low" | "medium" | "intensive";
 // Filtre modifications importantes : incluses, exclues, ou uniquement celles-ci.
 type ChangesFilter = "included" | "excluded" | "only";
 
@@ -280,7 +280,7 @@ function databaseClimate(value: string | null) {
 }
 
 function databaseUsage(value: UsageLevel) {
-  return value === "low" ? "Low" : "Intensive";
+  return value === "low" ? "Low" : value === "medium" ? "Medium" : "Intensive";
 }
 
 // Abaque théorique d'usine calculé en local (aucun appel réseau).
@@ -773,7 +773,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   // Largeur normale : 80 % de la largeur de la page web (et non de la colonne),
   // les cadres sont extraits de la grille via une bande pleine largeur centrée.
   return (
-    <div ref={containerRef} className="relative left-1/2 w-screen -translate-x-1/2 pb-[80vh] pt-2">
+    <div ref={containerRef} className="relative w-full pb-[80vh] pt-2">
       <div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} />)}</div>
     </div>
   );
@@ -828,12 +828,12 @@ function AverageBlock({ label, global, white, black, tone }: { label: string; gl
     <div className="flex h-full flex-col justify-end rounded bg-muted px-2 py-1.5 text-center">
       <div className="!text-[1.1rem] font-bold tracking-wide !text-black">{label}</div>
       <div className={`mt-1 !text-2xl !font-bold tabular-nums ${toneClass}`}>{val(global)}</div>
-      <div className={`mt-0.5 flex justify-center gap-2 text-[0.65rem] tabular-nums ${toneClass}`}>
+      <div className={`mt-0.5 flex items-end justify-center gap-2 text-[0.65rem] tabular-nums ${toneClass}`}>
         <span>{sub(white)}</span>
         <span className={toneClass}>/</span>
         <span>{sub(black)}</span>
       </div>
-      <div className={`flex justify-center gap-2 text-[0.55rem] tabular-nums ${toneClass}`}>
+      <div className={`flex items-end justify-center gap-2 text-[0.55rem] tabular-nums ${toneClass}`}>
         <span className="!text-xs font-medium">Blanches</span>
         <span className="invisible">/</span>
         <span className="!text-xs font-medium">Noires</span>
@@ -976,8 +976,8 @@ type SidebarPanelProps = {
 
 function SidebarPanel(props: SidebarPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const usageLabel = props.usageLevel === "all" ? "Tous" : props.usageLevel === "low" ? "Faible" : "Intensif";
-  const changesLabel = props.importantChanges === "included" ? "Inclus" : props.importantChanges === "excluded" ? "Exclus" : "Seuls";
+  const usageLabel = props.usageLevel === "low" ? "FAIBLE" : props.usageLevel === "medium" ? "MOYEN" : "INTENSIF";
+  const changesLabel = props.importantChanges === "included" ? "INCLUS" : props.importantChanges === "excluded" ? "EXCLUS" : "SEULS";
   // Filtres du bas : bascule cyclique Oui/Non (bordure noire quand actif).
   const cycleRow = (label: string, checked: boolean, onChange: (value: boolean) => void) => (
     <Button
@@ -1053,7 +1053,7 @@ function Comparer() {
   const [sameYear, setSameYear] = useState(false);
   const [importantChanges, setImportantChanges] = useState<ChangesFilter>("included");
   const [youngOnly, setYoungOnly] = useState(false);
-  const [usageLevel, setUsageLevel] = useState<UsageLevel>("all");
+  const [usageLevel, setUsageLevel] = useState<UsageLevel>("low");
   const [mine, setMine] = useState<ProfileRecord | null>(null);
   const [standard, setStandard] = useState<RefProfile>(FACTORY_STANDARD);
   const [standardLabel, setStandardLabel] = useState("CIBLE (Internet)");
@@ -1199,7 +1199,7 @@ function Comparer() {
       else if (importantChanges === "excluded") query = query.neq("maintenance_type", "Major modifications");
       else query = query.not("maintenance_type", "eq", "Major modifications");
       if (youngOnly) query = query.gte("manufacture_year", new Date().getFullYear() - 5);
-      if (usageLevel !== "all") query = query.eq("usage_level", databaseUsage(usageLevel));
+      query = query.eq("usage_level", databaseUsage(usageLevel));
 
       const result = await query;
       if (cancelled) return;
@@ -1274,7 +1274,7 @@ function Comparer() {
 
 
   function cycleUsage() {
-    setUsageLevel((value) => value === "all" ? "low" : value === "low" ? "intensive" : "all");
+    setUsageLevel((value) => value === "low" ? "medium" : value === "medium" ? "intensive" : "low");
   }
 
   function cycleKeyFilter() {
