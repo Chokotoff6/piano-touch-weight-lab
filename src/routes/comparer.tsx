@@ -943,8 +943,7 @@ type SidebarPanelProps = {
   setImportantChanges: (value: boolean) => void;
   setYoungOnly: (value: boolean) => void;
   cycleUsage: () => void;
-  keyFilter: KeyFilter;
-  cycleKeyFilter: () => void;
+
 };
 
 function SidebarPanel(props: SidebarPanelProps) {
