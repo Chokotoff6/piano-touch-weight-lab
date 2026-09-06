@@ -742,34 +742,24 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   // reprend la main qu'après un déplacement physique de plus de 30 px, et repart
   // alors de la dernière note du clavier.
   // ---------------------------------------------------------------------------
-  const pointerPos = useRef<{ x: number; y: number } | null>(null);
+  // ---------------------------------------------------------------------------
+  // Verrou clavier / souris en mode zoom (logique de lock brute).
+  // Une flèche ◄ ► active le verrou (isKeyboardActive = true) et déplace la
+  // pastille de ±1. Tant que le verrou est actif, la souris n'a aucun droit de
+  // lecture ni d'écriture (return immédiat dans onMouseMove). Le verrou retombe
+  // tout seul après 400 ms sans appui. La FF reste figée à la hauteur Y
+  // (lastMouseY) mémorisée par la souris, via le survol synthétique rejoué.
+  // ---------------------------------------------------------------------------
+  const kbLockTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!zoomId) {
       setKbNote(null);
       setKeyboardMode(false);
-      mouseAnchor.current = null;
+      keyboardModeRef.current = false;
+      if (kbLockTimer.current) { clearTimeout(kbLockTimer.current); kbLockTimer.current = null; }
       return;
     }
-
-    const onPointer = (event: MouseEvent) => {
-      if (!event.isTrusted) return;
-      pointerPos.current = { x: event.clientX, y: event.clientY };
-      if (!keyboardModeRef.current) return;
-      const anchor = mouseAnchor.current;
-      if (!anchor) {
-        mouseAnchor.current = { x: event.clientX, y: event.clientY };
-        return;
-      }
-      if (Math.hypot(event.clientX - anchor.x, event.clientY - anchor.y) > 30) {
-        // La souris reprend la détection depuis la dernière note du clavier.
-        if (kbNoteRef.current !== null) lastMouseNote.current = kbNoteRef.current;
-        keyboardModeRef.current = false;
-        mouseAnchor.current = null;
-        setKeyboardMode(false);
-        setKbNote(null);
-      }
-    };
 
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
@@ -778,9 +768,8 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
       event.preventDefault();
       const step = event.key === "ArrowRight" ? 1 : -1;
-      // Le clavier prend la main immédiatement, ancré sur la position réelle du pointeur.
+      // Le clavier prend la main : verrou immédiat.
       keyboardModeRef.current = true;
-      mouseAnchor.current = pointerPos.current;
       setKeyboardMode(true);
       const base = kbNoteRef.current ?? lastMouseNote.current ?? Math.round(zoomStartRef.current + ZOOM_WINDOW / 2);
       const next = Math.min(Math.max(base + step, 1), 88);
@@ -792,13 +781,19 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
         if (next > start + ZOOM_WINDOW - 1) return Math.min(next - ZOOM_WINDOW + 1, 88 - ZOOM_WINDOW + 1);
         return start;
       });
+      // Minuteur de 400 ms : la souris reste interdite pendant ce délai.
+      if (kbLockTimer.current) clearTimeout(kbLockTimer.current);
+      kbLockTimer.current = setTimeout(() => {
+        keyboardModeRef.current = false;
+        setKeyboardMode(false);
+        kbLockTimer.current = null;
+      }, 400);
     };
 
     window.addEventListener("keydown", onKey, true);
-    window.addEventListener("mousemove", onPointer, true);
     return () => {
       window.removeEventListener("keydown", onKey, true);
-      window.removeEventListener("mousemove", onPointer, true);
+      if (kbLockTimer.current) { clearTimeout(kbLockTimer.current); kbLockTimer.current = null; }
     };
   }, [zoomId]);
 
