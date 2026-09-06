@@ -1167,7 +1167,7 @@ function SidebarPanel(props: SidebarPanelProps) {
           {cycleRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
           {cycleRow("Même année de fabrication", props.sameYear, props.setSameYear)}
           {cycleRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
-          <div className="text-center text-base font-bold uppercase leading-tight" style={{ color: "#f97316", marginTop: "15px" }}>
+          <div className="text-center font-bold uppercase leading-tight" style={{ color: "#f97316", marginTop: "15px", fontSize: "0.85rem" }}>
             <div>{props.cloudSampleCount}/{props.cloudTotalCount} pianos</div>
             <div>{en ? "with identical model" : "modèle identique"}</div>
             <div>{en ? "on the Cloud" : "sur le Cloud"}</div>
