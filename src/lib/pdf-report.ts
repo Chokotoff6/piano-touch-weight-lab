@@ -41,13 +41,33 @@ async function capture(el: HTMLElement): Promise<Capture> {
 }
 
 
+/** Hauteur réservée au pied de page (2 lignes). */
+const FOOTER_H = 10;
+
 /** Échelle (mm/px) tenant dans une page A4 paysage pour une pile de blocs. */
 function pageRatio(blocks: Capture[]): number {
   const availW = PAGE_W - MARGIN * 2;
-  const availH = PAGE_H - MARGIN * 2 - GAP * (blocks.length - 1);
+  const availH = PAGE_H - MARGIN * 2 - FOOTER_H - GAP * (blocks.length - 1);
   const maxPxW = Math.max(...blocks.map((b) => b.width));
   const totalPxH = blocks.reduce((sum, b) => sum + b.height, 0);
   return Math.min(availW / maxPxW, availH / totalPxH);
+}
+
+/** Pied de page discret, aligné à droite, sur deux lignes. */
+function drawFooter(pdf: jsPDF, page: number, total: number, en: boolean) {
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, "0");
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const date = `${dd}-${mm}-${now.getFullYear()}`;
+  const x = PAGE_W - MARGIN;
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(8);
+  pdf.setTextColor(120);
+  pdf.text(`Page ${page} / ${total}`, x, PAGE_H - MARGIN - 4, { align: "right" });
+  pdf.text(`${en ? "Exported on" : "Exporte le"} : ${date}`, x, PAGE_H - MARGIN, {
+    align: "right",
+  });
+  pdf.setTextColor(0);
 }
 
 /** Empile verticalement les blocs capturés sur une page A4 paysage, à l'échelle imposée. */
@@ -62,6 +82,7 @@ function drawPage(pdf: jsPDF, blocks: Capture[], ratio: number) {
     y += h + GAP;
   }
 }
+
 
 /**
  * Capture les blocs, compose deux pages A4 paysage séparées par un saut de page
