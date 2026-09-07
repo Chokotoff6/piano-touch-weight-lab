@@ -1,7 +1,7 @@
 // Formulaires PDF vierges interactifs (champs numériques éditables).
 // Géométrie fixe pour permettre un ré-import fiable.
 import jsPDF from "jspdf";
-import { AcroFormButton, AcroFormTextField } from "jspdf";
+import { AcroFormTextField } from "jspdf";
 
 const PAGE_W = 210;
 const MARGIN = 14;
@@ -128,79 +128,6 @@ function header(pdf: jsPDF, title: string, pageWidth = PAGE_W) {
   pdf.text("# ID: CLAVIER_EXPERT_GENUINE_EXPORT", pageWidth / 2, 19, { align: "center" });
 }
 
-/**
- * Signaletique de conformite (haut a droite) :
- * - mention verte et grasse, invisible par defaut, qui apparait quand les
- *   88 touches ont Wa et Wd numeriques (script Acrobat embarque) ;
- * - icone « i » toujours visible, rappelant les 2 conditions au clic.
- */
-function drawCompliance(pdf: jsPDF, lang: "fr" | "en", pageWidth: number): void {
-  const isEn = lang === "en";
-  const badgeText = isEn
-    ? "Input form compliant for import"
-    : "Formulaire de saisie conforme pour import";
-  const tip = isEn
-    ? "Compliance requirements for import: 1. All 88 keys must be filled out. 2. Only numerical data (Wa and Wd) allowed."
-    : "Conditions de conformite pour l'importation : 1. Remplissage obligatoire des 88 touches. 2. Saisie exclusive de valeurs numeriques (Wa et Wd).";
-
-  const badge = new AcroFormTextField();
-  badge.fieldName = "compliance_badge";
-  (badge as unknown as { Rect: number[] }).Rect = [pageWidth - MARGIN - 84, 6, 78, 6];
-  badge.fontSize = 9;
-  badge.maxFontSize = 9;
-  (badge as unknown as { fontStyle: string }).fontStyle = "bold";
-  (badge as unknown as { color: string }).color = "#008000";
-  badge.value = badgeText;
-  badge.readOnly = true;
-  // Drapeau annotation « masque » : rien ne s'affiche tant que le script
-  // embarque ne montre pas explicitement la mention (etat 100% rempli).
-  (badge as unknown as { F: number }).F = 2;
-  pdf.addField(badge);
-
-  // Icone « i » dessinee en dur (visible en permanence) + bouton
-  // transparent par-dessus pour l'infobulle au clic.
-  const ix = pageWidth - MARGIN - 2.5;
-  const iy = 9;
-  pdf.setDrawColor(90);
-  pdf.setFillColor(240, 240, 240);
-  pdf.setLineWidth(0.3);
-  pdf.circle(ix, iy, 2.2, "FD");
-  pdf.setFont("helvetica", "bolditalic");
-  pdf.setFontSize(8);
-  pdf.setTextColor(90);
-  pdf.text("i", ix, iy + 1.4, { align: "center" });
-  pdf.setFont("helvetica", "normal");
-  pdf.setTextColor(0);
-
-  const info = new AcroFormButton();
-  info.fieldName = "compliance_info";
-  (info as unknown as { Rect: number[] }).Rect = [ix - 3, iy - 3, 6, 6];
-  pdf.addField(info);
-
-  const script = [
-    "function fncCompliance(){",
-    "  var ok=true;",
-    "  for(var i=1;i<=88;i++){",
-    "    var a=this.getField('wa_'+i);var d=this.getField('wd_'+i);",
-    "    if(!a||!d){continue;}",
-    "    var va=(''+a.value).replace(/^\\s+|\\s+$/g,'');",
-    "    var vd=(''+d.value).replace(/^\\s+|\\s+$/g,'');",
-    "    if(va===''||vd===''||isNaN(va)||isNaN(vd)){ok=false;break;}",
-    "  }",
-    "  var b=this.getField('compliance_badge');",
-    "  if(b){b.display=ok?display.visible:display.hidden;}",
-    "}",
-    "for(var j=1;j<=88;j++){",
-    "  var fa=this.getField('wa_'+j);if(fa){fa.setAction('Calculate','fncCompliance();');}",
-    "  var fd=this.getField('wd_'+j);if(fd){fd.setAction('Calculate','fncCompliance();');}",
-    "}",
-    "var fi=this.getField('compliance_info');",
-    `if(fi){fi.setAction('MouseUp','app.alert("${tip}");');}`,
-    "fncCompliance();",
-  ].join("\n");
-  (pdf as unknown as { addJS: (s: string) => void }).addJS(script);
-}
-
 /** Option 3 : formulaire vierge, tableau textuel avec colonne « Note ». */
 export function generateBlankFormPdf(
   filename: string,
@@ -214,7 +141,6 @@ export function generateBlankFormPdf(
     pdf,
     isEn ? "PIANO TOUCH ANALYZER - BLANK ENTRY FORM" : "PIANO TOUCH ANALYZER - FORMULAIRE VIERGE",
   );
-  drawCompliance(pdf, lang, PAGE_W);
   const y = drawIdentity(pdf, meta, lang, 26);
 
   const drawKeyBlock = (from: number, to: number, top: number) => {
@@ -349,7 +275,6 @@ export function generateBlankKeyboardPdf(
       : "PIANO TOUCH ANALYZER - FORMULAIRE CLAVIER VIERGE",
     W,
   );
-  drawCompliance(pdf, lang, W);
   const y = drawIdentity(pdf, meta, lang, 24, W, 40, 90);
   section(1, 22, y + 8);
   section(23, 44, y + 68);
