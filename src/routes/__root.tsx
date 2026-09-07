@@ -266,6 +266,32 @@ function RootComponent() {
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {pathname === "/saisie" && (
+              <div className="group relative ml-2 flex items-center">
+                <button
+                  type="button"
+                  aria-label="Info"
+                  className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-400 text-[11px] font-bold text-gray-500 hover:border-gray-600 hover:text-gray-800"
+                >
+                  i
+                </button>
+                <div
+                  className="pointer-events-none absolute left-0 top-full mt-1 hidden w-[420px] rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-950 shadow-lg group-hover:block"
+                  style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
+                >
+                  <div>
+                    {lang === "en"
+                      ? "Min. 1 white + 1 black per octave > e.g.: all C and C#"
+                      : "Min. 1 blanche + 1 noire par octave > ex : tous les Do et Do#"}
+                  </div>
+                  <div>
+                    {lang === "en" ? "shift+tab jumps from C to C." : "shift+tab saute de Do en Do."}
+                  </div>
+                </div>
+              </div>
+            )}
+
+
 
             {!isComparer && (
             <div className="relative flex items-center">
