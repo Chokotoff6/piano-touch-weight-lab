@@ -439,7 +439,7 @@ function Index() {
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const pdfInfoRef = useRef<HTMLDivElement | null>(null);
   const pdfChartRef = useRef<HTMLDivElement | null>(null);
-  const pdfRecapRef = useRef<HTMLDivElement | null>(null);
+  
 
   const moyennesRef = useRef<HTMLElement | null>(null);
   const mesuresRef = useRef<HTMLElement | null>(null);
@@ -2056,7 +2056,7 @@ function Index() {
       <Frame
         title={
           <span className="inline-flex items-center gap-2">
-            {en ? "Key weight measurements" : "Mesures poids de touches"}
+            {en ? "Static touch weight measurements" : "Mesures poids statiques"}
             <button
               type="button"
               data-pdf-hide
@@ -2073,7 +2073,7 @@ function Index() {
           </span>
         }
 
-        className={weighingMode ? "!mt-[26px] pb-4" : "mt-8 pb-10 !hidden"}
+        className={weighingMode ? "!mt-[100px] pb-4" : "!mt-[100px] pb-10 !hidden"}
         innerRef={(node) => {
           mesuresRef.current = node;
         }}
@@ -2096,7 +2096,7 @@ function Index() {
           </button>
         </div>
         {weighingMode && (
-          <div className="absolute right-4 top-3 z-10">
+          <div className="absolute right-4 top-0 z-10 -translate-y-1/2">
             <button
               type="button"
               data-pdf-hide
@@ -2123,7 +2123,21 @@ function Index() {
           {renderSection(1, 44, gridRef1)}
           {renderSection(45, 88, gridRef2)}
         </div>
+        <div className="mt-4 flex justify-end" data-pdf-hide>
+          <button
+            type="button"
+            onClick={() => void navigate({ to: "/resultats" })}
+            className={`rounded-md border px-4 py-1.5 !text-[0.85rem] font-bold transition-colors hover:bg-accent ${
+              badgeVisible
+                ? "!border-green-600 !text-green-700"
+                : "border-input !text-black"
+            }`}
+          >
+            {en ? "Results & charts >" : "Résultats & graphiques >"}
+          </button>
+        </div>
       </Frame>
+
 
       {/* Conteneur hors écran dédié à la capture PDF (largeur bornée à 1024 px). */}
       <div
@@ -2229,56 +2243,8 @@ Moyennes{" "}
         <div ref={pdfChartRef} className="mt-4 bg-white">
           <PdfComparisonChart data={chartData} frictionTarget={profile.frictionTarget} />
         </div>
-        {/* Tableau récapitulatif d'expertise : 8 lignes, bas de la page 2 du PDF. */}
-        <div ref={pdfRecapRef} className="mt-4 bg-white">
-          <table className="w-full border-collapse text-[13px] text-black">
-            <thead>
-              <tr>
-                <th className="border border-gray-400 bg-gray-100 px-2 py-1 text-left font-bold">
-                  {en ? "Expertise summary" : "Tableau récapitulatif d'expertise"}
-                </th>
-                <th className="border border-gray-400 bg-gray-100 px-2 py-1 text-center font-bold">
-                  {en ? "Section" : "Section"}
-                </th>
-                <th className="border border-gray-400 bg-gray-100 px-2 py-1 text-center font-bold">
-                  {en ? "Average (g)" : "Moyenne (gr.)"}
-                </th>
-                <th className="border border-gray-400 bg-gray-100 px-2 py-1 text-center font-bold">
-                  {en ? "Overall (g)" : "Global (gr.)"}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {(
-                [
-                  { key: "wa", label: en ? "Downweight (DW)" : "Poids descendant (PD)" },
-                  { key: "wd", label: en ? "Upweight (UW)" : "Poids remontant (PR)" },
-                  { key: "friction", label: "Friction (F)" },
-                  { key: "balance", label: en ? "Balance weight (BW)" : "Poids d'équilibre (PE)" },
-                ] as const
-              ).flatMap(({ key, label }) =>
-                (
-                  [
-                    { id: "first", range: en ? "White keys" : "Touches blanches" },
-                    { id: "second", range: en ? "Black keys" : "Touches noires" },
-                  ] as const
-                ).map(({ id, range }) => (
-                  <tr key={`${key}-${id}`}>
-                    <td className="border border-gray-400 px-2 py-1 font-semibold">{label}</td>
-                    <td className="border border-gray-400 px-2 py-1 text-center">{range}</td>
-                    <td className="border border-gray-400 px-2 py-1 text-center tabular-nums">
-                      {sectionAverages[id][key]}
-                    </td>
-                    <td className="border border-gray-400 px-2 py-1 text-center font-bold tabular-nums">
-                      {formatAverageResult(sectionAverages.global[key])}
-                    </td>
-                  </tr>
-                )),
-              )}
-            </tbody>
-          </table>
 
-        </div>
+
 
       </div>
 
