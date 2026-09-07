@@ -2109,10 +2109,10 @@ Moyennes{" "}
         <div className="grid grid-cols-4 mt-0.5 !gap-2.5">
           {(
             [
-              { key: "wa", label: "Poids descendant (Wa)" },
+              { key: "wa", label: en ? "Downweight" : "Poids descendant" },
               { key: "wd", label: "Poids ascendant (Wd)" },
               { key: "friction", label: "Friction" },
-              { key: "balance", label: "Balance" },
+              { key: "balance", label: en ? "Balance Weight" : "Poids d'équilibre" },
             ] as const
           ).map(({ key, label }) => (
             <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
