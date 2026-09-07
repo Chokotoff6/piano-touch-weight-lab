@@ -439,6 +439,8 @@ function Index() {
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const pdfInfoRef = useRef<HTMLDivElement | null>(null);
   const pdfChartRef = useRef<HTMLDivElement | null>(null);
+  const pdfRecapRef = useRef<HTMLDivElement | null>(null);
+
   const moyennesRef = useRef<HTMLElement | null>(null);
   const mesuresRef = useRef<HTMLElement | null>(null);
 
@@ -1163,9 +1165,11 @@ function Index() {
     const page1 = [pdfInfoRef.current, moyennesRef.current, mesuresRef.current].filter(
       (el): el is HTMLElement => el !== null,
     );
-    const page2 = [moyennesRef.current, pdfChartRef.current].filter(
+    // Page 2 : graphique + tableau récapitulatif (aucun doublon du bloc Moyennes).
+    const page2 = [pdfChartRef.current, pdfRecapRef.current].filter(
       (el): el is HTMLElement => el !== null,
     );
+
     if (page1.length === 0) return;
     const filename = buildExportFilename(
       info["marque"],
