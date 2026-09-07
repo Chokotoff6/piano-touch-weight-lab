@@ -1686,6 +1686,7 @@ function Index() {
           })}
         </div>
       </div>
+      <div data-pdf-result-frame className="w-full h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none">
       {(["friction", "balance"] as const).map((kind) => (
         <div className="result-sheet" key={kind}>
           <div className={`result-label ${SIDE_LABEL_CLASS}`}>
@@ -1710,6 +1711,7 @@ function Index() {
           </div>
         </div>
       ))}
+      </div>
     </section>
   );
 
@@ -2136,7 +2138,7 @@ function Index() {
       <div
         aria-hidden="true"
         data-pdf-capture-frame
-        className="w-[1024px] max-w-[1024px] md:hidden h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none bg-white print:block print:h-auto print:max-h-none print:opacity-100"
+        className="w-[1024px] max-w-[1024px] h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none bg-white print:h-auto print:max-h-none print:opacity-100"
       >
         <div className="p-4">
         <div ref={pdfInfoRef} className="bg-white">
