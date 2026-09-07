@@ -372,7 +372,19 @@ export const Route = createFileRoute("/saisie")({
 // ---------------------------------------------------------------------------
 
 function Index() {
+  const lang = useLang();
+  const en = lang === "en";
+  /** Terminologie officielle bilingue (PD / PR — DW / UW). */
+  const T = {
+    pd: en ? "Downweight" : "Poids descendant",
+    pr: en ? "Upweight" : "Poids remontant",
+    pdShort: en ? "DW" : "PD",
+    prShort: en ? "UW" : "PR",
+    friction: "Friction (F)",
+    balance: en ? "Balance Weight (BW)" : "Poids d'équilibre (PE)",
+  };
   const [rows, setRows] = useState<Row[]>(EMPTY);
+
   const [info, setInfo] = useState<Record<string, string>>({});
   const [isDirty, setIsDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
