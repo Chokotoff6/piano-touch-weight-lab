@@ -2,11 +2,10 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   hasAnyMeasurement,
-  missingConformityKeys,
+  incompleteOctaves,
   OCTAVE_RULE_MESSAGE,
   saisieGate,
 } from "@/lib/required-keys";
-
 import { SmartCombobox, type SmartComboboxHandle } from "@/components/SmartCombobox";
 import { modelsFor, modelGroupsFor, inferTypeFromModel } from "@/data/pianoModels";
 import {
@@ -25,7 +24,7 @@ import {
 import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
 import { buildCsv, buildExportFilename, downloadCsv, formatLocalDateTime } from "@/lib/export-csv";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
-import { getLang, useLang } from "@/data/translations";
+import { getLang } from "@/data/translations";
 import { generateLandscapeReport } from "@/lib/pdf-report";
 import { generateBlankFormPdf, generateBlankKeyboardPdf } from "@/lib/pdf-blank-form";
 
@@ -84,15 +83,9 @@ const SAVE_UPDATE_MESSAGE =
 const SAVE_NEW_MESSAGE =
   "⚠️ Nouvelle session de suivi chronologique créée avec succès. Cette fiche historique est archivée de manière étanche dans la base de données cloud pour vos futures comparaisons.";
 const ORPHAN_MESSAGE =
-  "⚠️ Mesure incomplète : chaque touche mesurée doit obligatoirement posséder à la fois un Poids descendant (PD) et un Poids remontant (PR).";
+  "⚠️ Mesure incomplète : Chaque touche mesurée doit obligatoirement posséder à la fois une valeur Wa et une valeur Wd.";
 const COHERENCE_MESSAGE =
-  "⚠️ Anomalie mécanique : le Poids descendant (PD) doit toujours être strictement supérieur au Poids remontant (PR).";
-const PD_RANGE_MESSAGE =
-  "⚠️ Valeur hors limites : le Poids descendant (PD) doit être compris entre 30 et 80 grammes.";
-const PD_HIGH_MESSAGE =
-  "Mesure anormalement élevée : assurez-vous d'enfoncer la pédale de sustain lors de la mesure";
-const PD_HIGH_HIDE_KEY = "ptw_hide_pd_high_alert";
-
+  "⚠️ Erreur de cohérence : Le poids descendant (Wa) doit toujours être supérieur au poids ascendant (Wd).";
 
 function wrapTooltipText(text: string, maxChars: number): string[] {
   const words = text.split(/\s+/);
@@ -372,19 +365,7 @@ export const Route = createFileRoute("/saisie")({
 // ---------------------------------------------------------------------------
 
 function Index() {
-  const lang = useLang();
-  const en = lang === "en";
-  /** Terminologie officielle bilingue (PD / PR — DW / UW). */
-  const T = {
-    pd: en ? "Downweight" : "Poids descendant",
-    pr: en ? "Upweight" : "Poids remontant",
-    pdShort: en ? "DW" : "PD",
-    prShort: en ? "UW" : "PR",
-    friction: "Friction (F)",
-    balance: en ? "Balance Weight (BW)" : "Poids d'équilibre (PE)",
-  };
   const [rows, setRows] = useState<Row[]>(EMPTY);
-
   const [info, setInfo] = useState<Record<string, string>>({});
   const [isDirty, setIsDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
@@ -401,13 +382,6 @@ function Index() {
   const blockTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const coherenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  /** CONDITION 3 : fenêtre flottante « pédale de sustain » (PD > 60). */
-  const [pdHighAlert, setPdHighAlert] = useState<{ x: number; y: number; offer: boolean } | null>(
-    null,
-  );
-  const [hidePdHigh, setHidePdHigh] = useState(false);
-  const pdHighCount = useRef(0);
-
   /** Badge vert retardé : ne s'allume qu'après 0,5 s sans cadre rouge ni erreur. */
   const [badgeVisible, setBadgeVisible] = useState(false);
   const badgeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -584,10 +558,9 @@ function Index() {
     [info, climateZone],
   );
 
-  /** CONDITION 1 : tous les Do et Do# saisis (Do 88 toléré vide). */
-  const octaveGaps = useMemo(() => missingConformityKeys(rows), [rows]);
+  const octaveGaps = useMemo(() => incompleteOctaves(rows), [rows]);
 
-  /** CONDITION 2 : touches "orphelines" (PD sans PR, ou l'inverse). */
+  /** Touches "orphelines" : Wa rempli sans Wd, ou l'inverse. */
   const orphanKeys = useMemo(
     () =>
       rows
@@ -597,23 +570,27 @@ function Index() {
     [rows],
   );
 
-  /** CONDITIONS 3 & 4 : limites PD et règle mécanique PD > PR. */
+  /** Vrai dès qu'une erreur de cohérence Wa <= Wd est présente sur le clavier. */
   const hasConsistencyErrors = useMemo(
-    () => Object.values(errors).some((m) => m === COHERENCE_MESSAGE || m === PD_RANGE_MESSAGE),
+    () => Object.values(errors).some((m) => m === COHERENCE_MESSAGE),
     [errors],
   );
 
   /**
-   * Validité instantanée du clavier (les 5 conditions de conformité).
+   * Validité instantanée du clavier (calcul brut, recalculé à chaque frappe) :
+   * porte logique AND stricte.
+   * TEST 1 (prioritaire) : touche orpheline (cadre rouge) ou erreur Wa<=Wd => faux.
+   * TEST 2 (successif) : échantillonnage des octaves, uniquement si zéro cadre rouge.
+   * Les carrés rouges s'affichent instantanément ; le badge vert, lui, est retardé
+   * (voir badgeVisible) : il ne s'allume qu'après 0,5 s sans aucun cadre rouge.
    */
   const keyboardValid = useMemo(() => {
-    if (orphanKeys.length > 0) return false; // CONDITION 2
-    if (hasConsistencyErrors) return false; // CONDITIONS 3 & 4
+    if (orphanKeys.length > 0) return false; // TEST 1
+    if (hasConsistencyErrors) return false;
     if (!hasAnyMeasurement(rows)) return false;
-    if (octaveGaps.length > 0) return false; // CONDITION 1
+    if (octaveGaps.length > 0) return false; // TEST 2
     return true;
   }, [orphanKeys.length, hasConsistencyErrors, rows, octaveGaps.length]);
-
 
   /**
    * Badge vert retardé : extinction instantanée dès qu'un cadre rouge apparaît,
@@ -652,21 +629,6 @@ function Index() {
       inputs.current["0-wa"]?.select();
     }, 50);
   }, []);
-
-  /** FOCUS INITIAL : à l'arrivée / au rechargement, le PD de la touche 1 (La 0) est actif. */
-  useEffect(() => {
-    focusFirstWeight();
-  }, [focusFirstWeight]);
-
-  /** Préférence « Ne plus afficher » de l'alerte PD élevé. */
-  useEffect(() => {
-    try {
-      if (window.localStorage.getItem(PD_HIGH_HIDE_KEY) === "1") setHidePdHigh(true);
-    } catch {
-      /* stockage indisponible */
-    }
-  }, []);
-
 
   /** Validation consciente de la fiche : alerte si incomplète, sinon mode pesée. */
   const onValidateWeighing = useCallback(() => {
@@ -798,36 +760,6 @@ function Index() {
     }, 3000);
   };
 
-  /** Alerte contextuelle ancrée sur une cellule précise. */
-  const showAnchoredAlert = (index: number, field: "wa" | "wd", text: string) => {
-    if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
-    const el = inputs.current[`${index}-${field}`];
-    const r = el?.getBoundingClientRect();
-    setBlockAnchor({
-      x: r ? r.right + 8 : window.innerWidth / 2 - 144,
-      y: r ? r.top : 120,
-      text,
-    });
-    blockAnchorTimeout.current = setTimeout(() => {
-      setBlockAnchor(null);
-      blockAnchorTimeout.current = null;
-    }, 3000);
-  };
-
-  /** CONDITION 3 : FF « pédale de sustain » dès qu'un PD dépasse 60 g. */
-  const triggerPdHighAlert = (index: number) => {
-    if (hidePdHigh) return;
-    pdHighCount.current += 1;
-    const el = inputs.current[`${index}-wa`];
-    const r = el?.getBoundingClientRect();
-    setPdHighAlert({
-      x: r ? r.right + 8 : window.innerWidth / 2 - 160,
-      y: r ? r.top : 120,
-      offer: pdHighCount.current >= 2,
-    });
-  };
-
-
   // --- Saisie des informations générales ---------------------------------------
 
   const markDirty = () => {
@@ -875,12 +807,8 @@ function Index() {
 
   // --- Saisie des poids ---------------------------------------------------------
 
-  /** Conserve les dixièmes présents dans les CSV importés. */
+  /** Conserve les dixièmes présents dans les CSV et dans la saisie clavier. */
   const cleanWeight = (value: string) => value.replace(",", ".").replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
-
-  /** CONDITION 5 : bridage strict à 2 chiffres, sans décimale, à la frappe. */
-  const cleanTyped = (value: string) => value.replace(/[^0-9]/g, "").slice(0, 2);
-
 
   const parseWeight = (value: string): number | null => {
     const cleaned = cleanWeight(value);
@@ -960,13 +888,13 @@ function Index() {
     markDirty();
     clearError(`${index}-${field}`);
     setRows((prev) =>
-      prev.map((r, i) => (i === index ? { ...r, [field]: cleanTyped(value) } : r)),
+      prev.map((r, i) => (i === index ? { ...r, [field]: cleanWeight(value) } : r)),
     );
   };
 
   const handleBlur = (index: number, field: "wa" | "wd", value: string) => {
     const key = `${index}-${field}`;
-    const cleaned = cleanTyped(value);
+    const cleaned = cleanWeight(value);
     if (cleaned === "") {
       clearError(key);
       checkCoherence(index, setRowField(index, field, ""));
@@ -974,22 +902,14 @@ function Index() {
     }
     const num = parseWeight(cleaned);
     if (num === null) {
-      setErrors((prev) => ({ ...prev, [key]: "Valeur invalide (2 chiffres, sans décimale)" }));
+      setErrors((prev) => ({ ...prev, [key]: "Valeur invalide (5-99, nombre entier)" }));
       return;
     }
-    // CONDITION 3 : le Poids descendant doit rester dans la plage 30-80 g.
-    if (field === "wa" && (num < 30 || num > 80)) {
-      setErrors((prev) => ({ ...prev, [key]: PD_RANGE_MESSAGE }));
-      showAnchoredAlert(index, "wa", PD_RANGE_MESSAGE);
-      setRowField(index, field, num.toString());
-      return;
-    }
-    if (field === "wa" && num > 60) triggerPdHighAlert(index);
     clearError(key);
     checkCoherence(index, setRowField(index, field, num.toString()));
   };
 
-  /** Applique (ou lève) l'alerte mécanique PD > PR sur les deux cellules d'une touche. */
+  /** Applique (ou lève) l'alerte de cohérence Wa > Wd sur les deux cellules d'une touche. */
   const checkCoherence = (index: number, row: Row) => {
     const wa = parseWeight(row.wa);
     const wd = parseWeight(row.wd);
@@ -1008,7 +928,6 @@ function Index() {
       return next;
     });
   };
-
 
   const compute = (r: Row) => {
     const wa = parseWeight(r.wa);
@@ -1592,32 +1511,20 @@ function Index() {
           }
         }}
         inputMode="numeric"
-        maxLength={2}
-        placeholder={field === "wa" ? T.pdShort : T.prShort}
-        aria-label={`${field === "wa" ? T.pd : T.pr} touche ${index + 1}`}
+        aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
-        onMouseDown={() => {
-          // AUTO-EFFACEMENT : un clic sur une case déjà remplie la vide instantanément.
-          if (canEnterWeights && rows[index]![field] !== "") setValue(index, field, "");
-        }}
         onFocus={(e) => {
           e.currentTarget.select();
         }}
-        className={`weight-input !font-sans font-semibold !text-black ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error !border-2 !border-red-600" : ""}`}
+        className={`weight-input !font-sans font-semibold !text-black ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
-
       />
     </div>
   );
 
   // --- Rendu : une section de 44 touches -----------------------------------------
 
-  const renderSection = (
-    from: number,
-    to: number,
-    gridRef: (n: HTMLDivElement | null) => void,
-    showResults = false,
-  ) => (
+  const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
     <section
       className="mt-2 flex w-full flex-col items-center"
       aria-label={`Touches ${from} à ${to}`}
@@ -1625,12 +1532,25 @@ function Index() {
       <div className="technical-sheet">
         <div className={`technical-labels ${SIDE_LABEL_CLASS}`} aria-hidden="true">
           <div className="label-key" />
-          <div className="label-wa">{T.pd}</div>
-          <div className="label-wd">{T.pr}</div>
-          <div className="label-wa-white">{T.pd}</div>
-          <div className="label-wd-white">{T.pr}</div>
+          <div className="label-wa" title="The minimum weight required to make the key move down.">
+            Poids Desc. (Wa)
+          </div>
+          <div className="label-wd" title="The maximum weight the key can lift when returning up.">
+            Poids Asc. (Wd)
+          </div>
+          <div
+            className="label-wa-white"
+            title="The minimum weight required to make the key move down."
+          >
+            Poids Desc. (Wa)
+          </div>
+          <div
+            className="label-wd-white"
+            title="The maximum weight the key can lift when returning up."
+          >
+            Poids Asc. (Wd)
+          </div>
         </div>
-
         <div className="piano-grid" ref={gridRef}>
           {rows.slice(from - 1, to).map((row, offset) => {
             const index = from - 1 + offset;
@@ -1655,12 +1575,11 @@ function Index() {
           })}
         </div>
       </div>
-      {showResults && (["friction", "balance"] as const).map((kind) => (
+      {(["friction", "balance"] as const).map((kind) => (
         <div className="result-sheet" key={kind}>
           <div className={`result-label ${SIDE_LABEL_CLASS}`}>
-            {kind === "friction" ? T.friction : T.balance}
+            {kind === "friction" ? "Friction" : "Balance"}
           </div>
-
           <div className="result-grid">
             {rows.slice(from - 1, to).map((row, offset) => {
               const index = from - 1 + offset;
@@ -1682,37 +1601,6 @@ function Index() {
       ))}
     </section>
   );
-
-  /** Tableau récapitulatif des 8 lignes de calcul, réservé à l'export PDF. */
-  const renderResultRows = (from: number, to: number) => (
-    <section className="mt-2 flex w-full flex-col items-center">
-      {(["friction", "balance"] as const).map((kind) => (
-        <div className="result-sheet" key={kind}>
-          <div className={`result-label ${SIDE_LABEL_CLASS}`}>
-            {kind === "friction" ? T.friction : T.balance}
-          </div>
-          <div className="result-grid">
-            {rows.slice(from - 1, to).map((row, offset) => {
-              const index = from - 1 + offset;
-              const black = BLACK_KEYS.has(index + 1);
-              const value = compute(row)[kind];
-              return (
-                <div key={index} className={`result-col ${black ? "is-black" : "is-white"}`}>
-                  <div className="result-strip">{black ? formatResult(value) : null}</div>
-                  <div className="result-value !overflow-visible">
-                    <span className="rv-text !text-center !whitespace-nowrap !overflow-visible !w-full !px-0.5">
-                      {black ? null : formatResult(value)}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-    </section>
-  );
-
 
   // --- Rendu : page ----------------------------------------------------------------
 
@@ -2046,24 +1934,17 @@ function Index() {
 
       <Frame
         title={
-          <span className="inline-flex items-center gap-2">
-            {en ? "Key weight measurements" : "Mesures poids de touches"}
-            <button
-              type="button"
+          <>
+            Mesures poids de touches{" "}
+            <span
               data-pdf-hide
-              aria-label={en ? "Input help" : "Aide à la saisie"}
-              onMouseEnter={(e) => {
-                const r = e.currentTarget.getBoundingClientRect();
-                setHelpTip({ x: r.right + 8, y: r.top - 4 });
-              }}
-              onMouseLeave={() => setHelpTip(null)}
-              className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-500 !text-[10px] font-bold italic !text-gray-600"
+              className="!print:hidden font-normal normal-case"
+              style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
             >
-              i
-            </button>
-          </span>
+              (Min. 1 blanche + 1 noire par octave. ex : tous les Do et Do# &gt; shift+tab saute de Do en Do.)
+            </span>
+          </>
         }
-
         className={weighingMode ? "!mt-[26px] pb-4" : "mt-8 pb-10 !hidden"}
         innerRef={(node) => {
           mesuresRef.current = node;
