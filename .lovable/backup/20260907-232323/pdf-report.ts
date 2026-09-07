@@ -37,10 +37,6 @@ async function capture(el: HTMLElement): Promise<Capture> {
       // (sinon la Page 2 du PDF sort blanche).
       doc.querySelectorAll("[data-pdf-capture-frame]").forEach((node) => {
         const frame = node as HTMLElement;
-        // `md:hidden` masque le cadre à l'écran (display:none). html2canvas
-        // ignore les media queries `print:`, il faut donc forcer `display:block`
-        // dans le clone pour que les blocs d'expertise soient peints (Page 2).
-        frame.style.display = "block";
         frame.style.height = "auto";
         frame.style.maxHeight = "none";
         frame.style.overflow = "visible";
