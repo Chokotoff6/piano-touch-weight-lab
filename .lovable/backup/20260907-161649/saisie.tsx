@@ -24,7 +24,7 @@ import {
 import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
 import { buildCsv, buildExportFilename, downloadCsv, formatLocalDateTime } from "@/lib/export-csv";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
-import { getLang, useLang } from "@/data/translations";
+import { getLang } from "@/data/translations";
 import { generateLandscapeReport } from "@/lib/pdf-report";
 import { generateBlankFormPdf, generateBlankKeyboardPdf } from "@/lib/pdf-blank-form";
 
@@ -69,17 +69,6 @@ const NATURAL_KEY_BREAKS = new Set([3, 10, 15, 22, 27, 34, 39, 46, 51, 58, 63, 7
 
 const C_KEYS = new Set([4, 16, 28, 40, 52, 64, 76, 88]);
 
-/** Do# de chaque octave : échantillonnage minimal exigé avec les Do. */
-const C_SHARP_KEYS = new Set([5, 17, 29, 41, 53, 65, 77]);
-
-const PD_RANGE_MESSAGE =
-  "⚠️ Le poids descendant (PD) doit être compris entre 30 et 80 grammes.";
-const PEDAL_MESSAGE_FR =
-  "Mesure anormalement élevée : assurez-vous d'enfoncer la pédale de sustain lors de la mesure";
-const PEDAL_MESSAGE_EN =
-  "Unusually high reading: make sure the sustain pedal is pressed while measuring";
-const PEDAL_HIDE_KEY = "ptw_hide_pedal_alert";
-
 type Row = { wa: string; wd: string };
 
 const EMPTY: Row[] = Array.from({ length: 88 }, () => ({ wa: "", wd: "" }));
@@ -96,7 +85,7 @@ const SAVE_NEW_MESSAGE =
 const ORPHAN_MESSAGE =
   "⚠️ Mesure incomplète : Chaque touche mesurée doit obligatoirement posséder à la fois une valeur Wa et une valeur Wd.";
 const COHERENCE_MESSAGE =
-  "⚠️ Anomalie mécanique : le poids descendant (PD) doit toujours être strictement supérieur au poids remontant (PR).";
+  "⚠️ Erreur de cohérence : Le poids descendant (Wa) doit toujours être supérieur au poids ascendant (Wd).";
 
 function wrapTooltipText(text: string, maxChars: number): string[] {
   const words = text.split(/\s+/);
@@ -425,16 +414,8 @@ function Index() {
   const mesuresRef = useRef<HTMLElement | null>(null);
 
   const navigate = useNavigate();
-  const lang = useLang();
-  const en = lang === "en";
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
-  /** Alerte pédale de sustain (PD > 60) et son option « ne plus afficher ». */
-  const [pedalAlert, setPedalAlert] = useState(false);
-  const pedalCount = useRef(0);
-  const [hidePedalAlert, setHidePedalAlert] = useState(false);
-  /** Valeur mémorisée avant effacement automatique au clic dans une case. */
-  const prevWeight = useRef<Record<string, string>>({});
 
   // --- Persistance locale (filet de sécurité) -------------------------------
 
@@ -608,19 +589,6 @@ function Index() {
     if (hasConsistencyErrors) return false;
     if (!hasAnyMeasurement(rows)) return false;
     if (octaveGaps.length > 0) return false; // TEST 2
-    // CONDITION 1 : tous les Do et tous les Do# saisis (Do 88 toléré vide).
-    const sampled = [...C_KEYS, ...C_SHARP_KEYS].filter((k) => k !== 88);
-    const missing = sampled.some((k) => {
-      const row = rows[k - 1];
-      return !row || row.wa.trim() === "" || row.wd.trim() === "";
-    });
-    if (missing) return false;
-    // CONDITION 3 : le poids descendant reste dans la plage mécanique 30-80 g.
-    const outOfRange = rows.some((row) => {
-      const value = Number(row.wa);
-      return row.wa.trim() !== "" && Number.isFinite(value) && (value < 30 || value > 80);
-    });
-    if (outOfRange) return false;
     return true;
   }, [orphanKeys.length, hasConsistencyErrors, rows, octaveGaps.length]);
 
@@ -660,17 +628,6 @@ function Index() {
       inputs.current["0-wa"]?.focus({ preventScroll: true });
       inputs.current["0-wa"]?.select();
     }, 50);
-  }, []);
-
-  /** Au chargement de la page en mode pesée, le curseur se place sur le PD du La 0. */
-  useEffect(() => {
-    if (weighingMode) focusFirstWeight();
-    try {
-      if (window.localStorage.getItem(PEDAL_HIDE_KEY) === "1") setHidePedalAlert(true);
-    } catch {
-      /* stockage indisponible */
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /** Validation consciente de la fiche : alerte si incomplète, sinon mode pesée. */
@@ -851,8 +808,7 @@ function Index() {
   // --- Saisie des poids ---------------------------------------------------------
 
   /** Conserve les dixièmes présents dans les CSV et dans la saisie clavier. */
-  // CONDITION 5 : bridage strict à 2 chiffres, aucune décimale acceptée.
-  const cleanWeight = (value: string) => value.replace(/[^0-9]/g, "").slice(0, 2);
+  const cleanWeight = (value: string) => value.replace(",", ".").replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
 
   const parseWeight = (value: string): number | null => {
     const cleaned = cleanWeight(value);
@@ -948,18 +904,6 @@ function Index() {
     if (num === null) {
       setErrors((prev) => ({ ...prev, [key]: "Valeur invalide (5-99, nombre entier)" }));
       return;
-    }
-    // CONDITION 3 : plage mécanique du poids descendant + alerte pédale au-delà de 60 g.
-    if (field === "wa") {
-      if (num < 30 || num > 80) {
-        setErrors((prev) => ({ ...prev, [key]: PD_RANGE_MESSAGE }));
-        setRowField(index, field, num.toString());
-        return;
-      }
-      if (num > 60 && !hidePedalAlert) {
-        pedalCount.current += 1;
-        setPedalAlert(true);
-      }
     }
     clearError(key);
     checkCoherence(index, setRowField(index, field, num.toString()));
@@ -1545,15 +1489,9 @@ function Index() {
           inputs.current[`${index}-${field}`] = el;
         }}
         value={rows[index]![field]}
-        maxLength={2}
-        placeholder={field === "wa" ? (en ? "DW" : "PD") : en ? "UW" : "PR"}
         onChange={(e) => canEnterWeights && setValue(index, field, e.target.value)}
         onBlur={(e) => {
-          if (!canEnterWeights) return;
-          const key = `${index}-${field}`;
-          const restored = e.target.value === "" ? (prevWeight.current[key] ?? "") : e.target.value;
-          delete prevWeight.current[key];
-          handleBlur(index, field, restored);
+          if (canEnterWeights) handleBlur(index, field, e.target.value);
         }}
         onKeyDown={(e) => {
           if (!canEnterWeights) {
@@ -1573,18 +1511,12 @@ function Index() {
           }
         }}
         inputMode="numeric"
-        aria-label={`${field === "wa" ? (en ? "DW" : "PD") : en ? "UW" : "PR"} touche ${index + 1}`}
+        aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
-        onFocus={() => {
-          // La valeur en place s'efface au clic ; elle revient si rien n'est saisi.
-          const key = `${index}-${field}`;
-          const current = rows[index]![field];
-          if (current !== "") {
-            prevWeight.current[key] = current;
-            setValue(index, field, "");
-          }
+        onFocus={(e) => {
+          e.currentTarget.select();
         }}
-        className={`weight-input !font-sans font-semibold !text-black focus:!border-black focus:!ring-0 ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        className={`weight-input !font-sans font-semibold !text-black ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
       />
     </div>
@@ -1600,10 +1532,24 @@ function Index() {
       <div className="technical-sheet">
         <div className={`technical-labels ${SIDE_LABEL_CLASS}`} aria-hidden="true">
           <div className="label-key" />
-          <div className="label-wa">{en ? "Downweight" : "Poids descendant"}</div>
-          <div className="label-wd">{en ? "Upweight" : "Poids remontant"}</div>
-          <div className="label-wa-white">{en ? "Downweight" : "Poids descendant"}</div>
-          <div className="label-wd-white">{en ? "Upweight" : "Poids remontant"}</div>
+          <div className="label-wa" title="The minimum weight required to make the key move down.">
+            Poids Desc. (Wa)
+          </div>
+          <div className="label-wd" title="The maximum weight the key can lift when returning up.">
+            Poids Asc. (Wd)
+          </div>
+          <div
+            className="label-wa-white"
+            title="The minimum weight required to make the key move down."
+          >
+            Poids Desc. (Wa)
+          </div>
+          <div
+            className="label-wd-white"
+            title="The maximum weight the key can lift when returning up."
+          >
+            Poids Asc. (Wd)
+          </div>
         </div>
         <div className="piano-grid" ref={gridRef}>
           {rows.slice(from - 1, to).map((row, offset) => {
@@ -1632,7 +1578,7 @@ function Index() {
       {(["friction", "balance"] as const).map((kind) => (
         <div className="result-sheet" key={kind}>
           <div className={`result-label ${SIDE_LABEL_CLASS}`}>
-            {kind === "friction" ? "F" : en ? "BW" : "PE"}
+            {kind === "friction" ? "Friction" : "Balance"}
           </div>
           <div className="result-grid">
             {rows.slice(from - 1, to).map((row, offset) => {
@@ -1989,40 +1935,21 @@ function Index() {
       <Frame
         title={
           <>
-            {en ? "Static touch weight measurements" : "Mesures poids statiques"}{" "}
-            <span data-pdf-hide className="group relative inline-flex items-center align-middle">
-              <span className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-400 text-[10px] font-bold normal-case text-gray-500">
-                i
-              </span>
-              <span
-                className="pointer-events-none absolute left-5 top-1/2 hidden w-[360px] -translate-y-1/2 rounded-md border border-gray-300 px-3 py-2 text-left text-[13px] font-medium normal-case text-gray-950 shadow-lg group-hover:block"
-                style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
-              >
-                <span className="block">
-                  {en
-                    ? "Compliant input = minimum all C and C#"
-                    : "Saisie conforme = minimum tous les Do et Do#"}
-                </span>
-                <span className="block">
-                  {en ? "Shift+TAB jumps from C to C." : "Shift+TAB saute de Do en Do."}
-                </span>
-              </span>
+            Mesures poids de touches{" "}
+            <span
+              data-pdf-hide
+              className="!print:hidden font-normal normal-case"
+              style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
+            >
+              (Min. 1 blanche + 1 noire par octave. ex : tous les Do et Do# &gt; shift+tab saute de Do en Do.)
             </span>
           </>
         }
-        className={weighingMode ? "!mt-[100px] pb-4" : "mt-8 pb-10 !hidden"}
+        className={weighingMode ? "!mt-[26px] pb-4" : "mt-8 pb-10 !hidden"}
         innerRef={(node) => {
           mesuresRef.current = node;
         }}
       >
-        <button
-          type="button"
-          data-pdf-hide
-          onClick={() => setWeighingMode(false)}
-          className="absolute left-1/2 -top-4 z-10 -translate-x-1/2 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
-        >
-          {en ? "Edit piano information" : "Modifier Informations piano"}
-        </button>
         <div className="absolute left-[calc(1rem+4rem)] top-12 z-10 -translate-x-1/2 -translate-y-1/2">
           {confirmReset === "rows" && (
             <div className="absolute bottom-full left-1/2 mb-2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
@@ -2047,25 +1974,13 @@ function Index() {
             style={{ transform: "translateY(calc(-50% + 30px))" }}
           >
             <div className="flex items-center !rounded-md !border !border-green-600 !bg-green-100 !px-2.5 !py-1 !shadow-sm">
-              <span className="text-[10px] font-semibold !text-gray-950">
-                {en ? "Compliant input" : "Saisie conforme"}
-              </span>
+              <span className="text-[10px] font-semibold !text-gray-950">Saisie valide</span>
             </div>
           </div>
         )}
-        <div className="mx-auto flex w-full flex-col items-center justify-center">
+        <div className="mx-auto flex w-full flex-col items-center">
           {renderSection(1, 44, gridRef1)}
           {renderSection(45, 88, gridRef2)}
-        </div>
-        <div className="mt-4 flex w-full justify-end pr-2">
-          <button
-            type="button"
-            data-pdf-hide
-            onClick={() => navigate({ to: "/resultats" })}
-            className={`rounded-md border border-input bg-background px-4 py-1.5 text-[0.9rem] font-bold transition-colors hover:bg-accent ${badgeVisible ? "!text-green-600" : "!text-black"}`}
-          >
-            {en ? "Results & charts >" : "Résultats & graphiques >"}
-          </button>
         </div>
       </Frame>
 
@@ -2120,10 +2035,10 @@ Moyennes{" "}
         <div className="grid grid-cols-4 mt-0.5 !gap-2.5">
           {(
             [
-              { key: "wa", label: en ? "Downweight" : "Poids descendant" },
-              { key: "wd", label: en ? "Upweight" : "Poids remontant" },
+              { key: "wa", label: "Poids descendant (Wa)" },
+              { key: "wd", label: "Poids ascendant (Wd)" },
               { key: "friction", label: "Friction" },
-              { key: "balance", label: en ? "Balance Weight" : "Poids d'équilibre" },
+              { key: "balance", label: "Balance" },
             ] as const
           ).map(({ key, label }) => (
             <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
@@ -2218,41 +2133,6 @@ Moyennes{" "}
         </AlertDialogContent>
 
       </AlertDialog>
-
-      {pedalAlert && (
-        <div
-          className="fixed left-1/2 top-24 w-[min(90vw,34rem)] -translate-x-1/2 rounded-md border border-gray-300 px-4 py-3 text-sm font-medium text-gray-950 shadow-lg"
-          style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
-        >
-          <div>{en ? PEDAL_MESSAGE_EN : PEDAL_MESSAGE_FR}</div>
-          {pedalCount.current > 1 && (
-            <label className="mt-2 flex items-center gap-2 text-xs font-normal">
-              <input
-                type="checkbox"
-                onChange={(e) => {
-                  setHidePedalAlert(e.target.checked);
-                  try {
-                    if (e.target.checked) window.localStorage.setItem(PEDAL_HIDE_KEY, "1");
-                    else window.localStorage.removeItem(PEDAL_HIDE_KEY);
-                  } catch {
-                    /* stockage indisponible */
-                  }
-                }}
-              />
-              {en ? "Do not show this message again" : "Ne plus afficher ce message"}
-            </label>
-          )}
-          <div className="mt-2 flex justify-end">
-            <button
-              type="button"
-              className="rounded border border-gray-950/40 px-2 py-0.5 text-xs font-bold !text-gray-950"
-              onClick={() => setPedalAlert(false)}
-            >
-              OK
-            </button>
-          </div>
-        </div>
-      )}
     </main>
   );
 }

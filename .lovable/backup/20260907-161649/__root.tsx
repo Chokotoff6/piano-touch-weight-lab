@@ -220,7 +220,7 @@ function RootComponent() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className={`border border-gray-300 bg-white text-lg font-bold ${topbar.measuresReady ? "!text-green-600" : "!text-black"}`}
+                    className="border border-gray-300 bg-white text-lg !text-muted-foreground"
                   >
                     {lang === "en" ? "Export" : "Exporter"}
                     <ChevronDown className="ml-1 h-4 w-4" />
@@ -252,23 +252,44 @@ function RootComponent() {
                     ? "Export entered data as PDF"
                     : "Exporter les données saisies au format PDF"}
                 </DropdownMenuItem>
-                {!isComparer && (
-                  <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-pdf")}>
-                    {lang === "en"
-                      ? "Export blank entry form - Text table (re-importable)"
-                      : "Exporter un formulaire de saisie vierge - Tableau textuel (ré-importable)"}
-                  </DropdownMenuItem>
-                )}
-                {!isComparer && (
-                  <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-keyboard-pdf")}>
-                    {lang === "en"
-                      ? "Export blank entry form - Graphic keyboard drawing (re-importable)"
-                      : "Exporter un formulaire de saisie vierge - Dessin clavier graphique (ré-importable)"}
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-pdf")}>
+                  {lang === "en"
+                    ? "Export blank entry form - Text table (re-importable)"
+                    : "Exporter un formulaire de saisie vierge - Tableau textuel (ré-importable)"}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-keyboard-pdf")}>
+                  {lang === "en"
+                    ? "Export blank entry form - Graphic keyboard drawing (re-importable)"
+                    : "Exporter un formulaire de saisie vierge - Dessin clavier graphique (ré-importable)"}
+                </DropdownMenuItem>
 
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {pathname === "/saisie" && (
+              <div className="group relative ml-2 flex items-center">
+                <button
+                  type="button"
+                  aria-label="Info"
+                  className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-400 text-[11px] font-bold text-gray-500 hover:border-gray-600 hover:text-gray-800"
+                >
+                  i
+                </button>
+                <div
+                  className="pointer-events-none absolute left-0 top-full mt-1 hidden w-[420px] rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-950 shadow-lg group-hover:block"
+                  style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
+                >
+                  <div>
+                    {lang === "en"
+                      ? "Min. 1 white + 1 black per octave > e.g.: all C and C#"
+                      : "Min. 1 blanche + 1 noire par octave > ex : tous les Do et Do#"}
+                  </div>
+                  <div>
+                    {lang === "en" ? "shift+tab jumps from C to C." : "shift+tab saute de Do en Do."}
+                  </div>
+                </div>
+              </div>
+            )}
 
 
 
