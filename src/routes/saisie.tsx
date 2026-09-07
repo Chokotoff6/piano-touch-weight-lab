@@ -1655,11 +1655,12 @@ function Index() {
           })}
         </div>
       </div>
-      {(["friction", "balance"] as const).map((kind) => (
+      {showResults && (["friction", "balance"] as const).map((kind) => (
         <div className="result-sheet" key={kind}>
           <div className={`result-label ${SIDE_LABEL_CLASS}`}>
-            {kind === "friction" ? "Friction" : "Balance"}
+            {kind === "friction" ? T.friction : T.balance}
           </div>
+
           <div className="result-grid">
             {rows.slice(from - 1, to).map((row, offset) => {
               const index = from - 1 + offset;
