@@ -658,6 +658,14 @@ function Index() {
     focusFirstWeight();
   }, [focusFirstWeight]);
 
+  /** Préférence « Ne plus afficher » de l'alerte PD élevé. */
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem(PD_HIGH_HIDE_KEY) === "1") setHidePdHigh(true);
+    } catch {
+      /* stockage indisponible */
+    }
+  }, []);
 
 
   /** Validation consciente de la fiche : alerte si incomplète, sinon mode pesée. */
