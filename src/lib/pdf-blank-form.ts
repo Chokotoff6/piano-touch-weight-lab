@@ -152,13 +152,29 @@ function drawCompliance(pdf: jsPDF, lang: "fr" | "en", pageWidth: number): void 
   (badge as unknown as { textColor: string }).textColor = "#008000";
   badge.value = badgeText;
   badge.readOnly = true;
+  // Drapeau annotation « masque » : rien ne s'affiche tant que le script
+  // embarque ne montre pas explicitement la mention (etat 100% rempli).
+  (badge as unknown as { F: number }).F = 2;
   pdf.addField(badge);
+
+  // Icone « i » dessinee en dur (visible en permanence) + bouton
+  // transparent par-dessus pour l'infobulle au clic.
+  const ix = pageWidth - MARGIN - 2.5;
+  const iy = 9;
+  pdf.setDrawColor(90);
+  pdf.setFillColor(240, 240, 240);
+  pdf.setLineWidth(0.3);
+  pdf.circle(ix, iy, 2.2, "FD");
+  pdf.setFont("helvetica", "bolditalic");
+  pdf.setFontSize(8);
+  pdf.setTextColor(90);
+  pdf.text("i", ix, iy + 1.4, { align: "center" });
+  pdf.setFont("helvetica", "normal");
+  pdf.setTextColor(0);
 
   const info = new AcroFormButton();
   info.fieldName = "compliance_info";
-  (info as unknown as { Rect: number[] }).Rect = [pageWidth - MARGIN - 5, 6, 5, 6];
-  (info as unknown as { caption: string }).caption = "i";
-  info.fontSize = 8;
+  (info as unknown as { Rect: number[] }).Rect = [ix - 3, iy - 3, 6, 6];
   pdf.addField(info);
 
   const script = [
