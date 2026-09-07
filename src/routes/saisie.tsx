@@ -1420,10 +1420,19 @@ function Index() {
 
     const onReset = () => setConfirmReset("rows");
 
+    const onBlankPdf = () => {
+      const lang = getLang();
+      generateBlankFormPdf(
+        lang === "en" ? "BLANK_ENTRY_FORM.pdf" : "FORMULAIRE_SAISIE_VIERGE.pdf",
+        lang,
+      );
+    };
+
     const handlers: Record<string, EventListener> = {
       "piano-export": onExport,
       "piano-export-csv": exportCsvOnly,
       "piano-export-pdf": onPdf,
+      "piano-export-blank-pdf": onBlankPdf,
       "piano-compare-guard": onCompareGuard,
       "piano-reset": onReset,
       "piano-import-csv": () => importInputRef.current?.click(),
@@ -1431,6 +1440,7 @@ function Index() {
       "piano-import-history-row": (event: Event) =>
         restoreHistoryRow((event as CustomEvent<string>).detail),
     };
+
 
     Object.entries(handlers).forEach(([type, fn]) => window.addEventListener(type, fn));
     return () =>
