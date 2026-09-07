@@ -2019,10 +2019,11 @@ function Index() {
                 ref={weighingBtnRef}
                 type="button"
                 onClick={onValidateWeighing}
-                className={`rounded-md !border !border-gray-300 px-5 py-2 text-sm font-bold transition-colors hover:bg-accent ${requiredSheetFieldsComplete ? "!bg-gray-100 !text-gray-600" : "!bg-white !text-gray-400"}`}
+                className={`rounded-md !border px-5 py-2 text-sm font-bold transition-colors ${requiredSheetFieldsComplete ? "!border-green-600 !bg-green-100 !text-green-800 hover:!bg-green-200" : "!border-gray-300 !bg-white !text-gray-400 hover:bg-accent"}`}
               >
-                Données de pesée ➔
+                {en ? "Weighing data entry ➔" : "Saisie des données de pesée ➔"}
               </button>
+
             </div>
 
           </div>
