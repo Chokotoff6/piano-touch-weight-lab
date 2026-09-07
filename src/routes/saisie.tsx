@@ -2170,7 +2170,7 @@ Moyennes{" "}
             </span>
           </>
         }
-        className="!p-3 !pt-4 bg-white"
+        className="!visible !p-3 !pt-4 bg-white"
         innerRef={(node) => {
           moyennesRef.current = node;
         }}
