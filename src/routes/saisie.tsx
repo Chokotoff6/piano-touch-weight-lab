@@ -2107,6 +2107,19 @@ function Index() {
             Reset
           </button>
         </div>
+        {weighingMode && (
+          <div className="absolute right-4 top-3 z-10">
+            <button
+              type="button"
+              data-pdf-hide
+              onClick={() => setWeighingMode(false)}
+              className="rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+            >
+              {en ? "Edit piano information" : "Modifier Informations piano"}
+            </button>
+          </div>
+        )}
+
         {badgeVisible && (
           <div
             data-pdf-hide
