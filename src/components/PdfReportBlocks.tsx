@@ -88,12 +88,20 @@ export function PdfComparisonChart({
   data: ChartPoint[];
   frictionTarget: number | null;
 }) {
+  const en = getLang() === "en";
+  const names = {
+    wa: en ? "Downweight" : "Poids descendant",
+    wd: en ? "Upweight" : "Poids remontant",
+    friction: "Friction",
+    balance: en ? "Balance weight" : "Poids d'équilibre",
+  };
   return (
     <div className="w-full bg-white">
       <div className="mb-1 text-[13px] font-bold text-black">
-        Analyse comparative des 88 touches
+        {en ? "Comparative analysis" : "Analyse comparative"}
         {frictionTarget !== null && ` — friction cible usine ${frictionTarget} g (± 1 g)`}
       </div>
+
       <div style={{ width: 960, height: 420 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 10, right: 20, bottom: 10, left: 0 }}>
