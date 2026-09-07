@@ -80,7 +80,22 @@ export async function generateLandscapeReport(
   // exactement la même largeur d'une page à l'autre.
   const ratio = Math.min(pageRatio(captures1), pageRatio(captures2));
   drawPage(pdf, captures1, ratio);
+  drawFooter(pdf, 1);
   pdf.addPage("a4", "landscape");
   drawPage(pdf, captures2, ratio);
+  drawFooter(pdf, 2);
   pdf.save(filename);
+}
+
+/** Pied de page discret en bas à droite : numéro de page et date d'export. */
+function drawFooter(pdf: jsPDF, page: number) {
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, "0");
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const date = `${dd}-${mm}-${now.getFullYear()}`;
+  pdf.setFontSize(7);
+  pdf.setTextColor(120);
+  pdf.text(`Page ${page} / 2`, PAGE_W - MARGIN, PAGE_H - MARGIN - 3, { align: "right" });
+  pdf.text(`Exporté le : ${date}`, PAGE_W - MARGIN, PAGE_H - MARGIN, { align: "right" });
+  pdf.setTextColor(0);
 }
