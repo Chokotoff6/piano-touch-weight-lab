@@ -2226,13 +2226,13 @@ Moyennes{" "}
                   {en ? "Expertise summary" : "Tableau récapitulatif d'expertise"}
                 </th>
                 <th className="border border-gray-400 bg-gray-100 px-2 py-1 text-center font-bold">
-                  {en ? "Keys 1-44" : "Touches 1-44"}
+                  {en ? "Section" : "Section"}
                 </th>
                 <th className="border border-gray-400 bg-gray-100 px-2 py-1 text-center font-bold">
-                  {en ? "Keys 45-88" : "Touches 45-88"}
+                  {en ? "Average (g)" : "Moyenne (gr.)"}
                 </th>
                 <th className="border border-gray-400 bg-gray-100 px-2 py-1 text-center font-bold">
-                  {en ? "Overall" : "Global"}
+                  {en ? "Overall (g)" : "Global (gr.)"}
                 </th>
               </tr>
             </thead>
@@ -2241,33 +2241,31 @@ Moyennes{" "}
                 [
                   { key: "wa", label: en ? "Downweight (DW)" : "Poids descendant (PD)" },
                   { key: "wd", label: en ? "Upweight (UW)" : "Poids remontant (PR)" },
-                  { key: "friction", label: en ? "Friction (F)" : "Friction (F)" },
+                  { key: "friction", label: "Friction (F)" },
                   { key: "balance", label: en ? "Balance weight (BW)" : "Poids d'équilibre (PE)" },
                 ] as const
-              ).flatMap(({ key, label }) => [
-                <tr key={`${key}-avg`}>
-                  <td className="border border-gray-400 px-2 py-1 font-semibold">{label}</td>
-                  <td className="border border-gray-400 px-2 py-1 text-center tabular-nums">
-                    {sectionAverages.first[key]}
-                  </td>
-                  <td className="border border-gray-400 px-2 py-1 text-center tabular-nums">
-                    {sectionAverages.second[key]}
-                  </td>
-                  <td className="border border-gray-400 px-2 py-1 text-center font-bold tabular-nums">
-                    {formatAverageResult(sectionAverages.global[key])}
-                  </td>
-                </tr>,
-                <tr key={`${key}-unit`}>
-                  <td className="border border-gray-400 px-2 py-1 pl-6 italic text-gray-600">
-                    {en ? "in grams (g)" : "en grammes (gr.)"}
-                  </td>
-                  <td className="border border-gray-400 px-2 py-1" />
-                  <td className="border border-gray-400 px-2 py-1" />
-                  <td className="border border-gray-400 px-2 py-1" />
-                </tr>,
-              ])}
+              ).flatMap(({ key, label }) =>
+                (
+                  [
+                    { id: "first", range: en ? "Keys 1-44" : "Touches 1-44" },
+                    { id: "second", range: en ? "Keys 45-88" : "Touches 45-88" },
+                  ] as const
+                ).map(({ id, range }) => (
+                  <tr key={`${key}-${id}`}>
+                    <td className="border border-gray-400 px-2 py-1 font-semibold">{label}</td>
+                    <td className="border border-gray-400 px-2 py-1 text-center">{range}</td>
+                    <td className="border border-gray-400 px-2 py-1 text-center tabular-nums">
+                      {sectionAverages[id][key]}
+                    </td>
+                    <td className="border border-gray-400 px-2 py-1 text-center font-bold tabular-nums">
+                      {formatAverageResult(sectionAverages.global[key])}
+                    </td>
+                  </tr>
+                )),
+              )}
             </tbody>
           </table>
+
         </div>
 
       </div>
