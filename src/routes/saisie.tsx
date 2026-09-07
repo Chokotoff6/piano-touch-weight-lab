@@ -1189,10 +1189,14 @@ function Index() {
 
   /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
   const exportPdfFile = async () => {
-    const page1 = [pdfInfoRef.current, moyennesRef.current, mesuresRef.current].filter(
+    // Page 1 : Informations piano + Moyennes + graphique de comparaison.
+    // Page 2 : clavier complet (mesuresRef) avec ses rangées d'expertise
+    // (Friction / Poids d'équilibre) masquées à l'écran mais restaurées
+    // dans le clone html2canvas via [data-pdf-result-frame].
+    const page1 = [pdfInfoRef.current, moyennesRef.current, pdfChartRef.current].filter(
       (el): el is HTMLElement => el !== null,
     );
-    const page2 = [moyennesRef.current, pdfChartRef.current].filter(
+    const page2 = [mesuresRef.current].filter(
       (el): el is HTMLElement => el !== null,
     );
     if (page1.length === 0) return;
