@@ -1162,11 +1162,14 @@ function Index() {
 
   /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
   const exportPdfFile = async () => {
-    const page1 = [pdfInfoRef.current, moyennesRef.current, mesuresRef.current].filter(
-      (el): el is HTMLElement => el !== null,
-    );
-    // Page 2 : graphique + tableau récapitulatif (aucun doublon du bloc Moyennes).
-    const page2 = ([pdfChartRef.current, pdfRecapRef.current] as (HTMLElement | null)[]).filter(
+    // Page 1 : informations piano, Moyennes globales, graphique comparatif.
+    const page1 = ([
+      pdfInfoRef.current,
+      moyennesRef.current,
+      pdfChartRef.current,
+    ] as (HTMLElement | null)[]).filter((el): el is HTMLElement => el !== null);
+    // Page 2 : dessin du clavier avec les 88 valeurs, puis tableau récapitulatif.
+    const page2 = ([mesuresRef.current, pdfRecapRef.current] as (HTMLElement | null)[]).filter(
       (el): el is HTMLElement => el !== null,
     );
 
