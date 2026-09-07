@@ -1,7 +1,7 @@
 // Formulaires PDF vierges interactifs (champs numériques éditables).
 // Géométrie fixe pour permettre un ré-import fiable.
 import jsPDF from "jspdf";
-import { AcroFormButton, AcroFormComboBox, AcroFormTextField } from "jspdf";
+import { AcroFormButton, AcroFormTextField } from "jspdf";
 
 const PAGE_W = 210;
 const MARGIN = 14;
@@ -80,40 +80,26 @@ function textField(
   pdf.addField(field);
 }
 
-/** Listes de choix fixes des formulaires vierges (index du champ -> options). */
-const CHOICES_FR: Record<number, string[]> = {
-  3: ["Piano Droit", "Piano a Queue"],
-  6: ["Faible", "Moyen", "Intensif"],
-  7: ["Inclus", "Exclus", "Seuls"],
-};
-const CHOICES_EN: Record<number, string[]> = {
-  3: ["Upright Piano", "Grand Piano"],
-  6: ["Low", "Medium", "Intensive"],
-  7: ["Included", "Excluded", "Only"],
-};
-
-function choiceField(
-  pdf: jsPDF,
-  name: string,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  options: string[],
-) {
-  const field = new AcroFormComboBox();
-  field.fieldName = name;
-  (field as unknown as { Rect: number[] }).Rect = [x, y, w, h];
-  (field as unknown as { fontSize: number }).fontSize = 8;
-  (field as unknown as { setOptions: (o: string[]) => void }).setOptions(options);
-  (field as unknown as { value: string }).value = "";
-  pdf.addField(field);
+function metaValues(meta: BlankFormMeta): string[] {
+  const place = [meta.ville, meta.pays].filter(Boolean).join(" / ");
+  return [
+    meta.marque ?? "",
+    meta.modele ?? "",
+    meta.serial ?? "",
+    meta.typePiano ?? "",
+    place,
+    meta.entretien ?? "",
+    meta.usage ?? "",
+    meta.modifications ?? "",
+    meta.zone ?? "",
+    meta.annee ?? "",
+  ];
 }
 
-/** Bloc identite vierge (10 champs sur 2 colonnes, 3 listes de choix). */
+/** Bloc identité (10 champs sur 2 colonnes). Retourne le Y sous le bloc. */
 function drawIdentity(
   pdf: jsPDF,
-  _meta: BlankFormMeta,
+  meta: BlankFormMeta,
   lang: "fr" | "en",
   top: number,
   pageWidth = PAGE_W,
@@ -121,7 +107,7 @@ function drawIdentity(
   fieldW = 52,
 ): number {
   const labels = lang === "en" ? LABELS_EN : LABELS_FR;
-  const choices = lang === "en" ? CHOICES_EN : CHOICES_FR;
+  const values = metaValues(meta);
   const colW = (pageWidth - MARGIN * 2) / 2;
   pdf.setFontSize(8);
   labels.forEach((label, i) => {
@@ -130,13 +116,10 @@ function drawIdentity(
     const x = MARGIN + col * colW;
     const yy = top + row * 9;
     pdf.text(`${label} :`, x, yy + 4);
-    const opts = choices[i];
-    if (opts) choiceField(pdf, `meta_${i}`, x + labelW, yy, fieldW, 5.5, opts);
-    else textField(pdf, `meta_${i}`, x + labelW, yy, fieldW, 5.5, "");
+    textField(pdf, `meta_${i}`, x + labelW, yy, fieldW, 5.5, values[i]);
   });
   return top + Math.ceil(labels.length / 2) * 9 + 4;
 }
-
 
 function header(pdf: jsPDF, title: string, pageWidth = PAGE_W) {
   pdf.setFontSize(13);
@@ -338,19 +321,12 @@ export function generateBlankKeyboardPdf(
       const yWd = yWa + fh + 1.2;
       // Repere textuel gris tres clair, visible sous le champ vide
       pdf.setFontSize(5);
-      pdf.setTextColor(100);
+      pdf.setTextColor(g.black ? 120 : 205);
       pdf.setFillColor(255, 255, 255);
       if (g.black) pdf.rect(fx, yWa, fw, fh * 2 + 1.2, "F");
       pdf.text("Wa", fx + fw / 2, yWa + fh - 1.4, { align: "center" });
       pdf.text("Wd", fx + fw / 2, yWd + fh - 1.4, { align: "center" });
       pdf.setTextColor(0);
-      // Carres rouges : limites de saisie
-      pdf.setDrawColor(220, 38, 38);
-      pdf.setLineWidth(0.15);
-      pdf.rect(fx, yWa, fw, fh, "S");
-      pdf.rect(fx, yWd, fw, fh, "S");
-      pdf.setDrawColor(40);
-      pdf.setLineWidth(0.25);
       textField(pdf, `wa_${k}`, fx, yWa, fw, fh, "", 5);
       textField(pdf, `wd_${k}`, fx, yWd, fw, fh, "", 5);
       // Numero de touche sous le clavier
