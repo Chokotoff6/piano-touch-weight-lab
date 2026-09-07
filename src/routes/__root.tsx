@@ -214,54 +214,18 @@ function RootComponent() {
 
             <div className="mx-10 h-6 w-[2px] bg-gray-400" aria-hidden="true" />
 
-            {topbar.measuresReady ? (
-              <DropdownMenu>
-                <div className="relative flex items-center">
+            <DropdownMenu>
+              <div className="relative flex items-center">
+                <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
-                    className={`rounded-r-none border border-gray-300 bg-white text-lg ${topbar.measuresReady ? "!text-muted-foreground" : "text-gray-400"}`}
-                    onClick={() => dispatchAction("piano-export-csv")}
+                    className="border border-gray-300 bg-white text-lg !text-muted-foreground"
                   >
-                    Exporter
+                    {lang === "en" ? "Export" : "Exporter"}
+                    <ChevronDown className="ml-1 h-4 w-4" />
                   </Button>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={`rounded-l-none border border-l-0 border-gray-300 bg-white px-2 text-lg ${topbar.measuresReady ? "!text-muted-foreground" : "text-gray-400"}`}
-                    >
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  {topbar.alert?.anchor === "export" && (
-                    <div
-                      className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
-                      style={{ position: "absolute", zIndex: 99999, backgroundColor: "#ffffff" }}
-                    >
-                      {topbar.alert.message}
-                    </div>
-                  )}
-                </div>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem onClick={() => dispatchAction("piano-export-csv")}>
-                    Télécharger le fichier CSV local
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => dispatchAction("piano-export-pdf")}>
-                    Générer rapport PDF
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <div className="relative flex items-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={`border border-gray-300 bg-white text-lg ${topbar.measuresReady ? "!text-muted-foreground" : "text-gray-400"}`}
-                  onClick={() => dispatchAction("piano-export-csv")}
-                >
-                  Exporter
-                </Button>
+                </DropdownMenuTrigger>
                 {topbar.alert?.anchor === "export" && (
                   <div
                     className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
@@ -271,7 +235,31 @@ function RootComponent() {
                   </div>
                 )}
               </div>
-            )}
+              <DropdownMenuContent align="start" className="max-w-[420px]">
+                <DropdownMenuItem
+                  disabled={!topbar.measuresReady}
+                  onClick={() => dispatchAction("piano-export-csv")}
+                >
+                  {lang === "en"
+                    ? "EXPORT DATA AS CSV"
+                    : "EXPORTER DONNÉES SAISIES AU FORMAT CSV"}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={!topbar.measuresReady}
+                  onClick={() => dispatchAction("piano-export-pdf")}
+                >
+                  {lang === "en"
+                    ? "EXPORT DATA AS PDF"
+                    : "EXPORTER DONNÉES SAISIES AU FORMAT PDF"}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-pdf")}>
+                  {lang === "en"
+                    ? "EXPORT BLANK PRINTABLE FORM AS PDF (RE-IMPORTABLE)"
+                    : "EXPORTER UN FORMULAIRE DE SAISIE VIERGE AU FORMAT PDF (RÉ-IMPORTABLE)"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
 
             {!isComparer && (
             <div className="relative flex items-center">
