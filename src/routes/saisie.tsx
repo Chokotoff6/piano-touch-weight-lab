@@ -720,6 +720,7 @@ function Index() {
     } catch {
       /* stockage indisponible */
     }
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
