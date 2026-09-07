@@ -149,7 +149,7 @@ function drawCompliance(pdf: jsPDF, lang: "fr" | "en", pageWidth: number): void 
   badge.fontSize = 9;
   badge.maxFontSize = 9;
   (badge as unknown as { fontStyle: string }).fontStyle = "bold";
-  (badge as unknown as { textColor: string }).textColor = "#008000";
+  (badge as unknown as { color: string }).color = "#008000";
   badge.value = badgeText;
   badge.readOnly = true;
   // Drapeau annotation « masque » : rien ne s'affiche tant que le script
