@@ -687,19 +687,34 @@ function Index() {
   const remarquesRequired = info["entretien"] === "Modifications importantes";
   const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
 
-  /** Téléporte le curseur dans la première case PD (Touche 1 / La0), si elle est vide. */
+  /**
+   * Téléporte le curseur dans la première case PD (Touche 1 / La0).
+   * SÉCURITÉ ABSOLUE : la lecture se fait sur rowsRef (données réellement
+   * chargées) et le focus est INTERDIT si la moindre touche est déjà saisie —
+   * le curseur ne se place que sur un piano intégralement vierge.
+   */
   const focusFirstWeight = useCallback(() => {
-    if ((rows[0]?.wa ?? "").trim() !== "") return;
     setTimeout(() => {
+      const current = rowsRef.current;
+      if (hasAnyMeasurement(current)) return; // profil chargé ou en cours : on ne touche à rien
+      if ((current[0]?.wa ?? "").trim() !== "") return;
       inputs.current["0-wa"]?.focus({ preventScroll: true });
       inputs.current["0-wa"]?.select();
-    }, 50);
+    }, 100);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** Au chargement de la page en mode pesée, le curseur se place sur le PD du La 0. */
+  /**
+   * Au chargement de la page en mode pesée, le curseur se place sur le PD du La 0,
+   * uniquement après la fin de l'hydratation (setTimeout 150 ms) et uniquement
+   * si le piano chargé est intégralement vierge.
+   */
   useEffect(() => {
-    if (weighingMode) focusFirstWeight();
+    const timer = setTimeout(() => {
+      if (!draftLoaded.current) return; // hydratation non terminée : interdit
+      if (!weighingModeRef.current) return;
+      focusFirstWeight();
+    }, 150);
     try {
       if (window.localStorage.getItem(PEDAL_HIDE_KEY) === "1") setHidePedalAlert(true);
     } catch {
