@@ -1592,13 +1592,20 @@ function Index() {
           }
         }}
         inputMode="numeric"
-        aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
+        maxLength={2}
+        placeholder={field === "wa" ? T.pdShort : T.prShort}
+        aria-label={`${field === "wa" ? T.pd : T.pr} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
+        onMouseDown={() => {
+          // AUTO-EFFACEMENT : un clic sur une case déjà remplie la vide instantanément.
+          if (canEnterWeights && rows[index]![field] !== "") setValue(index, field, "");
+        }}
         onFocus={(e) => {
           e.currentTarget.select();
         }}
-        className={`weight-input !font-sans font-semibold !text-black ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        className={`weight-input !font-sans font-semibold !text-black ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error !border-2 !border-red-600" : ""}`}
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
+
       />
     </div>
   );
