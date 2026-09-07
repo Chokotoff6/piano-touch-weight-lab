@@ -56,32 +56,14 @@ const args = (p: DiagnosticPayload) => ({
   _mesures_wd: p.mesures_wd,
 });
 
-/** Client Supabase tolérant : renvoie null si les variables d'environnement
- *  publiques ne sont pas injectées (site publié) au lieu de lever une erreur.
- *  L'export local (CSV / PDF) ne doit jamais être bloqué par le cloud. */
-function safeClient(): typeof supabase | null {
-  try {
-    // L'accès à une propriété déclenche la création réelle du client.
-    void supabase.rpc;
-    return supabase;
-  } catch (error) {
-    console.warn("[Supabase] client indisponible :", error);
-    return null;
-  }
-}
-
-export async function insertDiagnostic(p: DiagnosticPayload): Promise<string | null> {
-  const client = safeClient();
-  if (!client) return null;
-  const { data, error } = await client.rpc("insert_diagnostic", args(p));
+export async function insertDiagnostic(p: DiagnosticPayload): Promise<string> {
+  const { data, error } = await supabase.rpc("insert_diagnostic", args(p));
   if (error) throw error;
   return data as string;
 }
 
 export async function updateDiagnostic(id: string, p: DiagnosticPayload): Promise<string | null> {
-  const client = safeClient();
-  if (!client) return null;
-  const { data, error } = await client.rpc("update_own_diagnostic", { _id: id, ...args(p) });
+  const { data, error } = await supabase.rpc("update_own_diagnostic", { _id: id, ...args(p) });
   if (error) throw error;
   return (data as string | null) ?? null;
 }
@@ -90,13 +72,10 @@ export async function getOwnDiagnostics(
   userFingerprint: string,
   numeroCentral: string,
 ): Promise<DiagnosticHistoryRow[]> {
-  const client = safeClient();
-  if (!client) return [];
-  const { data, error } = await client.rpc("get_own_diagnostics", {
+  const { data, error } = await supabase.rpc("get_own_diagnostics", {
     _user_fingerprint: userFingerprint,
     _numero_central: numeroCentral,
   });
   if (error) throw error;
   return (data ?? []) as DiagnosticHistoryRow[];
 }
-

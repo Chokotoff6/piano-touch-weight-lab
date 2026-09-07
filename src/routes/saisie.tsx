@@ -439,8 +439,6 @@ function Index() {
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const pdfInfoRef = useRef<HTMLDivElement | null>(null);
   const pdfChartRef = useRef<HTMLDivElement | null>(null);
-  
-
   const moyennesRef = useRef<HTMLElement | null>(null);
   const mesuresRef = useRef<HTMLElement | null>(null);
 
@@ -1143,18 +1141,6 @@ function Index() {
 
   const serialFull = `${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`;
 
-  /** Nombre de touches réellement mesurées (blanches / noires). */
-  const measuredCounts = useMemo(() => {
-    let white = 0;
-    let black = 0;
-    rows.forEach((r, i) => {
-      if (r.wa.trim() === "" || r.wd.trim() === "") return;
-      if (BLACK_KEYS.has(i + 1)) black += 1;
-      else white += 1;
-    });
-    return { white, black };
-  }, [rows]);
-
   const chartData = useMemo<ChartPoint[]>(
     () =>
       rows.map((r, i) => {
@@ -1174,18 +1160,12 @@ function Index() {
 
   /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
   const exportPdfFile = async () => {
-    // Page 1 : informations piano, Moyennes globales, graphique comparatif.
-    const page1 = ([
-      pdfInfoRef.current,
-      moyennesRef.current,
-      pdfChartRef.current,
-    ] as (HTMLElement | null)[]).filter((el): el is HTMLElement => el !== null);
-    // Page 2 : dessin du clavier avec les 88 valeurs et les 8 lignes de calculs.
-    const page2 = ([mesuresRef.current] as (HTMLElement | null)[]).filter(
+    const page1 = [pdfInfoRef.current, moyennesRef.current, mesuresRef.current].filter(
       (el): el is HTMLElement => el !== null,
     );
-
-
+    const page2 = [moyennesRef.current, pdfChartRef.current].filter(
+      (el): el is HTMLElement => el !== null,
+    );
     if (page1.length === 0) return;
     const filename = buildExportFilename(
       info["marque"],
@@ -1639,6 +1619,7 @@ function Index() {
     from: number,
     to: number,
     gridRef: (n: HTMLDivElement | null) => void,
+    showResults = false,
   ) => (
     <section
       className="mt-2 flex w-full flex-col items-center"
@@ -1677,14 +1658,42 @@ function Index() {
           })}
         </div>
       </div>
-      {/* Lignes de calcul (Friction / Poids d'équilibre) : masquées à l'écran,
-          imbriquées et alignées sous le clavier lors de l'export PDF. */}
-      {(["friction", "balance"] as const).map((kind) => (
-        <div className="result-sheet" data-pdf-only style={{ display: "none" }} key={kind}>
+      {showResults && (["friction", "balance"] as const).map((kind) => (
+        <div className="result-sheet" key={kind}>
           <div className={`result-label ${SIDE_LABEL_CLASS}`}>
             {kind === "friction" ? T.friction : T.balance}
           </div>
 
+          <div className="result-grid">
+            {rows.slice(from - 1, to).map((row, offset) => {
+              const index = from - 1 + offset;
+              const black = BLACK_KEYS.has(index + 1);
+              const value = compute(row)[kind];
+              return (
+                <div key={index} className={`result-col ${black ? "is-black" : "is-white"}`}>
+                  <div className="result-strip">{black ? formatResult(value) : null}</div>
+                  <div className={`result-value ${(kind === "balance" || kind === "friction") && !black ? "!overflow-visible" : ""}`}>
+                    <span className={`rv-text !text-center !whitespace-nowrap !overflow-visible ${(kind === "balance" || kind === "friction") && !black ? "!w-[125%] !max-w-none !px-0" : "!w-full !px-0.5"}`}>
+                      {black ? null : formatResult(value)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+
+  /** Tableau récapitulatif des 8 lignes de calcul, réservé à l'export PDF. */
+  const renderResultRows = (from: number, to: number) => (
+    <section className="mt-2 flex w-full flex-col items-center">
+      {(["friction", "balance"] as const).map((kind) => (
+        <div className="result-sheet" key={kind}>
+          <div className={`result-label ${SIDE_LABEL_CLASS}`}>
+            {kind === "friction" ? T.friction : T.balance}
+          </div>
           <div className="result-grid">
             {rows.slice(from - 1, to).map((row, offset) => {
               const index = from - 1 + offset;
@@ -1706,7 +1715,6 @@ function Index() {
       ))}
     </section>
   );
-
 
 
   // --- Rendu : page ----------------------------------------------------------------
@@ -2007,11 +2015,10 @@ function Index() {
                 ref={weighingBtnRef}
                 type="button"
                 onClick={onValidateWeighing}
-                className={`rounded-md !border px-5 py-2 text-sm font-bold transition-colors ${requiredSheetFieldsComplete ? "!border-green-600 !bg-green-100 !text-green-800 hover:!bg-green-200" : "!border-gray-300 !bg-white !text-gray-400 hover:bg-accent"}`}
+                className={`rounded-md !border !border-gray-300 px-5 py-2 text-sm font-bold transition-colors hover:bg-accent ${requiredSheetFieldsComplete ? "!bg-gray-100 !text-gray-600" : "!bg-white !text-gray-400"}`}
               >
-                {en ? "Weighing data entry ➔" : "Saisie des données de pesée ➔"}
+                Données de pesée ➔
               </button>
-
             </div>
 
           </div>
@@ -2056,7 +2063,7 @@ function Index() {
       <Frame
         title={
           <span className="inline-flex items-center gap-2">
-            {en ? "Static touch weight measurements" : "Mesures poids statiques"}
+            {en ? "Key weight measurements" : "Mesures poids de touches"}
             <button
               type="button"
               data-pdf-hide
@@ -2073,7 +2080,7 @@ function Index() {
           </span>
         }
 
-        className={weighingMode ? "!mt-[100px] pb-4" : "!mt-[100px] pb-10 !hidden"}
+        className={weighingMode ? "!mt-[26px] pb-4" : "mt-8 pb-10 !hidden"}
         innerRef={(node) => {
           mesuresRef.current = node;
         }}
@@ -2095,19 +2102,6 @@ function Index() {
             Reset
           </button>
         </div>
-        {weighingMode && (
-          <div className="absolute right-4 top-0 z-10 -translate-y-1/2">
-            <button
-              type="button"
-              data-pdf-hide
-              onClick={() => setWeighingMode(false)}
-              className="rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
-            >
-              {en ? "Edit piano information" : "Modifier Informations piano"}
-            </button>
-          </div>
-        )}
-
         {badgeVisible && (
           <div
             data-pdf-hide
@@ -2123,21 +2117,7 @@ function Index() {
           {renderSection(1, 44, gridRef1)}
           {renderSection(45, 88, gridRef2)}
         </div>
-        <div className="mt-4 flex justify-end" data-pdf-hide>
-          <button
-            type="button"
-            onClick={() => void navigate({ to: "/resultats" })}
-            className={`rounded-md border px-4 py-1.5 !text-[0.85rem] font-bold transition-colors hover:bg-accent ${
-              badgeVisible
-                ? "!border-green-600 !text-green-700"
-                : "border-input !text-black"
-            }`}
-          >
-            {en ? "Results & charts >" : "Résultats & graphiques >"}
-          </button>
-        </div>
       </Frame>
-
 
       {/* Conteneur hors écran dédié à la capture PDF (largeur bornée à 1024 px). */}
       <div
@@ -2184,26 +2164,16 @@ Moyennes{" "}
           moyennesRef.current = node;
         }}
       >
-        <span className="mb-1 block !whitespace-nowrap !text-center !text-gray-950 !font-medium" style={{ fontSize: "0.83rem", lineHeight: 1.25 }}>
-          <span className="block">
-            {info["marque"]} {info["modele"]} ({info["fabrication"]?.trim() || "—"}) - SN {info["sn_num"]}
-          </span>
-          <span className="block">
-            {en ? "Measured" : "Mesure"} {formatLocalDateTime(new Date())}
-          </span>
-          <span className="block !text-orange-600">
-            - {measuredCounts.white} {en ? "White" : "Blanches"} / {measuredCounts.black}{" "}
-            {en ? "Black" : "Noires"}
-          </span>
+        <span className="!absolute !-top-3.5 !left-1/2 !-translate-x-1/2 !whitespace-nowrap !bg-card !px-2 !text-gray-950 !font-medium" style={{ fontSize: "0.83rem" }}>
+          {info["marque"]} {info["modele"]} ({info["fabrication"]?.trim() || "—"}) -  SN {info["sn_num"]}  /  Mesure {new Date().toISOString().slice(0, 10)}
         </span>
-
         <div className="grid grid-cols-4 mt-0.5 !gap-2.5">
           {(
             [
-              { key: "wa", label: en ? "Downweight (DW)" : "Poids descendant (PD)" },
-              { key: "wd", label: en ? "Upweight (UW)" : "Poids remontant (PR)" },
-              { key: "friction", label: "Friction (F)" },
-              { key: "balance", label: en ? "Balance weight (BW)" : "Poids d’équilibre (PE)" },
+              { key: "wa", label: "Poids descendant (Wa)" },
+              { key: "wd", label: "Poids ascendant (Wd)" },
+              { key: "friction", label: "Friction" },
+              { key: "balance", label: "Balance" },
             ] as const
           ).map(({ key, label }) => (
             <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
@@ -2243,9 +2213,6 @@ Moyennes{" "}
         <div ref={pdfChartRef} className="mt-4 bg-white">
           <PdfComparisonChart data={chartData} frictionTarget={profile.frictionTarget} />
         </div>
-
-
-
       </div>
 
 
