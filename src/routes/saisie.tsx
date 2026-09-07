@@ -1683,6 +1683,37 @@ function Index() {
     </section>
   );
 
+  /** Tableau récapitulatif des 8 lignes de calcul, réservé à l'export PDF. */
+  const renderResultRows = (from: number, to: number) => (
+    <section className="mt-2 flex w-full flex-col items-center">
+      {(["friction", "balance"] as const).map((kind) => (
+        <div className="result-sheet" key={kind}>
+          <div className={`result-label ${SIDE_LABEL_CLASS}`}>
+            {kind === "friction" ? T.friction : T.balance}
+          </div>
+          <div className="result-grid">
+            {rows.slice(from - 1, to).map((row, offset) => {
+              const index = from - 1 + offset;
+              const black = BLACK_KEYS.has(index + 1);
+              const value = compute(row)[kind];
+              return (
+                <div key={index} className={`result-col ${black ? "is-black" : "is-white"}`}>
+                  <div className="result-strip">{black ? formatResult(value) : null}</div>
+                  <div className="result-value !overflow-visible">
+                    <span className="rv-text !text-center !whitespace-nowrap !overflow-visible !w-full !px-0.5">
+                      {black ? null : formatResult(value)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+
+
   // --- Rendu : page ----------------------------------------------------------------
 
   return (
