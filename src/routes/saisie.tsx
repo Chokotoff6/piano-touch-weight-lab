@@ -2110,7 +2110,7 @@ Moyennes{" "}
           {(
             [
               { key: "wa", label: en ? "Downweight" : "Poids descendant" },
-              { key: "wd", label: "Poids ascendant (Wd)" },
+              { key: "wd", label: en ? "Upweight" : "Poids remontant" },
               { key: "friction", label: "Friction" },
               { key: "balance", label: en ? "Balance Weight" : "Poids d'équilibre" },
             ] as const
