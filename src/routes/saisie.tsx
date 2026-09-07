@@ -1189,10 +1189,14 @@ function Index() {
 
   /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
   const exportPdfFile = async () => {
-    const page1 = [pdfInfoRef.current, moyennesRef.current, mesuresRef.current].filter(
+    // Page 1 : Informations piano + Moyennes + graphique de comparaison.
+    // Page 2 : clavier complet (mesuresRef) avec ses rangées d'expertise
+    // (Friction / Poids d'équilibre) masquées à l'écran mais restaurées
+    // dans le clone html2canvas via [data-pdf-result-frame].
+    const page1 = [pdfInfoRef.current, moyennesRef.current, pdfChartRef.current].filter(
       (el): el is HTMLElement => el !== null,
     );
-    const page2 = [moyennesRef.current, pdfChartRef.current].filter(
+    const page2 = [mesuresRef.current].filter(
       (el): el is HTMLElement => el !== null,
     );
     if (page1.length === 0) return;
@@ -1686,6 +1690,7 @@ function Index() {
           })}
         </div>
       </div>
+      <div data-pdf-result-frame className="w-full h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none">
       {(["friction", "balance"] as const).map((kind) => (
         <div className="result-sheet" key={kind}>
           <div className={`result-label ${SIDE_LABEL_CLASS}`}>
@@ -1710,6 +1715,7 @@ function Index() {
           </div>
         </div>
       ))}
+      </div>
     </section>
   );
 
@@ -2136,7 +2142,7 @@ function Index() {
       <div
         aria-hidden="true"
         data-pdf-capture-frame
-        className="w-[1024px] max-w-[1024px] md:hidden h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none bg-white print:block print:h-auto print:max-h-none print:opacity-100"
+        className="w-[1024px] max-w-[1024px] h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none bg-white print:h-auto print:max-h-none print:opacity-100"
       >
         <div className="p-4">
         <div ref={pdfInfoRef} className="bg-white">

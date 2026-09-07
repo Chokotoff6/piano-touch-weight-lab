@@ -37,10 +37,17 @@ async function capture(el: HTMLElement): Promise<Capture> {
       // (sinon la Page 2 du PDF sort blanche).
       doc.querySelectorAll("[data-pdf-capture-frame]").forEach((node) => {
         const frame = node as HTMLElement;
-        // `md:hidden` masque le cadre à l'écran (display:none). html2canvas
-        // ignore les media queries `print:`, il faut donc forcer `display:block`
-        // dans le clone pour que les blocs d'expertise soient peints (Page 2).
-        frame.style.display = "block";
+        frame.style.height = "auto";
+        frame.style.maxHeight = "none";
+        frame.style.overflow = "visible";
+        frame.style.opacity = "1";
+      });
+      // Les blocs d'expertise (Friction / Poids d'équilibre) sous chaque
+      // demi-clavier sont masqués à l'écran (h-0 + opacity-0). On les force
+      // visibles dans le clone pour que la capture du clavier inclue ses
+      // rangées d'expertise.
+      doc.querySelectorAll("[data-pdf-result-frame]").forEach((node) => {
+        const frame = node as HTMLElement;
         frame.style.height = "auto";
         frame.style.maxHeight = "none";
         frame.style.overflow = "visible";
