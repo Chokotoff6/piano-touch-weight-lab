@@ -128,6 +128,63 @@ function header(pdf: jsPDF, title: string, pageWidth = PAGE_W) {
   pdf.text("# ID: CLAVIER_EXPERT_GENUINE_EXPORT", pageWidth / 2, 19, { align: "center" });
 }
 
+/**
+ * Signaletique de conformite (haut a droite) :
+ * - mention verte et grasse, invisible par defaut, qui apparait quand les
+ *   88 touches ont Wa et Wd numeriques (script Acrobat embarque) ;
+ * - icone « i » toujours visible, rappelant les 2 conditions au clic.
+ */
+function drawCompliance(pdf: jsPDF, lang: "fr" | "en", pageWidth: number): void {
+  const isEn = lang === "en";
+  const badgeText = isEn
+    ? "Input form compliant for import"
+    : "Formulaire de saisie conforme pour import";
+  const tip = isEn
+    ? "Compliance requirements for import: 1. All 88 keys must be filled out. 2. Only numerical data (Wa and Wd) allowed."
+    : "Conditions de conformite pour l'importation : 1. Remplissage obligatoire des 88 touches. 2. Saisie exclusive de valeurs numeriques (Wa et Wd).";
+
+  const badge = new AcroFormTextField();
+  badge.fieldName = "compliance_badge";
+  (badge as unknown as { Rect: number[] }).Rect = [pageWidth - MARGIN - 84, 6, 78, 6];
+  badge.fontSize = 9;
+  badge.maxFontSize = 9;
+  (badge as unknown as { fontStyle: string }).fontStyle = "bold";
+  (badge as unknown as { textColor: string }).textColor = "#008000";
+  badge.value = badgeText;
+  badge.readOnly = true;
+  pdf.addField(badge);
+
+  const info = new AcroFormButton();
+  info.fieldName = "compliance_info";
+  (info as unknown as { Rect: number[] }).Rect = [pageWidth - MARGIN - 5, 6, 5, 6];
+  (info as unknown as { caption: string }).caption = "i";
+  info.fontSize = 8;
+  pdf.addField(info);
+
+  const script = [
+    "function fncCompliance(){",
+    "  var ok=true;",
+    "  for(var i=1;i<=88;i++){",
+    "    var a=this.getField('wa_'+i);var d=this.getField('wd_'+i);",
+    "    if(!a||!d){continue;}",
+    "    var va=(''+a.value).replace(/^\\s+|\\s+$/g,'');",
+    "    var vd=(''+d.value).replace(/^\\s+|\\s+$/g,'');",
+    "    if(va===''||vd===''||isNaN(va)||isNaN(vd)){ok=false;break;}",
+    "  }",
+    "  var b=this.getField('compliance_badge');",
+    "  if(b){b.display=ok?display.visible:display.hidden;}",
+    "}",
+    "for(var j=1;j<=88;j++){",
+    "  var fa=this.getField('wa_'+j);if(fa){fa.setAction('Calculate','fncCompliance();');}",
+    "  var fd=this.getField('wd_'+j);if(fd){fd.setAction('Calculate','fncCompliance();');}",
+    "}",
+    "var fi=this.getField('compliance_info');",
+    `if(fi){fi.setAction('MouseUp','app.alert("${tip}");');}`,
+    "fncCompliance();",
+  ].join("\n");
+  (pdf as unknown as { addJS: (s: string) => void }).addJS(script);
+}
+
 /** Option 3 : formulaire vierge, tableau textuel avec colonne « Note ». */
 export function generateBlankFormPdf(
   filename: string,
