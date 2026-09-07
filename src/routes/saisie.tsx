@@ -662,6 +662,17 @@ function Index() {
     }, 50);
   }, []);
 
+  /** Au chargement de la page en mode pesée, le curseur se place sur le PD du La 0. */
+  useEffect(() => {
+    if (weighingMode) focusFirstWeight();
+    try {
+      if (window.localStorage.getItem(PEDAL_HIDE_KEY) === "1") setHidePedalAlert(true);
+    } catch {
+      /* stockage indisponible */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   /** Validation consciente de la fiche : alerte si incomplète, sinon mode pesée. */
   const onValidateWeighing = useCallback(() => {
     if (!requiredSheetFieldsComplete) {
