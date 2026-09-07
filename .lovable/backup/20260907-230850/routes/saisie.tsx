@@ -2126,20 +2126,16 @@ function Index() {
         </div>
       </Frame>
 
-      {/* Conteneur dédié à la capture PDF : hauteur nulle + overflow masqué,
-           donc totalement invisible à l'écran (0 px de haut, opacité 0,
-           non survolable), mais le DOM reste intact pour html2canvas. Le
-           script de capture force temporairement la visibilité de ce cadre
-           (`data-pdf-capture-frame`) dans le clone pour éviter une Page 2
-           blanche. À l'impression, les utilitaires `print:*` restaurent
-           hauteur et opacité. */}
+      {/* Conteneur hors écran dédié à la capture PDF (largeur bornée à 1024 px).
+          Masqué à l'écran (hors champ + invisible) mais reste dans le DOM et
+          redevient visible/statique à l'impression. Les blocs capturés par
+          html2canvas portent `!visible` pour neutraliser l'héritage de
+          `invisible` du conteneur (sinon la capture sort blanche). */}
       <div
         aria-hidden="true"
-        data-pdf-capture-frame
-        className="w-[1024px] max-w-[1024px] h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none bg-white print:h-auto print:max-h-none print:opacity-100"
+        className="absolute -left-[9999px] top-0 invisible pointer-events-none w-[1024px] max-w-[1024px] bg-white p-4 print:visible print:static"
       >
-        <div className="p-4">
-        <div ref={pdfInfoRef} className="bg-white">
+        <div ref={pdfInfoRef} className="!visible bg-white">
           <PdfInfoTable
             info={{
               marque: info["marque"] ?? "",
@@ -2174,7 +2170,7 @@ Moyennes{" "}
             </span>
           </>
         }
-        className="!p-3 !pt-4 bg-white"
+        className="!visible !p-3 !pt-4 bg-white"
         innerRef={(node) => {
           moyennesRef.current = node;
         }}
@@ -2225,13 +2221,10 @@ Moyennes{" "}
           ))}
         </div>
       </Frame>
-        <div ref={pdfChartRef} className="mt-4 bg-white">
+        <div ref={pdfChartRef} className="!visible mt-4 bg-white">
           <PdfComparisonChart data={chartData} frictionTarget={profile.frictionTarget} />
         </div>
-        </div>
       </div>
-
-
 
 
       <AlertDialog
