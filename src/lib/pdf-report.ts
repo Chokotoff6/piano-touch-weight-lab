@@ -1,6 +1,7 @@
 // Génération du rapport PDF Premium (A4 paysage, 2 pages, téléchargement direct).
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas-pro";
+import { getLang } from "@/data/translations";
 
 type Capture = { dataUrl: string; width: number; height: number };
 
