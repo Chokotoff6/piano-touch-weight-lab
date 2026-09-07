@@ -1143,6 +1143,18 @@ function Index() {
 
   const serialFull = `${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`;
 
+  /** Nombre de touches réellement mesurées (blanches / noires). */
+  const measuredCounts = useMemo(() => {
+    let white = 0;
+    let black = 0;
+    rows.forEach((r, i) => {
+      if (r.wa.trim() === "" || r.wd.trim() === "") return;
+      if (BLACK_KEYS.has(i + 1)) black += 1;
+      else white += 1;
+    });
+    return { white, black };
+  }, [rows]);
+
   const chartData = useMemo<ChartPoint[]>(
     () =>
       rows.map((r, i) => {
