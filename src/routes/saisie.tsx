@@ -1516,8 +1516,9 @@ function Index() {
         onFocus={(e) => {
           e.currentTarget.select();
         }}
-        className={`weight-input !font-sans font-semibold !text-black ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
-        style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
+        className={`weight-input !font-sans font-semibold !text-black ${isBlack ? "" : "![background-color:#a2aab4]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        style={isBlack ? { backgroundColor: "#a2aab4" } : undefined}
+
       />
     </div>
   );
