@@ -1534,9 +1534,15 @@ function Index() {
           inputs.current[`${index}-${field}`] = el;
         }}
         value={rows[index]![field]}
+        maxLength={2}
+        placeholder={field === "wa" ? (en ? "DW" : "PD") : en ? "UW" : "PR"}
         onChange={(e) => canEnterWeights && setValue(index, field, e.target.value)}
         onBlur={(e) => {
-          if (canEnterWeights) handleBlur(index, field, e.target.value);
+          if (!canEnterWeights) return;
+          const key = `${index}-${field}`;
+          const restored = e.target.value === "" ? (prevWeight.current[key] ?? "") : e.target.value;
+          delete prevWeight.current[key];
+          handleBlur(index, field, restored);
         }}
         onKeyDown={(e) => {
           if (!canEnterWeights) {
@@ -1556,12 +1562,18 @@ function Index() {
           }
         }}
         inputMode="numeric"
-        aria-label={`${field === "wa" ? "Wa" : "Wd"} touche ${index + 1}`}
+        aria-label={`${field === "wa" ? (en ? "DW" : "PD") : en ? "UW" : "PR"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
-        onFocus={(e) => {
-          e.currentTarget.select();
+        onFocus={() => {
+          // La valeur en place s'efface au clic ; elle revient si rien n'est saisi.
+          const key = `${index}-${field}`;
+          const current = rows[index]![field];
+          if (current !== "") {
+            prevWeight.current[key] = current;
+            setValue(index, field, "");
+          }
         }}
-        className={`weight-input !font-sans font-semibold !text-black ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        className={`weight-input !font-sans font-semibold !text-black focus:!border-black focus:!ring-0 ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
       />
     </div>
