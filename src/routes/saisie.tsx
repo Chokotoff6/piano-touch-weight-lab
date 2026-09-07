@@ -1575,30 +1575,6 @@ function Index() {
           })}
         </div>
       </div>
-      {(["friction", "balance"] as const).map((kind) => (
-        <div className="result-sheet" key={kind}>
-          <div className={`result-label ${SIDE_LABEL_CLASS}`}>
-            {kind === "friction" ? "Friction" : "Balance"}
-          </div>
-          <div className="result-grid">
-            {rows.slice(from - 1, to).map((row, offset) => {
-              const index = from - 1 + offset;
-              const black = BLACK_KEYS.has(index + 1);
-              const value = compute(row)[kind];
-              return (
-                <div key={index} className={`result-col ${black ? "is-black" : "is-white"}`}>
-                  <div className="result-strip">{black ? formatResult(value) : null}</div>
-                  <div className={`result-value ${(kind === "balance" || kind === "friction") && !black ? "!overflow-visible" : ""}`}>
-                    <span className={`rv-text !text-center !whitespace-nowrap !overflow-visible ${(kind === "balance" || kind === "friction") && !black ? "!w-[125%] !max-w-none !px-0" : "!w-full !px-0.5"}`}>
-                      {black ? null : formatResult(value)}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
     </section>
   );
 
