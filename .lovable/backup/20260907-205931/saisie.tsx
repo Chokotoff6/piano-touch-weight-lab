@@ -397,10 +397,6 @@ function Index() {
   const [badgeVisible, setBadgeVisible] = useState(false);
   const badgeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
-  /** Miroir toujours à jour des 88 touches (évite les closures périmées). */
-  const rowsRef = useRef<Row[]>(EMPTY);
-  /** Miroir du mode pesée, lisible depuis les setTimeout. */
-  const weighingModeRef = useRef(false);
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
   const fabricationTouched = useRef(false);
   const [isGeocoding, setIsGeocoding] = useState(false);
@@ -502,14 +498,6 @@ function Index() {
     }
     draftLoaded.current = true;
   }, []);
-
-  // Maintien des miroirs réactifs (rows / mode pesée) pour les lectures différées.
-  useEffect(() => {
-    rowsRef.current = rows;
-  }, [rows]);
-  useEffect(() => {
-    weighingModeRef.current = weighingMode;
-  }, [weighingMode]);
 
   useEffect(() => {
     if (!draftLoaded.current) return;
@@ -687,40 +675,24 @@ function Index() {
   const remarquesRequired = info["entretien"] === "Modifications importantes";
   const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
 
-  /**
-   * Téléporte le curseur dans la première case PD (Touche 1 / La0).
-   * SÉCURITÉ ABSOLUE : la lecture se fait sur rowsRef (données réellement
-   * chargées) et le focus est INTERDIT si la moindre touche est déjà saisie —
-   * le curseur ne se place que sur un piano intégralement vierge.
-   */
+  /** Téléporte le curseur dans la première case PD (Touche 1 / La0), si elle est vide. */
   const focusFirstWeight = useCallback(() => {
+    if ((rows[0]?.wa ?? "").trim() !== "") return;
     setTimeout(() => {
-      const current = rowsRef.current;
-      if (hasAnyMeasurement(current)) return; // profil chargé ou en cours : on ne touche à rien
-      if ((current[0]?.wa ?? "").trim() !== "") return;
       inputs.current["0-wa"]?.focus({ preventScroll: true });
       inputs.current["0-wa"]?.select();
-    }, 100);
+    }, 50);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /**
-   * Au chargement de la page en mode pesée, le curseur se place sur le PD du La 0,
-   * uniquement après la fin de l'hydratation (setTimeout 150 ms) et uniquement
-   * si le piano chargé est intégralement vierge.
-   */
+  /** Au chargement de la page en mode pesée, le curseur se place sur le PD du La 0. */
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!draftLoaded.current) return; // hydratation non terminée : interdit
-      if (!weighingModeRef.current) return;
-      focusFirstWeight();
-    }, 150);
+    if (weighingMode) focusFirstWeight();
     try {
       if (window.localStorage.getItem(PEDAL_HIDE_KEY) === "1") setHidePedalAlert(true);
     } catch {
       /* stockage indisponible */
     }
-    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
