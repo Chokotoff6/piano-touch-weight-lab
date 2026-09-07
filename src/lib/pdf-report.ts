@@ -31,6 +31,17 @@ async function capture(el: HTMLElement): Promise<Capture> {
           el.style.visibility = "hidden";
         }
       });
+      // Le conteneur de capture est masqué à l'écran par hauteur nulle
+      // (h-0 + overflow-hidden + opacity-0). On le force temporairement
+      // visible dans le clone pour qu'html2canvas peigne son contenu
+      // (sinon la Page 2 du PDF sort blanche).
+      doc.querySelectorAll("[data-pdf-capture-frame]").forEach((node) => {
+        const frame = node as HTMLElement;
+        frame.style.height = "auto";
+        frame.style.maxHeight = "none";
+        frame.style.overflow = "visible";
+        frame.style.opacity = "1";
+      });
     },
   });
   return {
