@@ -2136,8 +2136,9 @@ function Index() {
       <div
         aria-hidden="true"
         data-pdf-capture-frame
-        className="w-full h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none bg-white p-4 print:h-auto print:max-h-none print:opacity-100"
+        className="w-[1024px] max-w-[1024px] h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none bg-white print:h-auto print:max-h-none print:opacity-100"
       >
+        <div className="p-4">
         <div ref={pdfInfoRef} className="bg-white">
           <PdfInfoTable
             info={{
