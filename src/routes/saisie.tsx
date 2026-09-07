@@ -401,6 +401,13 @@ function Index() {
   const blockTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const coherenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  /** CONDITION 3 : fenêtre flottante « pédale de sustain » (PD > 60). */
+  const [pdHighAlert, setPdHighAlert] = useState<{ x: number; y: number; offer: boolean } | null>(
+    null,
+  );
+  const [hidePdHigh, setHidePdHigh] = useState(false);
+  const pdHighCount = useRef(0);
+
   /** Badge vert retardé : ne s'allume qu'après 0,5 s sans cadre rouge ni erreur. */
   const [badgeVisible, setBadgeVisible] = useState(false);
   const badgeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
