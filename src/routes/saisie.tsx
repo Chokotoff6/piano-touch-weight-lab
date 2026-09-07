@@ -2218,6 +2218,41 @@ Moyennes{" "}
         </AlertDialogContent>
 
       </AlertDialog>
+
+      {pedalAlert && (
+        <div
+          className="fixed left-1/2 top-24 w-[min(90vw,34rem)] -translate-x-1/2 rounded-md border border-gray-300 px-4 py-3 text-sm font-medium text-gray-950 shadow-lg"
+          style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
+        >
+          <div>{en ? PEDAL_MESSAGE_EN : PEDAL_MESSAGE_FR}</div>
+          {pedalCount.current > 1 && (
+            <label className="mt-2 flex items-center gap-2 text-xs font-normal">
+              <input
+                type="checkbox"
+                onChange={(e) => {
+                  setHidePedalAlert(e.target.checked);
+                  try {
+                    if (e.target.checked) window.localStorage.setItem(PEDAL_HIDE_KEY, "1");
+                    else window.localStorage.removeItem(PEDAL_HIDE_KEY);
+                  } catch {
+                    /* stockage indisponible */
+                  }
+                }}
+              />
+              {en ? "Do not show this message again" : "Ne plus afficher ce message"}
+            </label>
+          )}
+          <div className="mt-2 flex justify-end">
+            <button
+              type="button"
+              className="rounded border border-gray-950/40 px-2 py-0.5 text-xs font-bold !text-gray-950"
+              onClick={() => setPedalAlert(false)}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
