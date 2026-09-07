@@ -198,6 +198,7 @@ export function generateBlankFormPdf(
     pdf,
     isEn ? "PIANO TOUCH ANALYZER - BLANK ENTRY FORM" : "PIANO TOUCH ANALYZER - FORMULAIRE VIERGE",
   );
+  drawCompliance(pdf, lang, PAGE_W);
   const y = drawIdentity(pdf, meta, lang, 26);
 
   const drawKeyBlock = (from: number, to: number, top: number) => {
@@ -332,6 +333,7 @@ export function generateBlankKeyboardPdf(
       : "PIANO TOUCH ANALYZER - FORMULAIRE CLAVIER VIERGE",
     W,
   );
+  drawCompliance(pdf, lang, W);
   const y = drawIdentity(pdf, meta, lang, 24, W, 40, 90);
   section(1, 22, y + 8);
   section(23, 44, y + 68);
