@@ -577,9 +577,10 @@ function Index() {
     [info, climateZone],
   );
 
-  const octaveGaps = useMemo(() => incompleteOctaves(rows), [rows]);
+  /** CONDITION 1 : tous les Do et Do# saisis (Do 88 toléré vide). */
+  const octaveGaps = useMemo(() => missingConformityKeys(rows), [rows]);
 
-  /** Touches "orphelines" : Wa rempli sans Wd, ou l'inverse. */
+  /** CONDITION 2 : touches "orphelines" (PD sans PR, ou l'inverse). */
   const orphanKeys = useMemo(
     () =>
       rows
@@ -589,27 +590,23 @@ function Index() {
     [rows],
   );
 
-  /** Vrai dès qu'une erreur de cohérence Wa <= Wd est présente sur le clavier. */
+  /** CONDITIONS 3 & 4 : limites PD et règle mécanique PD > PR. */
   const hasConsistencyErrors = useMemo(
-    () => Object.values(errors).some((m) => m === COHERENCE_MESSAGE),
+    () => Object.values(errors).some((m) => m === COHERENCE_MESSAGE || m === PD_RANGE_MESSAGE),
     [errors],
   );
 
   /**
-   * Validité instantanée du clavier (calcul brut, recalculé à chaque frappe) :
-   * porte logique AND stricte.
-   * TEST 1 (prioritaire) : touche orpheline (cadre rouge) ou erreur Wa<=Wd => faux.
-   * TEST 2 (successif) : échantillonnage des octaves, uniquement si zéro cadre rouge.
-   * Les carrés rouges s'affichent instantanément ; le badge vert, lui, est retardé
-   * (voir badgeVisible) : il ne s'allume qu'après 0,5 s sans aucun cadre rouge.
+   * Validité instantanée du clavier (les 5 conditions de conformité).
    */
   const keyboardValid = useMemo(() => {
-    if (orphanKeys.length > 0) return false; // TEST 1
-    if (hasConsistencyErrors) return false;
+    if (orphanKeys.length > 0) return false; // CONDITION 2
+    if (hasConsistencyErrors) return false; // CONDITIONS 3 & 4
     if (!hasAnyMeasurement(rows)) return false;
-    if (octaveGaps.length > 0) return false; // TEST 2
+    if (octaveGaps.length > 0) return false; // CONDITION 1
     return true;
   }, [orphanKeys.length, hasConsistencyErrors, rows, octaveGaps.length]);
+
 
   /**
    * Badge vert retardé : extinction instantanée dès qu'un cadre rouge apparaît,
