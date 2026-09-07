@@ -26,7 +26,7 @@ const IDENTITY_FIELDS_EN = [
 function textField(pdf: jsPDF, name: string, x: number, y: number, w: number, h: number) {
   const field = new AcroFormTextField();
   field.fieldName = name;
-  field.Rect = [x, y, w, h];
+  (field as unknown as { Rect: number[] }).Rect = [x, y, w, h];
   field.fontSize = 8;
   field.maxFontSize = 8;
   field.multiline = false;
