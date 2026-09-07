@@ -338,12 +338,19 @@ export function generateBlankKeyboardPdf(
       const yWd = yWa + fh + 1.2;
       // Repere textuel gris tres clair, visible sous le champ vide
       pdf.setFontSize(5);
-      pdf.setTextColor(g.black ? 120 : 205);
+      pdf.setTextColor(100);
       pdf.setFillColor(255, 255, 255);
       if (g.black) pdf.rect(fx, yWa, fw, fh * 2 + 1.2, "F");
       pdf.text("Wa", fx + fw / 2, yWa + fh - 1.4, { align: "center" });
       pdf.text("Wd", fx + fw / 2, yWd + fh - 1.4, { align: "center" });
       pdf.setTextColor(0);
+      // Carres rouges : limites de saisie
+      pdf.setDrawColor(220, 38, 38);
+      pdf.setLineWidth(0.15);
+      pdf.rect(fx, yWa, fw, fh, "S");
+      pdf.rect(fx, yWd, fw, fh, "S");
+      pdf.setDrawColor(40);
+      pdf.setLineWidth(0.25);
       textField(pdf, `wa_${k}`, fx, yWa, fw, fh, "", 5);
       textField(pdf, `wd_${k}`, fx, yWd, fw, fh, "", 5);
       // Numero de touche sous le clavier
