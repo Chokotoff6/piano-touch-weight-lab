@@ -1,0 +1,74 @@
+// Règle de remplissage minimale : au moins une touche blanche ET une touche noire
+// mesurée par octave du piano.
+
+const BLACK_KEYS = new Set([
+  2, 5, 7, 10, 12, 14, 17, 19, 22, 24, 26, 29, 31, 34, 36, 38, 41, 43, 46, 48, 50, 53, 55, 58, 60,
+  62, 65, 67, 70, 72, 74, 77, 79, 82, 84, 86,
+]);
+
+/** Découpage du clavier en octaves (bornes incluses), à partir des Do.
+ *  L'octave 0 (touches 1-3, La0-Si0) et l'octave 8 (touche 88, Do8) sont
+ *  exclues de la règle : la validation s'applique des octaves 1 à 7. */
+export const OCTAVE_RANGES: [number, number][] = [
+  [4, 15],
+  [16, 27],
+  [28, 39],
+  [40, 51],
+  [52, 63],
+  [64, 75],
+  [76, 87],
+];
+
+type Row = { wa: string; wd: string };
+
+const filled = (row: Row | undefined) =>
+  !!row && (row.wa.trim() !== "" || row.wd.trim() !== "");
+
+export function hasAnyMeasurement(rows: Row[]): boolean {
+  return rows.some((r) => filled(r));
+}
+
+/** Retourne les octaves (index 1-based) incomplètes. */
+export function incompleteOctaves(rows: Row[]): number[] {
+  const out: number[] = [];
+  OCTAVE_RANGES.forEach(([start, end], i) => {
+    let white = false;
+    let black = false;
+    for (let key = start; key <= end; key += 1) {
+      if (!filled(rows[key - 1])) continue;
+      if (BLACK_KEYS.has(key)) black = true;
+      else white = true;
+    }
+    if (!white || !black) out.push(i + 1);
+  });
+  return out;
+}
+
+/** CONDITION 1 : tous les Do et tous les Do# doivent être saisis.
+ *  Tolérance exclusive : le Do 88 final peut rester vide. */
+export const C_CONFORMITY_KEYS = [4, 16, 28, 40, 52, 64, 76];
+export const C_SHARP_CONFORMITY_KEYS = [5, 17, 29, 41, 53, 65, 77];
+export const CONFORMITY_KEYS = [...C_CONFORMITY_KEYS, ...C_SHARP_CONFORMITY_KEYS].sort(
+  (a, b) => a - b,
+);
+
+const bothFilled = (row: Row | undefined) =>
+  !!row && row.wa.trim() !== "" && row.wd.trim() !== "";
+
+/** Touches Do / Do# obligatoires encore incomplètes (numéros 1-based). */
+export function missingConformityKeys(rows: Row[]): number[] {
+  return CONFORMITY_KEYS.filter((key) => !bothFilled(rows[key - 1]));
+}
+
+export const OCTAVE_RULE_MESSAGE =
+  "⚠️ Saisie non conforme : tous les Do et tous les Do# du clavier doivent être mesurés (le Do 88 final reste facultatif).";
+
+export const EMPTY_DATA_MESSAGE = "⚠️ Veuillez d'abord saisir les données de votre piano.";
+
+
+// Permet à la navigation globale de vérifier l'état de la page Saisie.
+export const saisieGate: {
+  hasData: (() => boolean) | null;
+} = {
+  hasData: null,
+};

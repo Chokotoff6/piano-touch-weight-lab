@@ -21,11 +21,6 @@ async function capture(el: HTMLElement): Promise<Capture> {
     y: -PAD,
     height: el.offsetHeight + PAD * 2,
     onclone: (doc) => {
-      // Blocs réservés au PDF (8 lignes de calculs sous le clavier) : révélés
-      // uniquement dans le clone capturé.
-      doc.querySelectorAll("[data-pdf-only]").forEach((node) => {
-        (node as HTMLElement).style.display = "";
-      });
       // Substitution textuelle : les notices/résumés sont vidés (textContent = "")
       // pour que les bordures se referment sans trou blanc. Les boutons et
       // pastilles interactives restent masqués en visibilité.
@@ -38,7 +33,6 @@ async function capture(el: HTMLElement): Promise<Capture> {
         }
       });
     },
-
   });
   return {
     dataUrl: canvas.toDataURL("image/png"),
