@@ -503,6 +503,14 @@ function Index() {
     draftLoaded.current = true;
   }, []);
 
+  // Maintien des miroirs réactifs (rows / mode pesée) pour les lectures différées.
+  useEffect(() => {
+    rowsRef.current = rows;
+  }, [rows]);
+  useEffect(() => {
+    weighingModeRef.current = weighingMode;
+  }, [weighingMode]);
+
   useEffect(() => {
     if (!draftLoaded.current) return;
     try {
