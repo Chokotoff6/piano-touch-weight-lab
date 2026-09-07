@@ -1,7 +1,7 @@
 // Formulaires PDF vierges interactifs (champs numériques éditables).
 // Géométrie fixe pour permettre un ré-import fiable.
 import jsPDF from "jspdf";
-import { AcroFormTextField } from "jspdf";
+import { AcroFormButton, AcroFormTextField } from "jspdf";
 
 const PAGE_W = 210;
 const MARGIN = 14;
