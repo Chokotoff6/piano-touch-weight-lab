@@ -1632,7 +1632,7 @@ function Index() {
       {(["friction", "balance"] as const).map((kind) => (
         <div className="result-sheet" key={kind}>
           <div className={`result-label ${SIDE_LABEL_CLASS}`}>
-            {kind === "friction" ? "F" : en ? "BW" : "PE"}
+            {kind === "friction" ? "Friction" : en ? "Balance Weight" : "Poids d'équilibre"}
           </div>
           <div className="result-grid">
             {rows.slice(from - 1, to).map((row, offset) => {
