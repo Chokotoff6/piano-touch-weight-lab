@@ -2046,17 +2046,24 @@ function Index() {
 
       <Frame
         title={
-          <>
-            Mesures poids de touches{" "}
-            <span
+          <span className="inline-flex items-center gap-2">
+            {en ? "Key weight measurements" : "Mesures poids de touches"}
+            <button
+              type="button"
               data-pdf-hide
-              className="!print:hidden font-normal normal-case"
-              style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
+              aria-label={en ? "Input help" : "Aide à la saisie"}
+              onMouseEnter={(e) => {
+                const r = e.currentTarget.getBoundingClientRect();
+                setHelpTip({ x: r.right + 8, y: r.top - 4 });
+              }}
+              onMouseLeave={() => setHelpTip(null)}
+              className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-500 !text-[10px] font-bold italic !text-gray-600"
             >
-              (Min. 1 blanche + 1 noire par octave. ex : tous les Do et Do# &gt; shift+tab saute de Do en Do.)
-            </span>
-          </>
+              i
+            </button>
+          </span>
         }
+
         className={weighingMode ? "!mt-[26px] pb-4" : "mt-8 pb-10 !hidden"}
         innerRef={(node) => {
           mesuresRef.current = node;
