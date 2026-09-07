@@ -2217,6 +2217,59 @@ Moyennes{" "}
         <div ref={pdfChartRef} className="mt-4 bg-white">
           <PdfComparisonChart data={chartData} frictionTarget={profile.frictionTarget} />
         </div>
+        {/* Tableau récapitulatif d'expertise : 8 lignes, bas de la page 2 du PDF. */}
+        <div ref={pdfRecapRef} className="mt-4 bg-white">
+          <table className="w-full border-collapse text-[13px] text-black">
+            <thead>
+              <tr>
+                <th className="border border-gray-400 bg-gray-100 px-2 py-1 text-left font-bold">
+                  {en ? "Expertise summary" : "Tableau récapitulatif d'expertise"}
+                </th>
+                <th className="border border-gray-400 bg-gray-100 px-2 py-1 text-center font-bold">
+                  {en ? "Keys 1-44" : "Touches 1-44"}
+                </th>
+                <th className="border border-gray-400 bg-gray-100 px-2 py-1 text-center font-bold">
+                  {en ? "Keys 45-88" : "Touches 45-88"}
+                </th>
+                <th className="border border-gray-400 bg-gray-100 px-2 py-1 text-center font-bold">
+                  {en ? "Overall" : "Global"}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {(
+                [
+                  { key: "wa", label: en ? "Downweight (DW)" : "Poids descendant (PD)" },
+                  { key: "wd", label: en ? "Upweight (UW)" : "Poids remontant (PR)" },
+                  { key: "friction", label: en ? "Friction (F)" : "Friction (F)" },
+                  { key: "balance", label: en ? "Balance weight (BW)" : "Poids d'équilibre (PE)" },
+                ] as const
+              ).flatMap(({ key, label }) => [
+                <tr key={`${key}-avg`}>
+                  <td className="border border-gray-400 px-2 py-1 font-semibold">{label}</td>
+                  <td className="border border-gray-400 px-2 py-1 text-center tabular-nums">
+                    {sectionAverages.first[key]}
+                  </td>
+                  <td className="border border-gray-400 px-2 py-1 text-center tabular-nums">
+                    {sectionAverages.second[key]}
+                  </td>
+                  <td className="border border-gray-400 px-2 py-1 text-center font-bold tabular-nums">
+                    {formatAverageResult(sectionAverages.global[key])}
+                  </td>
+                </tr>,
+                <tr key={`${key}-unit`}>
+                  <td className="border border-gray-400 px-2 py-1 pl-6 italic text-gray-600">
+                    {en ? "in grams (g)" : "en grammes (gr.)"}
+                  </td>
+                  <td className="border border-gray-400 px-2 py-1" />
+                  <td className="border border-gray-400 px-2 py-1" />
+                  <td className="border border-gray-400 px-2 py-1" />
+                </tr>,
+              ])}
+            </tbody>
+          </table>
+        </div>
+
       </div>
 
 
