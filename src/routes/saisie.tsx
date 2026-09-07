@@ -915,13 +915,13 @@ function Index() {
     markDirty();
     clearError(`${index}-${field}`);
     setRows((prev) =>
-      prev.map((r, i) => (i === index ? { ...r, [field]: cleanWeight(value) } : r)),
+      prev.map((r, i) => (i === index ? { ...r, [field]: cleanTyped(value) } : r)),
     );
   };
 
   const handleBlur = (index: number, field: "wa" | "wd", value: string) => {
     const key = `${index}-${field}`;
-    const cleaned = cleanWeight(value);
+    const cleaned = cleanTyped(value);
     if (cleaned === "") {
       clearError(key);
       checkCoherence(index, setRowField(index, field, ""));
@@ -929,14 +929,22 @@ function Index() {
     }
     const num = parseWeight(cleaned);
     if (num === null) {
-      setErrors((prev) => ({ ...prev, [key]: "Valeur invalide (5-99, nombre entier)" }));
+      setErrors((prev) => ({ ...prev, [key]: "Valeur invalide (2 chiffres, sans décimale)" }));
       return;
     }
+    // CONDITION 3 : le Poids descendant doit rester dans la plage 30-80 g.
+    if (field === "wa" && (num < 30 || num > 80)) {
+      setErrors((prev) => ({ ...prev, [key]: PD_RANGE_MESSAGE }));
+      showAnchoredAlert(index, "wa", PD_RANGE_MESSAGE);
+      setRowField(index, field, num.toString());
+      return;
+    }
+    if (field === "wa" && num > 60) triggerPdHighAlert(index);
     clearError(key);
     checkCoherence(index, setRowField(index, field, num.toString()));
   };
 
-  /** Applique (ou lève) l'alerte de cohérence Wa > Wd sur les deux cellules d'une touche. */
+  /** Applique (ou lève) l'alerte mécanique PD > PR sur les deux cellules d'une touche. */
   const checkCoherence = (index: number, row: Row) => {
     const wa = parseWeight(row.wa);
     const wd = parseWeight(row.wd);
@@ -955,6 +963,7 @@ function Index() {
       return next;
     });
   };
+
 
   const compute = (r: Row) => {
     const wa = parseWeight(r.wa);
