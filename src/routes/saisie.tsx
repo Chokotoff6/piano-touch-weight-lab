@@ -1589,24 +1589,10 @@ function Index() {
       <div className="technical-sheet">
         <div className={`technical-labels ${SIDE_LABEL_CLASS}`} aria-hidden="true">
           <div className="label-key" />
-          <div className="label-wa" title="The minimum weight required to make the key move down.">
-            Poids Desc. (Wa)
-          </div>
-          <div className="label-wd" title="The maximum weight the key can lift when returning up.">
-            Poids Asc. (Wd)
-          </div>
-          <div
-            className="label-wa-white"
-            title="The minimum weight required to make the key move down."
-          >
-            Poids Desc. (Wa)
-          </div>
-          <div
-            className="label-wd-white"
-            title="The maximum weight the key can lift when returning up."
-          >
-            Poids Asc. (Wd)
-          </div>
+          <div className="label-wa">{en ? "Downweight" : "Poids descendant"}</div>
+          <div className="label-wd">{en ? "Upweight" : "Poids remontant"}</div>
+          <div className="label-wa-white">{en ? "Downweight" : "Poids descendant"}</div>
+          <div className="label-wd-white">{en ? "Upweight" : "Poids remontant"}</div>
         </div>
         <div className="piano-grid" ref={gridRef}>
           {rows.slice(from - 1, to).map((row, offset) => {
