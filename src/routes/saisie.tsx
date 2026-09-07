@@ -1166,7 +1166,7 @@ function Index() {
       (el): el is HTMLElement => el !== null,
     );
     // Page 2 : graphique + tableau récapitulatif (aucun doublon du bloc Moyennes).
-    const page2 = [pdfChartRef.current, pdfRecapRef.current].filter(
+    const page2 = ([pdfChartRef.current, pdfRecapRef.current] as (HTMLElement | null)[]).filter(
       (el): el is HTMLElement => el !== null,
     );
 
