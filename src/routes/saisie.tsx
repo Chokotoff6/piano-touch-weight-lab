@@ -830,8 +830,12 @@ function Index() {
 
   // --- Saisie des poids ---------------------------------------------------------
 
-  /** Conserve les dixièmes présents dans les CSV et dans la saisie clavier. */
+  /** Conserve les dixièmes présents dans les CSV importés. */
   const cleanWeight = (value: string) => value.replace(",", ".").replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+
+  /** CONDITION 5 : bridage strict à 2 chiffres, sans décimale, à la frappe. */
+  const cleanTyped = (value: string) => value.replace(/[^0-9]/g, "").slice(0, 2);
+
 
   const parseWeight = (value: string): number | null => {
     const cleaned = cleanWeight(value);
