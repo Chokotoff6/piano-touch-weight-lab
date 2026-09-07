@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { getLang } from "@/data/translations";
 
 export type PdfInfo = {
   marque: string;
@@ -120,7 +121,7 @@ export function PdfComparisonChart({
             <Line
               type="monotone"
               dataKey="wa"
-              name="Downweight (Wa)"
+              name={names.wa}
               stroke="#1d4ed8"
               dot={false}
               strokeWidth={1.6}
@@ -130,7 +131,7 @@ export function PdfComparisonChart({
             <Line
               type="monotone"
               dataKey="wd"
-              name="Upweight (Wd)"
+              name={names.wd}
               stroke="#b91c1c"
               dot={false}
               strokeWidth={1.6}
@@ -140,7 +141,7 @@ export function PdfComparisonChart({
             <Line
               type="monotone"
               dataKey="friction"
-              name="Friction"
+              name={names.friction}
               stroke="#047857"
               dot={false}
               strokeWidth={1.6}
@@ -150,7 +151,7 @@ export function PdfComparisonChart({
             <Line
               type="monotone"
               dataKey="balance"
-              name="Balance"
+              name={names.balance}
               stroke="#7c3aed"
               dot={false}
               strokeWidth={1.6}
