@@ -43,8 +43,9 @@ function Line2({ label, value }: { label: string; value: string }) {
 export function PdfInfoTable({ info }: { info: PdfInfo }) {
   return (
     <div className="w-full bg-white">
-      <div className="mb-1 text-[13px] font-bold text-black">Informations piano</div>
+      <div className="mb-1.5 text-[16px] font-bold text-black">Informations piano</div>
       <div className="grid grid-cols-5">
+
         <div className={CELL}>
           <Line2 label="Marque" value={info.marque} />
           <Line2 label="Modèle" value={info.modele} />
