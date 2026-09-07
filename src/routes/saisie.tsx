@@ -675,12 +675,14 @@ function Index() {
   const remarquesRequired = info["entretien"] === "Modifications importantes";
   const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
 
-  /** Téléporte le curseur dans la première case Wa (Touche 1 / La0). */
+  /** Téléporte le curseur dans la première case PD (Touche 1 / La0), si elle est vide. */
   const focusFirstWeight = useCallback(() => {
+    if ((rows[0]?.wa ?? "").trim() !== "") return;
     setTimeout(() => {
       inputs.current["0-wa"]?.focus({ preventScroll: true });
       inputs.current["0-wa"]?.select();
     }, 50);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /** Au chargement de la page en mode pesée, le curseur se place sur le PD du La 0. */
