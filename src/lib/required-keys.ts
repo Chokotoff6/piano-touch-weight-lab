@@ -44,10 +44,27 @@ export function incompleteOctaves(rows: Row[]): number[] {
   return out;
 }
 
+/** CONDITION 1 : tous les Do et tous les Do# doivent être saisis.
+ *  Tolérance exclusive : le Do 88 final peut rester vide. */
+export const C_CONFORMITY_KEYS = [4, 16, 28, 40, 52, 64, 76];
+export const C_SHARP_CONFORMITY_KEYS = [5, 17, 29, 41, 53, 65, 77];
+export const CONFORMITY_KEYS = [...C_CONFORMITY_KEYS, ...C_SHARP_CONFORMITY_KEYS].sort(
+  (a, b) => a - b,
+);
+
+const bothFilled = (row: Row | undefined) =>
+  !!row && row.wa.trim() !== "" && row.wd.trim() !== "";
+
+/** Touches Do / Do# obligatoires encore incomplètes (numéros 1-based). */
+export function missingConformityKeys(rows: Row[]): number[] {
+  return CONFORMITY_KEYS.filter((key) => !bothFilled(rows[key - 1]));
+}
+
 export const OCTAVE_RULE_MESSAGE =
-  "⚠️ Veuillez saisir au minimum une valeur pour une touche blanche et une touche noire pour chaque octave (de l'octave 1 à 7).";
+  "⚠️ Saisie non conforme : tous les Do et tous les Do# du clavier doivent être mesurés (le Do 88 final reste facultatif).";
 
 export const EMPTY_DATA_MESSAGE = "⚠️ Veuillez d'abord saisir les données de votre piano.";
+
 
 // Permet à la navigation globale de vérifier l'état de la page Saisie.
 export const saisieGate: {
