@@ -1143,18 +1143,6 @@ function Index() {
 
   const serialFull = `${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`;
 
-  /** Nombre de touches réellement mesurées (blanches / noires). */
-  const measuredCounts = useMemo(() => {
-    let white = 0;
-    let black = 0;
-    rows.forEach((r, i) => {
-      if (r.wa.trim() === "" || r.wd.trim() === "") return;
-      if (BLACK_KEYS.has(i + 1)) black += 1;
-      else white += 1;
-    });
-    return { white, black };
-  }, [rows]);
-
   const chartData = useMemo<ChartPoint[]>(
     () =>
       rows.map((r, i) => {
@@ -2197,19 +2185,9 @@ Moyennes{" "}
           moyennesRef.current = node;
         }}
       >
-        <span className="mb-1 block !whitespace-nowrap !text-center !text-gray-950 !font-medium" style={{ fontSize: "0.83rem", lineHeight: 1.25 }}>
-          <span className="block">
-            {info["marque"]} {info["modele"]} ({info["fabrication"]?.trim() || "—"}) - SN {info["sn_num"]}
-          </span>
-          <span className="block">
-            {en ? "Measured" : "Mesure"} {formatLocalDateTime(new Date())}
-          </span>
-          <span className="block !text-orange-600">
-            - {measuredCounts.white} {en ? "White" : "Blanches"} / {measuredCounts.black}{" "}
-            {en ? "Black" : "Noires"}
-          </span>
+        <span className="!absolute !-top-3.5 !left-1/2 !-translate-x-1/2 !whitespace-nowrap !bg-card !px-2 !text-gray-950 !font-medium" style={{ fontSize: "0.83rem" }}>
+          {info["marque"]} {info["modele"]} ({info["fabrication"]?.trim() || "—"}) -  SN {info["sn_num"]}  /  Mesure {new Date().toISOString().slice(0, 10)}
         </span>
-
         <div className="grid grid-cols-4 mt-0.5 !gap-2.5">
           {(
             [

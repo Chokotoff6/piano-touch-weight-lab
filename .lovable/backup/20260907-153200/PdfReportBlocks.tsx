@@ -10,7 +10,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { getLang } from "@/data/translations";
 
 export type PdfInfo = {
   marque: string;
@@ -28,8 +27,7 @@ export type PdfInfo = {
   dateMesure: string;
 };
 
-// Fiche d'identité agrandie de +25 % (texte et hauteur des cellules).
-const CELL = "border border-neutral-400 px-3 py-2 align-top text-[14px] leading-[1.45]";
+const CELL = "border border-neutral-400 px-2 py-1 align-top text-[11px] leading-tight";
 const KEY = "font-semibold text-neutral-600";
 
 function Line2({ label, value }: { label: string; value: string }) {
@@ -44,9 +42,8 @@ function Line2({ label, value }: { label: string; value: string }) {
 export function PdfInfoTable({ info }: { info: PdfInfo }) {
   return (
     <div className="w-full bg-white">
-      <div className="mb-1.5 text-[16px] font-bold text-black">Informations piano</div>
+      <div className="mb-1 text-[13px] font-bold text-black">Informations piano</div>
       <div className="grid grid-cols-5">
-
         <div className={CELL}>
           <Line2 label="Marque" value={info.marque} />
           <Line2 label="Modèle" value={info.modele} />
@@ -89,20 +86,12 @@ export function PdfComparisonChart({
   data: ChartPoint[];
   frictionTarget: number | null;
 }) {
-  const en = getLang() === "en";
-  const names = {
-    wa: en ? "Downweight" : "Poids descendant",
-    wd: en ? "Upweight" : "Poids remontant",
-    friction: "Friction",
-    balance: en ? "Balance weight" : "Poids d'équilibre",
-  };
   return (
     <div className="w-full bg-white">
       <div className="mb-1 text-[13px] font-bold text-black">
-        {en ? "Comparative analysis" : "Analyse comparative"}
+        Analyse comparative des 88 touches
         {frictionTarget !== null && ` — friction cible usine ${frictionTarget} g (± 1 g)`}
       </div>
-
       <div style={{ width: 960, height: 420 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 10, right: 20, bottom: 10, left: 0 }}>
@@ -121,7 +110,7 @@ export function PdfComparisonChart({
             <Line
               type="monotone"
               dataKey="wa"
-              name={names.wa}
+              name="Downweight (Wa)"
               stroke="#1d4ed8"
               dot={false}
               strokeWidth={1.6}
@@ -131,7 +120,7 @@ export function PdfComparisonChart({
             <Line
               type="monotone"
               dataKey="wd"
-              name={names.wd}
+              name="Upweight (Wd)"
               stroke="#b91c1c"
               dot={false}
               strokeWidth={1.6}
@@ -141,7 +130,7 @@ export function PdfComparisonChart({
             <Line
               type="monotone"
               dataKey="friction"
-              name={names.friction}
+              name="Friction"
               stroke="#047857"
               dot={false}
               strokeWidth={1.6}
@@ -151,7 +140,7 @@ export function PdfComparisonChart({
             <Line
               type="monotone"
               dataKey="balance"
-              name={names.balance}
+              name="Balance"
               stroke="#7c3aed"
               dot={false}
               strokeWidth={1.6}
