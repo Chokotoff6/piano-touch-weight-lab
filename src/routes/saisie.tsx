@@ -2047,6 +2047,19 @@ function Index() {
         <SvgTooltip x={coherenceAnchor.x} y={coherenceAnchor.y} text={COHERENCE_MESSAGE} />
       )}
 
+      {helpTip && (
+        <div
+          role="tooltip"
+          className="pointer-events-none fixed z-[99999] !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-xs font-semibold !text-gray-950 shadow-lg"
+          style={{ left: helpTip.x, top: helpTip.y }}
+        >
+          <div>{en ? "Compliant input = minimum all C and C#" : "Saisie conforme = minimum tous les Do et Do#"}</div>
+          <div>{en ? "Shift+TAB jumps from C to C." : "Shift+TAB saute de Do en Do."}</div>
+        </div>
+      )}
+
+
+
       <Frame
         title={
           <span className="inline-flex items-center gap-2">
