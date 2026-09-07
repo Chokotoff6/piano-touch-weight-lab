@@ -2126,14 +2126,17 @@ function Index() {
         </div>
       </Frame>
 
-      {/* Conteneur hors écran dédié à la capture PDF (largeur bornée à 1024 px).
-          Masqué à l'écran (hors champ + invisible) mais reste dans le DOM et
-          redevient visible/statique à l'impression. Les blocs capturés par
-          html2canvas portent `!visible` pour neutraliser l'héritage de
-          `invisible` du conteneur (sinon la capture sort blanche). */}
+      {/* Conteneur dédié à la capture PDF : hauteur nulle + overflow masqué,
+           donc totalement invisible à l'écran (0 px de haut, opacité 0,
+           non survolable), mais le DOM reste intact pour html2canvas. Le
+           script de capture force temporairement la visibilité de ce cadre
+           (`data-pdf-capture-frame`) dans le clone pour éviter une Page 2
+           blanche. À l'impression, les utilitaires `print:*` restaurent
+           hauteur et opacité. */}
       <div
         aria-hidden="true"
-        className="absolute -left-[9999px] top-0 invisible pointer-events-none w-[1024px] max-w-[1024px] bg-white p-4 print:visible print:static"
+        data-pdf-capture-frame
+        className="w-full h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none bg-white p-4 print:h-auto print:max-h-none print:opacity-100"
       >
         <div ref={pdfInfoRef} className="bg-white">
           <PdfInfoTable
