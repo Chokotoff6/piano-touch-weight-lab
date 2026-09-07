@@ -1162,14 +1162,11 @@ function Index() {
 
   /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
   const exportPdfFile = async () => {
-    // Page 1 : informations piano, Moyennes globales, graphique comparatif.
-    const page1 = ([
-      pdfInfoRef.current,
-      moyennesRef.current,
-      pdfChartRef.current,
-    ] as (HTMLElement | null)[]).filter((el): el is HTMLElement => el !== null);
-    // Page 2 : dessin du clavier avec les 88 valeurs, puis tableau récapitulatif.
-    const page2 = ([mesuresRef.current, pdfRecapRef.current] as (HTMLElement | null)[]).filter(
+    const page1 = [pdfInfoRef.current, moyennesRef.current, mesuresRef.current].filter(
+      (el): el is HTMLElement => el !== null,
+    );
+    // Page 2 : graphique + tableau récapitulatif (aucun doublon du bloc Moyennes).
+    const page2 = ([pdfChartRef.current, pdfRecapRef.current] as (HTMLElement | null)[]).filter(
       (el): el is HTMLElement => el !== null,
     );
 
@@ -2264,8 +2261,8 @@ Moyennes{" "}
               ).flatMap(({ key, label }) =>
                 (
                   [
-                    { id: "first", range: en ? "White keys" : "Touches blanches" },
-                    { id: "second", range: en ? "Black keys" : "Touches noires" },
+                    { id: "first", range: en ? "Keys 1-44" : "Touches 1-44" },
+                    { id: "second", range: en ? "Keys 45-88" : "Touches 45-88" },
                   ] as const
                 ).map(({ id, range }) => (
                   <tr key={`${key}-${id}`}>
