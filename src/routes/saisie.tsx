@@ -2005,6 +2005,8 @@ function Index() {
               ville: info["ville"] ?? "",
               entretien: info["entretien"] ?? "",
               remarques: info["remarques"] ?? "",
+              usage: info["usage_level"] ?? "",
+              zone: climateZone !== null ? String(climateZone) : "",
               dateMesure: formatLocalDateTime(new Date()),
             }}
           />
