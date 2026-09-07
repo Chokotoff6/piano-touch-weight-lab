@@ -1516,9 +1516,8 @@ function Index() {
         onFocus={(e) => {
           e.currentTarget.select();
         }}
-        className={`weight-input !font-sans font-semibold !text-black ${isBlack ? "" : "![background-color:#a2aab4]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
-        style={isBlack ? { backgroundColor: "#a2aab4" } : undefined}
-
+        className={`weight-input !font-sans font-semibold !text-black ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
       />
     </div>
   );
@@ -1576,6 +1575,30 @@ function Index() {
           })}
         </div>
       </div>
+      {(["friction", "balance"] as const).map((kind) => (
+        <div className="result-sheet" key={kind}>
+          <div className={`result-label ${SIDE_LABEL_CLASS}`}>
+            {kind === "friction" ? "Friction" : "Balance"}
+          </div>
+          <div className="result-grid">
+            {rows.slice(from - 1, to).map((row, offset) => {
+              const index = from - 1 + offset;
+              const black = BLACK_KEYS.has(index + 1);
+              const value = compute(row)[kind];
+              return (
+                <div key={index} className={`result-col ${black ? "is-black" : "is-white"}`}>
+                  <div className="result-strip">{black ? formatResult(value) : null}</div>
+                  <div className={`result-value ${(kind === "balance" || kind === "friction") && !black ? "!overflow-visible" : ""}`}>
+                    <span className={`rv-text !text-center !whitespace-nowrap !overflow-visible ${(kind === "balance" || kind === "friction") && !black ? "!w-[125%] !max-w-none !px-0" : "!w-full !px-0.5"}`}>
+                      {black ? null : formatResult(value)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </section>
   );
 

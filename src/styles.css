@@ -285,17 +285,10 @@
   }
 
   .is-white .weight-input {
-    width: calc(var(--black-col, calc(var(--white-col, 100%) * 0.72)) * 0.85);
+    width: calc(var(--black-col, calc(var(--white-col, 100%) * 0.72)) - 2px);
     margin-right: auto;
     margin-left: auto;
   }
-
-  .is-black .weight-input {
-    width: calc(var(--black-col, 100%) * 0.85);
-    margin-right: auto;
-    margin-left: auto;
-  }
-
 
 
 
@@ -354,11 +347,11 @@
   }
 
   .is-black .weight-input::placeholder {
-    color: #1f2937;
+    color: oklch(0.35 0 0);
   }
 
   .weight-input::placeholder {
-    color: #4b5563;
+    color: var(--muted-foreground);
     font-family: "Work Sans", sans-serif;
     font-size: clamp(0.24rem, 0.32vw, 0.3rem);
     font-style: normal;
