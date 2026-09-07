@@ -1180,10 +1180,11 @@ function Index() {
       moyennesRef.current,
       pdfChartRef.current,
     ] as (HTMLElement | null)[]).filter((el): el is HTMLElement => el !== null);
-    // Page 2 : dessin du clavier avec les 88 valeurs, puis tableau récapitulatif.
-    const page2 = ([mesuresRef.current, pdfRecapRef.current] as (HTMLElement | null)[]).filter(
+    // Page 2 : dessin du clavier avec les 88 valeurs et les 8 lignes de calculs.
+    const page2 = ([mesuresRef.current] as (HTMLElement | null)[]).filter(
       (el): el is HTMLElement => el !== null,
     );
+
 
     if (page1.length === 0) return;
     const filename = buildExportFilename(
@@ -1638,7 +1639,6 @@ function Index() {
     from: number,
     to: number,
     gridRef: (n: HTMLDivElement | null) => void,
-    showResults = false,
   ) => (
     <section
       className="mt-2 flex w-full flex-col items-center"
@@ -1677,42 +1677,14 @@ function Index() {
           })}
         </div>
       </div>
-      {showResults && (["friction", "balance"] as const).map((kind) => (
-        <div className="result-sheet" key={kind}>
-          <div className={`result-label ${SIDE_LABEL_CLASS}`}>
-            {kind === "friction" ? T.friction : T.balance}
-          </div>
-
-          <div className="result-grid">
-            {rows.slice(from - 1, to).map((row, offset) => {
-              const index = from - 1 + offset;
-              const black = BLACK_KEYS.has(index + 1);
-              const value = compute(row)[kind];
-              return (
-                <div key={index} className={`result-col ${black ? "is-black" : "is-white"}`}>
-                  <div className="result-strip">{black ? formatResult(value) : null}</div>
-                  <div className={`result-value ${(kind === "balance" || kind === "friction") && !black ? "!overflow-visible" : ""}`}>
-                    <span className={`rv-text !text-center !whitespace-nowrap !overflow-visible ${(kind === "balance" || kind === "friction") && !black ? "!w-[125%] !max-w-none !px-0" : "!w-full !px-0.5"}`}>
-                      {black ? null : formatResult(value)}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-    </section>
-  );
-
-  /** Tableau récapitulatif des 8 lignes de calcul, réservé à l'export PDF. */
-  const renderResultRows = (from: number, to: number) => (
-    <section className="mt-2 flex w-full flex-col items-center">
+      {/* Lignes de calcul (Friction / Poids d'équilibre) : masquées à l'écran,
+          imbriquées et alignées sous le clavier lors de l'export PDF. */}
       {(["friction", "balance"] as const).map((kind) => (
-        <div className="result-sheet" key={kind}>
+        <div className="result-sheet" data-pdf-only style={{ display: "none" }} key={kind}>
           <div className={`result-label ${SIDE_LABEL_CLASS}`}>
             {kind === "friction" ? T.friction : T.balance}
           </div>
+
           <div className="result-grid">
             {rows.slice(from - 1, to).map((row, offset) => {
               const index = from - 1 + offset;
@@ -1734,6 +1706,7 @@ function Index() {
       ))}
     </section>
   );
+
 
 
   // --- Rendu : page ----------------------------------------------------------------
