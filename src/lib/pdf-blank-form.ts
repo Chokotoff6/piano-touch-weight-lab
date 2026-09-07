@@ -174,6 +174,7 @@ export function generateBlankFormPdf(
   pdf.setFontSize(12);
   pdf.text(isEn ? "KEYS 45 - 88" : "TOUCHES 45 - 88", PAGE_W / 2, 14, { align: "center" });
   drawKeyBlock(45, 88, 24);
+  drawFooter(pdf, lang, PAGE_W, 285);
 
   pdf.save(filename);
 }
@@ -209,7 +210,7 @@ export function generateBlankKeyboardPdf(
     const avail = W - MARGIN * 2;
     const wKey = avail / whites;
     const bKey = wKey * 0.605;
-    const kbH = 62;
+    const kbH = 46;
     const blackH = kbH * 0.62;
 
     let whiteIdx = 0;
@@ -276,13 +277,13 @@ export function generateBlankKeyboardPdf(
   );
   const y = drawIdentity(pdf, meta, lang, 24, W, 40, 90);
   section(1, 22, y + 8);
-  section(23, 44, y + 8 + 78);
+  section(23, 44, y + 68);
 
   pdf.addPage("a4", "landscape");
   pdf.setFontSize(12);
   pdf.text(isEn ? "KEYS 45 - 88" : "TOUCHES 45 - 88", W / 2, 12, { align: "center" });
-  section(45, 66, 24);
-  section(67, 88, 102);
+  section(45, 66, 26);
+  section(67, 88, 96);
   drawFooter(pdf, lang, W, 190);
 
   pdf.save(filename);
