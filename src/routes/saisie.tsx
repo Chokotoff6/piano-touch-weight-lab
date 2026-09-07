@@ -96,7 +96,7 @@ const SAVE_NEW_MESSAGE =
 const ORPHAN_MESSAGE =
   "⚠️ Mesure incomplète : Chaque touche mesurée doit obligatoirement posséder à la fois une valeur Wa et une valeur Wd.";
 const COHERENCE_MESSAGE =
-  "⚠️ Erreur de cohérence : Le poids descendant (Wa) doit toujours être supérieur au poids ascendant (Wd).";
+  "⚠️ Anomalie mécanique : le poids descendant (PD) doit toujours être strictement supérieur au poids remontant (PR).";
 
 function wrapTooltipText(text: string, maxChars: number): string[] {
   const words = text.split(/\s+/);
@@ -1621,7 +1621,7 @@ function Index() {
       {(["friction", "balance"] as const).map((kind) => (
         <div className="result-sheet" key={kind}>
           <div className={`result-label ${SIDE_LABEL_CLASS}`}>
-            {kind === "friction" ? "Friction" : "Balance"}
+            {kind === "friction" ? "F" : en ? "BW" : "PE"}
           </div>
           <div className="result-grid">
             {rows.slice(from - 1, to).map((row, offset) => {
@@ -1978,21 +1978,40 @@ function Index() {
       <Frame
         title={
           <>
-            Mesures poids de touches{" "}
-            <span
-              data-pdf-hide
-              className="!print:hidden font-normal normal-case"
-              style={{ fontFamily: "Arial, sans-serif", fontStyle: "italic", fontSize: "0.7em", color: "#4b5563" }}
-            >
-              (Min. 1 blanche + 1 noire par octave. ex : tous les Do et Do# &gt; shift+tab saute de Do en Do.)
+            {en ? "Static touch weight measurements" : "Mesures poids statiques"}{" "}
+            <span data-pdf-hide className="group relative inline-flex items-center align-middle">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-400 text-[10px] font-bold normal-case text-gray-500">
+                i
+              </span>
+              <span
+                className="pointer-events-none absolute left-5 top-1/2 hidden w-[360px] -translate-y-1/2 rounded-md border border-gray-300 px-3 py-2 text-left text-[13px] font-medium normal-case text-gray-950 shadow-lg group-hover:block"
+                style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
+              >
+                <span className="block">
+                  {en
+                    ? "Compliant input = minimum all C and C#"
+                    : "Saisie conforme = minimum tous les Do et Do#"}
+                </span>
+                <span className="block">
+                  {en ? "Shift+TAB jumps from C to C." : "Shift+TAB saute de Do en Do."}
+                </span>
+              </span>
             </span>
           </>
         }
-        className={weighingMode ? "!mt-[26px] pb-4" : "mt-8 pb-10 !hidden"}
+        className={weighingMode ? "!mt-[100px] pb-4" : "mt-8 pb-10 !hidden"}
         innerRef={(node) => {
           mesuresRef.current = node;
         }}
       >
+        <button
+          type="button"
+          data-pdf-hide
+          onClick={() => setWeighingMode(false)}
+          className="absolute left-1/2 -top-4 z-10 -translate-x-1/2 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+        >
+          {en ? "Edit piano information" : "Modifier Informations piano"}
+        </button>
         <div className="absolute left-[calc(1rem+4rem)] top-12 z-10 -translate-x-1/2 -translate-y-1/2">
           {confirmReset === "rows" && (
             <div className="absolute bottom-full left-1/2 mb-2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
@@ -2017,13 +2036,25 @@ function Index() {
             style={{ transform: "translateY(calc(-50% + 30px))" }}
           >
             <div className="flex items-center !rounded-md !border !border-green-600 !bg-green-100 !px-2.5 !py-1 !shadow-sm">
-              <span className="text-[10px] font-semibold !text-gray-950">Saisie valide</span>
+              <span className="text-[10px] font-semibold !text-gray-950">
+                {en ? "Compliant input" : "Saisie conforme"}
+              </span>
             </div>
           </div>
         )}
-        <div className="mx-auto flex w-full flex-col items-center">
+        <div className="mx-auto flex w-full flex-col items-center justify-center">
           {renderSection(1, 44, gridRef1)}
           {renderSection(45, 88, gridRef2)}
+        </div>
+        <div className="mt-4 flex w-full justify-end pr-2">
+          <button
+            type="button"
+            data-pdf-hide
+            onClick={() => navigate({ to: "/resultats" })}
+            className={`rounded-md border border-input bg-background px-4 py-1.5 text-[0.9rem] font-bold transition-colors hover:bg-accent ${badgeVisible ? "!text-green-600" : "!text-black"}`}
+          >
+            {en ? "Results & charts >" : "Résultats & graphiques >"}
+          </button>
         </div>
       </Frame>
 
