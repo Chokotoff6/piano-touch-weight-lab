@@ -97,11 +97,14 @@ export async function generateLandscapeReport(
   const captures2 = await Promise.all(page2.map(capture));
 
   const pdf = new jsPDF({ orientation: "landscape", format: "a4", unit: "mm" });
-  // Échelle commune aux deux pages : les cadres partagés (Moyennes) gardent
+  const en = getLang() === "en";
+  // Échelle commune aux deux pages : les cadres partagés gardent
   // exactement la même largeur d'une page à l'autre.
   const ratio = Math.min(pageRatio(captures1), pageRatio(captures2));
   drawPage(pdf, captures1, ratio);
+  drawFooter(pdf, 1, 2, en);
   pdf.addPage("a4", "landscape");
   drawPage(pdf, captures2, ratio);
+  drawFooter(pdf, 2, 2, en);
   pdf.save(filename);
 }
