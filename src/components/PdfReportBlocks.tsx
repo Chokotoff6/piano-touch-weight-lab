@@ -89,7 +89,7 @@ export function PdfComparisonChart({
   return (
     <div className="w-full bg-white">
       <div className="mb-1 text-[13px] font-bold text-black">
-        Analyse comparative des 88 touches
+        Analyse comparative
         {frictionTarget !== null && ` — friction cible usine ${frictionTarget} g (± 1 g)`}
       </div>
       <div style={{ width: 960, height: 420 }}>
@@ -110,7 +110,7 @@ export function PdfComparisonChart({
             <Line
               type="monotone"
               dataKey="wa"
-              name="Downweight (Wa)"
+              name="Poids descendant"
               stroke="#1d4ed8"
               dot={false}
               strokeWidth={1.6}
@@ -120,7 +120,7 @@ export function PdfComparisonChart({
             <Line
               type="monotone"
               dataKey="wd"
-              name="Upweight (Wd)"
+              name="Poids remontant"
               stroke="#b91c1c"
               dot={false}
               strokeWidth={1.6}
@@ -140,7 +140,7 @@ export function PdfComparisonChart({
             <Line
               type="monotone"
               dataKey="balance"
-              name="Balance"
+              name="Poids d'équilibre"
               stroke="#7c3aed"
               dot={false}
               strokeWidth={1.6}

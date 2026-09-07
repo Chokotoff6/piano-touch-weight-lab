@@ -140,8 +140,8 @@ function drawCompliance(pdf: jsPDF, lang: "fr" | "en", pageWidth: number): void 
     ? "Input form compliant for import"
     : "Formulaire de saisie conforme pour import";
   const tip = isEn
-    ? "Compliance requirements for import: 1. All 88 keys must be filled out. 2. Only numerical data (Wa and Wd) allowed."
-    : "Conditions de conformite pour l'importation : 1. Remplissage obligatoire des 88 touches. 2. Saisie exclusive de valeurs numeriques (Wa et Wd).";
+    ? "Compliance requirements for import: 1. All 88 keys must be filled out. 2. Only numerical data (DW and UW) allowed."
+    : "Conditions de conformite pour l'importation : 1. Remplissage obligatoire des 88 touches. 2. Saisie exclusive de valeurs numeriques (PD et PR).";
 
   const badge = new AcroFormTextField();
   badge.fieldName = "compliance_badge";
@@ -225,8 +225,8 @@ export function generateBlankFormPdf(
       const x = MARGIN + c * colWidth;
       pdf.text(isEn ? "Key" : "Touche", x, top - 2);
       pdf.text(isEn ? "Note" : "Note", x + 13, top - 2);
-      pdf.text("Wa (g)", x + 32, top - 2);
-      pdf.text("Wd (g)", x + 60, top - 2);
+      pdf.text(lang === "en" ? "DW (g)" : "PD (g)", x + 32, top - 2);
+      pdf.text(lang === "en" ? "UW (g)" : "PR (g)", x + 60, top - 2);
     }
     for (let i = from; i <= to; i++) {
       const idx = i - from;
@@ -324,8 +324,8 @@ export function generateBlankKeyboardPdf(
       pdf.setTextColor(g.black ? 120 : 205);
       pdf.setFillColor(255, 255, 255);
       if (g.black) pdf.rect(fx, yWa, fw, fh * 2 + 1.2, "F");
-      pdf.text("Wa", fx + fw / 2, yWa + fh - 1.4, { align: "center" });
-      pdf.text("Wd", fx + fw / 2, yWd + fh - 1.4, { align: "center" });
+      pdf.text(lang === "en" ? "DW" : "PD", fx + fw / 2, yWa + fh - 1.4, { align: "center" });
+      pdf.text(lang === "en" ? "UW" : "PR", fx + fw / 2, yWd + fh - 1.4, { align: "center" });
       pdf.setTextColor(0);
       textField(pdf, `wa_${k}`, fx, yWa, fw, fh, "", 5);
       textField(pdf, `wd_${k}`, fx, yWd, fw, fh, "", 5);
