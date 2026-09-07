@@ -589,11 +589,6 @@ function Index() {
     [rows],
   );
 
-  /** Vrai dès qu'une erreur de cohérence Wa <= Wd est présente sur le clavier. */
-  const hasConsistencyErrors = useMemo(
-    () => Object.values(errors).some((m) => m === COHERENCE_MESSAGE),
-    [errors],
-  );
 
   /**
    * Validité instantanée du clavier (calcul brut, recalculé à chaque frappe) :
