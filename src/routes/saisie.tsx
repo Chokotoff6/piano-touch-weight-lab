@@ -2264,8 +2264,8 @@ Moyennes{" "}
               ).flatMap(({ key, label }) =>
                 (
                   [
-                    { id: "first", range: en ? "Keys 1-44" : "Touches 1-44" },
-                    { id: "second", range: en ? "Keys 45-88" : "Touches 45-88" },
+                    { id: "first", range: en ? "White keys" : "Touches blanches" },
+                    { id: "second", range: en ? "Black keys" : "Touches noires" },
                   ] as const
                 ).map(({ id, range }) => (
                   <tr key={`${key}-${id}`}>
