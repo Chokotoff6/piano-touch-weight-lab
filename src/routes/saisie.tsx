@@ -2221,7 +2221,7 @@ Moyennes{" "}
           ))}
         </div>
       </Frame>
-        <div ref={pdfChartRef} className="mt-4 bg-white">
+        <div ref={pdfChartRef} className="!visible mt-4 bg-white">
           <PdfComparisonChart data={chartData} frictionTarget={profile.frictionTarget} />
         </div>
       </div>
