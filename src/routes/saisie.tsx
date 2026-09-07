@@ -1422,11 +1422,35 @@ function Index() {
 
     const onReset = () => setConfirmReset("rows");
 
+    const blankMeta = () => ({
+      marque: info["marque"] ?? "",
+      modele: info["modele"] ?? "",
+      serial: (info["sn_prefix"] ?? "") + (info["sn_num"] ?? "") + (info["sn_suffix"] ?? ""),
+      typePiano: info["type_piano"] ?? "",
+      pays: info["pays"] ?? "",
+      ville: info["ville"] ?? "",
+      entretien: info["entretien"] ?? "",
+      usage: info["usage_level"] ?? "",
+      modifications: info["remarques"] ?? "",
+      zone: climateZone !== null ? String(climateZone) : "",
+      annee: info["fabrication"] ?? "",
+    });
+
     const onBlankPdf = () => {
       const lang = getLang();
       generateBlankFormPdf(
         lang === "en" ? "BLANK_ENTRY_FORM.pdf" : "FORMULAIRE_SAISIE_VIERGE.pdf",
         lang,
+        blankMeta(),
+      );
+    };
+
+    const onBlankKeyboardPdf = () => {
+      const lang = getLang();
+      generateBlankKeyboardPdf(
+        lang === "en" ? "BLANK_KEYBOARD_FORM.pdf" : "FORMULAIRE_CLAVIER_VIERGE.pdf",
+        lang,
+        blankMeta(),
       );
     };
 
@@ -1435,6 +1459,8 @@ function Index() {
       "piano-export-csv": exportCsvOnly,
       "piano-export-pdf": onPdf,
       "piano-export-blank-pdf": onBlankPdf,
+      "piano-export-blank-keyboard-pdf": onBlankKeyboardPdf,
+
       "piano-compare-guard": onCompareGuard,
       "piano-reset": onReset,
       "piano-import-csv": () => importInputRef.current?.click(),
