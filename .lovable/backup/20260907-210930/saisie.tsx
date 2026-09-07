@@ -2126,16 +2126,12 @@ function Index() {
         </div>
       </Frame>
 
-      {/* Conteneur hors écran dédié à la capture PDF (largeur bornée à 1024 px).
-          Masqué à l'écran (hors champ + invisible) mais reste dans le DOM et
-          redevient visible/statique à l'impression. Les blocs capturés par
-          html2canvas portent `!visible` pour neutraliser l'héritage de
-          `invisible` du conteneur (sinon la capture sort blanche). */}
+      {/* Conteneur hors écran dédié à la capture PDF (largeur bornée à 1024 px). */}
       <div
         aria-hidden="true"
-        className="absolute -left-[9999px] top-0 invisible pointer-events-none w-[1024px] max-w-[1024px] bg-white p-4 print:visible print:static"
+        className="pointer-events-none fixed left-[-10000px] top-0 -z-10 w-[1024px] max-w-[1024px] bg-white p-4"
       >
-        <div ref={pdfInfoRef} className="!visible bg-white">
+        <div ref={pdfInfoRef} className="bg-white">
           <PdfInfoTable
             info={{
               marque: info["marque"] ?? "",
@@ -2170,7 +2166,7 @@ Moyennes{" "}
             </span>
           </>
         }
-        className="!visible !p-3 !pt-4 bg-white"
+        className="!p-3 !pt-4 bg-white"
         innerRef={(node) => {
           moyennesRef.current = node;
         }}
@@ -2221,7 +2217,7 @@ Moyennes{" "}
           ))}
         </div>
       </Frame>
-        <div ref={pdfChartRef} className="!visible mt-4 bg-white">
+        <div ref={pdfChartRef} className="mt-4 bg-white">
           <PdfComparisonChart data={chartData} frictionTarget={profile.frictionTarget} />
         </div>
       </div>
