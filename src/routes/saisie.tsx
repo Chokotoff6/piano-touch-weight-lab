@@ -2174,10 +2174,10 @@ Moyennes{" "}
         <div className="grid grid-cols-4 mt-0.5 !gap-2.5">
           {(
             [
-              { key: "wa", label: "Poids descendant (Wa)" },
-              { key: "wd", label: "Poids ascendant (Wd)" },
-              { key: "friction", label: "Friction" },
-              { key: "balance", label: "Balance" },
+              { key: "wa", label: en ? "Downweight (DW)" : "Poids descendant (PD)" },
+              { key: "wd", label: en ? "Upweight (UW)" : "Poids remontant (PR)" },
+              { key: "friction", label: "Friction (F)" },
+              { key: "balance", label: en ? "Balance weight (BW)" : "Poids d’équilibre (PE)" },
             ] as const
           ).map(({ key, label }) => (
             <div key={key} className="rounded bg-muted px-2 py-1.5 text-center">
