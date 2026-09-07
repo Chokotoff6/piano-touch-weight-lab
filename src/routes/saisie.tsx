@@ -840,7 +840,8 @@ function Index() {
   // --- Saisie des poids ---------------------------------------------------------
 
   /** Conserve les dixièmes présents dans les CSV et dans la saisie clavier. */
-  const cleanWeight = (value: string) => value.replace(",", ".").replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+  // CONDITION 5 : bridage strict à 2 chiffres, aucune décimale acceptée.
+  const cleanWeight = (value: string) => value.replace(/[^0-9]/g, "").slice(0, 2);
 
   const parseWeight = (value: string): number | null => {
     const cleaned = cleanWeight(value);
@@ -936,6 +937,18 @@ function Index() {
     if (num === null) {
       setErrors((prev) => ({ ...prev, [key]: "Valeur invalide (5-99, nombre entier)" }));
       return;
+    }
+    // CONDITION 3 : plage mécanique du poids descendant + alerte pédale au-delà de 60 g.
+    if (field === "wa") {
+      if (num < 30 || num > 80) {
+        setErrors((prev) => ({ ...prev, [key]: PD_RANGE_MESSAGE }));
+        setRowField(index, field, num.toString());
+        return;
+      }
+      if (num > 60 && !hidePedalAlert) {
+        pedalCount.current += 1;
+        setPedalAlert(true);
+      }
     }
     clearError(key);
     checkCoherence(index, setRowField(index, field, num.toString()));
