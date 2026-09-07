@@ -2185,9 +2185,19 @@ Moyennes{" "}
           moyennesRef.current = node;
         }}
       >
-        <span className="!absolute !-top-3.5 !left-1/2 !-translate-x-1/2 !whitespace-nowrap !bg-card !px-2 !text-gray-950 !font-medium" style={{ fontSize: "0.83rem" }}>
-          {info["marque"]} {info["modele"]} ({info["fabrication"]?.trim() || "—"}) -  SN {info["sn_num"]}  /  Mesure {new Date().toISOString().slice(0, 10)}
+        <span className="!absolute !-top-8 !left-1/2 !-translate-x-1/2 !whitespace-nowrap !bg-card !px-2 !text-center !text-gray-950 !font-medium" style={{ fontSize: "0.83rem", lineHeight: 1.25 }}>
+          <span className="block">
+            {info["marque"]} {info["modele"]} ({info["fabrication"]?.trim() || "—"}) - SN {info["sn_num"]}
+          </span>
+          <span className="block">
+            {en ? "Measured" : "Mesure"} {formatLocalDateTime(new Date())}
+          </span>
+          <span className="block !text-orange-600">
+            - {measuredCounts.white} {en ? "White" : "Blanches"} / {measuredCounts.black}{" "}
+            {en ? "Black" : "Noires"}
+          </span>
         </span>
+
         <div className="grid grid-cols-4 mt-0.5 !gap-2.5">
           {(
             [
