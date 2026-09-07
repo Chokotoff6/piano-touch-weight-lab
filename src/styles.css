@@ -285,10 +285,17 @@
   }
 
   .is-white .weight-input {
-    width: calc(var(--black-col, calc(var(--white-col, 100%) * 0.72)) - 2px);
+    width: calc(var(--black-col, calc(var(--white-col, 100%) * 0.72)) * 0.85);
     margin-right: auto;
     margin-left: auto;
   }
+
+  .is-black .weight-input {
+    width: calc(var(--black-col, 100%) * 0.85);
+    margin-right: auto;
+    margin-left: auto;
+  }
+
 
 
 
