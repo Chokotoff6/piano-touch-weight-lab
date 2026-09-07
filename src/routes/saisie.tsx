@@ -646,6 +646,13 @@ function Index() {
     }, 50);
   }, []);
 
+  /** FOCUS INITIAL : à l'arrivée / au rechargement, le PD de la touche 1 (La 0) est actif. */
+  useEffect(() => {
+    focusFirstWeight();
+  }, [focusFirstWeight]);
+
+
+
   /** Validation consciente de la fiche : alerte si incomplète, sinon mode pesée. */
   const onValidateWeighing = useCallback(() => {
     if (!requiredSheetFieldsComplete) {
