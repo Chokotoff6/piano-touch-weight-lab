@@ -589,6 +589,11 @@ function Index() {
     [rows],
   );
 
+  /** Vrai dès qu'une erreur de cohérence Wa <= Wd est présente sur le clavier. */
+  const hasConsistencyErrors = useMemo(
+    () => Object.values(errors).some((m) => m === COHERENCE_MESSAGE),
+    [errors],
+  );
 
   /**
    * Validité instantanée du clavier (calcul brut, recalculé à chaque frappe) :
@@ -599,51 +604,25 @@ function Index() {
    * (voir badgeVisible) : il ne s'allume qu'après 0,5 s sans aucun cadre rouge.
    */
   const keyboardValid = useMemo(() => {
-    const num = (raw: string): number | null => {
-      const cleaned = (raw ?? "").replace(/[^\d]/g, "");
-      if (cleaned === "") return null;
-      const n = Number(cleaned);
-      return Number.isFinite(n) ? n : null;
-    };
-    const reject = (reason: string) => {
-      console.log("[Saisie conforme] BLOQUÉ :", reason);
-      return false;
-    };
-
-    // CONDITION 2 : binôme obligatoire (PD et PR sur la même touche).
-    const orphan = rows.findIndex(
-      (r) => (r.wa.trim() !== "") !== (r.wd.trim() !== ""),
-    );
-    if (orphan >= 0) return reject(`Touche ${orphan + 1} : une seule des deux valeurs (PD/PR) est saisie.`);
-
-    if (!hasAnyMeasurement(rows)) return reject("Aucune mesure saisie.");
-
+    if (orphanKeys.length > 0) return false; // TEST 1
+    if (hasConsistencyErrors) return false;
+    if (!hasAnyMeasurement(rows)) return false;
+    if (octaveGaps.length > 0) return false; // TEST 2
     // CONDITION 1 : tous les Do et tous les Do# saisis (Do 88 toléré vide).
-    const sampled = [...C_KEYS, ...C_SHARP_KEYS].filter((k) => k !== 88).sort((a, b) => a - b);
-    const missing = sampled.filter((k) => {
+    const sampled = [...C_KEYS, ...C_SHARP_KEYS].filter((k) => k !== 88);
+    const missing = sampled.some((k) => {
       const row = rows[k - 1];
       return !row || row.wa.trim() === "" || row.wd.trim() === "";
     });
-    if (missing.length > 0)
-      return reject(`Do / Do# manquants aux touches : ${missing.join(", ")}.`);
-
-    for (let i = 0; i < rows.length; i += 1) {
-      const row = rows[i]!;
-      if (row.wa.trim() === "" && row.wd.trim() === "") continue;
-      const pd = num(row.wa);
-      const pr = num(row.wd);
-      if (pd === null || pr === null)
-        return reject(`Touche ${i + 1} : valeur non numérique (PD="${row.wa}", PR="${row.wd}").`);
-      // CONDITION 3 : plage mécanique du poids descendant.
-      if (pd < 30 || pd > 80)
-        return reject(`Touche ${i + 1} : PD=${pd} hors plage 30-80.`);
-      // CONDITION 4 : PD strictement supérieur à PR.
-      if (pd <= pr) return reject(`Touche ${i + 1} : PD (${pd}) doit être supérieur à PR (${pr}).`);
-    }
-
-    console.log("[Saisie conforme] OK — toutes les conditions sont remplies.");
+    if (missing) return false;
+    // CONDITION 3 : le poids descendant reste dans la plage mécanique 30-80 g.
+    const outOfRange = rows.some((row) => {
+      const value = Number(row.wa);
+      return row.wa.trim() !== "" && Number.isFinite(value) && (value < 30 || value > 80);
+    });
+    if (outOfRange) return false;
     return true;
-  }, [rows]);
+  }, [orphanKeys.length, hasConsistencyErrors, rows, octaveGaps.length]);
 
   /**
    * Badge vert retardé : extinction instantanée dès qu'un cadre rouge apparaît,
@@ -675,14 +654,12 @@ function Index() {
   const remarquesRequired = info["entretien"] === "Modifications importantes";
   const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
 
-  /** Téléporte le curseur dans la première case PD (Touche 1 / La0), si elle est vide. */
+  /** Téléporte le curseur dans la première case Wa (Touche 1 / La0). */
   const focusFirstWeight = useCallback(() => {
-    if ((rows[0]?.wa ?? "").trim() !== "") return;
     setTimeout(() => {
       inputs.current["0-wa"]?.focus({ preventScroll: true });
       inputs.current["0-wa"]?.select();
     }, 50);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /** Au chargement de la page en mode pesée, le curseur se place sur le PD du La 0. */
@@ -1655,7 +1632,7 @@ function Index() {
       {(["friction", "balance"] as const).map((kind) => (
         <div className="result-sheet" key={kind}>
           <div className={`result-label ${SIDE_LABEL_CLASS}`}>
-            {kind === "friction" ? "Friction" : en ? "Balance Weight" : "Poids d'équilibre"}
+            {kind === "friction" ? "F" : en ? "BW" : "PE"}
           </div>
           <div className="result-grid">
             {rows.slice(from - 1, to).map((row, offset) => {
