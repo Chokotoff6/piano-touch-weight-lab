@@ -397,6 +397,10 @@ function Index() {
   const [badgeVisible, setBadgeVisible] = useState(false);
   const badgeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
+  /** Miroir toujours à jour des 88 touches (évite les closures périmées). */
+  const rowsRef = useRef<Row[]>(EMPTY);
+  /** Miroir du mode pesée, lisible depuis les setTimeout. */
+  const weighingModeRef = useRef(false);
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
   const fabricationTouched = useRef(false);
   const [isGeocoding, setIsGeocoding] = useState(false);
