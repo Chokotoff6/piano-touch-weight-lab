@@ -24,7 +24,7 @@ import {
 import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
 import { buildCsv, buildExportFilename, downloadCsv, formatLocalDateTime } from "@/lib/export-csv";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
-import { getLang } from "@/data/translations";
+import { getLang, useLang } from "@/data/translations";
 import { generateLandscapeReport } from "@/lib/pdf-report";
 import { generateBlankFormPdf, generateBlankKeyboardPdf } from "@/lib/pdf-blank-form";
 
@@ -68,6 +68,17 @@ const BLACK_KEYS = new Set([
 const NATURAL_KEY_BREAKS = new Set([3, 10, 15, 22, 27, 34, 39, 46, 51, 58, 63, 70, 75, 82, 87]);
 
 const C_KEYS = new Set([4, 16, 28, 40, 52, 64, 76, 88]);
+
+/** Do# de chaque octave : échantillonnage minimal exigé avec les Do. */
+const C_SHARP_KEYS = new Set([5, 17, 29, 41, 53, 65, 77]);
+
+const PD_RANGE_MESSAGE =
+  "⚠️ Le poids descendant (PD) doit être compris entre 30 et 80 grammes.";
+const PEDAL_MESSAGE_FR =
+  "Mesure anormalement élevée : assurez-vous d'enfoncer la pédale de sustain lors de la mesure";
+const PEDAL_MESSAGE_EN =
+  "Unusually high reading: make sure the sustain pedal is pressed while measuring";
+const PEDAL_HIDE_KEY = "ptw_hide_pedal_alert";
 
 type Row = { wa: string; wd: string };
 
@@ -414,8 +425,16 @@ function Index() {
   const mesuresRef = useRef<HTMLElement | null>(null);
 
   const navigate = useNavigate();
+  const lang = useLang();
+  const en = lang === "en";
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
+  /** Alerte pédale de sustain (PD > 60) et son option « ne plus afficher ». */
+  const [pedalAlert, setPedalAlert] = useState(false);
+  const pedalCount = useRef(0);
+  const [hidePedalAlert, setHidePedalAlert] = useState(false);
+  /** Valeur mémorisée avant effacement automatique au clic dans une case. */
+  const prevWeight = useRef<Record<string, string>>({});
 
   // --- Persistance locale (filet de sécurité) -------------------------------
 
@@ -589,6 +608,19 @@ function Index() {
     if (hasConsistencyErrors) return false;
     if (!hasAnyMeasurement(rows)) return false;
     if (octaveGaps.length > 0) return false; // TEST 2
+    // CONDITION 1 : tous les Do et tous les Do# saisis (Do 88 toléré vide).
+    const sampled = [...C_KEYS, ...C_SHARP_KEYS].filter((k) => k !== 88);
+    const missing = sampled.some((k) => {
+      const row = rows[k - 1];
+      return !row || row.wa.trim() === "" || row.wd.trim() === "";
+    });
+    if (missing) return false;
+    // CONDITION 3 : le poids descendant reste dans la plage mécanique 30-80 g.
+    const outOfRange = rows.some((row) => {
+      const value = Number(row.wa);
+      return row.wa.trim() !== "" && Number.isFinite(value) && (value < 30 || value > 80);
+    });
+    if (outOfRange) return false;
     return true;
   }, [orphanKeys.length, hasConsistencyErrors, rows, octaveGaps.length]);
 
