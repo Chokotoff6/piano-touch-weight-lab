@@ -178,7 +178,20 @@ export function generateBlankFormPdf(
   pdf.save(filename);
 }
 
-/** Option 4 : formulaire vierge, dessin graphique du clavier (2 pages paysage). */
+const FOOTER_FR =
+  "Une fois vos mesures completees, glissez-deposez ce fichier directement sur l'application pour generer instantanement vos graphiques d'analyse et vous comparer au Cloud mondial.";
+const FOOTER_EN =
+  "Once your measurements are complete, drag and drop this file directly into the application to instantly generate your analysis charts and compare yourself to the global Cloud.";
+
+function drawFooter(pdf: jsPDF, lang: "fr" | "en", pageWidth: number, y: number) {
+  pdf.setFontSize(8);
+  pdf.setTextColor(60);
+  const lines = pdf.splitTextToSize(lang === "en" ? FOOTER_EN : FOOTER_FR, pageWidth - MARGIN * 2);
+  pdf.text(lines, pageWidth / 2, y, { align: "center" });
+  pdf.setTextColor(0);
+}
+
+/** Option 4 : formulaire vierge, dessin graphique du clavier (4 sections / 2 pages). */
 export function generateBlankKeyboardPdf(
   filename: string,
   lang: "fr" | "en" = "fr",
@@ -188,55 +201,70 @@ export function generateBlankKeyboardPdf(
   const W = 297;
   const pdf = new jsPDF({ orientation: "landscape", format: "a4", unit: "mm" });
 
+  // Dessin miroir de l'UI : blanches pleine hauteur, noires 62 % centrees
+  // sur la separation, deux casiers de saisie empiles dans le corps.
   const drawKeyboard = (from: number, to: number, top: number) => {
     const keys = Array.from({ length: to - from + 1 }, (_, i) => from + i);
     const whites = keys.filter((k) => !isBlackKey(k)).length;
     const avail = W - MARGIN * 2;
     const wKey = avail / whites;
-    const bKey = wKey * 0.6;
-    const kbH = 34;
+    const bKey = wKey * 0.605;
+    const kbH = 62;
+    const blackH = kbH * 0.62;
 
     let whiteIdx = 0;
-    const centers = new Map<number, number>();
-    // Touches blanches
-    pdf.setDrawColor(60);
-    pdf.setLineWidth(0.2);
+    const geo = new Map<number, { x: number; w: number; black: boolean }>();
+    pdf.setDrawColor(40);
+    pdf.setLineWidth(0.25);
     for (const k of keys) {
       if (isBlackKey(k)) continue;
       const x = MARGIN + whiteIdx * wKey;
       pdf.setFillColor(255, 255, 255);
       pdf.rect(x, top, wKey, kbH, "FD");
-      centers.set(k, x + wKey / 2);
+      geo.set(k, { x, w: wKey, black: false });
       whiteIdx++;
     }
-    // Touches noires
     whiteIdx = 0;
     for (const k of keys) {
       if (!isBlackKey(k)) {
         whiteIdx++;
         continue;
       }
-      const boundary = MARGIN + whiteIdx * wKey;
-      const x = boundary - bKey / 2;
+      const x = MARGIN + whiteIdx * wKey - bKey / 2;
       pdf.setFillColor(20, 20, 20);
-      pdf.rect(x, top, bKey, kbH * 0.62, "F");
-      centers.set(k, boundary);
+      pdf.rect(x, top, bKey, blackH, "F");
+      geo.set(k, { x, w: bKey, black: true });
     }
 
-    // Numéros, notes et champs de saisie sous le clavier
-    const labelY = top + kbH + 3;
+    // Casiers de saisie Wa / Wd dans le corps de chaque touche
+    const fh = 5;
     for (const k of keys) {
-      const cx = centers.get(k)!;
+      const g = geo.get(k)!;
+      const fw = Math.max(g.w - 1, 3.4);
+      const fx = g.x + (g.w - fw) / 2;
+      const yWa = g.black ? top + blackH - fh * 2 - 2.4 : top + kbH - fh * 2 - 6;
+      const yWd = yWa + fh + 1.2;
+      // Repere textuel gris tres clair, visible sous le champ vide
       pdf.setFontSize(5);
+      pdf.setTextColor(g.black ? 120 : 205);
+      pdf.setFillColor(255, 255, 255);
+      if (g.black) pdf.rect(fx, yWa, fw, fh * 2 + 1.2, "F");
+      pdf.text("Wa", fx + fw / 2, yWa + fh - 1.4, { align: "center" });
+      pdf.text("Wd", fx + fw / 2, yWd + fh - 1.4, { align: "center" });
       pdf.setTextColor(0);
-      pdf.text(String(k), cx, labelY, { align: "center" });
-      pdf.text(noteName(k, lang), cx, labelY + 3, { align: "center" });
-      textField(pdf, `wa_${k}`, cx - wKey / 2 + 0.3, labelY + 4.5, wKey - 0.6, 5, "", 5);
-      textField(pdf, `wd_${k}`, cx - wKey / 2 + 0.3, labelY + 10, wKey - 0.6, 5, "", 5);
+      textField(pdf, `wa_${k}`, fx, yWa, fw, fh, "", 5);
+      textField(pdf, `wd_${k}`, fx, yWd, fw, fh, "", 5);
+      // Numero de touche sous le clavier
+      pdf.setFontSize(5);
+      pdf.text(String(k), g.x + g.w / 2, top + kbH + 3, { align: "center" });
     }
-    pdf.setFontSize(7);
-    pdf.text("Wa", MARGIN - 4, labelY + 8.2, { align: "right" });
-    pdf.text("Wd", MARGIN - 4, labelY + 13.7, { align: "right" });
+  };
+
+  const section = (from: number, to: number, top: number) => {
+    pdf.setFontSize(8);
+    pdf.setTextColor(0);
+    pdf.text(isEn ? `Keys ${from} - ${to}` : `Touches ${from} - ${to}`, MARGIN, top - 2);
+    drawKeyboard(from, to, top);
   };
 
   header(
@@ -247,14 +275,15 @@ export function generateBlankKeyboardPdf(
     W,
   );
   const y = drawIdentity(pdf, meta, lang, 24, W, 40, 90);
-  pdf.setFontSize(9);
-  pdf.text(isEn ? "Keys 1 - 44" : "Touches 1 - 44", MARGIN, y + 4);
-  drawKeyboard(1, 44, y + 8);
+  section(1, 22, y + 8);
+  section(23, 44, y + 8 + 78);
 
   pdf.addPage("a4", "landscape");
   pdf.setFontSize(12);
-  pdf.text(isEn ? "KEYS 45 - 88" : "TOUCHES 45 - 88", W / 2, 14, { align: "center" });
-  drawKeyboard(45, 88, 24);
+  pdf.text(isEn ? "KEYS 45 - 88" : "TOUCHES 45 - 88", W / 2, 12, { align: "center" });
+  section(45, 66, 24);
+  section(67, 88, 102);
+  drawFooter(pdf, lang, W, 190);
 
   pdf.save(filename);
 }
