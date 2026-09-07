@@ -783,6 +783,36 @@ function Index() {
     }, 3000);
   };
 
+  /** Alerte contextuelle ancrée sur une cellule précise. */
+  const showAnchoredAlert = (index: number, field: "wa" | "wd", text: string) => {
+    if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
+    const el = inputs.current[`${index}-${field}`];
+    const r = el?.getBoundingClientRect();
+    setBlockAnchor({
+      x: r ? r.right + 8 : window.innerWidth / 2 - 144,
+      y: r ? r.top : 120,
+      text,
+    });
+    blockAnchorTimeout.current = setTimeout(() => {
+      setBlockAnchor(null);
+      blockAnchorTimeout.current = null;
+    }, 3000);
+  };
+
+  /** CONDITION 3 : FF « pédale de sustain » dès qu'un PD dépasse 60 g. */
+  const triggerPdHighAlert = (index: number) => {
+    if (hidePdHigh) return;
+    pdHighCount.current += 1;
+    const el = inputs.current[`${index}-wa`];
+    const r = el?.getBoundingClientRect();
+    setPdHighAlert({
+      x: r ? r.right + 8 : window.innerWidth / 2 - 160,
+      y: r ? r.top : 120,
+      offer: pdHighCount.current >= 2,
+    });
+  };
+
+
   // --- Saisie des informations générales ---------------------------------------
 
   const markDirty = () => {
