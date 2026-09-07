@@ -1612,7 +1612,12 @@ function Index() {
 
   // --- Rendu : une section de 44 touches -----------------------------------------
 
-  const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
+  const renderSection = (
+    from: number,
+    to: number,
+    gridRef: (n: HTMLDivElement | null) => void,
+    showResults = false,
+  ) => (
     <section
       className="mt-2 flex w-full flex-col items-center"
       aria-label={`Touches ${from} à ${to}`}
@@ -1620,25 +1625,12 @@ function Index() {
       <div className="technical-sheet">
         <div className={`technical-labels ${SIDE_LABEL_CLASS}`} aria-hidden="true">
           <div className="label-key" />
-          <div className="label-wa" title="The minimum weight required to make the key move down.">
-            Poids Desc. (Wa)
-          </div>
-          <div className="label-wd" title="The maximum weight the key can lift when returning up.">
-            Poids Asc. (Wd)
-          </div>
-          <div
-            className="label-wa-white"
-            title="The minimum weight required to make the key move down."
-          >
-            Poids Desc. (Wa)
-          </div>
-          <div
-            className="label-wd-white"
-            title="The maximum weight the key can lift when returning up."
-          >
-            Poids Asc. (Wd)
-          </div>
+          <div className="label-wa">{T.pd}</div>
+          <div className="label-wd">{T.pr}</div>
+          <div className="label-wa-white">{T.pd}</div>
+          <div className="label-wd-white">{T.pr}</div>
         </div>
+
         <div className="piano-grid" ref={gridRef}>
           {rows.slice(from - 1, to).map((row, offset) => {
             const index = from - 1 + offset;
