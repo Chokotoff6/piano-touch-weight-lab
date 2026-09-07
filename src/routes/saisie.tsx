@@ -84,9 +84,15 @@ const SAVE_UPDATE_MESSAGE =
 const SAVE_NEW_MESSAGE =
   "⚠️ Nouvelle session de suivi chronologique créée avec succès. Cette fiche historique est archivée de manière étanche dans la base de données cloud pour vos futures comparaisons.";
 const ORPHAN_MESSAGE =
-  "⚠️ Mesure incomplète : Chaque touche mesurée doit obligatoirement posséder à la fois une valeur Wa et une valeur Wd.";
+  "⚠️ Mesure incomplète : chaque touche mesurée doit obligatoirement posséder à la fois un Poids descendant (PD) et un Poids remontant (PR).";
 const COHERENCE_MESSAGE =
-  "⚠️ Erreur de cohérence : Le poids descendant (Wa) doit toujours être supérieur au poids ascendant (Wd).";
+  "⚠️ Anomalie mécanique : le Poids descendant (PD) doit toujours être strictement supérieur au Poids remontant (PR).";
+const PD_RANGE_MESSAGE =
+  "⚠️ Valeur hors limites : le Poids descendant (PD) doit être compris entre 30 et 80 grammes.";
+const PD_HIGH_MESSAGE =
+  "Mesure anormalement élevée : assurez-vous d'enfoncer la pédale de sustain lors de la mesure";
+const PD_HIGH_HIDE_KEY = "ptw_hide_pd_high_alert";
+
 
 function wrapTooltipText(text: string, maxChars: number): string[] {
   const words = text.split(/\s+/);
