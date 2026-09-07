@@ -611,56 +611,50 @@ function Index() {
    * (voir badgeVisible) : il ne s'allume qu'après 0,5 s sans aucun cadre rouge.
    */
   const keyboardValid = useMemo(() => {
-    const clean = (raw: unknown): string => String(raw ?? "").trim();
-    const num = (raw: unknown): number | null => {
-      const cleaned = clean(raw).replace(",", ".");
-      if (!cleaned) return null;
+    const num = (raw: string): number | null => {
+      const cleaned = (raw ?? "").replace(/[^\d]/g, "");
+      if (cleaned === "") return null;
       const n = Number(cleaned);
       return Number.isFinite(n) ? n : null;
     };
+    const reject = (reason: string) => {
+      console.log("[Saisie conforme] BLOQUÉ :", reason);
+      return false;
+    };
 
-    const parsedRows = rows.map((row) => ({
-      pd: num(row.wa),
-      pr: num(row.wd),
-      hasPd: Boolean(clean(row.wa)),
-      hasPr: Boolean(clean(row.wd)),
-    }));
+    // CONDITION 2 : binôme obligatoire (PD et PR sur la même touche).
+    const orphan = rows.findIndex(
+      (r) => (r.wa.trim() !== "") !== (r.wd.trim() !== ""),
+    );
+    if (orphan >= 0) return reject(`Touche ${orphan + 1} : une seule des deux valeurs (PD/PR) est saisie.`);
 
-    // CONDITION 1 : chaque mesure présente forme un binôme PD/PR.
-    const cond1 = parsedRows.every((row) => row.hasPd === row.hasPr);
+    if (!hasAnyMeasurement(rows)) return reject("Aucune mesure saisie.");
 
-    // CONDITION 2 : tous les Do et Do# requis sont renseignés.
+    // CONDITION 1 : tous les Do et tous les Do# saisis (Do 88 toléré vide).
     const sampled = [...C_KEYS, ...C_SHARP_KEYS].filter((k) => k !== 88).sort((a, b) => a - b);
-    const cond2 = sampled.every((key) => {
-      const row = parsedRows[key - 1];
-      return Boolean(row?.hasPd && row.hasPr);
+    const missing = sampled.filter((k) => {
+      const row = rows[k - 1];
+      return !row || row.wa.trim() === "" || row.wd.trim() === "";
     });
+    if (missing.length > 0)
+      return reject(`Do / Do# manquants aux touches : ${missing.join(", ")}.`);
 
-    const measuredRows = parsedRows.filter((row) => row.hasPd || row.hasPr);
-
-    // CONDITION 3 : toutes les valeurs présentes sont numériques et PD est dans la plage 30–80.
-    const cond3 = measuredRows.every(
-      (row) => row.pd !== null && row.pr !== null && row.pd >= 30 && row.pd <= 80,
-    );
-
-    // CONDITION 4 : comparaison exclusivement numérique, jamais lexicographique.
-    const cond4 = measuredRows.every(
-      (row) => row.pd !== null && row.pr !== null && Number(row.pd) > Number(row.pr),
-    );
-
-    // CONDITION 5 : le profil contient au moins une mesure exploitable.
-    const cond5 = measuredRows.length > 0;
-    const complete88 =
-      parsedRows.length === 88 &&
-      parsedRows.every((row) => row.hasPd && row.hasPr && row.pd !== null && row.pr !== null);
-
-    console.log("ÉTAT DE VALIDATION :", { cond1, cond2, cond3, cond4, cond5 });
-    if (complete88) {
-      console.log("[Saisie conforme] Profil complet : 88 touches numériques validées.");
-      return true;
+    for (let i = 0; i < rows.length; i += 1) {
+      const row = rows[i]!;
+      if (row.wa.trim() === "" && row.wd.trim() === "") continue;
+      const pd = num(row.wa);
+      const pr = num(row.wd);
+      if (pd === null || pr === null)
+        return reject(`Touche ${i + 1} : valeur non numérique (PD="${row.wa}", PR="${row.wd}").`);
+      // CONDITION 3 : plage mécanique du poids descendant.
+      if (pd < 30 || pd > 80)
+        return reject(`Touche ${i + 1} : PD=${pd} hors plage 30-80.`);
+      // CONDITION 4 : PD strictement supérieur à PR.
+      if (pd <= pr) return reject(`Touche ${i + 1} : PD (${pd}) doit être supérieur à PR (${pr}).`);
     }
 
-    return cond1 && cond2 && cond3 && cond4 && cond5;
+    console.log("[Saisie conforme] OK — toutes les conditions sont remplies.");
+    return true;
   }, [rows]);
 
   /**
