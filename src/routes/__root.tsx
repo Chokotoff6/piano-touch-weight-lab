@@ -241,22 +241,28 @@ function RootComponent() {
                   onClick={() => dispatchAction("piano-export-csv")}
                 >
                   {lang === "en"
-                    ? "EXPORT DATA AS CSV"
-                    : "EXPORTER DONNÉES SAISIES AU FORMAT CSV"}
+                    ? "Export entered data as CSV"
+                    : "Exporter les données saisies au format CSV"}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={!topbar.measuresReady}
                   onClick={() => dispatchAction("piano-export-pdf")}
                 >
                   {lang === "en"
-                    ? "EXPORT DATA AS PDF"
-                    : "EXPORTER DONNÉES SAISIES AU FORMAT PDF"}
+                    ? "Export entered data as PDF"
+                    : "Exporter les données saisies au format PDF"}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-pdf")}>
                   {lang === "en"
-                    ? "EXPORT BLANK PRINTABLE FORM AS PDF (RE-IMPORTABLE)"
-                    : "EXPORTER UN FORMULAIRE DE SAISIE VIERGE AU FORMAT PDF (RÉ-IMPORTABLE)"}
+                    ? "Export blank entry form - Text table (re-importable)"
+                    : "Exporter un formulaire de saisie vierge - Tableau textuel (ré-importable)"}
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-keyboard-pdf")}>
+                  {lang === "en"
+                    ? "Export blank entry form - Graphic keyboard drawing (re-importable)"
+                    : "Exporter un formulaire de saisie vierge - Dessin clavier graphique (ré-importable)"}
+                </DropdownMenuItem>
+
               </DropdownMenuContent>
             </DropdownMenu>
 

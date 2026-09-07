@@ -22,6 +22,8 @@ export type PdfInfo = {
   ville: string;
   entretien: string;
   remarques: string;
+  usage?: string;
+  zone?: string;
   dateMesure: string;
 };
 
@@ -49,7 +51,7 @@ export function PdfInfoTable({ info }: { info: PdfInfo }) {
         </div>
         <div className={CELL}>
           <Line2 label="N° de série" value={info.serial} />
-          <Line2 label="Remarques" value={info.remarques} />
+          <Line2 label="Modifications importantes" value={info.remarques} />
         </div>
         <div className={CELL}>
           <Line2 label="Année" value={info.fabrication} />
@@ -58,8 +60,10 @@ export function PdfInfoTable({ info }: { info: PdfInfo }) {
         <div className={CELL}>
           <Line2 label="Lieu" value={[info.ville, info.pays].filter(Boolean).join(", ")} />
           <Line2 label="Entretien" value={info.entretien} />
+          <Line2 label="Usage instrument" value={info.usage ?? ""} />
         </div>
         <div className={CELL}>
+          <Line2 label="Zone géographique" value={info.zone ?? ""} />
           <Line2 label="Date/Heure mesure" value={info.dateMesure} />
         </div>
       </div>

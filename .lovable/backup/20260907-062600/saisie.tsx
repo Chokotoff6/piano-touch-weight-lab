@@ -26,7 +26,7 @@ import { buildCsv, buildExportFilename, downloadCsv, formatLocalDateTime } from 
 import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { getLang } from "@/data/translations";
 import { generateLandscapeReport } from "@/lib/pdf-report";
-import { generateBlankFormPdf, generateBlankKeyboardPdf } from "@/lib/pdf-blank-form";
+import { generateBlankFormPdf } from "@/lib/pdf-blank-form";
 
 import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
 import { buildCurrentPiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, findHistoryProfileId, CURRENT_PIANO_KEY } from "@/lib/current-piano";
@@ -1422,35 +1422,11 @@ function Index() {
 
     const onReset = () => setConfirmReset("rows");
 
-    const blankMeta = () => ({
-      marque: info["marque"] ?? "",
-      modele: info["modele"] ?? "",
-      serial: (info["sn_prefix"] ?? "") + (info["sn_num"] ?? "") + (info["sn_suffix"] ?? ""),
-      typePiano: info["type_piano"] ?? "",
-      pays: info["pays"] ?? "",
-      ville: info["ville"] ?? "",
-      entretien: info["entretien"] ?? "",
-      usage: info["usage_level"] ?? "",
-      modifications: info["remarques"] ?? "",
-      zone: climateZone !== null ? String(climateZone) : "",
-      annee: info["fabrication"] ?? "",
-    });
-
     const onBlankPdf = () => {
       const lang = getLang();
       generateBlankFormPdf(
         lang === "en" ? "BLANK_ENTRY_FORM.pdf" : "FORMULAIRE_SAISIE_VIERGE.pdf",
         lang,
-        blankMeta(),
-      );
-    };
-
-    const onBlankKeyboardPdf = () => {
-      const lang = getLang();
-      generateBlankKeyboardPdf(
-        lang === "en" ? "BLANK_KEYBOARD_FORM.pdf" : "FORMULAIRE_CLAVIER_VIERGE.pdf",
-        lang,
-        blankMeta(),
       );
     };
 
@@ -1459,8 +1435,6 @@ function Index() {
       "piano-export-csv": exportCsvOnly,
       "piano-export-pdf": onPdf,
       "piano-export-blank-pdf": onBlankPdf,
-      "piano-export-blank-keyboard-pdf": onBlankKeyboardPdf,
-
       "piano-compare-guard": onCompareGuard,
       "piano-reset": onReset,
       "piano-import-csv": () => importInputRef.current?.click(),
@@ -2005,8 +1979,6 @@ function Index() {
               ville: info["ville"] ?? "",
               entretien: info["entretien"] ?? "",
               remarques: info["remarques"] ?? "",
-              usage: info["usage_level"] ?? "",
-              zone: climateZone !== null ? String(climateZone) : "",
               dateMesure: formatLocalDateTime(new Date()),
             }}
           />
