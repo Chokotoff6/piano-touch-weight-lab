@@ -27,7 +27,8 @@ export type PdfInfo = {
   dateMesure: string;
 };
 
-const CELL = "border border-neutral-400 px-2 py-1 align-top text-[11px] leading-tight";
+// Fiche d'identité agrandie de +25 % (texte et hauteur des cellules).
+const CELL = "border border-neutral-400 px-3 py-2 align-top text-[14px] leading-[1.45]";
 const KEY = "font-semibold text-neutral-600";
 
 function Line2({ label, value }: { label: string; value: string }) {
