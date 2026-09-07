@@ -407,6 +407,9 @@ function Index() {
   );
   const [hidePdHigh, setHidePdHigh] = useState(false);
   const pdHighCount = useRef(0);
+  /** Infobulle du bouton « i » placé après le titre des mesures. */
+  const [helpTip, setHelpTip] = useState<{ x: number; y: number } | null>(null);
+
 
   /** Badge vert retardé : ne s'allume qu'après 0,5 s sans cadre rouge ni erreur. */
   const [badgeVisible, setBadgeVisible] = useState(false);
