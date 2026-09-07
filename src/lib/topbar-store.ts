@@ -17,8 +17,6 @@ type TopbarState = {
   gateReady: boolean;
   /** Consentement RGPD validé sur la page Résultats (débloque "Comparer"). */
   compareUnlocked: boolean;
-  /** Les 5 conditions de conformité de la page Saisie sont remplies. */
-  conform: boolean;
 };
 
 const GATE_KEY = "ptw_gate_ready";
@@ -35,7 +33,6 @@ let state: TopbarState = {
   historyRows: [],
   gateReady: false,
   compareUnlocked: false,
-  conform: false,
 };
 const listeners = new Set<() => void>();
 
