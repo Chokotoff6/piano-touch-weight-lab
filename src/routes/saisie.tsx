@@ -2228,6 +2228,7 @@ Moyennes{" "}
         <div ref={pdfChartRef} className="mt-4 bg-white">
           <PdfComparisonChart data={chartData} frictionTarget={profile.frictionTarget} />
         </div>
+        </div>
       </div>
 
 
