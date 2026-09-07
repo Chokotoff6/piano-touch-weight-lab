@@ -2,10 +2,11 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   hasAnyMeasurement,
-  incompleteOctaves,
+  missingConformityKeys,
   OCTAVE_RULE_MESSAGE,
   saisieGate,
 } from "@/lib/required-keys";
+
 import { SmartCombobox, type SmartComboboxHandle } from "@/components/SmartCombobox";
 import { modelsFor, modelGroupsFor, inferTypeFromModel } from "@/data/pianoModels";
 import {
