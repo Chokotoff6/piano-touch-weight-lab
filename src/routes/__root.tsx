@@ -270,7 +270,15 @@ function RootComponent() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-
+            {/* OUTIL DE DÉBOGAGE TEMPORAIRE : capture PNG brute du cadre Mesures. */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="border border-dashed border-gray-300 bg-white text-xs text-gray-500"
+              onClick={() => dispatchAction("piano-debug-png")}
+            >
+              Debug PNG
+            </Button>
 
             {!isComparer && (
             <div className="relative flex items-center">
