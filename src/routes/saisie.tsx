@@ -1189,17 +1189,18 @@ function Index() {
 
   /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
   const exportPdfFile = async () => {
-    // Page 1 : Informations piano + Moyennes + graphique de comparaison.
-    // Page 2 : clavier complet (mesuresRef) avec ses rangées d'expertise
-    // (Friction / Poids d'équilibre) masquées à l'écran mais restaurées
-    // dans le clone html2canvas via [data-pdf-result-frame].
-    const page1 = [pdfInfoRef.current, moyennesRef.current, pdfChartRef.current].filter(
-      (el): el is HTMLElement => el !== null,
-    );
-    const page2 = [mesuresRef.current].filter(
-      (el): el is HTMLElement => el !== null,
-    );
-    if (page1.length === 0) return;
+    // Page 1 : Informations piano + cadre complet « Mesures poids statiques »
+    //          (clavier 88 touches + 8 rangées d'expertise restaurées dans le clone).
+    // Page 2 : Poids descendant + Poids remontant (courbes séparées, sans fond).
+    // Page 3 : Poids d'équilibre + Friction.
+    const keep = (list: Array<HTMLElement | null>) =>
+      list.filter((el): el is HTMLElement => el !== null);
+    const pages = [
+      keep([pdfInfoRef.current, mesuresRef.current]),
+      keep([pdfWaRef.current, pdfWdRef.current]),
+      keep([pdfBalRef.current, pdfFricRef.current]),
+    ];
+    if (pages[0]!.length === 0) return;
     const filename = buildExportFilename(
       info["marque"],
       info["modele"],
@@ -1207,7 +1208,7 @@ function Index() {
       new Date(),
       "pdf",
     );
-    await generateLandscapeReport(page1, page2, filename);
+    await generateLandscapeReport(pages, filename);
   };
 
   // --- Import (CSV local / historique en ligne) -----------------------------------
