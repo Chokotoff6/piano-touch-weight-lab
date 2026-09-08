@@ -953,10 +953,10 @@ export function Frame({ title, className = "", titleClassName, dataFrame, childr
 }
 
 const COLUMNS = [
-  { key: "wa", label: "Poids descendant (Wa)" },
-  { key: "wd", label: "Poids ascendant (Wd)" },
-  { key: "friction", label: "Friction mécanique" },
-  { key: "balance", label: "Balance statique" },
+  { key: "wa", label: "Poids descendant", labelEn: "Downweight" },
+  { key: "wd", label: "Poids remontant", labelEn: "Upweight" },
+  { key: "friction", label: "Friction", labelEn: "Friction" },
+  { key: "balance", label: "Poids d'équilibre", labelEn: "Balance Weight" },
 ] as const;
 type MetricKey = (typeof COLUMNS)[number]["key"];
 
