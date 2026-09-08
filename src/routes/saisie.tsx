@@ -1192,6 +1192,24 @@ function Index() {
     [rows],
   );
 
+  // Données au format de la page Résultats : les pages 2 et 3 du PDF capturent
+  // les cadres web eux-mêmes (mode Noir & Blanc, courbes blanches/noires séparées).
+  const webChartData = useMemo(() => {
+    const profile: RefProfile = { wa: [], wd: [], friction: [], balance: [] };
+    rows.forEach((row) => {
+      const a = parseWeight(row.wa);
+      const d = parseWeight(row.wd);
+      const valid = a !== null && d !== null && a > d;
+      profile.wa.push(valid ? a : Number.NaN);
+      profile.wd.push(valid ? d : Number.NaN);
+      profile.friction.push(valid ? (a - d) / 2 : Number.NaN);
+      profile.balance.push(valid ? (a + d) / 2 : Number.NaN);
+    });
+    const hasData = profile.wa.some((value) => Number.isFinite(value));
+    return buildChartData(hasData ? profile : null, null, null);
+  }, [rows]);
+
+
   /** Identification du piano reprise en en-tête des pages 2 et 3 du PDF. */
   const pdfSummary = useMemo(() => {
     const now = new Date();
