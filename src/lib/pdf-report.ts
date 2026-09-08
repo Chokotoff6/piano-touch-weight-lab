@@ -40,6 +40,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
     logging: false,
     y: -PAD,
     height,
+    windowWidth: 1400,
 
     onclone: (doc) => {
       // Normalisation typographique : html2canvas rend mal les utilitaires de
@@ -55,9 +56,9 @@ async function capture(el: HTMLElement): Promise<Capture> {
         /* Gabarit rigide de la page 1 : largeur totale imposée pour que les
            88 touches soient capturées sans rognage horizontal. */
         [data-pdf-compact] {
-          width: 100% !important;
-          min-width: 1024px !important;
-          max-width: 1024px !important;
+          width: 1350px !important;
+          min-width: 1350px !important;
+          max-width: 1350px !important;
           margin-left: auto !important;
           margin-right: auto !important;
           font-size: 11px !important;
