@@ -1156,7 +1156,7 @@ function Index() {
       Pays: info["pays"] ?? "",
       Ville: info["ville"] ?? "",
       "Zone climatique": climateZone !== null ? String(climateZone) : "",
-      
+      "Profil d'usine": profile.label,
       "Type d'entretien": info["entretien"] ?? "",
       usage_level: info["usage_level"] ?? "",
       Remarques: info["remarques"] ?? "",
@@ -1978,8 +1978,9 @@ function Index() {
                 </label>
                 <div className="flex h-8 items-end text-xs text-black">
                   <span>
+                    Profil d&apos;usine : <span className="text-foreground">{profile.label}</span>
                     {profile.frictionTarget !== null &&
-                      `Friction cible ${profile.frictionTarget} g`}
+                      ` — friction cible ${profile.frictionTarget} g`}
                   </span>
                 </div>
               </div>

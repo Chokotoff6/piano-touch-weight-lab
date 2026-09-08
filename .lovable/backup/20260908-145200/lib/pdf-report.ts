@@ -123,9 +123,6 @@ async function capture(el: HTMLElement): Promise<Capture> {
         frame.style.setProperty("opacity", "1", "important");
         frame.style.setProperty("visibility", "visible", "important");
         frame.style.setProperty("display", "block", "important");
-        frame.style.setProperty("height", "auto", "important");
-        frame.style.setProperty("max-height", "none", "important");
-        frame.style.setProperty("overflow", "visible", "important");
         frame.style.setProperty("margin-top", "0", "important");
         frame.style.setProperty("margin-bottom", "2rem", "important");
         frame.style.setProperty("padding-top", "10px", "important");
@@ -133,20 +130,12 @@ async function capture(el: HTMLElement): Promise<Capture> {
         frame.style.setProperty("transform", `scale(${COMPACT_SCALE})`, "important");
         frame.style.setProperty("transform-origin", "top center", "important");
       });
-      // Aucun conteneur interne ne doit rogner la bordure basse du cadre.
-      doc.querySelectorAll("[data-pdf-compact] *").forEach((node) => {
-        const el = node as HTMLElement;
-        el.style.setProperty("max-height", "none", "important");
-        el.style.setProperty("overflow", "visible", "important");
-      });
       // Centrage horizontal absolu des chiffres du tableau (page 1) : styles
       // en ligne posés directement sur chaque champ et son conteneur, car
       // html2canvas ignore une partie des règles utilitaires de mise en page.
       doc.querySelectorAll("[data-pdf-compact] input").forEach((node) => {
         const input = node as HTMLElement;
         input.style.setProperty("text-align", "center", "important");
-        input.style.setProperty("justify-content", "center", "important");
-        input.style.setProperty("font-weight", "bold", "important");
         input.style.setProperty("padding", "0", "important");
         input.style.setProperty("margin", "0 auto", "important");
         input.style.setProperty("width", "100%", "important");
