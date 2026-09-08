@@ -25,7 +25,7 @@ import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
 import { buildCsv, buildExportFilename, downloadCsv, formatLocalDateTime } from "@/lib/export-csv";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { getLang, useLang } from "@/data/translations";
-import { buildReportPdf, captureReportPages, getCachedCaptures, setCachedCaptures } from "@/lib/pdf-report";
+import { buildReportPdf, captureReportPages, type ReportCaptures } from "@/lib/pdf-report";
 import { generateBlankFormPdf, generateBlankKeyboardPdf } from "@/lib/pdf-blank-form";
 
 import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
@@ -1249,25 +1249,22 @@ function Index() {
     ];
   };
 
-  /** Empreinte des données : identifie le rapport déjà capturé en cache. */
-  const pdfCacheKey = useMemo(
-    () => JSON.stringify([rows, info["marque"], info["modele"], info["sn_num"]]),
-    [rows, info],
-  );
+  /** Cache mémoire des captures HD préparées en tâche de fond. */
+  const pdfCache = useRef<ReportCaptures | null>(null);
   const pdfPrerendering = useRef(false);
 
   // Pré-rendu silencieux : dès que le badge « Saisie conforme » est vert, les
-  // captures html2canvas sont calculées en arrière-plan et mises en cache
-  // (cache persistant : conservé lors des allers-retours vers Résultats).
+  // captures html2canvas sont calculées en arrière-plan et mises en cache, pour
+  // que le clic sur « Exporter » se limite à l'assemblage du PDF.
   useEffect(() => {
+    pdfCache.current = null;
     if (!badgeVisible) return;
-    if (getCachedCaptures(pdfCacheKey)) return;
     let cancelled = false;
     pdfPrerendering.current = true;
     const timer = setTimeout(() => {
       void captureReportPages(collectPdfPages())
         .then((shots) => {
-          if (!cancelled && shots.length > 0) setCachedCaptures(pdfCacheKey, shots);
+          if (!cancelled) pdfCache.current = shots;
         })
         .catch((error) => console.warn("[pdf] pré-rendu", error))
         .finally(() => {
@@ -1280,7 +1277,7 @@ function Index() {
       clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [badgeVisible, pdfCacheKey]);
+  }, [badgeVisible, rows]);
 
   /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
   const exportPdfFile = async () => {
@@ -1295,7 +1292,7 @@ function Index() {
       "pdf",
     );
     const header = [pdfSummary.main, pdfSummary.time, pdfSummary.count];
-    const cached = getCachedCaptures(pdfCacheKey);
+    const cached = pdfCache.current;
     if (cached && cached.length > 0) {
       buildReportPdf(cached, filename, header);
       return;
@@ -1304,10 +1301,9 @@ function Index() {
       toast.info("Génération du rapport PDF en cours... Merci de patienter.");
     }
     const shots = await captureReportPages(pages);
-    setCachedCaptures(pdfCacheKey, shots);
+    pdfCache.current = shots;
     buildReportPdf(shots, filename, header);
   };
-
 
 
   // --- Import (CSV local / historique en ligne) -----------------------------------
@@ -1740,10 +1736,14 @@ function Index() {
         inputMode="numeric"
         aria-label={`${field === "wa" ? (en ? "DW" : "PD") : en ? "UW" : "PR"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
-        onFocus={(e) => {
-          // La valeur en place n'est plus effacée : elle est entièrement
-          // sélectionnée, la première frappe la remplace donc instantanément.
-          e.currentTarget.select();
+        onFocus={() => {
+          // La valeur en place s'efface au clic ; elle revient si rien n'est saisi.
+          const key = `${index}-${field}`;
+          const current = rows[index]![field];
+          if (current !== "") {
+            prevWeight.current[key] = current;
+            setValue(index, field, "");
+          }
         }}
         className={`weight-input !font-sans font-semibold !text-black focus:!border-black focus:!ring-0 ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}

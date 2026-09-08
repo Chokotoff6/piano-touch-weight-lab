@@ -22,7 +22,7 @@ function isRenderable(el: HTMLElement): boolean {
 }
 
 /** Réduction d'échelle imposée au cadre « Mesures poids statiques » (page 1). */
-const COMPACT_SCALE = 0.82;
+const COMPACT_SCALE = 0.85;
 
 async function capture(el: HTMLElement): Promise<Capture> {
   // Marge haute : les titres des cadres débordent au-dessus de la bordure.
@@ -168,23 +168,6 @@ function drawPage(pdf: jsPDF, blocks: Capture[], ratio: number, topOffset: numbe
 
 /** Images haute définition d'un rapport, prêtes à être assemblées en PDF. */
 export type ReportCaptures = Capture[][];
-
-/**
- * Cache persistant (portée module) : il survit à la navigation entre les pages
- * Saisie et Résultats, donc l'export reste instantané au retour.
- */
-let cacheKey = "";
-let cacheShots: ReportCaptures | null = null;
-
-export function getCachedCaptures(key: string): ReportCaptures | null {
-  return cacheKey === key ? cacheShots : null;
-}
-
-export function setCachedCaptures(key: string, shots: ReportCaptures): void {
-  cacheKey = key;
-  cacheShots = shots;
-}
-
 
 /**
  * Capture les blocs page par page (html2canvas). Opération lente : elle peut

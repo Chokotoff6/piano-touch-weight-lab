@@ -27,6 +27,7 @@ import {
   YAxis,
   Tooltip,
   ReferenceLine,
+  CartesianGrid,
 } from "recharts";
 
 const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];
@@ -658,9 +659,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   // Chaque courbe est ancrée sur SON propre premier / dernier point défini
   // (indispensable en vue éclatée où blanches et noires ne partagent pas les mêmes index).
   const start = zoomed ? zoomStart : 1;
-  // Axe vertical isolé : sur les cadres gradués, le domaine horizontal démarre
-  // avant la touche 1 pour que l'axe ne touche jamais le départ des courbes.
-  const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [autoDomain ? -3 : 1, 88];
+  const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [1, 88];
   const firstIn = (key: SeriesKey) => firstDefinedIndexIn(chartData, key, domainX[0], domainX[1]);
   const lastIn = (key: SeriesKey) => lastDefinedIndexIn(chartData, key, domainX[0], domainX[1]);
   const endpointOffsets = (side: "left" | "right") => new Map(
@@ -688,21 +687,6 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
         ),
       )
     : undefined;
-  // Graduations entières calculées à la main : elles servent à la fois à l'axe
-  // et aux lignes de repère horizontales (jamais la première ni la dernière).
-  const yTicks = (() => {
-    if (!yDomain) return undefined;
-    const [lo, hi] = yDomain as [number, number];
-    const min = Math.ceil(lo);
-    const max = Math.floor(hi);
-    if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) return undefined;
-    const step = Math.max(1, Math.ceil((max - min) / 5));
-    const ticks: number[] = [];
-    for (let v = min; v <= max; v += step) ticks.push(v);
-    return ticks;
-  })();
-
-
 
   return (
     <Frame dataFrame={family.id} title={title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}>
@@ -752,25 +736,24 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               if (Number.isFinite(note)) lastMouseNote.current = note;
             }}
             onMouseLeave={() => { setHoveredFamily(null); }}
-            margin={{ top: 22, right: sideMargin, bottom: 15, left: autoDomain ? sideMargin + 46 : sideMargin }}
+            margin={{ top: 22, right: sideMargin, bottom: 15, left: autoDomain ? sideMargin + 118 : sideMargin }}
           >
             <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
             <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
             {autoDomain ? (
-              // Axe vertical gradué : graduations entières, décalé à gauche du
-              // départ des courbes (domaine X élargi) pour qu'aucun chiffre ne
-              // puisse toucher les libellés « blanches » / « noires ».
-              <YAxis width={44} tickMargin={8} domain={yDomain ?? ["auto", "auto"]} {...(yTicks ? { ticks: yTicks } : {})} allowDecimals={false} tick={{ fontSize: 10, fill: "#111827" }} axisLine={{ stroke: "#111827" }} tickLine={{ stroke: "#111827" }} />
+              // Axe vertical gradué : graduations calées sur l'écart réel du cadre,
+              // majoré de 10 % pour l'aération visuelle. Fortement décalé vers la
+              // gauche (marge élargie + tickMargin) pour qu'aucun chiffre ne puisse
+              // toucher les libellés de courbes ni le départ des tracés.
+              <YAxis width={62} tickMargin={14} domain={yDomain ?? ["auto", "auto"]} tickCount={6} allowDecimals={false} tick={{ fontSize: 10, fill: "#111827" }} axisLine={{ stroke: "#111827" }} tickLine={{ stroke: "#111827" }} />
             ) : (
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
             )}
 
-            {/* Lignes de repère horizontales : même gris que les repères DO,
-                hors première et dernière graduation. */}
-            {autoDomain && yTicks && yTicks.slice(1, -1).map((tick) => (
-              <ReferenceLine key={`grid-${tick}`} xAxisId="main" y={tick} stroke="#9ca3af" strokeWidth={1} />
-            ))}
-
+            {/* Lignes de repère horizontales : même gris clair que les repères DO. */}
+            {autoDomain && (
+              <CartesianGrid horizontal vertical={false} stroke="#9ca3af" strokeWidth={1} />
+            )}
 
             {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#9ca3af" strokeWidth={1.4} />)}
 
