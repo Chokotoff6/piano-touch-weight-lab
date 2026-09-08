@@ -1193,14 +1193,14 @@ function Index() {
 
   /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
   const exportPdfFile = async () => {
-    // Page 1 : Informations piano + cadre complet « Mesures poids statiques »
-    //          (clavier 88 touches + 8 rangées d'expertise restaurées dans le clone).
-    // Page 2 : Poids descendant + Poids remontant (courbes séparées, sans fond).
+    // Page 1 : bloc « Moyennes » (identique à la page Résultats) + cadre complet
+    //          « Mesures poids statiques » (clavier + 8 rangées d'expertise).
+    // Page 2 : Poids descendant + Poids remontant (courbes séparées, N&B).
     // Page 3 : Poids d'équilibre + Friction.
     const keep = (list: Array<HTMLElement | null>) =>
       list.filter((el): el is HTMLElement => el !== null);
     const pages = [
-      keep([pdfInfoRef.current, mesuresRef.current]),
+      keep([moyennesRef.current, mesuresRef.current]),
       keep([pdfWaRef.current, pdfWdRef.current]),
       keep([pdfBalRef.current, pdfFricRef.current]),
     ];
@@ -1212,8 +1212,13 @@ function Index() {
       new Date(),
       "pdf",
     );
-    await generateLandscapeReport(pages, filename);
+    await generateLandscapeReport(pages, filename, [
+      pdfSummary.main,
+      pdfSummary.time,
+      pdfSummary.count,
+    ]);
   };
+
 
   // --- Import (CSV local / historique en ligne) -----------------------------------
 
