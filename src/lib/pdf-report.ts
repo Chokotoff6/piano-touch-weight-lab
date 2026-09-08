@@ -52,7 +52,30 @@ async function capture(el: HTMLElement): Promise<Capture> {
           font-variant-ligatures: none !important;
           font-kerning: none !important;
         }
-        [data-pdf-compact] input { text-align: center !important; }
+        /* Gabarit rigide de la page 1 : largeur et typographie réduites pour que
+           le cadre « Mesures poids statiques » tienne intégralement sur la page. */
+        [data-pdf-compact] {
+          width: 850px !important;
+          max-width: 850px !important;
+          margin-left: auto !important;
+          margin-right: auto !important;
+          font-size: 11px !important;
+          padding: 8px !important;
+        }
+        [data-pdf-compact] td,
+        [data-pdf-compact] th,
+        [data-pdf-compact] span,
+        [data-pdf-compact] div,
+        [data-pdf-compact] input {
+          line-height: 1.15 !important;
+        }
+        [data-pdf-compact] input {
+          text-align: center !important;
+          font-size: 10px !important;
+          height: 16px !important;
+          min-height: 0 !important;
+          padding: 0 !important;
+        }
       `;
       doc.head.appendChild(style);
       // Substitution textuelle : les notices/résumés sont vidés (textContent = "")
