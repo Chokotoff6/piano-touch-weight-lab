@@ -690,7 +690,6 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
     : undefined;
   // Graduations entières calculées à la main : elles servent à la fois à l'axe
   // et aux lignes de repère horizontales (jamais la première ni la dernière).
-  const Y_AXIS_SHIFT = 90; // px : décalage rigide de l'axe vertical vers la gauche
   const yTicks = (() => {
     if (!yDomain) return undefined;
     const [lo, hi] = yDomain as [number, number];
@@ -761,19 +760,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               // Axe vertical gradué : graduations entières, décalé à gauche du
               // départ des courbes (domaine X élargi) pour qu'aucun chiffre ne
               // puisse toucher les libellés « blanches » / « noires ».
-              // Recalage physique : l'axe (ligne, graduations, chiffres) est
-              // translaté de 90 px vers la gauche sans déplacer la zone de
-              // tracé, donc il se place au milieu de l'espace blanc à gauche.
-              <YAxis
-                width={44}
-                tickMargin={8}
-                domain={yDomain ?? ["auto", "auto"]}
-                {...(yTicks ? { ticks: yTicks } : {})}
-                allowDecimals={false}
-                tick={{ fontSize: 10, fill: "#111827", dx: -Y_AXIS_SHIFT }}
-                axisLine={{ stroke: "#111827", transform: `translate(${-Y_AXIS_SHIFT},0)` }}
-                tickLine={{ stroke: "#111827", transform: `translate(${-Y_AXIS_SHIFT},0)` }}
-              />
+              <YAxis width={44} tickMargin={8} domain={yDomain ?? ["auto", "auto"]} {...(yTicks ? { ticks: yTicks } : {})} allowDecimals={false} tick={{ fontSize: 10, fill: "#111827" }} axisLine={{ stroke: "#111827" }} tickLine={{ stroke: "#111827" }} />
             ) : (
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
             )}
