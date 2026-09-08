@@ -86,38 +86,46 @@ function drawPage(pdf: jsPDF, blocks: Capture[], ratio: number) {
 }
 
 /**
- * Capture les blocs, compose deux pages A4 paysage séparées par un saut de page
- * physique, puis déclenche le téléchargement local direct (pdf.save).
+ * Capture les blocs page par page, compose autant de pages A4 paysage que
+ * demandé (saut de page physique entre chacune), puis déclenche le
+ * téléchargement local direct (pdf.save). Aucune requête réseau n'intervient :
+ * le rapport est entièrement construit à partir du DOM local.
  */
 export async function generateLandscapeReport(
-  page1: HTMLElement[],
-  page2: HTMLElement[],
+  pages: HTMLElement[][],
   filename: string,
 ): Promise<void> {
-  const captures1 = await Promise.all(page1.map(capture));
-  const captures2 = await Promise.all(page2.map(capture));
+  const captured: Capture[][] = [];
+  for (const page of pages) {
+    const blocks = page.filter(Boolean);
+    if (blocks.length === 0) continue;
+    captured.push(await Promise.all(blocks.map(capture)));
+  }
+  if (captured.length === 0) return;
 
   const pdf = new jsPDF({ orientation: "landscape", format: "a4", unit: "mm" });
-  // Échelle commune aux deux pages : les cadres partagés (Moyennes) gardent
-  // exactement la même largeur d'une page à l'autre.
-  const ratio = Math.min(pageRatio(captures1), pageRatio(captures2));
-  drawPage(pdf, captures1, ratio);
-  drawFooter(pdf, 1);
-  pdf.addPage("a4", "landscape");
-  drawPage(pdf, captures2, ratio);
-  drawFooter(pdf, 2);
+  const total = captured.length;
+  const stamp = exportStamp();
+  captured.forEach((blocks, index) => {
+    if (index > 0) pdf.addPage("a4", "landscape");
+    drawPage(pdf, blocks, pageRatio(blocks));
+    drawFooter(pdf, index + 1, total, stamp);
+  });
   pdf.save(filename);
 }
 
-/** Pied de page discret en bas à droite : numéro de page et date d'export. */
-function drawFooter(pdf: jsPDF, page: number) {
+/** Horodatage d'export : « DD-MM-YYYY à HH:MM ». */
+function exportStamp(): string {
   const now = new Date();
-  const dd = String(now.getDate()).padStart(2, "0");
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const date = `${dd}-${mm}-${now.getFullYear()}`;
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(now.getDate())}-${p(now.getMonth() + 1)}-${now.getFullYear()} à ${p(now.getHours())}:${p(now.getMinutes())}`;
+}
+
+/** Pied de page discret en bas à droite : numéro de page et date d'export. */
+function drawFooter(pdf: jsPDF, page: number, total: number, stamp: string) {
   pdf.setFontSize(7);
   pdf.setTextColor(120);
-  pdf.text(`Page ${page} / 2`, PAGE_W - MARGIN, PAGE_H - MARGIN - 3, { align: "right" });
-  pdf.text(`Exporté le : ${date}`, PAGE_W - MARGIN, PAGE_H - MARGIN, { align: "right" });
+  pdf.text(`Page ${page} / ${total}`, PAGE_W - MARGIN, PAGE_H - MARGIN - 3, { align: "right" });
+  pdf.text(`Exporté le : ${stamp}`, PAGE_W - MARGIN, PAGE_H - MARGIN, { align: "right" });
   pdf.setTextColor(0);
 }
