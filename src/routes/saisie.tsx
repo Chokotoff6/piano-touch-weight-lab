@@ -425,6 +425,10 @@ function Index() {
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const pdfInfoRef = useRef<HTMLDivElement | null>(null);
   const pdfChartRef = useRef<HTMLDivElement | null>(null);
+  const pdfWaRef = useRef<HTMLDivElement | null>(null);
+  const pdfWdRef = useRef<HTMLDivElement | null>(null);
+  const pdfBalRef = useRef<HTMLDivElement | null>(null);
+  const pdfFricRef = useRef<HTMLDivElement | null>(null);
   const moyennesRef = useRef<HTMLElement | null>(null);
   const mesuresRef = useRef<HTMLElement | null>(null);
 
