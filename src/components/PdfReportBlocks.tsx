@@ -55,7 +55,7 @@ export function PdfInfoTable({ info }: { info: PdfInfo }) {
         </div>
         <div className={CELL}>
           <Line2 label="Année" value={info.fabrication} />
-          <Line2 label="Profil d'usine" value={info.profil} />
+          
         </div>
         <div className={CELL}>
           <Line2 label="Lieu" value={[info.ville, info.pays].filter(Boolean).join(", ")} />
