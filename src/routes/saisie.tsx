@@ -28,7 +28,7 @@ import { getLang, useLang } from "@/data/translations";
 import { generateLandscapeReport } from "@/lib/pdf-report";
 import { generateBlankFormPdf, generateBlankKeyboardPdf } from "@/lib/pdf-blank-form";
 
-import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
+import { PdfComparisonChart, PdfInfoTable, PdfMetricChart, type ChartPoint } from "@/components/PdfReportBlocks";
 import { buildCurrentPiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, findHistoryProfileId, CURRENT_PIANO_KEY } from "@/lib/current-piano";
 
 const INVALID_CSV_MESSAGE =
@@ -2244,6 +2244,21 @@ Moyennes{" "}
         <div ref={pdfChartRef} className="mt-4 bg-white">
           <PdfComparisonChart data={chartData} frictionTarget={profile.frictionTarget} />
         </div>
+        {/* Pages 2 et 3 du PDF : chaque métrique isolée dans son propre cadre,
+             courbe séparée, fond blanc, axe vertical gradué. */}
+        <div ref={pdfWaRef} className="mt-4 bg-white">
+          <PdfMetricChart title={en ? "Downweight" : "Poids descendant"} metric="wa" data={chartData} />
+        </div>
+        <div ref={pdfWdRef} className="mt-4 bg-white">
+          <PdfMetricChart title={en ? "Upweight" : "Poids remontant"} metric="wd" data={chartData} />
+        </div>
+        <div ref={pdfBalRef} className="mt-4 bg-white">
+          <PdfMetricChart title={en ? "Balance Weight" : "Poids d'équilibre"} metric="balance" data={chartData} />
+        </div>
+        <div ref={pdfFricRef} className="mt-4 bg-white">
+          <PdfMetricChart title="Friction" metric="friction" data={chartData} />
+        </div>
+
         </div>
       </div>
 
