@@ -27,7 +27,6 @@ import {
   YAxis,
   Tooltip,
   ReferenceLine,
-  CartesianGrid,
 } from "recharts";
 
 const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];

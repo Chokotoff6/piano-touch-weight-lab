@@ -22,7 +22,7 @@ function isRenderable(el: HTMLElement): boolean {
 }
 
 /** Réduction d'échelle imposée au cadre « Mesures poids statiques » (page 1). */
-const COMPACT_SCALE = 0.85;
+const COMPACT_SCALE = 0.82;
 
 async function capture(el: HTMLElement): Promise<Capture> {
   // Marge haute : les titres des cadres débordent au-dessus de la bordure.
