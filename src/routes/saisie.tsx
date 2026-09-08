@@ -1240,12 +1240,16 @@ function Index() {
     // Page 3 : Poids d'équilibre + Friction.
     const keep = (list: Array<HTMLElement | null>) =>
       list.filter((el): el is HTMLElement => el !== null);
+    // Capture directe des cadres de la page Résultats (même graphisme exact).
+    const frame = (id: string) =>
+      pdfFramesRef.current?.querySelector<HTMLElement>(`[data-frame="${id}"]`) ?? null;
     const pages = [
       keep([moyennesRef.current, mesuresRef.current]),
-      keep([pdfWaRef.current, pdfWdRef.current]),
-      keep([pdfBalRef.current, pdfFricRef.current]),
+      keep([frame("wa"), frame("wd")]),
+      keep([frame("bal"), frame("fric")]),
     ];
-    if (pages[0]!.length === 0) return;
+    if (pages.every((page) => page.length === 0)) return;
+
     const filename = buildExportFilename(
       info["marque"],
       info["modele"],
