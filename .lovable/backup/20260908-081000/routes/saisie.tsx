@@ -2132,15 +2132,7 @@ function Index() {
             </span>
           </>
         }
-        // Hors mode pesée (page Infopiano), le cadre n'est PAS retiré du DOM :
-        // il est déporté hors écran (jamais `hidden`), de sorte que l'export PDF
-        // puisse toujours le rendre et le capturer, quelle que soit la page.
-        className={
-          weighingMode
-            ? "!mt-[100px] pb-4"
-            : "mt-8 pb-10 !absolute !-left-[9999px] !top-0 !w-[1100px] !opacity-0 pointer-events-none"
-        }
-
+        className={weighingMode ? "!mt-[100px] pb-4" : "mt-8 pb-10 !hidden"}
         innerRef={(node) => {
           mesuresRef.current = node;
           // Compactage réservé au clonage PDF (page 1) : voir pdf-report.ts.
