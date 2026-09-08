@@ -2295,20 +2295,21 @@ Moyennes{" "}
         <div ref={pdfChartRef} className="mt-4 bg-white">
           <PdfComparisonChart data={chartData} frictionTarget={profile.frictionTarget} />
         </div>
-        {/* Pages 2 et 3 du PDF : chaque métrique isolée dans son propre cadre,
-             courbe séparée, fond blanc, axe vertical gradué. */}
-        <div ref={pdfWaRef} className="mt-4 bg-white">
-          <PdfMetricChart title={en ? "Downweight" : "Poids descendant"} metric="wa" data={chartData} />
+        {/* Pages 2 et 3 du PDF : les quatre cadres de la page Résultats rendus
+             tels quels, en mode Noir & Blanc et courbes séparées (blanches /
+             noires), puis capturés un par un via leur attribut data-frame. */}
+        <div ref={pdfFramesRef} className="mt-4 w-full bg-white">
+          <ComparisonChart
+            chartData={webChartData}
+            keyFilter="split"
+            comparisonLabel=""
+            comparisonShort=""
+            currentBaseName=""
+            autoDomain
+            sideMargin={60}
+          />
         </div>
-        <div ref={pdfWdRef} className="mt-4 bg-white">
-          <PdfMetricChart title={en ? "Upweight" : "Poids remontant"} metric="wd" data={chartData} />
-        </div>
-        <div ref={pdfBalRef} className="mt-4 bg-white">
-          <PdfMetricChart title={en ? "Balance Weight" : "Poids d'équilibre"} metric="balance" data={chartData} />
-        </div>
-        <div ref={pdfFricRef} className="mt-4 bg-white">
-          <PdfMetricChart title="Friction" metric="friction" data={chartData} />
-        </div>
+
 
         </div>
       </div>
