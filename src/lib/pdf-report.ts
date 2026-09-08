@@ -140,16 +140,23 @@ export async function generateLandscapeReport(
   // intégralement calculés et figés avant la première capture.
   await settle(1500);
   for (const page of pages) {
-    const blocks = page.filter(Boolean);
+    const blocks = page.filter((block) => Boolean(block) && isRenderable(block));
     if (blocks.length === 0) continue;
     const shots: Capture[] = [];
     for (const block of blocks) {
       await settle(300);
-      shots.push(await capture(block));
+      // Étanchéité totale : un bloc non capturable est ignoré, jamais bloquant.
+      try {
+        const shot = await capture(block);
+        if (shot.width > 0 && shot.height > 0) shots.push(shot);
+      } catch (error) {
+        console.warn("[pdf] bloc ignoré", error);
+      }
     }
-    captured.push(shots);
+    if (shots.length > 0) captured.push(shots);
   }
   if (captured.length === 0) return;
+
 
   const pdf = new jsPDF({ orientation: "landscape", format: "a4", unit: "mm" });
   const total = captured.length;
