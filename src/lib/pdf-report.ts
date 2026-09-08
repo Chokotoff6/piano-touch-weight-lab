@@ -194,13 +194,33 @@ export type ReportCaptures = Capture[][];
 let cacheKey = "";
 let cacheShots: ReportCaptures | null = null;
 
+/** Stockage de session : les captures survivent à toute navigation (Saisie / Résultats / Comparer). */
+const STORE_KEY = "pdf_cached_charts";
+
 export function getCachedCaptures(key: string): ReportCaptures | null {
-  return cacheKey === key ? cacheShots : null;
+  if (cacheKey === key && cacheShots) return cacheShots;
+  try {
+    const raw = sessionStorage.getItem(STORE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { key: string; shots: ReportCaptures };
+    if (parsed?.key !== key || !Array.isArray(parsed.shots)) return null;
+    cacheKey = key;
+    cacheShots = parsed.shots;
+    return cacheShots;
+  } catch {
+    return null;
+  }
 }
 
 export function setCachedCaptures(key: string, shots: ReportCaptures): void {
   cacheKey = key;
   cacheShots = shots;
+  try {
+    sessionStorage.setItem(STORE_KEY, JSON.stringify({ key, shots }));
+  } catch (error) {
+    // Quota dépassé : le cache mémoire reste actif pour la page courante.
+    console.warn("[pdf] cache session indisponible", error);
+  }
 }
 
 
