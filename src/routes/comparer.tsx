@@ -1002,14 +1002,15 @@ const AVG_KEYS: Record<MetricKey, { cur: [SeriesKey, SeriesKey, SeriesKey]; ref:
 };
 
 export function AverageRow({ chartData, source, hasData, csv = false }: { chartData: ChartPoint[]; source: "cur" | "ref"; hasData: boolean; csv?: boolean }) {
+  const lang = useLang();
   return (
     <div className="grid grid-cols-4 gap-3">
-      {COLUMNS.map(({ key, label }) => {
+      {COLUMNS.map(({ key, label, labelEn }) => {
         const [globalKey, whiteKey, blackKey] = AVG_KEYS[key][source];
         return (
           <AverageBlock
             key={key}
-            label={label}
+            label={lang === "en" ? labelEn : label}
             tone={source === "ref" && csv ? "csv" : source}
             global={hasData ? seriesAverage(chartData, globalKey) : "—"}
             white={hasData ? seriesAverage(chartData, whiteKey) : "—"}
