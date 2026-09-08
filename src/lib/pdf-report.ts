@@ -118,10 +118,18 @@ export async function generateLandscapeReport(
   header: string[] = [],
 ): Promise<void> {
   const captured: Capture[][] = [];
+  // Stabilisation : on laisse aux graphiques Recharts le temps d'être
+  // intégralement calculés et figés avant la première capture.
+  await settle(1500);
   for (const page of pages) {
     const blocks = page.filter(Boolean);
     if (blocks.length === 0) continue;
-    captured.push(await Promise.all(blocks.map(capture)));
+    const shots: Capture[] = [];
+    for (const block of blocks) {
+      await settle(300);
+      shots.push(await capture(block));
+    }
+    captured.push(shots);
   }
   if (captured.length === 0) return;
 
