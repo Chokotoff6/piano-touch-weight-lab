@@ -2230,7 +2230,12 @@ function Index() {
           {renderSection(1, 44, gridRef1)}
           {renderSection(45, 88, gridRef2)}
         </div>
-        <div className="mt-4 flex w-full justify-end pr-2">
+      </Frame>
+
+      {/* Bouton de navigation officiel : placé sous le cadre « Mesures poids
+          statiques » (et non plus à l'intérieur), donc jamais capturé au PDF. */}
+      {weighingMode && (
+        <div className="mt-3 flex w-full justify-end pr-2">
           <button
             type="button"
             data-pdf-hide
@@ -2240,7 +2245,8 @@ function Index() {
             {en ? "Results & charts >" : "Résultats & graphiques >"}
           </button>
         </div>
-      </Frame>
+      )}
+
 
       {/* Conteneur dédié à la capture PDF : hauteur nulle + overflow masqué,
            donc totalement invisible à l'écran (0 px de haut, opacité 0,
