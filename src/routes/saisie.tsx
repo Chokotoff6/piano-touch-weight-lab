@@ -28,7 +28,9 @@ import { getLang, useLang } from "@/data/translations";
 import { generateLandscapeReport } from "@/lib/pdf-report";
 import { generateBlankFormPdf, generateBlankKeyboardPdf } from "@/lib/pdf-blank-form";
 
-import { PdfComparisonChart, PdfInfoTable, PdfMetricChart, type ChartPoint } from "@/components/PdfReportBlocks";
+import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
+import { ComparisonChart, buildChartData, type RefProfile } from "@/routes/comparer";
+
 import { buildCurrentPiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, findHistoryProfileId, CURRENT_PIANO_KEY } from "@/lib/current-piano";
 
 const INVALID_CSV_MESSAGE =
@@ -425,10 +427,9 @@ function Index() {
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const pdfInfoRef = useRef<HTMLDivElement | null>(null);
   const pdfChartRef = useRef<HTMLDivElement | null>(null);
-  const pdfWaRef = useRef<HTMLDivElement | null>(null);
-  const pdfWdRef = useRef<HTMLDivElement | null>(null);
-  const pdfBalRef = useRef<HTMLDivElement | null>(null);
-  const pdfFricRef = useRef<HTMLDivElement | null>(null);
+  // Conteneur des 4 cadres web (mode N/B séparé) capturés tels quels pour les pages 2 et 3.
+  const pdfFramesRef = useRef<HTMLDivElement | null>(null);
+
   const moyennesRef = useRef<HTMLElement | null>(null);
   const mesuresRef = useRef<HTMLElement | null>(null);
 
