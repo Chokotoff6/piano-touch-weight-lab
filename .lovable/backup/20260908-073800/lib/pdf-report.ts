@@ -16,11 +16,6 @@ function settle(ms: number): Promise<void> {
   });
 }
 
-/** Un bloc n'est capturable que s'il possède une surface réelle (pas display:none). */
-function isRenderable(el: HTMLElement): boolean {
-  return el.offsetWidth > 0 && el.offsetHeight > 0;
-}
-
 async function capture(el: HTMLElement): Promise<Capture> {
   // Marge haute : les titres des cadres débordent au-dessus de la bordure.
   const PAD = 14;
@@ -32,19 +27,6 @@ async function capture(el: HTMLElement): Promise<Capture> {
     y: -PAD,
     height: el.offsetHeight + PAD * 2,
     onclone: (doc) => {
-      // Normalisation typographique : html2canvas rend mal les utilitaires de
-      // tracking (textes et chiffres qui se chevauchent horizontalement).
-      const style = doc.createElement("style");
-      style.textContent = `
-        [data-pdf-compact], [data-pdf-compact] * {
-          letter-spacing: normal !important;
-          word-spacing: normal !important;
-          font-variant-ligatures: none !important;
-          font-kerning: none !important;
-        }
-        [data-pdf-compact] input { text-align: center !important; }
-      `;
-      doc.head.appendChild(style);
       // Substitution textuelle : les notices/résumés sont vidés (textContent = "")
       // pour que les bordures se referment sans trou blanc. Les boutons et
       // pastilles interactives restent masqués en visibilité.
@@ -78,15 +60,16 @@ async function capture(el: HTMLElement): Promise<Capture> {
         frame.style.overflow = "visible";
         frame.style.opacity = "1";
       });
-      // Cadre « Mesures poids statiques » (page 1) : suppression stricte des
-      // espaces vides au-dessus et en dessous pour remonter le tableau au
-      // maximum. L'ajustement final à la page est fait par l'échelle d'image.
+      // Compactage du grand cadre « Mesures poids statiques » (page 1) :
+      // réduction stricte d'échelle + resserrage des marges internes pour que
+      // sa hauteur totale tienne intégralement sur la page.
       doc.querySelectorAll("[data-pdf-compact]").forEach((node) => {
         const frame = node as HTMLElement;
-        frame.style.setProperty("margin-top", "0", "important");
-        frame.style.setProperty("margin-bottom", "0", "important");
-        frame.style.setProperty("padding-top", "10px", "important");
-        frame.style.setProperty("padding-bottom", "2px", "important");
+        frame.style.paddingTop = "6px";
+        frame.style.paddingBottom = "2px";
+        frame.style.marginTop = "0px";
+        frame.style.marginBottom = "0px";
+        frame.style.zoom = "0.9";
       });
     },
   });
@@ -96,7 +79,6 @@ async function capture(el: HTMLElement): Promise<Capture> {
     height: canvas.height,
   };
 }
-
 
 
 const HEADER_H = 14; // mm réservés en haut des pages 2 et 3
@@ -140,23 +122,16 @@ export async function generateLandscapeReport(
   // intégralement calculés et figés avant la première capture.
   await settle(1500);
   for (const page of pages) {
-    const blocks = page.filter((block) => Boolean(block) && isRenderable(block));
+    const blocks = page.filter(Boolean);
     if (blocks.length === 0) continue;
     const shots: Capture[] = [];
     for (const block of blocks) {
       await settle(300);
-      // Étanchéité totale : un bloc non capturable est ignoré, jamais bloquant.
-      try {
-        const shot = await capture(block);
-        if (shot.width > 0 && shot.height > 0) shots.push(shot);
-      } catch (error) {
-        console.warn("[pdf] bloc ignoré", error);
-      }
+      shots.push(await capture(block));
     }
-    if (shots.length > 0) captured.push(shots);
+    captured.push(shots);
   }
   if (captured.length === 0) return;
-
 
   const pdf = new jsPDF({ orientation: "landscape", format: "a4", unit: "mm" });
   const total = captured.length;

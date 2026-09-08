@@ -28,9 +28,7 @@ import { getLang, useLang } from "@/data/translations";
 import { generateLandscapeReport } from "@/lib/pdf-report";
 import { generateBlankFormPdf, generateBlankKeyboardPdf } from "@/lib/pdf-blank-form";
 
-import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
-import { ComparisonChart, buildChartData, type RefProfile } from "@/routes/comparer";
-
+import { PdfComparisonChart, PdfInfoTable, PdfMetricChart, type ChartPoint } from "@/components/PdfReportBlocks";
 import { buildCurrentPiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, findHistoryProfileId, CURRENT_PIANO_KEY } from "@/lib/current-piano";
 
 const INVALID_CSV_MESSAGE =
@@ -427,9 +425,10 @@ function Index() {
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const pdfInfoRef = useRef<HTMLDivElement | null>(null);
   const pdfChartRef = useRef<HTMLDivElement | null>(null);
-  // Conteneur des 4 cadres web (mode N/B séparé) capturés tels quels pour les pages 2 et 3.
-  const pdfFramesRef = useRef<HTMLDivElement | null>(null);
-
+  const pdfWaRef = useRef<HTMLDivElement | null>(null);
+  const pdfWdRef = useRef<HTMLDivElement | null>(null);
+  const pdfBalRef = useRef<HTMLDivElement | null>(null);
+  const pdfFricRef = useRef<HTMLDivElement | null>(null);
   const moyennesRef = useRef<HTMLElement | null>(null);
   const mesuresRef = useRef<HTMLElement | null>(null);
 
@@ -1192,24 +1191,6 @@ function Index() {
     [rows],
   );
 
-  // Données au format de la page Résultats : les pages 2 et 3 du PDF capturent
-  // les cadres web eux-mêmes (mode Noir & Blanc, courbes blanches/noires séparées).
-  const webChartData = useMemo(() => {
-    const profile: RefProfile = { wa: [], wd: [], friction: [], balance: [] };
-    rows.forEach((row) => {
-      const a = parseWeight(row.wa);
-      const d = parseWeight(row.wd);
-      const valid = a !== null && d !== null && a > d;
-      profile.wa.push(valid ? a : Number.NaN);
-      profile.wd.push(valid ? d : Number.NaN);
-      profile.friction.push(valid ? (a - d) / 2 : Number.NaN);
-      profile.balance.push(valid ? (a + d) / 2 : Number.NaN);
-    });
-    const hasData = profile.wa.some((value) => Number.isFinite(value));
-    return buildChartData(hasData ? profile : null, null, null);
-  }, [rows]);
-
-
   /** Identification du piano reprise en en-tête des pages 2 et 3 du PDF. */
   const pdfSummary = useMemo(() => {
     const now = new Date();
@@ -1240,16 +1221,12 @@ function Index() {
     // Page 3 : Poids d'équilibre + Friction.
     const keep = (list: Array<HTMLElement | null>) =>
       list.filter((el): el is HTMLElement => el !== null);
-    // Capture directe des cadres de la page Résultats (même graphisme exact).
-    const frame = (id: string) =>
-      pdfFramesRef.current?.querySelector<HTMLElement>(`[data-frame="${id}"]`) ?? null;
     const pages = [
       keep([moyennesRef.current, mesuresRef.current]),
-      keep([frame("wa"), frame("wd")]),
-      keep([frame("bal"), frame("fric")]),
+      keep([pdfWaRef.current, pdfWdRef.current]),
+      keep([pdfBalRef.current, pdfFricRef.current]),
     ];
-    if (pages.every((page) => page.length === 0)) return;
-
+    if (pages[0]!.length === 0) return;
     const filename = buildExportFilename(
       info["marque"],
       info["modele"],
@@ -1410,8 +1387,7 @@ function Index() {
     }
     setIsExporting(true);
     void exportPdfFile()
-      // Export 100 % local : aucune erreur n'est remontée à l'artisan.
-      .catch((error) => console.warn("[pdf] export", error))
+      .catch(() => showTopbarAlert("export", "⚠️ La génération du rapport PDF a échoué."))
       .finally(() => setIsExporting(false));
   };
 
@@ -2296,21 +2272,20 @@ Moyennes{" "}
         <div ref={pdfChartRef} className="mt-4 bg-white">
           <PdfComparisonChart data={chartData} frictionTarget={profile.frictionTarget} />
         </div>
-        {/* Pages 2 et 3 du PDF : les quatre cadres de la page Résultats rendus
-             tels quels, en mode Noir & Blanc et courbes séparées (blanches /
-             noires), puis capturés un par un via leur attribut data-frame. */}
-        <div ref={pdfFramesRef} className="mt-4 w-full bg-white">
-          <ComparisonChart
-            chartData={webChartData}
-            keyFilter="split"
-            comparisonLabel=""
-            comparisonShort=""
-            currentBaseName=""
-            autoDomain
-            sideMargin={60}
-          />
+        {/* Pages 2 et 3 du PDF : chaque métrique isolée dans son propre cadre,
+             courbe séparée, fond blanc, axe vertical gradué. */}
+        <div ref={pdfWaRef} className="mt-4 bg-white">
+          <PdfMetricChart title={en ? "Downweight" : "Poids descendant"} metric="wa" data={chartData} />
         </div>
-
+        <div ref={pdfWdRef} className="mt-4 bg-white">
+          <PdfMetricChart title={en ? "Upweight" : "Poids remontant"} metric="wd" data={chartData} />
+        </div>
+        <div ref={pdfBalRef} className="mt-4 bg-white">
+          <PdfMetricChart title={en ? "Balance Weight" : "Poids d'équilibre"} metric="balance" data={chartData} />
+        </div>
+        <div ref={pdfFricRef} className="mt-4 bg-white">
+          <PdfMetricChart title="Friction" metric="friction" data={chartData} />
+        </div>
 
         </div>
       </div>
