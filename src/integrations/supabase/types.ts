@@ -190,7 +190,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      current_workshop_token: { Args: never; Returns: string }
       get_own_diagnostics: {
         Args: { _numero_central: string; _user_fingerprint: string }
         Returns: {
