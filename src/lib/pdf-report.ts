@@ -52,15 +52,17 @@ async function capture(el: HTMLElement): Promise<Capture> {
           font-variant-ligatures: none !important;
           font-kerning: none !important;
         }
-        /* Gabarit rigide de la page 1 : largeur et typographie réduites pour que
-           le cadre « Mesures poids statiques » tienne intégralement sur la page. */
+        /* Gabarit rigide de la page 1 : largeur totale imposée pour que les
+           88 touches soient capturées sans rognage horizontal. */
         [data-pdf-compact] {
-          width: 850px !important;
-          max-width: 850px !important;
+          width: 100% !important;
+          min-width: 1024px !important;
+          max-width: 1024px !important;
           margin-left: auto !important;
           margin-right: auto !important;
           font-size: 11px !important;
           padding: 8px !important;
+          overflow: visible !important;
         }
         [data-pdf-compact] td,
         [data-pdf-compact] th,
@@ -71,11 +73,13 @@ async function capture(el: HTMLElement): Promise<Capture> {
         }
         [data-pdf-compact] input {
           text-align: center !important;
+          text-align-last: center !important;
           font-size: 10px !important;
           height: 16px !important;
           min-height: 0 !important;
           padding: 0 !important;
         }
+
       `;
       doc.head.appendChild(style);
       // Substitution textuelle : les notices/résumés sont vidés (textContent = "")
