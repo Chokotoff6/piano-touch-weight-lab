@@ -137,11 +137,20 @@ async function capture(el: HTMLElement): Promise<Capture> {
         frame.style.setProperty("transform", `scale(${COMPACT_SCALE})`, "important");
         frame.style.setProperty("transform-origin", "top center", "important");
       });
-      // Aucun conteneur interne ne doit rogner la bordure basse du cadre.
+      // Aucun conteneur interne ni parent ne doit rogner le cadre : ni la
+      // bordure basse, ni les touches à l'extrême droite du clavier.
       doc.querySelectorAll("[data-pdf-compact] *").forEach((node) => {
         const el = node as HTMLElement;
         el.style.setProperty("max-height", "none", "important");
         el.style.setProperty("overflow", "visible", "important");
+      });
+      doc.querySelectorAll("[data-pdf-compact]").forEach((node) => {
+        let parent = (node as HTMLElement).parentElement;
+        while (parent && parent !== doc.body) {
+          parent.style.setProperty("overflow", "visible", "important");
+          parent.style.setProperty("max-width", "none", "important");
+          parent = parent.parentElement;
+        }
       });
       // Centrage horizontal absolu des chiffres du tableau (page 1) : styles
       // en ligne posés directement sur chaque champ et son conteneur, car
@@ -149,21 +158,26 @@ async function capture(el: HTMLElement): Promise<Capture> {
       doc.querySelectorAll("[data-pdf-compact] input").forEach((node) => {
         const input = node as HTMLElement;
         input.style.setProperty("text-align", "center", "important");
+        input.style.setProperty("text-align-last", "center", "important");
         input.style.setProperty("justify-content", "center", "important");
         input.style.setProperty("font-weight", "bold", "important");
         input.style.setProperty("padding", "0", "important");
-        input.style.setProperty("margin", "0 auto", "important");
+        input.style.setProperty("margin", "0", "important");
         input.style.setProperty("width", "100%", "important");
         input.style.setProperty("text-indent", "0", "important");
         const cell = input.parentElement;
         if (cell) {
           cell.style.setProperty("display", "flex", "important");
-          cell.style.setProperty("justify-content", "center", "important");
           cell.style.setProperty("align-items", "center", "important");
-          cell.style.setProperty("padding", "0", "important");
+          cell.style.setProperty("justify-content", "center", "important");
           cell.style.setProperty("text-align", "center", "important");
+          cell.style.setProperty("text-align-last", "center", "important");
+          cell.style.setProperty("padding", "0", "important");
+          cell.style.setProperty("margin", "0", "important");
+          cell.style.setProperty("width", "100%", "important");
         }
       });
+
     },
   });
   return {
