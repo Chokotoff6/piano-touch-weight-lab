@@ -21,16 +21,26 @@ function isRenderable(el: HTMLElement): boolean {
   return el.offsetWidth > 0 && el.offsetHeight > 0;
 }
 
+/** Réduction d'échelle imposée au cadre « Mesures poids statiques » (page 1). */
+const COMPACT_SCALE = 0.85;
+
 async function capture(el: HTMLElement): Promise<Capture> {
   // Marge haute : les titres des cadres débordent au-dessus de la bordure.
   const PAD = 14;
+  const compact = el.hasAttribute("data-pdf-compact");
+  // Le clone est réduit (transform-origin: top center) : la fenêtre de capture
+  // est réduite d'autant, sinon html2canvas laisserait un large vide en bas.
+  const height = compact
+    ? Math.ceil(el.offsetHeight * COMPACT_SCALE) + PAD * 2
+    : el.offsetHeight + PAD * 2;
   const canvas = await html2canvas(el, {
     scale: 2,
     backgroundColor: "#ffffff",
     useCORS: true,
     logging: false,
     y: -PAD,
-    height: el.offsetHeight + PAD * 2,
+    height,
+
     onclone: (doc) => {
       // Normalisation typographique : html2canvas rend mal les utilitaires de
       // tracking (textes et chiffres qui se chevauchent horizontalement).
