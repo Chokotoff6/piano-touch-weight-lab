@@ -760,7 +760,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               // Axe vertical gradué : graduations entières, décalé à gauche du
               // départ des courbes (domaine X élargi) pour qu'aucun chiffre ne
               // puisse toucher les libellés « blanches » / « noires ».
-              <YAxis width={44} tickMargin={8} domain={yDomain ?? ["auto", "auto"]} ticks={yTicks} allowDecimals={false} tick={{ fontSize: 10, fill: "#111827" }} axisLine={{ stroke: "#111827" }} tickLine={{ stroke: "#111827" }} />
+              <YAxis width={44} tickMargin={8} domain={yDomain ?? ["auto", "auto"]} {...(yTicks ? { ticks: yTicks } : {})} allowDecimals={false} tick={{ fontSize: 10, fill: "#111827" }} axisLine={{ stroke: "#111827" }} tickLine={{ stroke: "#111827" }} />
             ) : (
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
             )}
