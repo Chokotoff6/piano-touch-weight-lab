@@ -721,7 +721,13 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           >
             <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
             <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
-            <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={autoDomain ? ["auto", "auto"] : family.domain} />
+            {autoDomain ? (
+              // Axe vertical gradué : graduations calées sur l'écart réel du cadre,
+              // majoré de 10 % pour l'aération visuelle.
+              <YAxis width={44} domain={yDomain} tickCount={6} tick={{ fontSize: 10, fill: "#111827" }} axisLine={{ stroke: "#9ca3af" }} tickLine={{ stroke: "#9ca3af" }} />
+            ) : (
+              <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
+            )}
             {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#9ca3af" strokeWidth={1.4} />)}
 
             {/* Fenêtre flottante native : une seule bulle par touche, toutes courbes confondues. */}
