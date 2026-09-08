@@ -74,22 +74,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
           min-height: 0 !important;
           padding: 0 !important;
         }
-        /* Noir pur : plus aucune nuance de gris clair dans le cadre Page 1. */
-        [data-pdf-compact], [data-pdf-compact] * {
-          color: #000000 !important;
-          -webkit-text-fill-color: #000000 !important;
-        }
-        /* Cadres graphiques (pages 2 et 3) : géométrie et bordure identiques. */
-        [data-pdf-chart] {
-          width: 100% !important;
-          max-width: 100% !important;
-          display: block !important;
-          border: 1px solid #e2e8f0 !important;
-          border-radius: 0.5rem !important;
-          background-color: #ffffff !important;
-          padding: 1rem !important;
-          overflow: visible !important;
-        }
+
       `;
       doc.head.appendChild(style);
       // Substitution textuelle : les notices/résumés sont vidés (textContent = "")
@@ -142,10 +127,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
         frame.style.setProperty("margin-top", "0", "important");
         frame.style.setProperty("margin-bottom", "2rem", "important");
         frame.style.setProperty("padding-top", "10px", "important");
-        // Marge basse renforcée : la rangée « Poids d'équilibre » ne colle plus
-        // à la bordure inférieure du cadre.
-        frame.style.setProperty("padding-bottom", "24px", "important");
-        frame.style.setProperty("margin-bottom", "16px", "important");
+        frame.style.setProperty("padding-bottom", "2px", "important");
         frame.style.setProperty("transform", "none", "important");
       });
       // Aucun conteneur interne ni parent ne doit rogner le cadre : ni la
@@ -190,19 +172,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
           cell.style.setProperty("width", "100%", "important");
         }
       });
-      // Cadres graphiques (pages 2 et 3) : styles imposés en ligne pour que le
-      // cadre « Friction » ne sorte plus brisé, sans bordure ni décalé.
-      doc.querySelectorAll("[data-pdf-chart]").forEach((node) => {
-        const chart = node as HTMLElement;
-        chart.style.setProperty("width", "100%", "important");
-        chart.style.setProperty("max-width", "100%", "important");
-        chart.style.setProperty("display", "block", "important");
-        chart.style.setProperty("border", "1px solid #e2e8f0", "important");
-        chart.style.setProperty("border-radius", "0.5rem", "important");
-        chart.style.setProperty("background-color", "#ffffff", "important");
-        chart.style.setProperty("padding", "1rem", "important");
-        chart.style.setProperty("overflow", "visible", "important");
-      });
+
     },
   });
   return {

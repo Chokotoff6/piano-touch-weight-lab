@@ -181,7 +181,7 @@ export function PdfMetricChart({
 }) {
   const domain = paddedDomain(data.map((point) => point[metric]));
   return (
-    <div className="w-full bg-white" data-pdf-chart>
+    <div className="w-full bg-white">
       <div className="mb-1 text-[13px] font-bold text-black">{title}</div>
       <div style={{ width: 960, height: 300 }} className="bg-white">
         <ResponsiveContainer width="100%" height="100%">

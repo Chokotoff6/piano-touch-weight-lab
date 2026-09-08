@@ -637,8 +637,7 @@ function HorizontalGuides({
   const xScale = Object.values(xAxisMap ?? {}).find((axis) => typeof axis?.scale === "function")?.scale;
   if (!yScale) return null;
   const rightEdge = xScale ? xScale(88) : left + width;
-  // À gauche : la ligne touche exactement l'axe vertical, sans le dépasser.
-  const x1 = left - axisShift;
+  const x1 = left - axisShift + 5;
   const x2 = rightEdge - 5;
   if (!(x2 > x1)) return null;
   return (
@@ -733,8 +732,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   // et aux lignes de repère horizontales (jamais la première ni la dernière).
   // px : l'axe vertical est placé exactement à mi-chemin entre le bord gauche du
   // cadre et le début du tracé (marge gauche = sideMargin + 46, axe = 44 px).
-  // Recalage final : l'axe est décalé de 10 px supplémentaires vers la droite.
-  const Y_AXIS_SHIFT = Math.round((sideMargin + 46 + 44) / 2) - 10;
+  const Y_AXIS_SHIFT = Math.round((sideMargin + 46 + 44) / 2);
   const yTicks = (() => {
     if (!yDomain) return undefined;
     const [lo, hi] = yDomain as [number, number];
