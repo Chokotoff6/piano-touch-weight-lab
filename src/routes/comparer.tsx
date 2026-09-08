@@ -690,7 +690,9 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
     : undefined;
   // Graduations entières calculées à la main : elles servent à la fois à l'axe
   // et aux lignes de repère horizontales (jamais la première ni la dernière).
-  const Y_AXIS_SHIFT = 90; // px : décalage rigide de l'axe vertical vers la gauche
+  // px : l'axe vertical est placé exactement à mi-chemin entre le bord gauche du
+  // cadre et le début du tracé (marge gauche = sideMargin + 46, axe = 44 px).
+  const Y_AXIS_SHIFT = Math.round((sideMargin + 46 + 44) / 2);
   const yTicks = (() => {
     if (!yDomain) return undefined;
     const [lo, hi] = yDomain as [number, number];
