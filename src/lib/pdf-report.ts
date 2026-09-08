@@ -170,6 +170,23 @@ function drawPage(pdf: jsPDF, blocks: Capture[], ratio: number, topOffset: numbe
 export type ReportCaptures = Capture[][];
 
 /**
+ * Cache persistant (portée module) : il survit à la navigation entre les pages
+ * Saisie et Résultats, donc l'export reste instantané au retour.
+ */
+let cacheKey = "";
+let cacheShots: ReportCaptures | null = null;
+
+export function getCachedCaptures(key: string): ReportCaptures | null {
+  return cacheKey === key ? cacheShots : null;
+}
+
+export function setCachedCaptures(key: string, shots: ReportCaptures): void {
+  cacheKey = key;
+  cacheShots = shots;
+}
+
+
+/**
  * Capture les blocs page par page (html2canvas). Opération lente : elle peut
  * être lancée en tâche de fond dès que la saisie est conforme, puis mise en
  * cache pour un téléchargement instantané.
