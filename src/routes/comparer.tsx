@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useLang } from "@/data/translations";
 import { RefreshCw, Square, SquareX } from "lucide-react";
 import { BrandTargetInfoIcon } from "@/components/BrandTargetInfo";
+import { paddedDomain } from "@/components/PdfReportBlocks";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
 import {
   buildCurrentPiano,
