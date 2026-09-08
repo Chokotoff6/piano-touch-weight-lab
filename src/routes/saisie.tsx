@@ -1791,8 +1791,10 @@ function Index() {
         className={`weight-input !font-sans font-semibold !text-black focus:!border-black focus:!ring-0 ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
       />
+      )}
     </div>
   );
+
 
   // --- Rendu : une section de 44 touches -----------------------------------------
 
