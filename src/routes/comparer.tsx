@@ -671,14 +671,22 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   const dyRight = endpointOffsets("right");
   const DotComp = zoomed ? ZoomDot : SampleDot;
   const title = familyTitle(family.id, lang, family.title);
-  // Domaine vertical dynamique (page Résultats) : min/max réels ± 10 % d'aération.
+  // Domaine vertical FIGÉ sur le mode groupé : l'échelle et ses graduations ne
+  // sont jamais recalculées quand l'artisan bascule N/B (groupé, séparé,
+  // blanches seules, noires seules).
+  const groupedLines = [
+    ...currentLinesFor(family.id, "all", currentBaseName),
+    ...comparisonLinesFor(family.id, "all", comparisonLabel, comparisonShort, csvActive),
+    ...otherLines,
+  ];
   const yDomain = autoDomain
     ? paddedDomain(
         chartData.flatMap((point) =>
-          lines.filter((line) => !line.hidden).map((line) => point[line.dataKey] as number | null),
+          groupedLines.filter((line) => !line.hidden).map((line) => point[line.dataKey] as number | null),
         ),
       )
     : undefined;
+
   return (
     <Frame dataFrame={family.id} title={title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}>
       <div className={`absolute right-3 z-20 flex flex-col items-end gap-1.5 ${zoomed ? "top-14" : "top-2"}`}>
