@@ -2221,8 +2221,9 @@ Moyennes{" "}
         }}
       >
         <span className="!absolute !-top-3.5 !left-1/2 !-translate-x-1/2 !whitespace-nowrap !bg-card !px-2 !text-gray-950 !font-medium" style={{ fontSize: "0.83rem" }}>
-          {info["marque"]} {info["modele"]} ({info["fabrication"]?.trim() || "—"}) -  SN {info["sn_num"]}  /  Mesure {new Date().toISOString().slice(0, 10)}
+          {pdfSummary.main} / {pdfSummary.time} {pdfSummary.count}
         </span>
+
         <div className="grid grid-cols-4 mt-0.5 !gap-2.5">
           {(
             [
