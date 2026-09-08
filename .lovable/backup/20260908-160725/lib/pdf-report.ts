@@ -307,21 +307,6 @@ export function buildReportPdf(
   pdf.save(filename);
 }
 
-/**
- * OUTIL DE DÉBOGAGE TEMPORAIRE : capture html2canvas brute d'un seul bloc
- * (cadre « Mesures poids statiques ») et téléchargement direct en PNG,
- * sans passer par jsPDF, pour analyse visuelle du recadrage.
- */
-export async function downloadDebugPng(el: HTMLElement, filename: string): Promise<void> {
-  const shot = await capture(el);
-  const link = document.createElement("a");
-  link.href = shot.dataUrl;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-}
-
 /** Capture puis télécharge en une seule opération (chemin sans pré-rendu). */
 export async function generateLandscapeReport(
   pages: HTMLElement[][],
