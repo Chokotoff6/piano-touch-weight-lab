@@ -52,30 +52,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
           font-variant-ligatures: none !important;
           font-kerning: none !important;
         }
-        /* Gabarit rigide de la page 1 : largeur et typographie réduites pour que
-           le cadre « Mesures poids statiques » tienne intégralement sur la page. */
-        [data-pdf-compact] {
-          width: 850px !important;
-          max-width: 850px !important;
-          margin-left: auto !important;
-          margin-right: auto !important;
-          font-size: 11px !important;
-          padding: 8px !important;
-        }
-        [data-pdf-compact] td,
-        [data-pdf-compact] th,
-        [data-pdf-compact] span,
-        [data-pdf-compact] div,
-        [data-pdf-compact] input {
-          line-height: 1.15 !important;
-        }
-        [data-pdf-compact] input {
-          text-align: center !important;
-          font-size: 10px !important;
-          height: 16px !important;
-          min-height: 0 !important;
-          padding: 0 !important;
-        }
+        [data-pdf-compact] input { text-align: center !important; }
       `;
       doc.head.appendChild(style);
       // Substitution textuelle : les notices/résumés sont vidés (textContent = "")
@@ -166,16 +143,19 @@ function drawPage(pdf: jsPDF, blocks: Capture[], ratio: number, topOffset: numbe
   }
 }
 
-/** Images haute définition d'un rapport, prêtes à être assemblées en PDF. */
-export type ReportCaptures = Capture[][];
-
 /**
- * Capture les blocs page par page (html2canvas). Opération lente : elle peut
- * être lancée en tâche de fond dès que la saisie est conforme, puis mise en
- * cache pour un téléchargement instantané.
+ * Capture les blocs page par page, compose autant de pages A4 paysage que
+ * demandé (saut de page physique entre chacune), puis déclenche le
+ * téléchargement local direct (pdf.save). Aucune requête réseau n'intervient :
+ * le rapport est entièrement construit à partir du DOM local.
+ * `header` : 3 lignes d'identification imprimées en haut à droite des pages 2+.
  */
-export async function captureReportPages(pages: HTMLElement[][]): Promise<ReportCaptures> {
-  const captured: ReportCaptures = [];
+export async function generateLandscapeReport(
+  pages: HTMLElement[][],
+  filename: string,
+  header: string[] = [],
+): Promise<void> {
+  const captured: Capture[][] = [];
   // Stabilisation : on laisse aux graphiques Recharts le temps d'être
   // intégralement calculés et figés avant la première capture.
   await settle(1500);
@@ -195,20 +175,9 @@ export async function captureReportPages(pages: HTMLElement[][]): Promise<Report
     }
     if (shots.length > 0) captured.push(shots);
   }
-  return captured;
-}
-
-/**
- * Assemble les captures déjà prêtes en A4 paysage (saut de page physique entre
- * chacune) et déclenche le téléchargement local direct (pdf.save).
- * `header` : 3 lignes d'identification imprimées en haut à droite des pages 2+.
- */
-export function buildReportPdf(
-  captured: ReportCaptures,
-  filename: string,
-  header: string[] = [],
-): void {
   if (captured.length === 0) return;
+
+
   const pdf = new jsPDF({ orientation: "landscape", format: "a4", unit: "mm" });
   const total = captured.length;
   const stamp = exportStamp();
@@ -221,15 +190,6 @@ export function buildReportPdf(
     drawFooter(pdf, index + 1, total, stamp);
   });
   pdf.save(filename);
-}
-
-/** Capture puis télécharge en une seule opération (chemin sans pré-rendu). */
-export async function generateLandscapeReport(
-  pages: HTMLElement[][],
-  filename: string,
-  header: string[] = [],
-): Promise<void> {
-  buildReportPdf(await captureReportPages(pages), filename, header);
 }
 
 /** En-tête d'identification (3 lignes) en haut à droite des pages 2 et 3. */

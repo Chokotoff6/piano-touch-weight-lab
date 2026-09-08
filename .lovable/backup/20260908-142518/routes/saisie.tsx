@@ -25,7 +25,7 @@ import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
 import { buildCsv, buildExportFilename, downloadCsv, formatLocalDateTime } from "@/lib/export-csv";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { getLang, useLang } from "@/data/translations";
-import { buildReportPdf, captureReportPages, type ReportCaptures } from "@/lib/pdf-report";
+import { generateLandscapeReport } from "@/lib/pdf-report";
 import { generateBlankFormPdf, generateBlankKeyboardPdf } from "@/lib/pdf-blank-form";
 
 import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
@@ -1232,56 +1232,22 @@ function Index() {
   }, [info, rows, serialFull]);
 
 
-  /**
-   * Blocs DOM composant le rapport.
-   * Page 1 : bloc « Moyennes » + cadre complet « Mesures poids statiques ».
-   * Page 2 : Poids descendant + Poids remontant. Page 3 : Poids d'équilibre + Friction.
-   */
-  const collectPdfPages = (): HTMLElement[][] => {
+  /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
+  const exportPdfFile = async () => {
+    // Page 1 : bloc « Moyennes » (identique à la page Résultats) + cadre complet
+    //          « Mesures poids statiques » (clavier + 8 rangées d'expertise).
+    // Page 2 : Poids descendant + Poids remontant (courbes séparées, N&B).
+    // Page 3 : Poids d'équilibre + Friction.
     const keep = (list: Array<HTMLElement | null>) =>
       list.filter((el): el is HTMLElement => el !== null);
+    // Capture directe des cadres de la page Résultats (même graphisme exact).
     const frame = (id: string) =>
       pdfFramesRef.current?.querySelector<HTMLElement>(`[data-frame="${id}"]`) ?? null;
-    return [
+    const pages = [
       keep([moyennesRef.current, mesuresRef.current]),
       keep([frame("wa"), frame("wd")]),
       keep([frame("bal"), frame("fric")]),
     ];
-  };
-
-  /** Cache mémoire des captures HD préparées en tâche de fond. */
-  const pdfCache = useRef<ReportCaptures | null>(null);
-  const pdfPrerendering = useRef(false);
-
-  // Pré-rendu silencieux : dès que le badge « Saisie conforme » est vert, les
-  // captures html2canvas sont calculées en arrière-plan et mises en cache, pour
-  // que le clic sur « Exporter » se limite à l'assemblage du PDF.
-  useEffect(() => {
-    pdfCache.current = null;
-    if (!badgeVisible) return;
-    let cancelled = false;
-    pdfPrerendering.current = true;
-    const timer = setTimeout(() => {
-      void captureReportPages(collectPdfPages())
-        .then((shots) => {
-          if (!cancelled) pdfCache.current = shots;
-        })
-        .catch((error) => console.warn("[pdf] pré-rendu", error))
-        .finally(() => {
-          pdfPrerendering.current = false;
-        });
-    }, 1200);
-    return () => {
-      cancelled = true;
-      pdfPrerendering.current = false;
-      clearTimeout(timer);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [badgeVisible, rows]);
-
-  /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
-  const exportPdfFile = async () => {
-    const pages = collectPdfPages();
     if (pages.every((page) => page.length === 0)) return;
 
     const filename = buildExportFilename(
@@ -1291,18 +1257,11 @@ function Index() {
       new Date(),
       "pdf",
     );
-    const header = [pdfSummary.main, pdfSummary.time, pdfSummary.count];
-    const cached = pdfCache.current;
-    if (cached && cached.length > 0) {
-      buildReportPdf(cached, filename, header);
-      return;
-    }
-    if (pdfPrerendering.current) {
-      toast.info("Génération du rapport PDF en cours... Merci de patienter.");
-    }
-    const shots = await captureReportPages(pages);
-    pdfCache.current = shots;
-    buildReportPdf(shots, filename, header);
+    await generateLandscapeReport(pages, filename, [
+      pdfSummary.main,
+      pdfSummary.time,
+      pdfSummary.count,
+    ]);
   };
 
 
@@ -2230,12 +2189,7 @@ function Index() {
           {renderSection(1, 44, gridRef1)}
           {renderSection(45, 88, gridRef2)}
         </div>
-      </Frame>
-
-      {/* Bouton de navigation officiel : placé sous le cadre « Mesures poids
-          statiques » (et non plus à l'intérieur), donc jamais capturé au PDF. */}
-      {weighingMode && (
-        <div className="mt-3 flex w-full justify-end pr-2">
+        <div className="mt-4 flex w-full justify-end pr-2">
           <button
             type="button"
             data-pdf-hide
@@ -2245,8 +2199,7 @@ function Index() {
             {en ? "Results & charts >" : "Résultats & graphiques >"}
           </button>
         </div>
-      )}
-
+      </Frame>
 
       {/* Conteneur dédié à la capture PDF : hauteur nulle + overflow masqué,
            donc totalement invisible à l'écran (0 px de haut, opacité 0,
