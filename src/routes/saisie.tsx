@@ -1410,7 +1410,8 @@ function Index() {
     }
     setIsExporting(true);
     void exportPdfFile()
-      .catch(() => showTopbarAlert("export", "⚠️ La génération du rapport PDF a échoué."))
+      // Export 100 % local : aucune erreur n'est remontée à l'artisan.
+      .catch((error) => console.warn("[pdf] export", error))
       .finally(() => setIsExporting(false));
   };
 
