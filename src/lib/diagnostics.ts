@@ -1,5 +1,9 @@
-// Synchronisation cloud du diagnostic (INSERT / UPDATE via fonctions sécurisées).
-import { supabase } from "@/integrations/supabase/client";
+// Synchronisation cloud du diagnostic : tout passe par des fonctions serveur.
+import {
+  getOwnDiagnosticsFn,
+  insertDiagnosticFn,
+  updateDiagnosticFn,
+} from "@/lib/diagnostics.functions";
 
 export type DiagnosticHistoryRow = {
   id: string;
