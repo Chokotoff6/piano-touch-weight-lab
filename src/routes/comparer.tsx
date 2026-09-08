@@ -689,6 +689,21 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
         ),
       )
     : undefined;
+  // Graduations entières calculées à la main : elles servent à la fois à l'axe
+  // et aux lignes de repère horizontales (jamais la première ni la dernière).
+  const yTicks = (() => {
+    if (!yDomain) return undefined;
+    const [lo, hi] = yDomain as [number, number];
+    const min = Math.ceil(lo);
+    const max = Math.floor(hi);
+    if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) return undefined;
+    const step = Math.max(1, Math.ceil((max - min) / 5));
+    const ticks: number[] = [];
+    for (let v = min; v <= max; v += step) ticks.push(v);
+    return ticks;
+  })();
+
+
 
   return (
     <Frame dataFrame={family.id} title={title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}>
