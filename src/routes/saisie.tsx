@@ -432,12 +432,15 @@ function Index() {
 
   const moyennesRef = useRef<HTMLElement | null>(null);
   const mesuresRef = useRef<HTMLElement | null>(null);
+  const pdfMesuresRef = useRef<HTMLElement | null>(null);
 
   const navigate = useNavigate();
   const lang = useLang();
   const en = lang === "en";
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
+  const pdfGridRef1 = useSnappedGrid(1, 44);
+  const pdfGridRef2 = useSnappedGrid(45, 88);
   /** Alerte pédale de sustain (PD > 60) et son option « ne plus afficher ». */
   const [pedalAlert, setPedalAlert] = useState(false);
   const pedalCount = useRef(0);
@@ -1243,7 +1246,7 @@ function Index() {
     const frame = (id: string) =>
       pdfFramesRef.current?.querySelector<HTMLElement>(`[data-frame="${id}"]`) ?? null;
     return [
-      keep([moyennesRef.current, mesuresRef.current]),
+      keep([moyennesRef.current, pdfMesuresRef.current]),
       keep([frame("wa"), frame("wd")]),
       keep([frame("bal"), frame("fric")]),
     ];
@@ -1678,7 +1681,7 @@ function Index() {
     // OUTIL DE DÉBOGAGE TEMPORAIRE : capture PNG brute du cadre « Mesures
     // poids statiques » (sans jsPDF) pour analyser le recadrage.
     const onDebugPng = () => {
-      const el = mesuresRef.current;
+      const el = pdfMesuresRef.current;
       if (!el) {
         toast.error("Cadre « Mesures poids statiques » introuvable.");
         return;
@@ -1715,7 +1718,7 @@ function Index() {
 
   // --- Rendu : champ de saisie d'un poids (Wa ou Wd) ------------------------------
 
-  const renderWeightInput = (index: number, field: "wa" | "wd", isBlack: boolean) => (
+  const renderWeightInput = (index: number, field: "wa" | "wd", isBlack: boolean, pdfMirror = false) => (
     <div
       className={`weight-fields weight-fields-${field}`}
       onClick={() => {
@@ -1723,13 +1726,14 @@ function Index() {
       }}
     >
       <input
-        ref={(el) => {
+        ref={pdfMirror ? undefined : (el) => {
           inputs.current[`${index}-${field}`] = el;
         }}
         value={rows[index]![field]}
+        readOnly={pdfMirror}
         maxLength={2}
         placeholder={field === "wa" ? (en ? "DW" : "PD") : en ? "UW" : "PR"}
-        onChange={(e) => canEnterWeights && setValue(index, field, e.target.value)}
+        onChange={pdfMirror ? undefined : (e) => canEnterWeights && setValue(index, field, e.target.value)}
         onBlur={(e) => {
           if (!canEnterWeights) return;
           const key = `${index}-${field}`;
@@ -1770,7 +1774,7 @@ function Index() {
 
   // --- Rendu : une section de 44 touches -----------------------------------------
 
-  const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void) => (
+  const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void, pdfMirror = false) => (
     <section
       className="mt-2 flex w-full flex-col items-center"
       aria-label={`Touches ${from} à ${to}`}
@@ -1799,15 +1803,15 @@ function Index() {
                   {index + 1}
                 </div>
                 <div className="key-body">
-                  {renderWeightInput(index, "wa", black)}
-                  {renderWeightInput(index, "wd", black)}
+                  {renderWeightInput(index, "wa", black, pdfMirror)}
+                  {renderWeightInput(index, "wd", black, pdfMirror)}
                 </div>
               </div>
             );
           })}
         </div>
       </div>
-      <div data-pdf-result-frame className="w-full h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none">
+      <div data-pdf-result-frame className={pdfMirror ? "w-full h-auto max-h-none overflow-visible opacity-100 pointer-events-none" : "w-full h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none"}>
       {(["friction", "balance"] as const).map((kind) => (
         <div className="result-sheet" key={kind}>
           <div className={`result-label ${SIDE_LABEL_CLASS}`}>
@@ -2247,6 +2251,27 @@ function Index() {
           {renderSection(45, 88, gridRef2)}
         </div>
       </Frame>
+
+      {/* Miroir non responsive exclusivement réservé à la Page 1 et au PNG de
+          diagnostic. Il reste peint hors écran et expose toujours les quatre
+          lignes d'expertise sous chacun des deux demi-claviers. */}
+      <div className="absolute -left-[9999px] top-0 pointer-events-none">
+        <div className="!w-[1250px] !min-w-[1250px] !max-w-[1250px] overflow-visible bg-white">
+          <Frame
+            title={en ? "Static touch weight measurements" : "Mesures poids statiques"}
+            className="!w-[1250px] !min-w-[1250px] !max-w-[1250px] overflow-visible bg-white pb-4"
+            innerRef={(node) => {
+              pdfMesuresRef.current = node;
+              node?.setAttribute("data-pdf-compact", "");
+            }}
+          >
+            <div className="mx-auto flex w-full flex-col items-center justify-center overflow-visible">
+              {renderSection(1, 44, pdfGridRef1, true)}
+              {renderSection(45, 88, pdfGridRef2, true)}
+            </div>
+          </Frame>
+        </div>
+      </div>
 
       {/* Bouton de navigation officiel : placé sous le cadre « Mesures poids
           statiques » (et non plus à l'intérieur), donc jamais capturé au PDF. */}

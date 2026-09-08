@@ -2,7 +2,7 @@
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas-pro";
 
-type Capture = { dataUrl: string; width: number; height: number };
+type Capture = { dataUrl: string; width: number; height: number; insertionScale: number };
 
 const PAGE_W = 297; // mm (A4 paysage)
 const PAGE_H = 210;
@@ -28,11 +28,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
   // Marge haute : les titres des cadres débordent au-dessus de la bordure.
   const PAD = 14;
   const compact = el.hasAttribute("data-pdf-compact");
-  // Le clone est réduit (transform-origin: top center) : la fenêtre de capture
-  // est réduite d'autant, sinon html2canvas laisserait un large vide en bas.
-  const height = compact
-    ? Math.ceil(el.offsetHeight * COMPACT_SCALE) + PAD * 2
-    : el.offsetHeight + PAD * 2;
+  const height = el.offsetHeight + PAD * 2;
   const canvas = await html2canvas(el, {
     scale: 2,
     backgroundColor: "#ffffff",
@@ -40,7 +36,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
     logging: false,
     y: -PAD,
     height,
-    windowWidth: 1500,
+    windowWidth: compact ? 1300 : 1500,
 
     onclone: (doc) => {
       // Normalisation typographique : html2canvas rend mal les utilitaires de
@@ -53,14 +49,12 @@ async function capture(el: HTMLElement): Promise<Capture> {
           font-variant-ligatures: none !important;
           font-kerning: none !important;
         }
-        /* Gabarit rigide de la page 1 : largeur totale imposée pour que les
-           88 touches soient capturées sans rognage horizontal. */
+        /* Le miroir PDF possède déjà sa géométrie définitive. Le clone ne
+           change ni sa largeur ni celle de ses deux demi-claviers. */
         [data-pdf-compact] {
-          width: 1450px !important;
-          min-width: 1450px !important;
-          max-width: 1450px !important;
-          margin-left: auto !important;
-          margin-right: auto !important;
+          width: 1250px !important;
+          min-width: 1250px !important;
+          max-width: 1250px !important;
           font-size: 11px !important;
           padding: 8px !important;
           overflow: visible !important;
@@ -116,10 +110,9 @@ async function capture(el: HTMLElement): Promise<Capture> {
         frame.style.overflow = "visible";
         frame.style.opacity = "1";
       });
-      // Cadre « Mesures poids statiques » (page 1) : rendu forcé (il peut être
-      // déporté hors écran quand l'export part de la page Infopiano), marges
-      // supprimées et réduction d'échelle stricte pour que ses 8 rangées
-      // d'expertise et sa bordure basse tiennent entièrement sur la page 1.
+      // Miroir « Mesures poids statiques » : rendu hors écran remis à l'origine
+      // du clone, sans transformation. La réduction 0,82 est appliquée lors de
+      // l'insertion dans le PDF, après une capture intégrale nette.
       doc.querySelectorAll("[data-pdf-compact]").forEach((node) => {
         const frame = node as HTMLElement;
         frame.style.setProperty("position", "static", "important");
@@ -135,25 +128,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
         frame.style.setProperty("margin-bottom", "2rem", "important");
         frame.style.setProperty("padding-top", "10px", "important");
         frame.style.setProperty("padding-bottom", "2px", "important");
-        frame.style.setProperty("transform", `scale(${COMPACT_SCALE})`, "important");
-        frame.style.setProperty("transform-origin", "top center", "important");
-      });
-      // Les deux demi-claviers (touches 1–44 et 45–88) et chacune de leurs
-      // lignes internes reçoivent leur propre largeur physique. Cette seconde
-      // contrainte empêche le navigateur de recalculer le demi-clavier bas sur
-      // une largeur plus étroite que le premier pendant le clonage.
-      doc.querySelectorAll('[data-pdf-compact] section[aria-label^="Touches "]').forEach((node) => {
-        const halfKeyboard = node as HTMLElement;
-        const forceFullWidth = (target: HTMLElement) => {
-          target.style.setProperty("width", "1450px", "important");
-          target.style.setProperty("min-width", "1450px", "important");
-          target.style.setProperty("max-width", "1450px", "important");
-          target.style.setProperty("overflow", "visible", "important");
-        };
-        forceFullWidth(halfKeyboard);
-        halfKeyboard.querySelectorAll(":scope > div, .technical-sheet, .piano-grid, [data-pdf-result-frame], .result-sheet, .result-grid").forEach((row) => {
-          forceFullWidth(row as HTMLElement);
-        });
+        frame.style.setProperty("transform", "none", "important");
       });
       // Aucun conteneur interne ni parent ne doit rogner le cadre : ni la
       // bordure basse, ni les touches à l'extrême droite du clavier.
@@ -204,6 +179,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
     dataUrl: canvas.toDataURL("image/png"),
     width: canvas.width,
     height: canvas.height,
+    insertionScale: compact ? COMPACT_SCALE : 1,
   };
 }
 
@@ -215,8 +191,8 @@ const HEADER_H = 14; // mm réservés en haut des pages 2 et 3
 function pageRatio(blocks: Capture[], topOffset: number): number {
   const availW = PAGE_W - MARGIN * 2;
   const availH = PAGE_H - MARGIN * 2 - topOffset - GAP * (blocks.length - 1) - 6;
-  const maxPxW = Math.max(...blocks.map((b) => b.width));
-  const totalPxH = blocks.reduce((sum, b) => sum + b.height, 0);
+  const maxPxW = Math.max(...blocks.map((b) => b.width * b.insertionScale));
+  const totalPxH = blocks.reduce((sum, b) => sum + b.height * b.insertionScale, 0);
   return Math.min(availW / maxPxW, availH / totalPxH);
 }
 
@@ -225,8 +201,8 @@ function drawPage(pdf: jsPDF, blocks: Capture[], ratio: number, topOffset: numbe
   const availW = PAGE_W - MARGIN * 2;
   let y = MARGIN + topOffset;
   for (const block of blocks) {
-    const w = block.width * ratio;
-    const h = block.height * ratio;
+    const w = block.width * block.insertionScale * ratio;
+    const h = block.height * block.insertionScale * ratio;
     const x = MARGIN + (availW - w) / 2;
     pdf.addImage(block.dataUrl, "PNG", x, y, w, h, undefined, "FAST");
     y += h + GAP;
