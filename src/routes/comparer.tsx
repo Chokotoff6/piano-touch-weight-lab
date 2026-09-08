@@ -780,11 +780,22 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
             )}
 
-            {/* Lignes de repère horizontales : même gris que les repères DO,
-                hors première et dernière graduation. */}
-            {autoDomain && yTicks && yTicks.slice(1, -1).map((tick) => (
-              <ReferenceLine key={`grid-${tick}`} xAxisId="main" y={tick} stroke="#9ca3af" strokeWidth={1} />
-            ))}
+            {/* Lignes de repère horizontales : géométrie brute imposée —
+                début à 5 px à droite de l'axe vertical, fin à 5 px à gauche du
+                repère vertical de la touche 88. Hors première et dernière
+                graduation. */}
+            {autoDomain && yTicks && yTicks.length > 2 && (
+              <Customized
+                component={(props: unknown) => (
+                  <HorizontalGuides
+                    {...(props as GuideChartProps)}
+                    ticks={yTicks.slice(1, -1)}
+                    axisShift={Y_AXIS_SHIFT}
+                  />
+                )}
+              />
+            )}
+
 
 
             {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#9ca3af" strokeWidth={1.4} />)}
