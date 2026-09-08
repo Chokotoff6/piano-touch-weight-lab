@@ -9,13 +9,6 @@ const PAGE_H = 210;
 const MARGIN = 8;
 const GAP = 4;
 
-/** Attend que le navigateur ait peint (double rAF) puis laisse respirer le rendu. */
-function settle(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, ms)));
-  });
-}
-
 async function capture(el: HTMLElement): Promise<Capture> {
   // Marge haute : les titres des cadres débordent au-dessus de la bordure.
   const PAD = 14;
@@ -59,17 +52,6 @@ async function capture(el: HTMLElement): Promise<Capture> {
         frame.style.maxHeight = "none";
         frame.style.overflow = "visible";
         frame.style.opacity = "1";
-      });
-      // Compactage du grand cadre « Mesures poids statiques » (page 1) :
-      // réduction stricte d'échelle + resserrage des marges internes pour que
-      // sa hauteur totale tienne intégralement sur la page.
-      doc.querySelectorAll("[data-pdf-compact]").forEach((node) => {
-        const frame = node as HTMLElement;
-        frame.style.paddingTop = "6px";
-        frame.style.paddingBottom = "2px";
-        frame.style.marginTop = "0px";
-        frame.style.marginBottom = "0px";
-        frame.style.zoom = "0.9";
       });
     },
   });
@@ -118,18 +100,10 @@ export async function generateLandscapeReport(
   header: string[] = [],
 ): Promise<void> {
   const captured: Capture[][] = [];
-  // Stabilisation : on laisse aux graphiques Recharts le temps d'être
-  // intégralement calculés et figés avant la première capture.
-  await settle(1500);
   for (const page of pages) {
     const blocks = page.filter(Boolean);
     if (blocks.length === 0) continue;
-    const shots: Capture[] = [];
-    for (const block of blocks) {
-      await settle(300);
-      shots.push(await capture(block));
-    }
-    captured.push(shots);
+    captured.push(await Promise.all(blocks.map(capture)));
   }
   if (captured.length === 0) return;
 

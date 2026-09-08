@@ -2111,8 +2111,6 @@ function Index() {
         className={weighingMode ? "!mt-[100px] pb-4" : "mt-8 pb-10 !hidden"}
         innerRef={(node) => {
           mesuresRef.current = node;
-          // Compactage réservé au clonage PDF (page 1) : voir pdf-report.ts.
-          node?.setAttribute("data-pdf-compact", "");
         }}
       >
         <button

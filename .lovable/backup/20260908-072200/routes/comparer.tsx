@@ -727,15 +727,14 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               if (Number.isFinite(note)) lastMouseNote.current = note;
             }}
             onMouseLeave={() => { setHoveredFamily(null); }}
-            margin={{ top: 22, right: sideMargin, bottom: 15, left: autoDomain ? sideMargin + 32 : sideMargin }}
+            margin={{ top: 22, right: sideMargin, bottom: 15, left: sideMargin }}
           >
             <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
             <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
             {autoDomain ? (
               // Axe vertical gradué : graduations calées sur l'écart réel du cadre,
-              // majoré de 10 % pour l'aération visuelle. Décalé vers la gauche
-              // (marge gauche élargie) pour ne pas chevaucher le départ des courbes.
-              <YAxis width={44} domain={yDomain ?? ["auto", "auto"]} tickCount={6} allowDecimals={false} tick={{ fontSize: 10, fill: "#111827" }} axisLine={{ stroke: "#111827" }} tickLine={{ stroke: "#111827" }} />
+              // majoré de 10 % pour l'aération visuelle.
+              <YAxis width={44} domain={yDomain ?? ["auto", "auto"]} tickCount={6} allowDecimals={false} tick={{ fontSize: 10, fill: "#111827" }} axisLine={{ stroke: "#9ca3af" }} tickLine={{ stroke: "#9ca3af" }} />
             ) : (
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
             )}
@@ -752,31 +751,22 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               offset={24}
             />
 
-            {lines.map((line) => {
-              // Page Résultats + captures PDF : rendu strictement noir & blanc
-              // (aucune couleur bleue / verte / orange / violette résiduelle).
-              const color = autoDomain
-                ? line.dataKey.toLowerCase().includes("white") || line.color === "#6b7280"
-                  ? "#4b5563"
-                  : "#111827"
-                : line.color;
-              return (
+            {lines.map((line) => (
               <Line
                 key={line.dataKey}
                 xAxisId="main"
                 type="monotone"
                 dataKey={line.dataKey}
                 name={line.name}
-                stroke={line.hidden ? "transparent" : color}
+                stroke={line.hidden ? "transparent" : line.color}
                 strokeWidth={2}
-                activeDot={line.hidden ? false : { r: 5, fill: color, stroke: "#ffffff", strokeWidth: 2 }}
+                activeDot={line.hidden ? false : { r: 5, fill: line.color, stroke: "#ffffff", strokeWidth: 2 }}
                 dot={line.real ? <DotComp /> : false}
                 connectNulls={true}
                 isAnimationActive={false}
-                label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color, firstIndex: firstIn(line.dataKey), lastIndex: lastIn(line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden, maxY: zoomed ? 100000 : LABEL_MAX_Y })}
+                label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color: line.color, firstIndex: firstIn(line.dataKey), lastIndex: lastIn(line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden, maxY: zoomed ? 100000 : LABEL_MAX_Y })}
               />
-              );
-            })}
+            ))}
 
           </LineChart>
         </ResponsiveContainer>
