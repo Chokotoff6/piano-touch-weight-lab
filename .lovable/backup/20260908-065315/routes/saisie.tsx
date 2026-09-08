@@ -28,7 +28,7 @@ import { getLang, useLang } from "@/data/translations";
 import { generateLandscapeReport } from "@/lib/pdf-report";
 import { generateBlankFormPdf, generateBlankKeyboardPdf } from "@/lib/pdf-blank-form";
 
-import { PdfComparisonChart, PdfInfoTable, PdfMetricChart, type ChartPoint } from "@/components/PdfReportBlocks";
+import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
 import { buildCurrentPiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, findHistoryProfileId, CURRENT_PIANO_KEY } from "@/lib/current-piano";
 
 const INVALID_CSV_MESSAGE =
@@ -425,10 +425,6 @@ function Index() {
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const pdfInfoRef = useRef<HTMLDivElement | null>(null);
   const pdfChartRef = useRef<HTMLDivElement | null>(null);
-  const pdfWaRef = useRef<HTMLDivElement | null>(null);
-  const pdfWdRef = useRef<HTMLDivElement | null>(null);
-  const pdfBalRef = useRef<HTMLDivElement | null>(null);
-  const pdfFricRef = useRef<HTMLDivElement | null>(null);
   const moyennesRef = useRef<HTMLElement | null>(null);
   const mesuresRef = useRef<HTMLElement | null>(null);
 
@@ -1193,18 +1189,17 @@ function Index() {
 
   /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
   const exportPdfFile = async () => {
-    // Page 1 : Informations piano + cadre complet « Mesures poids statiques »
-    //          (clavier 88 touches + 8 rangées d'expertise restaurées dans le clone).
-    // Page 2 : Poids descendant + Poids remontant (courbes séparées, sans fond).
-    // Page 3 : Poids d'équilibre + Friction.
-    const keep = (list: Array<HTMLElement | null>) =>
-      list.filter((el): el is HTMLElement => el !== null);
-    const pages = [
-      keep([pdfInfoRef.current, mesuresRef.current]),
-      keep([pdfWaRef.current, pdfWdRef.current]),
-      keep([pdfBalRef.current, pdfFricRef.current]),
-    ];
-    if (pages[0]!.length === 0) return;
+    // Page 1 : Informations piano + Moyennes + graphique de comparaison.
+    // Page 2 : clavier complet (mesuresRef) avec ses rangées d'expertise
+    // (Friction / Poids d'équilibre) masquées à l'écran mais restaurées
+    // dans le clone html2canvas via [data-pdf-result-frame].
+    const page1 = [pdfInfoRef.current, moyennesRef.current, pdfChartRef.current].filter(
+      (el): el is HTMLElement => el !== null,
+    );
+    const page2 = [mesuresRef.current].filter(
+      (el): el is HTMLElement => el !== null,
+    );
+    if (page1.length === 0) return;
     const filename = buildExportFilename(
       info["marque"],
       info["modele"],
@@ -1212,7 +1207,7 @@ function Index() {
       new Date(),
       "pdf",
     );
-    await generateLandscapeReport(pages, filename);
+    await generateLandscapeReport(page1, page2, filename);
   };
 
   // --- Import (CSV local / historique en ligne) -----------------------------------
@@ -1513,15 +1508,10 @@ function Index() {
       return savedDateRef.current !== today || changedWeightCount() >= 5;
     };
     const startAction = (kind: "csv" | "pdf" | "compare") => {
-      // Exports CSV et PDF : fonctionnalités 100 % locales. Aucun consentement,
-      // aucune validation bloquante, aucune synchronisation cloud ne peut les
-      // retarder ni les faire échouer (aucune alerte de synchronisation).
-      if (kind === "csv" || kind === "pdf") {
-        try {
-          runLocalExport(kind);
-        } catch (error) {
-          console.error("[Export local] échec :", error);
-        }
+      // Export CSV : fonctionnalité 100 % locale et gratuite. Aucun consentement,
+      // aucune validation bloquante, aucune synchronisation cloud ne peut le retarder.
+      if (kind === "csv") {
+        runLocalExport("csv");
         return;
       }
       if (!guardExport("export")) return;
@@ -1535,7 +1525,9 @@ function Index() {
       // Navigation verrouillée : on n'exporte / ne navigue QUE si les deux
       // écritures cloud (buffer + historique) ont abouti.
       void syncAndFinish(mode).then((ok) => {
-        if (ok) void navigate({ to: "/comparer" });
+        // L'export local n'est jamais bloqué par un incident cloud.
+        if (kind === "pdf") runLocalExport("pdf");
+        if (ok && kind === "compare") void navigate({ to: "/comparer" });
       });
     };
     const onExport = () => startAction("csv");
@@ -2242,21 +2234,6 @@ Moyennes{" "}
         <div ref={pdfChartRef} className="mt-4 bg-white">
           <PdfComparisonChart data={chartData} frictionTarget={profile.frictionTarget} />
         </div>
-        {/* Pages 2 et 3 du PDF : chaque métrique isolée dans son propre cadre,
-             courbe séparée, fond blanc, axe vertical gradué. */}
-        <div ref={pdfWaRef} className="mt-4 bg-white">
-          <PdfMetricChart title={en ? "Downweight" : "Poids descendant"} metric="wa" data={chartData} />
-        </div>
-        <div ref={pdfWdRef} className="mt-4 bg-white">
-          <PdfMetricChart title={en ? "Upweight" : "Poids remontant"} metric="wd" data={chartData} />
-        </div>
-        <div ref={pdfBalRef} className="mt-4 bg-white">
-          <PdfMetricChart title={en ? "Balance Weight" : "Poids d'équilibre"} metric="balance" data={chartData} />
-        </div>
-        <div ref={pdfFricRef} className="mt-4 bg-white">
-          <PdfMetricChart title="Friction" metric="friction" data={chartData} />
-        </div>
-
         </div>
       </div>
 

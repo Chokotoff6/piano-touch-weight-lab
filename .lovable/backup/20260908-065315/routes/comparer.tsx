@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { useLang } from "@/data/translations";
 import { RefreshCw, Square, SquareX } from "lucide-react";
 import { BrandTargetInfoIcon } from "@/components/BrandTargetInfo";
-import { paddedDomain } from "@/components/PdfReportBlocks";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
 import {
   buildCurrentPiano,
@@ -466,24 +465,11 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
 
 type LineDef = { dataKey: SeriesKey; name: string; shortName: string; color: string; real?: boolean; hidden?: boolean };
 const FAMILIES: Array<{ id: string; title: string; domain: [number, number]; lines: LineDef[] }> = [
-  { id: "wa", title: "Poids descendant", domain: [55, 85], lines: [{ dataKey: "sameWa", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWa", name: "Cible", shortName: "Cible", color: "#10b981" }] },
-  { id: "wd", title: "Poids remontant", domain: [50, 70], lines: [{ dataKey: "sameWd", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWd", name: "Cible", shortName: "Cible", color: "#10b981" }] },
-  { id: "bal", title: "Poids d'équilibre", domain: [55, 75], lines: [{ dataKey: "sameBal", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryBal", name: "Cible", shortName: "Cible", color: "#10b981" }] },
-  { id: "fric", title: "Friction", domain: ["dataMin - 1.5", "dataMax + 1.5"] as unknown as [number, number], lines: [{ dataKey: "sameFric", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryFric", name: "Cible", shortName: "Cible", color: "#10b981" }] },
+  { id: "wa", title: "Poids d'enfoncement (Wa)", domain: [55, 85], lines: [{ dataKey: "sameWa", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWa", name: "Cible", shortName: "Cible", color: "#10b981" }] },
+  { id: "wd", title: "Poids de retour (Wd)", domain: [50, 70], lines: [{ dataKey: "sameWd", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWd", name: "Cible", shortName: "Cible", color: "#10b981" }] },
+  { id: "bal", title: "Balance statique", domain: [55, 75], lines: [{ dataKey: "sameBal", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryBal", name: "Cible", shortName: "Cible", color: "#10b981" }] },
+  { id: "fric", title: "Friction mécanique", domain: ["dataMin - 1.5", "dataMax + 1.5"] as unknown as [number, number], lines: [{ dataKey: "sameFric", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryFric", name: "Cible", shortName: "Cible", color: "#10b981" }] },
 ];
-
-// Terminologie bilingue stricte des quatre cadres graphiques.
-const FAMILY_TITLES: Record<string, { fr: string; en: string }> = {
-  wa: { fr: "Poids descendant", en: "Downweight" },
-  wd: { fr: "Poids remontant", en: "Upweight" },
-  bal: { fr: "Poids d'équilibre", en: "Balance Weight" },
-  fric: { fr: "Friction", en: "Friction" },
-};
-export function familyTitle(id: string, lang: string, fallback: string) {
-  const entry = FAMILY_TITLES[id];
-  if (!entry) return fallback;
-  return lang === "en" ? entry.en : entry.fr;
-}
 const DY_STEPS = [-15, 0, 15, 30, 45];
 function offsetsFor(lines: LineDef[], point: ChartPoint | undefined) {
   const map = new Map<SeriesKey, number>();
@@ -670,23 +656,14 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   const dyLeft = endpointOffsets("left");
   const dyRight = endpointOffsets("right");
   const DotComp = zoomed ? ZoomDot : SampleDot;
-  const title = familyTitle(family.id, lang, family.title);
-  // Domaine vertical dynamique (page Résultats) : min/max réels ± 10 % d'aération.
-  const yDomain = autoDomain
-    ? paddedDomain(
-        chartData.flatMap((point) =>
-          lines.filter((line) => !line.hidden).map((line) => point[line.dataKey] as number | null),
-        ),
-      )
-    : undefined;
   return (
-    <Frame dataFrame={family.id} title={title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}>
+    <Frame dataFrame={family.id} title={family.title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}>
       <div className={`absolute right-3 z-20 flex flex-col items-end gap-1.5 ${zoomed ? "top-14" : "top-2"}`}>
         {zoomed && (
           <button type="button" aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
         )}
         {!zoomed && (
-          <button type="button" aria-label={`Zoom sur ${title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-2 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
+          <button type="button" aria-label={`Zoom sur ${family.title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-2 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
         )}
         {onCycleKeyFilter && (
           <button
@@ -731,13 +708,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           >
             <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
             <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
-            {autoDomain ? (
-              // Axe vertical gradué : graduations calées sur l'écart réel du cadre,
-              // majoré de 10 % pour l'aération visuelle.
-              <YAxis width={44} domain={yDomain ?? ["auto", "auto"]} tickCount={6} tick={{ fontSize: 10, fill: "#111827" }} axisLine={{ stroke: "#9ca3af" }} tickLine={{ stroke: "#9ca3af" }} />
-            ) : (
-              <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
-            )}
+            <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={autoDomain ? ["auto", "auto"] : family.domain} />
             {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#9ca3af" strokeWidth={1.4} />)}
 
             {/* Fenêtre flottante native : une seule bulle par touche, toutes courbes confondues. */}
@@ -953,10 +924,10 @@ export function Frame({ title, className = "", titleClassName, dataFrame, childr
 }
 
 const COLUMNS = [
-  { key: "wa", label: "Poids descendant", labelEn: "Downweight" },
-  { key: "wd", label: "Poids remontant", labelEn: "Upweight" },
-  { key: "friction", label: "Friction", labelEn: "Friction" },
-  { key: "balance", label: "Poids d'équilibre", labelEn: "Balance Weight" },
+  { key: "wa", label: "Poids descendant (Wa)" },
+  { key: "wd", label: "Poids ascendant (Wd)" },
+  { key: "friction", label: "Friction mécanique" },
+  { key: "balance", label: "Balance statique" },
 ] as const;
 type MetricKey = (typeof COLUMNS)[number]["key"];
 
@@ -1002,15 +973,14 @@ const AVG_KEYS: Record<MetricKey, { cur: [SeriesKey, SeriesKey, SeriesKey]; ref:
 };
 
 export function AverageRow({ chartData, source, hasData, csv = false }: { chartData: ChartPoint[]; source: "cur" | "ref"; hasData: boolean; csv?: boolean }) {
-  const lang = useLang();
   return (
     <div className="grid grid-cols-4 gap-3">
-      {COLUMNS.map(({ key, label, labelEn }) => {
+      {COLUMNS.map(({ key, label }) => {
         const [globalKey, whiteKey, blackKey] = AVG_KEYS[key][source];
         return (
           <AverageBlock
             key={key}
-            label={lang === "en" ? labelEn : label}
+            label={label}
             tone={source === "ref" && csv ? "csv" : source}
             global={hasData ? seriesAverage(chartData, globalKey) : "—"}
             white={hasData ? seriesAverage(chartData, whiteKey) : "—"}
