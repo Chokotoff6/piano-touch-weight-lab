@@ -1254,7 +1254,7 @@ function Index() {
 
   /** Empreinte des données : identifie le rapport déjà capturé en cache. */
   const pdfCacheKey = useMemo(
-    () => JSON.stringify([rows, info["marque"], info["modele"], info["sn_num"]]),
+    () => JSON.stringify(["pdf-mirror-1250-v1", rows, info["marque"], info["modele"], info["sn_num"]]),
     [rows, info],
   );
   const pdfPrerendering = useRef(false);
@@ -2204,8 +2204,6 @@ function Index() {
 
         innerRef={(node) => {
           mesuresRef.current = node;
-          // Compactage réservé au clonage PDF (page 1) : voir pdf-report.ts.
-          node?.setAttribute("data-pdf-compact", "");
         }}
       >
         <button
