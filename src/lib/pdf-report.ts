@@ -142,7 +142,10 @@ async function capture(el: HTMLElement): Promise<Capture> {
         frame.style.setProperty("margin-top", "0", "important");
         frame.style.setProperty("margin-bottom", "2rem", "important");
         frame.style.setProperty("padding-top", "10px", "important");
-        frame.style.setProperty("padding-bottom", "2px", "important");
+        // Marge basse renforcée : la rangée « Poids d'équilibre » ne colle plus
+        // à la bordure inférieure du cadre.
+        frame.style.setProperty("padding-bottom", "24px", "important");
+        frame.style.setProperty("margin-bottom", "16px", "important");
         frame.style.setProperty("transform", "none", "important");
       });
       // Aucun conteneur interne ni parent ne doit rogner le cadre : ni la
