@@ -9,6 +9,13 @@ const PAGE_H = 210;
 const MARGIN = 8;
 const GAP = 4;
 
+/** Attend que le navigateur ait peint (double rAF) puis laisse respirer le rendu. */
+function settle(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, ms)));
+  });
+}
+
 async function capture(el: HTMLElement): Promise<Capture> {
   // Marge haute : les titres des cadres débordent au-dessus de la bordure.
   const PAD = 14;

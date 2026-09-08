@@ -752,22 +752,31 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               offset={24}
             />
 
-            {lines.map((line) => (
+            {lines.map((line) => {
+              // Page Résultats + captures PDF : rendu strictement noir & blanc
+              // (aucune couleur bleue / verte / orange / violette résiduelle).
+              const color = autoDomain
+                ? line.dataKey.toLowerCase().includes("white") || line.color === "#6b7280"
+                  ? "#4b5563"
+                  : "#111827"
+                : line.color;
+              return (
               <Line
                 key={line.dataKey}
                 xAxisId="main"
                 type="monotone"
                 dataKey={line.dataKey}
                 name={line.name}
-                stroke={line.hidden ? "transparent" : line.color}
+                stroke={line.hidden ? "transparent" : color}
                 strokeWidth={2}
-                activeDot={line.hidden ? false : { r: 5, fill: line.color, stroke: "#ffffff", strokeWidth: 2 }}
+                activeDot={line.hidden ? false : { r: 5, fill: color, stroke: "#ffffff", strokeWidth: 2 }}
                 dot={line.real ? <DotComp /> : false}
                 connectNulls={true}
                 isAnimationActive={false}
-                label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color: line.color, firstIndex: firstIn(line.dataKey), lastIndex: lastIn(line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden, maxY: zoomed ? 100000 : LABEL_MAX_Y })}
+                label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color, firstIndex: firstIn(line.dataKey), lastIndex: lastIn(line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden, maxY: zoomed ? 100000 : LABEL_MAX_Y })}
               />
-            ))}
+              );
+            })}
 
           </LineChart>
         </ResponsiveContainer>
