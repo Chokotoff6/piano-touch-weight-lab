@@ -1508,10 +1508,15 @@ function Index() {
       return savedDateRef.current !== today || changedWeightCount() >= 5;
     };
     const startAction = (kind: "csv" | "pdf" | "compare") => {
-      // Export CSV : fonctionnalité 100 % locale et gratuite. Aucun consentement,
-      // aucune validation bloquante, aucune synchronisation cloud ne peut le retarder.
-      if (kind === "csv") {
-        runLocalExport("csv");
+      // Exports CSV et PDF : fonctionnalités 100 % locales. Aucun consentement,
+      // aucune validation bloquante, aucune synchronisation cloud ne peut les
+      // retarder ni les faire échouer (aucune alerte de synchronisation).
+      if (kind === "csv" || kind === "pdf") {
+        try {
+          runLocalExport(kind);
+        } catch (error) {
+          console.error("[Export local] échec :", error);
+        }
         return;
       }
       if (!guardExport("export")) return;

@@ -220,7 +220,7 @@ function RootComponent() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className={`border border-gray-300 bg-white text-lg font-bold ${topbar.measuresReady ? "!text-green-600" : "!text-black"}`}
+                    className="border border-gray-300 bg-white text-lg font-bold !text-black"
                   >
                     {lang === "en" ? "Export" : "Exporter"}
                     <ChevronDown className="ml-1 h-4 w-4" />
