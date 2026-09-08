@@ -734,7 +734,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             {autoDomain ? (
               // Axe vertical gradué : graduations calées sur l'écart réel du cadre,
               // majoré de 10 % pour l'aération visuelle.
-              <YAxis width={44} domain={yDomain ?? ["auto", "auto"]} tickCount={6} allowDecimals={false} tick={{ fontSize: 10, fill: "#111827" }} axisLine={{ stroke: "#9ca3af" }} tickLine={{ stroke: "#9ca3af" }} />
+              <YAxis width={44} domain={yDomain ?? ["auto", "auto"]} tickCount={6} tick={{ fontSize: 10, fill: "#111827" }} axisLine={{ stroke: "#9ca3af" }} tickLine={{ stroke: "#9ca3af" }} />
             ) : (
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
             )}

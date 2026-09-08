@@ -1191,38 +1191,16 @@ function Index() {
     [rows],
   );
 
-  /** Identification du piano reprise en en-tête des pages 2 et 3 du PDF. */
-  const pdfSummary = useMemo(() => {
-    const now = new Date();
-    const p = (n: number) => String(n).padStart(2, "0");
-    const year = info["fabrication"]?.trim() || "—";
-    const BLACK_MOD = new Set([2, 5, 7, 10, 0]);
-    let white = 0;
-    let black = 0;
-    rows.forEach((row, index) => {
-      const filled = String(row.wa ?? "").trim() !== "" || String(row.wd ?? "").trim() !== "";
-      if (!filled) return;
-      if (BLACK_MOD.has((index + 1) % 12)) black += 1;
-      else white += 1;
-    });
-    return {
-      main: `${info["marque"] ?? ""} ${info["modele"] ?? ""} (${year}) - SN ${serialFull}`.trim(),
-      time: `Mesure ${p(now.getDate())}-${p(now.getMonth() + 1)}-${now.getFullYear()} - ${p(now.getHours())}:${p(now.getMinutes())}`,
-      count: `- ${white} Blanches / ${black} Noires`,
-    };
-  }, [info, rows, serialFull]);
-
-
   /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
   const exportPdfFile = async () => {
-    // Page 1 : bloc « Moyennes » (identique à la page Résultats) + cadre complet
-    //          « Mesures poids statiques » (clavier + 8 rangées d'expertise).
-    // Page 2 : Poids descendant + Poids remontant (courbes séparées, N&B).
+    // Page 1 : Informations piano + cadre complet « Mesures poids statiques »
+    //          (clavier 88 touches + 8 rangées d'expertise restaurées dans le clone).
+    // Page 2 : Poids descendant + Poids remontant (courbes séparées, sans fond).
     // Page 3 : Poids d'équilibre + Friction.
     const keep = (list: Array<HTMLElement | null>) =>
       list.filter((el): el is HTMLElement => el !== null);
     const pages = [
-      keep([moyennesRef.current, mesuresRef.current]),
+      keep([pdfInfoRef.current, mesuresRef.current]),
       keep([pdfWaRef.current, pdfWdRef.current]),
       keep([pdfBalRef.current, pdfFricRef.current]),
     ];
@@ -1234,13 +1212,8 @@ function Index() {
       new Date(),
       "pdf",
     );
-    await generateLandscapeReport(pages, filename, [
-      pdfSummary.main,
-      pdfSummary.time,
-      pdfSummary.count,
-    ]);
+    await generateLandscapeReport(pages, filename);
   };
-
 
   // --- Import (CSV local / historique en ligne) -----------------------------------
 
@@ -2221,9 +2194,8 @@ Moyennes{" "}
         }}
       >
         <span className="!absolute !-top-3.5 !left-1/2 !-translate-x-1/2 !whitespace-nowrap !bg-card !px-2 !text-gray-950 !font-medium" style={{ fontSize: "0.83rem" }}>
-          {pdfSummary.main} / {pdfSummary.time} {pdfSummary.count}
+          {info["marque"]} {info["modele"]} ({info["fabrication"]?.trim() || "—"}) -  SN {info["sn_num"]}  /  Mesure {new Date().toISOString().slice(0, 10)}
         </span>
-
         <div className="grid grid-cols-4 mt-0.5 !gap-2.5">
           {(
             [
