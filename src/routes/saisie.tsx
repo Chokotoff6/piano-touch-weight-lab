@@ -25,7 +25,7 @@ import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
 import { buildCsv, buildExportFilename, downloadCsv, formatLocalDateTime } from "@/lib/export-csv";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { getLang, useLang } from "@/data/translations";
-import { buildReportPdf, captureReportPages, getCachedCaptures, setCachedCaptures } from "@/lib/pdf-report";
+import { buildReportPdf, captureReportPages, downloadDebugPng, getCachedCaptures, setCachedCaptures } from "@/lib/pdf-report";
 import { generateBlankFormPdf, generateBlankKeyboardPdf } from "@/lib/pdf-blank-form";
 
 import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
@@ -1675,12 +1675,29 @@ function Index() {
       );
     };
 
+    // OUTIL DE DÉBOGAGE TEMPORAIRE : capture PNG brute du cadre « Mesures
+    // poids statiques » (sans jsPDF) pour analyser le recadrage.
+    const onDebugPng = () => {
+      const el = mesuresRef.current;
+      if (!el) {
+        toast.error("Cadre « Mesures poids statiques » introuvable.");
+        return;
+      }
+      toast.info("Capture PNG de débogage en cours...");
+      void downloadDebugPng(el, "debug-mesures-poids-statiques.png").catch((error) => {
+        console.error("[debug-png] échec", error);
+        toast.error("Échec de la capture PNG de débogage.");
+      });
+    };
+
+
     const handlers: Record<string, EventListener> = {
       "piano-export": onExport,
       "piano-export-csv": exportCsvOnly,
       "piano-export-pdf": onPdf,
       "piano-export-blank-pdf": onBlankPdf,
       "piano-export-blank-keyboard-pdf": onBlankKeyboardPdf,
+      "piano-debug-png": onDebugPng,
 
       "piano-compare-guard": onCompareGuard,
       "piano-reset": onReset,
