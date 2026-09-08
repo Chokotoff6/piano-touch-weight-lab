@@ -74,7 +74,22 @@ async function capture(el: HTMLElement): Promise<Capture> {
           min-height: 0 !important;
           padding: 0 !important;
         }
-
+        /* Noir pur : plus aucune nuance de gris clair dans le cadre Page 1. */
+        [data-pdf-compact], [data-pdf-compact] * {
+          color: #000000 !important;
+          -webkit-text-fill-color: #000000 !important;
+        }
+        /* Cadres graphiques (pages 2 et 3) : géométrie et bordure identiques. */
+        [data-pdf-chart] {
+          width: 100% !important;
+          max-width: 100% !important;
+          display: block !important;
+          border: 1px solid #e2e8f0 !important;
+          border-radius: 0.5rem !important;
+          background-color: #ffffff !important;
+          padding: 1rem !important;
+          overflow: visible !important;
+        }
       `;
       doc.head.appendChild(style);
       // Substitution textuelle : les notices/résumés sont vidés (textContent = "")
