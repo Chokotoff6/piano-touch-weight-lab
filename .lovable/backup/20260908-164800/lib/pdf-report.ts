@@ -40,7 +40,6 @@ async function capture(el: HTMLElement): Promise<Capture> {
     logging: false,
     y: -PAD,
     height,
-    windowWidth: 1400,
 
     onclone: (doc) => {
       // Normalisation typographique : html2canvas rend mal les utilitaires de
@@ -56,9 +55,9 @@ async function capture(el: HTMLElement): Promise<Capture> {
         /* Gabarit rigide de la page 1 : largeur totale imposée pour que les
            88 touches soient capturées sans rognage horizontal. */
         [data-pdf-compact] {
-          width: 1350px !important;
-          min-width: 1350px !important;
-          max-width: 1350px !important;
+          width: 100% !important;
+          min-width: 1024px !important;
+          max-width: 1024px !important;
           margin-left: auto !important;
           margin-right: auto !important;
           font-size: 11px !important;
@@ -158,25 +157,23 @@ async function capture(el: HTMLElement): Promise<Capture> {
       // html2canvas ignore une partie des règles utilitaires de mise en page.
       doc.querySelectorAll("[data-pdf-compact] input").forEach((node) => {
         const input = node as HTMLElement;
-        input.style.textAlign = "center";
-        input.style.paddingLeft = "0px";
-        input.style.paddingRight = "0px";
-        input.style.margin = "0px";
+        input.style.setProperty("text-align", "center", "important");
         input.style.setProperty("text-align-last", "center", "important");
         input.style.setProperty("justify-content", "center", "important");
         input.style.setProperty("font-weight", "bold", "important");
+        input.style.setProperty("padding", "0", "important");
+        input.style.setProperty("margin", "0", "important");
         input.style.setProperty("width", "100%", "important");
         input.style.setProperty("text-indent", "0", "important");
         const cell = input.parentElement;
         if (cell) {
-          cell.style.textAlign = "center";
-          cell.style.paddingLeft = "0px";
-          cell.style.paddingRight = "0px";
-          cell.style.margin = "0px";
           cell.style.setProperty("display", "flex", "important");
           cell.style.setProperty("align-items", "center", "important");
           cell.style.setProperty("justify-content", "center", "important");
+          cell.style.setProperty("text-align", "center", "important");
           cell.style.setProperty("text-align-last", "center", "important");
+          cell.style.setProperty("padding", "0", "important");
+          cell.style.setProperty("margin", "0", "important");
           cell.style.setProperty("width", "100%", "important");
         }
       });
