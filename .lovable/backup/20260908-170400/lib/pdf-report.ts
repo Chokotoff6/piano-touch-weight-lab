@@ -40,7 +40,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
     logging: false,
     y: -PAD,
     height,
-    windowWidth: 1500,
+    windowWidth: 1400,
 
     onclone: (doc) => {
       // Normalisation typographique : html2canvas rend mal les utilitaires de
@@ -56,9 +56,9 @@ async function capture(el: HTMLElement): Promise<Capture> {
         /* Gabarit rigide de la page 1 : largeur totale imposée pour que les
            88 touches soient capturées sans rognage horizontal. */
         [data-pdf-compact] {
-          width: 1450px !important;
-          min-width: 1450px !important;
-          max-width: 1450px !important;
+          width: 1350px !important;
+          min-width: 1350px !important;
+          max-width: 1350px !important;
           margin-left: auto !important;
           margin-right: auto !important;
           font-size: 11px !important;
@@ -137,23 +137,6 @@ async function capture(el: HTMLElement): Promise<Capture> {
         frame.style.setProperty("padding-bottom", "2px", "important");
         frame.style.setProperty("transform", `scale(${COMPACT_SCALE})`, "important");
         frame.style.setProperty("transform-origin", "top center", "important");
-      });
-      // Les deux demi-claviers (touches 1–44 et 45–88) et chacune de leurs
-      // lignes internes reçoivent leur propre largeur physique. Cette seconde
-      // contrainte empêche le navigateur de recalculer le demi-clavier bas sur
-      // une largeur plus étroite que le premier pendant le clonage.
-      doc.querySelectorAll('[data-pdf-compact] section[aria-label^="Touches "]').forEach((node) => {
-        const halfKeyboard = node as HTMLElement;
-        const forceFullWidth = (target: HTMLElement) => {
-          target.style.setProperty("width", "1450px", "important");
-          target.style.setProperty("min-width", "1450px", "important");
-          target.style.setProperty("max-width", "1450px", "important");
-          target.style.setProperty("overflow", "visible", "important");
-        };
-        forceFullWidth(halfKeyboard);
-        halfKeyboard.querySelectorAll(":scope > div, .technical-sheet, .piano-grid, [data-pdf-result-frame], .result-sheet, .result-grid").forEach((row) => {
-          forceFullWidth(row as HTMLElement);
-        });
       });
       // Aucun conteneur interne ni parent ne doit rogner le cadre : ni la
       // bordure basse, ni les touches à l'extrême droite du clavier.
