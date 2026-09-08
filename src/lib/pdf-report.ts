@@ -88,16 +88,26 @@ async function capture(el: HTMLElement): Promise<Capture> {
         frame.style.overflow = "visible";
         frame.style.opacity = "1";
       });
-      // Cadre « Mesures poids statiques » (page 1) : suppression stricte des
-      // espaces vides au-dessus et en dessous pour remonter le tableau au
-      // maximum. L'ajustement final à la page est fait par l'échelle d'image.
+      // Cadre « Mesures poids statiques » (page 1) : rendu forcé (il peut être
+      // déporté hors écran quand l'export part de la page Infopiano), marges
+      // supprimées et réduction d'échelle stricte pour que ses 8 rangées
+      // d'expertise et sa bordure basse tiennent entièrement sur la page 1.
       doc.querySelectorAll("[data-pdf-compact]").forEach((node) => {
         const frame = node as HTMLElement;
+        frame.style.setProperty("position", "static", "important");
+        frame.style.setProperty("left", "auto", "important");
+        frame.style.setProperty("top", "auto", "important");
+        frame.style.setProperty("opacity", "1", "important");
+        frame.style.setProperty("visibility", "visible", "important");
+        frame.style.setProperty("display", "block", "important");
         frame.style.setProperty("margin-top", "0", "important");
-        frame.style.setProperty("margin-bottom", "0", "important");
+        frame.style.setProperty("margin-bottom", "2rem", "important");
         frame.style.setProperty("padding-top", "10px", "important");
         frame.style.setProperty("padding-bottom", "2px", "important");
+        frame.style.setProperty("transform", `scale(${COMPACT_SCALE})`, "important");
+        frame.style.setProperty("transform-origin", "top center", "important");
       });
+
     },
   });
   return {
