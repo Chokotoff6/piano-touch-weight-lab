@@ -60,6 +60,17 @@ async function capture(el: HTMLElement): Promise<Capture> {
         frame.style.overflow = "visible";
         frame.style.opacity = "1";
       });
+      // Compactage du grand cadre « Mesures poids statiques » (page 1) :
+      // réduction stricte d'échelle + resserrage des marges internes pour que
+      // sa hauteur totale tienne intégralement sur la page.
+      doc.querySelectorAll("[data-pdf-compact]").forEach((node) => {
+        const frame = node as HTMLElement;
+        frame.style.paddingTop = "6px";
+        frame.style.paddingBottom = "2px";
+        frame.style.marginTop = "0px";
+        frame.style.marginBottom = "0px";
+        frame.style.zoom = "0.9";
+      });
     },
   });
   return {
