@@ -166,19 +166,16 @@ function drawPage(pdf: jsPDF, blocks: Capture[], ratio: number, topOffset: numbe
   }
 }
 
+/** Images haute définition d'un rapport, prêtes à être assemblées en PDF. */
+export type ReportCaptures = Capture[][];
+
 /**
- * Capture les blocs page par page, compose autant de pages A4 paysage que
- * demandé (saut de page physique entre chacune), puis déclenche le
- * téléchargement local direct (pdf.save). Aucune requête réseau n'intervient :
- * le rapport est entièrement construit à partir du DOM local.
- * `header` : 3 lignes d'identification imprimées en haut à droite des pages 2+.
+ * Capture les blocs page par page (html2canvas). Opération lente : elle peut
+ * être lancée en tâche de fond dès que la saisie est conforme, puis mise en
+ * cache pour un téléchargement instantané.
  */
-export async function generateLandscapeReport(
-  pages: HTMLElement[][],
-  filename: string,
-  header: string[] = [],
-): Promise<void> {
-  const captured: Capture[][] = [];
+export async function captureReportPages(pages: HTMLElement[][]): Promise<ReportCaptures> {
+  const captured: ReportCaptures = [];
   // Stabilisation : on laisse aux graphiques Recharts le temps d'être
   // intégralement calculés et figés avant la première capture.
   await settle(1500);
@@ -198,9 +195,20 @@ export async function generateLandscapeReport(
     }
     if (shots.length > 0) captured.push(shots);
   }
+  return captured;
+}
+
+/**
+ * Assemble les captures déjà prêtes en A4 paysage (saut de page physique entre
+ * chacune) et déclenche le téléchargement local direct (pdf.save).
+ * `header` : 3 lignes d'identification imprimées en haut à droite des pages 2+.
+ */
+export function buildReportPdf(
+  captured: ReportCaptures,
+  filename: string,
+  header: string[] = [],
+): void {
   if (captured.length === 0) return;
-
-
   const pdf = new jsPDF({ orientation: "landscape", format: "a4", unit: "mm" });
   const total = captured.length;
   const stamp = exportStamp();
@@ -213,6 +221,15 @@ export async function generateLandscapeReport(
     drawFooter(pdf, index + 1, total, stamp);
   });
   pdf.save(filename);
+}
+
+/** Capture puis télécharge en une seule opération (chemin sans pré-rendu). */
+export async function generateLandscapeReport(
+  pages: HTMLElement[][],
+  filename: string,
+  header: string[] = [],
+): Promise<void> {
+  buildReportPdf(await captureReportPages(pages), filename, header);
 }
 
 /** En-tête d'identification (3 lignes) en haut à droite des pages 2 et 3. */
