@@ -465,11 +465,24 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
 
 type LineDef = { dataKey: SeriesKey; name: string; shortName: string; color: string; real?: boolean; hidden?: boolean };
 const FAMILIES: Array<{ id: string; title: string; domain: [number, number]; lines: LineDef[] }> = [
-  { id: "wa", title: "Poids d'enfoncement (Wa)", domain: [55, 85], lines: [{ dataKey: "sameWa", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWa", name: "Cible", shortName: "Cible", color: "#10b981" }] },
-  { id: "wd", title: "Poids de retour (Wd)", domain: [50, 70], lines: [{ dataKey: "sameWd", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWd", name: "Cible", shortName: "Cible", color: "#10b981" }] },
-  { id: "bal", title: "Balance statique", domain: [55, 75], lines: [{ dataKey: "sameBal", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryBal", name: "Cible", shortName: "Cible", color: "#10b981" }] },
-  { id: "fric", title: "Friction mécanique", domain: ["dataMin - 1.5", "dataMax + 1.5"] as unknown as [number, number], lines: [{ dataKey: "sameFric", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryFric", name: "Cible", shortName: "Cible", color: "#10b981" }] },
+  { id: "wa", title: "Poids descendant", domain: [55, 85], lines: [{ dataKey: "sameWa", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWa", name: "Cible", shortName: "Cible", color: "#10b981" }] },
+  { id: "wd", title: "Poids remontant", domain: [50, 70], lines: [{ dataKey: "sameWd", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWd", name: "Cible", shortName: "Cible", color: "#10b981" }] },
+  { id: "bal", title: "Poids d'équilibre", domain: [55, 75], lines: [{ dataKey: "sameBal", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryBal", name: "Cible", shortName: "Cible", color: "#10b981" }] },
+  { id: "fric", title: "Friction", domain: ["dataMin - 1.5", "dataMax + 1.5"] as unknown as [number, number], lines: [{ dataKey: "sameFric", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryFric", name: "Cible", shortName: "Cible", color: "#10b981" }] },
 ];
+
+// Terminologie bilingue stricte des quatre cadres graphiques.
+const FAMILY_TITLES: Record<string, { fr: string; en: string }> = {
+  wa: { fr: "Poids descendant", en: "Downweight" },
+  wd: { fr: "Poids remontant", en: "Upweight" },
+  bal: { fr: "Poids d'équilibre", en: "Balance Weight" },
+  fric: { fr: "Friction", en: "Friction" },
+};
+export function familyTitle(id: string, lang: string, fallback: string) {
+  const entry = FAMILY_TITLES[id];
+  if (!entry) return fallback;
+  return lang === "en" ? entry.en : entry.fr;
+}
 const DY_STEPS = [-15, 0, 15, 30, 45];
 function offsetsFor(lines: LineDef[], point: ChartPoint | undefined) {
   const map = new Map<SeriesKey, number>();
