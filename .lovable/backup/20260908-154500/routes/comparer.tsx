@@ -27,9 +27,7 @@ import {
   YAxis,
   Tooltip,
   ReferenceLine,
-  Customized,
 } from "recharts";
-
 
 const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];
 // Toutes les notes pesées portent une pastille : le tracé couvre les 88 touches.
@@ -612,49 +610,11 @@ function ArrowHintIcon() {
   );
 }
 
-/** Données de géométrie injectées par Recharts dans un enfant `Customized`. */
-type GuideChartProps = {
-  offset?: { left?: number; top?: number; width?: number; height?: number };
-  xAxisMap?: Record<string, { scale?: (value: number) => number }>;
-  yAxisMap?: Record<string, { scale?: (value: number) => number }>;
-};
 
-/**
- * Lignes de repère horizontales à géométrie brute : elles démarrent 5 px à
- * droite de l'axe vertical gradué (translaté de `axisShift`) et s'arrêtent
- * 5 px avant le repère vertical de la touche 88. Aucun débordement possible.
- */
-function HorizontalGuides({
-  ticks,
-  axisShift,
-  offset,
-  xAxisMap,
-  yAxisMap,
-}: GuideChartProps & { ticks: number[]; axisShift: number }) {
-  const left = offset?.left ?? 0;
-  const width = offset?.width ?? 0;
-  const yScale = Object.values(yAxisMap ?? {}).find((axis) => typeof axis?.scale === "function")?.scale;
-  const xScale = Object.values(xAxisMap ?? {}).find((axis) => typeof axis?.scale === "function")?.scale;
-  if (!yScale) return null;
-  const rightEdge = xScale ? xScale(88) : left + width;
-  const x1 = left - axisShift + 5;
-  const x2 = rightEdge - 5;
-  if (!(x2 > x1)) return null;
-  return (
-    <g>
-      {ticks.map((tick) => {
-        const y = yScale(tick);
-        if (!Number.isFinite(y)) return null;
-        return <line key={`guide-${tick}`} x1={x1} x2={x2} y1={y} y2={y} stroke="#9ca3af" strokeWidth={1} />;
-      })}
-    </g>
-  );
-}
 
 type SubChartCtx = {
   chartData: ChartPoint[];
   keyFilter: KeyFilter;
-
   comparisonLabel: string;
   comparisonShort: string;
   currentBaseName: string;
@@ -820,22 +780,11 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
             )}
 
-            {/* Lignes de repère horizontales : géométrie brute imposée —
-                début à 5 px à droite de l'axe vertical, fin à 5 px à gauche du
-                repère vertical de la touche 88. Hors première et dernière
-                graduation. */}
-            {autoDomain && yTicks && yTicks.length > 2 && (
-              <Customized
-                component={(props: unknown) => (
-                  <HorizontalGuides
-                    {...(props as GuideChartProps)}
-                    ticks={yTicks.slice(1, -1)}
-                    axisShift={Y_AXIS_SHIFT}
-                  />
-                )}
-              />
-            )}
-
+            {/* Lignes de repère horizontales : même gris que les repères DO,
+                hors première et dernière graduation. */}
+            {autoDomain && yTicks && yTicks.slice(1, -1).map((tick) => (
+              <ReferenceLine key={`grid-${tick}`} xAxisId="main" y={tick} stroke="#9ca3af" strokeWidth={1} />
+            ))}
 
 
             {DO_POSITIONS.map((position) => <ReferenceLine key={position} xAxisId="main" x={position} stroke="#9ca3af" strokeWidth={1.4} />)}
