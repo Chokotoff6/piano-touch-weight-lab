@@ -190,7 +190,19 @@ async function capture(el: HTMLElement): Promise<Capture> {
           cell.style.setProperty("width", "100%", "important");
         }
       });
-
+      // Cadres graphiques (pages 2 et 3) : styles imposés en ligne pour que le
+      // cadre « Friction » ne sorte plus brisé, sans bordure ni décalé.
+      doc.querySelectorAll("[data-pdf-chart]").forEach((node) => {
+        const chart = node as HTMLElement;
+        chart.style.setProperty("width", "100%", "important");
+        chart.style.setProperty("max-width", "100%", "important");
+        chart.style.setProperty("display", "block", "important");
+        chart.style.setProperty("border", "1px solid #e2e8f0", "important");
+        chart.style.setProperty("border-radius", "0.5rem", "important");
+        chart.style.setProperty("background-color", "#ffffff", "important");
+        chart.style.setProperty("padding", "1rem", "important");
+        chart.style.setProperty("overflow", "visible", "important");
+      });
     },
   });
   return {
