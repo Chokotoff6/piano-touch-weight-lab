@@ -156,24 +156,20 @@ export function PdfComparisonChart({
 
 export type MetricKeyPdf = "wa" | "wd" | "balance" | "friction";
 
-const METRIC_COLOR: Record<MetricKeyPdf, string> = {
-  wa: "#1d4ed8",
-  wd: "#b91c1c",
-  balance: "#7c3aed",
-  friction: "#047857",
-};
-
-/** Domaine vertical : écart réel (min/max) majoré de 10 % pour l'aération. */
+/**
+ * Domaine vertical en nombres ENTIERS : écart réel (max - min) majoré de 10 %,
+ * arrondi vers l'extérieur pour que chaque graduation soit un entier.
+ */
 export function paddedDomain(values: Array<number | null | undefined>): [number, number] {
   const nums = values.filter((v): v is number => typeof v === "number" && Number.isFinite(v));
   if (nums.length === 0) return [0, 1];
   const min = Math.min(...nums);
   const max = Math.max(...nums);
-  const pad = Math.max((max - min) * 0.1, 0.5);
-  return [Math.floor((min - pad) * 10) / 10, Math.ceil((max + pad) * 10) / 10];
+  const pad = Math.max((max - min) * 0.1, 1);
+  return [Math.floor(min - pad), Math.ceil(max + pad)];
 }
 
-/** Cadre PDF isolé pour une seule métrique : courbe seule, fond blanc, axe gradué. */
+/** Cadre PDF isolé pour une seule métrique : noir et blanc, axe gradué en entiers. */
 export function PdfMetricChart({
   title,
   metric,
@@ -190,20 +186,22 @@ export function PdfMetricChart({
       <div style={{ width: 960, height: 300 }} className="bg-white">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 10, right: 20, bottom: 10, left: 0 }}>
-            <CartesianGrid stroke="#e5e7eb" />
+            <CartesianGrid stroke="#d1d5db" />
             <XAxis dataKey="key" tick={{ fontSize: 10, fill: "#111827" }} interval={3} />
             <YAxis
               tick={{ fontSize: 10, fill: "#111827" }}
               domain={domain}
               width={44}
               tickCount={8}
-              allowDecimals
+              allowDecimals={false}
+              axisLine={{ stroke: "#111827" }}
+              tickLine={{ stroke: "#111827" }}
             />
             <Line
               type="monotone"
               dataKey={metric}
               name={title}
-              stroke={METRIC_COLOR[metric]}
+              stroke="#111827"
               dot={false}
               strokeWidth={1.6}
               connectNulls
@@ -215,3 +213,4 @@ export function PdfMetricChart({
     </div>
   );
 }
+

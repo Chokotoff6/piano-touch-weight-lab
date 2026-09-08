@@ -63,19 +63,21 @@ async function capture(el: HTMLElement): Promise<Capture> {
 }
 
 
+const HEADER_H = 14; // mm réservés en haut des pages 2 et 3
+
 /** Échelle (mm/px) tenant dans une page A4 paysage pour une pile de blocs. */
-function pageRatio(blocks: Capture[]): number {
+function pageRatio(blocks: Capture[], topOffset: number): number {
   const availW = PAGE_W - MARGIN * 2;
-  const availH = PAGE_H - MARGIN * 2 - GAP * (blocks.length - 1);
+  const availH = PAGE_H - MARGIN * 2 - topOffset - GAP * (blocks.length - 1) - 6;
   const maxPxW = Math.max(...blocks.map((b) => b.width));
   const totalPxH = blocks.reduce((sum, b) => sum + b.height, 0);
   return Math.min(availW / maxPxW, availH / totalPxH);
 }
 
 /** Empile verticalement les blocs capturés sur une page A4 paysage, à l'échelle imposée. */
-function drawPage(pdf: jsPDF, blocks: Capture[], ratio: number) {
+function drawPage(pdf: jsPDF, blocks: Capture[], ratio: number, topOffset: number) {
   const availW = PAGE_W - MARGIN * 2;
-  let y = MARGIN;
+  let y = MARGIN + topOffset;
   for (const block of blocks) {
     const w = block.width * ratio;
     const h = block.height * ratio;
@@ -90,10 +92,12 @@ function drawPage(pdf: jsPDF, blocks: Capture[], ratio: number) {
  * demandé (saut de page physique entre chacune), puis déclenche le
  * téléchargement local direct (pdf.save). Aucune requête réseau n'intervient :
  * le rapport est entièrement construit à partir du DOM local.
+ * `header` : 3 lignes d'identification imprimées en haut à droite des pages 2+.
  */
 export async function generateLandscapeReport(
   pages: HTMLElement[][],
   filename: string,
+  header: string[] = [],
 ): Promise<void> {
   const captured: Capture[][] = [];
   for (const page of pages) {
@@ -108,10 +112,22 @@ export async function generateLandscapeReport(
   const stamp = exportStamp();
   captured.forEach((blocks, index) => {
     if (index > 0) pdf.addPage("a4", "landscape");
-    drawPage(pdf, blocks, pageRatio(blocks));
+    const withHeader = index > 0 && header.length > 0;
+    const topOffset = withHeader ? HEADER_H : 0;
+    if (withHeader) drawHeader(pdf, header);
+    drawPage(pdf, blocks, pageRatio(blocks, topOffset), topOffset);
     drawFooter(pdf, index + 1, total, stamp);
   });
   pdf.save(filename);
+}
+
+/** En-tête d'identification (3 lignes) en haut à droite des pages 2 et 3. */
+function drawHeader(pdf: jsPDF, lines: string[]) {
+  pdf.setTextColor(0);
+  lines.slice(0, 3).forEach((line, i) => {
+    pdf.setFontSize(i === 0 ? 10 : 8);
+    pdf.text(line, PAGE_W - MARGIN, MARGIN + 3 + i * 4, { align: "right" });
+  });
 }
 
 /** Horodatage d'export : « DD-MM-YYYY à HH:MM ». */
@@ -129,3 +145,4 @@ function drawFooter(pdf: jsPDF, page: number, total: number, stamp: string) {
   pdf.text(`Exporté le : ${stamp}`, PAGE_W - MARGIN, PAGE_H - MARGIN, { align: "right" });
   pdf.setTextColor(0);
 }
+
