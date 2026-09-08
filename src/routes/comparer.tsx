@@ -27,7 +27,9 @@ import {
   YAxis,
   Tooltip,
   ReferenceLine,
+  Customized,
 } from "recharts";
+
 
 const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];
 // Toutes les notes pesées portent une pastille : le tracé couvre les 88 touches.
