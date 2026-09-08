@@ -659,7 +659,9 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   // Chaque courbe est ancrée sur SON propre premier / dernier point défini
   // (indispensable en vue éclatée où blanches et noires ne partagent pas les mêmes index).
   const start = zoomed ? zoomStart : 1;
-  const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [1, 88];
+  // Axe vertical isolé : sur les cadres gradués, le domaine horizontal démarre
+  // avant la touche 1 pour que l'axe ne touche jamais le départ des courbes.
+  const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [autoDomain ? -3 : 1, 88];
   const firstIn = (key: SeriesKey) => firstDefinedIndexIn(chartData, key, domainX[0], domainX[1]);
   const lastIn = (key: SeriesKey) => lastDefinedIndexIn(chartData, key, domainX[0], domainX[1]);
   const endpointOffsets = (side: "left" | "right") => new Map(

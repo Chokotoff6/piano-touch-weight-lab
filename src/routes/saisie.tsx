@@ -1736,14 +1736,10 @@ function Index() {
         inputMode="numeric"
         aria-label={`${field === "wa" ? (en ? "DW" : "PD") : en ? "UW" : "PR"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
-        onFocus={() => {
-          // La valeur en place s'efface au clic ; elle revient si rien n'est saisi.
-          const key = `${index}-${field}`;
-          const current = rows[index]![field];
-          if (current !== "") {
-            prevWeight.current[key] = current;
-            setValue(index, field, "");
-          }
+        onFocus={(e) => {
+          // La valeur en place n'est plus effacée : elle est entièrement
+          // sélectionnée, la première frappe la remplace donc instantanément.
+          e.currentTarget.select();
         }}
         className={`weight-input !font-sans font-semibold !text-black focus:!border-black focus:!ring-0 ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
