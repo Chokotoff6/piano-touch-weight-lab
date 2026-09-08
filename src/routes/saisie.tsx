@@ -1725,7 +1725,29 @@ function Index() {
         if (!canEnterWeights) showBlockMessage(index, field);
       }}
     >
+      {pdfMirror ? (
+        // Miroir PDF : aucune saisie n'est nécessaire, on remplace l'<input>
+        // (dont les marges internes décalaient le chiffre à droite dans
+        // html2canvas) par un <span> statique mathématiquement centré.
+        <span
+          className={`weight-input !font-sans ${isBlack ? "" : "![background-color:#cbd5e1]"}`}
+          style={{
+            display: "block",
+            textAlign: "center",
+            textAlignLast: "center",
+            width: "100%",
+            padding: "0px",
+            margin: "0px",
+            fontWeight: "bold",
+            color: "#000000",
+            backgroundColor: "#cbd5e1",
+          }}
+        >
+          {rows[index]![field]}
+        </span>
+      ) : (
       <input
+
         ref={pdfMirror ? undefined : (el) => {
           inputs.current[`${index}-${field}`] = el;
         }}
