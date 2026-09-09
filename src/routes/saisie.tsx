@@ -2628,8 +2628,14 @@ function Index() {
           <button
             type="button"
             data-pdf-hide
-            onClick={() => navigate({ to: "/resultats" })}
-            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100" : "border-input bg-background hover:bg-accent"}`}
+            // Accès hermétiquement bloqué tant que « Saisie conforme » n'est
+            // pas au vert intense.
+            disabled={!badgeVisible}
+            onClick={() => {
+              if (!badgeVisible) return;
+              navigate({ to: "/resultats" });
+            }}
+            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100 !text-black" : "cursor-not-allowed border-input bg-background !text-gray-400 opacity-60"}`}
             style={
               badgeVisible
                 ? {
