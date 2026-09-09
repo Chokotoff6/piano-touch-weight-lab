@@ -356,8 +356,10 @@ function RootComponent() {
                           <DropdownMenuItem
                             key={row.id}
                             onClick={() =>
-                              window.dispatchEvent(
-                                new CustomEvent("piano-import-history-row", { detail: row.id }),
+                              requireConsent(() =>
+                                window.dispatchEvent(
+                                  new CustomEvent("piano-import-history-row", { detail: row.id }),
+                                ),
                               )
                             }
                           >
