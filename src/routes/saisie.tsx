@@ -1569,7 +1569,7 @@ function Index() {
     );
     const header = [pdfSummary.main, pdfSummary.time, pdfSummary.count];
     // Aucune capture en arrière-plan : html2canvas ne tourne QU'ICI, au clic.
-    toast.info("Génération du rapport PDF en cours... Merci de patienter.");
+    // L'indicateur « Export en cours... » s'affiche à côté du bouton Sauver.
     const shots = await captureReportPages(pages);
     buildReportPdf(shots, filename, header);
   };
