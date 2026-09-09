@@ -20,8 +20,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, type ReactNode } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
 
@@ -138,45 +137,16 @@ function RootShell({ children }: { children: ReactNode }) {
 const LEGAL_TEXT =
   "Conditions d'utilisation et clause de non-garantie Service en l'état : Ce site est un outil expérimental collaboratif mis à disposition gratuitement. L'éditeur ne fournit aucune garantie quant à la disponibilité du service, l'exactitude des calculs ou la conservation des données. L'éditeur se réserve le droit de modifier, restreindre ou fermer l'accès, ainsi que de supprimer l'historique des saisies à tout moment, sans préavis ni indemnité. L'éditeur reste libre d'introduire des fonctionnalités payantes. Sauf fermeture définitive du service, les numéros de série enregistrés durant la phase gratuite conserveront un accès préférentiel gratuit aux fonctionnalités de base existantes, sans que cela ne constitue un droit opposable.";
 
-const RGPD_CONSENT_KEY = "rgpd-cgu-consent";
-const RGPD_CONSENT_TEXT =
-  "En poursuivant, vous acceptez notre politique de confidentialité (RGPD) ainsi que nos CGU. Vous reconnaissez que les données de référence fournies le sont à titre purement indicatif, de recherche et d'aide au diagnostic indépendant, sans affiliation officielle avec les constructeurs cités.";
-
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const topbar = useTopbarState();
   const lang = useLang();
-  const [consentOpen, setConsentOpen] = useState(false);
-  const [saveMenuOpen, setSaveMenuOpen] = useState(false);
-  const pendingActionRef = useRef<(() => void) | null>(null);
   useEffect(() => {
     initLang();
     initJourneyFlags();
   }, []);
   const isComparer = pathname === "/comparer";
-
-  /** Affiche le consentement RGPD/CGU au premier clic Sauver/Importer de la
-      session, puis exécute l'action différée après acceptation. */
-  const requireConsent = (action: () => void) => {
-    try {
-      if (window.sessionStorage.getItem(RGPD_CONSENT_KEY) === "1") {
-        action();
-        return;
-      }
-    } catch { /* stockage indisponible */ }
-    pendingActionRef.current = action;
-    setConsentOpen(true);
-  };
-  const acceptConsent = () => {
-    try {
-      window.sessionStorage.setItem(RGPD_CONSENT_KEY, "1");
-    } catch { /* stockage indisponible */ }
-    setConsentOpen(false);
-    const pending = pendingActionRef.current;
-    pendingActionRef.current = null;
-    pending?.();
-  };
 
   const linkClass = "rounded-md px-3 py-2 text-base font-semibold !text-black transition-colors hover:bg-background sm:px-4 sm:text-lg";
   const activeLinkClass = "rounded-md bg-background px-3 py-2 text-base font-semibold !text-black shadow-sm sm:px-4 sm:text-lg";
@@ -244,24 +214,13 @@ function RootComponent() {
 
             <div className="mx-10 h-6 w-[2px] bg-gray-400" aria-hidden="true" />
 
-            <DropdownMenu open={saveMenuOpen} onOpenChange={setSaveMenuOpen}>
+            <DropdownMenu>
               <div className="relative flex items-center">
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
                     disabled={!topbar.measuresReady}
-                    onClickCapture={(e) => {
-                      let ok = false;
-                      try {
-                        ok = window.sessionStorage.getItem(RGPD_CONSENT_KEY) === "1";
-                      } catch { /* stockage indisponible */ }
-                      if (!ok) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        requireConsent(() => setSaveMenuOpen(true));
-                      }
-                    }}
                     className={`border border-gray-300 bg-white text-lg font-bold ${
                       topbar.measuresReady ? "!text-black" : "!text-gray-400"
                     }`}
@@ -282,7 +241,7 @@ function RootComponent() {
               <DropdownMenuContent align="start" className="max-w-[420px]">
                 <DropdownMenuItem
                   disabled={!topbar.measuresReady}
-                  onClick={() => requireConsent(() => dispatchAction("piano-export-csv"))}
+                  onClick={() => dispatchAction("piano-export-csv")}
                 >
                   {lang === "en"
                     ? "Save entered data as CSV (re-importable)"
@@ -290,7 +249,7 @@ function RootComponent() {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={!topbar.measuresReady}
-                  onClick={() => requireConsent(() => dispatchAction("piano-export-pdf"))}
+                  onClick={() => dispatchAction("piano-export-pdf")}
                 >
                   {lang === "en"
                     ? "Export entered data as PDF (re-importable)"
@@ -325,7 +284,7 @@ function RootComponent() {
                       variant="outline"
                       size="sm"
                       className="rounded-r-none bg-white text-lg !text-black"
-                      onClick={() => requireConsent(() => dispatchAction("piano-import-csv"))}
+                      onClick={() => dispatchAction("piano-import-csv")}
                     >
                       Importer
                     </Button>
@@ -340,12 +299,12 @@ function RootComponent() {
                     </DropdownMenuTrigger>
                   </div>
                   <DropdownMenuContent align="start">
-                    <DropdownMenuItem onClick={() => requireConsent(() => dispatchAction("piano-import-csv"))}>
+                    <DropdownMenuItem onClick={() => dispatchAction("piano-import-csv")}>
                       Charger un fichier CSV local
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onSelect={(event) => event.preventDefault()}
-                      onClick={() => requireConsent(() => dispatchAction("piano-import-history"))}
+                      onClick={() => dispatchAction("piano-import-history")}
                     >
                       Restaurer depuis l&apos;historique en ligne
                     </DropdownMenuItem>
@@ -356,10 +315,8 @@ function RootComponent() {
                           <DropdownMenuItem
                             key={row.id}
                             onClick={() =>
-                              requireConsent(() =>
-                                window.dispatchEvent(
-                                  new CustomEvent("piano-import-history-row", { detail: row.id }),
-                                ),
+                              window.dispatchEvent(
+                                new CustomEvent("piano-import-history-row", { detail: row.id }),
                               )
                             }
                           >
@@ -375,7 +332,7 @@ function RootComponent() {
                   variant="outline"
                   size="sm"
                   className="bg-white text-lg !text-black"
-                  onClick={() => requireConsent(() => dispatchAction("piano-import-csv"))}
+                  onClick={() => dispatchAction("piano-import-csv")}
                 >
                   Importer
                 </Button>
@@ -414,27 +371,7 @@ function RootComponent() {
 
             </div>
           </div>
-        </nav>
-
-      {consentOpen &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 p-4">
-            <div className="w-full max-w-lg rounded-lg border border-black bg-white p-6 shadow-xl">
-              <p className="text-sm leading-relaxed text-gray-950">{RGPD_CONSENT_TEXT}</p>
-              <div className="mt-4 flex justify-end">
-                <button
-                  type="button"
-                  onClick={acceptConsent}
-                  className="rounded-md border-2 border-black bg-white px-4 py-1.5 text-sm font-bold !text-black transition-colors hover:bg-gray-100"
-                >
-                  {lang === "en" ? "I accept" : "J'accepte"}
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )}
+       </nav>
 
 
       <a

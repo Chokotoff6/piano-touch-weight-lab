@@ -54,39 +54,6 @@ export function BrandTargetInfoContent({ variant = "brand" }: { variant?: Target
   );
 }
 
-export const TARGET_LEGAL_TEXT =
-  "Données indicatives courantes issues de compilations professionnelles indépendantes. Cet outil d'aide au diagnostic n'est pas affilié aux fabricants cités. L'artisan reste le seul maître d'œuvre et responsable des réglages mécaniques effectués.";
-
-/** Petit "i" noir net, affiché à côté de « Cible » : tooltip légal au survol
-    et bascule au clic (pour le tactile). */
-export function TargetLegalInfoIcon() {
-  const [pinned, setPinned] = useState(false);
-  return (
-    <span
-      className="group relative inline-flex items-center align-middle"
-      onMouseLeave={() => setPinned(false)}
-    >
-      <button
-        type="button"
-        aria-label="Avertissement sur les données cibles"
-        onClick={(event) => {
-          event.stopPropagation();
-          setPinned((v) => !v);
-        }}
-        className="flex h-4 w-4 items-center justify-center rounded-full border border-black text-[10px] font-bold !text-black"
-      >
-        i
-      </button>
-      <span
-        className={`absolute left-5 top-1/2 w-[360px] -translate-y-1/2 rounded-md border border-gray-300 px-3 py-2 text-left text-[13px] font-medium normal-case text-gray-950 shadow-lg group-hover:block ${pinned ? "block" : "hidden"}`}
-        style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
-      >
-        {TARGET_LEGAL_TEXT}
-      </span>
-    </span>
-  );
-}
-
 /** Petite icône "i" verte ouvrant l'overlay d'information juridique. */
 export function BrandTargetInfoIcon({ variant = "brand" }: { variant?: TargetVariant }) {
   const [open, setOpen] = useState(false);
