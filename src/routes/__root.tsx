@@ -292,6 +292,11 @@ function RootComponent() {
                     {topbar.alert.message}
                   </div>
                 )}
+                {topbar.isExporting && (
+                  <span className="ml-3 whitespace-nowrap text-sm font-semibold !text-black">
+                    Export en cours...
+                  </span>
+                )}
               </div>
               <DropdownMenuContent align="start" className="max-w-[420px]">
                 <DropdownMenuItem
