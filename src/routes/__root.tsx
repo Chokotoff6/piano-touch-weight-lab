@@ -220,9 +220,12 @@ function RootComponent() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border border-gray-300 bg-white text-lg font-bold !text-black"
+                    disabled={!topbar.measuresReady}
+                    className={`border border-gray-300 bg-white text-lg font-bold ${
+                      topbar.measuresReady ? "!text-black" : "!text-gray-400"
+                    }`}
                   >
-                    {lang === "en" ? "Export" : "Exporter"}
+                    {lang === "en" ? "Save" : "Sauver"}
                     <ChevronDown className="ml-1 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -241,44 +244,36 @@ function RootComponent() {
                   onClick={() => dispatchAction("piano-export-csv")}
                 >
                   {lang === "en"
-                    ? "Export entered data as CSV"
-                    : "Exporter les données saisies au format CSV"}
+                    ? "Save entered data as CSV (re-importable)"
+                    : "Sauver les données saisies au format CSV (ré-importable)"}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={!topbar.measuresReady}
                   onClick={() => dispatchAction("piano-export-pdf")}
                 >
                   {lang === "en"
-                    ? "Export entered data as PDF"
-                    : "Exporter les données saisies au format PDF"}
+                    ? "Export entered data as PDF (re-importable)"
+                    : "Exporter les données saisies au format PDF (ré-importable)"}
                 </DropdownMenuItem>
                 {!isComparer && (
                   <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-pdf")}>
                     {lang === "en"
-                      ? "Export blank entry form - Text table (re-importable)"
-                      : "Exporter un formulaire de saisie vierge - Tableau textuel (ré-importable)"}
+                      ? "Generate a blank form - Table format"
+                      : "Générer un formulaire vierge au format Tableau"}
                   </DropdownMenuItem>
                 )}
                 {!isComparer && (
                   <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-keyboard-pdf")}>
                     {lang === "en"
-                      ? "Export blank entry form - Graphic keyboard drawing (re-importable)"
-                      : "Exporter un formulaire de saisie vierge - Dessin clavier graphique (ré-importable)"}
+                      ? "Generate a blank form - Keyboard drawing format"
+                      : "Générer un formulaire vierge au format Dessin Clavier"}
                   </DropdownMenuItem>
                 )}
 
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* OUTIL DE DÉBOGAGE TEMPORAIRE : capture PNG brute du cadre Mesures. */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="border border-dashed border-gray-300 bg-white text-xs text-gray-500"
-              onClick={() => dispatchAction("piano-debug-png")}
-            >
-              Debug PNG
-            </Button>
+
 
             {!isComparer && (
             <div className="relative flex items-center">
