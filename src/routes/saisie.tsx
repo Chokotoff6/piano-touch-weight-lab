@@ -1074,6 +1074,7 @@ function Index() {
     const num = parseWeight(cleaned);
     if (num === null) {
       setErrors((prev) => ({ ...prev, [key]: "Valeur invalide (5-99, nombre entier)" }));
+      focusCell(index, field);
       return;
     }
     // CONDITION 3 : plage mécanique du poids descendant + alerte pédale au-delà de 60 g.
@@ -1081,6 +1082,8 @@ function Index() {
       if (num < 30 || num > 80) {
         setErrors((prev) => ({ ...prev, [key]: PD_RANGE_MESSAGE }));
         setRowField(index, field, num.toString());
+        // Verrouillage du focus tant que la valeur reste hors fourchette.
+        setTimeout(() => focusCell(index, field), 0);
         return;
       }
       if (num > 75 && !hidePedalAlert) {
