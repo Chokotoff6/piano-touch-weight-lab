@@ -734,6 +734,11 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   // cadre et le début du tracé (marge gauche = sideMargin + 46, axe = 44 px).
   // Recalage final : l'axe est décalé de 10 px supplémentaires vers la droite.
   const Y_AXIS_SHIFT = Math.round((sideMargin + 46 + 44) / 2) - 10;
+  // Mode « N/B groupées » hors zoom : le bloc entier est translaté de 30 px vers
+  // la gauche. L'axe vertical, lui, doit rester STRICTEMENT immobile : on le
+  // recale de +30 px, et le tracé est élargi de 30 px de chaque côté.
+  const groupedShift = !zoomed && keyFilter === "all" ? 30 : 0;
+  const axisShift = Y_AXIS_SHIFT - groupedShift;
   const yTicks = (() => {
     if (!yDomain) return undefined;
     const [lo, hi] = yDomain as [number, number];
