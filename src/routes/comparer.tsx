@@ -1698,6 +1698,8 @@ function Comparer() {
         ? "- Moyennes sur base de 1 profil de modèle identique\u00A0"
         : `Moyennes sur ${cloudSampleCount} pianos de modèle identique enregistrés par les utilisateurs`;
 
+  // Pages 1 à 3 du rapport : profil du piano actuel seul, courbes séparées.
+  const mirrorChartData = useMemo(() => buildChartData(mine, null, null), [mine]);
 
   return (
     <main className="mx-auto w-full max-w-[1400px] px-6 py-8">
@@ -1705,6 +1707,32 @@ function Comparer() {
         aria-hidden="true"
         className="pointer-events-none fixed inset-x-0 top-[77px] z-40 h-[50px] bg-white"
       />
+      {/* Miroir hors écran (jamais visible) : cadre Mesures + graphiques
+          d'atelier, source des pages 1 à 3 du rapport PDF unique. */}
+      <PianoSheetMirror
+        wa={mine?.wa ?? []}
+        wd={mine?.wd ?? []}
+        summary={summary}
+        averagesRef={(node) => {
+          mirrorAveragesRef.current = node;
+        }}
+        sheetRef={(node) => {
+          mirrorSheetRef.current = node;
+        }}
+      />
+      <div aria-hidden="true" className="absolute -left-[9999px] top-0 pointer-events-none">
+        <div ref={mirrorChartsRef} className="!w-[1250px] !min-w-[1250px] !max-w-[1250px] bg-white">
+          <ComparisonChart
+            chartData={mirrorChartData}
+            keyFilter="split"
+            comparisonLabel=""
+            comparisonShort=""
+            currentBaseName=""
+            autoDomain
+            sideMargin={60}
+          />
+        </div>
+      </div>
       {status === "loading" ? <p className="py-16 text-center text-muted-foreground">Chargement des profils externes…</p> : (
         <>
           <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-stretch gap-6">
