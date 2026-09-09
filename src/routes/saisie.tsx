@@ -2158,7 +2158,7 @@ function Index() {
           <>
             {en ? "Static touch weight measurements" : "Mesures poids statiques"}{" "}
             <span data-pdf-hide className="group relative inline-flex items-center align-middle">
-              <span className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-400 text-[10px] font-bold normal-case text-gray-500">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full border border-black text-[10px] font-bold normal-case !text-black">
                 i
               </span>
               <span
@@ -2194,6 +2194,7 @@ function Index() {
           type="button"
           data-pdf-hide
           onClick={() => setWeighingMode(false)}
+          style={{ marginLeft: "200px" }}
           className="absolute left-1/2 -top-4 z-10 -translate-x-1/2 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
         >
           {en ? "Edit piano information" : "Modifier Informations piano"}
@@ -2202,18 +2203,30 @@ function Index() {
           {confirmReset === "rows" && (
             <div className="absolute bottom-full left-1/2 mb-2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
               <span>Voulez-vous effacer toutes les données de poids saisies ?</span>
-              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setConfirmReset(null); }}>Oui</button>
+              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setUndoStack([]); setConfirmReset(null); }}>Oui</button>
               <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
             </div>
           )}
-          <button
-            type="button"
-            data-pdf-hide
-            onClick={() => setConfirmReset("rows")}
-            className="rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
-          >
-            Reset
-          </button>
+          <div className="flex flex-col items-stretch gap-1">
+            <button
+              type="button"
+              data-pdf-hide
+              onClick={() => setConfirmReset("rows")}
+              className="rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+            >
+              Reset
+            </button>
+            <button
+              type="button"
+              data-pdf-hide
+              disabled={undoStack.length === 0}
+              onClick={undoRows}
+              title="Annuler la dernière saisie (3 maximum)"
+              className={`rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold transition-colors hover:bg-accent ${undoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "!text-black"}`}
+            >
+              Undo
+            </button>
+          </div>
         </div>
         {badgeVisible && (
           <div
@@ -2263,9 +2276,9 @@ function Index() {
             type="button"
             data-pdf-hide
             onClick={() => navigate({ to: "/resultats" })}
-            className={`rounded-md border border-input bg-background px-4 py-1.5 text-[0.9rem] font-bold transition-colors hover:bg-accent ${badgeVisible ? "!text-green-600" : "!text-black"}`}
+            className={`rounded-md border px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100 hover:!bg-green-200" : "border-input bg-background hover:bg-accent"}`}
           >
-            {en ? "Results & charts >" : "Résultats & graphiques >"}
+            {en ? "Results & Charts >" : "Résultats & Graphiques >"}
           </button>
         </div>
       )}
@@ -2455,7 +2468,7 @@ Moyennes{" "}
           style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
         >
           <div>{en ? PEDAL_MESSAGE_EN : PEDAL_MESSAGE_FR}</div>
-          {pedalCount.current > 1 && (
+          {pedalCount.current > 0 && (
             <label className="mt-2 flex items-center gap-2 text-xs font-normal">
               <input
                 type="checkbox"
