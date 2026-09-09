@@ -290,9 +290,8 @@ export function setCachedCaptures(key: string, shots: ReportCaptures): void {
 
 
 /**
- * Capture les blocs page par page (html2canvas). Opération lente : elle peut
- * être lancée en tâche de fond dès que la saisie est conforme, puis mise en
- * cache pour un téléchargement instantané.
+ * Capture les blocs page par page (html2canvas), en extraction brute : les
+ * nœuds sont utilisés tels quels, sans lecture d'état applicatif.
  */
 export async function captureReportPages(pages: HTMLElement[][]): Promise<ReportCaptures> {
   const captured: ReportCaptures = [];
