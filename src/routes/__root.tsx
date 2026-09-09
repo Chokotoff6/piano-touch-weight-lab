@@ -244,13 +244,24 @@ function RootComponent() {
 
             <div className="mx-10 h-6 w-[2px] bg-gray-400" aria-hidden="true" />
 
-            <DropdownMenu>
+            <DropdownMenu open={saveMenuOpen} onOpenChange={setSaveMenuOpen}>
               <div className="relative flex items-center">
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
                     disabled={!topbar.measuresReady}
+                    onClickCapture={(e) => {
+                      let ok = false;
+                      try {
+                        ok = window.sessionStorage.getItem(RGPD_CONSENT_KEY) === "1";
+                      } catch { /* stockage indisponible */ }
+                      if (!ok) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        requireConsent(() => setSaveMenuOpen(true));
+                      }
+                    }}
                     className={`border border-gray-300 bg-white text-lg font-bold ${
                       topbar.measuresReady ? "!text-black" : "!text-gray-400"
                     }`}
@@ -271,7 +282,7 @@ function RootComponent() {
               <DropdownMenuContent align="start" className="max-w-[420px]">
                 <DropdownMenuItem
                   disabled={!topbar.measuresReady}
-                  onClick={() => dispatchAction("piano-export-csv")}
+                  onClick={() => requireConsent(() => dispatchAction("piano-export-csv"))}
                 >
                   {lang === "en"
                     ? "Save entered data as CSV (re-importable)"
@@ -279,7 +290,7 @@ function RootComponent() {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={!topbar.measuresReady}
-                  onClick={() => dispatchAction("piano-export-pdf")}
+                  onClick={() => requireConsent(() => dispatchAction("piano-export-pdf"))}
                 >
                   {lang === "en"
                     ? "Export entered data as PDF (re-importable)"
@@ -314,7 +325,7 @@ function RootComponent() {
                       variant="outline"
                       size="sm"
                       className="rounded-r-none bg-white text-lg !text-black"
-                      onClick={() => dispatchAction("piano-import-csv")}
+                      onClick={() => requireConsent(() => dispatchAction("piano-import-csv"))}
                     >
                       Importer
                     </Button>
@@ -329,12 +340,12 @@ function RootComponent() {
                     </DropdownMenuTrigger>
                   </div>
                   <DropdownMenuContent align="start">
-                    <DropdownMenuItem onClick={() => dispatchAction("piano-import-csv")}>
+                    <DropdownMenuItem onClick={() => requireConsent(() => dispatchAction("piano-import-csv"))}>
                       Charger un fichier CSV local
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onSelect={(event) => event.preventDefault()}
-                      onClick={() => dispatchAction("piano-import-history")}
+                      onClick={() => requireConsent(() => dispatchAction("piano-import-history"))}
                     >
                       Restaurer depuis l&apos;historique en ligne
                     </DropdownMenuItem>
@@ -362,7 +373,7 @@ function RootComponent() {
                   variant="outline"
                   size="sm"
                   className="bg-white text-lg !text-black"
-                  onClick={() => dispatchAction("piano-import-csv")}
+                  onClick={() => requireConsent(() => dispatchAction("piano-import-csv"))}
                 >
                   Importer
                 </Button>
