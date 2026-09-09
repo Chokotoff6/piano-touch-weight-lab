@@ -106,12 +106,68 @@ function Resultats() {
   const [busy, setBusy] = useState(false);
   const averagesRef = useRef<HTMLDivElement>(null);
   const [averagesHeight, setAveragesHeight] = useState(0);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setDraft(readDraft());
     // Jalon de parcours : la visite de cette page débloque « Comparer ».
     setResultsVisited(true);
   }, []);
+
+  // Bouton « Importer » de la barre supérieure : ouvre le sélecteur de fichier
+  // CSV du système, exactement comme sur la page Saisie.
+  useEffect(() => {
+    const open = () => importInputRef.current?.click();
+    window.addEventListener("piano-import-csv", open);
+    return () => window.removeEventListener("piano-import-csv", open);
+  }, []);
+
+  /** Applique un CSV Touchweight aux moyennes et graphiques de cette page. */
+  const importCsvContent = (content: string) => {
+    try {
+      const { fields, rows: imported } = parseDiagnosticCsv(content);
+      const nextRows: Row[] = imported.map((r) => ({ wa: r.wa, wd: r.wd }));
+      const nextInfo: Info = {
+        marque: fields["brand"] ?? "",
+        modele: fields["model"] ?? "",
+        type_piano: fields["type_piano"] ?? "",
+        sn_num: fields["serial_number"] ?? "",
+        fabrication: fields["manufacture_year"] ?? "",
+        pays: fields["pays"] ?? "",
+        ville: fields["ville"] ?? "",
+        entretien: fields["maintenance_type"] ?? "",
+        usage_level: fields["usage_level"] ?? "",
+        remarques: fields["remarques"] ?? "",
+      };
+      try {
+        window.localStorage.setItem(DRAFT_ROWS_KEY, JSON.stringify(nextRows));
+        window.localStorage.setItem(DRAFT_INFO_KEY, JSON.stringify(nextInfo));
+      } catch {
+        /* stockage indisponible */
+      }
+      saveCurrentPiano(
+        buildCurrentPiano({
+          brand: nextInfo["marque"] ?? "",
+          model: nextInfo["modele"] ?? "",
+          serial_number: nextInfo["sn_num"] ?? "",
+          type_piano: nextInfo["type_piano"] ?? "",
+          manufacture_year: Number(nextInfo["fabrication"]) || null,
+          climate_zone: String(loadCurrentPiano()?.climate_zone || fallbackZone(nextInfo["pays"] ?? "")),
+          maintenance_type: nextInfo["entretien"] ?? "",
+          usage_level: nextInfo["usage_level"] ?? "",
+          ville: nextInfo["ville"] ?? "",
+          pays: nextInfo["pays"] ?? "",
+          remarques: nextInfo["remarques"] ?? "",
+          wa: nextRows.map((r) => r.wa),
+          wd: nextRows.map((r) => r.wd),
+        }),
+      );
+      setDraft({ rows: nextRows, info: nextInfo });
+      toast.success("Fichier CSV importé.");
+    } catch {
+      toast.error("Fichier CSV invalide.");
+    }
+  };
 
   useEffect(() => {
     const node = averagesRef.current;
