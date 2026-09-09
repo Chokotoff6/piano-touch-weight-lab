@@ -300,7 +300,12 @@ function RootComponent() {
                   </div>
                 )}
                 {topbar.isExporting && (
-                  <span className="ml-3 whitespace-nowrap text-sm font-semibold !text-black">
+                  <span
+                    className="fixed right-4 !z-[99999] whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-1 text-sm font-semibold !text-black shadow"
+                    style={{
+                      top: (exportMsgTop || (saveBtnRef.current?.getBoundingClientRect().bottom ?? 56) + 10),
+                    }}
+                  >
                     Export en cours...
                   </span>
                 )}
