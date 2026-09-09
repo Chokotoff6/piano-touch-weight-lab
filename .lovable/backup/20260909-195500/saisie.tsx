@@ -1557,9 +1557,6 @@ function Index() {
 
   /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
   const exportPdfFile = async () => {
-    // Le calcul lourd est retardé de 150 ms : le navigateur a le temps
-    // d'afficher « Export en cours... » (10px sous Sauver) avant de capturer.
-    await new Promise((resolve) => setTimeout(resolve, 150));
     const pages = collectPdfPages();
     if (pages.every((page) => page.length === 0)) return;
 
