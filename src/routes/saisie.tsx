@@ -2218,7 +2218,7 @@ function Index() {
           type="button"
           data-pdf-hide
           onClick={() => setWeighingMode(false)}
-          style={{ marginLeft: "200px" }}
+          style={{ marginLeft: "400px" }}
           className="absolute left-1/2 -top-4 z-10 -translate-x-1/2 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
         >
           {en ? "Edit piano information" : "Modifier Informations piano"}
@@ -2227,7 +2227,7 @@ function Index() {
           {confirmReset === "rows" && (
             <div className="absolute bottom-full left-1/2 mb-2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
               <span>Voulez-vous effacer toutes les données de poids saisies ?</span>
-              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setUndoStack([]); setConfirmReset(null); }}>Oui</button>
+              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setUndoStack([]); setRedoStack([]); setConfirmReset(null); }}>Oui</button>
               <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
             </div>
           )}
@@ -2245,10 +2245,22 @@ function Index() {
               data-pdf-hide
               disabled={undoStack.length === 0}
               onClick={undoRows}
+              aria-label="Annuler"
               title="Annuler la dernière saisie (3 maximum)"
-              className={`rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold transition-colors hover:bg-accent ${undoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "!text-black"}`}
+              className={`flex items-center justify-center rounded-md border border-input bg-background px-4 py-1.5 transition-colors hover:bg-accent ${undoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "!text-black"}`}
             >
-              Undo
+              <Undo2 className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              data-pdf-hide
+              disabled={redoStack.length === 0}
+              onClick={redoRows}
+              aria-label="Rétablir"
+              title="Rétablir la saisie annulée (3 maximum)"
+              className={`flex items-center justify-center rounded-md border border-input bg-background px-4 py-1.5 transition-colors hover:bg-accent ${redoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "!text-black"}`}
+            >
+              <Redo2 className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -2300,7 +2312,7 @@ function Index() {
             type="button"
             data-pdf-hide
             onClick={() => navigate({ to: "/resultats" })}
-            className={`rounded-md border px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100 hover:!bg-green-200" : "border-input bg-background hover:bg-accent"}`}
+            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors ${badgeVisible ? "!border-green-600 !bg-green-500 hover:!bg-green-600" : "border-input bg-background hover:bg-accent"}`}
           >
             {en ? "Results & Charts >" : "Résultats & Graphiques >"}
           </button>
