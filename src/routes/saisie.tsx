@@ -83,6 +83,9 @@ const PEDAL_MESSAGE_FR =
 const PEDAL_MESSAGE_EN =
   "⚠️ Warning: high value detected. Make sure the sustain pedal is fully pressed during the measurement to release the dampers.";
 const PEDAL_HIDE_KEY = "ptw_hide_pedal_alert";
+/** Profondeur de l'historique Undo / Redo (20 manipulations). */
+const UNDO_LIMIT = 20;
+
 
 type Row = { wa: string; wd: string };
 
