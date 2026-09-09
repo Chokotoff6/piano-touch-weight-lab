@@ -287,15 +287,14 @@ export function setCachedCaptures(key: string, shots: ReportCaptures): void {
  */
 export async function captureReportPages(pages: HTMLElement[][]): Promise<ReportCaptures> {
   const captured: ReportCaptures = [];
-  // Stabilisation : on laisse aux graphiques Recharts le temps d'être
-  // intégralement calculés et figés avant la première capture.
-  await settle(1500);
+  // Les blocs (miroir fixe hors écran + graphiques) sont déjà peints en
+  // mémoire : une seule frame d'attente suffit, l'export reste immédiat.
+  await settle(0);
   for (const page of pages) {
     const blocks = page.filter((block) => Boolean(block) && isRenderable(block));
     if (blocks.length === 0) continue;
     const shots: Capture[] = [];
     for (const block of blocks) {
-      await settle(300);
       // Étanchéité totale : un bloc non capturable est ignoré, jamais bloquant.
       try {
         const shot = await capture(block);
