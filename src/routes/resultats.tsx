@@ -282,6 +282,21 @@ function Resultats() {
 
   return (
     <main className="mx-auto w-full max-w-[1120px] px-6 py-8">
+      <input
+        ref={importInputRef}
+        type="file"
+        accept=".csv,text/csv"
+        style={{ display: "none" }}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = () => importCsvContent(String(reader.result ?? ""));
+          reader.onerror = () => toast.error("Lecture du fichier impossible.");
+          reader.readAsText(file, "utf-8");
+        }}
+      />
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-x-0 top-[77px] z-40 h-[50px] bg-white"
