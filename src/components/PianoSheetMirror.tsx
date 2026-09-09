@@ -157,7 +157,7 @@ type Avg = { wa: string; wd: string; friction: string; balance: string };
 function average(cells: Cell[]): Avg {
   const valid = cells
     .map((c) => ({ wa: Number(c.wa), wd: Number(c.wd) }))
-    .filter((e) => Number.isFinite(e.wa) && Number.isFinite(e.wd) && e.wa > e.wd && c1(e.wa) && c1(e.wd));
+    .filter((e) => Number.isFinite(e.wa) && Number.isFinite(e.wd) && e.wa > e.wd && e.wd > 0);
   if (valid.length === 0) return { wa: "—", wd: "—", friction: "—", balance: "—" };
   const avgWa = valid.reduce((s, e) => s + e.wa, 0) / valid.length;
   const avgWd = valid.reduce((s, e) => s + e.wd, 0) / valid.length;
