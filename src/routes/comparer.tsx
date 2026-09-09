@@ -1421,11 +1421,20 @@ function Comparer() {
       window.setTimeout(() => {
         void (async () => {
           try {
-            const pick = (id: string) =>
-              document.querySelector<HTMLElement>(`[data-frame="${id}"]`);
+            const inside = (root: HTMLElement | null, id: string) =>
+              root?.querySelector<HTMLElement>(`[data-frame="${id}"]`) ?? null;
+            const pick = (id: string) => inside(liveChartsRef.current, id);
+            const mirror = (id: string) => inside(mirrorChartsRef.current, id);
             const keep = (list: Array<HTMLElement | null>) =>
               list.filter((el): el is HTMLElement => el !== null);
             const pages: LandscapePage[] = [
+              // Pages 1 à 3 : atelier (miroir hors écran de la page Saisie).
+              {
+                blocks: keep([mirrorAveragesRef.current, mirrorSheetRef.current]),
+                layout: "column" as const,
+              },
+              { blocks: keep([mirror("wa"), mirror("wd")]), layout: "column" as const },
+              { blocks: keep([mirror("bal"), mirror("fric")]), layout: "column" as const },
               // Page 4 : titre officiel, « Réglages » à gauche et « Moyennes » à droite.
               {
                 blocks: keep([settingsRef.current, averagesRef.current]),
@@ -1438,7 +1447,7 @@ function Comparer() {
               { blocks: keep([pick("pair2")]), layout: "column" as const },
             ].filter((page) => page.blocks.length > 0);
             if (pages.length === 0) return;
-            await generateComparisonReport(pages, "COMPARATIF_TOUCHWEIGHT.pdf", 4, 6);
+            await generateComparisonReport(pages, "COMPARATIF_TOUCHWEIGHT.pdf", 1, 6);
           } finally {
             setTopbarState({ isExporting: false });
           }
