@@ -638,11 +638,12 @@ function Index() {
   );
   orphanRef.current = orphanKeys;
 
-  /** Une touche est en anomalie : erreur mécanique, hors fourchette ou binôme incomplet. */
+  /** Une touche est en anomalie : erreur mécanique, hors fourchette ou binôme
+   *  déclaré incomplet À LA SORTIE de la touche (jamais pendant la frappe). */
   const pairHasError = (index: number) =>
     !!errorsRef.current[`${index}-wa`] ||
     !!errorsRef.current[`${index}-wd`] ||
-    orphanRef.current.includes(index);
+    incompleteRef.current.includes(index);
 
   /** Case fautive du binôme sur laquelle le curseur doit rester capturé. */
   const pairErrorField = (index: number): "wa" | "wd" => {
