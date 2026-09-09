@@ -410,6 +410,11 @@ function Index() {
   /** Miroir des erreurs : permet de verrouiller le curseur dans une case fautive. */
   const errorsRef = useRef<Record<string, string>>({});
   errorsRef.current = errors;
+  /** Miroir des binômes incomplets (une seule case remplie sur la touche). */
+  const orphanRef = useRef<number[]>([]);
+  /** Binôme actuellement verrouillé : interdiction absolue d'en sortir. */
+  const lockedPairRef = useRef<number | null>(null);
+
   /** Badge vert retardé : ne s'allume qu'après 0,5 s sans cadre rouge ni erreur. */
   const [badgeVisible, setBadgeVisible] = useState(false);
   const badgeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
