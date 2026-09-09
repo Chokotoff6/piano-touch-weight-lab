@@ -54,8 +54,15 @@ export function BrandTargetInfoContent({ variant = "brand" }: { variant?: Target
   );
 }
 
-export const TARGET_LEGAL_TEXT =
-  "Données indicatives courantes issues de compilations professionnelles indépendantes. Cet outil d'aide au diagnostic n'est pas affilié aux fabricants cités. L'artisan reste le seul maître d'œuvre et responsable des réglages mécaniques effectués.";
+export const TARGET_LEGAL_TITLE = "À propos des Courbes de Référence Indicatives de marques";
+
+export const TARGET_LEGAL_PARAGRAPHS = [
+  "Données Indicatives : Ces valeurs de référence sont fournies à titre purement indicatif et informatif. Elles proviennent de compilations professionnelles indépendantes, de documentations techniques publiques et de constatations d'ateliers. Elles représentent des données courantes pour la marque sélectionnée et ne constituent pas une spécification contractuelle d'usine.",
+  "Propriété Intellectuelle & Indépendance : Cette application est un outil totalement indépendant d'aide au diagnostic. Les marques mentionnées (Yamaha, Kawai, Steinway & Sons, etc.) sont la propriété exclusive de leurs titulaires respectifs. Ce service n'est ni affilié, ni agréé, ni soutenu officiellement par ces constructeurs.",
+  "CGU & Responsabilité de l'Artisan : En utilisant ces profils, vous acceptez nos CGU et notre politique de confidentialité (RGPD). L'artisan professionnel reste le seul maître d'œuvre, expert et unique responsable des réglages mécaniques et des interventions physiques effectués sur l'instrument.",
+];
+
+export const TARGET_LEGAL_TEXT = [TARGET_LEGAL_TITLE, ...TARGET_LEGAL_PARAGRAPHS].join("\n\n");
 
 /** Petit "i" noir net, affiché à côté de « Cible » : tooltip légal au survol
     et bascule au clic (pour le tactile). */
@@ -78,14 +85,20 @@ export function TargetLegalInfoIcon() {
         i
       </button>
       <span
-        className={`absolute left-5 top-1/2 w-[360px] -translate-y-1/2 rounded-md border border-gray-300 px-3 py-2 text-left text-[13px] font-medium normal-case text-gray-950 shadow-lg group-hover:block ${pinned ? "block" : "hidden"}`}
+        className={`absolute left-5 top-1/2 w-[420px] -translate-y-1/2 rounded-md border border-gray-300 px-3 py-2 text-left text-[12.5px] font-medium normal-case leading-snug text-gray-950 shadow-lg group-hover:block ${pinned ? "block" : "hidden"}`}
         style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
       >
-        {TARGET_LEGAL_TEXT}
+        <span className="mb-1 block font-bold">{TARGET_LEGAL_TITLE}</span>
+        {TARGET_LEGAL_PARAGRAPHS.map((paragraph) => (
+          <span key={paragraph} className="mb-1 block last:mb-0">
+            {paragraph}
+          </span>
+        ))}
       </span>
     </span>
   );
 }
+
 
 /** Petite icône "i" verte ouvrant l'overlay d'information juridique. */
 export function BrandTargetInfoIcon({ variant = "brand" }: { variant?: TargetVariant }) {
