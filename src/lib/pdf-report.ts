@@ -390,3 +390,12 @@ function drawFooter(pdf: jsPDF, page: number, total: number, stamp: string) {
   pdf.setTextColor(0);
 }
 
+
+/**
+ * Extraction brute du miroir PDF « Mesures poids statiques » (conteneur fixe
+ * de 1250px placé hors écran). Le nœud est récupéré directement dans le DOM,
+ * sans passer par les refs React ni par la pile Undo/Redo.
+ */
+export function rawPdfMirror(): HTMLElement | null {
+  return document.querySelector<HTMLElement>("[data-pdf-compact]");
+}
