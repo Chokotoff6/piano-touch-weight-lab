@@ -169,7 +169,7 @@ function average(cells: Cell[]): Avg {
   };
 }
 
-const c1 = (n: number) => n > 0;
+
 
 function Section({
   from,
