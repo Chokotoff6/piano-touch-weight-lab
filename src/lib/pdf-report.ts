@@ -282,7 +282,7 @@ function drawPage(pdf: jsPDF, blocks: Capture[], ratio: number, topOffset: numbe
     const w = block.width * block.insertionScale * ratio;
     const h = block.height * block.insertionScale * ratio;
     const x = MARGIN + (availW - w) / 2;
-    pdf.addImage(block.dataUrl, "PNG", x, y, w, h, undefined, "FAST");
+    pdf.addImage(block.dataUrl, block.format ?? "PNG", x, y, w, h, undefined, "FAST");
     y += h + GAP;
   }
 }
