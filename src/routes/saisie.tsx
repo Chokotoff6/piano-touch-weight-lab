@@ -1172,6 +1172,10 @@ function Index() {
       hideRangeMessage();
       return;
     }
+    // Binôme complété pendant la frappe : le cadre rouge « incomplet » tombe.
+    if (cleanWeight(nextRow.wa).length === 2 && cleanWeight(nextRow.wd).length === 2) {
+      setIncompletePairs((prev) => prev.filter((i) => i !== index));
+    }
     // Feedback Flash : PD > PR obligatoire (valeur complète uniquement).
     checkCoherence(index, nextRow);
     const num = parseWeight(cleaned);
@@ -1315,7 +1319,9 @@ function Index() {
       showCoherencePopover(index);
       setTimeout(() => {
         const input = inputs.current[wdKey];
-        if (!input) return;
+        const active = document.activeElement;
+        const inPair = active === inputs.current[waKey] || active === input;
+        if (!input || !inPair) return;
         input.focus();
         input.select();
       }, 0);
@@ -2041,7 +2047,7 @@ function Index() {
           // Le message FF de fourchette s'efface définitivement dès le clic dans la case.
           hideRangeMessage(true);
         }}
-        className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "error !border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"} ${incompletePairs.includes(index) ? "error !border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
 
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
       />
@@ -2456,7 +2462,7 @@ function Index() {
           {confirmReset === "rows" && (
             <div className="absolute bottom-full right-0 mb-2 mr-[40px] flex min-w-max items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
               <span>Voulez-vous effacer toutes les données de poids saisies ?</span>
-              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); setBlockAnchor(null); rangeDismissed.current.clear(); coherenceDismissed.current.clear(); lockedPairRef.current = null; setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
+              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); setBlockAnchor(null); rangeDismissed.current.clear(); coherenceDismissed.current.clear(); setIncompletePairs([]); lockedPairRef.current = null; setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
               <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
             </div>
           )}
@@ -2491,7 +2497,7 @@ function Index() {
                   <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 align-middle text-[11px] leading-none">
                     ⌥
                   </span>{" "}
-                  sur Mac) : passe directement au DO suivant
+                  sur Mac) : saute directement au DO suivant
                 </span>
               </span>
             </span>
