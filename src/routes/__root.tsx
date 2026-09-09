@@ -325,7 +325,7 @@ function RootComponent() {
                       variant="outline"
                       size="sm"
                       className="rounded-r-none bg-white text-lg !text-black"
-                      onClick={() => requireConsent(() => dispatchAction("piano-import-csv"))}
+                      onClick={() => dispatchAction("piano-import-csv")}
                     >
                       Importer
                     </Button>
@@ -340,12 +340,12 @@ function RootComponent() {
                     </DropdownMenuTrigger>
                   </div>
                   <DropdownMenuContent align="start">
-                    <DropdownMenuItem onClick={() => requireConsent(() => dispatchAction("piano-import-csv"))}>
+                    <DropdownMenuItem onClick={() => dispatchAction("piano-import-csv")}>
                       Charger un fichier CSV local
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onSelect={(event) => event.preventDefault()}
-                      onClick={() => requireConsent(() => dispatchAction("piano-import-history"))}
+                      onClick={() => dispatchAction("piano-import-history")}
                     >
                       Restaurer depuis l&apos;historique en ligne
                     </DropdownMenuItem>
@@ -375,7 +375,7 @@ function RootComponent() {
                   variant="outline"
                   size="sm"
                   className="bg-white text-lg !text-black"
-                  onClick={() => requireConsent(() => dispatchAction("piano-import-csv"))}
+                  onClick={() => dispatchAction("piano-import-csv")}
                 >
                   Importer
                 </Button>
