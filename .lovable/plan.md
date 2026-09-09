@@ -20,3 +20,10 @@
 ## Résultat attendu
 
 Le clic ne reposera sur aucun pré-rendu ni cache. Le travail passera de cinq clonages/compressions à trois, avec des images graphiques moins coûteuses. Une seconde exacte ne peut pas être garantie sur tous les appareils, mais cette approche attaque réellement les opérations responsables des 7 secondes tout en préservant le grand tableau.
+
+## Position imposée du message « Export en cours... »
+
+- Affichage fixe, exactement 10 pixels sous le bas du bouton principal « Sauver », donc juste sous la ligne du bandeau collant.
+- Aligné sur le bord droit de l'écran.
+- Position recalculée si le bandeau change de hauteur (chargement, redimensionnement, défilement), pour que l'écart de 10 pixels reste exact.
+- Le message doit apparaître avant le début du travail lourd et rester lisible pendant toute la durée de l'export.
