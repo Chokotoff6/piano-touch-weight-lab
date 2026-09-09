@@ -41,7 +41,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
     // Définition ajustée à la taille exacte d'insertion PDF : les graphiques
     // s'impriment à leur largeur CSS (scale 1 suffit), seul le miroir du
     // tableau reste en scale 2 pour la netteté des 88 chiffres.
-    scale: 2,
+    scale: chart ? 1 : 2,
     backgroundColor: "#ffffff",
     useCORS: true,
     logging: false,
@@ -243,11 +243,12 @@ async function capture(el: HTMLElement): Promise<Capture> {
       });
     },
   });
-  // Encodage : PNG natif sans perte pour TOUS les blocs (tableau et
-  // graphiques). Le JPEG introduisait des artefacts visibles sur les tracés
-  // et les libellés techniques.
-  const format: "PNG" | "JPEG" = "PNG";
-  const dataUrl = canvas.toDataURL("image/png");
+  // Encodage : PNG uniquement pour le tableau des 88 touches (netteté des
+  // chiffres). Les graphiques passent en JPEG haute qualité, bien plus rapide
+  // à encoder et à intégrer au PDF, sans perte visible sur des courbes.
+  const format: "PNG" | "JPEG" = chart ? "JPEG" : "PNG";
+  const dataUrl =
+    format === "JPEG" ? canvas.toDataURL("image/jpeg", 0.92) : canvas.toDataURL("image/png");
   console.info(
     `[pdf] capture ${compact ? "tableau" : chart ? "graphique" : "bloc"} : ${Math.round(performance.now() - started)} ms`,
   );
