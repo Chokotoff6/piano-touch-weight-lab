@@ -2284,7 +2284,7 @@ function Index() {
                 disabled={undoStack.length === 0}
                 onClick={undoRows}
                 aria-label="Annuler"
-                title="Annuler la dernière saisie (3 maximum)"
+                title="Annuler la dernière saisie (20 maximum)"
                 className={`flex h-6 w-7 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${undoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "!text-black"}`}
               >
                 <Undo2 className="h-3.5 w-3.5" />
@@ -2295,7 +2295,7 @@ function Index() {
                 disabled={redoStack.length === 0}
                 onClick={redoRows}
                 aria-label="Rétablir"
-                title="Rétablir la saisie annulée (3 maximum)"
+                title="Rétablir la saisie annulée (20 maximum)"
                 className={`flex h-6 w-7 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${redoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "!text-black"}`}
               >
                 <Redo2 className="h-3.5 w-3.5" />
@@ -2351,7 +2351,17 @@ function Index() {
             type="button"
             data-pdf-hide
             onClick={() => navigate({ to: "/resultats" })}
-            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors ${badgeVisible ? "!border-green-600 !bg-green-500 hover:!bg-green-600" : "border-input bg-background hover:bg-accent"}`}
+            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100" : "border-input bg-background hover:bg-accent"}`}
+            style={
+              badgeVisible
+                ? {
+                    backgroundColor: "#dcfce7",
+                    borderColor: "#16a34a",
+                    color: "#000000",
+                    fontWeight: "bold",
+                  }
+                : undefined
+            }
           >
             {en ? "Results & Charts >" : "Résultats & Graphiques >"}
           </button>
@@ -2563,7 +2573,7 @@ Moyennes{" "}
             <button
               type="button"
               className="rounded border border-gray-950/40 px-2 py-0.5 text-xs font-bold !text-gray-950"
-              onClick={() => setPedalAlert(false)}
+              onClick={closePedalAlert}
             >
               OK
             </button>
