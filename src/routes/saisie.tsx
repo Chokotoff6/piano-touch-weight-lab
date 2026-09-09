@@ -2340,7 +2340,13 @@ function Index() {
               >
                 <span className="block">• TAB : avance d&apos;une zone de saisie</span>
                 <span className="block">• Shift + TAB : recule d&apos;une zone de saisie</span>
-                <span className="block">• ALT + TAB (Option + TAB sur Mac) : passe directement au DO suivant</span>
+                <span className="block">
+                  • ALT + TAB (Option{" "}
+                  <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 align-middle text-[11px] leading-none">
+                    ⌥
+                  </span>{" "}
+                  sur Mac) : passe directement au DO suivant
+                </span>
               </span>
             </span>
           </>
