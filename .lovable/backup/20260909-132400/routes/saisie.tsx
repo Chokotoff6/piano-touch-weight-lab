@@ -101,7 +101,7 @@ const SAVE_UPDATE_MESSAGE =
 const SAVE_NEW_MESSAGE =
   "⚠️ Nouvelle session de suivi chronologique créée avec succès. Cette fiche historique est archivée de manière étanche dans la base de données cloud pour vos futures comparaisons.";
 const ORPHAN_MESSAGE =
-  "⚠️ Saisie incomplète : Le Poids Descendant et le Poids Remontant doivent être tous les deux renseignés pour cette touche.";
+  "⚠️ Mesure incomplète : Chaque touche mesurée doit obligatoirement posséder à la fois une valeur Wa et une valeur Wd.";
 const COHERENCE_MESSAGE =
   "⚠️ Erreur mécanique : Le Poids Descendant (PD) doit être strictement supérieur au Poids Remontant (PR) pour calculer la Friction.";
 
@@ -966,36 +966,6 @@ function Index() {
     };
   }, []);
 
-  // Clic en dehors des zones de saisie du clavier alors qu'un binôme reste en
-  // anomalie (hors fourchette ou incohérence mécanique) : le message FF est
-  // effacé, le blocage levé, les DEUX cases du binôme sont vidées et le focus
-  // revient automatiquement sur le Poids Descendant du binôme nettoyé.
-  useEffect(() => {
-    const onOutsidePointerDown = (e: PointerEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (target?.closest(".weight-input")) return;
-      const locked = lockedPairRef.current;
-      if (locked === null) return;
-      const hasCellError =
-        !!errorsRef.current[`${locked}-wa`] || !!errorsRef.current[`${locked}-wd`];
-      if (!hasCellError) return;
-      lockedPairRef.current = null;
-      hideRangeMessage(true);
-      setCoherenceIndex(null);
-      setCoherenceAnchor(null);
-      setErrors((prev) => {
-        const next = { ...prev };
-        delete next[`${locked}-wa`];
-        delete next[`${locked}-wd`];
-        return next;
-      });
-      setRows((prev) => prev.map((r, i) => (i === locked ? { wa: "", wd: "" } : r)));
-      setTimeout(() => focusCell(locked, "wa"), 0);
-    };
-    document.addEventListener("pointerdown", onOutsidePointerDown);
-    return () => document.removeEventListener("pointerdown", onOutsidePointerDown);
-  }, []);
-
 
   // --- Saisie des informations générales ---------------------------------------
 
@@ -1186,8 +1156,8 @@ function Index() {
     // Valeur redevenue conforme : nettoyage instantané du cadre rouge et du FF.
     if (!mechanicalError) clearError(`${index}-${field}`);
     hideRangeMessage();
-    // Alerte sustain : toute valeur conforme strictement supérieure à 75 g.
-    if (num !== null && num > 75 && !hidePedalAlert) {
+    // Alerte sustain strictement entre 76 g et 80 g.
+    if (num !== null && num > 75 && num <= 80 && !hidePedalAlert) {
       pedalCount.current += 1;
       pedalOrigin.current = { index, field };
       setPedalAlert(true);
@@ -1267,12 +1237,7 @@ function Index() {
 
     clearError(key);
     hideRangeMessage();
-    const finalRow = setRowField(index, field, num.toString());
-    checkCoherence(index, finalRow);
-    // Binôme incomplet : la case restée vide passe en rouge et le message FF
-    // dédié s'affiche immédiatement.
-    const other = field === "wa" ? "wd" : "wa";
-    if (finalRow[other].trim() === "") showOrphanPopover(index);
+    checkCoherence(index, setRowField(index, field, num.toString()));
   };
 
   /** Applique (ou lève) l'alerte de cohérence Wa > Wd sur les deux cellules d'une touche. */
@@ -2414,29 +2379,6 @@ function Index() {
         <SvgTooltip x={rangeAnchor.x} y={rangeAnchor.y} text={PD_RANGE_MESSAGE} />
       )}
 
-      {/* Bouton Reset : au-dessus du cadre Mesures, aligné dans le coin
-          supérieur droit, avec 25 px de marge sous le bouton. */}
-      {weighingMode && (
-        <div className="relative flex w-full justify-end pr-2" style={{ marginBottom: "25px" }}>
-          {confirmReset === "rows" && (
-            <div className="absolute bottom-full right-0 mb-2 mr-[40px] flex min-w-max items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
-              <span>Voulez-vous effacer toutes les données de poids saisies ?</span>
-              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); setBlockAnchor(null); rangeDismissed.current.clear(); coherenceDismissed.current.clear(); lockedPairRef.current = null; setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
-              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
-            </div>
-          )}
-          <button
-            type="button"
-            data-pdf-hide
-            onClick={() => setConfirmReset("rows")}
-            className="rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
-          >
-            Reset
-          </button>
-        </div>
-      )}
-
-
       <Frame
         title={
           <>
@@ -2485,8 +2427,22 @@ function Index() {
           {en ? "Edit piano information" : "Modifier Informations piano"}
         </button>
         <div className="absolute left-[calc(1rem+4rem)] top-12 z-10 -translate-x-1/2 -translate-y-1/2">
+          {confirmReset === "rows" && (
+            <div className="absolute bottom-full left-0 mb-2 ml-[120px] flex min-w-max items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
+              <span>Voulez-vous effacer toutes les données de poids saisies ?</span>
+              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); rangeDismissed.current.clear(); coherenceDismissed.current.clear(); setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
+              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
+            </div>
+          )}
           <div className="flex flex-col items-stretch gap-1">
-
+            <button
+              type="button"
+              data-pdf-hide
+              onClick={() => setConfirmReset("rows")}
+              className="rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+            >
+              Reset
+            </button>
             <div className="flex flex-row items-center justify-center gap-1">
               <button
                 type="button"
