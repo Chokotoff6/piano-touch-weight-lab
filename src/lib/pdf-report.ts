@@ -105,7 +105,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
       // Substitution textuelle : les notices/résumés sont vidés (textContent = "")
       // pour que les bordures se referment sans trou blanc. Les boutons et
       // pastilles interactives restent masqués en visibilité.
-      doc.querySelectorAll("[data-pdf-hide]").forEach((node) => {
+      pick("[data-pdf-hide]").forEach((node) => {
         const el = node as HTMLElement;
         if (el.tagName === "SPAN") {
           el.textContent = "";
@@ -117,7 +117,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
       // (h-0 + overflow-hidden + opacity-0). On le force temporairement
       // visible dans le clone pour qu'html2canvas peigne son contenu
       // (sinon la Page 2 du PDF sort blanche).
-      doc.querySelectorAll("[data-pdf-capture-frame]").forEach((node) => {
+      pick("[data-pdf-capture-frame]").forEach((node) => {
         const frame = node as HTMLElement;
         frame.style.height = "auto";
         frame.style.maxHeight = "none";
@@ -128,7 +128,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
       // demi-clavier sont masqués à l'écran (h-0 + opacity-0). On les force
       // visibles dans le clone pour que la capture du clavier inclue ses
       // rangées d'expertise.
-      doc.querySelectorAll("[data-pdf-result-frame]").forEach((node) => {
+      pick("[data-pdf-result-frame]").forEach((node) => {
         const frame = node as HTMLElement;
         frame.style.height = "auto";
         frame.style.maxHeight = "none";
@@ -138,7 +138,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
       // Miroir « Mesures poids statiques » : rendu hors écran remis à l'origine
       // du clone, sans transformation. La réduction 0,82 est appliquée lors de
       // l'insertion dans le PDF, après une capture intégrale nette.
-      doc.querySelectorAll("[data-pdf-compact]").forEach((node) => {
+      pick("[data-pdf-compact]").forEach((node) => {
         const frame = node as HTMLElement;
         frame.style.setProperty("position", "static", "important");
         frame.style.setProperty("left", "auto", "important");
@@ -160,12 +160,12 @@ async function capture(el: HTMLElement): Promise<Capture> {
       });
       // Aucun conteneur interne ni parent ne doit rogner le cadre : ni la
       // bordure basse, ni les touches à l'extrême droite du clavier.
-      doc.querySelectorAll("[data-pdf-compact] *").forEach((node) => {
+      pick("[data-pdf-compact] *").forEach((node) => {
         const el = node as HTMLElement;
         el.style.setProperty("max-height", "none", "important");
         el.style.setProperty("overflow", "visible", "important");
       });
-      doc.querySelectorAll("[data-pdf-compact]").forEach((node) => {
+      pick("[data-pdf-compact]").forEach((node) => {
         let parent = (node as HTMLElement).parentElement;
         while (parent && parent !== doc.body) {
           parent.style.setProperty("overflow", "visible", "important");
@@ -176,7 +176,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
       // Centrage horizontal absolu des chiffres du tableau (page 1) : styles
       // en ligne posés directement sur chaque champ et son conteneur, car
       // html2canvas ignore une partie des règles utilitaires de mise en page.
-      doc.querySelectorAll("[data-pdf-compact] input").forEach((node) => {
+      pick("[data-pdf-compact] input").forEach((node) => {
         const input = node as HTMLElement;
         input.style.textAlign = "center";
         input.style.paddingLeft = "0px";
@@ -202,7 +202,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
       });
       // Cadres graphiques (pages 2 et 3) : styles imposés en ligne pour que le
       // cadre « Friction » ne sorte plus brisé, sans bordure ni décalé.
-      doc.querySelectorAll("[data-pdf-chart]").forEach((node) => {
+      pick("[data-pdf-chart]").forEach((node) => {
         const chart = node as HTMLElement;
         chart.style.setProperty("width", "100%", "important");
         chart.style.setProperty("max-width", "100%", "important");
