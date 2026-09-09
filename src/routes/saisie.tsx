@@ -1062,15 +1062,17 @@ function Index() {
     inputs.current[`${index}-${field}`]?.select();
   };
 
-  const onKeyDown = useCallback((e: React.KeyboardEvent, index: number, field: "wa" | "wd") => {
-    // Verrou absolu : tant que la case est en erreur (hors 30-80 g), aucune
-    // navigation clavier n'est autorisée.
-    if (errorsRef.current[`${index}-${field}`]) {
-      if (e.key === "Tab" || e.key === "Enter") {
-        e.preventDefault();
-        return;
-      }
+  const onKeyDown = (e: React.KeyboardEvent, index: number, field: "wa" | "wd") => {
+    // Verrou absolu du binôme : erreur mécanique, hors fourchette ou binôme
+    // incomplet. Seuls les déplacements INTERNES au binôme restent permis.
+    if (pairHasError(index) && (e.key === "Tab" || e.key === "Enter")) {
+      e.preventDefault();
+      const other = field === "wa" ? "wd" : "wa";
+      if (errorsRef.current[`${index}-${field}`]) focusCell(index, field);
+      else focusCell(index, other);
+      return;
     }
+
     // ALT + TAB (Option + TAB sur Mac) : saute directement au DO suivant.
     if (e.altKey && e.key === "Tab") {
       const nextCKey = Array.from(C_KEYS).find((key) => key > index + 1);
