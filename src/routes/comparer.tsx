@@ -1405,6 +1405,11 @@ function Comparer() {
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
   const averagesRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
+  // Miroir hors écran de la page Saisie : pages 1 à 3 du rapport unique.
+  const mirrorAveragesRef = useRef<HTMLElement | null>(null);
+  const mirrorSheetRef = useRef<HTMLElement | null>(null);
+  const mirrorChartsRef = useRef<HTMLDivElement>(null);
+  const liveChartsRef = useRef<HTMLDivElement>(null);
 
   // Export PDF autonome de la page Comparer : 3 pages A4 portrait en PNG.
   useEffect(() => {
