@@ -1424,13 +1424,13 @@ function Comparer() {
               // Page 4 : titre officiel, « Réglages » à gauche et « Moyennes » à droite.
               {
                 blocks: keep([settingsRef.current, averagesRef.current]),
-                layout: "row",
+                layout: "row" as const,
                 title: "COMPARAISON PROFIL PIANO ACTUEL VS CLOUD ET/OU CIBLES",
               },
               // Page 5 : Poids descendant (haut) et Poids remontant (bas).
-              { blocks: keep([pick("pair1")]), layout: "column" },
+              { blocks: keep([pick("pair1")]), layout: "column" as const },
               // Page 6 : Poids d'équilibre (haut) et Friction (bas).
-              { blocks: keep([pick("pair2")]), layout: "column" },
+              { blocks: keep([pick("pair2")]), layout: "column" as const },
             ].filter((page) => page.blocks.length > 0);
             if (pages.length === 0) return;
             await generateComparisonReport(pages, "COMPARATIF_TOUCHWEIGHT.pdf", 4, 6);
