@@ -447,7 +447,9 @@ function Index() {
   const [pedalAlert, setPedalAlert] = useState(false);
   const [undoStack, setUndoStack] = useState<Row[][]>([]);
   const [redoStack, setRedoStack] = useState<Row[][]>([]);
+  const pedalCount = useRef(0);
   const pedalOrigin = useRef<{ index: number; field: "wa" | "wd" } | null>(null);
+
   const [hidePedalAlert, setHidePedalAlert] = useState(false);
   /** Valeur mémorisée avant effacement automatique au clic dans une case. */
   const prevWeight = useRef<Record<string, string>>({});
