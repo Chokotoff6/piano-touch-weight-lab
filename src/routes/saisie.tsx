@@ -8,7 +8,7 @@ import {
   saisieGate,
 } from "@/lib/required-keys";
 import { SmartCombobox, type SmartComboboxHandle } from "@/components/SmartCombobox";
-import { TargetLegalInfoIcon } from "@/components/BrandTargetInfo";
+
 import { modelsFor, modelGroupsFor, inferTypeFromModel } from "@/data/pianoModels";
 import {
   BRAND_SUGGESTIONS,
@@ -447,7 +447,7 @@ function Index() {
   const [pedalAlert, setPedalAlert] = useState(false);
   const [undoStack, setUndoStack] = useState<Row[][]>([]);
   const [redoStack, setRedoStack] = useState<Row[][]>([]);
-  const pedalCount = useRef(0);
+  const pedalOrigin = useRef<{ index: number; field: "wa" | "wd" } | null>(null);
   const [hidePedalAlert, setHidePedalAlert] = useState(false);
   /** Valeur mémorisée avant effacement automatique au clic dans une case. */
   const prevWeight = useRef<Record<string, string>>({});
@@ -1092,20 +1092,20 @@ function Index() {
       focusCell(index, field);
       return;
     }
-    // CONDITION 3 : plage mécanique du poids descendant + alerte pédale au-delà de 60 g.
-    if (field === "wa") {
-      if (num < 30 || num > 80) {
-        setErrors((prev) => ({ ...prev, [key]: PD_RANGE_MESSAGE }));
-        setRowField(index, field, num.toString());
-        // Verrouillage du focus tant que la valeur reste hors fourchette.
-        setTimeout(() => focusCell(index, field), 0);
-        return;
-      }
-      if (num > 75 && !hidePedalAlert) {
-        pedalCount.current += 1;
-        setPedalAlert(true);
-      }
+    // Fourchette mécanique 30-80 g : hors plage, aucun message sustain,
+    // cadre rouge et focus verrouillé dans la case.
+    if (num < 30 || num > 80) {
+      setErrors((prev) => ({ ...prev, [key]: PD_RANGE_MESSAGE }));
+      setRowField(index, field, num.toString());
+      setTimeout(() => focusCell(index, field), 0);
+      return;
     }
+    if (num > 75 && !hidePedalAlert) {
+      pedalCount.current += 1;
+      pedalOrigin.current = { index, field };
+      setPedalAlert(true);
+    }
+
     clearError(key);
     checkCoherence(index, setRowField(index, field, num.toString()));
   };
