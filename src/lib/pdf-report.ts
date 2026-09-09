@@ -298,25 +298,30 @@ export function setCachedCaptures(key: string, shots: ReportCaptures): void {
  * nœuds sont utilisés tels quels, sans lecture d'état applicatif.
  */
 export async function captureReportPages(pages: HTMLElement[][]): Promise<ReportCaptures> {
-  const captured: ReportCaptures = [];
   // Les blocs (miroir fixe hors écran + graphiques) sont déjà peints en
   // mémoire : une seule frame d'attente suffit, l'export reste immédiat.
   await settle(0);
-  for (const page of pages) {
-    const blocks = page.filter((block) => Boolean(block) && isRenderable(block));
-    if (blocks.length === 0) continue;
-    const shots: Capture[] = [];
-    for (const block of blocks) {
-      // Étanchéité totale : un bloc non capturable est ignoré, jamais bloquant.
-      try {
-        const shot = await capture(block);
-        if (shot.width > 0 && shot.height > 0) shots.push(shot);
-      } catch (error) {
-        console.warn("[pdf] bloc ignoré", error);
-      }
-    }
-    if (shots.length > 0) captured.push(shots);
-  }
+  // Le grand tableau caché et les 4 graphiques sont capturés EN PARALLÈLE
+  // (Promise.all) au lieu de l'un après l'autre : le temps total d'export
+  // correspond au bloc le plus lent, plus à la somme de tous.
+  const jobs = pages.map((page) =>
+    page
+      .filter((block) => Boolean(block) && isRenderable(block))
+      .map(async (block): Promise<Capture | null> => {
+        // Étanchéité totale : un bloc non capturable est ignoré, jamais bloquant.
+        try {
+          const shot = await capture(block);
+          return shot.width > 0 && shot.height > 0 ? shot : null;
+        } catch (error) {
+          console.warn("[pdf] bloc ignoré", error);
+          return null;
+        }
+      }),
+  );
+  const resolved = await Promise.all(jobs.map((page) => Promise.all(page)));
+  const captured = resolved
+    .map((page) => page.filter((shot): shot is Capture => shot !== null))
+    .filter((page) => page.length > 0);
   return captured;
 }
 
