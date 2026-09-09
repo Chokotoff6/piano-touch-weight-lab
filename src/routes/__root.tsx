@@ -336,7 +336,7 @@ function RootComponent() {
                     : "Sauver les données saisies au format CSV (ré-importable)"}
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  disabled={!topbar.measuresReady}
+                  disabled={!isComparer && !topbar.measuresReady}
                   onClick={() => requireConsent(() => dispatchAction("piano-export-pdf"))}
                 >
                   {lang === "en"
