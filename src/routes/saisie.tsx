@@ -25,7 +25,7 @@ import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
 import { buildCsv, buildExportFilename, downloadCsv, formatLocalDateTime } from "@/lib/export-csv";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { getLang, useLang } from "@/data/translations";
-import { buildReportPdf, captureReportPages, downloadDebugPng, getCachedCaptures, setCachedCaptures } from "@/lib/pdf-report";
+import { buildReportPdf, captureReportPages } from "@/lib/pdf-report";
 import { generateBlankFormPdf, generateBlankKeyboardPdf } from "@/lib/pdf-blank-form";
 
 import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
