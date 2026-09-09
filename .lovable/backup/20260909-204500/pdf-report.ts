@@ -35,11 +35,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
   const PAD = 14;
   const compact = el.hasAttribute("data-pdf-compact");
   const chart = Boolean(el.hasAttribute("data-pdf-chart") || el.closest?.("[data-pdf-chart]") || el.hasAttribute("data-frame"));
-  // Blocs « Réglages » / « Moyennes » de la page Comparer : hauteur contrainte
-  // à l'écran (sticky). La capture prend leur hauteur réelle de contenu pour
-  // qu'aucun filtre ni aucune ligne de texte ne soit tronqué.
-  const expand = el.hasAttribute("data-pdf-expand");
-  const height = (expand ? Math.max(el.scrollHeight, el.offsetHeight) : el.offsetHeight) + PAD * 2;
+  const height = el.offsetHeight + PAD * 2;
   const started = performance.now();
   const canvas = await html2canvas(el, {
     // Définition ajustée à la taille exacte d'insertion PDF : les graphiques
@@ -166,21 +162,6 @@ async function capture(el: HTMLElement): Promise<Capture> {
         frame.style.maxHeight = "none";
         frame.style.overflow = "visible";
         frame.style.opacity = "1";
-      });
-      // Blocs « Réglages » et « Moyennes » (page Comparer) : la hauteur fixe
-      // et le positionnement collant sont neutralisés dans le clone pour que
-      // l'intégralité des filtres et des valeurs soit peinte, sans coupure.
-      pick("[data-pdf-expand]").forEach((node) => {
-        const frame = node as HTMLElement;
-        frame.style.setProperty("position", "static", "important");
-        frame.style.setProperty("height", "auto", "important");
-        frame.style.setProperty("max-height", "none", "important");
-        frame.style.setProperty("overflow", "visible", "important");
-      });
-      pick("[data-pdf-expand] *").forEach((node) => {
-        const child = node as HTMLElement;
-        child.style.setProperty("max-height", "none", "important");
-        child.style.setProperty("overflow", "visible", "important");
       });
       // Miroir « Mesures poids statiques » : rendu hors écran remis à l'origine
       // du clone, sans transformation. La réduction 0,82 est appliquée lors de
@@ -493,22 +474,18 @@ function drawPortraitPage(pdf: jsPDF, blocks: Capture[], ratio: number) {
 export async function generatePortraitReport(
   pages: HTMLElement[][],
   filename: string,
-  /** Numéro de la première page imprimée (section comparative : 4). */
-  startPage = 1,
-  /** Nombre total affiché au pied de page (section comparative : 5). */
-  totalPages?: number,
 ): Promise<void> {
   const captured = await captureReportPages(pages);
   if (captured.length === 0) return;
   const pdf = new jsPDF({ orientation: "portrait", format: "a4", unit: "mm" });
-  const total = totalPages ?? startPage - 1 + captured.length;
+  const total = captured.length;
   const stamp = exportStamp();
   captured.forEach((blocks, index) => {
     if (index > 0) pdf.addPage("a4", "portrait");
     drawPortraitPage(pdf, blocks, portraitRatio(blocks));
     pdf.setFontSize(7);
     pdf.setTextColor(120);
-    pdf.text(`Page ${startPage + index} / ${total}`, P_W - MARGIN, P_H - MARGIN - 3, { align: "right" });
+    pdf.text(`Page ${index + 1} / ${total}`, P_W - MARGIN, P_H - MARGIN - 3, { align: "right" });
     pdf.text(`Exporté le : ${stamp}`, P_W - MARGIN, P_H - MARGIN, { align: "right" });
     pdf.setTextColor(0);
   });

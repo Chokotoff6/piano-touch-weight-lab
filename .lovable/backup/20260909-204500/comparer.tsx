@@ -1421,13 +1421,12 @@ function Comparer() {
             const keep = (list: Array<HTMLElement | null>) =>
               list.filter((el): el is HTMLElement => el !== null);
             const pages = [
-              // Page 4 : « Réglages » AU-DESSUS de « Moyennes ».
-              keep([settingsRef.current, averagesRef.current]),
-              // Page 5 : les 4 graphiques regroupés sur une seule page.
-              keep([pick("pair1"), pick("pair2")]),
+              keep([averagesRef.current, settingsRef.current]),
+              keep([pick("pair1")]),
+              keep([pick("pair2")]),
             ].filter((page) => page.length > 0);
             if (pages.length === 0) return;
-            await generatePortraitReport(pages, "COMPARATIF_TOUCHWEIGHT.pdf", 4, 5);
+            await generatePortraitReport(pages, "COMPARATIF_TOUCHWEIGHT.pdf");
           } finally {
             setTopbarState({ isExporting: false });
           }
@@ -1690,7 +1689,7 @@ function Comparer() {
           <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-stretch gap-6">
             <div className="min-w-0">
               
-              <div ref={averagesRef} data-pdf-expand className="sticky top-[127px] z-50 mb-[50px] w-full bg-white pb-2 relative">
+              <div ref={averagesRef} className="sticky top-[127px] z-50 mb-[50px] w-full bg-white pb-2 relative">
                 <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span>Moyennes</span>} className="h-fit">
                   {/* Séparateurs affichés uniquement si au moins deux sources sont présentes. */}
                   <div className={(comparedPiano !== null || sourceMode === "cloud" || standardEnabled) ? "mb-3 border-b border-gray-400 pb-3" : ""}><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">Piano actuel : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
@@ -1712,7 +1711,7 @@ function Comparer() {
 
               <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible"} onCycleKeyFilter={cycleKeyFilter} />
             </div>
-            <aside className="min-w-0"><div ref={settingsRef} data-pdf-expand className="sticky top-[127px] z-50 flex flex-col overflow-visible" style={averagesHeight > 0 ? { height: `${averagesHeight - 8}px` } : undefined}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
+            <aside className="min-w-0"><div ref={settingsRef} className="sticky top-[127px] z-50 flex flex-col overflow-visible" style={averagesHeight > 0 ? { height: `${averagesHeight - 8}px` } : undefined}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
           </div>
         </>
       )}
