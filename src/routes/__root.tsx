@@ -285,7 +285,7 @@ function RootComponent() {
                     ref={saveBtnRef}
                     variant="outline"
                     size="sm"
-                    disabled={!topbar.measuresReady}
+                    disabled={!isComparer && !topbar.measuresReady}
                     onClickCapture={(e) => {
                       const rect = saveBtnRef.current?.getBoundingClientRect();
                       if (rect) setExportMsgTop(rect.bottom + 10);
@@ -300,7 +300,7 @@ function RootComponent() {
                       }
                     }}
                     className={`border border-gray-300 bg-white text-lg font-bold ${
-                      topbar.measuresReady ? "!text-black" : "!text-gray-400"
+                      topbar.measuresReady || isComparer ? "!text-black" : "!text-gray-400"
                     }`}
                   >
                     {lang === "en" ? "Save" : "Sauver"}
