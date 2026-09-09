@@ -77,7 +77,7 @@ const C_KEYS = new Set([4, 16, 28, 40, 52, 64, 76, 88]);
 const C_SHARP_KEYS = new Set([5, 17, 29, 41, 53, 65, 77]);
 
 const PD_RANGE_MESSAGE =
-  "⚠️ Valeur hors fourchette : Les pesées doivent être comprises entre 30 grammes et 80 grammes pour être conformes.";
+  "⚠️ Valeur hors fourchette : Les pesées doivent être comprises entre 10 grammes et 90 grammes pour être conformes.";
 const PEDAL_MESSAGE_FR =
   "⚠️ Attention : Valeur élevée détectée. Assurez-vous que la pédale de sustain (forte) est bien enfoncée à fond durant la mesure pour libérer les étouffoirs.";
 const PEDAL_MESSAGE_EN =
@@ -392,6 +392,7 @@ function Index() {
   const blockAnchorTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Ancre le message FF de fourchette sous la case fautive (persistant). */
   const [rangeAnchor, setRangeAnchor] = useState<{ x: number; y: number } | null>(null);
+  const rangeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Mode pesée : formulaire masqué, bandeau résumé affiché. */
   const [weighingMode, setWeighingMode] = useState(false);
   const weighingBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -660,9 +661,9 @@ function Index() {
 
     const measuredRows = parsedRows.filter((row) => row.hasPd || row.hasPr);
 
-    // CONDITION 3 : toutes les valeurs présentes sont numériques et PD est dans la plage 30–80.
+    // CONDITION 3 : toutes les valeurs présentes sont numériques et PD est dans la plage 10–90.
     const cond3 = measuredRows.every(
-      (row) => row.pd !== null && row.pr !== null && row.pd >= 30 && row.pd <= 80,
+      (row) => row.pd !== null && row.pr !== null && row.pd >= 10 && row.pd <= 90,
     );
 
     // CONDITION 4 : comparaison exclusivement numérique, jamais lexicographique.
@@ -839,7 +840,7 @@ function Index() {
       setCoherenceIndex(null);
       setCoherenceAnchor(null);
       coherenceTimeout.current = null;
-    }, 3000);
+    }, 5000);
   };
 
   useEffect(() => {
@@ -883,8 +884,9 @@ function Index() {
   };
 
   /** Message FF de fourchette : ancré juste en dessous de la case fautive,
-   *  persistant tant que la valeur n'est pas corrigée entre 30 et 80 g. */
+   *  effacé automatiquement après 5 secondes maximum. */
   const showRangeMessage = (index: number, field: "wa" | "wd") => {
+    if (rangeTimeout.current) clearTimeout(rangeTimeout.current);
     const el = inputs.current[`${index}-${field}`];
     const r = el?.getBoundingClientRect();
     if (r) {
@@ -892,6 +894,19 @@ function Index() {
     } else {
       setRangeAnchor({ x: window.innerWidth / 2 - 200, y: 160 });
     }
+    rangeTimeout.current = setTimeout(() => {
+      setRangeAnchor(null);
+      rangeTimeout.current = null;
+    }, 5000);
+  };
+
+  /** Efface instantanément le message FF de fourchette. */
+  const hideRangeMessage = () => {
+    if (rangeTimeout.current) {
+      clearTimeout(rangeTimeout.current);
+      rangeTimeout.current = null;
+    }
+    setRangeAnchor(null);
   };
 
   // --- Saisie des informations générales ---------------------------------------
