@@ -1569,7 +1569,7 @@ function Index() {
     );
     const header = [pdfSummary.main, pdfSummary.time, pdfSummary.count];
     // Aucune capture en arrière-plan : html2canvas ne tourne QU'ICI, au clic.
-    // L'indicateur « Export en cours... » s'affiche à côté du bouton Sauver.
+    toast.info("Génération du rapport PDF en cours... Merci de patienter.");
     const shots = await captureReportPages(pages);
     buildReportPdf(shots, filename, header);
   };
@@ -2064,9 +2064,7 @@ function Index() {
           // Le message FF de fourchette s'efface définitivement dès le clic dans la case.
           hideRangeMessage(true);
         }}
-        // Aucune coloration rouge : les cases restent d'apparence normale même
-        // en anomalie. Seuls les messages FF et le blocage du focus subsistent.
-        className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"}`}
+        className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"} ${incompletePairs.includes(index) ? "error !border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
 
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
       />
@@ -2628,14 +2626,8 @@ function Index() {
           <button
             type="button"
             data-pdf-hide
-            // Accès hermétiquement bloqué tant que « Saisie conforme » n'est
-            // pas au vert intense.
-            disabled={!badgeVisible}
-            onClick={() => {
-              if (!badgeVisible) return;
-              navigate({ to: "/resultats" });
-            }}
-            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100 !text-black" : "cursor-not-allowed border-input bg-background !text-gray-400 opacity-60"}`}
+            onClick={() => navigate({ to: "/resultats" })}
+            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100" : "border-input bg-background hover:bg-accent"}`}
             style={
               badgeVisible
                 ? {
