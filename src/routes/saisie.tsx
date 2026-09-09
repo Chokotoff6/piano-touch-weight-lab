@@ -2216,14 +2216,9 @@ function Index() {
                 className="pointer-events-none absolute left-5 top-1/2 hidden w-[360px] -translate-y-1/2 rounded-md border border-gray-300 px-3 py-2 text-left text-[13px] font-medium normal-case text-gray-950 shadow-lg group-hover:block"
                 style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
               >
-                <span className="block">
-                  {en
-                    ? "Compliant input = minimum all C and C#"
-                    : "Saisie conforme = minimum tous les Do et Do#"}
-                </span>
-                <span className="block">
-                  {en ? "Shift+TAB jumps from C to C." : "Shift+TAB saute de Do en Do."}
-                </span>
+                <span className="block">• TAB : avance d&apos;une zone de saisie</span>
+                <span className="block">• Shift + TAB : recule d&apos;une zone de saisie</span>
+                <span className="block">• CTRL + TAB : passe directement au DO suivant</span>
               </span>
             </span>
           </>
