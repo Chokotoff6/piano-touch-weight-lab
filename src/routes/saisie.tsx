@@ -2521,7 +2521,6 @@ Moyennes{" "}
               />
               {en ? "Do not show this message again" : "Ne plus afficher ce message"}
             </label>
-          )}
           <div className="mt-2 flex justify-end">
             <button
               type="button"
