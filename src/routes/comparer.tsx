@@ -903,6 +903,14 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     setFilters((current) => ({ ...current, [familyId]: nextKeyFilter(current[familyId] ?? keyFilter) }));
   const [hoveredFamily, setHoveredFamily] = useState<string | null>(null);
 
+  // Export PDF : les 4 cadres passent d'office en « N/B séparées » avant capture.
+  useEffect(() => {
+    const force = () =>
+      setFilters({ wa: "split", wd: "split", bal: "split", fric: "split" });
+    window.addEventListener("piano-pdf-force-split", force);
+    return () => window.removeEventListener("piano-pdf-force-split", force);
+  }, []);
+
   const [zoomId, setZoomId] = useState<string | null>(null);
   const [zoomStart, setZoomStart] = useState(1);
   const [kbNote, setKbNote] = useState<number | null>(null);
