@@ -8,7 +8,7 @@ import {
   saisieGate,
 } from "@/lib/required-keys";
 import { SmartCombobox, type SmartComboboxHandle } from "@/components/SmartCombobox";
-
+import { TargetLegalInfoIcon } from "@/components/BrandTargetInfo";
 import { modelsFor, modelGroupsFor, inferTypeFromModel } from "@/data/pianoModels";
 import {
   BRAND_SUGGESTIONS,
@@ -83,9 +83,6 @@ const PEDAL_MESSAGE_FR =
 const PEDAL_MESSAGE_EN =
   "⚠️ Warning: high value detected. Make sure the sustain pedal is fully pressed during the measurement to release the dampers.";
 const PEDAL_HIDE_KEY = "ptw_hide_pedal_alert";
-/** Profondeur de l'historique Undo / Redo (20 manipulations). */
-const UNDO_LIMIT = 20;
-
 
 type Row = { wa: string; wd: string };
 
@@ -451,8 +448,6 @@ function Index() {
   const [undoStack, setUndoStack] = useState<Row[][]>([]);
   const [redoStack, setRedoStack] = useState<Row[][]>([]);
   const pedalCount = useRef(0);
-  const pedalOrigin = useRef<{ index: number; field: "wa" | "wd" } | null>(null);
-
   const [hidePedalAlert, setHidePedalAlert] = useState(false);
   /** Valeur mémorisée avant effacement automatique au clic dans une case. */
   const prevWeight = useRef<Record<string, string>>({});
@@ -1018,8 +1013,8 @@ function Index() {
   const setValue = (index: number, field: "wa" | "wd", value: string) => {
     markDirty();
     clearError(`${index}-${field}`);
-    // Pile d'annulation : 20 retours en arrière maximum.
-    setUndoStack((prev) => [...prev, rows].slice(-UNDO_LIMIT));
+    // Pile d'annulation : 3 retours en arrière maximum.
+    setUndoStack((prev) => [...prev, rows].slice(-3));
     setRedoStack([]);
     const cleaned = cleanWeight(value);
     const nextRow: Row = { ...rows[index]!, [field]: cleaned };
@@ -1034,22 +1029,20 @@ function Index() {
     }
     // Feedback Flash : PD > PR obligatoire (valeur complète uniquement).
     checkCoherence(index, nextRow);
-    // Alerte sustain strictement entre 76 g et 80 g : hors fourchette (>80 ou <30),
-    // aucun message n'est affiché, seul le cadre rouge bloque la case.
+    // Alerte sustain au-delà de 75 g (les deux colonnes).
     const num = parseWeight(cleaned);
-    if (num !== null && num > 75 && num <= 80 && !hidePedalAlert) {
+    if (num !== null && num > 75 && !hidePedalAlert) {
       pedalCount.current += 1;
-      pedalOrigin.current = { index, field };
       setPedalAlert(true);
     }
   };
 
-  /** Restaure l'état de mesures précédent (jusqu'à 20 fois de suite). */
+  /** Restaure l'état de mesures précédent (jusqu'à 3 fois de suite). */
   const undoRows = () => {
     setUndoStack((prev) => {
       if (prev.length === 0) return prev;
       const last = prev[prev.length - 1]!;
-      setRedoStack((r) => [...r, rows].slice(-UNDO_LIMIT));
+      setRedoStack((r) => [...r, rows].slice(-3));
       setRows(last);
       setErrors({});
       setCoherenceIndex(null);
@@ -1057,31 +1050,18 @@ function Index() {
     });
   };
 
-  /** Rétablit un état annulé (jusqu'à 20 fois de suite). */
+  /** Rétablit un état annulé (jusqu'à 3 fois de suite). */
   const redoRows = () => {
     setRedoStack((prev) => {
       if (prev.length === 0) return prev;
       const last = prev[prev.length - 1]!;
-      setUndoStack((u) => [...u, rows].slice(-UNDO_LIMIT));
+      setUndoStack((u) => [...u, rows].slice(-3));
       setRows(last);
       setErrors({});
       setCoherenceIndex(null);
       return prev.slice(0, -1);
     });
   };
-
-  /** Ferme l'alerte sustain et saute automatiquement à la case suivante. */
-  const closePedalAlert = () => {
-    setPedalAlert(false);
-    const origin = pedalOrigin.current;
-    pedalOrigin.current = null;
-    if (!origin) return;
-    setTimeout(() => {
-      if (origin.field === "wa") focusCell(origin.index, "wd");
-      else if (origin.index < 87) focusCell(origin.index + 1, "wa");
-    }, 0);
-  };
-
 
   const handleBlur = (index: number, field: "wa" | "wd", value: string) => {
     const key = `${index}-${field}`;
@@ -1097,20 +1077,20 @@ function Index() {
       focusCell(index, field);
       return;
     }
-    // Fourchette mécanique 30-80 g : hors plage, aucun message sustain,
-    // cadre rouge et focus verrouillé dans la case.
-    if (num < 30 || num > 80) {
-      setErrors((prev) => ({ ...prev, [key]: PD_RANGE_MESSAGE }));
-      setRowField(index, field, num.toString());
-      setTimeout(() => focusCell(index, field), 0);
-      return;
+    // CONDITION 3 : plage mécanique du poids descendant + alerte pédale au-delà de 60 g.
+    if (field === "wa") {
+      if (num < 30 || num > 80) {
+        setErrors((prev) => ({ ...prev, [key]: PD_RANGE_MESSAGE }));
+        setRowField(index, field, num.toString());
+        // Verrouillage du focus tant que la valeur reste hors fourchette.
+        setTimeout(() => focusCell(index, field), 0);
+        return;
+      }
+      if (num > 75 && !hidePedalAlert) {
+        pedalCount.current += 1;
+        setPedalAlert(true);
+      }
     }
-    if (num > 75 && !hidePedalAlert) {
-      pedalCount.current += 1;
-      pedalOrigin.current = { index, field };
-      setPedalAlert(true);
-    }
-
     clearError(key);
     checkCoherence(index, setRowField(index, field, num.toString()));
   };
@@ -2051,8 +2031,13 @@ function Index() {
                     className={`${INPUT_CLASS} max-w-[120px]`}
                   />
                 </label>
-                <div className="flex h-8 items-end gap-1 text-xs text-black" />
-
+                <div className="flex h-8 items-end gap-1 text-xs text-black">
+                  <span>
+                    {profile.frictionTarget !== null &&
+                      `Friction cible ${profile.frictionTarget} g`}
+                  </span>
+                  <TargetLegalInfoIcon />
+                </div>
               </div>
               {!serialFormatValid && (
                 <p className="mt-1 text-[0.7rem] leading-snug text-destructive">
@@ -2284,7 +2269,7 @@ function Index() {
                 disabled={undoStack.length === 0}
                 onClick={undoRows}
                 aria-label="Annuler"
-                title="Annuler la dernière saisie (20 maximum)"
+                title="Annuler la dernière saisie (3 maximum)"
                 className={`flex h-6 w-7 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${undoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "!text-black"}`}
               >
                 <Undo2 className="h-3.5 w-3.5" />
@@ -2295,7 +2280,7 @@ function Index() {
                 disabled={redoStack.length === 0}
                 onClick={redoRows}
                 aria-label="Rétablir"
-                title="Rétablir la saisie annulée (20 maximum)"
+                title="Rétablir la saisie annulée (3 maximum)"
                 className={`flex h-6 w-7 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${redoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "!text-black"}`}
               >
                 <Redo2 className="h-3.5 w-3.5" />
@@ -2351,17 +2336,7 @@ function Index() {
             type="button"
             data-pdf-hide
             onClick={() => navigate({ to: "/resultats" })}
-            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100" : "border-input bg-background hover:bg-accent"}`}
-            style={
-              badgeVisible
-                ? {
-                    backgroundColor: "#dcfce7",
-                    borderColor: "#16a34a",
-                    color: "#000000",
-                    fontWeight: "bold",
-                  }
-                : undefined
-            }
+            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors ${badgeVisible ? "!border-green-600 !bg-green-500 hover:!bg-green-600" : "border-input bg-background hover:bg-accent"}`}
           >
             {en ? "Results & Charts >" : "Résultats & Graphiques >"}
           </button>
@@ -2573,7 +2548,7 @@ Moyennes{" "}
             <button
               type="button"
               className="rounded border border-gray-950/40 px-2 py-0.5 text-xs font-bold !text-gray-950"
-              onClick={closePedalAlert}
+              onClick={() => setPedalAlert(false)}
             >
               OK
             </button>

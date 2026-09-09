@@ -212,7 +212,7 @@ function RootComponent() {
                 </span>
               )}
               <div className="relative">
-                {topbar.compareUnlocked && topbar.resultsVisited && topbar.gateReady ? (
+                {topbar.compareUnlocked && topbar.resultsVisited ? (
                   <Link
                     to="/comparer"
                     className={linkClass}
@@ -224,12 +224,11 @@ function RootComponent() {
                   <span
                     className={lockedLinkClass}
                     aria-disabled="true"
-                    title="Le témoin « Saisie conforme » doit être vert, puis passez par la page Résultats."
+                    title="Passez d'abord par la page Résultats."
                   >
                     Comparer
                   </span>
                 )}
-
 
                 {topbar.alert?.anchor === "compare" && (
                   <div
