@@ -802,7 +802,9 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               if (Number.isFinite(note)) lastMouseNote.current = note;
             }}
             onMouseLeave={() => { setHoveredFamily(null); }}
-            margin={{ top: 22, right: sideMargin, bottom: 15, left: autoDomain ? sideMargin + 46 : sideMargin }}
+            // Anti-chevauchement : la marge droite garantit toujours la place
+            // du libellé « Moy: xx.xg », la marge gauche celle des noms courts.
+            margin={{ top: 22, right: Math.max(sideMargin, 80), bottom: 15, left: Math.max(autoDomain ? sideMargin + 46 : sideMargin, 70) }}
           >
             <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
             <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
