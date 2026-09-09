@@ -732,7 +732,7 @@ function Index() {
       focusFirstWeight();
     }, 150);
     try {
-      if (window.localStorage.getItem(PEDAL_HIDE_KEY) === "1") setHidePedalAlert(true);
+      if (window.sessionStorage.getItem(PEDAL_HIDE_KEY) === "1") setHidePedalAlert(true);
     } catch {
       /* stockage indisponible */
     }
