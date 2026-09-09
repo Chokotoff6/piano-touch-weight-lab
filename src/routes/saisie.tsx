@@ -2505,7 +2505,7 @@ Moyennes{" "}
           style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
         >
           <div>{en ? PEDAL_MESSAGE_EN : PEDAL_MESSAGE_FR}</div>
-          {true && (
+          {/* Case toujours visible, mémorisée pour la session. */}
             <label className="mt-2 flex items-center gap-2 text-xs font-normal">
               <input
                 type="checkbox"
