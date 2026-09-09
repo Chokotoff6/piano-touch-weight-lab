@@ -528,21 +528,26 @@ export type LandscapePage = {
   title?: string;
 };
 
-/** Dessine les blocs côte à côte, alignés en haut, largeur pleine page. */
+/**
+ * Dessine les blocs côte à côte à HAUTEUR STRICTEMENT ÉGALE (même bordure
+ * inférieure) et centrés verticalement dans la hauteur utile de la page.
+ */
 function drawRow(pdf: jsPDF, blocks: Capture[], topOffset: number) {
   const availW = PAGE_W - MARGIN * 2 - GAP * (blocks.length - 1);
   const availH = PAGE_H - MARGIN * 2 - topOffset - 6;
-  const totalPxW = blocks.reduce((sum, b) => sum + b.width * b.insertionScale, 0);
-  const maxPxH = Math.max(...blocks.map((b) => b.height * b.insertionScale));
-  const ratio = Math.min(availW / totalPxW, availH / maxPxH);
-  let x = MARGIN;
-  const y = MARGIN + topOffset;
-  for (const block of blocks) {
-    const w = block.width * block.insertionScale * ratio;
-    const h = block.height * block.insertionScale * ratio;
+  // Rapport largeur/hauteur de chaque bloc : à hauteur commune H, la largeur
+  // totale vaut H × Σ(aspect). On choisit la plus grande hauteur qui tient.
+  const aspects = blocks.map((b) => (b.width * b.insertionScale) / (b.height * b.insertionScale));
+  const totalAspect = aspects.reduce((sum, a) => sum + a, 0);
+  const h = Math.min(availH, availW / totalAspect);
+  const totalW = h * totalAspect + GAP * (blocks.length - 1);
+  let x = MARGIN + (PAGE_W - MARGIN * 2 - totalW) / 2;
+  const y = MARGIN + topOffset + (availH - h) / 2;
+  blocks.forEach((block, index) => {
+    const w = h * (aspects[index] ?? 1);
     pdf.addImage(block.dataUrl, "PNG", x, y, w, h, undefined, "FAST");
     x += w + GAP;
-  }
+  });
 }
 
 /** Titre officiel centré, noir intense et souligné, en haut de la page 4. */
