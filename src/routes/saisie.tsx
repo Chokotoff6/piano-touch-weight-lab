@@ -2349,7 +2349,9 @@ function Index() {
 
           </div>
         </Frame>
+        <p className="mt-1 pl-0 text-left text-sm italic text-foreground">* Champs obligatoires</p>
       </div>
+
       )}
 
       {blockMessage && (
