@@ -632,6 +632,24 @@ function Index() {
         .map(({ i }) => i),
     [rows],
   );
+  orphanRef.current = orphanKeys;
+
+  /** Une touche est en anomalie : erreur mécanique, hors fourchette ou binôme incomplet. */
+  const pairHasError = (index: number) =>
+    !!errorsRef.current[`${index}-wa`] ||
+    !!errorsRef.current[`${index}-wd`] ||
+    orphanRef.current.includes(index);
+
+  /** Case fautive du binôme sur laquelle le curseur doit rester capturé. */
+  const pairErrorField = (index: number): "wa" | "wd" => {
+    if (errorsRef.current[`${index}-wa`]) return "wa";
+    if (errorsRef.current[`${index}-wd`]) return "wd";
+    const row = rowsRef.current?.[index];
+    if (row && row.wa.trim() === "") return "wa";
+    return "wd";
+  };
+
+
 
 
   /**
