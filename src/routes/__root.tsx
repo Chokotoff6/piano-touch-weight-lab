@@ -414,7 +414,27 @@ function RootComponent() {
 
             </div>
           </div>
-       </nav>
+        </nav>
+
+      {consentOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 p-4">
+            <div className="w-full max-w-lg rounded-lg border border-black bg-white p-6 shadow-xl">
+              <p className="text-sm leading-relaxed text-gray-950">{RGPD_CONSENT_TEXT}</p>
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={acceptConsent}
+                  className="rounded-md border-2 border-black bg-white px-4 py-1.5 text-sm font-bold !text-black transition-colors hover:bg-gray-100"
+                >
+                  {lang === "en" ? "I accept" : "J'accepte"}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
 
 
       <a
