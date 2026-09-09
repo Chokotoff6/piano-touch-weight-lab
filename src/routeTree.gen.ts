@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CguRouteImport } from './routes/cgu'
 import { Route as ComparerRouteImport } from './routes/comparer'
+import { Route as PolitiqueConfidentialiteRouteImport } from './routes/politique-confidentialite'
 import { Route as ResultatsRouteImport } from './routes/resultats'
 import { Route as SaisieRouteImport } from './routes/saisie'
 
@@ -19,11 +21,22 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CguRoute = CguRouteImport.update({
+  id: '/cgu',
+  path: '/cgu',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ComparerRoute = ComparerRouteImport.update({
   id: '/comparer',
   path: '/comparer',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PolitiqueConfidentialiteRoute =
+  PolitiqueConfidentialiteRouteImport.update({
+    id: '/politique-confidentialite',
+    path: '/politique-confidentialite',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ResultatsRoute = ResultatsRouteImport.update({
   id: '/resultats',
   path: '/resultats',
@@ -37,34 +50,61 @@ const SaisieRoute = SaisieRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cgu': typeof CguRoute
   '/comparer': typeof ComparerRoute
+  '/politique-confidentialite': typeof PolitiqueConfidentialiteRoute
   '/resultats': typeof ResultatsRoute
   '/saisie': typeof SaisieRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cgu': typeof CguRoute
   '/comparer': typeof ComparerRoute
+  '/politique-confidentialite': typeof PolitiqueConfidentialiteRoute
   '/resultats': typeof ResultatsRoute
   '/saisie': typeof SaisieRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cgu': typeof CguRoute
   '/comparer': typeof ComparerRoute
+  '/politique-confidentialite': typeof PolitiqueConfidentialiteRoute
   '/resultats': typeof ResultatsRoute
   '/saisie': typeof SaisieRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/comparer' | '/resultats' | '/saisie'
+  fullPaths:
+    | '/'
+    | '/cgu'
+    | '/comparer'
+    | '/politique-confidentialite'
+    | '/resultats'
+    | '/saisie'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/comparer' | '/resultats' | '/saisie'
-  id: '__root__' | '/' | '/comparer' | '/resultats' | '/saisie'
+  to:
+    | '/'
+    | '/cgu'
+    | '/comparer'
+    | '/politique-confidentialite'
+    | '/resultats'
+    | '/saisie'
+  id:
+    | '__root__'
+    | '/'
+    | '/cgu'
+    | '/comparer'
+    | '/politique-confidentialite'
+    | '/resultats'
+    | '/saisie'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CguRoute: typeof CguRoute
   ComparerRoute: typeof ComparerRoute
+  PolitiqueConfidentialiteRoute: typeof PolitiqueConfidentialiteRoute
   ResultatsRoute: typeof ResultatsRoute
   SaisieRoute: typeof SaisieRoute
 }
@@ -78,11 +118,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cgu': {
+      id: '/cgu'
+      path: '/cgu'
+      fullPath: '/cgu'
+      preLoaderRoute: typeof CguRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/comparer': {
       id: '/comparer'
       path: '/comparer'
       fullPath: '/comparer'
       preLoaderRoute: typeof ComparerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/politique-confidentialite': {
+      id: '/politique-confidentialite'
+      path: '/politique-confidentialite'
+      fullPath: '/politique-confidentialite'
+      preLoaderRoute: typeof PolitiqueConfidentialiteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/resultats': {
@@ -104,7 +158,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CguRoute: CguRoute,
   ComparerRoute: ComparerRoute,
+  PolitiqueConfidentialiteRoute: PolitiqueConfidentialiteRoute,
   ResultatsRoute: ResultatsRoute,
   SaisieRoute: SaisieRoute,
 }
