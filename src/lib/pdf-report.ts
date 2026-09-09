@@ -35,7 +35,11 @@ async function capture(el: HTMLElement): Promise<Capture> {
   const PAD = 14;
   const compact = el.hasAttribute("data-pdf-compact");
   const chart = Boolean(el.hasAttribute("data-pdf-chart") || el.closest?.("[data-pdf-chart]") || el.hasAttribute("data-frame"));
-  const height = el.offsetHeight + PAD * 2;
+  // Blocs « Réglages » / « Moyennes » de la page Comparer : hauteur contrainte
+  // à l'écran (sticky). La capture prend leur hauteur réelle de contenu pour
+  // qu'aucun filtre ni aucune ligne de texte ne soit tronqué.
+  const expand = el.hasAttribute("data-pdf-expand");
+  const height = (expand ? Math.max(el.scrollHeight, el.offsetHeight) : el.offsetHeight) + PAD * 2;
   const started = performance.now();
   const canvas = await html2canvas(el, {
     // Définition ajustée à la taille exacte d'insertion PDF : les graphiques
