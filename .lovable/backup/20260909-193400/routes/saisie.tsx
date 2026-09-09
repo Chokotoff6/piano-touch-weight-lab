@@ -27,7 +27,7 @@ import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
 import { buildCsv, buildExportFilename, downloadCsv, formatLocalDateTime } from "@/lib/export-csv";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { getLang, useLang } from "@/data/translations";
-import { buildReportPdf, captureReportPages, rawPdfMirror } from "@/lib/pdf-report";
+import { buildReportPdf, captureReportPages } from "@/lib/pdf-report";
 import { generateBlankFormPdf, generateBlankKeyboardPdf } from "@/lib/pdf-blank-form";
 
 import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
@@ -1549,7 +1549,7 @@ function Index() {
     const frame = (id: string) =>
       pdfFramesRef.current?.querySelector<HTMLElement>(`[data-frame="${id}"]`) ?? null;
     return [
-      keep([moyennesRef.current, rawPdfMirror() ?? pdfMesuresRef.current]),
+      keep([moyennesRef.current, pdfMesuresRef.current]),
       keep([frame("wa"), frame("wd")]),
       keep([frame("bal"), frame("fric")]),
     ];

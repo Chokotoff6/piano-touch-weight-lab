@@ -39,16 +39,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
     height,
     windowWidth: compact ? 1300 : 1500,
 
-    onclone: (doc: Document, cloned: HTMLElement) => {
-      // Isolation stricte : toutes les retouches sont limitées au nœud cloné
-      // (miroir hors écran), jamais au document entier. Aucune dépendance à
-      // l'état React ni à l'historique Undo/Redo n'est parcourue.
-      const root: HTMLElement = cloned ?? (doc.body as HTMLElement);
-      const pick = (selector: string): HTMLElement[] => {
-        const list = Array.from(root.querySelectorAll<HTMLElement>(selector));
-        if (root.matches?.(selector)) list.unshift(root);
-        return list;
-      };
+    onclone: (doc) => {
       // Normalisation typographique : html2canvas rend mal les utilitaires de
       // tracking (textes et chiffres qui se chevauchent horizontalement).
       const style = doc.createElement("style");
@@ -105,7 +96,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
       // Substitution textuelle : les notices/résumés sont vidés (textContent = "")
       // pour que les bordures se referment sans trou blanc. Les boutons et
       // pastilles interactives restent masqués en visibilité.
-      pick("[data-pdf-hide]").forEach((node) => {
+      doc.querySelectorAll("[data-pdf-hide]").forEach((node) => {
         const el = node as HTMLElement;
         if (el.tagName === "SPAN") {
           el.textContent = "";
@@ -117,7 +108,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
       // (h-0 + overflow-hidden + opacity-0). On le force temporairement
       // visible dans le clone pour qu'html2canvas peigne son contenu
       // (sinon la Page 2 du PDF sort blanche).
-      pick("[data-pdf-capture-frame]").forEach((node) => {
+      doc.querySelectorAll("[data-pdf-capture-frame]").forEach((node) => {
         const frame = node as HTMLElement;
         frame.style.height = "auto";
         frame.style.maxHeight = "none";
@@ -128,7 +119,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
       // demi-clavier sont masqués à l'écran (h-0 + opacity-0). On les force
       // visibles dans le clone pour que la capture du clavier inclue ses
       // rangées d'expertise.
-      pick("[data-pdf-result-frame]").forEach((node) => {
+      doc.querySelectorAll("[data-pdf-result-frame]").forEach((node) => {
         const frame = node as HTMLElement;
         frame.style.height = "auto";
         frame.style.maxHeight = "none";
@@ -138,7 +129,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
       // Miroir « Mesures poids statiques » : rendu hors écran remis à l'origine
       // du clone, sans transformation. La réduction 0,82 est appliquée lors de
       // l'insertion dans le PDF, après une capture intégrale nette.
-      pick("[data-pdf-compact]").forEach((node) => {
+      doc.querySelectorAll("[data-pdf-compact]").forEach((node) => {
         const frame = node as HTMLElement;
         frame.style.setProperty("position", "static", "important");
         frame.style.setProperty("left", "auto", "important");
@@ -160,12 +151,12 @@ async function capture(el: HTMLElement): Promise<Capture> {
       });
       // Aucun conteneur interne ni parent ne doit rogner le cadre : ni la
       // bordure basse, ni les touches à l'extrême droite du clavier.
-      pick("[data-pdf-compact] *").forEach((node) => {
+      doc.querySelectorAll("[data-pdf-compact] *").forEach((node) => {
         const el = node as HTMLElement;
         el.style.setProperty("max-height", "none", "important");
         el.style.setProperty("overflow", "visible", "important");
       });
-      pick("[data-pdf-compact]").forEach((node) => {
+      doc.querySelectorAll("[data-pdf-compact]").forEach((node) => {
         let parent = (node as HTMLElement).parentElement;
         while (parent && parent !== doc.body) {
           parent.style.setProperty("overflow", "visible", "important");
@@ -176,7 +167,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
       // Centrage horizontal absolu des chiffres du tableau (page 1) : styles
       // en ligne posés directement sur chaque champ et son conteneur, car
       // html2canvas ignore une partie des règles utilitaires de mise en page.
-      pick("[data-pdf-compact] input").forEach((node) => {
+      doc.querySelectorAll("[data-pdf-compact] input").forEach((node) => {
         const input = node as HTMLElement;
         input.style.textAlign = "center";
         input.style.paddingLeft = "0px";
@@ -202,7 +193,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
       });
       // Cadres graphiques (pages 2 et 3) : styles imposés en ligne pour que le
       // cadre « Friction » ne sorte plus brisé, sans bordure ni décalé.
-      pick("[data-pdf-chart]").forEach((node) => {
+      doc.querySelectorAll("[data-pdf-chart]").forEach((node) => {
         const chart = node as HTMLElement;
         chart.style.setProperty("width", "100%", "important");
         chart.style.setProperty("max-width", "100%", "important");
@@ -290,8 +281,9 @@ export function setCachedCaptures(key: string, shots: ReportCaptures): void {
 
 
 /**
- * Capture les blocs page par page (html2canvas), en extraction brute : les
- * nœuds sont utilisés tels quels, sans lecture d'état applicatif.
+ * Capture les blocs page par page (html2canvas). Opération lente : elle peut
+ * être lancée en tâche de fond dès que la saisie est conforme, puis mise en
+ * cache pour un téléchargement instantané.
  */
 export async function captureReportPages(pages: HTMLElement[][]): Promise<ReportCaptures> {
   const captured: ReportCaptures = [];
@@ -390,12 +382,3 @@ function drawFooter(pdf: jsPDF, page: number, total: number, stamp: string) {
   pdf.setTextColor(0);
 }
 
-
-/**
- * Extraction brute du miroir PDF « Mesures poids statiques » (conteneur fixe
- * de 1250px placé hors écran). Le nœud est récupéré directement dans le DOM,
- * sans passer par les refs React ni par la pile Undo/Redo.
- */
-export function rawPdfMirror(): HTMLElement | null {
-  return document.querySelector<HTMLElement>("[data-pdf-compact]");
-}

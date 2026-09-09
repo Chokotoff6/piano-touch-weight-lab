@@ -162,10 +162,6 @@ function RootComponent() {
   const lang = useLang();
   const [consentOpen, setConsentOpen] = useState(false);
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
-  // Position du message « Export en cours... » : fixe, 10 px sous le bouton
-  // « Sauver » (donc juste sous le bandeau collant), aligné au bord droit.
-  const saveBtnRef = useRef<HTMLButtonElement | null>(null);
-  const [exportMsgTop, setExportMsgTop] = useState(0);
   const pendingActionRef = useRef<(() => void) | null>(null);
   useEffect(() => {
     initLang();
@@ -266,13 +262,10 @@ function RootComponent() {
               <div className="relative flex items-center">
                 <DropdownMenuTrigger asChild>
                   <Button
-                    ref={saveBtnRef}
                     variant="outline"
                     size="sm"
                     disabled={!topbar.measuresReady}
                     onClickCapture={(e) => {
-                      const rect = saveBtnRef.current?.getBoundingClientRect();
-                      if (rect) setExportMsgTop(rect.bottom + 10);
                       let ok = false;
                       try {
                         ok = window.sessionStorage.getItem(RGPD_CONSENT_KEY) === "1";
@@ -300,12 +293,7 @@ function RootComponent() {
                   </div>
                 )}
                 {topbar.isExporting && (
-                  <span
-                    className="fixed right-4 !z-[99999] whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-1 text-sm font-semibold !text-black shadow"
-                    style={{
-                      top: (exportMsgTop || (saveBtnRef.current?.getBoundingClientRect().bottom ?? 56) + 10),
-                    }}
-                  >
+                  <span className="ml-3 whitespace-nowrap text-sm font-semibold !text-black">
                     Export en cours...
                   </span>
                 )}
