@@ -2,13 +2,7 @@
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas-pro";
 
-type Capture = {
-  dataUrl: string;
-  width: number;
-  height: number;
-  insertionScale: number;
-  format?: "PNG" | "JPEG";
-};
+type Capture = { dataUrl: string; width: number; height: number; insertionScale: number };
 
 const PAGE_W = 297; // mm (A4 paysage)
 const PAGE_H = 210;
@@ -34,9 +28,8 @@ async function capture(el: HTMLElement): Promise<Capture> {
   // Marge haute : les titres des cadres débordent au-dessus de la bordure.
   const PAD = 14;
   const compact = el.hasAttribute("data-pdf-compact");
-  const chart = Boolean(el.hasAttribute("data-pdf-chart") || el.closest?.("[data-pdf-chart]") || el.hasAttribute("data-frame"));
+  const chart = el.hasAttribute("data-pdf-chart") || el.closest?.("[data-pdf-chart]");
   const height = el.offsetHeight + PAD * 2;
-  const started = performance.now();
   const canvas = await html2canvas(el, {
     // Définition ajustée à la taille exacte d'insertion PDF : les graphiques
     // s'impriment à leur largeur CSS (scale 1 suffit), seul le miroir du
@@ -46,26 +39,9 @@ async function capture(el: HTMLElement): Promise<Capture> {
     useCORS: true,
     logging: false,
     imageTimeout: 0,
-    removeContainer: true,
-    foreignObjectRendering: false,
     y: -PAD,
     height,
     windowWidth: compact ? 1300 : 1500,
-
-    // Élagage du clonage : html2canvas duplique tout le document à chaque
-    // capture. Les blocs lourds étrangers à la cible sont écartés avant le
-    // clonage, SANS toucher à la géométrie du bloc capturé :
-    //  - le miroir des 88 touches est hors flux (position absolue hors écran),
-    //    son retrait ne déplace donc aucun autre bloc ;
-    //  - les cadres graphiques sont situés APRÈS le miroir dans le document,
-    //    leur retrait ne décale pas ce qui les précède.
-    ignoreElements: (node: Element) => {
-      if (node === el || node.contains(el) || el.contains(node)) return false;
-      if (!compact && node instanceof HTMLElement && node.hasAttribute("data-pdf-compact")) return true;
-      if (node instanceof HTMLElement && node.hasAttribute("data-frame")) return true;
-      return false;
-    },
-
 
     onclone: (doc: Document, cloned: HTMLElement) => {
       // Isolation stricte : toutes les retouches sont limitées au nœud cloné
@@ -243,18 +219,8 @@ async function capture(el: HTMLElement): Promise<Capture> {
       });
     },
   });
-  // Encodage : PNG uniquement pour le tableau des 88 touches (netteté des
-  // chiffres). Les graphiques passent en JPEG haute qualité, bien plus rapide
-  // à encoder et à intégrer au PDF, sans perte visible sur des courbes.
-  const format: "PNG" | "JPEG" = chart ? "JPEG" : "PNG";
-  const dataUrl =
-    format === "JPEG" ? canvas.toDataURL("image/jpeg", 0.92) : canvas.toDataURL("image/png");
-  console.info(
-    `[pdf] capture ${compact ? "tableau" : chart ? "graphique" : "bloc"} : ${Math.round(performance.now() - started)} ms`,
-  );
   return {
-    dataUrl,
-    format,
+    dataUrl: canvas.toDataURL("image/png"),
     width: canvas.width,
     height: canvas.height,
     insertionScale: compact ? COMPACT_SCALE : 1,
@@ -282,7 +248,7 @@ function drawPage(pdf: jsPDF, blocks: Capture[], ratio: number, topOffset: numbe
     const w = block.width * block.insertionScale * ratio;
     const h = block.height * block.insertionScale * ratio;
     const x = MARGIN + (availW - w) / 2;
-    pdf.addImage(block.dataUrl, block.format ?? "PNG", x, y, w, h, undefined, "FAST");
+    pdf.addImage(block.dataUrl, "PNG", x, y, w, h, undefined, "FAST");
     y += h + GAP;
   }
 }
@@ -335,28 +301,27 @@ export async function captureReportPages(pages: HTMLElement[][]): Promise<Report
   // Les blocs (miroir fixe hors écran + graphiques) sont déjà peints en
   // mémoire : une seule frame d'attente suffit, l'export reste immédiat.
   await settle(0);
-  const total = performance.now();
-  // Captures séquentielles avec restitution de la main à l'affichage entre
-  // chacune : html2canvas travaille de toute façon sur l'unique fil de rendu,
-  // les lancer ensemble ne partage aucun travail et fige l'écran. Ici le
-  // message « Export en cours... » reste peint pendant toute l'opération.
-  const captured: ReportCaptures = [];
-  for (const page of pages) {
-    const shots: Capture[] = [];
-    for (const block of page) {
-      if (!block || !isRenderable(block)) continue;
-      // Étanchéité totale : un bloc non capturable est ignoré, jamais bloquant.
-      try {
-        const shot = await capture(block);
-        if (shot.width > 0 && shot.height > 0) shots.push(shot);
-      } catch (error) {
-        console.warn("[pdf] bloc ignoré", error);
-      }
-      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
-    }
-    if (shots.length > 0) captured.push(shots);
-  }
-  console.info(`[pdf] captures totales : ${Math.round(performance.now() - total)} ms`);
+  // Le grand tableau caché et les 4 graphiques sont capturés EN PARALLÈLE
+  // (Promise.all) au lieu de l'un après l'autre : le temps total d'export
+  // correspond au bloc le plus lent, plus à la somme de tous.
+  const jobs = pages.map((page) =>
+    page
+      .filter((block) => Boolean(block) && isRenderable(block))
+      .map(async (block): Promise<Capture | null> => {
+        // Étanchéité totale : un bloc non capturable est ignoré, jamais bloquant.
+        try {
+          const shot = await capture(block);
+          return shot.width > 0 && shot.height > 0 ? shot : null;
+        } catch (error) {
+          console.warn("[pdf] bloc ignoré", error);
+          return null;
+        }
+      }),
+  );
+  const resolved = await Promise.all(jobs.map((page) => Promise.all(page)));
+  const captured = resolved
+    .map((page) => page.filter((shot): shot is Capture => shot !== null))
+    .filter((page) => page.length > 0);
   return captured;
 }
 

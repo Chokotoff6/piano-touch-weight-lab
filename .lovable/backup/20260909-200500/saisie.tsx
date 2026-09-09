@@ -1557,9 +1557,9 @@ function Index() {
 
   /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
   const exportPdfFile = async () => {
-    // Une seule frame d'attente : « Export en cours... » (10 px sous Sauver)
-    // est peint avant le premier calcul, sans ajouter de délai artificiel.
-    await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+    // Le calcul lourd est retardé de 150 ms : le navigateur a le temps
+    // d'afficher « Export en cours... » (10px sous Sauver) avant de capturer.
+    await new Promise((resolve) => setTimeout(resolve, 150));
     const pages = collectPdfPages();
     if (pages.every((page) => page.length === 0)) return;
 
@@ -1573,13 +1573,8 @@ function Index() {
     const header = [pdfSummary.main, pdfSummary.time, pdfSummary.count];
     // Aucune capture en arrière-plan : html2canvas ne tourne QU'ICI, au clic.
     // L'indicateur « Export en cours... » s'affiche à côté du bouton Sauver.
-    const started = performance.now();
     const shots = await captureReportPages(pages);
-    const assembly = performance.now();
     buildReportPdf(shots, filename, header);
-    console.info(
-      `[pdf] captures ${Math.round(assembly - started)} ms + assemblage ${Math.round(performance.now() - assembly)} ms`,
-    );
   };
 
 
