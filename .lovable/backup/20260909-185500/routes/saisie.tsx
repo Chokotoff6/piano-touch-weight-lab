@@ -984,23 +984,6 @@ function Index() {
       const hasCellError =
         !!errorsRef.current[`${locked}-wa`] || !!errorsRef.current[`${locked}-wd`];
       if (!hasCellError) return;
-      // Erreur mécanique (PR >= PD) : on ferme seulement le message FF et on
-      // pré-sélectionne les 2 chiffres du Poids Remontant (case du bas) pour
-      // une re-saisie directe. Les valeurs ne sont JAMAIS effacées.
-      const mechanical = errorsRef.current[`${locked}-wd`] === COHERENCE_MESSAGE;
-      if (mechanical) {
-        e.preventDefault();
-        setCoherenceIndex(null);
-        setCoherenceAnchor(null);
-        hideRangeMessage(true);
-        setTimeout(() => {
-          const input = inputs.current[`${locked}-wd`];
-          if (!input) return;
-          input.focus();
-          input.select();
-        }, 0);
-        return;
-      }
       lockedPairRef.current = null;
       hideRangeMessage(true);
       setCoherenceIndex(null);
@@ -2442,9 +2425,7 @@ function Index() {
 
           </div>
         </Frame>
-        <p className="mt-1 pl-0 text-left text-sm text-foreground">
-          <span className="not-italic">*</span> <em className="italic">Champs obligatoires</em>
-        </p>
+        <p className="mt-1 pl-0 text-left text-sm italic text-foreground">* Champs obligatoires</p>
       </div>
 
       )}
@@ -2474,17 +2455,17 @@ function Index() {
         <SvgTooltip x={rangeAnchor.x} y={rangeAnchor.y} text={PD_RANGE_MESSAGE} />
       )}
 
-      {/* Bouton Reset : positionné EXACTEMENT 15 px au-dessus du bord supérieur
-          du cadre « Mesures poids statiques » (le cadre porte mt-[100px], d'où
-          la marge négative de -85 px). Position horizontale inchangée. */}
+      {/* Bouton Reset : au-dessus du cadre Mesures, aligné dans le coin
+          supérieur droit, avec 25 px de marge sous le bouton. */}
       {weighingMode && (
-        <div className="relative flex w-full justify-end pr-2" style={{ marginBottom: "-85px" }}>
+        <div className="relative flex w-full justify-end pr-2" style={{ marginBottom: "25px" }}>
           {confirmReset === "rows" && (
-            /* Hauteur verticale inchangée (bas du message aligné sur l'ancienne
-               position), décalé de 50 px supplémentaires vers la gauche. */
+            /* Message FF placé exactement 15 px au-dessus du bord supérieur du
+               cadre « Mesures poids statiques » (25 px de marge + 100 px de
+               décalage du cadre = 110 px sous le bouton), au-dessus de tout. */
             <div
-              className="absolute right-0 mr-[90px] flex min-w-max items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
-              style={{ top: "100%", transform: "translateY(-100%)", zIndex: 50 }}
+              className="absolute right-0 mr-[40px] flex min-w-max items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
+              style={{ top: "calc(100% + 110px)", transform: "translateY(-100%)", zIndex: 50 }}
             >
               <span>Voulez-vous effacer toutes les données de poids saisies ?</span>
               <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); setBlockAnchor(null); rangeDismissed.current.clear(); coherenceDismissed.current.clear(); setIncompletePairs([]); lockedPairRef.current = null; setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
@@ -2495,7 +2476,7 @@ function Index() {
             type="button"
             data-pdf-hide
             onClick={() => setConfirmReset("rows")}
-            className="relative z-10 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.96rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+            className="rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
           >
             Reset
           </button>
