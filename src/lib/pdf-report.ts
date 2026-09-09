@@ -39,7 +39,16 @@ async function capture(el: HTMLElement): Promise<Capture> {
     height,
     windowWidth: compact ? 1300 : 1500,
 
-    onclone: (doc) => {
+    onclone: (doc: Document, cloned: HTMLElement) => {
+      // Isolation stricte : toutes les retouches sont limitées au nœud cloné
+      // (miroir hors écran), jamais au document entier. Aucune dépendance à
+      // l'état React ni à l'historique Undo/Redo n'est parcourue.
+      const root: HTMLElement = cloned ?? (doc.body as HTMLElement);
+      const pick = (selector: string): HTMLElement[] => {
+        const list = Array.from(root.querySelectorAll<HTMLElement>(selector));
+        if (root.matches?.(selector)) list.unshift(root);
+        return list;
+      };
       // Normalisation typographique : html2canvas rend mal les utilitaires de
       // tracking (textes et chiffres qui se chevauchent horizontalement).
       const style = doc.createElement("style");
