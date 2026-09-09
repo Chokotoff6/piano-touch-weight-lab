@@ -1019,9 +1019,17 @@ function Index() {
     const cleaned = cleanWeight(value);
     const nextRow: Row = { ...rows[index]!, [field]: cleaned };
     setRows((prev) => prev.map((r, i) => (i === index ? nextRow : r)));
-    // Feedback Flash immédiat : PD > PR obligatoire.
+    // AUCUNE erreur mécanique tant que la case ne contient pas 2 chiffres :
+    // l'artisan doit pouvoir taper librement son binôme.
+    if (cleaned.length < 2) {
+      clearError(`${index}-wa`);
+      clearError(`${index}-wd`);
+      if (coherenceIndex === index) setCoherenceIndex(null);
+      return;
+    }
+    // Feedback Flash : PD > PR obligatoire (valeur complète uniquement).
     checkCoherence(index, nextRow);
-    // Alerte sustain immédiate au-delà de 75 g (les deux colonnes).
+    // Alerte sustain au-delà de 75 g (les deux colonnes).
     const num = parseWeight(cleaned);
     if (num !== null && num > 75 && !hidePedalAlert) {
       pedalCount.current += 1;
