@@ -1013,8 +1013,8 @@ function Index() {
         return;
       }
     }
-    // CTRL + TAB : saute directement au DO suivant.
-    if (e.ctrlKey && e.key === "Tab") {
+    // ALT + TAB (Option + TAB sur Mac) : saute directement au DO suivant.
+    if (e.altKey && e.key === "Tab") {
       const nextCKey = Array.from(C_KEYS).find((key) => key > index + 1);
       if (nextCKey !== undefined) {
         e.preventDefault();
@@ -1070,23 +1070,28 @@ function Index() {
       clearError(`${index}-wa`);
       clearError(`${index}-wd`);
       if (coherenceIndex === index) setCoherenceIndex(null);
-      setRangeAnchor(null);
+      hideRangeMessage();
       return;
     }
     // Feedback Flash : PD > PR obligatoire (valeur complète uniquement).
     checkCoherence(index, nextRow);
     const num = parseWeight(cleaned);
-    // Hors fourchette (<30 ou >80) : cadre rouge IMMÉDIAT + message FF en
+    // Priorité absolue à l'erreur mécanique (PR >= PD) : elle masque le FF de fourchette.
+    const rowWa = parseWeight(nextRow.wa);
+    const rowWd = parseWeight(nextRow.wd);
+    const mechanicalError = rowWa !== null && rowWd !== null && rowWa <= rowWd;
+    // Hors fourchette (<10 ou >90) : cadre rouge IMMÉDIAT + message FF en
     // dessous de la case, sans aucun message sustain. Le verrouillage du focus
     // n'agit qu'à la tentative de sortie (blur/Tab/Enter).
-    if (num !== null && (num < 30 || num > 80)) {
+    if (num !== null && (num < 10 || num > 90)) {
       setErrors((prev) => ({ ...prev, [`${index}-${field}`]: PD_RANGE_MESSAGE }));
-      showRangeMessage(index, field);
+      if (mechanicalError) hideRangeMessage();
+      else showRangeMessage(index, field);
       return;
     }
     // Valeur redevenue conforme : nettoyage instantané du cadre rouge et du FF.
-    clearError(`${index}-${field}`);
-    setRangeAnchor(null);
+    if (!mechanicalError) clearError(`${index}-${field}`);
+    hideRangeMessage();
     // Alerte sustain strictement entre 76 g et 80 g.
     if (num !== null && num > 75 && num <= 80 && !hidePedalAlert) {
       pedalCount.current += 1;
@@ -1148,12 +1153,15 @@ function Index() {
       focusCell(index, field);
       return;
     }
-    // Fourchette mécanique 30-80 g : hors plage, aucun message sustain,
+    // Fourchette mécanique 10-90 g : hors plage, aucun message sustain,
     // cadre rouge, message FF en dessous et focus verrouillé dans la case.
-    if (num < 30 || num > 80) {
+    if (num < 10 || num > 90) {
       setErrors((prev) => ({ ...prev, [key]: PD_RANGE_MESSAGE }));
-      setRowField(index, field, num.toString());
-      showRangeMessage(index, field);
+      const updated = setRowField(index, field, num.toString());
+      const rowWa = parseWeight(updated.wa);
+      const rowWd = parseWeight(updated.wd);
+      if (rowWa !== null && rowWd !== null && rowWa <= rowWd) hideRangeMessage();
+      else showRangeMessage(index, field);
       setTimeout(() => focusCell(index, field), 0);
       return;
     }
@@ -1164,7 +1172,7 @@ function Index() {
     }
 
     clearError(key);
-    setRangeAnchor(null);
+    hideRangeMessage();
     checkCoherence(index, setRowField(index, field, num.toString()));
   };
 
@@ -2290,7 +2298,7 @@ function Index() {
               >
                 <span className="block">• TAB : avance d&apos;une zone de saisie</span>
                 <span className="block">• Shift + TAB : recule d&apos;une zone de saisie</span>
-                <span className="block">• CTRL + TAB : passe directement au DO suivant</span>
+                <span className="block">• ALT + TAB (Option + TAB sur Mac) : passe directement au DO suivant</span>
               </span>
             </span>
           </>
