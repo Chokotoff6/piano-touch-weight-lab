@@ -77,7 +77,7 @@ const C_KEYS = new Set([4, 16, 28, 40, 52, 64, 76, 88]);
 const C_SHARP_KEYS = new Set([5, 17, 29, 41, 53, 65, 77]);
 
 const PD_RANGE_MESSAGE =
-  "⚠️ Valeur hors fourchette : Les pesées doivent être comprises entre 30 grammes et 80 grammes pour être conformes.";
+  "⚠️ Le poids descendant (PD) doit être compris entre 30 et 80 grammes.";
 const PEDAL_MESSAGE_FR =
   "⚠️ Attention : Valeur élevée détectée. Assurez-vous que la pédale de sustain (forte) est bien enfoncée à fond durant la mesure pour libérer les étouffoirs.";
 const PEDAL_MESSAGE_EN =
@@ -390,8 +390,6 @@ function Index() {
   const [blockMessage, setBlockMessage] = useState<string | null>(null);
   const [blockAnchor, setBlockAnchor] = useState<{ x: number; y: number; text?: string } | null>(null);
   const blockAnchorTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /** Ancre le message FF de fourchette sous la case fautive (persistant). */
-  const [rangeAnchor, setRangeAnchor] = useState<{ x: number; y: number } | null>(null);
   /** Mode pesée : formulaire masqué, bandeau résumé affiché. */
   const [weighingMode, setWeighingMode] = useState(false);
   const weighingBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -882,18 +880,6 @@ function Index() {
     }, 3000);
   };
 
-  /** Message FF de fourchette : ancré juste en dessous de la case fautive,
-   *  persistant tant que la valeur n'est pas corrigée entre 30 et 80 g. */
-  const showRangeMessage = (index: number, field: "wa" | "wd") => {
-    const el = inputs.current[`${index}-${field}`];
-    const r = el?.getBoundingClientRect();
-    if (r) {
-      setRangeAnchor({ x: Math.min(r.left, window.innerWidth - 290), y: r.bottom + 6 });
-    } else {
-      setRangeAnchor({ x: window.innerWidth / 2 - 200, y: 160 });
-    }
-  };
-
   // --- Saisie des informations générales ---------------------------------------
 
   const markDirty = () => {
@@ -1055,23 +1041,20 @@ function Index() {
       clearError(`${index}-wa`);
       clearError(`${index}-wd`);
       if (coherenceIndex === index) setCoherenceIndex(null);
-      setRangeAnchor(null);
       return;
     }
     // Feedback Flash : PD > PR obligatoire (valeur complète uniquement).
     checkCoherence(index, nextRow);
     const num = parseWeight(cleaned);
-    // Hors fourchette (<30 ou >80) : cadre rouge IMMÉDIAT + message FF en
-    // dessous de la case, sans aucun message sustain. Le verrouillage du focus
-    // n'agit qu'à la tentative de sortie (blur/Tab/Enter).
+    // Hors fourchette (<30 ou >80) : cadre rouge IMMÉDIAT dès la détection,
+    // sans aucun message sustain. La case reste libre d'être corrigée ; le
+    // verrouillage du focus n'agit qu'à la tentative de sortie (blur/Tab/Enter).
     if (num !== null && (num < 30 || num > 80)) {
       setErrors((prev) => ({ ...prev, [`${index}-${field}`]: PD_RANGE_MESSAGE }));
-      showRangeMessage(index, field);
       return;
     }
-    // Valeur redevenue conforme : nettoyage instantané du cadre rouge et du FF.
+    // Valeur redevenue conforme : nettoyage instantané du cadre rouge.
     clearError(`${index}-${field}`);
-    setRangeAnchor(null);
     // Alerte sustain strictement entre 76 g et 80 g.
     if (num !== null && num > 75 && num <= 80 && !hidePedalAlert) {
       pedalCount.current += 1;
@@ -1134,11 +1117,10 @@ function Index() {
       return;
     }
     // Fourchette mécanique 30-80 g : hors plage, aucun message sustain,
-    // cadre rouge, message FF en dessous et focus verrouillé dans la case.
+    // cadre rouge et focus verrouillé dans la case.
     if (num < 30 || num > 80) {
       setErrors((prev) => ({ ...prev, [key]: PD_RANGE_MESSAGE }));
       setRowField(index, field, num.toString());
-      showRangeMessage(index, field);
       setTimeout(() => focusCell(index, field), 0);
       return;
     }
@@ -1149,7 +1131,6 @@ function Index() {
     }
 
     clearError(key);
-    setRangeAnchor(null);
     checkCoherence(index, setRowField(index, field, num.toString()));
   };
 
@@ -2257,10 +2238,6 @@ function Index() {
         <SvgTooltip x={coherenceAnchor.x} y={coherenceAnchor.y} text={COHERENCE_MESSAGE} />
       )}
 
-      {rangeAnchor && (
-        <SvgTooltip x={rangeAnchor.x} y={rangeAnchor.y} text={PD_RANGE_MESSAGE} />
-      )}
-
       <Frame
         title={
           <>
@@ -2306,7 +2283,7 @@ function Index() {
           {confirmReset === "rows" && (
             <div className="absolute bottom-full left-0 mb-2 ml-[120px] flex min-w-max items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
               <span>Voulez-vous effacer toutes les données de poids saisies ?</span>
-              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
+              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
               <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
             </div>
           )}
