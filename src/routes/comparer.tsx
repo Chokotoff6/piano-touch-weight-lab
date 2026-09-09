@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, ty
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/data/translations";
 import { RefreshCw, Square, SquareX } from "lucide-react";
-import { BrandTargetInfoIcon } from "@/components/BrandTargetInfo";
+import { BrandTargetInfoIcon, TargetLegalInfoIcon } from "@/components/BrandTargetInfo";
 import { paddedDomain } from "@/components/PdfReportBlocks";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
 import {
@@ -1307,7 +1307,7 @@ function SidebarPanel(props: SidebarPanelProps) {
       <div className="flex h-full flex-col items-stretch justify-start gap-2 pt-2">
           <div className="text-sm font-bold !text-black">{en ? "Compare current piano with:" : "Comparer piano actuel avec :"}</div>
           <FastTip text={tipCloud}><Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={sourceButtonClass(props.cloudEnabled, "!text-orange-600")}><span className="w-full text-center font-bold uppercase">Cloud</span></Button></FastTip>
-          <FastTip text={tipTarget}><Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><span className="w-full text-center font-bold uppercase">{en ? "Target" : "Cible"}</span></Button></FastTip>
+          <div className="flex items-center gap-1"><FastTip text={tipTarget}><Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><span className="w-full text-center font-bold uppercase">{en ? "Target" : "Cible"}</span></Button></FastTip><TargetLegalInfoIcon /></div>
           <FastTip text={tipCsv}><Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} ${props.csvActive ? "!border-black !text-blue-700 [&_svg]:!text-blue-700" : "!border-gray-200 !text-black"}`}><span className="w-full text-center font-bold uppercase">{en ? "Imported CSV" : "CSV importé"}</span></Button></FastTip>
           <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
           <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold" style={{ color: "#f97316" }}>{en ? "CLOUD filters" : "Filtres CLOUD"}</div>
