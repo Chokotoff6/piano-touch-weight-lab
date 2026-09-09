@@ -393,10 +393,6 @@ function Index() {
   /** Ancre le message FF de fourchette sous la case fautive (persistant). */
   const [rangeAnchor, setRangeAnchor] = useState<{ x: number; y: number } | null>(null);
   const rangeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /** Clés dont le message FF est déjà consommé : interdiction de réapparition. */
-  const rangeDismissed = useRef<Set<string>>(new Set());
-  const rangeKeyRef = useRef<string | null>(null);
-  const coherenceDismissed = useRef<Set<number>>(new Set());
   /** Mode pesée : formulaire masqué, bandeau résumé affiché. */
   const [weighingMode, setWeighingMode] = useState(false);
   const weighingBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -833,9 +829,6 @@ function Index() {
   };
 
   const showCoherencePopover = (index: number) => {
-    // Aucune réapparition automatique : une alerte déjà consommée reste fermée
-    // tant que l'artisan n'a pas retapé un chiffre sur cette touche.
-    if (coherenceDismissed.current.has(index)) return;
     if (coherenceTimeout.current) clearTimeout(coherenceTimeout.current);
     const el = inputs.current[`${index}-wd`];
     if (el) {
@@ -844,7 +837,6 @@ function Index() {
     }
     setCoherenceIndex(index);
     coherenceTimeout.current = setTimeout(() => {
-      coherenceDismissed.current.add(index);
       setCoherenceIndex(null);
       setCoherenceAnchor(null);
       coherenceTimeout.current = null;
@@ -853,10 +845,7 @@ function Index() {
 
   useEffect(() => {
     const dismissCoherencePopover = () => {
-      setCoherenceIndex((prev) => {
-        if (prev !== null) coherenceDismissed.current.add(prev);
-        return null;
-      });
+      setCoherenceIndex(null);
       setCoherenceAnchor(null);
     };
     document.addEventListener("pointerdown", dismissCoherencePopover);
@@ -865,7 +854,6 @@ function Index() {
       if (coherenceTimeout.current) clearTimeout(coherenceTimeout.current);
     };
   }, []);
-
 
   /** Alerte ancrée sur la touche orpheline (Wa sans Wd ou inversement). */
   const showOrphanPopover = (index: number) => {
@@ -896,53 +884,30 @@ function Index() {
   };
 
   /** Message FF de fourchette : ancré juste en dessous de la case fautive,
-   *  effacé automatiquement après 5 secondes maximum. Une fois estompé ou
-   *  fermé, il ne peut PLUS réapparaître tant que l'artisan n'a pas tapé une
-   *  nouvelle valeur dans la case (aucune réapparition cyclique). */
+   *  effacé automatiquement après 5 secondes maximum. */
   const showRangeMessage = (index: number, field: "wa" | "wd") => {
-    const key = `${index}-${field}`;
-    if (rangeDismissed.current.has(key)) return;
     if (rangeTimeout.current) clearTimeout(rangeTimeout.current);
-    rangeKeyRef.current = key;
-    const el = inputs.current[key];
+    const el = inputs.current[`${index}-${field}`];
     const r = el?.getBoundingClientRect();
     if (r) {
       setRangeAnchor({ x: Math.min(r.left, window.innerWidth - 290), y: r.bottom + 6 });
     } else {
       setRangeAnchor({ x: window.innerWidth / 2 - 200, y: 160 });
     }
-    // Sélection automatique des 2 chiffres : l'artisan retape directement.
-    setTimeout(() => {
-      const input = inputs.current[key];
-      if (input && document.activeElement === input) input.select();
-    }, 0);
     rangeTimeout.current = setTimeout(() => {
-      if (rangeKeyRef.current) rangeDismissed.current.add(rangeKeyRef.current);
       setRangeAnchor(null);
       rangeTimeout.current = null;
     }, 5000);
   };
 
-  /** Efface instantanément le message FF de fourchette (clic, correction…). */
-  const hideRangeMessage = (permanent = false) => {
+  /** Efface instantanément le message FF de fourchette. */
+  const hideRangeMessage = () => {
     if (rangeTimeout.current) {
       clearTimeout(rangeTimeout.current);
       rangeTimeout.current = null;
     }
-    if (permanent && rangeKeyRef.current) rangeDismissed.current.add(rangeKeyRef.current);
     setRangeAnchor(null);
   };
-
-  // Un clic n'importe où sur la page efface définitivement le message de fourchette.
-  useEffect(() => {
-    const dismiss = () => hideRangeMessage(true);
-    document.addEventListener("pointerdown", dismiss);
-    return () => {
-      document.removeEventListener("pointerdown", dismiss);
-      if (rangeTimeout.current) clearTimeout(rangeTimeout.current);
-    };
-  }, []);
-
 
   // --- Saisie des informations générales ---------------------------------------
 
@@ -1093,9 +1058,6 @@ function Index() {
   const setValue = (index: number, field: "wa" | "wd", value: string) => {
     markDirty();
     clearError(`${index}-${field}`);
-    // Nouvelle frappe : l'état figé est levé, les alertes redeviennent autorisées.
-    rangeDismissed.current.delete(`${index}-${field}`);
-    coherenceDismissed.current.delete(index);
     // Pile d'annulation : 20 retours en arrière maximum.
     setUndoStack((prev) => [...prev, rows].slice(-UNDO_LIMIT));
     setRedoStack([]);
@@ -1913,13 +1875,11 @@ function Index() {
         aria-label={`${field === "wa" ? (en ? "DW" : "PD") : en ? "UW" : "PR"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
         onFocus={(e) => {
-          // Sélection intégrale des 2 chiffres (fourchette OU erreur mécanique) :
-          // l'artisan retape immédiatement sa nouvelle valeur.
-          const input = e.currentTarget;
-          input.select();
-          setTimeout(() => input.select(), 0);
-          // Le message FF de fourchette s'efface définitivement dès le clic dans la case.
-          hideRangeMessage(true);
+          // La valeur en place n'est plus effacée : elle est entièrement
+          // sélectionnée, la première frappe la remplace donc instantanément.
+          e.currentTarget.select();
+          // Le message FF de fourchette disparaît dès que l'artisan revient dans une case.
+          hideRangeMessage();
         }}
         className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
@@ -2340,13 +2300,7 @@ function Index() {
               >
                 <span className="block">• TAB : avance d&apos;une zone de saisie</span>
                 <span className="block">• Shift + TAB : recule d&apos;une zone de saisie</span>
-                <span className="block">
-                  • ALT + TAB (Option{" "}
-                  <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 align-middle text-[11px] leading-none">
-                    ⌥
-                  </span>{" "}
-                  sur Mac) : passe directement au DO suivant
-                </span>
+                <span className="block">• ALT + TAB (Option + TAB sur Mac) : passe directement au DO suivant</span>
               </span>
             </span>
           </>
@@ -2377,7 +2331,7 @@ function Index() {
           {confirmReset === "rows" && (
             <div className="absolute bottom-full left-0 mb-2 ml-[120px] flex min-w-max items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
               <span>Voulez-vous effacer toutes les données de poids saisies ?</span>
-              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); rangeDismissed.current.clear(); coherenceDismissed.current.clear(); setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
+              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
               <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
             </div>
           )}
