@@ -976,6 +976,14 @@ function Index() {
   };
 
   const onKeyDown = useCallback((e: React.KeyboardEvent, index: number, field: "wa" | "wd") => {
+    // Verrou absolu : tant que la case est en erreur (hors 30-80 g), aucune
+    // navigation clavier n'est autorisée.
+    if (errorsRef.current[`${index}-${field}`]) {
+      if (e.key === "Tab" || e.key === "Enter") {
+        e.preventDefault();
+        return;
+      }
+    }
     // CTRL + TAB : saute directement au DO suivant.
     if (e.ctrlKey && e.key === "Tab") {
       const nextCKey = Array.from(C_KEYS).find((key) => key > index + 1);
