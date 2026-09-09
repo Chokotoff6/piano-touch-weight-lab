@@ -1913,11 +1913,13 @@ function Index() {
         aria-label={`${field === "wa" ? (en ? "DW" : "PD") : en ? "UW" : "PR"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
         onFocus={(e) => {
-          // La valeur en place n'est plus effacée : elle est entièrement
-          // sélectionnée, la première frappe la remplace donc instantanément.
-          e.currentTarget.select();
-          // Le message FF de fourchette disparaît dès que l'artisan revient dans une case.
-          hideRangeMessage();
+          // Sélection intégrale des 2 chiffres (fourchette OU erreur mécanique) :
+          // l'artisan retape immédiatement sa nouvelle valeur.
+          const input = e.currentTarget;
+          input.select();
+          setTimeout(() => input.select(), 0);
+          // Le message FF de fourchette s'efface définitivement dès le clic dans la case.
+          hideRangeMessage(true);
         }}
         className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
