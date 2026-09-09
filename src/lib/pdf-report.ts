@@ -2,7 +2,13 @@
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas-pro";
 
-type Capture = { dataUrl: string; width: number; height: number; insertionScale: number };
+type Capture = {
+  dataUrl: string;
+  width: number;
+  height: number;
+  insertionScale: number;
+  format?: "PNG" | "JPEG";
+};
 
 const PAGE_W = 297; // mm (A4 paysage)
 const PAGE_H = 210;
@@ -237,8 +243,18 @@ async function capture(el: HTMLElement): Promise<Capture> {
       });
     },
   });
+  // Encodage : PNG uniquement pour le tableau des 88 touches (netteté des
+  // chiffres). Les graphiques passent en JPEG haute qualité, bien plus rapide
+  // à encoder et à intégrer au PDF, sans perte visible sur des courbes.
+  const format: "PNG" | "JPEG" = chart ? "JPEG" : "PNG";
+  const dataUrl =
+    format === "JPEG" ? canvas.toDataURL("image/jpeg", 0.92) : canvas.toDataURL("image/png");
+  console.info(
+    `[pdf] capture ${compact ? "tableau" : chart ? "graphique" : "bloc"} : ${Math.round(performance.now() - started)} ms`,
+  );
   return {
-    dataUrl: canvas.toDataURL("image/png"),
+    dataUrl,
+    format,
     width: canvas.width,
     height: canvas.height,
     insertionScale: compact ? COMPACT_SCALE : 1,
