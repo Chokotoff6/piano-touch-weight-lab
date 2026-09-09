@@ -968,11 +968,24 @@ function Index() {
   };
 
   const onKeyDown = useCallback((e: React.KeyboardEvent, index: number, field: "wa" | "wd") => {
-    if (e.shiftKey && e.key === "Tab") {
+    // CTRL + TAB : saute directement au DO suivant.
+    if (e.ctrlKey && e.key === "Tab") {
       const nextCKey = Array.from(C_KEYS).find((key) => key > index + 1);
       if (nextCKey !== undefined) {
         e.preventDefault();
         focusCell(nextCKey - 1, "wa");
+      }
+      return;
+    }
+    // TAB : avance d'une zone ; Shift + TAB : recule d'une zone.
+    if (e.key === "Tab") {
+      e.preventDefault();
+      if (e.shiftKey) {
+        if (field === "wd") focusCell(index, "wa");
+        else if (index > 0) focusCell(index - 1, "wd");
+      } else {
+        if (field === "wa") focusCell(index, "wd");
+        else if (index < 87) focusCell(index + 1, "wa");
       }
       return;
     }
