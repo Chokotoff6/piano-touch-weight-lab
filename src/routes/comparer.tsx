@@ -5,6 +5,8 @@ import { useLang } from "@/data/translations";
 import { RefreshCw, Square, SquareX } from "lucide-react";
 import { BrandTargetInfoIcon, TargetLegalInfoIcon } from "@/components/BrandTargetInfo";
 import { paddedDomain } from "@/components/PdfReportBlocks";
+import { generatePortraitReport } from "@/lib/pdf-report";
+import { setTopbarState } from "@/lib/topbar-store";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
 import {
   buildCurrentPiano,
@@ -1403,6 +1405,37 @@ function Comparer() {
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
   const averagesRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
+
+  // Export PDF autonome de la page Comparer : 3 pages A4 portrait en PNG.
+  useEffect(() => {
+    const onPdf = () => {
+      window.dispatchEvent(new CustomEvent("piano-pdf-force-split"));
+      setTopbarState({ isExporting: true });
+      // 150 ms : « Export en cours... » a le temps d'être peint (10 px sous
+      // le bouton Sauver) avant le calcul lourd des captures.
+      window.setTimeout(() => {
+        void (async () => {
+          try {
+            const pick = (id: string) =>
+              document.querySelector<HTMLElement>(`[data-frame="${id}"]`);
+            const keep = (list: Array<HTMLElement | null>) =>
+              list.filter((el): el is HTMLElement => el !== null);
+            const pages = [
+              keep([averagesRef.current, settingsRef.current]),
+              keep([pick("pair1")]),
+              keep([pick("pair2")]),
+            ].filter((page) => page.length > 0);
+            if (pages.length === 0) return;
+            await generatePortraitReport(pages, "COMPARATIF_TOUCHWEIGHT.pdf");
+          } finally {
+            setTopbarState({ isExporting: false });
+          }
+        })();
+      }, 150);
+    };
+    window.addEventListener("piano-export-pdf", onPdf);
+    return () => window.removeEventListener("piano-export-pdf", onPdf);
+  }, []);
   const [averagesHeight, setAveragesHeight] = useState(0);
 
   useEffect(() => {
