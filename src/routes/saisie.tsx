@@ -1252,39 +1252,6 @@ function Index() {
     ];
   };
 
-  /** Empreinte des données : identifie le rapport déjà capturé en cache. */
-  const pdfCacheKey = useMemo(
-    () => JSON.stringify(["pdf-mirror-1250-v1", rows, info["marque"], info["modele"], info["sn_num"]]),
-    [rows, info],
-  );
-  const pdfPrerendering = useRef(false);
-
-  // Pré-rendu silencieux : dès que le badge « Saisie conforme » est vert, les
-  // captures html2canvas sont calculées en arrière-plan et mises en cache
-  // (cache persistant : conservé lors des allers-retours vers Résultats).
-  useEffect(() => {
-    if (!badgeVisible) return;
-    if (getCachedCaptures(pdfCacheKey)) return;
-    let cancelled = false;
-    pdfPrerendering.current = true;
-    const timer = setTimeout(() => {
-      void captureReportPages(collectPdfPages())
-        .then((shots) => {
-          if (!cancelled && shots.length > 0) setCachedCaptures(pdfCacheKey, shots);
-        })
-        .catch((error) => console.warn("[pdf] pré-rendu", error))
-        .finally(() => {
-          pdfPrerendering.current = false;
-        });
-    }, 1200);
-    return () => {
-      cancelled = true;
-      pdfPrerendering.current = false;
-      clearTimeout(timer);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [badgeVisible, pdfCacheKey]);
-
   /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
   const exportPdfFile = async () => {
     const pages = collectPdfPages();
@@ -1298,18 +1265,12 @@ function Index() {
       "pdf",
     );
     const header = [pdfSummary.main, pdfSummary.time, pdfSummary.count];
-    const cached = getCachedCaptures(pdfCacheKey);
-    if (cached && cached.length > 0) {
-      buildReportPdf(cached, filename, header);
-      return;
-    }
-    if (pdfPrerendering.current) {
-      toast.info("Génération du rapport PDF en cours... Merci de patienter.");
-    }
+    // Aucune capture en arrière-plan : html2canvas ne tourne QU'ICI, au clic.
+    toast.info("Génération du rapport PDF en cours... Merci de patienter.");
     const shots = await captureReportPages(pages);
-    setCachedCaptures(pdfCacheKey, shots);
     buildReportPdf(shots, filename, header);
   };
+
 
 
 
