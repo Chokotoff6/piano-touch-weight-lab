@@ -833,6 +833,9 @@ function Index() {
   };
 
   const showCoherencePopover = (index: number) => {
+    // Aucune réapparition automatique : une alerte déjà consommée reste fermée
+    // tant que l'artisan n'a pas retapé un chiffre sur cette touche.
+    if (coherenceDismissed.current.has(index)) return;
     if (coherenceTimeout.current) clearTimeout(coherenceTimeout.current);
     const el = inputs.current[`${index}-wd`];
     if (el) {
@@ -841,6 +844,7 @@ function Index() {
     }
     setCoherenceIndex(index);
     coherenceTimeout.current = setTimeout(() => {
+      coherenceDismissed.current.add(index);
       setCoherenceIndex(null);
       setCoherenceAnchor(null);
       coherenceTimeout.current = null;
@@ -849,7 +853,10 @@ function Index() {
 
   useEffect(() => {
     const dismissCoherencePopover = () => {
-      setCoherenceIndex(null);
+      setCoherenceIndex((prev) => {
+        if (prev !== null) coherenceDismissed.current.add(prev);
+        return null;
+      });
       setCoherenceAnchor(null);
     };
     document.addEventListener("pointerdown", dismissCoherencePopover);
@@ -858,6 +865,7 @@ function Index() {
       if (coherenceTimeout.current) clearTimeout(coherenceTimeout.current);
     };
   }, []);
+
 
   /** Alerte ancrée sur la touche orpheline (Wa sans Wd ou inversement). */
   const showOrphanPopover = (index: number) => {
