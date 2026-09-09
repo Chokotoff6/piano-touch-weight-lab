@@ -2504,15 +2504,15 @@ Moyennes{" "}
           style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
         >
           <div>{en ? PEDAL_MESSAGE_EN : PEDAL_MESSAGE_FR}</div>
-          {pedalCount.current > 0 && (
+          {true && (
             <label className="mt-2 flex items-center gap-2 text-xs font-normal">
               <input
                 type="checkbox"
                 onChange={(e) => {
                   setHidePedalAlert(e.target.checked);
                   try {
-                    if (e.target.checked) window.localStorage.setItem(PEDAL_HIDE_KEY, "1");
-                    else window.localStorage.removeItem(PEDAL_HIDE_KEY);
+                    if (e.target.checked) window.sessionStorage.setItem(PEDAL_HIDE_KEY, "1");
+                    else window.sessionStorage.removeItem(PEDAL_HIDE_KEY);
                   } catch {
                     /* stockage indisponible */
                   }
