@@ -412,6 +412,10 @@ function Index() {
   errorsRef.current = errors;
   /** Miroir des binômes incomplets (une seule case remplie sur la touche). */
   const orphanRef = useRef<number[]>([]);
+  /** Binômes déclarés incomplets À LA SORTIE de la touche (cadre rouge). */
+  const [incompletePairs, setIncompletePairs] = useState<number[]>([]);
+  const incompleteRef = useRef<number[]>([]);
+  incompleteRef.current = incompletePairs;
   /** Binôme actuellement verrouillé : interdiction absolue d'en sortir. */
   const lockedPairRef = useRef<number | null>(null);
 
