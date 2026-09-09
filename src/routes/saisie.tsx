@@ -1764,7 +1764,7 @@ function Index() {
         value={rows[index]![field]}
         readOnly={pdfMirror}
         maxLength={2}
-        placeholder={field === "wa" ? (en ? "DW" : "PD") : en ? "UW" : "PR"}
+        placeholder=""
         onChange={pdfMirror ? undefined : (e) => canEnterWeights && setValue(index, field, e.target.value)}
         onBlur={(e) => {
           if (!canEnterWeights) return;
