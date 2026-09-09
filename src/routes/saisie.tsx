@@ -400,6 +400,9 @@ function Index() {
   const blockTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const coherenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  /** Miroir des erreurs : permet de verrouiller le curseur dans une case fautive. */
+  const errorsRef = useRef<Record<string, string>>({});
+  errorsRef.current = errors;
   /** Badge vert retardé : ne s'allume qu'après 0,5 s sans cadre rouge ni erreur. */
   const [badgeVisible, setBadgeVisible] = useState(false);
   const badgeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
