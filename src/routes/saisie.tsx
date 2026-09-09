@@ -2377,7 +2377,7 @@ function Index() {
           {confirmReset === "rows" && (
             <div className="absolute bottom-full left-0 mb-2 ml-[120px] flex min-w-max items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
               <span>Voulez-vous effacer toutes les données de poids saisies ?</span>
-              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
+              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); rangeDismissed.current.clear(); coherenceDismissed.current.clear(); setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
               <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
             </div>
           )}
