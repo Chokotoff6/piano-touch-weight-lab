@@ -139,8 +139,21 @@ const LEGAL_TEXT =
   "Conditions d'utilisation et clause de non-garantie Service en l'état : Ce site est un outil expérimental collaboratif mis à disposition gratuitement. L'éditeur ne fournit aucune garantie quant à la disponibilité du service, l'exactitude des calculs ou la conservation des données. L'éditeur se réserve le droit de modifier, restreindre ou fermer l'accès, ainsi que de supprimer l'historique des saisies à tout moment, sans préavis ni indemnité. L'éditeur reste libre d'introduire des fonctionnalités payantes. Sauf fermeture définitive du service, les numéros de série enregistrés durant la phase gratuite conserveront un accès préférentiel gratuit aux fonctionnalités de base existantes, sans que cela ne constitue un droit opposable.";
 
 const RGPD_CONSENT_KEY = "rgpd-cgu-consent";
-const RGPD_CONSENT_TEXT =
-  "En poursuivant, vous acceptez notre politique de confidentialité (RGPD) ainsi que nos CGU. Vous reconnaissez que les données de référence fournies le sont à titre purement indicatif, de recherche et d'aide au diagnostic indépendant, sans affiliation officielle avec les constructeurs cités.";
+const consentLinkClass =
+  "underline font-semibold text-blue-700 hover:text-blue-900";
+const RGPD_CONSENT_TEXT = (
+  <span>
+    En poursuivant, vous acceptez notre{" "}
+    <a href="/politique-confidentialite" target="_blank" rel="noopener noreferrer" className={consentLinkClass}>
+      Politique de confidentialité (RGPD)
+    </a>{" "}
+    ainsi que nos{" "}
+    <a href="/cgu" target="_blank" rel="noopener noreferrer" className={consentLinkClass}>
+      CGU
+    </a>
+    . Vous êtes informés que les données de régulation cibles fournies le sont à titre purement indicatif, de recherche et d'aide au diagnostic indépendant, sans affiliation officielle avec les constructeurs cités.
+  </span>
+);
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
