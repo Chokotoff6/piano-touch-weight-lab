@@ -734,11 +734,6 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   // cadre et le début du tracé (marge gauche = sideMargin + 46, axe = 44 px).
   // Recalage final : l'axe est décalé de 10 px supplémentaires vers la droite.
   const Y_AXIS_SHIFT = Math.round((sideMargin + 46 + 44) / 2) - 10;
-  // Mode « N/B groupées » hors zoom : le bloc entier est translaté de 30 px vers
-  // la gauche. L'axe vertical, lui, doit rester STRICTEMENT immobile : on le
-  // recale de +30 px, et le tracé est élargi de 30 px de chaque côté.
-  const groupedShift = !zoomed && keyFilter === "all" ? 30 : 0;
-  const axisShift = Y_AXIS_SHIFT - groupedShift;
   const yTicks = (() => {
     if (!yDomain) return undefined;
     const [lo, hi] = yDomain as [number, number];
@@ -809,24 +804,27 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             onMouseLeave={() => { setHoveredFamily(null); }}
             // Anti-chevauchement : la marge droite garantit toujours la place
             // du libellé « Moy: xx.xg », la marge gauche celle des noms courts.
-            margin={{ top: 22, right: Math.max(sideMargin, 80) + groupedShift, bottom: 15, left: Math.max(autoDomain ? sideMargin + 46 : sideMargin, 70) - groupedShift }}
+            margin={{ top: 22, right: Math.max(sideMargin, 80), bottom: 15, left: Math.max(autoDomain ? sideMargin + 46 : sideMargin, 70) }}
           >
             <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
             <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
             {autoDomain ? (
-              // Axe vertical gradué : STRICTEMENT immobile, y compris quand le
-              // bloc est translaté de 30 px vers la gauche en « N/B groupées ».
+              // Axe vertical gradué : graduations entières, décalé à gauche du
+              // départ des courbes (domaine X élargi) pour qu'aucun chiffre ne
+              // puisse toucher les libellés « blanches » / « noires ».
+              // Recalage physique : l'axe (ligne, graduations, chiffres) est
+              // translaté de 90 px vers la gauche sans déplacer la zone de
+              // tracé, donc il se place au milieu de l'espace blanc à gauche.
               <YAxis
                 width={44}
                 tickMargin={8}
                 domain={yDomain ?? ["auto", "auto"]}
                 {...(yTicks ? { ticks: yTicks } : {})}
                 allowDecimals={false}
-                tick={{ fontSize: 10, fill: "#111827", dx: -axisShift }}
-                axisLine={{ stroke: "#111827", transform: `translate(${-axisShift},0)` }}
-                tickLine={{ stroke: "#111827", transform: `translate(${-axisShift},0)` }}
+                tick={{ fontSize: 10, fill: "#111827", dx: -Y_AXIS_SHIFT }}
+                axisLine={{ stroke: "#111827", transform: `translate(${-Y_AXIS_SHIFT},0)` }}
+                tickLine={{ stroke: "#111827", transform: `translate(${-Y_AXIS_SHIFT},0)` }}
               />
-
             ) : (
               <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
             )}

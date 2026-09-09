@@ -412,10 +412,6 @@ function Index() {
   errorsRef.current = errors;
   /** Miroir des binômes incomplets (une seule case remplie sur la touche). */
   const orphanRef = useRef<number[]>([]);
-  /** Binômes déclarés incomplets À LA SORTIE de la touche (cadre rouge). */
-  const [incompletePairs, setIncompletePairs] = useState<number[]>([]);
-  const incompleteRef = useRef<number[]>([]);
-  incompleteRef.current = incompletePairs;
   /** Binôme actuellement verrouillé : interdiction absolue d'en sortir. */
   const lockedPairRef = useRef<number | null>(null);
 
@@ -638,12 +634,11 @@ function Index() {
   );
   orphanRef.current = orphanKeys;
 
-  /** Une touche est en anomalie : erreur mécanique, hors fourchette ou binôme
-   *  déclaré incomplet À LA SORTIE de la touche (jamais pendant la frappe). */
+  /** Une touche est en anomalie : erreur mécanique, hors fourchette ou binôme incomplet. */
   const pairHasError = (index: number) =>
     !!errorsRef.current[`${index}-wa`] ||
     !!errorsRef.current[`${index}-wd`] ||
-    incompleteRef.current.includes(index);
+    orphanRef.current.includes(index);
 
   /** Case fautive du binôme sur laquelle le curseur doit rester capturé. */
   const pairErrorField = (index: number): "wa" | "wd" => {
@@ -1172,10 +1167,6 @@ function Index() {
       hideRangeMessage();
       return;
     }
-    // Binôme complété pendant la frappe : le cadre rouge « incomplet » tombe.
-    if (cleanWeight(nextRow.wa).length === 2 && cleanWeight(nextRow.wd).length === 2) {
-      setIncompletePairs((prev) => prev.filter((i) => i !== index));
-    }
     // Feedback Flash : PD > PR obligatoire (valeur complète uniquement).
     checkCoherence(index, nextRow);
     const num = parseWeight(cleaned);
@@ -1278,53 +1269,21 @@ function Index() {
     hideRangeMessage();
     const finalRow = setRowField(index, field, num.toString());
     checkCoherence(index, finalRow);
-    // Le contrôle « Saisie incomplète » n'intervient QUE si l'artisan quitte
-    // complètement le binôme (jamais à la validation de la seule case du haut).
-    checkPairLeave(index, finalRow);
+    // Binôme incomplet : la case restée vide passe en rouge et le message FF
+    // dédié s'affiche immédiatement.
+    const other = field === "wa" ? "wd" : "wa";
+    if (finalRow[other].trim() === "") showOrphanPopover(index);
   };
 
-  /** Contrôle de sortie du binôme : cadre rouge + FF uniquement si l'artisan
-   *  quitte la touche alors qu'une des deux cases n'a pas ses 2 chiffres. */
-  const checkPairLeave = (index: number, row: Row) => {
-    setTimeout(() => {
-      const active = document.activeElement;
-      const stillInPair =
-        active === inputs.current[`${index}-wa`] || active === inputs.current[`${index}-wd`];
-      if (stillInPair) return;
-      const waFull = cleanWeight(row.wa).length === 2;
-      const wdFull = cleanWeight(row.wd).length === 2;
-      const bothEmpty = row.wa.trim() === "" && row.wd.trim() === "";
-      if ((waFull && wdFull) || bothEmpty) {
-        setIncompletePairs((prev) => prev.filter((i) => i !== index));
-        return;
-      }
-      setIncompletePairs((prev) => (prev.includes(index) ? prev : [...prev, index]));
-      showOrphanPopover(index);
-    }, 0);
-  };
-
-  /** Erreur mécanique PR >= PD : cadre rouge STRICTEMENT sur la case du bas
-   *  (Poids Remontant), dont les 2 chiffres sont sélectionnés automatiquement. */
+  /** Applique (ou lève) l'alerte de cohérence Wa > Wd sur les deux cellules d'une touche. */
   const checkCoherence = (index: number, row: Row) => {
     const wa = parseWeight(row.wa);
     const wd = parseWeight(row.wd);
     const waKey = `${index}-wa`;
     const wdKey = `${index}-wd`;
     if (wa !== null && wd !== null && wa <= wd) {
-      setErrors((prev) => {
-        const next = { ...prev, [wdKey]: COHERENCE_MESSAGE };
-        if (next[waKey] === COHERENCE_MESSAGE) delete next[waKey];
-        return next;
-      });
+      setErrors((prev) => ({ ...prev, [waKey]: COHERENCE_MESSAGE, [wdKey]: COHERENCE_MESSAGE }));
       showCoherencePopover(index);
-      setTimeout(() => {
-        const input = inputs.current[wdKey];
-        const active = document.activeElement;
-        const inPair = active === inputs.current[waKey] || active === input;
-        if (!input || !inPair) return;
-        input.focus();
-        input.select();
-      }, 0);
       return;
     }
     if (coherenceIndex === index) setCoherenceIndex(null);
@@ -2047,7 +2006,7 @@ function Index() {
           // Le message FF de fourchette s'efface définitivement dès le clic dans la case.
           hideRangeMessage(true);
         }}
-        className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"} ${incompletePairs.includes(index) ? "error !border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "error !border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
 
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
       />
@@ -2460,15 +2419,9 @@ function Index() {
       {weighingMode && (
         <div className="relative flex w-full justify-end pr-2" style={{ marginBottom: "25px" }}>
           {confirmReset === "rows" && (
-            /* Message FF placé exactement 15 px au-dessus du bord supérieur du
-               cadre « Mesures poids statiques » (25 px de marge + 100 px de
-               décalage du cadre = 110 px sous le bouton), au-dessus de tout. */
-            <div
-              className="absolute right-0 mr-[40px] flex min-w-max items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
-              style={{ top: "calc(100% + 110px)", transform: "translateY(-100%)", zIndex: 50 }}
-            >
+            <div className="absolute bottom-full right-0 mb-2 mr-[40px] flex min-w-max items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
               <span>Voulez-vous effacer toutes les données de poids saisies ?</span>
-              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); setBlockAnchor(null); rangeDismissed.current.clear(); coherenceDismissed.current.clear(); setIncompletePairs([]); lockedPairRef.current = null; setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
+              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); setBlockAnchor(null); rangeDismissed.current.clear(); coherenceDismissed.current.clear(); lockedPairRef.current = null; setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
               <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
             </div>
           )}
@@ -2503,7 +2456,7 @@ function Index() {
                   <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 align-middle text-[11px] leading-none">
                     ⌥
                   </span>{" "}
-                  sur Mac) : saute directement au DO suivant
+                  sur Mac) : passe directement au DO suivant
                 </span>
               </span>
             </span>
