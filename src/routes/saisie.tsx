@@ -101,7 +101,7 @@ const SAVE_UPDATE_MESSAGE =
 const SAVE_NEW_MESSAGE =
   "⚠️ Nouvelle session de suivi chronologique créée avec succès. Cette fiche historique est archivée de manière étanche dans la base de données cloud pour vos futures comparaisons.";
 const ORPHAN_MESSAGE =
-  "⚠️ Mesure incomplète : Chaque touche mesurée doit obligatoirement posséder à la fois une valeur Wa et une valeur Wd.";
+  "⚠️ Saisie incomplète : Le Poids Descendant et le Poids Remontant doivent être tous les deux renseignés pour cette touche.";
 const COHERENCE_MESSAGE =
   "⚠️ Erreur mécanique : Le Poids Descendant (PD) doit être strictement supérieur au Poids Remontant (PR) pour calculer la Friction.";
 
@@ -966,6 +966,36 @@ function Index() {
     };
   }, []);
 
+  // Clic en dehors des zones de saisie du clavier alors qu'un binôme reste en
+  // anomalie (hors fourchette ou incohérence mécanique) : le message FF est
+  // effacé, le blocage levé, les DEUX cases du binôme sont vidées et le focus
+  // revient automatiquement sur le Poids Descendant du binôme nettoyé.
+  useEffect(() => {
+    const onOutsidePointerDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest(".weight-input")) return;
+      const locked = lockedPairRef.current;
+      if (locked === null) return;
+      const hasCellError =
+        !!errorsRef.current[`${locked}-wa`] || !!errorsRef.current[`${locked}-wd`];
+      if (!hasCellError) return;
+      lockedPairRef.current = null;
+      hideRangeMessage(true);
+      setCoherenceIndex(null);
+      setCoherenceAnchor(null);
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[`${locked}-wa`];
+        delete next[`${locked}-wd`];
+        return next;
+      });
+      setRows((prev) => prev.map((r, i) => (i === locked ? { wa: "", wd: "" } : r)));
+      setTimeout(() => focusCell(locked, "wa"), 0);
+    };
+    document.addEventListener("pointerdown", onOutsidePointerDown);
+    return () => document.removeEventListener("pointerdown", onOutsidePointerDown);
+  }, []);
+
 
   // --- Saisie des informations générales ---------------------------------------
 
@@ -1156,8 +1186,8 @@ function Index() {
     // Valeur redevenue conforme : nettoyage instantané du cadre rouge et du FF.
     if (!mechanicalError) clearError(`${index}-${field}`);
     hideRangeMessage();
-    // Alerte sustain strictement entre 76 g et 80 g.
-    if (num !== null && num > 75 && num <= 80 && !hidePedalAlert) {
+    // Alerte sustain : toute valeur conforme strictement supérieure à 75 g.
+    if (num !== null && num > 75 && !hidePedalAlert) {
       pedalCount.current += 1;
       pedalOrigin.current = { index, field };
       setPedalAlert(true);
@@ -1237,7 +1267,12 @@ function Index() {
 
     clearError(key);
     hideRangeMessage();
-    checkCoherence(index, setRowField(index, field, num.toString()));
+    const finalRow = setRowField(index, field, num.toString());
+    checkCoherence(index, finalRow);
+    // Binôme incomplet : la case restée vide passe en rouge et le message FF
+    // dédié s'affiche immédiatement.
+    const other = field === "wa" ? "wd" : "wa";
+    if (finalRow[other].trim() === "") showOrphanPopover(index);
   };
 
   /** Applique (ou lève) l'alerte de cohérence Wa > Wd sur les deux cellules d'une touche. */
