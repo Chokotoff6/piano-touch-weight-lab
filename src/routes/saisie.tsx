@@ -1013,8 +1013,8 @@ function Index() {
   const setValue = (index: number, field: "wa" | "wd", value: string) => {
     markDirty();
     clearError(`${index}-${field}`);
-    // Pile d'annulation : 3 retours en arrière maximum.
-    setUndoStack((prev) => [...prev, rows].slice(-3));
+    // Pile d'annulation : 20 retours en arrière maximum.
+    setUndoStack((prev) => [...prev, rows].slice(-UNDO_LIMIT));
     setRedoStack([]);
     const cleaned = cleanWeight(value);
     const nextRow: Row = { ...rows[index]!, [field]: cleaned };
@@ -1029,20 +1029,22 @@ function Index() {
     }
     // Feedback Flash : PD > PR obligatoire (valeur complète uniquement).
     checkCoherence(index, nextRow);
-    // Alerte sustain au-delà de 75 g (les deux colonnes).
+    // Alerte sustain strictement entre 76 g et 80 g : hors fourchette (>80 ou <30),
+    // aucun message n'est affiché, seul le cadre rouge bloque la case.
     const num = parseWeight(cleaned);
-    if (num !== null && num > 75 && !hidePedalAlert) {
+    if (num !== null && num > 75 && num <= 80 && !hidePedalAlert) {
       pedalCount.current += 1;
+      pedalOrigin.current = { index, field };
       setPedalAlert(true);
     }
   };
 
-  /** Restaure l'état de mesures précédent (jusqu'à 3 fois de suite). */
+  /** Restaure l'état de mesures précédent (jusqu'à 20 fois de suite). */
   const undoRows = () => {
     setUndoStack((prev) => {
       if (prev.length === 0) return prev;
       const last = prev[prev.length - 1]!;
-      setRedoStack((r) => [...r, rows].slice(-3));
+      setRedoStack((r) => [...r, rows].slice(-UNDO_LIMIT));
       setRows(last);
       setErrors({});
       setCoherenceIndex(null);
@@ -1050,18 +1052,31 @@ function Index() {
     });
   };
 
-  /** Rétablit un état annulé (jusqu'à 3 fois de suite). */
+  /** Rétablit un état annulé (jusqu'à 20 fois de suite). */
   const redoRows = () => {
     setRedoStack((prev) => {
       if (prev.length === 0) return prev;
       const last = prev[prev.length - 1]!;
-      setUndoStack((u) => [...u, rows].slice(-3));
+      setUndoStack((u) => [...u, rows].slice(-UNDO_LIMIT));
       setRows(last);
       setErrors({});
       setCoherenceIndex(null);
       return prev.slice(0, -1);
     });
   };
+
+  /** Ferme l'alerte sustain et saute automatiquement à la case suivante. */
+  const closePedalAlert = () => {
+    setPedalAlert(false);
+    const origin = pedalOrigin.current;
+    pedalOrigin.current = null;
+    if (!origin) return;
+    setTimeout(() => {
+      if (origin.field === "wa") focusCell(origin.index, "wd");
+      else if (origin.index < 87) focusCell(origin.index + 1, "wa");
+    }, 0);
+  };
+
 
   const handleBlur = (index: number, field: "wa" | "wd", value: string) => {
     const key = `${index}-${field}`;
@@ -2031,13 +2046,8 @@ function Index() {
                     className={`${INPUT_CLASS} max-w-[120px]`}
                   />
                 </label>
-                <div className="flex h-8 items-end gap-1 text-xs text-black">
-                  <span>
-                    {profile.frictionTarget !== null &&
-                      `Friction cible ${profile.frictionTarget} g`}
-                  </span>
-                  <TargetLegalInfoIcon />
-                </div>
+                <div className="flex h-8 items-end gap-1 text-xs text-black" />
+
               </div>
               {!serialFormatValid && (
                 <p className="mt-1 text-[0.7rem] leading-snug text-destructive">
