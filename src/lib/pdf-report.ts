@@ -167,6 +167,21 @@ async function capture(el: HTMLElement): Promise<Capture> {
         frame.style.overflow = "visible";
         frame.style.opacity = "1";
       });
+      // Blocs « Réglages » et « Moyennes » (page Comparer) : la hauteur fixe
+      // et le positionnement collant sont neutralisés dans le clone pour que
+      // l'intégralité des filtres et des valeurs soit peinte, sans coupure.
+      pick("[data-pdf-expand]").forEach((node) => {
+        const frame = node as HTMLElement;
+        frame.style.setProperty("position", "static", "important");
+        frame.style.setProperty("height", "auto", "important");
+        frame.style.setProperty("max-height", "none", "important");
+        frame.style.setProperty("overflow", "visible", "important");
+      });
+      pick("[data-pdf-expand] *").forEach((node) => {
+        const child = node as HTMLElement;
+        child.style.setProperty("max-height", "none", "important");
+        child.style.setProperty("overflow", "visible", "important");
+      });
       // Miroir « Mesures poids statiques » : rendu hors écran remis à l'origine
       // du clone, sans transformation. La réduction 0,82 est appliquée lors de
       // l'insertion dans le PDF, après une capture intégrale nette.
