@@ -5,8 +5,6 @@ import { useLang } from "@/data/translations";
 import { RefreshCw, Square, SquareX } from "lucide-react";
 import { BrandTargetInfoIcon, TargetLegalInfoIcon } from "@/components/BrandTargetInfo";
 import { paddedDomain } from "@/components/PdfReportBlocks";
-import { generatePortraitReport } from "@/lib/pdf-report";
-import { setTopbarState } from "@/lib/topbar-store";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
 import {
   buildCurrentPiano,
@@ -905,14 +903,6 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
     setFilters((current) => ({ ...current, [familyId]: nextKeyFilter(current[familyId] ?? keyFilter) }));
   const [hoveredFamily, setHoveredFamily] = useState<string | null>(null);
 
-  // Export PDF : les 4 cadres passent d'office en « N/B séparées » avant capture.
-  useEffect(() => {
-    const force = () =>
-      setFilters({ wa: "split", wd: "split", bal: "split", fric: "split" });
-    window.addEventListener("piano-pdf-force-split", force);
-    return () => window.removeEventListener("piano-pdf-force-split", force);
-  }, []);
-
   const [zoomId, setZoomId] = useState<string | null>(null);
   const [zoomStart, setZoomStart] = useState(1);
   const [kbNote, setKbNote] = useState<number | null>(null);
@@ -1055,15 +1045,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   // les cadres sont extraits de la grille via une bande pleine largeur centrée.
   return (
     <div ref={containerRef} className="relative w-full pb-[80vh] pt-2">
-      <div className="flex w-full flex-col gap-4">
-        {/* Deux paires : chaque paire est capturée en UNE seule image PDF. */}
-        <div data-frame="pair1" className="flex w-full flex-col gap-4">
-          {FAMILIES.slice(0, 2).map((family) => <SubChart key={family.id} family={family} ctx={subCtx} />)}
-        </div>
-        <div data-frame="pair2" className="flex w-full flex-col gap-4">
-          {FAMILIES.slice(2).map((family) => <SubChart key={family.id} family={family} ctx={subCtx} />)}
-        </div>
-      </div>
+      <div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} ctx={subCtx} />)}</div>
     </div>
   );
 
@@ -1404,38 +1386,6 @@ function Comparer() {
   const [comparedPiano, setComparedPiano] = useState<ProfileRecord | null>(null);
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
   const averagesRef = useRef<HTMLDivElement>(null);
-  const settingsRef = useRef<HTMLDivElement>(null);
-
-  // Export PDF autonome de la page Comparer : 3 pages A4 portrait en PNG.
-  useEffect(() => {
-    const onPdf = () => {
-      window.dispatchEvent(new CustomEvent("piano-pdf-force-split"));
-      setTopbarState({ isExporting: true });
-      // 150 ms : « Export en cours... » a le temps d'être peint (10 px sous
-      // le bouton Sauver) avant le calcul lourd des captures.
-      window.setTimeout(() => {
-        void (async () => {
-          try {
-            const pick = (id: string) =>
-              document.querySelector<HTMLElement>(`[data-frame="${id}"]`);
-            const keep = (list: Array<HTMLElement | null>) =>
-              list.filter((el): el is HTMLElement => el !== null);
-            const pages = [
-              keep([averagesRef.current, settingsRef.current]),
-              keep([pick("pair1")]),
-              keep([pick("pair2")]),
-            ].filter((page) => page.length > 0);
-            if (pages.length === 0) return;
-            await generatePortraitReport(pages, "COMPARATIF_TOUCHWEIGHT.pdf");
-          } finally {
-            setTopbarState({ isExporting: false });
-          }
-        })();
-      }, 150);
-    };
-    window.addEventListener("piano-export-pdf", onPdf);
-    return () => window.removeEventListener("piano-export-pdf", onPdf);
-  }, []);
   const [averagesHeight, setAveragesHeight] = useState(0);
 
   useEffect(() => {
@@ -1711,7 +1661,7 @@ function Comparer() {
 
               <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible"} onCycleKeyFilter={cycleKeyFilter} />
             </div>
-            <aside className="min-w-0"><div ref={settingsRef} className="sticky top-[127px] z-50 flex flex-col overflow-visible" style={averagesHeight > 0 ? { height: `${averagesHeight - 8}px` } : undefined}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
+            <aside className="min-w-0"><div className="sticky top-[127px] z-50 flex flex-col overflow-visible" style={averagesHeight > 0 ? { height: `${averagesHeight - 8}px` } : undefined}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
           </div>
         </>
       )}

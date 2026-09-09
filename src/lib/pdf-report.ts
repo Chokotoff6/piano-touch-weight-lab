@@ -442,3 +442,52 @@ function drawFooter(pdf: jsPDF, page: number, total: number, stamp: string) {
 export function rawPdfMirror(): HTMLElement | null {
   return document.querySelector<HTMLElement>("[data-pdf-compact]");
 }
+
+// ---------------------------------------------------------------------------
+// Rapport autonome de la page Comparer : 3 pages A4 PORTRAIT, encodage PNG
+// natif sans perte (scale 2), pied de page « Page X / 3 ».
+// ---------------------------------------------------------------------------
+const P_W = 210; // mm (A4 portrait)
+const P_H = 297;
+
+function portraitRatio(blocks: Capture[]): number {
+  const availW = P_W - MARGIN * 2;
+  const availH = P_H - MARGIN * 2 - GAP * (blocks.length - 1) - 6;
+  const maxPxW = Math.max(...blocks.map((b) => b.width * b.insertionScale));
+  const totalPxH = blocks.reduce((sum, b) => sum + b.height * b.insertionScale, 0);
+  return Math.min(availW / maxPxW, availH / totalPxH);
+}
+
+function drawPortraitPage(pdf: jsPDF, blocks: Capture[], ratio: number) {
+  const availW = P_W - MARGIN * 2;
+  let y = MARGIN;
+  for (const block of blocks) {
+    const w = block.width * block.insertionScale * ratio;
+    const h = block.height * block.insertionScale * ratio;
+    const x = MARGIN + (availW - w) / 2;
+    pdf.addImage(block.dataUrl, "PNG", x, y, w, h, undefined, "FAST");
+    y += h + GAP;
+  }
+}
+
+/** Capture puis télécharge le comparatif en A4 portrait (3 pages, PNG). */
+export async function generatePortraitReport(
+  pages: HTMLElement[][],
+  filename: string,
+): Promise<void> {
+  const captured = await captureReportPages(pages);
+  if (captured.length === 0) return;
+  const pdf = new jsPDF({ orientation: "portrait", format: "a4", unit: "mm" });
+  const total = captured.length;
+  const stamp = exportStamp();
+  captured.forEach((blocks, index) => {
+    if (index > 0) pdf.addPage("a4", "portrait");
+    drawPortraitPage(pdf, blocks, portraitRatio(blocks));
+    pdf.setFontSize(7);
+    pdf.setTextColor(120);
+    pdf.text(`Page ${index + 1} / ${total}`, P_W - MARGIN, P_H - MARGIN - 3, { align: "right" });
+    pdf.text(`Exporté le : ${stamp}`, P_W - MARGIN, P_H - MARGIN, { align: "right" });
+    pdf.setTextColor(0);
+  });
+  pdf.save(filename);
+}
