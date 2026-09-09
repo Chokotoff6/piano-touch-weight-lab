@@ -393,6 +393,10 @@ function Index() {
   /** Ancre le message FF de fourchette sous la case fautive (persistant). */
   const [rangeAnchor, setRangeAnchor] = useState<{ x: number; y: number } | null>(null);
   const rangeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Clés dont le message FF est déjà consommé : interdiction de réapparition. */
+  const rangeDismissed = useRef<Set<string>>(new Set());
+  const rangeKeyRef = useRef<string | null>(null);
+  const coherenceDismissed = useRef<Set<number>>(new Set());
   /** Mode pesée : formulaire masqué, bandeau résumé affiché. */
   const [weighingMode, setWeighingMode] = useState(false);
   const weighingBtnRef = useRef<HTMLButtonElement | null>(null);
