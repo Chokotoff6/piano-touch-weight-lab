@@ -5,7 +5,6 @@ import { useLang } from "@/data/translations";
 import { RefreshCw, Square, SquareX } from "lucide-react";
 import { BrandTargetInfoIcon, TargetLegalInfoIcon } from "@/components/BrandTargetInfo";
 import { paddedDomain } from "@/components/PdfReportBlocks";
-import { PianoSheetMirror } from "@/components/PianoSheetMirror";
 import { generateComparisonReport, type LandscapePage } from "@/lib/pdf-report";
 import { setTopbarState } from "@/lib/topbar-store";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
@@ -1406,11 +1405,6 @@ function Comparer() {
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
   const averagesRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
-  // Miroir hors écran de la page Saisie : pages 1 à 3 du rapport unique.
-  const mirrorAveragesRef = useRef<HTMLElement | null>(null);
-  const mirrorSheetRef = useRef<HTMLElement | null>(null);
-  const mirrorChartsRef = useRef<HTMLDivElement>(null);
-  const liveChartsRef = useRef<HTMLDivElement>(null);
 
   // Export PDF autonome de la page Comparer : 3 pages A4 portrait en PNG.
   useEffect(() => {
@@ -1422,20 +1416,11 @@ function Comparer() {
       window.setTimeout(() => {
         void (async () => {
           try {
-            const inside = (root: HTMLElement | null, id: string) =>
-              root?.querySelector<HTMLElement>(`[data-frame="${id}"]`) ?? null;
-            const pick = (id: string) => inside(liveChartsRef.current, id);
-            const mirror = (id: string) => inside(mirrorChartsRef.current, id);
+            const pick = (id: string) =>
+              document.querySelector<HTMLElement>(`[data-frame="${id}"]`);
             const keep = (list: Array<HTMLElement | null>) =>
               list.filter((el): el is HTMLElement => el !== null);
             const pages: LandscapePage[] = [
-              // Pages 1 à 3 : atelier (miroir hors écran de la page Saisie).
-              {
-                blocks: keep([mirrorAveragesRef.current, mirrorSheetRef.current]),
-                layout: "column" as const,
-              },
-              { blocks: keep([mirror("wa"), mirror("wd")]), layout: "column" as const },
-              { blocks: keep([mirror("bal"), mirror("fric")]), layout: "column" as const },
               // Page 4 : titre officiel, « Réglages » à gauche et « Moyennes » à droite.
               {
                 blocks: keep([settingsRef.current, averagesRef.current]),
@@ -1448,7 +1433,7 @@ function Comparer() {
               { blocks: keep([pick("pair2")]), layout: "column" as const },
             ].filter((page) => page.blocks.length > 0);
             if (pages.length === 0) return;
-            await generateComparisonReport(pages, "COMPARATIF_TOUCHWEIGHT.pdf", 1, 6);
+            await generateComparisonReport(pages, "COMPARATIF_TOUCHWEIGHT.pdf", 4, 6);
           } finally {
             setTopbarState({ isExporting: false });
           }
@@ -1699,8 +1684,6 @@ function Comparer() {
         ? "- Moyennes sur base de 1 profil de modèle identique\u00A0"
         : `Moyennes sur ${cloudSampleCount} pianos de modèle identique enregistrés par les utilisateurs`;
 
-  // Pages 1 à 3 du rapport : profil du piano actuel seul, courbes séparées.
-  const mirrorChartData = useMemo(() => buildChartData(mine, null, null), [mine]);
 
   return (
     <main className="mx-auto w-full max-w-[1400px] px-6 py-8">
@@ -1708,32 +1691,6 @@ function Comparer() {
         aria-hidden="true"
         className="pointer-events-none fixed inset-x-0 top-[77px] z-40 h-[50px] bg-white"
       />
-      {/* Miroir hors écran (jamais visible) : cadre Mesures + graphiques
-          d'atelier, source des pages 1 à 3 du rapport PDF unique. */}
-      <PianoSheetMirror
-        wa={mine?.wa ?? []}
-        wd={mine?.wd ?? []}
-        summary={summary}
-        averagesRef={(node) => {
-          mirrorAveragesRef.current = node;
-        }}
-        sheetRef={(node) => {
-          mirrorSheetRef.current = node;
-        }}
-      />
-      <div aria-hidden="true" className="absolute -left-[9999px] top-0 pointer-events-none">
-        <div ref={mirrorChartsRef} className="!w-[1250px] !min-w-[1250px] !max-w-[1250px] bg-white">
-          <ComparisonChart
-            chartData={mirrorChartData}
-            keyFilter="split"
-            comparisonLabel=""
-            comparisonShort=""
-            currentBaseName=""
-            autoDomain
-            sideMargin={60}
-          />
-        </div>
-      </div>
       {status === "loading" ? <p className="py-16 text-center text-muted-foreground">Chargement des profils externes…</p> : (
         <>
           <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-stretch gap-6">
@@ -1759,9 +1716,7 @@ function Comparer() {
                 </Frame>
               </div>
 
-              <div ref={liveChartsRef}>
-                <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible"} onCycleKeyFilter={cycleKeyFilter} />
-              </div>
+              <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible"} onCycleKeyFilter={cycleKeyFilter} />
             </div>
             <aside className="min-w-0"><div ref={settingsRef} data-pdf-expand className="sticky top-[127px] z-50 flex flex-col overflow-visible" style={averagesHeight > 0 ? { height: `${averagesHeight - 8}px` } : undefined}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
           </div>
