@@ -20,6 +20,7 @@ import {
   type CurrentPiano,
 } from "@/lib/current-piano";
 import { fallbackZone } from "@/lib/climate";
+import { parseDiagnosticCsv } from "@/lib/import-csv";
 
 export const Route = createFileRoute("/resultats")({
   head: () => ({
