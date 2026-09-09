@@ -984,6 +984,23 @@ function Index() {
       const hasCellError =
         !!errorsRef.current[`${locked}-wa`] || !!errorsRef.current[`${locked}-wd`];
       if (!hasCellError) return;
+      // Erreur mécanique (PR >= PD) : on ferme seulement le message FF et on
+      // pré-sélectionne les 2 chiffres du Poids Remontant (case du bas) pour
+      // une re-saisie directe. Les valeurs ne sont JAMAIS effacées.
+      const mechanical = errorsRef.current[`${locked}-wd`] === COHERENCE_MESSAGE;
+      if (mechanical) {
+        e.preventDefault();
+        setCoherenceIndex(null);
+        setCoherenceAnchor(null);
+        hideRangeMessage(true);
+        setTimeout(() => {
+          const input = inputs.current[`${locked}-wd`];
+          if (!input) return;
+          input.focus();
+          input.select();
+        }, 0);
+        return;
+      }
       lockedPairRef.current = null;
       hideRangeMessage(true);
       setCoherenceIndex(null);
@@ -2425,7 +2442,9 @@ function Index() {
 
           </div>
         </Frame>
-        <p className="mt-1 pl-0 text-left text-sm italic text-foreground">* Champs obligatoires</p>
+        <p className="mt-1 pl-0 text-left text-sm text-foreground">
+          <span className="not-italic">*</span> <em className="italic">Champs obligatoires</em>
+        </p>
       </div>
 
       )}
