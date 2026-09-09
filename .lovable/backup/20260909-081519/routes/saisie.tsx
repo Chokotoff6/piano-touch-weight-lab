@@ -400,9 +400,6 @@ function Index() {
   const blockTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const coherenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  /** Miroir des erreurs : permet de verrouiller le curseur dans une case fautive. */
-  const errorsRef = useRef<Record<string, string>>({});
-  errorsRef.current = errors;
   /** Badge vert retardé : ne s'allume qu'après 0,5 s sans cadre rouge ni erreur. */
   const [badgeVisible, setBadgeVisible] = useState(false);
   const badgeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -976,14 +973,6 @@ function Index() {
   };
 
   const onKeyDown = useCallback((e: React.KeyboardEvent, index: number, field: "wa" | "wd") => {
-    // Verrou absolu : tant que la case est en erreur (hors 30-80 g), aucune
-    // navigation clavier n'est autorisée.
-    if (errorsRef.current[`${index}-${field}`]) {
-      if (e.key === "Tab" || e.key === "Enter") {
-        e.preventDefault();
-        return;
-      }
-    }
     // CTRL + TAB : saute directement au DO suivant.
     if (e.ctrlKey && e.key === "Tab") {
       const nextCKey = Array.from(C_KEYS).find((key) => key > index + 1);
@@ -2275,7 +2264,7 @@ function Index() {
           {confirmReset === "rows" && (
             <div className="absolute bottom-full left-0 mb-2 ml-[120px] flex min-w-max items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
               <span>Voulez-vous effacer toutes les données de poids saisies ?</span>
-              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
+              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setUndoStack([]); setRedoStack([]); setConfirmReset(null); }}>Oui</button>
               <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
             </div>
           )}
@@ -2576,8 +2565,6 @@ Moyennes{" "}
                   } catch {
                     /* stockage indisponible */
                   }
-                  // Fermeture immédiate + saut à la case suivante.
-                  if (e.target.checked) closePedalAlert();
                 }}
               />
               {en ? "Do not show this message again" : "Ne plus afficher ce message"}
