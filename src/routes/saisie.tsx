@@ -1093,6 +1093,9 @@ function Index() {
   const setValue = (index: number, field: "wa" | "wd", value: string) => {
     markDirty();
     clearError(`${index}-${field}`);
+    // Nouvelle frappe : l'état figé est levé, les alertes redeviennent autorisées.
+    rangeDismissed.current.delete(`${index}-${field}`);
+    coherenceDismissed.current.delete(index);
     // Pile d'annulation : 20 retours en arrière maximum.
     setUndoStack((prev) => [...prev, rows].slice(-UNDO_LIMIT));
     setRedoStack([]);
