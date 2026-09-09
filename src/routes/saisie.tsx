@@ -77,9 +77,9 @@ const C_SHARP_KEYS = new Set([5, 17, 29, 41, 53, 65, 77]);
 const PD_RANGE_MESSAGE =
   "⚠️ Le poids descendant (PD) doit être compris entre 30 et 80 grammes.";
 const PEDAL_MESSAGE_FR =
-  "Mesure anormalement élevée : assurez-vous d'enfoncer la pédale de sustain lors de la mesure";
+  "⚠️ Attention : Valeur élevée détectée. Assurez-vous que la pédale de sustain (forte) est bien enfoncée à fond durant la mesure pour libérer les étouffoirs.";
 const PEDAL_MESSAGE_EN =
-  "Unusually high reading: make sure the sustain pedal is pressed while measuring";
+  "⚠️ Warning: high value detected. Make sure the sustain pedal is fully pressed during the measurement to release the dampers.";
 const PEDAL_HIDE_KEY = "ptw_hide_pedal_alert";
 
 type Row = { wa: string; wd: string };
@@ -98,7 +98,7 @@ const SAVE_NEW_MESSAGE =
 const ORPHAN_MESSAGE =
   "⚠️ Mesure incomplète : Chaque touche mesurée doit obligatoirement posséder à la fois une valeur Wa et une valeur Wd.";
 const COHERENCE_MESSAGE =
-  "⚠️ Anomalie mécanique : le poids descendant (PD) doit toujours être strictement supérieur au poids remontant (PR).";
+  "⚠️ Erreur mécanique : Le Poids Descendant (PD) doit être strictement supérieur au Poids Remontant (PR) pour calculer la Friction.";
 
 function wrapTooltipText(text: string, maxChars: number): string[] {
   const words = text.split(/\s+/);
@@ -443,6 +443,7 @@ function Index() {
   const pdfGridRef2 = useSnappedGrid(45, 88);
   /** Alerte pédale de sustain (PD > 60) et son option « ne plus afficher ». */
   const [pedalAlert, setPedalAlert] = useState(false);
+  const [undoStack, setUndoStack] = useState<Row[][]>([]);
   const pedalCount = useRef(0);
   const [hidePedalAlert, setHidePedalAlert] = useState(false);
   /** Valeur mémorisée avant effacement automatique au clic dans une case. */
@@ -996,9 +997,23 @@ function Index() {
   const setValue = (index: number, field: "wa" | "wd", value: string) => {
     markDirty();
     clearError(`${index}-${field}`);
+    // Pile d'annulation : 3 retours en arrière maximum.
+    setUndoStack((prev) => [...prev, rows].slice(-3));
     setRows((prev) =>
       prev.map((r, i) => (i === index ? { ...r, [field]: cleanWeight(value) } : r)),
     );
+  };
+
+  /** Restaure l'état de mesures précédent (jusqu'à 3 fois de suite). */
+  const undoRows = () => {
+    setUndoStack((prev) => {
+      if (prev.length === 0) return prev;
+      const last = prev[prev.length - 1]!;
+      setRows(last);
+      setErrors({});
+      setCoherenceIndex(null);
+      return prev.slice(0, -1);
+    });
   };
 
   const handleBlur = (index: number, field: "wa" | "wd", value: string) => {
@@ -1021,7 +1036,7 @@ function Index() {
         setRowField(index, field, num.toString());
         return;
       }
-      if (num > 60 && !hidePedalAlert) {
+      if (num > 75 && !hidePedalAlert) {
         pedalCount.current += 1;
         setPedalAlert(true);
       }
