@@ -1549,7 +1549,7 @@ function Index() {
     const frame = (id: string) =>
       pdfFramesRef.current?.querySelector<HTMLElement>(`[data-frame="${id}"]`) ?? null;
     return [
-      keep([moyennesRef.current, pdfMesuresRef.current]),
+      keep([moyennesRef.current, rawPdfMirror() ?? pdfMesuresRef.current]),
       keep([frame("wa"), frame("wd")]),
       keep([frame("bal"), frame("fric")]),
     ];
