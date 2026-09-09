@@ -410,11 +410,6 @@ function Index() {
   /** Miroir des erreurs : permet de verrouiller le curseur dans une case fautive. */
   const errorsRef = useRef<Record<string, string>>({});
   errorsRef.current = errors;
-  /** Miroir des binômes incomplets (une seule case remplie sur la touche). */
-  const orphanRef = useRef<number[]>([]);
-  /** Binôme actuellement verrouillé : interdiction absolue d'en sortir. */
-  const lockedPairRef = useRef<number | null>(null);
-
   /** Badge vert retardé : ne s'allume qu'après 0,5 s sans cadre rouge ni erreur. */
   const [badgeVisible, setBadgeVisible] = useState(false);
   const badgeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -632,24 +627,6 @@ function Index() {
         .map(({ i }) => i),
     [rows],
   );
-  orphanRef.current = orphanKeys;
-
-  /** Une touche est en anomalie : erreur mécanique, hors fourchette ou binôme incomplet. */
-  const pairHasError = (index: number) =>
-    !!errorsRef.current[`${index}-wa`] ||
-    !!errorsRef.current[`${index}-wd`] ||
-    orphanRef.current.includes(index);
-
-  /** Case fautive du binôme sur laquelle le curseur doit rester capturé. */
-  const pairErrorField = (index: number): "wa" | "wd" => {
-    if (errorsRef.current[`${index}-wa`]) return "wa";
-    if (errorsRef.current[`${index}-wd`]) return "wd";
-    const row = rowsRef.current?.[index];
-    if (row && row.wa.trim() === "") return "wa";
-    return "wd";
-  };
-
-
 
 
   /**
@@ -1062,17 +1039,15 @@ function Index() {
     inputs.current[`${index}-${field}`]?.select();
   };
 
-  const onKeyDown = (e: React.KeyboardEvent, index: number, field: "wa" | "wd") => {
-    // Verrou absolu du binôme : erreur mécanique, hors fourchette ou binôme
-    // incomplet. Seuls les déplacements INTERNES au binôme restent permis.
-    if (pairHasError(index) && (e.key === "Tab" || e.key === "Enter")) {
-      e.preventDefault();
-      const other = field === "wa" ? "wd" : "wa";
-      if (errorsRef.current[`${index}-${field}`]) focusCell(index, field);
-      else focusCell(index, other);
-      return;
+  const onKeyDown = useCallback((e: React.KeyboardEvent, index: number, field: "wa" | "wd") => {
+    // Verrou absolu : tant que la case est en erreur (hors 30-80 g), aucune
+    // navigation clavier n'est autorisée.
+    if (errorsRef.current[`${index}-${field}`]) {
+      if (e.key === "Tab" || e.key === "Enter") {
+        e.preventDefault();
+        return;
+      }
     }
-
     // ALT + TAB (Option + TAB sur Mac) : saute directement au DO suivant.
     if (e.altKey && e.key === "Tab") {
       const nextCKey = Array.from(C_KEYS).find((key) => key > index + 1);
@@ -1098,8 +1073,7 @@ function Index() {
     e.preventDefault();
     if (field === "wa") focusCell(index, "wd");
     else if (index < 87) focusCell(index + 1, "wa");
-  };
-
+  }, []);
 
   /** Met à jour une cellule (Wa/Wd) et renvoie la ligne résultante. */
   const setRowField = (index: number, field: "wa" | "wd", value: string): Row => {
@@ -1924,20 +1898,6 @@ function Index() {
             showBlockMessage(index, field);
             return;
           }
-          // Saisie expéditive : si la case est en anomalie (FF mécanique ou
-          // hors fourchette), la première frappe numérique écrase la valeur.
-          if (
-            /^[0-9]$/.test(e.key) &&
-            !e.altKey &&
-            !e.ctrlKey &&
-            !e.metaKey &&
-            errorsRef.current[`${index}-${field}`] &&
-            e.currentTarget.selectionStart === e.currentTarget.selectionEnd
-          ) {
-            e.preventDefault();
-            setValue(index, field, e.key);
-            return;
-          }
           if (e.key === "Enter") {
             handleBlur(index, field, e.currentTarget.value);
           }
@@ -1953,16 +1913,6 @@ function Index() {
         aria-label={`${field === "wa" ? (en ? "DW" : "PD") : en ? "UW" : "PR"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
         onFocus={(e) => {
-          // Verrou du binôme : impossible de rejoindre une autre touche tant
-          // que le binôme précédent est en anomalie (mécanique, fourchette,
-          // ou binôme incomplet).
-          const locked = lockedPairRef.current;
-          if (locked !== null && locked !== index && pairHasError(locked)) {
-            const target = pairErrorField(locked);
-            setTimeout(() => focusCell(locked, target), 0);
-            return;
-          }
-          lockedPairRef.current = index;
           // Sélection intégrale des 2 chiffres (fourchette OU erreur mécanique) :
           // l'artisan retape immédiatement sa nouvelle valeur.
           const input = e.currentTarget;
@@ -1971,8 +1921,7 @@ function Index() {
           // Le message FF de fourchette s'efface définitivement dès le clic dans la case.
           hideRangeMessage(true);
         }}
-        className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "error !border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
-
+        className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
       />
       )}
@@ -2349,9 +2298,7 @@ function Index() {
 
           </div>
         </Frame>
-        <p className="mt-1 pl-0 text-left text-sm italic text-foreground">* Champs obligatoires</p>
       </div>
-
       )}
 
       {blockMessage && (
