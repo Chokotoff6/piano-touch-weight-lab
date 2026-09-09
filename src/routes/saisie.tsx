@@ -1045,9 +1045,17 @@ function Index() {
     }
     // Feedback Flash : PD > PR obligatoire (valeur complète uniquement).
     checkCoherence(index, nextRow);
-    // Alerte sustain strictement entre 76 g et 80 g : hors fourchette (>80 ou <30),
-    // aucun message n'est affiché, seul le cadre rouge bloque la case.
     const num = parseWeight(cleaned);
+    // Hors fourchette (<30 ou >80) : cadre rouge IMMÉDIAT dès la détection,
+    // sans aucun message sustain. La case reste libre d'être corrigée ; le
+    // verrouillage du focus n'agit qu'à la tentative de sortie (blur/Tab/Enter).
+    if (num !== null && (num < 30 || num > 80)) {
+      setErrors((prev) => ({ ...prev, [`${index}-${field}`]: PD_RANGE_MESSAGE }));
+      return;
+    }
+    // Valeur redevenue conforme : nettoyage instantané du cadre rouge.
+    clearError(`${index}-${field}`);
+    // Alerte sustain strictement entre 76 g et 80 g.
     if (num !== null && num > 75 && num <= 80 && !hidePedalAlert) {
       pedalCount.current += 1;
       pedalOrigin.current = { index, field };
