@@ -444,6 +444,7 @@ function Index() {
   /** Alerte pédale de sustain (PD > 60) et son option « ne plus afficher ». */
   const [pedalAlert, setPedalAlert] = useState(false);
   const [undoStack, setUndoStack] = useState<Row[][]>([]);
+  const [redoStack, setRedoStack] = useState<Row[][]>([]);
   const pedalCount = useRef(0);
   const [hidePedalAlert, setHidePedalAlert] = useState(false);
   /** Valeur mémorisée avant effacement automatique au clic dans une case. */
@@ -999,9 +1000,18 @@ function Index() {
     clearError(`${index}-${field}`);
     // Pile d'annulation : 3 retours en arrière maximum.
     setUndoStack((prev) => [...prev, rows].slice(-3));
-    setRows((prev) =>
-      prev.map((r, i) => (i === index ? { ...r, [field]: cleanWeight(value) } : r)),
-    );
+    setRedoStack([]);
+    const cleaned = cleanWeight(value);
+    const nextRow: Row = { ...rows[index]!, [field]: cleaned };
+    setRows((prev) => prev.map((r, i) => (i === index ? nextRow : r)));
+    // Feedback Flash immédiat : PD > PR obligatoire.
+    checkCoherence(index, nextRow);
+    // Alerte sustain immédiate au-delà de 75 g (les deux colonnes).
+    const num = parseWeight(cleaned);
+    if (num !== null && num > 75 && !hidePedalAlert) {
+      pedalCount.current += 1;
+      setPedalAlert(true);
+    }
   };
 
   /** Restaure l'état de mesures précédent (jusqu'à 3 fois de suite). */
@@ -1009,6 +1019,20 @@ function Index() {
     setUndoStack((prev) => {
       if (prev.length === 0) return prev;
       const last = prev[prev.length - 1]!;
+      setRedoStack((r) => [...r, rows].slice(-3));
+      setRows(last);
+      setErrors({});
+      setCoherenceIndex(null);
+      return prev.slice(0, -1);
+    });
+  };
+
+  /** Rétablit un état annulé (jusqu'à 3 fois de suite). */
+  const redoRows = () => {
+    setRedoStack((prev) => {
+      if (prev.length === 0) return prev;
+      const last = prev[prev.length - 1]!;
+      setUndoStack((u) => [...u, rows].slice(-3));
       setRows(last);
       setErrors({});
       setCoherenceIndex(null);
