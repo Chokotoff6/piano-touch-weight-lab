@@ -8,6 +8,7 @@ import {
   saisieGate,
 } from "@/lib/required-keys";
 import { SmartCombobox, type SmartComboboxHandle } from "@/components/SmartCombobox";
+import { TargetLegalInfoIcon } from "@/components/BrandTargetInfo";
 import { modelsFor, modelGroupsFor, inferTypeFromModel } from "@/data/pianoModels";
 import {
   BRAND_SUGGESTIONS,
@@ -2006,11 +2007,12 @@ function Index() {
                     className={`${INPUT_CLASS} max-w-[120px]`}
                   />
                 </label>
-                <div className="flex h-8 items-end text-xs text-black">
+                <div className="flex h-8 items-end gap-1 text-xs text-black">
                   <span>
                     {profile.frictionTarget !== null &&
                       `Friction cible ${profile.frictionTarget} g`}
                   </span>
+                  <TargetLegalInfoIcon />
                 </div>
               </div>
               {!serialFormatValid && (
