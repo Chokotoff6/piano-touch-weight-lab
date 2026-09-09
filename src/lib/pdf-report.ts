@@ -493,18 +493,22 @@ function drawPortraitPage(pdf: jsPDF, blocks: Capture[], ratio: number) {
 export async function generatePortraitReport(
   pages: HTMLElement[][],
   filename: string,
+  /** Numéro de la première page imprimée (section comparative : 4). */
+  startPage = 1,
+  /** Nombre total affiché au pied de page (section comparative : 5). */
+  totalPages?: number,
 ): Promise<void> {
   const captured = await captureReportPages(pages);
   if (captured.length === 0) return;
   const pdf = new jsPDF({ orientation: "portrait", format: "a4", unit: "mm" });
-  const total = captured.length;
+  const total = totalPages ?? startPage - 1 + captured.length;
   const stamp = exportStamp();
   captured.forEach((blocks, index) => {
     if (index > 0) pdf.addPage("a4", "portrait");
     drawPortraitPage(pdf, blocks, portraitRatio(blocks));
     pdf.setFontSize(7);
     pdf.setTextColor(120);
-    pdf.text(`Page ${index + 1} / ${total}`, P_W - MARGIN, P_H - MARGIN - 3, { align: "right" });
+    pdf.text(`Page ${startPage + index} / ${total}`, P_W - MARGIN, P_H - MARGIN - 3, { align: "right" });
     pdf.text(`Exporté le : ${stamp}`, P_W - MARGIN, P_H - MARGIN, { align: "right" });
     pdf.setTextColor(0);
   });
