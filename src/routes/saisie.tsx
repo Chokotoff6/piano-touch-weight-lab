@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Redo2, Undo2 } from "lucide-react";
 import {
   hasAnyMeasurement,
   incompleteOctaves,
