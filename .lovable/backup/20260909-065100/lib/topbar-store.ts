@@ -17,13 +17,10 @@ type TopbarState = {
   gateReady: boolean;
   /** Consentement RGPD validé sur la page Résultats (débloque "Comparer"). */
   compareUnlocked: boolean;
-  /** La page Résultats a été visitée au moins une fois. */
-  resultsVisited: boolean;
 };
 
 const GATE_KEY = "ptw_gate_ready";
 const UNLOCK_KEY = "ptw_compare_unlocked";
-const VISITED_KEY = "ptw_results_visited";
 
 let state: TopbarState = {
   exportReady: false,
@@ -36,7 +33,6 @@ let state: TopbarState = {
   historyRows: [],
   gateReady: false,
   compareUnlocked: false,
-  resultsVisited: false,
 };
 const listeners = new Set<() => void>();
 
@@ -56,21 +52,10 @@ export function initJourneyFlags() {
     setTopbarState({
       gateReady: window.localStorage.getItem(GATE_KEY) === "1",
       compareUnlocked: window.localStorage.getItem(UNLOCK_KEY) === "1",
-      resultsVisited: window.localStorage.getItem(VISITED_KEY) === "1",
     });
   } catch {
     /* stockage indisponible */
   }
-}
-
-/** Mémorise la visite de la page Résultats (débloque le bouton Comparer). */
-export function setResultsVisited(visited: boolean) {
-  try {
-    window.localStorage.setItem(VISITED_KEY, visited ? "1" : "0");
-  } catch {
-    /* stockage indisponible */
-  }
-  setTopbarState({ resultsVisited: visited });
 }
 
 export function setGateReady(ready: boolean) {

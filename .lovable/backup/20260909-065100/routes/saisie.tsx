@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Redo2, Undo2 } from "lucide-react";
 import {
   hasAnyMeasurement,
   incompleteOctaves,
@@ -445,7 +444,6 @@ function Index() {
   /** Alerte pédale de sustain (PD > 60) et son option « ne plus afficher ». */
   const [pedalAlert, setPedalAlert] = useState(false);
   const [undoStack, setUndoStack] = useState<Row[][]>([]);
-  const [redoStack, setRedoStack] = useState<Row[][]>([]);
   const pedalCount = useRef(0);
   const [hidePedalAlert, setHidePedalAlert] = useState(false);
   /** Valeur mémorisée avant effacement automatique au clic dans une case. */
@@ -733,7 +731,7 @@ function Index() {
       focusFirstWeight();
     }, 150);
     try {
-      if (window.sessionStorage.getItem(PEDAL_HIDE_KEY) === "1") setHidePedalAlert(true);
+      if (window.localStorage.getItem(PEDAL_HIDE_KEY) === "1") setHidePedalAlert(true);
     } catch {
       /* stockage indisponible */
     }
@@ -1001,18 +999,9 @@ function Index() {
     clearError(`${index}-${field}`);
     // Pile d'annulation : 3 retours en arrière maximum.
     setUndoStack((prev) => [...prev, rows].slice(-3));
-    setRedoStack([]);
-    const cleaned = cleanWeight(value);
-    const nextRow: Row = { ...rows[index]!, [field]: cleaned };
-    setRows((prev) => prev.map((r, i) => (i === index ? nextRow : r)));
-    // Feedback Flash immédiat : PD > PR obligatoire.
-    checkCoherence(index, nextRow);
-    // Alerte sustain immédiate au-delà de 75 g (les deux colonnes).
-    const num = parseWeight(cleaned);
-    if (num !== null && num > 75 && !hidePedalAlert) {
-      pedalCount.current += 1;
-      setPedalAlert(true);
-    }
+    setRows((prev) =>
+      prev.map((r, i) => (i === index ? { ...r, [field]: cleanWeight(value) } : r)),
+    );
   };
 
   /** Restaure l'état de mesures précédent (jusqu'à 3 fois de suite). */
@@ -1020,20 +1009,6 @@ function Index() {
     setUndoStack((prev) => {
       if (prev.length === 0) return prev;
       const last = prev[prev.length - 1]!;
-      setRedoStack((r) => [...r, rows].slice(-3));
-      setRows(last);
-      setErrors({});
-      setCoherenceIndex(null);
-      return prev.slice(0, -1);
-    });
-  };
-
-  /** Rétablit un état annulé (jusqu'à 3 fois de suite). */
-  const redoRows = () => {
-    setRedoStack((prev) => {
-      if (prev.length === 0) return prev;
-      const last = prev[prev.length - 1]!;
-      setUndoStack((u) => [...u, rows].slice(-3));
       setRows(last);
       setErrors({});
       setCoherenceIndex(null);
@@ -2219,7 +2194,7 @@ function Index() {
           type="button"
           data-pdf-hide
           onClick={() => setWeighingMode(false)}
-          style={{ marginLeft: "400px" }}
+          style={{ marginLeft: "200px" }}
           className="absolute left-1/2 -top-4 z-10 -translate-x-1/2 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
         >
           {en ? "Edit piano information" : "Modifier Informations piano"}
@@ -2228,7 +2203,7 @@ function Index() {
           {confirmReset === "rows" && (
             <div className="absolute bottom-full left-1/2 mb-2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
               <span>Voulez-vous effacer toutes les données de poids saisies ?</span>
-              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setUndoStack([]); setRedoStack([]); setConfirmReset(null); }}>Oui</button>
+              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setUndoStack([]); setConfirmReset(null); }}>Oui</button>
               <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
             </div>
           )}
@@ -2246,22 +2221,10 @@ function Index() {
               data-pdf-hide
               disabled={undoStack.length === 0}
               onClick={undoRows}
-              aria-label="Annuler"
               title="Annuler la dernière saisie (3 maximum)"
-              className={`flex items-center justify-center rounded-md border border-input bg-background px-4 py-1.5 transition-colors hover:bg-accent ${undoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "!text-black"}`}
+              className={`rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold transition-colors hover:bg-accent ${undoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "!text-black"}`}
             >
-              <Undo2 className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              data-pdf-hide
-              disabled={redoStack.length === 0}
-              onClick={redoRows}
-              aria-label="Rétablir"
-              title="Rétablir la saisie annulée (3 maximum)"
-              className={`flex items-center justify-center rounded-md border border-input bg-background px-4 py-1.5 transition-colors hover:bg-accent ${redoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "!text-black"}`}
-            >
-              <Redo2 className="h-4 w-4" />
+              Undo
             </button>
           </div>
         </div>
@@ -2313,7 +2276,7 @@ function Index() {
             type="button"
             data-pdf-hide
             onClick={() => navigate({ to: "/resultats" })}
-            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors ${badgeVisible ? "!border-green-600 !bg-green-500 hover:!bg-green-600" : "border-input bg-background hover:bg-accent"}`}
+            className={`rounded-md border px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100 hover:!bg-green-200" : "border-input bg-background hover:bg-accent"}`}
           >
             {en ? "Results & Charts >" : "Résultats & Graphiques >"}
           </button>
@@ -2505,15 +2468,15 @@ Moyennes{" "}
           style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
         >
           <div>{en ? PEDAL_MESSAGE_EN : PEDAL_MESSAGE_FR}</div>
-          {/* Case toujours visible, mémorisée pour la session. */}
+          {pedalCount.current > 0 && (
             <label className="mt-2 flex items-center gap-2 text-xs font-normal">
               <input
                 type="checkbox"
                 onChange={(e) => {
                   setHidePedalAlert(e.target.checked);
                   try {
-                    if (e.target.checked) window.sessionStorage.setItem(PEDAL_HIDE_KEY, "1");
-                    else window.sessionStorage.removeItem(PEDAL_HIDE_KEY);
+                    if (e.target.checked) window.localStorage.setItem(PEDAL_HIDE_KEY, "1");
+                    else window.localStorage.removeItem(PEDAL_HIDE_KEY);
                   } catch {
                     /* stockage indisponible */
                   }
@@ -2521,6 +2484,7 @@ Moyennes{" "}
               />
               {en ? "Do not show this message again" : "Ne plus afficher ce message"}
             </label>
+          )}
           <div className="mt-2 flex justify-end">
             <button
               type="button"

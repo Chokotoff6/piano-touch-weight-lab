@@ -9,7 +9,7 @@ import {
   type KeyFilter,
   type RefProfile,
 } from "@/routes/comparer";
-import { setCompareUnlocked, setResultsVisited, useTopbarState } from "@/lib/topbar-store";
+import { setCompareUnlocked, useTopbarState } from "@/lib/topbar-store";
 import {
   buildCurrentPiano,
   loadCurrentPiano,
@@ -109,8 +109,6 @@ function Resultats() {
 
   useEffect(() => {
     setDraft(readDraft());
-    // Jalon de parcours : la visite de cette page débloque « Comparer ».
-    setResultsVisited(true);
   }, []);
 
   useEffect(() => {

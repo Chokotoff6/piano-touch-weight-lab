@@ -385,6 +385,7 @@ function CustomTickTop(props: { x?: number; y?: number; dy?: number; payload?: {
   const value = payload?.value ?? 0;
   return (
     <g transform={`translate(${x},${y})`}>
+      {value === 4 && <text x={-24} y={dy} dy={6} textAnchor="middle" fontSize={10} fill="#6b7280">(DO)</text>}
       <text x={0} y={dy} dy={6} textAnchor="middle" fontSize={10} fill="#6b7280">{value}</text>
     </g>
   );
@@ -577,7 +578,7 @@ export function nextKeyFilter(keyFilter: KeyFilter): KeyFilter {
 
 function MagnifyIcon() {
   return (
-    <svg aria-hidden="true" className="h-[1.3rem] w-[1.3rem]" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+    <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
       <circle cx="9" cy="9" r="5.5" />
       <path d="m13.5 13.5 3.5 3.5M7 9h4M9 7v4" />
     </svg>
@@ -802,9 +803,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               if (Number.isFinite(note)) lastMouseNote.current = note;
             }}
             onMouseLeave={() => { setHoveredFamily(null); }}
-            // Anti-chevauchement : la marge droite garantit toujours la place
-            // du libellé « Moy: xx.xg », la marge gauche celle des noms courts.
-            margin={{ top: 22, right: Math.max(sideMargin, 80), bottom: 15, left: Math.max(autoDomain ? sideMargin + 46 : sideMargin, 70) }}
+            margin={{ top: 22, right: sideMargin, bottom: 15, left: autoDomain ? sideMargin + 46 : sideMargin }}
           >
             <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
             <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />

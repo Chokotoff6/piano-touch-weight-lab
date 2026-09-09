@@ -9,9 +9,11 @@ import {
 } from "@/components/ui/accordion";
 
 export const Route = createFileRoute("/")({
-  // Page d'accueil par défaut : la Saisie.
+  // Redirection temporaire (302) vers /comparer.
+  // Les utilisateurs qui arrivent sur "/" atterrissent directement sur la
+  // page Comparer. Pas de boucle : /comparer est une route distincte.
   beforeLoad: () => {
-    throw redirect({ to: "/saisie" });
+    throw redirect({ to: "/comparer" });
   },
   head: () => ({
     meta: [

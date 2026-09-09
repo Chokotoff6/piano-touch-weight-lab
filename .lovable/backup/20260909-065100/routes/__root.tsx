@@ -182,7 +182,7 @@ function RootComponent() {
                 </span>
               )}
               <div className="relative">
-                {topbar.compareUnlocked && topbar.resultsVisited ? (
+                {topbar.compareUnlocked ? (
                   <Link
                     to="/comparer"
                     className={linkClass}
@@ -194,7 +194,7 @@ function RootComponent() {
                   <span
                     className={lockedLinkClass}
                     aria-disabled="true"
-                    title="Passez d'abord par la page Résultats."
+                    title="Validez le partage collaboratif sur la page Résultats."
                   >
                     Comparer
                   </span>
@@ -292,7 +292,7 @@ function RootComponent() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="rounded-l-none border-l-0 bg-white px-2 !text-black"
+                        className="rounded-l-none border-l-0 bg-white px-2 text-muted-foreground"
                       >
                         <ChevronDown className="h-4 w-4" />
                       </Button>
