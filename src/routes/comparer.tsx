@@ -1045,7 +1045,15 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   // les cadres sont extraits de la grille via une bande pleine largeur centrée.
   return (
     <div ref={containerRef} className="relative w-full pb-[80vh] pt-2">
-      <div className="flex w-full flex-col gap-4">{FAMILIES.map((family) => <SubChart key={family.id} family={family} ctx={subCtx} />)}</div>
+      <div className="flex w-full flex-col gap-4">
+        {/* Deux paires : chaque paire est capturée en UNE seule image PDF. */}
+        <div data-frame="pair1" className="flex w-full flex-col gap-4">
+          {FAMILIES.slice(0, 2).map((family) => <SubChart key={family.id} family={family} ctx={subCtx} />)}
+        </div>
+        <div data-frame="pair2" className="flex w-full flex-col gap-4">
+          {FAMILIES.slice(2).map((family) => <SubChart key={family.id} family={family} ctx={subCtx} />)}
+        </div>
+      </div>
     </div>
   );
 
