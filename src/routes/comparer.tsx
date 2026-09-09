@@ -1421,12 +1421,13 @@ function Comparer() {
             const keep = (list: Array<HTMLElement | null>) =>
               list.filter((el): el is HTMLElement => el !== null);
             const pages = [
-              keep([averagesRef.current, settingsRef.current]),
-              keep([pick("pair1")]),
-              keep([pick("pair2")]),
+              // Page 4 : « Réglages » AU-DESSUS de « Moyennes ».
+              keep([settingsRef.current, averagesRef.current]),
+              // Page 5 : les 4 graphiques regroupés sur une seule page.
+              keep([pick("pair1"), pick("pair2")]),
             ].filter((page) => page.length > 0);
             if (pages.length === 0) return;
-            await generatePortraitReport(pages, "COMPARATIF_TOUCHWEIGHT.pdf");
+            await generatePortraitReport(pages, "COMPARATIF_TOUCHWEIGHT.pdf", 4, 5);
           } finally {
             setTopbarState({ isExporting: false });
           }
