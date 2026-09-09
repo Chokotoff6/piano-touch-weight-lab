@@ -780,10 +780,9 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
         ref={zoomed ? plotRef : undefined}
         className="h-full w-full"
         // Mode non-zoom : tout le bloc graphique (axes, repères, courbes,
-        // étiquettes) est translaté vers la gauche. En mode « N/B groupées »,
-        // le décalage total est de 30 px. Les boutons ne bougent pas (frères).
-        style={zoomed ? undefined : { transform: `translateX(${keyFilter === "all" ? -30 : -10}px)` }}
-
+        // étiquettes) est translaté de 10 px vers la gauche pour s'écarter de
+        // la bordure droite du cadre. Les boutons ne bougent pas (frères).
+        style={zoomed ? undefined : { transform: "translateX(-10px)" }}
 
         onMouseEnter={() => setHoveredFamily(family.id)}
         onMouseMove={(event) => {

@@ -25,7 +25,7 @@ import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
 import { buildCsv, buildExportFilename, downloadCsv, formatLocalDateTime } from "@/lib/export-csv";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { getLang, useLang } from "@/data/translations";
-import { buildReportPdf, captureReportPages } from "@/lib/pdf-report";
+import { buildReportPdf, captureReportPages, downloadDebugPng, getCachedCaptures, setCachedCaptures } from "@/lib/pdf-report";
 import { generateBlankFormPdf, generateBlankKeyboardPdf } from "@/lib/pdf-blank-form";
 
 import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
@@ -1252,6 +1252,39 @@ function Index() {
     ];
   };
 
+  /** Empreinte des données : identifie le rapport déjà capturé en cache. */
+  const pdfCacheKey = useMemo(
+    () => JSON.stringify(["pdf-mirror-1250-v1", rows, info["marque"], info["modele"], info["sn_num"]]),
+    [rows, info],
+  );
+  const pdfPrerendering = useRef(false);
+
+  // Pré-rendu silencieux : dès que le badge « Saisie conforme » est vert, les
+  // captures html2canvas sont calculées en arrière-plan et mises en cache
+  // (cache persistant : conservé lors des allers-retours vers Résultats).
+  useEffect(() => {
+    if (!badgeVisible) return;
+    if (getCachedCaptures(pdfCacheKey)) return;
+    let cancelled = false;
+    pdfPrerendering.current = true;
+    const timer = setTimeout(() => {
+      void captureReportPages(collectPdfPages())
+        .then((shots) => {
+          if (!cancelled && shots.length > 0) setCachedCaptures(pdfCacheKey, shots);
+        })
+        .catch((error) => console.warn("[pdf] pré-rendu", error))
+        .finally(() => {
+          pdfPrerendering.current = false;
+        });
+    }, 1200);
+    return () => {
+      cancelled = true;
+      pdfPrerendering.current = false;
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [badgeVisible, pdfCacheKey]);
+
   /** Compose et télécharge directement le rapport PDF (aucun panneau d'impression). */
   const exportPdfFile = async () => {
     const pages = collectPdfPages();
@@ -1265,12 +1298,18 @@ function Index() {
       "pdf",
     );
     const header = [pdfSummary.main, pdfSummary.time, pdfSummary.count];
-    // Aucune capture en arrière-plan : html2canvas ne tourne QU'ICI, au clic.
-    toast.info("Génération du rapport PDF en cours... Merci de patienter.");
+    const cached = getCachedCaptures(pdfCacheKey);
+    if (cached && cached.length > 0) {
+      buildReportPdf(cached, filename, header);
+      return;
+    }
+    if (pdfPrerendering.current) {
+      toast.info("Génération du rapport PDF en cours... Merci de patienter.");
+    }
     const shots = await captureReportPages(pages);
+    setCachedCaptures(pdfCacheKey, shots);
     buildReportPdf(shots, filename, header);
   };
-
 
 
 
@@ -1639,13 +1678,29 @@ function Index() {
       );
     };
 
+    // OUTIL DE DÉBOGAGE TEMPORAIRE : capture PNG brute du cadre « Mesures
+    // poids statiques » (sans jsPDF) pour analyser le recadrage.
+    const onDebugPng = () => {
+      const el = pdfMesuresRef.current;
+      if (!el) {
+        toast.error("Cadre « Mesures poids statiques » introuvable.");
+        return;
+      }
+      toast.info("Capture PNG de débogage en cours...");
+      void downloadDebugPng(el, "debug-mesures-poids-statiques.png").catch((error) => {
+        console.error("[debug-png] échec", error);
+        toast.error("Échec de la capture PNG de débogage.");
+      });
+    };
+
+
     const handlers: Record<string, EventListener> = {
       "piano-export": onExport,
       "piano-export-csv": exportCsvOnly,
       "piano-export-pdf": onPdf,
       "piano-export-blank-pdf": onBlankPdf,
       "piano-export-blank-keyboard-pdf": onBlankKeyboardPdf,
-
+      "piano-debug-png": onDebugPng,
 
       "piano-compare-guard": onCompareGuard,
       "piano-reset": onReset,
@@ -1733,7 +1788,7 @@ function Index() {
           // sélectionnée, la première frappe la remplace donc instantanément.
           e.currentTarget.select();
         }}
-        className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        className={`weight-input !font-sans font-semibold !text-black focus:!border-black focus:!ring-0 ${isBlack ? "" : "![background-color:#cbd5e1]"} ${orphanKeys.includes(index) ? "!border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
       />
       )}
