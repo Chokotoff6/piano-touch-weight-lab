@@ -34,6 +34,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
     backgroundColor: "#ffffff",
     useCORS: true,
     logging: false,
+    imageTimeout: 0,
     y: -PAD,
     height,
     windowWidth: compact ? 1300 : 1500,
