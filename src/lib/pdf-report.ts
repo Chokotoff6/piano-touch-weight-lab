@@ -300,8 +300,6 @@ export async function captureReportPages(pages: HTMLElement[][]): Promise<Report
   // mémoire : une seule frame d'attente suffit, l'export reste immédiat.
   await settle(0);
   for (const page of pages) {
-    // Extraction brute : aucun état applicatif n'est consulté ici.
-    void 0;
     const blocks = page.filter((block) => Boolean(block) && isRenderable(block));
     if (blocks.length === 0) continue;
     const shots: Capture[] = [];
