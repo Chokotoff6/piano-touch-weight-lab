@@ -1098,7 +1098,8 @@ function Index() {
     e.preventDefault();
     if (field === "wa") focusCell(index, "wd");
     else if (index < 87) focusCell(index + 1, "wa");
-  }, []);
+  };
+
 
   /** Met à jour une cellule (Wa/Wd) et renvoie la ligne résultante. */
   const setRowField = (index: number, field: "wa" | "wd", value: string): Row => {
