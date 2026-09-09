@@ -968,24 +968,11 @@ function Index() {
   };
 
   const onKeyDown = useCallback((e: React.KeyboardEvent, index: number, field: "wa" | "wd") => {
-    // CTRL + TAB : saute directement au DO suivant.
-    if (e.ctrlKey && e.key === "Tab") {
+    if (e.shiftKey && e.key === "Tab") {
       const nextCKey = Array.from(C_KEYS).find((key) => key > index + 1);
       if (nextCKey !== undefined) {
         e.preventDefault();
         focusCell(nextCKey - 1, "wa");
-      }
-      return;
-    }
-    // TAB : avance d'une zone ; Shift + TAB : recule d'une zone.
-    if (e.key === "Tab") {
-      e.preventDefault();
-      if (e.shiftKey) {
-        if (field === "wd") focusCell(index, "wa");
-        else if (index > 0) focusCell(index - 1, "wd");
-      } else {
-        if (field === "wa") focusCell(index, "wd");
-        else if (index < 87) focusCell(index + 1, "wa");
       }
       return;
     }
@@ -1019,17 +1006,9 @@ function Index() {
     const cleaned = cleanWeight(value);
     const nextRow: Row = { ...rows[index]!, [field]: cleaned };
     setRows((prev) => prev.map((r, i) => (i === index ? nextRow : r)));
-    // AUCUNE erreur mécanique tant que la case ne contient pas 2 chiffres :
-    // l'artisan doit pouvoir taper librement son binôme.
-    if (cleaned.length < 2) {
-      clearError(`${index}-wa`);
-      clearError(`${index}-wd`);
-      if (coherenceIndex === index) setCoherenceIndex(null);
-      return;
-    }
-    // Feedback Flash : PD > PR obligatoire (valeur complète uniquement).
+    // Feedback Flash immédiat : PD > PR obligatoire.
     checkCoherence(index, nextRow);
-    // Alerte sustain au-delà de 75 g (les deux colonnes).
+    // Alerte sustain immédiate au-delà de 75 g (les deux colonnes).
     const num = parseWeight(cleaned);
     if (num !== null && num > 75 && !hidePedalAlert) {
       pedalCount.current += 1;
@@ -1074,7 +1053,6 @@ function Index() {
     const num = parseWeight(cleaned);
     if (num === null) {
       setErrors((prev) => ({ ...prev, [key]: "Valeur invalide (5-99, nombre entier)" }));
-      focusCell(index, field);
       return;
     }
     // CONDITION 3 : plage mécanique du poids descendant + alerte pédale au-delà de 60 g.
@@ -1082,8 +1060,6 @@ function Index() {
       if (num < 30 || num > 80) {
         setErrors((prev) => ({ ...prev, [key]: PD_RANGE_MESSAGE }));
         setRowField(index, field, num.toString());
-        // Verrouillage du focus tant que la valeur reste hors fourchette.
-        setTimeout(() => focusCell(index, field), 0);
         return;
       }
       if (num > 75 && !hidePedalAlert) {
@@ -1764,7 +1740,7 @@ function Index() {
         value={rows[index]![field]}
         readOnly={pdfMirror}
         maxLength={2}
-        placeholder=""
+        placeholder={field === "wa" ? (en ? "DW" : "PD") : en ? "UW" : "PR"}
         onChange={pdfMirror ? undefined : (e) => canEnterWeights && setValue(index, field, e.target.value)}
         onBlur={(e) => {
           if (!canEnterWeights) return;
@@ -2216,9 +2192,14 @@ function Index() {
                 className="pointer-events-none absolute left-5 top-1/2 hidden w-[360px] -translate-y-1/2 rounded-md border border-gray-300 px-3 py-2 text-left text-[13px] font-medium normal-case text-gray-950 shadow-lg group-hover:block"
                 style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
               >
-                <span className="block">• TAB : avance d&apos;une zone de saisie</span>
-                <span className="block">• Shift + TAB : recule d&apos;une zone de saisie</span>
-                <span className="block">• CTRL + TAB : passe directement au DO suivant</span>
+                <span className="block">
+                  {en
+                    ? "Compliant input = minimum all C and C#"
+                    : "Saisie conforme = minimum tous les Do et Do#"}
+                </span>
+                <span className="block">
+                  {en ? "Shift+TAB jumps from C to C." : "Shift+TAB saute de Do en Do."}
+                </span>
               </span>
             </span>
           </>
@@ -2247,7 +2228,7 @@ function Index() {
         </button>
         <div className="absolute left-[calc(1rem+4rem)] top-12 z-10 -translate-x-1/2 -translate-y-1/2">
           {confirmReset === "rows" && (
-            <div className="absolute bottom-full left-0 mb-2 ml-[120px] flex min-w-max items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
+            <div className="absolute bottom-full left-1/2 mb-2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
               <span>Voulez-vous effacer toutes les données de poids saisies ?</span>
               <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setUndoStack([]); setRedoStack([]); setConfirmReset(null); }}>Oui</button>
               <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
@@ -2262,30 +2243,28 @@ function Index() {
             >
               Reset
             </button>
-            <div className="flex flex-row items-center justify-center gap-1">
-              <button
-                type="button"
-                data-pdf-hide
-                disabled={undoStack.length === 0}
-                onClick={undoRows}
-                aria-label="Annuler"
-                title="Annuler la dernière saisie (3 maximum)"
-                className={`flex h-6 w-7 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${undoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "!text-black"}`}
-              >
-                <Undo2 className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                data-pdf-hide
-                disabled={redoStack.length === 0}
-                onClick={redoRows}
-                aria-label="Rétablir"
-                title="Rétablir la saisie annulée (3 maximum)"
-                className={`flex h-6 w-7 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${redoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "!text-black"}`}
-              >
-                <Redo2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
+            <button
+              type="button"
+              data-pdf-hide
+              disabled={undoStack.length === 0}
+              onClick={undoRows}
+              aria-label="Annuler"
+              title="Annuler la dernière saisie (3 maximum)"
+              className={`flex items-center justify-center rounded-md border border-input bg-background px-4 py-1.5 transition-colors hover:bg-accent ${undoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "!text-black"}`}
+            >
+              <Undo2 className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              data-pdf-hide
+              disabled={redoStack.length === 0}
+              onClick={redoRows}
+              aria-label="Rétablir"
+              title="Rétablir la saisie annulée (3 maximum)"
+              className={`flex items-center justify-center rounded-md border border-input bg-background px-4 py-1.5 transition-colors hover:bg-accent ${redoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "!text-black"}`}
+            >
+              <Redo2 className="h-4 w-4" />
+            </button>
           </div>
         </div>
         {badgeVisible && (
