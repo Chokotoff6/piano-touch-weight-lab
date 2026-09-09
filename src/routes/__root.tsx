@@ -162,6 +162,10 @@ function RootComponent() {
   const lang = useLang();
   const [consentOpen, setConsentOpen] = useState(false);
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
+  // Position du message « Export en cours... » : fixe, 10 px sous le bouton
+  // « Sauver » (donc juste sous le bandeau collant), aligné au bord droit.
+  const saveBtnRef = useRef<HTMLButtonElement | null>(null);
+  const [exportMsgTop, setExportMsgTop] = useState(0);
   const pendingActionRef = useRef<(() => void) | null>(null);
   useEffect(() => {
     initLang();
