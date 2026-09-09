@@ -2064,7 +2064,9 @@ function Index() {
           // Le message FF de fourchette s'efface définitivement dès le clic dans la case.
           hideRangeMessage(true);
         }}
-        className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"} ${incompletePairs.includes(index) ? "error !border-red-500" : ""} ${errors[`${index}-${field}`] ? "error" : ""}`}
+        // Aucune coloration rouge : les cases restent d'apparence normale même
+        // en anomalie. Seuls les messages FF et le blocage du focus subsistent.
+        className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"}`}
 
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
       />
