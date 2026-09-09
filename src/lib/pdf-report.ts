@@ -335,27 +335,28 @@ export async function captureReportPages(pages: HTMLElement[][]): Promise<Report
   // Les blocs (miroir fixe hors écran + graphiques) sont déjà peints en
   // mémoire : une seule frame d'attente suffit, l'export reste immédiat.
   await settle(0);
-  // Le grand tableau caché et les 4 graphiques sont capturés EN PARALLÈLE
-  // (Promise.all) au lieu de l'un après l'autre : le temps total d'export
-  // correspond au bloc le plus lent, plus à la somme de tous.
-  const jobs = pages.map((page) =>
-    page
-      .filter((block) => Boolean(block) && isRenderable(block))
-      .map(async (block): Promise<Capture | null> => {
-        // Étanchéité totale : un bloc non capturable est ignoré, jamais bloquant.
-        try {
-          const shot = await capture(block);
-          return shot.width > 0 && shot.height > 0 ? shot : null;
-        } catch (error) {
-          console.warn("[pdf] bloc ignoré", error);
-          return null;
-        }
-      }),
-  );
-  const resolved = await Promise.all(jobs.map((page) => Promise.all(page)));
-  const captured = resolved
-    .map((page) => page.filter((shot): shot is Capture => shot !== null))
-    .filter((page) => page.length > 0);
+  const total = performance.now();
+  // Captures séquentielles avec restitution de la main à l'affichage entre
+  // chacune : html2canvas travaille de toute façon sur l'unique fil de rendu,
+  // les lancer ensemble ne partage aucun travail et fige l'écran. Ici le
+  // message « Export en cours... » reste peint pendant toute l'opération.
+  const captured: ReportCaptures = [];
+  for (const page of pages) {
+    const shots: Capture[] = [];
+    for (const block of page) {
+      if (!block || !isRenderable(block)) continue;
+      // Étanchéité totale : un bloc non capturable est ignoré, jamais bloquant.
+      try {
+        const shot = await capture(block);
+        if (shot.width > 0 && shot.height > 0) shots.push(shot);
+      } catch (error) {
+        console.warn("[pdf] bloc ignoré", error);
+      }
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+    }
+    if (shots.length > 0) captured.push(shots);
+  }
+  console.info(`[pdf] captures totales : ${Math.round(performance.now() - total)} ms`);
   return captured;
 }
 
