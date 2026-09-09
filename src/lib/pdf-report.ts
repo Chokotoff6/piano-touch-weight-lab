@@ -28,9 +28,13 @@ async function capture(el: HTMLElement): Promise<Capture> {
   // Marge haute : les titres des cadres débordent au-dessus de la bordure.
   const PAD = 14;
   const compact = el.hasAttribute("data-pdf-compact");
+  const chart = el.hasAttribute("data-pdf-chart") || el.closest?.("[data-pdf-chart]");
   const height = el.offsetHeight + PAD * 2;
   const canvas = await html2canvas(el, {
-    scale: 2,
+    // Définition ajustée à la taille exacte d'insertion PDF : les graphiques
+    // s'impriment à leur largeur CSS (scale 1 suffit), seul le miroir du
+    // tableau reste en scale 2 pour la netteté des 88 chiffres.
+    scale: chart ? 1 : 2,
     backgroundColor: "#ffffff",
     useCORS: true,
     logging: false,
