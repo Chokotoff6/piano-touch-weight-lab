@@ -1274,21 +1274,51 @@ function Index() {
     hideRangeMessage();
     const finalRow = setRowField(index, field, num.toString());
     checkCoherence(index, finalRow);
-    // Binôme incomplet : la case restée vide passe en rouge et le message FF
-    // dédié s'affiche immédiatement.
-    const other = field === "wa" ? "wd" : "wa";
-    if (finalRow[other].trim() === "") showOrphanPopover(index);
+    // Le contrôle « Saisie incomplète » n'intervient QUE si l'artisan quitte
+    // complètement le binôme (jamais à la validation de la seule case du haut).
+    checkPairLeave(index, finalRow);
   };
 
-  /** Applique (ou lève) l'alerte de cohérence Wa > Wd sur les deux cellules d'une touche. */
+  /** Contrôle de sortie du binôme : cadre rouge + FF uniquement si l'artisan
+   *  quitte la touche alors qu'une des deux cases n'a pas ses 2 chiffres. */
+  const checkPairLeave = (index: number, row: Row) => {
+    setTimeout(() => {
+      const active = document.activeElement;
+      const stillInPair =
+        active === inputs.current[`${index}-wa`] || active === inputs.current[`${index}-wd`];
+      if (stillInPair) return;
+      const waFull = cleanWeight(row.wa).length === 2;
+      const wdFull = cleanWeight(row.wd).length === 2;
+      const bothEmpty = row.wa.trim() === "" && row.wd.trim() === "";
+      if ((waFull && wdFull) || bothEmpty) {
+        setIncompletePairs((prev) => prev.filter((i) => i !== index));
+        return;
+      }
+      setIncompletePairs((prev) => (prev.includes(index) ? prev : [...prev, index]));
+      showOrphanPopover(index);
+    }, 0);
+  };
+
+  /** Erreur mécanique PR >= PD : cadre rouge STRICTEMENT sur la case du bas
+   *  (Poids Remontant), dont les 2 chiffres sont sélectionnés automatiquement. */
   const checkCoherence = (index: number, row: Row) => {
     const wa = parseWeight(row.wa);
     const wd = parseWeight(row.wd);
     const waKey = `${index}-wa`;
     const wdKey = `${index}-wd`;
     if (wa !== null && wd !== null && wa <= wd) {
-      setErrors((prev) => ({ ...prev, [waKey]: COHERENCE_MESSAGE, [wdKey]: COHERENCE_MESSAGE }));
+      setErrors((prev) => {
+        const next = { ...prev, [wdKey]: COHERENCE_MESSAGE };
+        if (next[waKey] === COHERENCE_MESSAGE) delete next[waKey];
+        return next;
+      });
       showCoherencePopover(index);
+      setTimeout(() => {
+        const input = inputs.current[wdKey];
+        if (!input) return;
+        input.focus();
+        input.select();
+      }, 0);
       return;
     }
     if (coherenceIndex === index) setCoherenceIndex(null);
