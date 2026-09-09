@@ -884,30 +884,53 @@ function Index() {
   };
 
   /** Message FF de fourchette : ancré juste en dessous de la case fautive,
-   *  effacé automatiquement après 5 secondes maximum. */
+   *  effacé automatiquement après 5 secondes maximum. Une fois estompé ou
+   *  fermé, il ne peut PLUS réapparaître tant que l'artisan n'a pas tapé une
+   *  nouvelle valeur dans la case (aucune réapparition cyclique). */
   const showRangeMessage = (index: number, field: "wa" | "wd") => {
+    const key = `${index}-${field}`;
+    if (rangeDismissed.current.has(key)) return;
     if (rangeTimeout.current) clearTimeout(rangeTimeout.current);
-    const el = inputs.current[`${index}-${field}`];
+    rangeKeyRef.current = key;
+    const el = inputs.current[key];
     const r = el?.getBoundingClientRect();
     if (r) {
       setRangeAnchor({ x: Math.min(r.left, window.innerWidth - 290), y: r.bottom + 6 });
     } else {
       setRangeAnchor({ x: window.innerWidth / 2 - 200, y: 160 });
     }
+    // Sélection automatique des 2 chiffres : l'artisan retape directement.
+    setTimeout(() => {
+      const input = inputs.current[key];
+      if (input && document.activeElement === input) input.select();
+    }, 0);
     rangeTimeout.current = setTimeout(() => {
+      if (rangeKeyRef.current) rangeDismissed.current.add(rangeKeyRef.current);
       setRangeAnchor(null);
       rangeTimeout.current = null;
     }, 5000);
   };
 
-  /** Efface instantanément le message FF de fourchette. */
-  const hideRangeMessage = () => {
+  /** Efface instantanément le message FF de fourchette (clic, correction…). */
+  const hideRangeMessage = (permanent = false) => {
     if (rangeTimeout.current) {
       clearTimeout(rangeTimeout.current);
       rangeTimeout.current = null;
     }
+    if (permanent && rangeKeyRef.current) rangeDismissed.current.add(rangeKeyRef.current);
     setRangeAnchor(null);
   };
+
+  // Un clic n'importe où sur la page efface définitivement le message de fourchette.
+  useEffect(() => {
+    const dismiss = () => hideRangeMessage(true);
+    document.addEventListener("pointerdown", dismiss);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss);
+      if (rangeTimeout.current) clearTimeout(rangeTimeout.current);
+    };
+  }, []);
+
 
   // --- Saisie des informations générales ---------------------------------------
 
