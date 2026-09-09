@@ -1678,29 +1678,13 @@ function Index() {
       );
     };
 
-    // OUTIL DE DÉBOGAGE TEMPORAIRE : capture PNG brute du cadre « Mesures
-    // poids statiques » (sans jsPDF) pour analyser le recadrage.
-    const onDebugPng = () => {
-      const el = pdfMesuresRef.current;
-      if (!el) {
-        toast.error("Cadre « Mesures poids statiques » introuvable.");
-        return;
-      }
-      toast.info("Capture PNG de débogage en cours...");
-      void downloadDebugPng(el, "debug-mesures-poids-statiques.png").catch((error) => {
-        console.error("[debug-png] échec", error);
-        toast.error("Échec de la capture PNG de débogage.");
-      });
-    };
-
-
     const handlers: Record<string, EventListener> = {
       "piano-export": onExport,
       "piano-export-csv": exportCsvOnly,
       "piano-export-pdf": onPdf,
       "piano-export-blank-pdf": onBlankPdf,
       "piano-export-blank-keyboard-pdf": onBlankKeyboardPdf,
-      "piano-debug-png": onDebugPng,
+
 
       "piano-compare-guard": onCompareGuard,
       "piano-reset": onReset,
