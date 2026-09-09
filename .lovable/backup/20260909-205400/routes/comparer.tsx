@@ -5,7 +5,7 @@ import { useLang } from "@/data/translations";
 import { RefreshCw, Square, SquareX } from "lucide-react";
 import { BrandTargetInfoIcon, TargetLegalInfoIcon } from "@/components/BrandTargetInfo";
 import { paddedDomain } from "@/components/PdfReportBlocks";
-import { generateComparisonReport, type LandscapePage } from "@/lib/pdf-report";
+import { generatePortraitReport } from "@/lib/pdf-report";
 import { setTopbarState } from "@/lib/topbar-store";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
 import {
@@ -1420,20 +1420,14 @@ function Comparer() {
               document.querySelector<HTMLElement>(`[data-frame="${id}"]`);
             const keep = (list: Array<HTMLElement | null>) =>
               list.filter((el): el is HTMLElement => el !== null);
-            const pages: LandscapePage[] = [
-              // Page 4 : titre officiel, « Réglages » à gauche et « Moyennes » à droite.
-              {
-                blocks: keep([settingsRef.current, averagesRef.current]),
-                layout: "row" as const,
-                title: "COMPARAISON PROFIL PIANO ACTUEL VS CLOUD ET/OU CIBLES",
-              },
-              // Page 5 : Poids descendant (haut) et Poids remontant (bas).
-              { blocks: keep([pick("pair1")]), layout: "column" as const },
-              // Page 6 : Poids d'équilibre (haut) et Friction (bas).
-              { blocks: keep([pick("pair2")]), layout: "column" as const },
-            ].filter((page) => page.blocks.length > 0);
+            const pages = [
+              // Page 4 : « Réglages » AU-DESSUS de « Moyennes ».
+              keep([settingsRef.current, averagesRef.current]),
+              // Page 5 : les 4 graphiques regroupés sur une seule page.
+              keep([pick("pair1"), pick("pair2")]),
+            ].filter((page) => page.length > 0);
             if (pages.length === 0) return;
-            await generateComparisonReport(pages, "COMPARATIF_TOUCHWEIGHT.pdf", 4, 6);
+            await generatePortraitReport(pages, "COMPARATIF_TOUCHWEIGHT.pdf", 4, 5);
           } finally {
             setTopbarState({ isExporting: false });
           }
