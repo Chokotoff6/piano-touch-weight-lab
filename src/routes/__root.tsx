@@ -271,8 +271,6 @@ function RootComponent() {
                     size="sm"
                     disabled={!isComparer && !topbar.measuresReady}
                     onClickCapture={(e) => {
-                      const rect = saveBtnRef.current?.getBoundingClientRect();
-                      if (rect) setExportMsgTop(rect.bottom + 10);
                       let ok = false;
                       try {
                         ok = window.sessionStorage.getItem(RGPD_CONSENT_KEY) === "1";
