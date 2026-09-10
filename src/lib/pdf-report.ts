@@ -626,7 +626,9 @@ export async function generateComparisonReport(
   for (const page of pages) {
     if (page.layout !== "row" || page.blocks.length < 2) continue;
     const heights = page.blocks.map((el) => Math.max(el.scrollHeight, el.offsetHeight));
-    const common = Math.max(...heights);
+    // Contraction imposée : hauteur commune plafonnée à 480 px, donc les deux
+    // cadres finissent exactement sur la même ligne de bordure inférieure.
+    const common = Math.min(480, Math.max(...heights));
     page.blocks.forEach((el) => {
       el.setAttribute("data-pdf-fixed-h", String(common));
       marked.push(el);
@@ -644,7 +646,7 @@ export async function generateComparisonReport(
   captured.forEach((blocks, index) => {
     if (index > 0) pdf.addPage("a4", "landscape");
     const page = pages[index];
-    const topOffset = page?.title ? drawTitle(pdf, page.title) : 0;
+    const topOffset = page?.title ? drawTitle(pdf, page.title, page.underline !== false) : 0;
     if (page?.layout === "row" && blocks.length > 1) {
       drawRow(pdf, blocks, topOffset);
     } else {
