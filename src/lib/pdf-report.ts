@@ -565,6 +565,8 @@ export type LandscapePage = {
   blocks: HTMLElement[];
   layout: "row" | "column";
   title?: string;
+  /** Soulignement du grand titre (page 4 uniquement). */
+  underline?: boolean;
 };
 
 /**
@@ -589,18 +591,25 @@ function drawRow(pdf: jsPDF, blocks: Capture[], topOffset: number) {
   });
 }
 
-/** Titre officiel centré, noir intense et souligné, en haut de la page 4. */
-function drawTitle(pdf: jsPDF, title: string): number {
+/**
+ * Grand titre centré en noir intense, avec 30 px (≈ 8 mm) de marge vide
+ * au-dessus et en dessous. Souligné uniquement quand `underline` est vrai.
+ */
+function drawTitle(pdf: jsPDF, title: string, underline = true): number {
+  const TOP = 8; // ≈ 30 px de marge vide au-dessus du texte
+  const BOTTOM = 8; // ≈ 30 px de marge vide en dessous
   pdf.setTextColor(0);
   pdf.setFontSize(14);
   pdf.setFont("helvetica", "bold");
-  const y = MARGIN + 6;
+  const y = MARGIN + TOP;
   pdf.text(title, PAGE_W / 2, y, { align: "center" });
-  const w = pdf.getTextWidth(title);
-  pdf.setLineWidth(0.4);
-  pdf.line((PAGE_W - w) / 2, y + 1.4, (PAGE_W + w) / 2, y + 1.4);
+  if (underline) {
+    const w = pdf.getTextWidth(title);
+    pdf.setLineWidth(0.4);
+    pdf.line((PAGE_W - w) / 2, y + 1.4, (PAGE_W + w) / 2, y + 1.4);
+  }
   pdf.setFont("helvetica", "normal");
-  return 12; // mm réservés par le titre
+  return TOP + BOTTOM; // mm réservés par le titre et ses marges
 }
 
 /** Capture puis télécharge la section comparative en A4 paysage. */
