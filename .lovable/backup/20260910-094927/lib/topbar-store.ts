@@ -9,8 +9,6 @@ type TopbarState = {
   measuresReady: boolean;
   serialFilled: boolean;
   isExporting: boolean;
-  /** Avancement de l'export PDF, de 0 à 1 (ligne de progression verte). */
-  exportProgress: number;
   isDirty: boolean;
   hasSaved: boolean;
   alert: TopbarAlert;
@@ -32,7 +30,6 @@ let state: TopbarState = {
   measuresReady: false,
   serialFilled: false,
   isExporting: false,
-  exportProgress: 0,
   isDirty: false,
   hasSaved: false,
   alert: null,
@@ -109,11 +106,6 @@ export function clearTopbarAlert() {
   if (alertTimer) clearTimeout(alertTimer);
   alertTimer = null;
   setTopbarState({ alert: null });
-}
-
-/** Avancement de l'export PDF (0 → 1), lu par la ligne verte du bandeau. */
-export function setExportProgress(value: number) {
-  setTopbarState({ exportProgress: Math.max(0, Math.min(1, value)) });
 }
 
 export function getTopbarState() {

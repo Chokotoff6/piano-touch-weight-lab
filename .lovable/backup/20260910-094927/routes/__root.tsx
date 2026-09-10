@@ -316,22 +316,14 @@ function RootComponent() {
                   </div>
                 )}
                 {topbar.isExporting && (
-                  // Progression purement visuelle : fine ligne verte intense,
-                  // fixée à 10 px sous le bouton « Sauver », alignée à droite.
-                  <div
-                    className="fixed right-4 !z-[99999] h-[3px] w-[220px] overflow-hidden rounded-full bg-gray-200"
+                  <span
+                    className="fixed right-4 !z-[99999] whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-1 text-sm font-semibold !text-black shadow"
                     style={{
                       top: (exportMsgTop || (saveBtnRef.current?.getBoundingClientRect().bottom ?? 56) + 10),
                     }}
                   >
-                    <div
-                      className="h-full rounded-full transition-[width] duration-200 ease-linear"
-                      style={{
-                        width: `${Math.round(Math.max(0.04, topbar.exportProgress) * 100)}%`,
-                        backgroundColor: "#16a34a",
-                      }}
-                    />
-                  </div>
+                    Export en cours...
+                  </span>
                 )}
               </div>
               <DropdownMenuContent align="start" className="max-w-[420px]">

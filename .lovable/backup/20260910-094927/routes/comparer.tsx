@@ -1416,7 +1416,7 @@ function Comparer() {
   useEffect(() => {
     const onPdf = () => {
       window.dispatchEvent(new CustomEvent("piano-pdf-force-split"));
-      setTopbarState({ isExporting: true, exportProgress: 0 });
+      setTopbarState({ isExporting: true });
       // 150 ms : « Export en cours... » a le temps d'être peint (10 px sous
       // le bouton Sauver) avant le calcul lourd des captures.
       window.setTimeout(() => {
@@ -1450,7 +1450,7 @@ function Comparer() {
             if (pages.length === 0) return;
             await generateComparisonReport(pages, "COMPARATIF_TOUCHWEIGHT.pdf", 1, 6);
           } finally {
-            setTopbarState({ isExporting: false, exportProgress: 0 });
+            setTopbarState({ isExporting: false });
           }
         })();
       }, 150);

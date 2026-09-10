@@ -1,7 +1,6 @@
 // Génération du rapport PDF Premium (A4 paysage, 2 pages, téléchargement direct).
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas-pro";
-import { setExportProgress } from "@/lib/topbar-store";
 
 type Capture = {
   dataUrl: string;
@@ -40,11 +39,7 @@ async function capture(el: HTMLElement): Promise<Capture> {
   // à l'écran (sticky). La capture prend leur hauteur réelle de contenu pour
   // qu'aucun filtre ni aucune ligne de texte ne soit tronqué.
   const expand = el.hasAttribute("data-pdf-expand");
-  // Hauteur rigide imposée (page 4) : les deux cadres côte à côte partagent
-  // exactement la même hauteur en pixels, contenu centré verticalement.
-  const fixedH = Number(el.getAttribute("data-pdf-fixed-h") ?? 0);
-  const naturalH = expand ? Math.max(el.scrollHeight, el.offsetHeight) : el.offsetHeight;
-  const height = (fixedH > 0 ? fixedH : naturalH) + PAD * 2;
+  const height = (expand ? Math.max(el.scrollHeight, el.offsetHeight) : el.offsetHeight) + PAD * 2;
   const started = performance.now();
   const canvas = await html2canvas(el, {
     // Définition ajustée à la taille exacte d'insertion PDF : les graphiques
@@ -186,23 +181,6 @@ async function capture(el: HTMLElement): Promise<Capture> {
         const child = node as HTMLElement;
         child.style.setProperty("max-height", "none", "important");
         child.style.setProperty("overflow", "visible", "important");
-      });
-      // Hauteur rigide commune (page 4) : les deux cadres reçoivent la même
-      // hauteur en pixels et leur contenu est centré verticalement, donc les
-      // bordures inférieures coïncident exactement dans le PDF.
-      pick("[data-pdf-fixed-h]").forEach((node) => {
-        const frame = node as HTMLElement;
-        const h = Number(frame.getAttribute("data-pdf-fixed-h") ?? 0);
-        if (!(h > 0)) return;
-        frame.style.setProperty("position", "static", "important");
-        frame.style.setProperty("height", `${h}px`, "important");
-        frame.style.setProperty("min-height", `${h}px`, "important");
-        frame.style.setProperty("max-height", `${h}px`, "important");
-        frame.style.setProperty("overflow", "hidden", "important");
-        frame.style.setProperty("display", "flex", "important");
-        frame.style.setProperty("flex-direction", "column", "important");
-        frame.style.setProperty("justify-content", "center", "important");
-        frame.style.setProperty("box-sizing", "border-box", "important");
       });
       // Miroir « Mesures poids statiques » : rendu hors écran remis à l'origine
       // du clone, sans transformation. La réduction 0,82 est appliquée lors de
@@ -381,19 +359,10 @@ export async function captureReportPages(pages: HTMLElement[][]): Promise<Report
   // les lancer ensemble ne partage aucun travail et fige l'écran. Ici le
   // message « Export en cours... » reste peint pendant toute l'opération.
   const captured: ReportCaptures = [];
-  // Progression visuelle : les captures occupent 0 → 90 %, l'assemblage final
-  // du PDF complète la ligne verte jusqu'à 100 %.
-  const totalBlocks = Math.max(1, pages.reduce((sum, page) => sum + page.length, 0));
-  let done = 0;
-  setExportProgress(0.04);
   for (const page of pages) {
     const shots: Capture[] = [];
     for (const block of page) {
-      if (!block || !isRenderable(block)) {
-        done += 1;
-        setExportProgress((done / totalBlocks) * 0.9);
-        continue;
-      }
+      if (!block || !isRenderable(block)) continue;
       // Étanchéité totale : un bloc non capturable est ignoré, jamais bloquant.
       try {
         const shot = await capture(block);
@@ -401,13 +370,10 @@ export async function captureReportPages(pages: HTMLElement[][]): Promise<Report
       } catch (error) {
         console.warn("[pdf] bloc ignoré", error);
       }
-      done += 1;
-      setExportProgress((done / totalBlocks) * 0.9);
       await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
     }
     if (shots.length > 0) captured.push(shots);
   }
-  setExportProgress(0.92);
   console.info(`[pdf] captures totales : ${Math.round(performance.now() - total)} ms`);
   return captured;
 }
@@ -434,7 +400,6 @@ export function buildReportPdf(
     drawPage(pdf, blocks, pageRatio(blocks, topOffset), topOffset);
     drawFooter(pdf, index + 1, total, stamp);
   });
-  setExportProgress(1);
   pdf.save(filename);
 }
 
@@ -484,8 +449,6 @@ function drawFooter(pdf: jsPDF, page: number, total: number, stamp: string) {
   pdf.setTextColor(120);
   pdf.text(`Page ${page} / ${total}`, PAGE_W - MARGIN, PAGE_H - MARGIN - 3, { align: "right" });
   pdf.text(`Exporté le : ${stamp}`, PAGE_W - MARGIN, PAGE_H - MARGIN, { align: "right" });
-  // Signature obligatoire, en bas à gauche de chaque page.
-  pdf.text("Keyweight.com © 2026", MARGIN, PAGE_H - MARGIN, { align: "left" });
   pdf.setTextColor(0);
 }
 
@@ -547,10 +510,8 @@ export async function generatePortraitReport(
     pdf.setTextColor(120);
     pdf.text(`Page ${startPage + index} / ${total}`, P_W - MARGIN, P_H - MARGIN - 3, { align: "right" });
     pdf.text(`Exporté le : ${stamp}`, P_W - MARGIN, P_H - MARGIN, { align: "right" });
-    pdf.text("Keyweight.com © 2026", MARGIN, P_H - MARGIN, { align: "left" });
     pdf.setTextColor(0);
   });
-  setExportProgress(1);
   pdf.save(filename);
 }
 
@@ -610,25 +571,7 @@ export async function generateComparisonReport(
   startPage = 4,
   totalPages = 6,
 ): Promise<void> {
-  // Pages « côte à côte » : les blocs reçoivent une hauteur rigide commune
-  // (la plus grande hauteur de contenu) avant capture. Les deux cadres sortent
-  // donc à hauteur strictement égale, contenu centré et jamais coupé.
-  const marked: HTMLElement[] = [];
-  for (const page of pages) {
-    if (page.layout !== "row" || page.blocks.length < 2) continue;
-    const heights = page.blocks.map((el) => Math.max(el.scrollHeight, el.offsetHeight));
-    const common = Math.max(...heights);
-    page.blocks.forEach((el) => {
-      el.setAttribute("data-pdf-fixed-h", String(common));
-      marked.push(el);
-    });
-  }
-  let captured: ReportCaptures;
-  try {
-    captured = await captureReportPages(pages.map((page) => page.blocks));
-  } finally {
-    marked.forEach((el) => el.removeAttribute("data-pdf-fixed-h"));
-  }
+  const captured = await captureReportPages(pages.map((page) => page.blocks));
   if (captured.length === 0) return;
   const pdf = new jsPDF({ orientation: "landscape", format: "a4", unit: "mm" });
   const stamp = exportStamp();
@@ -643,6 +586,5 @@ export async function generateComparisonReport(
     }
     drawFooter(pdf, startPage + index, totalPages, stamp);
   });
-  setExportProgress(1);
   pdf.save(filename);
 }
