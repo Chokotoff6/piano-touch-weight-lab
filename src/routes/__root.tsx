@@ -285,7 +285,7 @@ function RootComponent() {
                       topbar.measuresReady || isComparer ? "!text-black" : "!text-gray-400"
                     }`}
                   >
-                    {lang === "en" ? "Save" : "Sauver"}
+                    {isComparer ? "FICHIERS" : lang === "en" ? "Save" : "Sauver"}
                     <ChevronDown className="ml-1 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -302,7 +302,7 @@ function RootComponent() {
                   // imbriquée sous le bouton « Sauver », à 10 px exactement,
                   // alignée à droite. Aucun texte descriptif.
                   <div
-                    className="absolute right-0 top-full !z-[99999] mt-[10px] h-[3px] w-[220px] overflow-hidden rounded-full bg-gray-200"
+                    className="absolute inset-x-0 top-full !z-[99999] mt-[10px] h-[3px] w-full overflow-hidden rounded-full bg-gray-200"
                   >
                     <div
                       className="h-full rounded-full transition-[width] duration-200 ease-linear"
@@ -315,14 +315,17 @@ function RootComponent() {
                 )}
               </div>
               <DropdownMenuContent align="start" className="max-w-[420px]">
-                <DropdownMenuItem
-                  disabled={!topbar.measuresReady}
-                  onClick={() => requireConsent(() => dispatchAction("piano-export-csv"))}
-                >
-                  {lang === "en"
-                    ? "Save entered data as CSV (re-importable)"
-                    : "Sauver les données saisies au format CSV (ré-importable)"}
-                </DropdownMenuItem>
+                {/* Page Comparer : uniquement l'export PDF (pas de CSV). */}
+                {!isComparer && (
+                  <DropdownMenuItem
+                    disabled={!topbar.measuresReady}
+                    onClick={() => requireConsent(() => dispatchAction("piano-export-csv"))}
+                  >
+                    {lang === "en"
+                      ? "Save entered data as CSV (re-importable)"
+                      : "Sauver les données saisies au format CSV (ré-importable)"}
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   disabled={!isComparer && !topbar.measuresReady}
                   onClick={() => requireConsent(() => dispatchAction("piano-export-pdf"))}
