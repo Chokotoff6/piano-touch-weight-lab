@@ -317,12 +317,10 @@ function RootComponent() {
                 )}
                 {topbar.isExporting && (
                   // Progression purement visuelle : fine ligne verte intense,
-                  // fixée à 10 px sous le bouton « Sauver », alignée à droite.
+                  // imbriquée sous le bouton « Sauver », à 10 px exactement,
+                  // alignée à droite. Aucun texte descriptif.
                   <div
-                    className="fixed right-4 !z-[99999] h-[3px] w-[220px] overflow-hidden rounded-full bg-gray-200"
-                    style={{
-                      top: (exportMsgTop || (saveBtnRef.current?.getBoundingClientRect().bottom ?? 56) + 10),
-                    }}
+                    className="absolute right-0 top-full !z-[99999] mt-[10px] h-[3px] w-[220px] overflow-hidden rounded-full bg-gray-200"
                   >
                     <div
                       className="h-full rounded-full transition-[width] duration-200 ease-linear"
