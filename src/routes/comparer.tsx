@@ -1300,6 +1300,10 @@ function SidebarPanel(props: SidebarPanelProps) {
     : "Importez vos fichiers de mesures format CSV depuis votre stockage local.";
   // Filtres du bas : bascule ON/OFF. Aucune icône, aucune bordure noire.
   // État ON signalé par un "V" majuscule noir juste après le titre en CAPITALES.
+  // Gabarit aéré des lignes de filtres : hauteur automatique, texte libre de
+  // passer sur deux lignes, case toujours visible à droite.
+  const FILTER_ROW =
+    "flex w-full min-h-[34px] h-auto max-h-none items-center justify-between gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 text-[0.68rem] leading-snug whitespace-normal text-left !opacity-100 hover:border-gray-300 disabled:!opacity-100";
   const cycleRow = (label: string, checked: boolean, onChange: (value: boolean) => void) => (
     <Button
       type="button"
@@ -1307,18 +1311,15 @@ function SidebarPanel(props: SidebarPanelProps) {
       disabled={props.filtersDisabled}
       aria-pressed={checked}
       onClick={() => onChange(!checked)}
-      className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !opacity-100 hover:border-gray-300 disabled:!opacity-100`}
+      className={FILTER_ROW}
     >
-      {/* Espaceur invisible de même largeur que l'icône RefreshCw (16px) pour aligner le début du texte sur les boutons du haut. */}
-      <span className="w-4 shrink-0" aria-hidden="true" />
-      <span className="flex items-center font-bold uppercase text-black">
-        {label}
-        {checked
-          ? <SquareX size={18} strokeWidth={2.6} className="ml-[10px] shrink-0 !text-black" />
-          : <Square size={18} strokeWidth={1.4} className="ml-[10px] shrink-0 !text-black" />}
-      </span>
+      <span className="min-w-0 font-bold uppercase text-black">{label}</span>
+      {checked
+        ? <SquareX size={18} strokeWidth={2.6} className="shrink-0 !text-black" />
+        : <Square size={18} strokeWidth={1.4} className="shrink-0 !text-black" />}
     </Button>
   );
+
 
   // Les trois boutons de source affichent la même bordure noire nette, actifs
   // comme inactifs ; seule la couleur du libellé change à l'activation.
