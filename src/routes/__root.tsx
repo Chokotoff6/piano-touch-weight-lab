@@ -314,41 +314,51 @@ function RootComponent() {
                   </div>
                 )}
               </div>
-              <DropdownMenuContent align="start" className="max-w-[420px]">
-                {/* Page Comparer : uniquement l'export PDF (pas de CSV). */}
-                {!isComparer && (
+              <DropdownMenuContent align="start" className="max-w-[520px]">
+                {isComparer ? (
+                  /* Page Comparer : une seule ligne directe (algorithme adaptatif 3/4/6 pages). */
                   <DropdownMenuItem
-                    disabled={!topbar.measuresReady}
-                    onClick={() => requireConsent(() => dispatchAction("piano-export-csv"))}
+                    onClick={() => requireConsent(() => dispatchAction("piano-export-pdf"))}
                   >
                     {lang === "en"
-                      ? "Save entered data as CSV (re-importable)"
-                      : "Sauver les données saisies au format CSV (ré-importable)"}
+                      ? "Export Workshop report + Comparative analysis as PDF"
+                      : "Exporter Rapport d'atelier + Analyse comparative au format PDF"}
                   </DropdownMenuItem>
+                ) : (
+                  <>
+                    <DropdownMenuItem
+                      disabled={!filesEnabled}
+                      onClick={() => requireConsent(() => dispatchAction("piano-export-csv"))}
+                    >
+                      {lang === "en"
+                        ? "Save entered data as CSV (re-importable)"
+                        : "Sauver données saisies au format CSV (re-importable)"}
+                    </DropdownMenuItem>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        {lang === "en" ? "Export PDF" : "Exporter PDF"}
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="max-w-[520px]">
+                        <DropdownMenuItem
+                          disabled={!filesEnabled}
+                          onClick={() => requireConsent(() => dispatchAction("piano-export-pdf"))}
+                        >
+                          {lang === "en" ? "Workshop report (3 pages)" : "Rapport d'atelier (3 pages)"}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-pdf")}>
+                          {lang === "en"
+                            ? "Blank form - table format (Paper - re-importable)"
+                            : "Formulaire vierge format tableau (Papier - re-importable)"}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-keyboard-pdf")}>
+                          {lang === "en"
+                            ? "Blank form - keyboard drawing format (Paper - re-importable)"
+                            : "Formulaire vierge format dessin clavier (Papier - re-importable)"}
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  </>
                 )}
-                <DropdownMenuItem
-                  disabled={!isComparer && !topbar.measuresReady}
-                  onClick={() => requireConsent(() => dispatchAction("piano-export-pdf"))}
-                >
-                  {lang === "en"
-                    ? "Export entered data as PDF (re-importable)"
-                    : "Exporter les données saisies au format PDF (ré-importable)"}
-                </DropdownMenuItem>
-                {!isComparer && (
-                  <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-pdf")}>
-                    {lang === "en"
-                      ? "Generate a blank form - Table format"
-                      : "Générer un formulaire vierge au format Tableau"}
-                  </DropdownMenuItem>
-                )}
-                {!isComparer && (
-                  <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-keyboard-pdf")}>
-                    {lang === "en"
-                      ? "Generate a blank form - Keyboard drawing format"
-                      : "Générer un formulaire vierge au format Dessin Clavier"}
-                  </DropdownMenuItem>
-                )}
-
               </DropdownMenuContent>
             </DropdownMenu>
 
