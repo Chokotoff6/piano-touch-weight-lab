@@ -362,7 +362,7 @@ function RootComponent() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="rounded-r-none bg-white text-lg !text-black"
+                      className="rounded-r-none border border-gray-300 bg-white text-lg font-bold !text-black"
                       onClick={() => dispatchAction("piano-import-csv")}
                     >
                       Importer
@@ -410,7 +410,7 @@ function RootComponent() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="bg-white text-lg !text-black"
+                  className="border border-gray-300 bg-white text-lg font-bold !text-black"
                   onClick={() => dispatchAction("piano-import-csv")}
                 >
                   Importer
