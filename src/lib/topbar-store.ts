@@ -9,6 +9,8 @@ type TopbarState = {
   measuresReady: boolean;
   serialFilled: boolean;
   isExporting: boolean;
+  /** Avancement de l'export PDF, de 0 à 1 (ligne de progression verte). */
+  exportProgress: number;
   isDirty: boolean;
   hasSaved: boolean;
   alert: TopbarAlert;
