@@ -546,8 +546,10 @@ export async function generatePortraitReport(
     pdf.setTextColor(120);
     pdf.text(`Page ${startPage + index} / ${total}`, P_W - MARGIN, P_H - MARGIN - 3, { align: "right" });
     pdf.text(`Exporté le : ${stamp}`, P_W - MARGIN, P_H - MARGIN, { align: "right" });
+    pdf.text("Keyweight.com © 2026", MARGIN, P_H - MARGIN, { align: "left" });
     pdf.setTextColor(0);
   });
+  setExportProgress(1);
   pdf.save(filename);
 }
 
