@@ -434,6 +434,7 @@ export function buildReportPdf(
     drawPage(pdf, blocks, pageRatio(blocks, topOffset), topOffset);
     drawFooter(pdf, index + 1, total, stamp);
   });
+  setExportProgress(1);
   pdf.save(filename);
 }
 
