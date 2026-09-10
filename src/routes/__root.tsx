@@ -269,7 +269,7 @@ function RootComponent() {
                     ref={saveBtnRef}
                     variant="outline"
                     size="sm"
-                    disabled={!isComparer && !topbar.measuresReady}
+                    disabled={!filesEnabled}
                     onClickCapture={(e) => {
                       let ok = false;
                       try {
