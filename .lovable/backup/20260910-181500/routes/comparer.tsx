@@ -1300,10 +1300,6 @@ function SidebarPanel(props: SidebarPanelProps) {
     : "Importez vos fichiers de mesures format CSV depuis votre stockage local.";
   // Filtres du bas : bascule ON/OFF. Aucune icône, aucune bordure noire.
   // État ON signalé par un "V" majuscule noir juste après le titre en CAPITALES.
-  // Gabarit aéré des lignes de filtres : hauteur automatique, texte libre de
-  // passer sur deux lignes, case toujours visible à droite.
-  const FILTER_ROW =
-    "flex w-full min-h-[34px] h-auto max-h-none items-center justify-between gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 text-[0.68rem] leading-snug whitespace-normal text-left !opacity-100 hover:border-gray-300 disabled:!opacity-100";
   const cycleRow = (label: string, checked: boolean, onChange: (value: boolean) => void) => (
     <Button
       type="button"
@@ -1311,15 +1307,18 @@ function SidebarPanel(props: SidebarPanelProps) {
       disabled={props.filtersDisabled}
       aria-pressed={checked}
       onClick={() => onChange(!checked)}
-      className={FILTER_ROW}
+      className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !opacity-100 hover:border-gray-300 disabled:!opacity-100`}
     >
-      <span className="min-w-0 font-bold uppercase text-black">{label}</span>
-      {checked
-        ? <SquareX size={18} strokeWidth={2.6} className="shrink-0 !text-black" />
-        : <Square size={18} strokeWidth={1.4} className="shrink-0 !text-black" />}
+      {/* Espaceur invisible de même largeur que l'icône RefreshCw (16px) pour aligner le début du texte sur les boutons du haut. */}
+      <span className="w-4 shrink-0" aria-hidden="true" />
+      <span className="flex items-center font-bold uppercase text-black">
+        {label}
+        {checked
+          ? <SquareX size={18} strokeWidth={2.6} className="ml-[10px] shrink-0 !text-black" />
+          : <Square size={18} strokeWidth={1.4} className="ml-[10px] shrink-0 !text-black" />}
+      </span>
     </Button>
   );
-
 
   // Les trois boutons de source affichent la même bordure noire nette, actifs
   // comme inactifs ; seule la couleur du libellé change à l'activation.
@@ -1328,7 +1327,7 @@ function SidebarPanel(props: SidebarPanelProps) {
 
   return (
     <Frame title="Réglages" className="flex flex-1 flex-col">
-      <div className="flex h-auto flex-col items-stretch justify-start gap-2 pt-2">
+      <div className="flex h-full flex-col items-stretch justify-start gap-2 pt-2">
           <div className="text-sm font-bold !text-black">{en ? "Compare current piano with:" : "Comparer piano actuel avec :"}</div>
           <FastTip text={tipTarget}><Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><span className="w-full text-center font-bold uppercase">{en ? "Target" : "Cible"}</span></Button></FastTip>
           <FastTip text={tipCloud}><Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={sourceButtonClass(props.cloudEnabled, "!text-orange-600")}><span className="w-full text-center font-bold uppercase">Cloud</span></Button></FastTip>
@@ -1337,9 +1336,8 @@ function SidebarPanel(props: SidebarPanelProps) {
           {props.cloudEnabled && (
             <>
           <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold" style={{ color: "#f97316" }}>{en ? "CLOUD filters" : "Filtres CLOUD"}</div>
-          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.usageLevel !== "low" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">Usage instrument : <span className="!text-black font-semibold uppercase">{usageLabel}</span></span></Button>
-          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.importantChanges !== "excluded" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">Modifications importantes : <span className="!text-black font-semibold uppercase">{changesLabel}</span></span></Button>
-
+          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white !text-black !opacity-100 disabled:!opacity-100 font-medium hover:border-gray-300 [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.usageLevel !== "low" ? 2.5 : 1.2} className="shrink-0" /><span className="!text-black font-bold uppercase">Usage instrument : <span className="!text-black font-semibold uppercase">{usageLabel}</span></span></Button>
+          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${PILL_BASE} flex w-full items-center justify-start gap-2 border-gray-200 bg-white text-left !text-black !opacity-100 disabled:!opacity-100 [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.importantChanges !== "excluded" ? 2.5 : 1.2} className="shrink-0" /><span className="!text-black font-bold uppercase">Modifications importantes : <span className="!text-black font-semibold uppercase">{changesLabel}</span></span></Button>
           {cycleRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
           {cycleRow("Même année de fabrication", props.sameYear, props.setSameYear)}
           {cycleRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
@@ -1777,7 +1775,7 @@ function Comparer() {
                 <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible"} onCycleKeyFilter={cycleKeyFilter} />
               </div>
             </div>
-            <aside className="min-w-0"><div ref={settingsRef} data-pdf-expand className="sticky top-[127px] z-50 flex flex-col overflow-visible" ><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
+            <aside className="min-w-0"><div ref={settingsRef} data-pdf-expand className="sticky top-[127px] z-50 flex flex-col overflow-visible" style={averagesHeight > 0 ? { height: `${averagesHeight - 8}px` } : undefined}><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
           </div>
         </>
       )}
