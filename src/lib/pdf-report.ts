@@ -483,6 +483,8 @@ function drawFooter(pdf: jsPDF, page: number, total: number, stamp: string) {
   pdf.setTextColor(120);
   pdf.text(`Page ${page} / ${total}`, PAGE_W - MARGIN, PAGE_H - MARGIN - 3, { align: "right" });
   pdf.text(`Exporté le : ${stamp}`, PAGE_W - MARGIN, PAGE_H - MARGIN, { align: "right" });
+  // Signature obligatoire, en bas à gauche de chaque page.
+  pdf.text("Keyweight.com © 2026", MARGIN, PAGE_H - MARGIN, { align: "left" });
   pdf.setTextColor(0);
 }
 
