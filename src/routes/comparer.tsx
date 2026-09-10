@@ -1437,6 +1437,8 @@ function Comparer() {
               {
                 blocks: keep([mirrorAveragesRef.current, mirrorSheetRef.current]),
                 layout: "column" as const,
+                title: `POIDS STATIQUES DES TOUCHES – ${[mine?.brand, mine?.model].filter(Boolean).join(" ").toLocaleUpperCase()}`.trim(),
+                underline: false,
               },
               { blocks: keep([mirror("wa"), mirror("wd")]), layout: "column" as const },
               { blocks: keep([mirror("bal"), mirror("fric")]), layout: "column" as const },
@@ -1445,6 +1447,7 @@ function Comparer() {
                 blocks: keep([settingsRef.current, averagesRef.current]),
                 layout: "row" as const,
                 title: "COMPARAISON PROFIL PIANO ACTUEL VS CLOUD ET/OU CIBLES",
+                underline: true,
               },
               // Page 5 : Poids descendant (haut) et Poids remontant (bas).
               { blocks: keep([pick("pair1")]), layout: "column" as const },
