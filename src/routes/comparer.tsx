@@ -1347,7 +1347,7 @@ function SidebarPanel(props: SidebarPanelProps) {
             ) : (
               <>
                 <div className="uppercase">{props.cloudSampleCount}/{props.cloudTotalCount} pianos</div>
-                <div className="uppercase">{en ? "with identical model" : "modèle identique"}</div>
+                <div className="uppercase">{en ? "with identical model" : "DE MODÈLE IDENTIQUE"}</div>
                 <div className="uppercase">{en ? "on the Cloud" : "sur le Cloud"}</div>
               </>
             )}
