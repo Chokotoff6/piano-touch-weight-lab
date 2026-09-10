@@ -212,6 +212,16 @@ async function capture(el: HTMLElement): Promise<Capture> {
         frame.style.setProperty("padding-bottom", "16px", "important");
       });
 
+      // Largeur verrouillée : le cadre « Moyennes » de la page 4 garde toujours
+      // la même largeur, quel que soit le nombre de sources comparées.
+      pick("[data-pdf-lock-w]").forEach((node) => {
+        const frame = node as HTMLElement;
+        const px = `${frame.getAttribute("data-pdf-lock-w") || 900}px`;
+        frame.style.setProperty("width", px, "important");
+        frame.style.setProperty("min-width", px, "important");
+        frame.style.setProperty("max-width", px, "important");
+      });
+
       // Miroir « Mesures poids statiques » : rendu hors écran remis à l'origine
       // du clone, sans transformation. La réduction 0,82 est appliquée lors de
       // l'insertion dans le PDF, après une capture intégrale nette.
