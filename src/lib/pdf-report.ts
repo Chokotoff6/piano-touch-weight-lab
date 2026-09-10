@@ -40,8 +40,22 @@ async function capture(el: HTMLElement): Promise<Capture> {
   // à l'écran (sticky). La capture prend leur hauteur réelle de contenu pour
   // qu'aucun filtre ni aucune ligne de texte ne soit tronqué.
   const expand = el.hasAttribute("data-pdf-expand");
-  const naturalH = expand ? Math.max(el.scrollHeight, el.offsetHeight) : el.offsetHeight;
+  // Le contenu peut déborder en `overflow: visible` : `scrollHeight` reste alors
+  // égal à la boîte figée. On mesure donc le bas réel du dernier enfant.
+  const overflowBottom = () => {
+    const top = el.getBoundingClientRect().top;
+    let bottom = 0;
+    Array.from(el.querySelectorAll("*")).forEach((node) => {
+      const rect = (node as HTMLElement).getBoundingClientRect();
+      if (rect.height > 0) bottom = Math.max(bottom, rect.bottom - top);
+    });
+    return bottom;
+  };
+  const naturalH = expand
+    ? Math.max(el.scrollHeight, el.offsetHeight, Math.ceil(overflowBottom()) + 8)
+    : el.offsetHeight;
   const height = naturalH + PAD * 2;
+
 
   const started = performance.now();
   const canvas = await html2canvas(el, {
