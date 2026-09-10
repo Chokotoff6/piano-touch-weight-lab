@@ -1483,7 +1483,7 @@ function Comparer() {
     };
     window.addEventListener("piano-export-pdf", onPdf);
     return () => window.removeEventListener("piano-export-pdf", onPdf);
-  }, [mine]);
+  }, [mine, standardEnabled, sourceMode, comparedPiano]);
   const [averagesHeight, setAveragesHeight] = useState(0);
 
   useEffect(() => {
