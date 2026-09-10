@@ -40,11 +40,9 @@ async function capture(el: HTMLElement): Promise<Capture> {
   // à l'écran (sticky). La capture prend leur hauteur réelle de contenu pour
   // qu'aucun filtre ni aucune ligne de texte ne soit tronqué.
   const expand = el.hasAttribute("data-pdf-expand");
-  // Hauteur rigide imposée (page 4) : les deux cadres côte à côte partagent
-  // exactement la même hauteur en pixels, contenu centré verticalement.
-  const fixedH = Number(el.getAttribute("data-pdf-fixed-h") ?? 0);
   const naturalH = expand ? Math.max(el.scrollHeight, el.offsetHeight) : el.offsetHeight;
-  const height = (fixedH > 0 ? fixedH : naturalH) + PAD * 2;
+  const height = naturalH + PAD * 2;
+
   const started = performance.now();
   const canvas = await html2canvas(el, {
     // Définition ajustée à la taille exacte d'insertion PDF : les graphiques
@@ -187,35 +185,19 @@ async function capture(el: HTMLElement): Promise<Capture> {
         child.style.setProperty("max-height", "none", "important");
         child.style.setProperty("overflow", "visible", "important");
       });
-      // Hauteur rigide commune (page 4) : les deux cadres reçoivent la même
-      // hauteur en pixels et leur contenu est centré verticalement, donc les
-      // bordures inférieures coïncident exactement dans le PDF.
-      pick("[data-pdf-fixed-h]").forEach((node) => {
+      // Cadre « Réglages » : hauteur libre, jamais tronqué. Réserve haute pour
+      // le titre débordant et réserve basse pour les derniers filtres.
+      pick("[data-pdf-expand]").forEach((node) => {
         const frame = node as HTMLElement;
-        const h = Number(frame.getAttribute("data-pdf-fixed-h") ?? 0);
-        if (!(h > 0)) return;
-        frame.style.setProperty("position", "static", "important");
-        frame.style.setProperty("height", `${h}px`, "important");
-        frame.style.setProperty("min-height", `${h}px`, "important");
-        frame.style.setProperty("max-height", `${h}px`, "important");
-        frame.style.setProperty("overflow", "hidden", "important");
-        frame.style.setProperty("display", "flex", "important");
-        frame.style.setProperty("flex-direction", "column", "important");
-        frame.style.setProperty("justify-content", "center", "important");
+        frame.style.setProperty("height", "auto", "important");
+        frame.style.setProperty("min-height", "0", "important");
+        frame.style.setProperty("max-height", "none", "important");
+        frame.style.setProperty("overflow", "visible", "important");
         frame.style.setProperty("box-sizing", "border-box", "important");
-        // Le titre du cadre (« Réglages ») déborde au-dessus de la bordure :
-        // une réserve haute évite qu'il soit rogné à la capture.
         frame.style.setProperty("padding-top", "18px", "important");
-        // Filtres internes resserrés : tout tient dans les 480 px imposés.
-        frame.querySelectorAll<HTMLElement>("button").forEach((btn) => {
-          btn.style.setProperty("height", "26px", "important");
-          btn.style.setProperty("min-height", "26px", "important");
-          btn.style.setProperty("max-height", "26px", "important");
-          btn.style.setProperty("padding-top", "0px", "important");
-          btn.style.setProperty("padding-bottom", "0px", "important");
-          btn.style.setProperty("line-height", "1", "important");
-        });
+        frame.style.setProperty("padding-bottom", "16px", "important");
       });
+
       // Miroir « Mesures poids statiques » : rendu hors écran remis à l'origine
       // du clone, sans transformation. La réduction 0,82 est appliquée lors de
       // l'insertion dans le PDF, après une capture intégrale nette.
