@@ -609,7 +609,25 @@ export async function generateComparisonReport(
   startPage = 4,
   totalPages = 6,
 ): Promise<void> {
-  const captured = await captureReportPages(pages.map((page) => page.blocks));
+  // Pages « côte à côte » : les blocs reçoivent une hauteur rigide commune
+  // (la plus grande hauteur de contenu) avant capture. Les deux cadres sortent
+  // donc à hauteur strictement égale, contenu centré et jamais coupé.
+  const marked: HTMLElement[] = [];
+  for (const page of pages) {
+    if (page.layout !== "row" || page.blocks.length < 2) continue;
+    const heights = page.blocks.map((el) => Math.max(el.scrollHeight, el.offsetHeight));
+    const common = Math.max(...heights);
+    page.blocks.forEach((el) => {
+      el.setAttribute("data-pdf-fixed-h", String(common));
+      marked.push(el);
+    });
+  }
+  let captured: ReportCaptures;
+  try {
+    captured = await captureReportPages(pages.map((page) => page.blocks));
+  } finally {
+    marked.forEach((el) => el.removeAttribute("data-pdf-fixed-h"));
+  }
   if (captured.length === 0) return;
   const pdf = new jsPDF({ orientation: "landscape", format: "a4", unit: "mm" });
   const stamp = exportStamp();
