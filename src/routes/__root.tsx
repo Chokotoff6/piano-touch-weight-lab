@@ -424,34 +424,52 @@ function RootComponent() {
              </div>
              )}
 
-             <div className="ml-auto mr-[152px] flex items-center gap-1 text-sm font-semibold">
-               <Button
-                 variant="ghost"
-                 size="sm"
-                 onClick={() => setLang("en")}
-                 className={lang === "en" ? "!text-gray-900 underline" : "!text-gray-400"}
+             <div className="ml-auto flex items-center gap-3">
+               {/* Café à gauche des langues, puis logo tout à droite. */}
+               <a
+                 href="https://buymeacoffee.com"
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
+                 aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
+                 className="flex shrink-0 items-center justify-center rounded-lg bg-transparent transition-transform hover:scale-105"
                >
-                 EN
-               </Button>
-               <span className="!text-gray-300">|</span>
-               <Button
-                 type="button"
-                 variant="ghost"
-                 size="sm"
-                 onClick={() => setLang("fr")}
-                 className={lang === "fr" ? "!text-gray-900 underline" : "!text-gray-400"}
-               >
-                 FR
-               </Button>
-              </div>
+                 <img
+                   src={premiumCoffeeAsset.url}
+                   alt="Buy me a coffee"
+                   className="!h-[44px] !w-auto rounded-lg object-contain"
+                 />
+               </a>
+               <div className="flex shrink-0 items-center gap-1 text-sm font-semibold">
+                 <Button
+                   variant="ghost"
+                   size="sm"
+                   onClick={() => setLang("en")}
+                   className={lang === "en" ? "!text-gray-900 underline" : "!text-gray-400"}
+                 >
+                   EN
+                 </Button>
+                 <span className="!text-gray-300">|</span>
+                 <Button
+                   type="button"
+                   variant="ghost"
+                   size="sm"
+                   onClick={() => setLang("fr")}
+                   className={lang === "fr" ? "!text-gray-900 underline" : "!text-gray-400"}
+                 >
+                   FR
+                 </Button>
+               </div>
 
-              {/* Logo officiel KeyWeight, tout à fait à droite du bandeau. */}
-              <img
-                src={keyweightLogo.url}
-                alt="KeyWeight"
-                style={{ height: "38px", width: "auto" }}
-                className="ml-auto shrink-0"
-              />
+               {/* Logo officiel KeyWeight, pleine hauteur du bandeau. */}
+               <img
+                 src={keyweightLogo.url}
+                 alt="KeyWeight"
+                 style={{ height: "calc(100% - 12px)", maxHeight: "55px", width: "auto" }}
+                 className="shrink-0 self-stretch object-contain"
+               />
+             </div>
+
 
             </div>
           </div>
