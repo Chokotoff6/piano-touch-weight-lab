@@ -1464,7 +1464,7 @@ function Comparer() {
     };
     window.addEventListener("piano-export-pdf", onPdf);
     return () => window.removeEventListener("piano-export-pdf", onPdf);
-  }, []);
+  }, [mine]);
   const [averagesHeight, setAveragesHeight] = useState(0);
 
   useEffect(() => {
