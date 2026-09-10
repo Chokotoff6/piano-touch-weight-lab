@@ -1416,7 +1416,7 @@ function Comparer() {
   useEffect(() => {
     const onPdf = () => {
       window.dispatchEvent(new CustomEvent("piano-pdf-force-split"));
-      setTopbarState({ isExporting: true });
+      setTopbarState({ isExporting: true, exportProgress: 0 });
       // 150 ms : « Export en cours... » a le temps d'être peint (10 px sous
       // le bouton Sauver) avant le calcul lourd des captures.
       window.setTimeout(() => {
