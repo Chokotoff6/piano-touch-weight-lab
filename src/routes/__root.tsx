@@ -427,15 +427,16 @@ function RootComponent() {
              </div>
              )}
 
-             <div className="ml-auto flex items-center gap-3">
-               {/* Café à gauche des langues, puis logo tout à droite. */}
+             <div className="ml-auto flex items-center gap-3 mr-[-1rem] sm:mr-[-1.5rem]">
+               {/* Café à gauche des langues (chevauchant la ligne grise),
+                   puis logo calé au bord droit, à cheval sur cette ligne. */}
                <a
                  href="https://buymeacoffee.com"
                  target="_blank"
                  rel="noopener noreferrer"
                  title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
                  aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
-                 className="flex shrink-0 items-center justify-center rounded-lg bg-transparent transition-transform hover:scale-105"
+                 className="relative z-10 flex shrink-0 translate-y-[30px] items-center justify-center rounded-lg bg-transparent transition-transform hover:scale-105"
                >
                  <img
                    src={premiumCoffeeAsset.url}
@@ -464,12 +465,13 @@ function RootComponent() {
                  </Button>
                </div>
 
-               {/* Logo officiel KeyWeight, pleine hauteur du bandeau. */}
+               {/* Logo officiel KeyWeight : bord droit collé au bord de page,
+                   le mot KEYWEIGHT coupé en son milieu par la ligne grise. */}
                <img
                  src={keyweightLogo.url}
                  alt="KeyWeight"
-                 style={{ height: "calc(100% - 12px)", maxHeight: "55px", width: "auto" }}
-                 className="shrink-0 self-stretch object-contain"
+                 style={{ height: "64px", width: "auto" }}
+                 className="relative z-10 shrink-0 translate-y-[19px] object-contain"
                />
              </div>
 
