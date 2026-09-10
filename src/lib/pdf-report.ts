@@ -607,7 +607,7 @@ function drawRow(pdf: jsPDF, blocks: Capture[], topOffset: number) {
  * Grand titre centré en noir intense, avec 30 px (≈ 8 mm) de marge vide
  * au-dessus et en dessous. Souligné uniquement quand `underline` est vrai.
  */
-function drawTitle(pdf: jsPDF, title: string, underline = true): number {
+function drawTitle(pdf: jsPDF, title: string, underline = true, logo?: LogoImage | null): number {
   const TOP = 8; // ≈ 30 px de marge vide au-dessus du texte
   const BOTTOM = 8; // ≈ 30 px de marge vide en dessous
   pdf.setTextColor(0);
@@ -621,7 +621,51 @@ function drawTitle(pdf: jsPDF, title: string, underline = true): number {
     pdf.line((PAGE_W - w) / 2, y + 1.4, (PAGE_W + w) / 2, y + 1.4);
   }
   pdf.setFont("helvetica", "normal");
+  if (logo) {
+    // Logo officiel calé contre la marge droite, centré sur la ligne du titre.
+    const h = LOGO_H_MM;
+    const w = h * logo.ratio;
+    pdf.addImage(logo.dataUrl, "PNG", PAGE_W - MARGIN - w, y - h * 0.72, w, h, undefined, "FAST");
+  }
   return TOP + BOTTOM; // mm réservés par le titre et ses marges
+}
+
+/** Logo KeyWeight prêt pour jsPDF (données PNG + rapport largeur/hauteur). */
+type LogoImage = { dataUrl: string; ratio: number };
+
+/** Hauteur imposée du logo dans le PDF : 30 px ≈ 7,9 mm. */
+const LOGO_H_MM = 30 * 0.2646;
+
+let logoPromise: Promise<LogoImage | null> | null = null;
+
+/** Charge (une seule fois) le logo du bandeau et le convertit en PNG base64. */
+async function loadBrandLogo(): Promise<LogoImage | null> {
+  if (!logoPromise) {
+    logoPromise = (async () => {
+      try {
+        const asset = await import("@/assets/keyweight-logo.png.asset.json");
+        const url = (asset as { url?: string; default?: { url: string } }).url ?? asset.default?.url;
+        if (!url) return null;
+        const blob = await fetch(url).then((r) => r.blob());
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result));
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(blob);
+        });
+        const ratio = await new Promise<number>((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve(img.naturalWidth / img.naturalHeight || 1);
+          img.onerror = () => resolve(1);
+          img.src = dataUrl;
+        });
+        return { dataUrl, ratio };
+      } catch {
+        return null;
+      }
+    })();
+  }
+  return logoPromise;
 }
 
 /** Capture puis télécharge la section comparative en A4 paysage. */
