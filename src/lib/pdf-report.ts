@@ -451,7 +451,7 @@ export async function buildReportPdf(
     // Charte PDF : page 1 titrée « Poids statique » (centré, 30 px de marge
     // haute et basse) avec le logo KeyWeight de 42 px tout en haut à droite.
     const topOffset = index === 0
-      ? drawTitle(pdf, "POIDS STATIQUES DES TOUCHES", false, logo)
+      ? drawTitle(pdf, "RAPPORT D'ATELIER", false, logo)
       : withHeader
         ? HEADER_H
         : 0;
