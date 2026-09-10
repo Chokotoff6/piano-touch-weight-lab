@@ -111,6 +111,11 @@ export function clearTopbarAlert() {
   setTopbarState({ alert: null });
 }
 
+/** Avancement de l'export PDF (0 → 1), lu par la ligne verte du bandeau. */
+export function setExportProgress(value: number) {
+  setTopbarState({ exportProgress: Math.max(0, Math.min(1, value)) });
+}
+
 export function getTopbarState() {
   return state;
 }
