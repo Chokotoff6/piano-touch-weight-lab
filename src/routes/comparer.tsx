@@ -1696,7 +1696,7 @@ function Comparer() {
     : cloudSampleCount === 0
       ? ""
       : cloudSampleCount === 1
-        ? "- Moyennes sur base de 1 profil de modèle identique\u00A0"
+        ? "> 1 piano de modèle identique enregistré par les utilisateurs"
         : `Moyennes sur ${cloudSampleCount} pianos de modèle identique enregistrés par les utilisateurs`;
 
   // Pages 1 à 3 du rapport : profil du piano actuel seul, courbes séparées.
