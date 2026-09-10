@@ -370,66 +370,15 @@ function RootComponent() {
 
             {!isComparer && (
             <div className="relative flex items-center">
-              {topbar.serialFilled ? (
-                <DropdownMenu>
-                  <div className="flex items-center">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="rounded-r-none border border-gray-300 bg-white text-lg font-bold !text-black"
-                      onClick={() => dispatchAction("piano-import-csv")}
-                    >
-                      Importer
-                    </Button>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="rounded-l-none border-l-0 bg-white px-2 !text-black"
-                      >
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                  </div>
-                  <DropdownMenuContent align="start">
-                    <DropdownMenuItem onClick={() => dispatchAction("piano-import-csv")}>
-                      Charger un fichier CSV local
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={(event) => event.preventDefault()}
-                      onClick={() => dispatchAction("piano-import-history")}
-                    >
-                      Restaurer depuis l&apos;historique en ligne
-                    </DropdownMenuItem>
-                    {topbar.historyRows.length > 0 && (
-                      <>
-                        <div className="mx-1 my-1 border-t border-border" />
-                        {topbar.historyRows.map((row) => (
-                          <DropdownMenuItem
-                            key={row.id}
-                            onClick={() =>
-                              window.dispatchEvent(
-                                new CustomEvent("piano-import-history-row", { detail: row.id }),
-                              )
-                            }
-                          >
-                            {row.label}
-                          </DropdownMenuItem>
-                        ))}
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border border-gray-300 bg-white text-lg font-bold !text-black"
-                  onClick={() => dispatchAction("piano-import-csv")}
-                >
-                  Importer
-                </Button>
-              )}
+              {/* Importer : chargement d'un fichier CSV local uniquement. */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="border border-gray-300 bg-white text-lg font-bold !text-black"
+                onClick={() => dispatchAction("piano-import-csv")}
+              >
+                Importer
+              </Button>
               {topbar.alert?.anchor === "import" && (
                 <div
                   className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
