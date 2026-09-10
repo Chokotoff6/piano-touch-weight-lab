@@ -1449,7 +1449,7 @@ function Comparer() {
               {
                 blocks: keep([mirrorAveragesRef.current, mirrorSheetRef.current]),
                 layout: "column" as const,
-                title: "RAPPORT D'ATELIER",
+                title: "POIDS STATIQUES DES TOUCHES",
                 underline: false,
               },
               { blocks: keep([mirror("wa"), mirror("wd")]), layout: "column" as const },
@@ -1460,7 +1460,7 @@ function Comparer() {
               {
                 blocks: keep([settingsRef.current, averagesRef.current]),
                 layout: "row" as const,
-                title: "ANALYSE COMPARATIVE",
+                title: "ANALYSE COMPARATIVE STATIQUE",
                 underline: true,
               },
               // Poids descendant (haut) et Poids remontant (bas).

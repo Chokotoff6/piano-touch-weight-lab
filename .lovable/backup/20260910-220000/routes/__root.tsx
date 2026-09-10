@@ -8,9 +8,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -202,10 +199,6 @@ function RootComponent() {
   const activeLinkClass = "rounded-md bg-background px-3 py-2 text-base font-semibold !text-black shadow-sm sm:px-4 sm:text-lg";
   const lockedLinkClass = "cursor-not-allowed rounded-md px-3 py-2 text-base font-semibold !text-gray-300 sm:px-4 sm:text-lg";
 
-  // Le bouton « Fichiers » reste actif hors Comparer dès qu'une saisie
-  // exploitable existe (retour depuis Comparer inclus).
-  const filesEnabled = isComparer || topbar.measuresReady || topbar.gateReady;
-
   const dispatchAction = (type: string) => {
     window.dispatchEvent(new CustomEvent(type, { bubbles: true }));
   };
@@ -276,7 +269,7 @@ function RootComponent() {
                     ref={saveBtnRef}
                     variant="outline"
                     size="sm"
-                    disabled={!filesEnabled}
+                    disabled={!isComparer && !topbar.measuresReady}
                     onClickCapture={(e) => {
                       let ok = false;
                       try {
@@ -289,7 +282,7 @@ function RootComponent() {
                       }
                     }}
                     className={`border border-gray-300 bg-white text-lg font-bold ${
-                      filesEnabled ? "!text-black" : "!text-gray-400"
+                      topbar.measuresReady || isComparer ? "!text-black" : "!text-gray-400"
                     }`}
                   >
                     {lang === "en" ? "Files" : "Fichiers"}
@@ -321,51 +314,41 @@ function RootComponent() {
                   </div>
                 )}
               </div>
-              <DropdownMenuContent align="start" className="max-w-[520px]">
-                {isComparer ? (
-                  /* Page Comparer : une seule ligne directe (algorithme adaptatif 3/4/6 pages). */
+              <DropdownMenuContent align="start" className="max-w-[420px]">
+                {/* Page Comparer : uniquement l'export PDF (pas de CSV). */}
+                {!isComparer && (
                   <DropdownMenuItem
-                    onClick={() => requireConsent(() => dispatchAction("piano-export-pdf"))}
+                    disabled={!topbar.measuresReady}
+                    onClick={() => requireConsent(() => dispatchAction("piano-export-csv"))}
                   >
                     {lang === "en"
-                      ? "Export Workshop report + Comparative analysis as PDF"
-                      : "Exporter Rapport d'atelier + Analyse comparative au format PDF"}
+                      ? "Save entered data as CSV (re-importable)"
+                      : "Sauver les données saisies au format CSV (ré-importable)"}
                   </DropdownMenuItem>
-                ) : (
-                  <>
-                    <DropdownMenuItem
-                      disabled={!filesEnabled}
-                      onClick={() => requireConsent(() => dispatchAction("piano-export-csv"))}
-                    >
-                      {lang === "en"
-                        ? "Save entered data as CSV (re-importable)"
-                        : "Sauver données saisies au format CSV (re-importable)"}
-                    </DropdownMenuItem>
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        {lang === "en" ? "Export PDF" : "Exporter PDF"}
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent className="max-w-[520px]">
-                        <DropdownMenuItem
-                          disabled={!filesEnabled}
-                          onClick={() => requireConsent(() => dispatchAction("piano-export-pdf"))}
-                        >
-                          {lang === "en" ? "Workshop report (3 pages)" : "Rapport d'atelier (3 pages)"}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-pdf")}>
-                          {lang === "en"
-                            ? "Blank form - table format (Paper - re-importable)"
-                            : "Formulaire vierge format tableau (Papier - re-importable)"}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-keyboard-pdf")}>
-                          {lang === "en"
-                            ? "Blank form - keyboard drawing format (Paper - re-importable)"
-                            : "Formulaire vierge format dessin clavier (Papier - re-importable)"}
-                        </DropdownMenuItem>
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-                  </>
                 )}
+                <DropdownMenuItem
+                  disabled={!isComparer && !topbar.measuresReady}
+                  onClick={() => requireConsent(() => dispatchAction("piano-export-pdf"))}
+                >
+                  {lang === "en"
+                    ? "Export entered data as PDF (re-importable)"
+                    : "Exporter les données saisies au format PDF (ré-importable)"}
+                </DropdownMenuItem>
+                {!isComparer && (
+                  <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-pdf")}>
+                    {lang === "en"
+                      ? "Generate a blank form - Table format"
+                      : "Générer un formulaire vierge au format Tableau"}
+                  </DropdownMenuItem>
+                )}
+                {!isComparer && (
+                  <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-keyboard-pdf")}>
+                    {lang === "en"
+                      ? "Generate a blank form - Keyboard drawing format"
+                      : "Générer un formulaire vierge au format Dessin Clavier"}
+                  </DropdownMenuItem>
+                )}
+
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -373,15 +356,66 @@ function RootComponent() {
 
             {!isComparer && (
             <div className="relative flex items-center">
-              {/* Importer : chargement d'un fichier CSV local uniquement. */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="border border-gray-300 bg-white text-lg font-bold !text-black"
-                onClick={() => dispatchAction("piano-import-csv")}
-              >
-                Importer
-              </Button>
+              {topbar.serialFilled ? (
+                <DropdownMenu>
+                  <div className="flex items-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-r-none border border-gray-300 bg-white text-lg font-bold !text-black"
+                      onClick={() => dispatchAction("piano-import-csv")}
+                    >
+                      Importer
+                    </Button>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-l-none border-l-0 bg-white px-2 !text-black"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </div>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem onClick={() => dispatchAction("piano-import-csv")}>
+                      Charger un fichier CSV local
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={(event) => event.preventDefault()}
+                      onClick={() => dispatchAction("piano-import-history")}
+                    >
+                      Restaurer depuis l&apos;historique en ligne
+                    </DropdownMenuItem>
+                    {topbar.historyRows.length > 0 && (
+                      <>
+                        <div className="mx-1 my-1 border-t border-border" />
+                        {topbar.historyRows.map((row) => (
+                          <DropdownMenuItem
+                            key={row.id}
+                            onClick={() =>
+                              window.dispatchEvent(
+                                new CustomEvent("piano-import-history-row", { detail: row.id }),
+                              )
+                            }
+                          >
+                            {row.label}
+                          </DropdownMenuItem>
+                        ))}
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border border-gray-300 bg-white text-lg font-bold !text-black"
+                  onClick={() => dispatchAction("piano-import-csv")}
+                >
+                  Importer
+                </Button>
+              )}
               {topbar.alert?.anchor === "import" && (
                 <div
                   className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
