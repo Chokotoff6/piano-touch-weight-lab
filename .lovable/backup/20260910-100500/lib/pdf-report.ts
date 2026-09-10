@@ -203,18 +203,6 @@ async function capture(el: HTMLElement): Promise<Capture> {
         frame.style.setProperty("flex-direction", "column", "important");
         frame.style.setProperty("justify-content", "center", "important");
         frame.style.setProperty("box-sizing", "border-box", "important");
-        // Le titre du cadre (« Réglages ») déborde au-dessus de la bordure :
-        // une réserve haute évite qu'il soit rogné à la capture.
-        frame.style.setProperty("padding-top", "18px", "important");
-        // Filtres internes resserrés : tout tient dans les 480 px imposés.
-        frame.querySelectorAll<HTMLElement>("button").forEach((btn) => {
-          btn.style.setProperty("height", "26px", "important");
-          btn.style.setProperty("min-height", "26px", "important");
-          btn.style.setProperty("max-height", "26px", "important");
-          btn.style.setProperty("padding-top", "0px", "important");
-          btn.style.setProperty("padding-bottom", "0px", "important");
-          btn.style.setProperty("line-height", "1", "important");
-        });
       });
       // Miroir « Mesures poids statiques » : rendu hors écran remis à l'origine
       // du clone, sans transformation. La réduction 0,82 est appliquée lors de
@@ -577,8 +565,6 @@ export type LandscapePage = {
   blocks: HTMLElement[];
   layout: "row" | "column";
   title?: string;
-  /** Soulignement du grand titre (page 4 uniquement). */
-  underline?: boolean;
 };
 
 /**
@@ -603,25 +589,18 @@ function drawRow(pdf: jsPDF, blocks: Capture[], topOffset: number) {
   });
 }
 
-/**
- * Grand titre centré en noir intense, avec 30 px (≈ 8 mm) de marge vide
- * au-dessus et en dessous. Souligné uniquement quand `underline` est vrai.
- */
-function drawTitle(pdf: jsPDF, title: string, underline = true): number {
-  const TOP = 8; // ≈ 30 px de marge vide au-dessus du texte
-  const BOTTOM = 8; // ≈ 30 px de marge vide en dessous
+/** Titre officiel centré, noir intense et souligné, en haut de la page 4. */
+function drawTitle(pdf: jsPDF, title: string): number {
   pdf.setTextColor(0);
   pdf.setFontSize(14);
   pdf.setFont("helvetica", "bold");
-  const y = MARGIN + TOP;
+  const y = MARGIN + 6;
   pdf.text(title, PAGE_W / 2, y, { align: "center" });
-  if (underline) {
-    const w = pdf.getTextWidth(title);
-    pdf.setLineWidth(0.4);
-    pdf.line((PAGE_W - w) / 2, y + 1.4, (PAGE_W + w) / 2, y + 1.4);
-  }
+  const w = pdf.getTextWidth(title);
+  pdf.setLineWidth(0.4);
+  pdf.line((PAGE_W - w) / 2, y + 1.4, (PAGE_W + w) / 2, y + 1.4);
   pdf.setFont("helvetica", "normal");
-  return TOP + BOTTOM; // mm réservés par le titre et ses marges
+  return 12; // mm réservés par le titre
 }
 
 /** Capture puis télécharge la section comparative en A4 paysage. */
@@ -638,9 +617,7 @@ export async function generateComparisonReport(
   for (const page of pages) {
     if (page.layout !== "row" || page.blocks.length < 2) continue;
     const heights = page.blocks.map((el) => Math.max(el.scrollHeight, el.offsetHeight));
-    // Contraction imposée : hauteur commune plafonnée à 480 px, donc les deux
-    // cadres finissent exactement sur la même ligne de bordure inférieure.
-    const common = Math.min(480, Math.max(...heights));
+    const common = Math.max(...heights);
     page.blocks.forEach((el) => {
       el.setAttribute("data-pdf-fixed-h", String(common));
       marked.push(el);
@@ -658,7 +635,7 @@ export async function generateComparisonReport(
   captured.forEach((blocks, index) => {
     if (index > 0) pdf.addPage("a4", "landscape");
     const page = pages[index];
-    const topOffset = page?.title ? drawTitle(pdf, page.title, page.underline !== false) : 0;
+    const topOffset = page?.title ? drawTitle(pdf, page.title) : 0;
     if (page?.layout === "row" && blocks.length > 1) {
       drawRow(pdf, blocks, topOffset);
     } else {

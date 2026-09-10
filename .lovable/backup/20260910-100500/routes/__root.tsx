@@ -27,7 +27,6 @@ import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
 import premiumCoffeeAsset from "@/assets/premium-coffee.png.asset.json";
-import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -163,9 +162,26 @@ function RootComponent() {
   const lang = useLang();
   const [consentOpen, setConsentOpen] = useState(false);
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
-  // La jauge verte est imbriquée sous le bouton « Sauver » (10 px, à droite) :
-  // aucun calcul de position n'est nécessaire.
+  // Position du message « Export en cours... » : fixe, 10 px sous le bouton
+  // « Sauver » (donc juste sous le bandeau collant), aligné au bord droit.
   const saveBtnRef = useRef<HTMLButtonElement | null>(null);
+  const [exportMsgTop, setExportMsgTop] = useState(0);
+  // Écart strict de 10 px sous le bas du bouton « Sauver » : recalculé à
+  // l'ouverture de l'export, au redimensionnement et au défilement, pour que
+  // le message reste collé juste sous la ligne du bandeau collant.
+  useEffect(() => {
+    const place = () => {
+      const rect = saveBtnRef.current?.getBoundingClientRect();
+      if (rect) setExportMsgTop(rect.bottom + 10);
+    };
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, { passive: true });
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place);
+    };
+  }, [topbar.isExporting]);
   const pendingActionRef = useRef<(() => void) | null>(null);
   useEffect(() => {
     initLang();
@@ -271,6 +287,8 @@ function RootComponent() {
                     size="sm"
                     disabled={!isComparer && !topbar.measuresReady}
                     onClickCapture={(e) => {
+                      const rect = saveBtnRef.current?.getBoundingClientRect();
+                      if (rect) setExportMsgTop(rect.bottom + 10);
                       let ok = false;
                       try {
                         ok = window.sessionStorage.getItem(RGPD_CONSENT_KEY) === "1";
@@ -299,10 +317,12 @@ function RootComponent() {
                 )}
                 {topbar.isExporting && (
                   // Progression purement visuelle : fine ligne verte intense,
-                  // imbriquée sous le bouton « Sauver », à 10 px exactement,
-                  // alignée à droite. Aucun texte descriptif.
+                  // fixée à 10 px sous le bouton « Sauver », alignée à droite.
                   <div
-                    className="absolute right-0 top-full !z-[99999] mt-[10px] h-[3px] w-[220px] overflow-hidden rounded-full bg-gray-200"
+                    className="fixed right-4 !z-[99999] h-[3px] w-[220px] overflow-hidden rounded-full bg-gray-200"
+                    style={{
+                      top: (exportMsgTop || (saveBtnRef.current?.getBoundingClientRect().bottom ?? 56) + 10),
+                    }}
                   >
                     <div
                       className="h-full rounded-full transition-[width] duration-200 ease-linear"
@@ -444,14 +464,6 @@ function RootComponent() {
                  FR
                </Button>
               </div>
-
-              {/* Logo officiel KeyWeight, tout à fait à droite du bandeau. */}
-              <img
-                src={keyweightLogo.url}
-                alt="KeyWeight"
-                style={{ height: "38px", width: "auto" }}
-                className="ml-auto shrink-0"
-              />
 
             </div>
           </div>
