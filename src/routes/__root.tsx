@@ -163,26 +163,9 @@ function RootComponent() {
   const lang = useLang();
   const [consentOpen, setConsentOpen] = useState(false);
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
-  // Position du message « Export en cours... » : fixe, 10 px sous le bouton
-  // « Sauver » (donc juste sous le bandeau collant), aligné au bord droit.
+  // La jauge verte est imbriquée sous le bouton « Sauver » (10 px, à droite) :
+  // aucun calcul de position n'est nécessaire.
   const saveBtnRef = useRef<HTMLButtonElement | null>(null);
-  const [exportMsgTop, setExportMsgTop] = useState(0);
-  // Écart strict de 10 px sous le bas du bouton « Sauver » : recalculé à
-  // l'ouverture de l'export, au redimensionnement et au défilement, pour que
-  // le message reste collé juste sous la ligne du bandeau collant.
-  useEffect(() => {
-    const place = () => {
-      const rect = saveBtnRef.current?.getBoundingClientRect();
-      if (rect) setExportMsgTop(rect.bottom + 10);
-    };
-    place();
-    window.addEventListener("resize", place);
-    window.addEventListener("scroll", place, { passive: true });
-    return () => {
-      window.removeEventListener("resize", place);
-      window.removeEventListener("scroll", place);
-    };
-  }, [topbar.isExporting]);
   const pendingActionRef = useRef<(() => void) | null>(null);
   useEffect(() => {
     initLang();
