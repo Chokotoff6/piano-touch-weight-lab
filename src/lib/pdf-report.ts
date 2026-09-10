@@ -40,7 +40,11 @@ async function capture(el: HTMLElement): Promise<Capture> {
   // à l'écran (sticky). La capture prend leur hauteur réelle de contenu pour
   // qu'aucun filtre ni aucune ligne de texte ne soit tronqué.
   const expand = el.hasAttribute("data-pdf-expand");
-  const height = (expand ? Math.max(el.scrollHeight, el.offsetHeight) : el.offsetHeight) + PAD * 2;
+  // Hauteur rigide imposée (page 4) : les deux cadres côte à côte partagent
+  // exactement la même hauteur en pixels, contenu centré verticalement.
+  const fixedH = Number(el.getAttribute("data-pdf-fixed-h") ?? 0);
+  const naturalH = expand ? Math.max(el.scrollHeight, el.offsetHeight) : el.offsetHeight;
+  const height = (fixedH > 0 ? fixedH : naturalH) + PAD * 2;
   const started = performance.now();
   const canvas = await html2canvas(el, {
     // Définition ajustée à la taille exacte d'insertion PDF : les graphiques
