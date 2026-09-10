@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, ty
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/data/translations";
 import { RefreshCw, Square, SquareX } from "lucide-react";
-import { BrandTargetInfoIcon, TargetLegalInfoIcon } from "@/components/BrandTargetInfo";
+import { BrandTargetInfoIcon } from "@/components/BrandTargetInfo";
 import { paddedDomain } from "@/components/PdfReportBlocks";
 import { PianoSheetMirror } from "@/components/PianoSheetMirror";
 import { generateComparisonReport, type LandscapePage } from "@/lib/pdf-report";
