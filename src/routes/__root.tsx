@@ -282,7 +282,7 @@ function RootComponent() {
                       }
                     }}
                     className={`border border-gray-300 bg-white text-lg font-bold ${
-                      topbar.measuresReady || isComparer ? "!text-black" : "!text-gray-400"
+                      filesEnabled ? "!text-black" : "!text-gray-400"
                     }`}
                   >
                     {lang === "en" ? "Files" : "Fichiers"}
