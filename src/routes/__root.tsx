@@ -285,7 +285,7 @@ function RootComponent() {
                       topbar.measuresReady || isComparer ? "!text-black" : "!text-gray-400"
                     }`}
                   >
-                    {isComparer ? "FICHIERS" : lang === "en" ? "Save" : "Sauver"}
+                    {lang === "en" ? "Files" : "Fichiers"}
                     <ChevronDown className="ml-1 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
