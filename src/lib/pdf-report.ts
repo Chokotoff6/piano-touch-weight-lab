@@ -590,7 +590,9 @@ function drawRow(pdf: jsPDF, blocks: Capture[], topOffset: number) {
  * au-dessus et en dessous. Souligné uniquement quand `underline` est vrai.
  */
 function drawTitle(pdf: jsPDF, title: string, underline = true, logo?: LogoImage | null): number {
-  const TOP = 8; // ≈ 30 px de marge vide au-dessus du texte
+  // Titre souligné (page 4) : 30 px de respiration supplémentaire en haut.
+  const TOP = underline ? 16 : 8; // ≈ 30 px (+30 px) de marge vide au-dessus
+
   const BOTTOM = 8; // ≈ 30 px de marge vide en dessous
   pdf.setTextColor(0);
   pdf.setFontSize(14);
@@ -616,7 +618,7 @@ function drawTitle(pdf: jsPDF, title: string, underline = true, logo?: LogoImage
 type LogoImage = { dataUrl: string; ratio: number };
 
 /** Hauteur imposée du logo dans le PDF : 30 px ≈ 7,9 mm. */
-const LOGO_H_MM = 30 * 0.2646;
+const LOGO_H_MM = 42 * 0.2646;
 
 let logoPromise: Promise<LogoImage | null> | null = null;
 
@@ -657,27 +659,10 @@ export async function generateComparisonReport(
   startPage = 4,
   totalPages = 6,
 ): Promise<void> {
-  // Pages « côte à côte » : les blocs reçoivent une hauteur rigide commune
-  // (la plus grande hauteur de contenu) avant capture. Les deux cadres sortent
-  // donc à hauteur strictement égale, contenu centré et jamais coupé.
-  const marked: HTMLElement[] = [];
-  for (const page of pages) {
-    if (page.layout !== "row" || page.blocks.length < 2) continue;
-    const heights = page.blocks.map((el) => Math.max(el.scrollHeight, el.offsetHeight));
-    // Contraction imposée : hauteur commune plafonnée à 480 px, donc les deux
-    // cadres finissent exactement sur la même ligne de bordure inférieure.
-    const common = Math.min(480, Math.max(...heights));
-    page.blocks.forEach((el) => {
-      el.setAttribute("data-pdf-fixed-h", String(common));
-      marked.push(el);
-    });
-  }
-  let captured: ReportCaptures;
-  try {
-    captured = await captureReportPages(pages.map((page) => page.blocks));
-  } finally {
-    marked.forEach((el) => el.removeAttribute("data-pdf-fixed-h"));
-  }
+  // Pages « côte à côte » : chaque cadre garde sa hauteur naturelle. Aucune
+  // contrainte de hauteur égale, donc plus aucun risque de troncature.
+  const captured: ReportCaptures = await captureReportPages(pages.map((page) => page.blocks));
+
   if (captured.length === 0) return;
   const logo = await loadBrandLogo();
   const pdf = new jsPDF({ orientation: "landscape", format: "a4", unit: "mm" });
