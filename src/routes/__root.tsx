@@ -496,21 +496,6 @@ function RootComponent() {
         )}
 
 
-      <a
-        href="https://buymeacoffee.com"
-        target="_blank"
-        rel="noopener noreferrer"
-        title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
-        aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
-        className="fixed right-6 top-4 z-50 flex max-h-none -translate-x-full items-center justify-center rounded-lg bg-transparent transition-transform hover:scale-105"
-        style={{ marginLeft: "65px", marginRight: "-30px" }}
-      >
-        <img
-          src={premiumCoffeeAsset.url}
-          alt="Buy me a coffee"
-          className="!h-[68px] !w-auto rounded-lg object-cover !shadow-xl"
-        />
-      </a>
 
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
