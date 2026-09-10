@@ -1450,7 +1450,7 @@ function Comparer() {
             if (pages.length === 0) return;
             await generateComparisonReport(pages, "COMPARATIF_TOUCHWEIGHT.pdf", 1, 6);
           } finally {
-            setTopbarState({ isExporting: false });
+            setTopbarState({ isExporting: false, exportProgress: 0 });
           }
         })();
       }, 150);
