@@ -697,12 +697,13 @@ export async function generateComparisonReport(
     marked.forEach((el) => el.removeAttribute("data-pdf-fixed-h"));
   }
   if (captured.length === 0) return;
+  const logo = await loadBrandLogo();
   const pdf = new jsPDF({ orientation: "landscape", format: "a4", unit: "mm" });
   const stamp = exportStamp();
   captured.forEach((blocks, index) => {
     if (index > 0) pdf.addPage("a4", "landscape");
     const page = pages[index];
-    const topOffset = page?.title ? drawTitle(pdf, page.title, page.underline !== false) : 0;
+    const topOffset = page?.title ? drawTitle(pdf, page.title, page.underline !== false, logo) : 0;
     if (page?.layout === "row" && blocks.length > 1) {
       drawRow(pdf, blocks, topOffset);
     } else {
