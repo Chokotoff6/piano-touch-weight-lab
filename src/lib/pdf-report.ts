@@ -425,19 +425,26 @@ export async function captureReportPages(pages: HTMLElement[][]): Promise<Report
  * chacune) et déclenche le téléchargement local direct (pdf.save).
  * `header` : 3 lignes d'identification imprimées en haut à droite des pages 2+.
  */
-export function buildReportPdf(
+export async function buildReportPdf(
   captured: ReportCaptures,
   filename: string,
   header: string[] = [],
-): void {
+): Promise<void> {
   if (captured.length === 0) return;
+  const logo = await loadBrandLogo();
   const pdf = new jsPDF({ orientation: "landscape", format: "a4", unit: "mm" });
   const total = captured.length;
   const stamp = exportStamp();
   captured.forEach((blocks, index) => {
     if (index > 0) pdf.addPage("a4", "landscape");
     const withHeader = index > 0 && header.length > 0;
-    const topOffset = withHeader ? HEADER_H : 0;
+    // Charte PDF : page 1 titrée « Poids statique » (centré, 30 px de marge
+    // haute et basse) avec le logo KeyWeight de 42 px tout en haut à droite.
+    const topOffset = index === 0
+      ? drawTitle(pdf, "Poids statique", false, logo)
+      : withHeader
+        ? HEADER_H
+        : 0;
     if (withHeader) drawHeader(pdf, header);
     drawPage(pdf, blocks, pageRatio(blocks, topOffset), topOffset);
     drawFooter(pdf, index + 1, total, stamp);
@@ -467,7 +474,7 @@ export async function generateLandscapeReport(
   filename: string,
   header: string[] = [],
 ): Promise<void> {
-  buildReportPdf(await captureReportPages(pages), filename, header);
+  await buildReportPdf(await captureReportPages(pages), filename, header);
 }
 
 /** En-tête d'identification (3 lignes) en haut à droite des pages 2 et 3. */
@@ -605,7 +612,7 @@ function drawRow(pdf: jsPDF, blocks: Capture[], topOffset: number) {
  */
 function drawTitle(pdf: jsPDF, title: string, underline = true, logo?: LogoImage | null): number {
   // Titre souligné (page 4) : 30 px de respiration supplémentaire en haut.
-  const TOP = underline ? 16 : 8; // ≈ 30 px (+30 px) de marge vide au-dessus
+  const TOP = underline ? 24 : 8; // ≈ 30 px (+30 px) de marge vide au-dessus
 
   const BOTTOM = 8; // ≈ 30 px de marge vide en dessous
   pdf.setTextColor(0);
