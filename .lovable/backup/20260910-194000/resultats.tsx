@@ -103,8 +103,7 @@ function Resultats() {
     info: {},
   }));
   const [consent, setConsent] = useState(false);
-  // État initial imposé : touches blanches et noires affichées séparément.
-  const [keyFilter, setKeyFilter] = useState<KeyFilter>("split");
+  const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
   const [busy, setBusy] = useState(false);
   const averagesRef = useRef<HTMLDivElement>(null);
   const [averagesHeight, setAveragesHeight] = useState(0);

@@ -1439,49 +1439,42 @@ function Comparer() {
             const mirror = (id: string) => inside(mirrorChartsRef.current, id);
             const keep = (list: Array<HTMLElement | null>) =>
               list.filter((el): el is HTMLElement => el !== null);
-            // Cas 1 : rien de coché → 3 pages. Cas 2 : Cible seule → 4 pages
-            // (page 1 + les 3 pages comparatives). Cas 3 : Cloud et/ou Import
-            // → 6 pages complètes.
-            const cloudOrCsv = sourceMode === "cloud" || comparedPiano !== null;
-            const comparisonActive = standardEnabled || cloudOrCsv;
+            // Aucune source cochée : rapport court du piano seul (3 pages).
+            const comparisonActive =
+              standardEnabled || sourceMode === "cloud" || comparedPiano !== null;
             const soloPages: LandscapePage[] = [
               // Pages 1 à 3 : atelier (miroir hors écran de la page Saisie).
               {
                 blocks: keep([mirrorAveragesRef.current, mirrorSheetRef.current]),
                 layout: "column" as const,
-                title: "POIDS STATIQUES DES TOUCHES",
+                title: "Poids statique",
                 underline: false,
               },
               { blocks: keep([mirror("wa"), mirror("wd")]), layout: "column" as const },
               { blocks: keep([mirror("bal"), mirror("fric")]), layout: "column" as const },
             ];
             const comparePages: LandscapePage[] = [
-              // Page comparative 1 : « Réglages » à gauche et « Moyennes » à droite.
+              // Page 4 : titre officiel, « Réglages » à gauche et « Moyennes » à droite.
               {
                 blocks: keep([settingsRef.current, averagesRef.current]),
                 layout: "row" as const,
-                title: "ANALYSE COMPARATIVE STATIQUE",
+                title: "COMPARAISON PROFIL PIANO ACTUEL VS CLOUD ET/OU CIBLES",
                 underline: true,
               },
-              // Poids descendant (haut) et Poids remontant (bas).
+              // Page 5 : Poids descendant (haut) et Poids remontant (bas).
               { blocks: keep([pick("pair1")]), layout: "column" as const },
-              // Poids d'équilibre (haut) et Friction (bas).
+              // Page 6 : Poids d'équilibre (haut) et Friction (bas).
               { blocks: keep([pick("pair2")]), layout: "column" as const },
             ];
-            const selected = !comparisonActive
-              ? soloPages
-              : cloudOrCsv
-                ? [...soloPages, ...comparePages]
-                : [soloPages[0]!, ...comparePages];
-            const pages = selected.filter((page) => page.blocks.length > 0);
+            const pages = (comparisonActive ? [...soloPages, ...comparePages] : soloPages)
+              .filter((page) => page.blocks.length > 0);
             if (pages.length === 0) return;
             await generateComparisonReport(
               pages,
               "COMPARATIF_TOUCHWEIGHT.pdf",
               1,
-              pages.length,
+              comparisonActive ? 6 : 3,
             );
-
           } finally {
             setTopbarState({ isExporting: false, exportProgress: 0 });
           }
