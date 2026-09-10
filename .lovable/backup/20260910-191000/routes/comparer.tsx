@@ -1439,21 +1439,16 @@ function Comparer() {
             const mirror = (id: string) => inside(mirrorChartsRef.current, id);
             const keep = (list: Array<HTMLElement | null>) =>
               list.filter((el): el is HTMLElement => el !== null);
-            // Aucune source cochée : rapport court du piano seul (3 pages).
-            const comparisonActive =
-              standardEnabled || sourceMode === "cloud" || comparedPiano !== null;
-            const soloPages: LandscapePage[] = [
+            const pages: LandscapePage[] = [
               // Pages 1 à 3 : atelier (miroir hors écran de la page Saisie).
               {
                 blocks: keep([mirrorAveragesRef.current, mirrorSheetRef.current]),
                 layout: "column" as const,
-                title: "Poids statique",
+                title: `POIDS STATIQUES DES TOUCHES – ${[mine?.brand, mine?.model].filter(Boolean).join(" ").toLocaleUpperCase()}`.trim(),
                 underline: false,
               },
               { blocks: keep([mirror("wa"), mirror("wd")]), layout: "column" as const },
               { blocks: keep([mirror("bal"), mirror("fric")]), layout: "column" as const },
-            ];
-            const comparePages: LandscapePage[] = [
               // Page 4 : titre officiel, « Réglages » à gauche et « Moyennes » à droite.
               {
                 blocks: keep([settingsRef.current, averagesRef.current]),
@@ -1465,16 +1460,9 @@ function Comparer() {
               { blocks: keep([pick("pair1")]), layout: "column" as const },
               // Page 6 : Poids d'équilibre (haut) et Friction (bas).
               { blocks: keep([pick("pair2")]), layout: "column" as const },
-            ];
-            const pages = (comparisonActive ? [...soloPages, ...comparePages] : soloPages)
-              .filter((page) => page.blocks.length > 0);
+            ].filter((page) => page.blocks.length > 0);
             if (pages.length === 0) return;
-            await generateComparisonReport(
-              pages,
-              "COMPARATIF_TOUCHWEIGHT.pdf",
-              1,
-              comparisonActive ? 6 : 3,
-            );
+            await generateComparisonReport(pages, "COMPARATIF_TOUCHWEIGHT.pdf", 1, 6);
           } finally {
             setTopbarState({ isExporting: false, exportProgress: 0 });
           }
@@ -1483,7 +1471,7 @@ function Comparer() {
     };
     window.addEventListener("piano-export-pdf", onPdf);
     return () => window.removeEventListener("piano-export-pdf", onPdf);
-  }, [mine, standardEnabled, sourceMode, comparedPiano]);
+  }, [mine]);
   const [averagesHeight, setAveragesHeight] = useState(0);
 
   useEffect(() => {
@@ -1765,7 +1753,7 @@ function Comparer() {
           <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-stretch gap-6">
             <div className="min-w-0">
               
-              <div ref={averagesRef} data-pdf-expand data-pdf-lock-w="980" className="sticky top-[127px] z-50 mb-[50px] w-full bg-white pb-2 relative">
+              <div ref={averagesRef} data-pdf-expand className="sticky top-[127px] z-50 mb-[50px] w-full bg-white pb-2 relative">
                 <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span>Moyennes</span>} className="h-fit">
                   {/* Séparateurs affichés uniquement si au moins deux sources sont présentes. */}
                   <div className={(comparedPiano !== null || sourceMode === "cloud" || standardEnabled) ? "mb-3 border-b border-gray-400 pb-3" : ""}><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">Piano actuel : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>

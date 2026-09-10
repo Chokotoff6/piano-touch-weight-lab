@@ -1576,7 +1576,7 @@ function Index() {
     const started = performance.now();
     const shots = await captureReportPages(pages);
     const assembly = performance.now();
-    await buildReportPdf(shots, filename, header);
+    buildReportPdf(shots, filename, header);
     console.info(
       `[pdf] captures ${Math.round(assembly - started)} ms + assemblage ${Math.round(performance.now() - assembly)} ms`,
     );

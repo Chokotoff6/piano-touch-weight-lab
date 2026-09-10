@@ -285,7 +285,7 @@ function RootComponent() {
                       topbar.measuresReady || isComparer ? "!text-black" : "!text-gray-400"
                     }`}
                   >
-                    {isComparer ? "FICHIERS" : lang === "en" ? "Save" : "Sauver"}
+                    {lang === "en" ? "Save" : "Sauver"}
                     <ChevronDown className="ml-1 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -302,7 +302,7 @@ function RootComponent() {
                   // imbriquée sous le bouton « Sauver », à 10 px exactement,
                   // alignée à droite. Aucun texte descriptif.
                   <div
-                    className="absolute inset-x-0 top-full !z-[99999] mt-[10px] h-[3px] w-full overflow-hidden rounded-full bg-gray-200"
+                    className="absolute right-0 top-full !z-[99999] mt-[10px] h-[3px] w-[220px] overflow-hidden rounded-full bg-gray-200"
                   >
                     <div
                       className="h-full rounded-full transition-[width] duration-200 ease-linear"
@@ -315,17 +315,14 @@ function RootComponent() {
                 )}
               </div>
               <DropdownMenuContent align="start" className="max-w-[420px]">
-                {/* Page Comparer : uniquement l'export PDF (pas de CSV). */}
-                {!isComparer && (
-                  <DropdownMenuItem
-                    disabled={!topbar.measuresReady}
-                    onClick={() => requireConsent(() => dispatchAction("piano-export-csv"))}
-                  >
-                    {lang === "en"
-                      ? "Save entered data as CSV (re-importable)"
-                      : "Sauver les données saisies au format CSV (ré-importable)"}
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem
+                  disabled={!topbar.measuresReady}
+                  onClick={() => requireConsent(() => dispatchAction("piano-export-csv"))}
+                >
+                  {lang === "en"
+                    ? "Save entered data as CSV (re-importable)"
+                    : "Sauver les données saisies au format CSV (ré-importable)"}
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={!isComparer && !topbar.measuresReady}
                   onClick={() => requireConsent(() => dispatchAction("piano-export-pdf"))}
@@ -427,16 +424,15 @@ function RootComponent() {
              </div>
              )}
 
-             <div className="ml-auto flex items-center gap-3 mr-[-1rem] sm:mr-[-1.5rem]">
-               {/* Café à gauche des langues (chevauchant la ligne grise),
-                   puis logo calé au bord droit, à cheval sur cette ligne. */}
+             <div className="ml-auto flex items-center gap-3">
+               {/* Café à gauche des langues, puis logo tout à droite. */}
                <a
                  href="https://buymeacoffee.com"
                  target="_blank"
                  rel="noopener noreferrer"
                  title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
                  aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
-                 className="relative z-10 flex shrink-0 translate-y-[30px] items-center justify-center rounded-lg bg-transparent transition-transform hover:scale-105"
+                 className="flex shrink-0 items-center justify-center rounded-lg bg-transparent transition-transform hover:scale-105"
                >
                  <img
                    src={premiumCoffeeAsset.url}
@@ -465,13 +461,12 @@ function RootComponent() {
                  </Button>
                </div>
 
-               {/* Logo officiel KeyWeight : bord droit collé au bord de page,
-                   le mot KEYWEIGHT coupé en son milieu par la ligne grise. */}
+               {/* Logo officiel KeyWeight, pleine hauteur du bandeau. */}
                <img
                  src={keyweightLogo.url}
                  alt="KeyWeight"
-                 style={{ height: "64px", width: "auto" }}
-                 className="relative z-10 shrink-0 translate-y-[19px] object-contain"
+                 style={{ height: "calc(100% - 12px)", maxHeight: "55px", width: "auto" }}
+                 className="shrink-0 self-stretch object-contain"
                />
              </div>
 
