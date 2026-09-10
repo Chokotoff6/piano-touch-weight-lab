@@ -32,6 +32,7 @@ let state: TopbarState = {
   measuresReady: false,
   serialFilled: false,
   isExporting: false,
+  exportProgress: 0,
   isDirty: false,
   hasSaved: false,
   alert: null,
