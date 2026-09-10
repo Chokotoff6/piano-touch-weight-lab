@@ -463,6 +463,14 @@ function RootComponent() {
                </Button>
               </div>
 
+              {/* Logo officiel KeyWeight, tout à fait à droite du bandeau. */}
+              <img
+                src={keyweightLogo.url}
+                alt="KeyWeight"
+                style={{ height: "38px", width: "auto" }}
+                className="ml-auto shrink-0"
+              />
+
             </div>
           </div>
         </nav>
