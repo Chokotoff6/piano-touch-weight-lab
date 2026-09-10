@@ -27,6 +27,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
 import premiumCoffeeAsset from "@/assets/premium-coffee.png.asset.json";
+import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
