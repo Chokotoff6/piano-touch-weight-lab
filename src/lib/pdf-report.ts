@@ -203,6 +203,18 @@ async function capture(el: HTMLElement): Promise<Capture> {
         frame.style.setProperty("flex-direction", "column", "important");
         frame.style.setProperty("justify-content", "center", "important");
         frame.style.setProperty("box-sizing", "border-box", "important");
+        // Le titre du cadre (« Réglages ») déborde au-dessus de la bordure :
+        // une réserve haute évite qu'il soit rogné à la capture.
+        frame.style.setProperty("padding-top", "18px", "important");
+        // Filtres internes resserrés : tout tient dans les 480 px imposés.
+        frame.querySelectorAll<HTMLElement>("button").forEach((btn) => {
+          btn.style.setProperty("height", "26px", "important");
+          btn.style.setProperty("min-height", "26px", "important");
+          btn.style.setProperty("max-height", "26px", "important");
+          btn.style.setProperty("padding-top", "0px", "important");
+          btn.style.setProperty("padding-bottom", "0px", "important");
+          btn.style.setProperty("line-height", "1", "important");
+        });
       });
       // Miroir « Mesures poids statiques » : rendu hors écran remis à l'origine
       // du clone, sans transformation. La réduction 0,82 est appliquée lors de
