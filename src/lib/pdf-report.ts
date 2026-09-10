@@ -381,10 +381,19 @@ export async function captureReportPages(pages: HTMLElement[][]): Promise<Report
   // les lancer ensemble ne partage aucun travail et fige l'écran. Ici le
   // message « Export en cours... » reste peint pendant toute l'opération.
   const captured: ReportCaptures = [];
+  // Progression visuelle : les captures occupent 0 → 90 %, l'assemblage final
+  // du PDF complète la ligne verte jusqu'à 100 %.
+  const totalBlocks = Math.max(1, pages.reduce((sum, page) => sum + page.length, 0));
+  let done = 0;
+  setExportProgress(0.04);
   for (const page of pages) {
     const shots: Capture[] = [];
     for (const block of page) {
-      if (!block || !isRenderable(block)) continue;
+      if (!block || !isRenderable(block)) {
+        done += 1;
+        setExportProgress((done / totalBlocks) * 0.9);
+        continue;
+      }
       // Étanchéité totale : un bloc non capturable est ignoré, jamais bloquant.
       try {
         const shot = await capture(block);
@@ -392,10 +401,13 @@ export async function captureReportPages(pages: HTMLElement[][]): Promise<Report
       } catch (error) {
         console.warn("[pdf] bloc ignoré", error);
       }
+      done += 1;
+      setExportProgress((done / totalBlocks) * 0.9);
       await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
     }
     if (shots.length > 0) captured.push(shots);
   }
+  setExportProgress(0.92);
   console.info(`[pdf] captures totales : ${Math.round(performance.now() - total)} ms`);
   return captured;
 }
