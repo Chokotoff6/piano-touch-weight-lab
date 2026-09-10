@@ -40,9 +40,11 @@ async function capture(el: HTMLElement): Promise<Capture> {
   // à l'écran (sticky). La capture prend leur hauteur réelle de contenu pour
   // qu'aucun filtre ni aucune ligne de texte ne soit tronqué.
   const expand = el.hasAttribute("data-pdf-expand");
+  // Hauteur rigide imposée (page 4) : les deux cadres côte à côte partagent
+  // exactement la même hauteur en pixels, contenu centré verticalement.
+  const fixedH = Number(el.getAttribute("data-pdf-fixed-h") ?? 0);
   const naturalH = expand ? Math.max(el.scrollHeight, el.offsetHeight) : el.offsetHeight;
-  const height = naturalH + PAD * 2;
-
+  const height = (fixedH > 0 ? fixedH : naturalH) + PAD * 2;
   const started = performance.now();
   const canvas = await html2canvas(el, {
     // Définition ajustée à la taille exacte d'insertion PDF : les graphiques
@@ -185,19 +187,35 @@ async function capture(el: HTMLElement): Promise<Capture> {
         child.style.setProperty("max-height", "none", "important");
         child.style.setProperty("overflow", "visible", "important");
       });
-      // Cadre « Réglages » : hauteur libre, jamais tronqué. Réserve haute pour
-      // le titre débordant et réserve basse pour les derniers filtres.
-      pick("[data-pdf-expand]").forEach((node) => {
+      // Hauteur rigide commune (page 4) : les deux cadres reçoivent la même
+      // hauteur en pixels et leur contenu est centré verticalement, donc les
+      // bordures inférieures coïncident exactement dans le PDF.
+      pick("[data-pdf-fixed-h]").forEach((node) => {
         const frame = node as HTMLElement;
-        frame.style.setProperty("height", "auto", "important");
-        frame.style.setProperty("min-height", "0", "important");
-        frame.style.setProperty("max-height", "none", "important");
-        frame.style.setProperty("overflow", "visible", "important");
+        const h = Number(frame.getAttribute("data-pdf-fixed-h") ?? 0);
+        if (!(h > 0)) return;
+        frame.style.setProperty("position", "static", "important");
+        frame.style.setProperty("height", `${h}px`, "important");
+        frame.style.setProperty("min-height", `${h}px`, "important");
+        frame.style.setProperty("max-height", `${h}px`, "important");
+        frame.style.setProperty("overflow", "hidden", "important");
+        frame.style.setProperty("display", "flex", "important");
+        frame.style.setProperty("flex-direction", "column", "important");
+        frame.style.setProperty("justify-content", "center", "important");
         frame.style.setProperty("box-sizing", "border-box", "important");
+        // Le titre du cadre (« Réglages ») déborde au-dessus de la bordure :
+        // une réserve haute évite qu'il soit rogné à la capture.
         frame.style.setProperty("padding-top", "18px", "important");
-        frame.style.setProperty("padding-bottom", "16px", "important");
+        // Filtres internes resserrés : tout tient dans les 480 px imposés.
+        frame.querySelectorAll<HTMLElement>("button").forEach((btn) => {
+          btn.style.setProperty("height", "26px", "important");
+          btn.style.setProperty("min-height", "26px", "important");
+          btn.style.setProperty("max-height", "26px", "important");
+          btn.style.setProperty("padding-top", "0px", "important");
+          btn.style.setProperty("padding-bottom", "0px", "important");
+          btn.style.setProperty("line-height", "1", "important");
+        });
       });
-
       // Miroir « Mesures poids statiques » : rendu hors écran remis à l'origine
       // du clone, sans transformation. La réduction 0,82 est appliquée lors de
       // l'insertion dans le PDF, après une capture intégrale nette.
@@ -590,9 +608,7 @@ function drawRow(pdf: jsPDF, blocks: Capture[], topOffset: number) {
  * au-dessus et en dessous. Souligné uniquement quand `underline` est vrai.
  */
 function drawTitle(pdf: jsPDF, title: string, underline = true, logo?: LogoImage | null): number {
-  // Titre souligné (page 4) : 30 px de respiration supplémentaire en haut.
-  const TOP = underline ? 16 : 8; // ≈ 30 px (+30 px) de marge vide au-dessus
-
+  const TOP = 8; // ≈ 30 px de marge vide au-dessus du texte
   const BOTTOM = 8; // ≈ 30 px de marge vide en dessous
   pdf.setTextColor(0);
   pdf.setFontSize(14);
@@ -618,7 +634,7 @@ function drawTitle(pdf: jsPDF, title: string, underline = true, logo?: LogoImage
 type LogoImage = { dataUrl: string; ratio: number };
 
 /** Hauteur imposée du logo dans le PDF : 30 px ≈ 7,9 mm. */
-const LOGO_H_MM = 42 * 0.2646;
+const LOGO_H_MM = 30 * 0.2646;
 
 let logoPromise: Promise<LogoImage | null> | null = null;
 
@@ -659,10 +675,27 @@ export async function generateComparisonReport(
   startPage = 4,
   totalPages = 6,
 ): Promise<void> {
-  // Pages « côte à côte » : chaque cadre garde sa hauteur naturelle. Aucune
-  // contrainte de hauteur égale, donc plus aucun risque de troncature.
-  const captured: ReportCaptures = await captureReportPages(pages.map((page) => page.blocks));
-
+  // Pages « côte à côte » : les blocs reçoivent une hauteur rigide commune
+  // (la plus grande hauteur de contenu) avant capture. Les deux cadres sortent
+  // donc à hauteur strictement égale, contenu centré et jamais coupé.
+  const marked: HTMLElement[] = [];
+  for (const page of pages) {
+    if (page.layout !== "row" || page.blocks.length < 2) continue;
+    const heights = page.blocks.map((el) => Math.max(el.scrollHeight, el.offsetHeight));
+    // Contraction imposée : hauteur commune plafonnée à 480 px, donc les deux
+    // cadres finissent exactement sur la même ligne de bordure inférieure.
+    const common = Math.min(480, Math.max(...heights));
+    page.blocks.forEach((el) => {
+      el.setAttribute("data-pdf-fixed-h", String(common));
+      marked.push(el);
+    });
+  }
+  let captured: ReportCaptures;
+  try {
+    captured = await captureReportPages(pages.map((page) => page.blocks));
+  } finally {
+    marked.forEach((el) => el.removeAttribute("data-pdf-fixed-h"));
+  }
   if (captured.length === 0) return;
   const logo = await loadBrandLogo();
   const pdf = new jsPDF({ orientation: "landscape", format: "a4", unit: "mm" });
