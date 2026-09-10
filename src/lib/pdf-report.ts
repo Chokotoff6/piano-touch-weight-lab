@@ -187,6 +187,23 @@ async function capture(el: HTMLElement): Promise<Capture> {
         child.style.setProperty("max-height", "none", "important");
         child.style.setProperty("overflow", "visible", "important");
       });
+      // Hauteur rigide commune (page 4) : les deux cadres reçoivent la même
+      // hauteur en pixels et leur contenu est centré verticalement, donc les
+      // bordures inférieures coïncident exactement dans le PDF.
+      pick("[data-pdf-fixed-h]").forEach((node) => {
+        const frame = node as HTMLElement;
+        const h = Number(frame.getAttribute("data-pdf-fixed-h") ?? 0);
+        if (!(h > 0)) return;
+        frame.style.setProperty("position", "static", "important");
+        frame.style.setProperty("height", `${h}px`, "important");
+        frame.style.setProperty("min-height", `${h}px`, "important");
+        frame.style.setProperty("max-height", `${h}px`, "important");
+        frame.style.setProperty("overflow", "hidden", "important");
+        frame.style.setProperty("display", "flex", "important");
+        frame.style.setProperty("flex-direction", "column", "important");
+        frame.style.setProperty("justify-content", "center", "important");
+        frame.style.setProperty("box-sizing", "border-box", "important");
+      });
       // Miroir « Mesures poids statiques » : rendu hors écran remis à l'origine
       // du clone, sans transformation. La réduction 0,82 est appliquée lors de
       // l'insertion dans le PDF, après une capture intégrale nette.
