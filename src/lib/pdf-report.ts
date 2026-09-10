@@ -642,5 +642,6 @@ export async function generateComparisonReport(
     }
     drawFooter(pdf, startPage + index, totalPages, stamp);
   });
+  setExportProgress(1);
   pdf.save(filename);
 }
