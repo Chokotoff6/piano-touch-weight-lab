@@ -199,6 +199,10 @@ function RootComponent() {
   const activeLinkClass = "rounded-md bg-background px-3 py-2 text-base font-semibold !text-black shadow-sm sm:px-4 sm:text-lg";
   const lockedLinkClass = "cursor-not-allowed rounded-md px-3 py-2 text-base font-semibold !text-gray-300 sm:px-4 sm:text-lg";
 
+  // Le bouton « Fichiers » reste actif hors Comparer dès qu'une saisie
+  // exploitable existe (retour depuis Comparer inclus).
+  const filesEnabled = isComparer || topbar.measuresReady || topbar.gateReady;
+
   const dispatchAction = (type: string) => {
     window.dispatchEvent(new CustomEvent(type, { bubbles: true }));
   };
