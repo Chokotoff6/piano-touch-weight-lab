@@ -865,6 +865,7 @@ function Index() {
   const resetInfo = () => {
     try {
       window.localStorage.removeItem(DRAFT_INFO_KEY);
+      window.sessionStorage.setItem("ptw_weighing_mode", "0");
     } catch {
       /* stockage indisponible */
     }
@@ -873,8 +874,13 @@ function Index() {
     setCurrentDbId(null);
     setErrors({});
     fabricationTouched.current = false;
+    // Verrou de sécurité : le bouton « Mesures clavier » redevient neutre et inactif.
+    setWeighingMode(false);
+    setGateReady(false);
+    setTopbarState({ measuresReady: false, exportReady: false });
     markDirty();
   };
+
 
   // --- Messages temporaires ---------------------------------------------------
 
@@ -1675,7 +1681,7 @@ function Index() {
       fabricationTouched.current = true;
       setCurrentDbId(null);
       markDirty();
-      showTopbarAlert("import", "Fichier CSV importé.");
+      // Importation silencieuse : aucun message de confirmation à l'écran.
     } catch {
       showTopbarAlert("import", INVALID_CSV_MESSAGE);
     }
