@@ -348,7 +348,13 @@ function RootComponent() {
                   </div>
                 )}
               </div>
-              <DropdownMenuContent align="start" className="max-w-[520px]">
+              <DropdownMenuContent
+                align="start"
+                className="max-w-[520px]"
+                onMouseEnter={cancelMenuClose}
+                onMouseLeave={scheduleMenuClose}
+              >
+
                 {isComparer ? (
                   /* Page Comparer : une seule ligne directe (algorithme adaptatif 3/4/6 pages). */
                   <DropdownMenuItem
