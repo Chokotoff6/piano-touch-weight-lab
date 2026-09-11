@@ -799,7 +799,7 @@ function Index() {
   }, [keyboardValid]);
 
   /** Remarques obligatoires dès que des modifications importantes sont déclarées. */
-  const remarquesRequired = maintenanceList.includes("Modifications importantes");
+  const remarquesRequired = (info["entretien"] ?? "").trim() === "Modifications importantes";
   const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
 
   /**
