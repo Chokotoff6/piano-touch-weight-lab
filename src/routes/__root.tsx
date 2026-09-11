@@ -395,19 +395,24 @@ function RootComponent() {
               <Button
                 variant="outline"
                 size="sm"
-                title="Importer un fichier CSV (Keyweight) depuis votre stockage local."
+                onMouseEnter={showImportHint}
+                onMouseLeave={hideImportHint}
                 className="border border-gray-300 bg-white text-lg font-bold !text-black"
                 onClick={() => dispatchAction("piano-import-csv")}
               >
                 Importer
               </Button>
 
-              {topbar.alert?.anchor === "import" && (
+              {(importHint || topbar.alert?.anchor === "import") && (
                 <div
                   className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
                   style={{ position: "absolute", zIndex: 99999, backgroundColor: "#ffffff" }}
                 >
-                  {topbar.alert.message}
+                  {topbar.alert?.anchor === "import"
+                    ? topbar.alert.message
+                    : lang === "en"
+                      ? "Import a Keyweight CSV file from your local storage."
+                      : "Importer un fichier CSV (Keyweight) depuis votre stockage local."}
                 </div>
                )}
              </div>
