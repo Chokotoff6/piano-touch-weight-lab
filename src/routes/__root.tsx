@@ -490,21 +490,21 @@ function RootComponent() {
                      setSupportHint(false);
                    }}
                  >
-                     {/* Le clavier occupe 37,5 px dans le logo affiché à 85 px :
-                         25 px correspond exactement à ses deux tiers. */}
+                     {/* Le clavier occupe 36,08 px dans le logo affiché à 85 px :
+                         24,05 px correspond exactement à ses deux tiers. */}
                      <Button
                       type="button"
                        variant="ghost"
                        size="sm"
                       onClick={() => setSupportOpen(true)}
                       aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                       style={{ height: "25px", width: "auto" }}
-                       className="relative z-10 mr-3 flex shrink-0 translate-y-[29px] items-center justify-center overflow-hidden p-0 transition-transform hover:scale-105 hover:bg-transparent"
+                       style={{ height: "24.05px", width: "auto" }}
+                       className="relative z-10 mr-3 flex shrink-0 items-center justify-center overflow-hidden p-0 transition-transform hover:scale-105 hover:bg-transparent"
                    >
                      <img
                         src={likedLogoAsset.url}
                        alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                        style={{ height: "25px", width: "auto" }}
+                        style={{ height: "24.05px", width: "auto" }}
                         className="block max-w-none object-contain"
                      />
                     </Button>
