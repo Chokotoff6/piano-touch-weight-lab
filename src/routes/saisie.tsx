@@ -799,6 +799,12 @@ function Index() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /** Message « Complétez : ... » affiché uniquement au clic sur le bouton. */
+  const [missingFlash, setMissingFlash] = useState(false);
+  const missingFlashTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+
+
   /** Validation consciente de la fiche : alerte si incomplète, sinon mode pesée. */
   const onValidateWeighing = useCallback(() => {
     if (!requiredSheetFieldsComplete) {
