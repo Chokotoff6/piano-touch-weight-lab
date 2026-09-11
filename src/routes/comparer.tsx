@@ -1736,6 +1736,11 @@ function Comparer() {
   const keyCounts = countKeys(mine?.wa);
   const summary = `${summaryValue(mine?.brand)}\u00A0\u00A0${summaryValue(mine?.model)} - ${summaryValue(mine?.year)} - SN ${summaryValue(mine?.serialNumber)} - ${en ? "Measurement" : "Mesure"} ${formatMeasureDate(mine?.measureDate)}${mineTime}${keyCounts}`;
   const cloudActive = !comparedPiano && sourceMode === "cloud";
+  // Intitulé dynamique de l'option « Exporter » du header.
+  useEffect(() => {
+    setTopbarState({ comparisonActive: standardEnabled || sourceMode === "cloud" || comparedPiano !== null });
+    return () => setTopbarState({ comparisonActive: false });
+  }, [standardEnabled, sourceMode, comparedPiano]);
   const cloudIsEmpty = cloudActive && cloudSampleCount === 0;
   const cloudCounterText = cloudLoading
     ? "Calcul de la moyenne cloud…"
