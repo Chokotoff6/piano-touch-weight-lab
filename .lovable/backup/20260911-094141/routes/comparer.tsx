@@ -759,31 +759,6 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
     for (let v = min; v <= max; v += step) ticks.push(v);
     return ticks;
   })();
-  // Anti-chevauchement réel des libellés de droite : on convertit les valeurs en
-  // pixels puis on écarte verticalement toute paire trop proche (14 px minimum).
-  const spacedDyRight = (() => {
-    const domain = (yDomain as [number, number] | undefined) ?? undefined;
-    if (!domain || domain[1] <= domain[0]) return dyRight;
-    const plotH = (zoomed ? 560 : 250) - 37;
-    const scale = plotH / (domain[1] - domain[0]);
-    const entries = lines
-      .map((line) => {
-        const value = chartData[lastIn(line.dataKey)]?.[line.dataKey];
-        if (typeof value !== "number" || !Number.isFinite(value)) return null;
-        return { key: line.dataKey, y: (domain[1] - value) * scale };
-      })
-      .filter((entry): entry is { key: SeriesKey; y: number } => entry !== null)
-      .sort((a, b) => a.y - b.y);
-    const map = new Map(dyRight);
-    let previous = -Infinity;
-    entries.forEach((entry) => {
-      const target = Math.max(entry.y, previous + 14);
-      map.set(entry.key, Math.round(target - entry.y));
-      previous = target;
-    });
-    return map;
-  })();
-
 
 
 
@@ -917,7 +892,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
                 dot={line.real ? <DotComp /> : false}
                 connectNulls={true}
                 isAnimationActive={false}
-                label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color, firstIndex: firstIn(line.dataKey), lastIndex: lastIn(line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : spacedDyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden, maxY: zoomed ? 100000 : LABEL_MAX_Y })}
+                label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color, firstIndex: firstIn(line.dataKey), lastIndex: lastIn(line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : dyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden, maxY: zoomed ? 100000 : LABEL_MAX_Y })}
               />
               );
             })}

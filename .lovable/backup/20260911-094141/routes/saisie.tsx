@@ -406,9 +406,6 @@ function Index() {
   const coherenceDismissed = useRef<Set<number>>(new Set());
   /** Mode pesée : formulaire masqué, bandeau résumé affiché. */
   const [weighingMode, setWeighingMode] = useState(false);
-  /** Filtrage visuel cyclique des touches affichées à l'écran. */
-  const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
-
   /** Retour depuis Résultats / Comparer : on rouvre directement l'écran clavier. */
   useEffect(() => {
     try {
@@ -2148,9 +2145,6 @@ function Index() {
             const leftBlack = !black && BLACK_KEYS.has(index);
             const rightBlack = !black && BLACK_KEYS.has(index + 2);
             const shift = leftBlack === rightBlack ? "" : leftBlack ? "shift-left" : "shift-right";
-            const hiddenByView =
-              !pdfMirror &&
-              ((viewFilter === "white" && black) || (viewFilter === "black" && !black));
             return (
               <div
                 key={index}
@@ -2159,14 +2153,13 @@ function Index() {
                 <div className={`key-number ${C_KEYS.has(index + 1) ? "is-c-key" : ""}`}>
                   {index + 1}
                 </div>
-                <div className="key-body" style={hiddenByView ? { visibility: "hidden" } : undefined}>
+                <div className="key-body">
                   {renderWeightInput(index, "wa", black, pdfMirror)}
                   {renderWeightInput(index, "wd", black, pdfMirror)}
                 </div>
               </div>
             );
           })}
-
         </div>
       </div>
       <div data-pdf-result-frame className={pdfMirror ? "w-full h-auto max-h-none overflow-visible opacity-100 pointer-events-none" : "w-full h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none"}>
@@ -2436,7 +2429,7 @@ function Index() {
               <select
                 value={info["usage_level"] ?? ""}
                 onChange={(e) => updateInfo("usage_level", e.target.value)}
-                className={`${INPUT_CLASS} !bg-white !w-auto !max-w-[300px]`}
+                className={`${INPUT_CLASS} !bg-white`}
               >
                 <option value="">{en ? "— Select —" : "— Sélectionner —"}</option>
                 {USAGE_OPTIONS.map((option) => (
@@ -2554,12 +2547,6 @@ function Index() {
                 style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
               >
                 <span className="block whitespace-nowrap">
-                  {en
-                    ? "Enter at least the values for every C and C# to access the results."
-                    : "Saisir au minimum les valeurs pour tous les Do et Do# pour accéder aux résultats."}
-                </span>
-                <span className="block whitespace-nowrap">
-
                   {en ? "• TAB: move forward one input field" : "• TAB : avance d'une zone de saisie"}
                 </span>
                 <span className="block whitespace-nowrap">
@@ -2589,8 +2576,35 @@ function Index() {
           mesuresRef.current = node;
         }}
       >
-        {/* Undo / Redo déplacés dans la barre d'outils centrale du bas. */}
+        <div className="absolute left-[calc(1rem+4rem)] top-12 z-10 -translate-x-1/2 -translate-y-1/2">
+          <div className="flex flex-col items-stretch gap-1">
 
+            <div className="flex flex-row items-center justify-center gap-1">
+              <button
+                type="button"
+                data-pdf-hide
+                disabled={undoStack.length === 0}
+                onClick={undoRows}
+                aria-label="Annuler"
+                title="Annuler la dernière saisie (20 maximum)"
+                className={`flex h-6 w-7 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${undoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "!text-black"}`}
+              >
+                <Undo2 className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                data-pdf-hide
+                disabled={redoStack.length === 0}
+                onClick={redoRows}
+                aria-label="Rétablir"
+                title="Rétablir la saisie annulée (20 maximum)"
+                className={`flex h-6 w-7 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${redoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "!text-black"}`}
+              >
+                <Redo2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
         {badgeVisible && (
           <div
             data-pdf-hide
@@ -2635,87 +2649,38 @@ function Index() {
           statiques » (et non plus à l'intérieur), donc jamais capturé au PDF. */}
       {weighingMode && (
         <div className="mt-3 flex w-full items-center justify-between pl-2 pr-2">
-          {/* Retour à la fiche piano : bordure noire nette, jamais verte. */}
+          {/* Retour à la fiche piano : même ligne, calé à gauche. */}
           <button
             type="button"
             data-pdf-hide
             onClick={() => setWeighingMode(false)}
-            className="rounded-md border-2 border-black bg-white px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors hover:bg-gray-100"
+            className="rounded-md border-2 border-input bg-background px-4 py-1.5 text-[0.9rem] font-bold !text-gray-800 transition-colors hover:bg-muted"
 
           >
             {en ? "< Edit piano information" : "< Modifier informations piano"}
           </button>
 
-          {/* Barre d'outils d'atelier centrée : vue, undo, redo, reset. */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              data-pdf-hide
-              onClick={() =>
-                setViewFilter((current) =>
-                  current === "all" ? "white" : current === "white" ? "black" : "all",
-                )
-              }
-              className="rounded-md border border-input bg-background px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
-            >
-              {en
-                ? viewFilter === "all"
-                  ? "View: All"
-                  : viewFilter === "white"
-                    ? "View: Whites"
-                    : "View: Blacks"
-                : viewFilter === "all"
-                  ? "Vue : Toutes"
-                  : viewFilter === "white"
-                    ? "Vue : Blanches"
-                    : "Vue : Noires"}
-            </button>
-
-            <button
-              type="button"
-              data-pdf-hide
-              disabled={undoStack.length === 0}
-              onClick={undoRows}
-              aria-label="Annuler"
-              title={en ? "Undo the last entry (20 max)" : "Annuler la dernière saisie (20 maximum)"}
-              className={`flex h-[34px] w-9 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${undoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "text-muted-foreground"}`}
-            >
-              <Undo2 className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              data-pdf-hide
-              disabled={redoStack.length === 0}
-              onClick={redoRows}
-              aria-label="Rétablir"
-              title={en ? "Redo the cancelled entry (20 max)" : "Rétablir la saisie annulée (20 maximum)"}
-              className={`flex h-[34px] w-9 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${redoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "text-muted-foreground"}`}
-            >
-              <Redo2 className="h-4 w-4" />
-            </button>
-
-            <div className="relative flex items-center">
-              {confirmReset === "rows" && (
-                <div
-                  className="absolute left-1/2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
-                  style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
-                >
-                  <span>{en ? "Do you want to erase all entered weight data?" : "Voulez-vous effacer toutes les données de poids saisies ?"}</span>
-                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); setBlockAnchor(null); rangeDismissed.current.clear(); coherenceDismissed.current.clear(); setIncompletePairs([]); lockedPairRef.current = null; setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
-                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
-                </div>
-              )}
-              <button
-                type="button"
-                data-pdf-hide
-                onClick={() => setConfirmReset("rows")}
-                className="relative z-10 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.96rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+          {/* Reset : centré entre les deux boutons de navigation. */}
+          <div className="relative flex items-center">
+            {confirmReset === "rows" && (
+              <div
+                className="absolute left-1/2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
+                style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
               >
-                Reset
-              </button>
-            </div>
+                <span>{en ? "Do you want to erase all entered weight data?" : "Voulez-vous effacer toutes les données de poids saisies ?"}</span>
+                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); setBlockAnchor(null); rangeDismissed.current.clear(); coherenceDismissed.current.clear(); setIncompletePairs([]); lockedPairRef.current = null; setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
+                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
+              </div>
+            )}
+            <button
+              type="button"
+              data-pdf-hide
+              onClick={() => setConfirmReset("rows")}
+              className="relative z-10 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.96rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+            >
+              Reset
+            </button>
           </div>
-
 
           <button
             type="button"
@@ -2837,10 +2802,9 @@ Moyennes{" "}
                 </span>
               </div>
               <div className="flex justify-center gap-2 text-[0.55rem] text-muted-foreground tabular-nums">
-                <span className="!text-xs font-medium">{en ? "Whites" : "Blanches"}</span>
+                <span className="!text-xs font-medium">Blanches</span>
                 <span className="invisible">/</span>
-                <span className="!text-xs font-medium">{en ? "Blacks" : "Noires"}</span>
-
+                <span className="!text-xs font-medium">Noires</span>
               </div>
             </div>
           ))}

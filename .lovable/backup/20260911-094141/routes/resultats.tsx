@@ -233,7 +233,7 @@ function Resultats() {
       time: `${en ? "Measurement" : "Mesure"} ${dd}-${mm}-${now.getFullYear()} - ${hh}:${mi}`,
       count: ` - ${white} ${en ? "Whites" : "Blanches"} / ${black} ${en ? "Blacks" : "Noires"}`,
     };
-  }, [info, rows, en]);
+  }, [info, rows]);
 
   const buildPiano = (): CurrentPiano => {
     const pays = info["pays"] ?? "";
