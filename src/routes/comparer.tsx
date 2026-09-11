@@ -598,24 +598,27 @@ function CloseIcon() {
 }
 // Guide visuel : souris avec molette animée (indique le défilement horizontal).
 function WheelHintIcon() {
+  const en = useLang() === "en";
   return (
     <span className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 text-[0.65rem] font-medium !text-black shadow-sm">
       <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
         <rect x="5.5" y="2.5" width="9" height="15" rx="4.5" />
         <path className="animate-pulse" d="M10 5.5v3.5" stroke="#2563EB" strokeWidth="2.4" />
       </svg>
-      <span>Molette : déplace courbe ◄ ►</span>
+      <span>{en ? "Scroll wheel = moves curve ◀ ▶" : "Molette = déplace courbe ◀ ▶"}</span>
     </span>
   );
 }
 // Guide visuel : rappel clavier, sans icône.
 function ArrowHintIcon() {
+  const en = useLang() === "en";
   return (
     <span className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 text-[0.65rem] font-medium !text-black shadow-sm">
-      <span>{"Clavier <> : note préc./suiv."}</span>
+      <span>{en ? "Keyboard keys ◀ ▶ = previous/next note" : "Touches clavier ◀ ▶ = note précédente/suivante"}</span>
     </span>
   );
 }
+
 
 /** Données de géométrie injectées par Recharts dans un enfant `Customized`. */
 type GuideChartProps = {
