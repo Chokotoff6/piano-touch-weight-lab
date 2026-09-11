@@ -2589,15 +2589,6 @@ function Index() {
           mesuresRef.current = node;
         }}
       >
-        <button
-          type="button"
-          data-pdf-hide
-          onClick={() => setWeighingMode(false)}
-          style={{ marginLeft: "400px" }}
-          className="absolute left-1/2 -top-4 z-10 -translate-x-1/2 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
-        >
-          {en ? "Edit piano information" : "Modifier Informations piano"}
-        </button>
         <div className="absolute left-[calc(1rem+4rem)] top-12 z-10 -translate-x-1/2 -translate-y-1/2">
           <div className="flex flex-col items-stretch gap-1">
 
@@ -2670,7 +2661,23 @@ function Index() {
       {/* Bouton de navigation officiel : placé sous le cadre « Mesures poids
           statiques » (et non plus à l'intérieur), donc jamais capturé au PDF. */}
       {weighingMode && (
-        <div className="mt-3 flex w-full justify-end pr-2">
+        <div className="mt-3 flex w-full items-center justify-between pl-2 pr-2">
+          {/* Retour à la fiche piano : même ligne, calé à gauche. */}
+          <button
+            type="button"
+            data-pdf-hide
+            onClick={() => setWeighingMode(false)}
+            className="rounded-md border-2 !border-green-600 !bg-green-100 px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors"
+            style={{
+              backgroundColor: "#dcfce7",
+              borderColor: "#16a34a",
+              color: "#000000",
+              fontWeight: "bold",
+            }}
+          >
+            {en ? "< Edit piano information" : "< Modifier informations piano"}
+          </button>
+
           <button
             type="button"
             data-pdf-hide
