@@ -2468,7 +2468,8 @@ function Index() {
                       setTimeout(() => remarquesRef.current?.focus(), 0);
                     }
                   }}
-                  className={`${INPUT_CLASS} !bg-white !block !w-full mt-2`}
+                  className={`${INPUT_CLASS} !bg-white !block !w-fit !min-w-0 !max-w-full mt-2`}
+
                 >
                   <option value="">{en ? "— Select —" : "— Sélectionner —"}</option>
                   {MAINTENANCE_OPTIONS.map((option) => (
@@ -2484,7 +2485,7 @@ function Index() {
                 <select
                   value={info["usage_level"] ?? ""}
                   onChange={(e) => updateInfo("usage_level", e.target.value)}
-                  className={`${INPUT_CLASS} !bg-white !block !w-full mt-2`}
+                  className={`${INPUT_CLASS} !bg-white !block !w-fit !min-w-0 !max-w-full mt-2`}
                 >
                   <option value="">{en ? "— Select —" : "— Sélectionner —"}</option>
                   {USAGE_OPTIONS.map((option) => (
