@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/cgu")({
   head: () => ({
     meta: [
-      { title: "KeyWeight" },
+      { title: "CGU — Piano Touch Weight Lab" },
       { name: "description", content: "Conditions générales d'utilisation du service Piano Touch Weight Lab." },
       { property: "og:title", content: "CGU — Piano Touch Weight Lab" },
       { property: "og:description", content: "Conditions générales d'utilisation du service Piano Touch Weight Lab." },

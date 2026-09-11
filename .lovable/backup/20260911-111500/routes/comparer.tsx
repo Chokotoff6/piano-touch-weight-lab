@@ -776,20 +776,12 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
       .filter((entry): entry is { key: SeriesKey; y: number } => entry !== null)
       .sort((a, b) => a.y - b.y);
     const map = new Map(dyRight);
-    // Séparation stricte : dès qu'une paire d'étiquettes se superpose,
-    // l'étiquette haute remonte de 12 px et l'étiquette basse descend de 12 px.
-    const adjusted = entries.map((entry) => ({ ...entry, off: 0 }));
-    for (let i = 0; i < adjusted.length - 1; i += 1) {
-      const upper = adjusted[i];
-      const lower = adjusted[i + 1];
-      if (!upper || !lower) continue;
-      const gap = lower.y + lower.off - (upper.y + upper.off);
-      if (gap < 24) {
-        upper.off -= 12;
-        lower.off += 12;
-      }
-    }
-    adjusted.forEach((entry) => map.set(entry.key, Math.round(entry.off)));
+    let previous = -Infinity;
+    entries.forEach((entry) => {
+      const target = Math.max(entry.y, previous + 18);
+      map.set(entry.key, Math.round(target - entry.y));
+      previous = target;
+    });
     return map;
   })();
 

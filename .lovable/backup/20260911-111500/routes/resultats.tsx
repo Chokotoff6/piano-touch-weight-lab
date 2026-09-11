@@ -26,7 +26,7 @@ import { parseDiagnosticCsv } from "@/lib/import-csv";
 export const Route = createFileRoute("/resultats")({
   head: () => ({
     meta: [
-      { title: "KeyWeight" },
+      { title: "Diagnostic de votre instrument — Touchweight piano" },
       {
         name: "description",
         content:
