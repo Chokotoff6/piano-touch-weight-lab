@@ -2343,7 +2343,7 @@ function Index() {
       const g = group.getBoundingClientRect();
       setUndoPos({
         left: k.left - s.left - 35 - g.width,
-        top: l.top - s.top - 35 - g.height,
+        top: l.top - s.top - 35 - g.height - 8,
       });
     };
     place();
