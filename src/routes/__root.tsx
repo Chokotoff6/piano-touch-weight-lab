@@ -479,7 +479,7 @@ function RootComponent() {
                 {/* Bouton de soutien à droite du sélecteur EN / FR,
                     taille 2× (~50 px) et descendu de 10 px. */}
                 <div className="flex -translate-x-[60px] items-center">
-                   <div className="flex shrink-0 translate-y-[19px] items-center gap-0 text-[1.14rem] font-semibold">
+                   <div className="flex shrink-0 -translate-x-[50px] translate-y-[19px] items-center gap-0 text-[1.14rem] font-semibold">
                      <Button
                        variant="ghost"
                        size="sm"
