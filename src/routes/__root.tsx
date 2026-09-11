@@ -36,7 +36,8 @@ import { createPortal } from "react-dom";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
-import likedLogoAsset from "@/assets/image_FRybPM.png.asset.json";
+import likedLogoFrAsset from "@/assets/image_eXLu6a.png.asset.json";
+import likedLogoEnAsset from "@/assets/image_RPh_ZG.png.asset.json";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -547,8 +548,8 @@ function RootComponent() {
                           style={{ height: "40px", width: "auto" }}
                           className="relative z-10 flex shrink-0 items-center justify-center overflow-hidden p-0 transition-transform hover:scale-105 hover:bg-transparent"
                       >
-                        <img
-                           src={likedLogoAsset.url}
+                         <img
+                            src={lang === "en" ? likedLogoEnAsset.url : likedLogoFrAsset.url}
                           alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
                            style={{ height: "40px", width: "auto" }}
                           className="block max-w-none object-contain"
