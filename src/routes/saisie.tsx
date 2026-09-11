@@ -2635,38 +2635,87 @@ function Index() {
           statiques » (et non plus à l'intérieur), donc jamais capturé au PDF. */}
       {weighingMode && (
         <div className="mt-3 flex w-full items-center justify-between pl-2 pr-2">
-          {/* Retour à la fiche piano : même ligne, calé à gauche. */}
+          {/* Retour à la fiche piano : bordure noire nette, jamais verte. */}
           <button
             type="button"
             data-pdf-hide
             onClick={() => setWeighingMode(false)}
-            className="rounded-md border-2 border-input bg-background px-4 py-1.5 text-[0.9rem] font-bold !text-gray-800 transition-colors hover:bg-muted"
+            className="rounded-md border-2 border-black bg-white px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors hover:bg-gray-100"
 
           >
             {en ? "< Edit piano information" : "< Modifier informations piano"}
           </button>
 
-          {/* Reset : centré entre les deux boutons de navigation. */}
-          <div className="relative flex items-center">
-            {confirmReset === "rows" && (
-              <div
-                className="absolute left-1/2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
-                style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
-              >
-                <span>{en ? "Do you want to erase all entered weight data?" : "Voulez-vous effacer toutes les données de poids saisies ?"}</span>
-                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); setBlockAnchor(null); rangeDismissed.current.clear(); coherenceDismissed.current.clear(); setIncompletePairs([]); lockedPairRef.current = null; setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
-                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
-              </div>
-            )}
+          {/* Barre d'outils d'atelier centrée : vue, undo, redo, reset. */}
+          <div className="flex items-center gap-2">
             <button
               type="button"
               data-pdf-hide
-              onClick={() => setConfirmReset("rows")}
-              className="relative z-10 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.96rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+              onClick={() =>
+                setViewFilter((current) =>
+                  current === "all" ? "white" : current === "white" ? "black" : "all",
+                )
+              }
+              className="rounded-md border border-input bg-background px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
             >
-              Reset
+              {en
+                ? viewFilter === "all"
+                  ? "View: All"
+                  : viewFilter === "white"
+                    ? "View: Whites"
+                    : "View: Blacks"
+                : viewFilter === "all"
+                  ? "Vue : Toutes"
+                  : viewFilter === "white"
+                    ? "Vue : Blanches"
+                    : "Vue : Noires"}
             </button>
+
+            <button
+              type="button"
+              data-pdf-hide
+              disabled={undoStack.length === 0}
+              onClick={undoRows}
+              aria-label="Annuler"
+              title={en ? "Undo the last entry (20 max)" : "Annuler la dernière saisie (20 maximum)"}
+              className={`flex h-[34px] w-9 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${undoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "text-muted-foreground"}`}
+            >
+              <Undo2 className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              data-pdf-hide
+              disabled={redoStack.length === 0}
+              onClick={redoRows}
+              aria-label="Rétablir"
+              title={en ? "Redo the cancelled entry (20 max)" : "Rétablir la saisie annulée (20 maximum)"}
+              className={`flex h-[34px] w-9 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${redoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "text-muted-foreground"}`}
+            >
+              <Redo2 className="h-4 w-4" />
+            </button>
+
+            <div className="relative flex items-center">
+              {confirmReset === "rows" && (
+                <div
+                  className="absolute left-1/2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
+                  style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
+                >
+                  <span>{en ? "Do you want to erase all entered weight data?" : "Voulez-vous effacer toutes les données de poids saisies ?"}</span>
+                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); setBlockAnchor(null); rangeDismissed.current.clear(); coherenceDismissed.current.clear(); setIncompletePairs([]); lockedPairRef.current = null; setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
+                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
+                </div>
+              )}
+              <button
+                type="button"
+                data-pdf-hide
+                onClick={() => setConfirmReset("rows")}
+                className="relative z-10 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.96rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+              >
+                Reset
+              </button>
+            </div>
           </div>
+
 
           <button
             type="button"
