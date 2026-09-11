@@ -844,15 +844,19 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           if (keyboardModeRef.current) return;
           const rect = event.currentTarget.getBoundingClientRect();
           lastMouseY.current = Math.round(event.clientY - rect.top);
+          // La souris reprend la main : l'état clavier est effacé pour que la
+          // prochaine flèche reparte de la note réellement survolée.
+          onMouseTakeover(null);
         }}
       >
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
             onMouseMove={(state: { activeLabel?: string | number }) => {
-              if (keyboardMode) return;
+              // Verrou lu sur le ref (synchrone) et non sur l'état React.
+              if (keyboardModeRef.current) return;
               const note = Number(state?.activeLabel);
-              if (Number.isFinite(note)) lastMouseNote.current = note;
+              if (Number.isFinite(note)) onMouseTakeover(note);
             }}
             onMouseLeave={() => { setHoveredFamily(null); }}
             // Anti-chevauchement : la marge droite garantit toujours la place
