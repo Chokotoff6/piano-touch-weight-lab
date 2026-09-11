@@ -1397,7 +1397,9 @@ function Comparer() {
   // noire du piano actuel s'affiche.
   const [sourceMode, setSourceMode] = useState<SourceMode>("none");
   const [standardEnabled, setStandardEnabled] = useState(false);
-  const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
+  // Arrivée sur Comparer : les 4 graphiques démarrent en « N/B : séparées ».
+  const [keyFilter, setKeyFilter] = useState<KeyFilter>("split");
+
   const [sameClimate, setSameClimate] = useState(true);
   const [sameYear, setSameYear] = useState(false);
   const [importantChanges, setImportantChanges] = useState<ChangesFilter>("excluded");
