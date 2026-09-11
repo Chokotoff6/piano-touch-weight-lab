@@ -406,21 +406,6 @@ function Index() {
   const coherenceDismissed = useRef<Set<number>>(new Set());
   /** Mode pesée : formulaire masqué, bandeau résumé affiché. */
   const [weighingMode, setWeighingMode] = useState(false);
-  /** Retour depuis Résultats / Comparer : on rouvre directement l'écran clavier. */
-  useEffect(() => {
-    try {
-      if (window.sessionStorage.getItem("ptw_weighing_mode") === "1") setWeighingMode(true);
-    } catch {
-      /* stockage indisponible */
-    }
-  }, []);
-  useEffect(() => {
-    try {
-      window.sessionStorage.setItem("ptw_weighing_mode", weighingMode ? "1" : "0");
-    } catch {
-      /* stockage indisponible */
-    }
-  }, [weighingMode]);
   const weighingBtnRef = useRef<HTMLButtonElement | null>(null);
   const [coherenceIndex, setCoherenceIndex] = useState<number | null>(null);
   const [coherenceAnchor, setCoherenceAnchor] = useState<{ x: number; y: number } | null>(null);
@@ -2224,7 +2209,6 @@ function Index() {
               type="button"
               onClick={() => setConfirmReset("info")}
               title={en ? "Reset the information sheet only" : "Réinitialiser uniquement la fiche d'informations"}
-              style={{ transform: "scale(1.15)", transformOrigin: "top right" }}
               className="rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
             >
               Reset
@@ -2497,8 +2481,8 @@ function Index() {
             ref={weighingBtnRef}
             type="button"
             onClick={onValidateWeighing}
-            // Toujours activable : noir par défaut, vert dès que la fiche est complète.
-            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors ${requiredSheetFieldsComplete ? "!border-green-600 !bg-green-100" : "border-black bg-white hover:bg-gray-100"}`}
+            // Toujours activable : texte noir net et bordure noire standard.
+            className="rounded-md border-2 border-black bg-white px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors hover:bg-gray-100"
           >
             {en ? "Key measurements >" : "Mesures clavier >"}
           </button>
@@ -2533,6 +2517,35 @@ function Index() {
       {rangeAnchor && (
         <SvgTooltip x={rangeAnchor.x} y={rangeAnchor.y} text={PD_RANGE_MESSAGE} />
       )}
+
+      {/* Bouton Reset : positionné EXACTEMENT 15 px au-dessus du bord supérieur
+          du cadre « Mesures poids statiques » (le cadre porte mt-[100px], d'où
+          la marge négative de -85 px). Position horizontale inchangée. */}
+      {weighingMode && (
+        <div className="relative flex w-full justify-end pr-2" style={{ marginBottom: "-85px" }}>
+          {confirmReset === "rows" && (
+            /* Hauteur verticale inchangée (bas du message aligné sur l'ancienne
+               position), décalé de 50 px supplémentaires vers la gauche. */
+            <div
+              className="absolute right-0 mr-[90px] flex min-w-max items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
+              style={{ top: "100%", transform: "translateY(-100%)", zIndex: 50 }}
+            >
+              <span>Voulez-vous effacer toutes les données de poids saisies ?</span>
+              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); setBlockAnchor(null); rangeDismissed.current.clear(); coherenceDismissed.current.clear(); setIncompletePairs([]); lockedPairRef.current = null; setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
+              <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
+            </div>
+          )}
+          <button
+            type="button"
+            data-pdf-hide
+            onClick={() => setConfirmReset("rows")}
+            className="relative z-10 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.96rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+          >
+            Reset
+          </button>
+        </div>
+      )}
+
 
       <Frame
         title={
@@ -2659,28 +2672,6 @@ function Index() {
           >
             {en ? "< Edit piano information" : "< Modifier informations piano"}
           </button>
-
-          {/* Reset : centré entre les deux boutons de navigation. */}
-          <div className="relative flex items-center">
-            {confirmReset === "rows" && (
-              <div
-                className="absolute left-1/2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
-                style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
-              >
-                <span>{en ? "Do you want to erase all entered weight data?" : "Voulez-vous effacer toutes les données de poids saisies ?"}</span>
-                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); setBlockAnchor(null); rangeDismissed.current.clear(); coherenceDismissed.current.clear(); setIncompletePairs([]); lockedPairRef.current = null; setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
-                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
-              </div>
-            )}
-            <button
-              type="button"
-              data-pdf-hide
-              onClick={() => setConfirmReset("rows")}
-              className="relative z-10 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.96rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
-            >
-              Reset
-            </button>
-          </div>
 
           <button
             type="button"

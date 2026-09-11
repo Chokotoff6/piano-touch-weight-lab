@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, type SetStateAction, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
-import { useLang, getLang } from "@/data/translations";
+import { useLang } from "@/data/translations";
 import { RefreshCw, Square, SquareX } from "lucide-react";
 import { BrandTargetInfoIcon } from "@/components/BrandTargetInfo";
 import { paddedDomain } from "@/components/PdfReportBlocks";
@@ -375,7 +375,7 @@ function makeEndLabel(opts: EndLabelOptions) {
       return <text x={x - 8} y={y} dy={clampLabelY(y, opts.dyLeft, opts.maxY)} textAnchor="end" fontSize={11} fontWeight={600} fill={color}>{opts.shortName}</text>;
     }
     if (index === opts.lastIndex && opts.showAverage !== false && opts.avg !== "—") {
-      return <text x={x + 10} y={y} dy={clampLabelY(y, opts.dyRight, opts.maxY)} textAnchor="start" fontSize={11} fontWeight={600} fill={color}>{`${getLang() === "en" ? "Avg" : "Moy"}: ${opts.avg}g`}</text>;
+      return <text x={x + 10} y={y} dy={clampLabelY(y, opts.dyRight, opts.maxY)} textAnchor="start" fontSize={11} fontWeight={600} fill={color}>{`Moy: ${opts.avg}g`}</text>;
     }
     return <g />;
   };
@@ -397,13 +397,11 @@ type TooltipEntry = { name?: string; value?: number; color?: string; dataKey?: s
 function tooltipColorFor(name: string) {
   const lower = name.toLowerCase();
   // Identité bleue exclusive de l'import CSV.
-  const isWhite = lower.includes("blanches") || lower.includes("whites");
-  const isBlack = lower.includes("noires") || lower.includes("blacks");
-  if (lower.startsWith("import csv")) return isWhite ? "#93c5fd" : "#2563EB";
+  if (lower.startsWith("import csv")) return lower.includes("blanches") ? "#93c5fd" : "#2563EB";
   const isReference = lower.startsWith("cloud") || lower.startsWith("référence");
-  if (isReference) return isWhite ? "#fdba74" : "#f97316";
-  if (isBlack) return "#000000";
-  if (isWhite) return "#6b7280";
+  if (isReference) return lower.includes("blanches") ? "#fdba74" : "#f97316";
+  if (lower.includes("noires")) return "#000000";
+  if (lower.includes("blanches")) return "#6b7280";
   if (lower.includes("piano actuel") || lower.trim() === "") return "#000000";
   return "#10b981";
 }
@@ -505,10 +503,8 @@ function currentLinesFor(familyId: string, keyFilter: KeyFilter, baseName = "Pia
   const metrics: Record<string, [SeriesKey, SeriesKey, SeriesKey, SeriesKey]> = { wa: ["waCur", "waCurW", "waCurB", "waMid"], wd: ["wdCur", "wdCurW", "wdCurB", "wdMid"], bal: ["balCur", "balCurW", "balCurB", "balMid"], fric: ["fricCur", "fricCurW", "fricCurB", "fricMid"] };
   const metric = metrics[familyId];
   if (!metric) return [];
-  const whiteWord = getLang() === "en" ? "whites" : "blanches";
-  const blackWord = getLang() === "en" ? "blacks" : "noires";
-  const white = baseName ? `${baseName} ${whiteWord}` : whiteWord;
-  const black = baseName ? `${baseName} ${blackWord}` : blackWord;
+  const white = baseName ? `${baseName} blanches` : "blanches";
+  const black = baseName ? `${baseName} noires` : "noires";
   const whiteLine: LineDef = { dataKey: metric[1], name: white, shortName: white, color: "#6b7280", real: true };
   const blackLine: LineDef = { dataKey: metric[2], name: black, shortName: black, color: "#000000", real: true };
   if (keyFilter === "split") return [whiteLine, blackLine];
@@ -526,10 +522,8 @@ function comparisonLinesFor(familyId: string, keyFilter: KeyFilter, name: string
   // Bleu intense pour l'import CSV, orange pour la moyenne Cloud.
   const strong = isCsv ? "#2563EB" : "#f97316";
   const light = isCsv ? "#93c5fd" : "#fdba74";
-  const whiteWord = getLang() === "en" ? "whites" : "blanches";
-  const blackWord = getLang() === "en" ? "blacks" : "noires";
-  const whiteLine: LineDef = { dataKey: metric[1], name: `${name} ${whiteWord}`, shortName: `${short} ${whiteWord}`, color: light };
-  const blackLine: LineDef = { dataKey: metric[2], name: `${name} ${blackWord}`, shortName: `${short} ${blackWord}`, color: strong };
+  const whiteLine: LineDef = { dataKey: metric[1], name: `${name} blanches`, shortName: `${short} blanches`, color: light };
+  const blackLine: LineDef = { dataKey: metric[2], name: `${name} noires`, shortName: `${short} noires`, color: strong };
   if (keyFilter === "split") return [whiteLine, blackLine];
   if (keyFilter === "white") return [whiteLine];
   if (keyFilter === "black") return [blackLine];
@@ -1398,7 +1392,7 @@ function countKeys(values: number[] | undefined) {
     if (isBlackKey(index + 1)) black += 1;
     else white += 1;
   });
-  return getLang() === "en" ? ` - ${white} Whites / ${black} Blacks` : ` - ${white} Blanches / ${black} Noires`;
+  return ` - ${white} Blanches / ${black} Noires`;
 }
 
 function Comparer() {
@@ -1684,7 +1678,7 @@ function Comparer() {
         .join(" - ")
     : "";
   const csvStats = comparedPiano
-    ? ` - ${en ? "Measurement" : "Mesure"} ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime}${countKeys(comparedPiano.wa)}`
+    ? ` - Mesure ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime}${countKeys(comparedPiano.wa)}`
     : "";
 
   const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
@@ -1734,13 +1728,8 @@ function Comparer() {
 
   const mineTime = mine?.measureTime ? ` - ${mine.measureTime}` : "";
   const keyCounts = countKeys(mine?.wa);
-  const summary = `${summaryValue(mine?.brand)}\u00A0\u00A0${summaryValue(mine?.model)} - ${summaryValue(mine?.year)} - SN ${summaryValue(mine?.serialNumber)} - ${en ? "Measurement" : "Mesure"} ${formatMeasureDate(mine?.measureDate)}${mineTime}${keyCounts}`;
+  const summary = `${summaryValue(mine?.brand)}\u00A0\u00A0${summaryValue(mine?.model)} - ${summaryValue(mine?.year)} - SN ${summaryValue(mine?.serialNumber)} - Mesure ${formatMeasureDate(mine?.measureDate)}${mineTime}${keyCounts}`;
   const cloudActive = !comparedPiano && sourceMode === "cloud";
-  // Intitulé dynamique de l'option « Exporter » du header.
-  useEffect(() => {
-    setTopbarState({ comparisonActive: standardEnabled || sourceMode === "cloud" || comparedPiano !== null });
-    return () => setTopbarState({ comparisonActive: false });
-  }, [standardEnabled, sourceMode, comparedPiano]);
   const cloudIsEmpty = cloudActive && cloudSampleCount === 0;
   const cloudCounterText = cloudLoading
     ? "Calcul de la moyenne cloud…"

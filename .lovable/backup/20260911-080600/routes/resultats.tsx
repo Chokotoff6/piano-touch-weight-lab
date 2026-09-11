@@ -231,7 +231,7 @@ function Resultats() {
     return {
       main: `${brand} ${model} (${year}) - SN ${sn}`,
       time: `${en ? "Measurement" : "Mesure"} ${dd}-${mm}-${now.getFullYear()} - ${hh}:${mi}`,
-      count: ` - ${white} ${en ? "Whites" : "Blanches"} / ${black} ${en ? "Blacks" : "Noires"}`,
+      count: ` - ${white} ${en ? "White" : "Blanches"} / ${black} ${en ? "Black" : "Noires"}`,
     };
   }, [info, rows]);
 

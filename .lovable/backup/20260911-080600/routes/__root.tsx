@@ -375,13 +375,9 @@ function RootComponent() {
                   <DropdownMenuItem
                     onClick={() => requireConsent(() => dispatchAction("piano-export-pdf"))}
                   >
-                    {topbar.comparisonActive
-                      ? lang === "en"
-                        ? "Export Workshop report + Comparative analysis as PDF"
-                        : "Exporter Rapport d'atelier + Analyse comparative au format PDF"
-                      : lang === "en"
-                        ? "Export Workshop report as PDF"
-                        : "Exporter Rapport d'atelier au format PDF"}
+                    {lang === "en"
+                      ? "Export Workshop report + Comparative analysis as PDF"
+                      : "Exporter Rapport d'atelier + Analyse comparative au format PDF"}
                   </DropdownMenuItem>
                 ) : (
                   <>
@@ -492,12 +488,12 @@ function RootComponent() {
                    rel="noopener noreferrer"
                    title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
                    aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
-                   className="relative z-10 ml-[60px] flex shrink-0 translate-y-[9px] items-center justify-center rounded-lg bg-transparent transition-transform hover:scale-105"
+                   className="relative z-10 ml-[60px] flex shrink-0 translate-y-[19px] items-center justify-center rounded-lg bg-transparent transition-transform hover:scale-105"
                  >
                    <img
                      src={premiumCoffeeAsset.url}
                      alt="Buy me a coffee"
-                     className="!h-[74px] !w-auto rounded-lg object-contain"
+                     className="!h-[64px] !w-auto rounded-lg object-contain"
                    />
                  </a>
                </div>
@@ -507,8 +503,8 @@ function RootComponent() {
                <img
                  src={keyweightLogo.url}
                  alt="KeyWeight"
-                 style={{ height: "74px", width: "auto" }}
-                 className="relative z-10 shrink-0 -translate-x-[30px] translate-y-[10px] object-contain"
+                 style={{ height: "64px", width: "auto" }}
+                 className="relative z-10 shrink-0 -translate-x-[30px] translate-y-[20px] object-contain"
                />
 
              </div>
