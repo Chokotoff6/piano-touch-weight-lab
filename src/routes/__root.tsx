@@ -166,6 +166,19 @@ function RootComponent() {
   const lang = useLang();
   const [consentOpen, setConsentOpen] = useState(false);
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
+  /** Infobulle « Importer » : visible au survol, masquée après 3 secondes. */
+  const [importHint, setImportHint] = useState(false);
+  const importHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showImportHint = () => {
+    setImportHint(true);
+    if (importHintTimer.current) clearTimeout(importHintTimer.current);
+    importHintTimer.current = setTimeout(() => setImportHint(false), 3000);
+  };
+  const hideImportHint = () => {
+    if (importHintTimer.current) clearTimeout(importHintTimer.current);
+    importHintTimer.current = null;
+    setImportHint(false);
+  };
   // La jauge verte est imbriquée sous le bouton « Sauver » (10 px, à droite) :
   // aucun calcul de position n'est nécessaire.
   const saveBtnRef = useRef<HTMLButtonElement | null>(null);
