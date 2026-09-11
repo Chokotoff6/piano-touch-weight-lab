@@ -291,9 +291,15 @@ function RootComponent() {
 
             <div className="mx-10 h-6 w-[2px] bg-gray-400" aria-hidden="true" />
 
-            <DropdownMenu open={saveMenuOpen} onOpenChange={setSaveMenuOpen}>
-              <div className="relative flex items-center">
+            <DropdownMenu open={saveMenuOpen} onOpenChange={setSaveMenuOpen} modal={false}>
+              <div
+                className="relative flex items-center"
+                onMouseEnter={cancelMenuClose}
+                onMouseLeave={scheduleMenuClose}
+              >
                 <DropdownMenuTrigger asChild>
+                  <Button
+
                   <Button
                     ref={saveBtnRef}
                     variant="outline"
