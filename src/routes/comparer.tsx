@@ -1111,6 +1111,7 @@ const TONE_CLASS: Record<Tone, string> = {
 
 // Bloc de moyenne façon page Saisie : moyenne globale en grand + détail Blanches/Noires.
 function AverageBlock({ label, global, white, black, tone }: { label: string; global: string; white: string; black: string; tone: Tone }) {
+  const lang = useLang();
   const toneClass = TONE_CLASS[tone];
   const val = (v: string) => v === "—" ? <span className={toneClass}>—</span> : <>{v}<span className="!text-xs !font-medium"> gr.</span></>;
   const sub = (v: string) => v === "—" ? "—" : <>{v}<span className={toneClass}> gr.</span></>;
@@ -1124,9 +1125,9 @@ function AverageBlock({ label, global, white, black, tone }: { label: string; gl
         <span>{sub(black)}</span>
       </div>
       <div className={`flex items-end justify-center gap-2 text-[0.55rem] tabular-nums ${toneClass}`}>
-        <span className="!text-xs font-medium">Blanches</span>
+        <span className="!text-xs font-medium">{lang === "en" ? "White" : "Blanches"}</span>
         <span className="invisible">/</span>
-        <span className="!text-xs font-medium">Noires</span>
+        <span className="!text-xs font-medium">{lang === "en" ? "Black" : "Noires"}</span>
       </div>
     </div>
   );
@@ -1181,7 +1182,8 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
   return (
     <div className="grid grid-cols-4 gap-3">
       {STD_KEYS.map(({ key, globalKey }) => {
-        const { label } = COLUMNS.find((col) => col.key === key)!;
+        const col = COLUMNS.find((c) => c.key === key)!;
+        const label = lang === "en" ? col.labelEn : col.label;
         const value = seriesAverage(chartData, globalKey);
         return (
           <div key={key} className="flex h-full flex-col justify-end rounded bg-muted px-2 py-1.5 text-center">
