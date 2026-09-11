@@ -754,15 +754,15 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   const yDomain = regularScale.domain;
   const yTicks = regularScale.ticks;
   const guideTicks = yTicks.slice(1, -1);
+  // px : l'axe vertical est placé exactement à mi-chemin entre le bord gauche du
+  // cadre et le début du tracé (marge gauche = sideMargin + 46, axe = 44 px).
+  // Recalage final : l'axe est décalé de 10 px supplémentaires vers la droite.
+  const Y_AXIS_SHIFT = Math.round((sideMargin + 46 + 44) / 2) - 10;
   // Mode « N/B groupées » hors zoom : le bloc entier est translaté de 30 px vers
   // la gauche. L'axe vertical, lui, doit rester STRICTEMENT immobile : on le
   // recale de +30 px, et le tracé est élargi de 30 px de chaque côté.
   const groupedShift = !zoomed && keyFilter === "all" ? 30 : 0;
-  const chartShift = zoomed ? 0 : keyFilter === "all" ? -30 : -10;
-  const chartLeftMargin = Math.max(sideMargin + 46, 70) - groupedShift;
-  // Position visuelle commune à Résultats et Comparer : l'axe reste à 55 px du
-  // bord gauche du cadre, quelle que soit la grande marge réservée aux libellés.
-  const axisShift = chartLeftMargin + 44 + chartShift - 55;
+  const axisShift = Y_AXIS_SHIFT - groupedShift;
   // Anti-chevauchement réel des libellés de droite : on convertit les valeurs en
   // pixels puis on écarte verticalement toute paire trop proche (14 px minimum).
   const spacedDyRight = (() => {
@@ -860,7 +860,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             onMouseLeave={() => { setHoveredFamily(null); }}
             // Anti-chevauchement : la marge droite garantit toujours la place
             // du libellé « Moy: xx.xg », la marge gauche celle des noms courts.
-            margin={{ top: 22, right: Math.max(sideMargin, 80) + groupedShift, bottom: 15, left: chartLeftMargin }}
+            margin={{ top: 22, right: Math.max(sideMargin, 80) + groupedShift, bottom: 15, left: Math.max(sideMargin + 46, 70) - groupedShift }}
           >
             <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
             <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
@@ -1113,7 +1113,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   // Largeur normale : 80 % de la largeur de la page web (et non de la colonne),
   // les cadres sont extraits de la grille via une bande pleine largeur centrée.
   return (
-    <div ref={containerRef} className="relative w-full pb-[calc(100vh-127px)] pt-2">
+    <div ref={containerRef} className="relative w-full pb-[80vh] pt-2">
       <div className="flex w-full flex-col gap-4">
         {/* Deux paires : chaque paire est capturée en UNE seule image PDF. */}
         <div data-frame="pair1" className="flex w-full flex-col gap-4">
@@ -1453,25 +1453,6 @@ function countKeys(values: number[] | undefined) {
   return getLang() === "en" ? ` - ${white} Whites / ${black} Blacks` : ` - ${white} Blanches / ${black} Noires`;
 }
 
-/** Décompte du brouillon actif : une touche compte dès que Wa ou Wd est saisi. */
-function countDraftKeys() {
-  if (typeof window === "undefined") return null;
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem("ptw_draft_rows") ?? "null") as Array<{ wa?: string; wd?: string }> | null;
-    if (!Array.isArray(parsed) || parsed.length !== 88) return null;
-    let white = 0;
-    let black = 0;
-    parsed.forEach((row, index) => {
-      if (!String(row?.wa ?? "").trim() && !String(row?.wd ?? "").trim()) return;
-      if (isBlackKey(index + 1)) black += 1;
-      else white += 1;
-    });
-    return { white, black };
-  } catch {
-    return null;
-  }
-}
-
 function Comparer() {
   // Arrivée sur la page : aucune source de comparaison active, seule la courbe
   // noire du piano actuel s'affiche.
@@ -1488,7 +1469,6 @@ function Comparer() {
   const [youngOnly, setYoungOnly] = useState(false);
   const [usageLevel, setUsageLevel] = useState<UsageLevel>("low");
   const [mine, setMine] = useState<ProfileRecord | null>(null);
-  const [draftKeyCounts, setDraftKeyCounts] = useState<{ white: number; black: number } | null>(null);
   const [standard, setStandard] = useState<RefProfile>(FACTORY_STANDARD);
   const [standardLabel, setStandardLabel] = useState("CIBLE (Internet)");
 
@@ -1593,7 +1573,7 @@ function Comparer() {
   useEffect(() => {
     if (status !== "ok") return;
     const clamp = () => {
-      const frame = liveChartsRef.current?.querySelector('[data-frame="fric"]');
+      const frame = document.querySelector('[data-frame="fric"]');
       if (!frame) return;
       const frameTop = frame.getBoundingClientRect().top + window.scrollY;
       // -5 : laisse un fin filet d'air de 5 px entre le cadre « Moyennes »
@@ -1617,7 +1597,6 @@ function Comparer() {
     // Le LocalStorage n'est qu'un secours hors ligne.
     let cancelled = false;
     const sync = async () => {
-      setDraftKeyCounts(countDraftKeys());
       const cloudPiano = await loadCurrentPianoFromCloud();
       if (cancelled) return;
       const piano = cloudPiano ?? loadCurrentPiano();
@@ -1806,11 +1785,7 @@ function Comparer() {
   }
 
   const mineTime = mine?.measureTime ? ` - ${mine.measureTime}` : "";
-  const keyCounts = draftKeyCounts
-    ? en
-      ? ` - ${draftKeyCounts.white} Whites / ${draftKeyCounts.black} Blacks`
-      : ` - ${draftKeyCounts.white} Blanches / ${draftKeyCounts.black} Noires`
-    : countKeys(mine?.wa);
+  const keyCounts = countKeys(mine?.wa);
   const summary = `${summaryValue(mine?.brand)}\u00A0\u00A0${summaryValue(mine?.model)} - ${summaryValue(mine?.year)} - SN ${summaryValue(mine?.serialNumber)} - ${en ? "Measurement" : "Mesure"} ${formatMeasureDate(mine?.measureDate)}${mineTime}${keyCounts}`;
   const cloudActive = !comparedPiano && sourceMode === "cloud";
   // Intitulé dynamique de l'option « Exporter » du header.
