@@ -902,24 +902,36 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               />
 
             ) : (
-              <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
+              // Page Comparer : axe vertical gradué en grammes, logé dans la
+              // marge gauche existante (aucun décalage du tracé).
+              <YAxis
+                width={44}
+                tickMargin={8}
+                domain={family.domain}
+                {...(familyTicks ? { ticks: familyTicks } : {})}
+                allowDecimals={false}
+                tick={{ fontSize: 10, fill: "#111827" }}
+                axisLine={{ stroke: "#111827" }}
+                tickLine={{ stroke: "#111827" }}
+              />
             )}
 
             {/* Lignes de repère horizontales : géométrie brute imposée —
                 début à 5 px à droite de l'axe vertical, fin à 5 px à gauche du
                 repère vertical de la touche 88. Hors première et dernière
                 graduation. */}
-            {autoDomain && yTicks && yTicks.length > 2 && (
+            {guideTicks && guideTicks.length > 0 && (
               <Customized
                 component={(props: unknown) => (
                   <HorizontalGuides
                     {...(props as GuideChartProps)}
-                    ticks={yTicks.slice(1, -1)}
-                    axisShift={Y_AXIS_SHIFT}
+                    ticks={guideTicks}
+                    axisShift={autoDomain ? Y_AXIS_SHIFT : 0}
                   />
                 )}
               />
             )}
+
 
 
 
