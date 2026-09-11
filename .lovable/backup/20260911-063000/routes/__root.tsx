@@ -166,19 +166,6 @@ function RootComponent() {
   const lang = useLang();
   const [consentOpen, setConsentOpen] = useState(false);
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
-  /** Infobulle « Importer » : visible au survol, masquée après 3 secondes. */
-  const [importHint, setImportHint] = useState(false);
-  const importHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const showImportHint = () => {
-    setImportHint(true);
-    if (importHintTimer.current) clearTimeout(importHintTimer.current);
-    importHintTimer.current = setTimeout(() => setImportHint(false), 3000);
-  };
-  const hideImportHint = () => {
-    if (importHintTimer.current) clearTimeout(importHintTimer.current);
-    importHintTimer.current = null;
-    setImportHint(false);
-  };
   // La jauge verte est imbriquée sous le bouton « Sauver » (10 px, à droite) :
   // aucun calcul de position n'est nécessaire.
   const saveBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -358,12 +345,7 @@ function RootComponent() {
                       <DropdownMenuSubTrigger>
                         {lang === "en" ? "Export PDF" : "Exporter PDF"}
                       </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent
-                        sideOffset={4}
-                        alignOffset={-4}
-                        avoidCollisions={false}
-                        className="max-w-[520px]"
-                      >
+                      <DropdownMenuSubContent className="max-w-[520px]">
                         <DropdownMenuItem
                           disabled={!filesEnabled}
                           onClick={() => requireConsent(() => dispatchAction("piano-export-pdf"))}
@@ -395,24 +377,19 @@ function RootComponent() {
               <Button
                 variant="outline"
                 size="sm"
-                onMouseEnter={showImportHint}
-                onMouseLeave={hideImportHint}
+                title="Importer un fichier CSV (Keyweight) depuis votre stockage local."
                 className="border border-gray-300 bg-white text-lg font-bold !text-black"
                 onClick={() => dispatchAction("piano-import-csv")}
               >
                 Importer
               </Button>
 
-              {(importHint || topbar.alert?.anchor === "import") && (
+              {topbar.alert?.anchor === "import" && (
                 <div
                   className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
                   style={{ position: "absolute", zIndex: 99999, backgroundColor: "#ffffff" }}
                 >
-                  {topbar.alert?.anchor === "import"
-                    ? topbar.alert.message
-                    : lang === "en"
-                      ? "Import a Keyweight CSV file from your local storage."
-                      : "Importer un fichier CSV (Keyweight) depuis votre stockage local."}
+                  {topbar.alert.message}
                 </div>
                )}
              </div>

@@ -154,10 +154,6 @@ async function capture(el: HTMLElement): Promise<Capture> {
       // Substitution textuelle : les notices/résumés sont vidés (textContent = "")
       // pour que les bordures se referment sans trou blanc. Les boutons et
       // pastilles interactives restent masqués en visibilité.
-      // Boutons de zoom (loupe) : jamais imprimés sur les rapports.
-      pick('[aria-label^="Zoom"], [aria-label="Quitter le zoom"]').forEach((node) => {
-        (node as HTMLElement).style.display = "none";
-      });
       pick("[data-pdf-hide]").forEach((node) => {
         const el = node as HTMLElement;
         if (el.tagName === "SPAN") {
