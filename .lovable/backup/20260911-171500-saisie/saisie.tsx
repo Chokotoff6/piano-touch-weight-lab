@@ -95,7 +95,7 @@ const DRAFT_ROWS_KEY = "ptw_draft_rows";
 const DRAFT_INFO_KEY = "ptw_draft_info";
 
 const FORM_INCOMPLETE_MESSAGE =
-  "⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, Ville, Type d'entretien et Niveau d'usage avant de sauver.";
+  "⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, ville et Type d'entretien avant de sauver.";
 const SAVE_UPDATE_MESSAGE =
   "⚠️ Diagnostic synchronisé avec succès dans la base de données de l'application (Cloud)";
 const SAVE_NEW_MESSAGE =
@@ -619,8 +619,7 @@ function Index() {
           info["type_piano"] &&
           info["pays"]?.trim() &&
           info["ville"]?.trim() &&
-          info["entretien"] &&
-          info["usage_level"],
+          info["entretien"],
       ),
     [info],
   );
@@ -633,9 +632,7 @@ function Index() {
           info["sn_num"]?.trim() &&
           info["type_piano"] &&
           info["pays"]?.trim() &&
-          info["ville"]?.trim() &&
-          info["entretien"] &&
-          info["usage_level"],
+          info["entretien"],
       ),
     [info],
   );
@@ -648,9 +645,7 @@ function Index() {
       ["sn_num", en ? "Serial number" : "N° de série"],
       ["type_piano", en ? "Type" : "Type"],
       ["pays", en ? "Country" : "Pays"],
-      ["ville", en ? "City" : "Ville"],
       ["entretien", en ? "Maintenance" : "Entretien"],
-      ["usage_level", en ? "Usage level" : "Niveau d'usage"],
     ];
     return checks.filter(([key]) => !String(info[key] ?? "").trim()).map(([, label]) => label);
   }, [info, en]);
