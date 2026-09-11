@@ -2751,8 +2751,8 @@ function Index() {
         {badgeVisible && (
           <div
             data-pdf-hide
-            className="pointer-events-none absolute left-0 top-1/2 z-10 flex w-32 justify-center"
-            style={{ transform: "translateY(calc(-50% + 30px))" }}
+            className="pointer-events-none absolute left-0 top-0 z-10 flex w-32 justify-center"
+            style={{ transform: "translateY(30px)" }}
           >
             <div className="flex items-center !rounded-md !border !border-green-600 !bg-green-100 !px-2.5 !py-1 !shadow-sm">
               <span className="text-[10px] font-semibold !text-gray-950">
