@@ -345,7 +345,12 @@ function RootComponent() {
                       <DropdownMenuSubTrigger>
                         {lang === "en" ? "Export PDF" : "Exporter PDF"}
                       </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent className="max-w-[520px]">
+                      <DropdownMenuSubContent
+                        sideOffset={4}
+                        alignOffset={-4}
+                        avoidCollisions={false}
+                        className="max-w-[520px]"
+                      >
                         <DropdownMenuItem
                           disabled={!filesEnabled}
                           onClick={() => requireConsent(() => dispatchAction("piano-export-pdf"))}
