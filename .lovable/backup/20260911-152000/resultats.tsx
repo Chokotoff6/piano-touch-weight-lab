@@ -285,7 +285,7 @@ function Resultats() {
   const unlocked = topbar.compareUnlocked;
 
   return (
-    <main className="mx-auto w-full max-w-[1120px] px-6 pb-10 pt-20">
+    <main className="mx-auto w-full max-w-[1120px] px-6 py-10">
       <input
         ref={importInputRef}
         type="file"
