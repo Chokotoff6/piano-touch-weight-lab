@@ -970,15 +970,26 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const keyboardModeRef = useRef(false);
   const kbNoteRef = useRef<number | null>(null);
   const zoomStartRef = useRef(1);
-  keyboardModeRef.current = keyboardMode;
-  kbNoteRef.current = kbNote;
+  // Le verrou clavier et la note clavier vivent EXCLUSIVEMENT dans les refs :
+  // les réécrire pendant le rendu relâchait le verrou lors d'un rendu externe
+  // (molette, changement de filtre) et désynchronisait les deux entrées.
   zoomStartRef.current = zoomStart;
   
 
   // Dernière hauteur (Y) décidée par la souris : la FF pilotée au clavier y reste figée.
   const lastMouseY = useRef<number | null>(null);
-  // Dernière note (index X) survolée par la souris : point de départ du pilotage clavier.
+  // Note active PARTAGÉE (source unique) : écrite par la souris comme par le clavier.
   const lastMouseNote = useRef<number | null>(null);
+
+  // Reprise de main par la souris : met à jour la note active partagée et efface
+  // l'état clavier, pour que la prochaine flèche reparte de la note survolée.
+  const onMouseTakeover = useCallback((note: number | null) => {
+    if (note !== null) lastMouseNote.current = note;
+    if (kbNoteRef.current !== null) {
+      kbNoteRef.current = null;
+      setKbNote(null);
+    }
+  }, []);
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<HTMLDivElement>(null);
   // Zone de tracé du cadre zoomé : sert à rejouer un survol réel à la note pilotée au clavier.
