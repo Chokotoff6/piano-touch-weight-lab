@@ -487,20 +487,20 @@ function RootComponent() {
                      FR
                    </Button>
                  </div>
-                 <a
-                   href="https://buymeacoffee.com"
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
-                   aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
-                   className="relative z-10 ml-[60px] flex shrink-0 translate-y-[24px] items-center justify-center rounded-lg bg-transparent transition-transform hover:scale-105"
+                 <button
+                   type="button"
+                   onClick={() => setSupportOpen(true)}
+                   title={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
+                   aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
+                   className="relative z-10 ml-[60px] flex shrink-0 translate-y-[24px] items-center justify-center overflow-hidden rounded-lg bg-transparent transition-transform hover:scale-105"
                  >
                    <img
-                     src={premiumCoffeeAsset.url}
-                     alt="Buy me a coffee"
-                     className="!h-[85px] !w-auto rounded-lg object-contain"
+                     src={lang === "en" ? supportDollarAsset.url : supportEuroAsset.url}
+                     alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
+                     style={{ height: "38px", width: "auto" }}
+                     className="rounded-lg object-contain"
                    />
-                 </a>
+                 </button>
                </div>
 
                {/* Logo officiel KeyWeight : 30 px à gauche du bord droit,
