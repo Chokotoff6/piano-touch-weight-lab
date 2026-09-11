@@ -2432,11 +2432,11 @@ function Index() {
             </div>
 
             <label className={`mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
-              <span className="inline-flex items-center">{en ? "Usage level" : "Niveau d'usage"}</span>
+              <span className="block">{en ? "Usage level" : "Niveau d'usage"}</span>
               <select
                 value={info["usage_level"] ?? ""}
                 onChange={(e) => updateInfo("usage_level", e.target.value)}
-                className={`${INPUT_CLASS} !bg-white !w-auto !max-w-[300px]`}
+                className={`${INPUT_CLASS} !bg-white !block !w-auto !max-w-[300px]`}
               >
                 <option value="">{en ? "— Select —" : "— Sélectionner —"}</option>
                 {USAGE_OPTIONS.map((option) => (
