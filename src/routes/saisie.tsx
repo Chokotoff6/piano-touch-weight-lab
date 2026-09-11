@@ -2799,30 +2799,10 @@ function Index() {
             {en ? "< Edit piano information" : "< Modifier informations piano"}
           </button>
 
-          {/* Barre d'outils d'atelier centrée : undo, redo, touches, reset. */}
+          {/* Barre d'outils d'atelier centrée : touches, reset.
+              Undo / Redo sont désormais calés dans le cadre des mesures. */}
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              data-pdf-hide
-              disabled={undoStack.length === 0}
-              onClick={undoRows}
-              aria-label="Annuler"
-              title={en ? "Undo the last entry (20 max)" : "Annuler la dernière saisie (20 maximum)"}
-              className={`flex h-[34px] w-9 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${undoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "text-muted-foreground"}`}
-            >
-              <Undo2 className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              data-pdf-hide
-              disabled={redoStack.length === 0}
-              onClick={redoRows}
-              aria-label="Rétablir"
-              title={en ? "Redo the cancelled entry (20 max)" : "Rétablir la saisie annulée (20 maximum)"}
-              className={`flex h-[34px] w-9 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${redoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "text-muted-foreground"}`}
-            >
-              <Redo2 className="h-4 w-4" />
-            </button>
+
 
             <button
               type="button"
