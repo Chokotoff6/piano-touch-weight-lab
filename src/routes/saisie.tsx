@@ -2522,12 +2522,12 @@ function Index() {
                 i
               </span>
               <span
-                className="pointer-events-none absolute left-5 top-1/2 hidden w-[360px] -translate-y-1/2 rounded-md border border-gray-300 px-3 py-2 text-left text-[13px] font-medium normal-case text-gray-950 shadow-lg group-hover:block"
+                className="pointer-events-none absolute left-5 top-1/2 hidden w-max max-w-none -translate-y-1/2 whitespace-nowrap rounded-md border border-gray-300 px-3 py-2 text-left text-[13px] font-medium normal-case text-gray-950 shadow-lg group-hover:block"
                 style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
               >
-                <span className="block">• TAB : avance d&apos;une zone de saisie</span>
-                <span className="block">• Shift + TAB : recule d&apos;une zone de saisie</span>
-                <span className="block">
+                <span className="block whitespace-nowrap">• TAB : avance d&apos;une zone de saisie</span>
+                <span className="block whitespace-nowrap">• Shift + TAB : recule d&apos;une zone de saisie</span>
+                <span className="block whitespace-nowrap">
                   • ALT + TAB (Option{" "}
                   <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 align-middle text-[11px] leading-none">
                     ⌥
@@ -2535,6 +2535,7 @@ function Index() {
                   sur Mac) : saute directement au DO suivant
                 </span>
               </span>
+
             </span>
           </>
         }
