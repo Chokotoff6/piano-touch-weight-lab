@@ -326,20 +326,23 @@ function profileFromSpec(spec: FactorySpecRow): RefProfile {
 }
 
 
-// Pastilles permanentes : un point sur CHAQUE touche réellement mesurée,
-// à la couleur de sa courbe. Le survol agrandit le point (activeDot).
-const makeSampleDot = (radius: number) => {
-  const Dot = (props: { cx?: number; cy?: number; stroke?: string; value?: number | null }) => {
-    const { cx, cy, stroke, value } = props;
+// Pastilles épurées : une tous les 6 demi-tons à partir de la touche 4 (Do et Fa#).
+// En mode zoom chirurgical la granularité passe à une touche sur deux.
+const DOT_NOTES = new Set(Array.from({ length: 15 }, (_, i) => 4 + i * 6));
+const makeSampleDot = (step: number) => {
+  const Dot = (props: { cx?: number; cy?: number; payload?: { key?: number } }) => {
+    const { cx, cy, payload } = props;
     if (typeof cx !== "number" || typeof cy !== "number") return null;
-    if (value === null || value === undefined || !Number.isFinite(value as number)) return null;
-    return <circle cx={cx} cy={cy} r={radius} fill={stroke ?? "#000000"} stroke="none" />;
+    const note = payload?.key;
+    if (typeof note !== "number") return null;
+    const visible = step === 2 ? note % 2 === 0 : DOT_NOTES.has(note);
+    if (!visible) return null;
+    return <circle cx={cx} cy={cy} r={2} fill="#000000" />;
   };
   return Dot;
 };
-const SampleDot = makeSampleDot(2.2);
-const ZoomDot = makeSampleDot(3);
-
+const SampleDot = makeSampleDot(6);
+const ZoomDot = makeSampleDot(2);
 
 
 type EndLabelOptions = {
@@ -598,27 +601,24 @@ function CloseIcon() {
 }
 // Guide visuel : souris avec molette animée (indique le défilement horizontal).
 function WheelHintIcon() {
-  const en = useLang() === "en";
   return (
     <span className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 text-[0.65rem] font-medium !text-black shadow-sm">
       <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
         <rect x="5.5" y="2.5" width="9" height="15" rx="4.5" />
         <path className="animate-pulse" d="M10 5.5v3.5" stroke="#2563EB" strokeWidth="2.4" />
       </svg>
-      <span>{en ? "Scroll wheel = moves curve ◀ ▶" : "Molette = déplace courbe ◀ ▶"}</span>
+      <span>Molette : déplace courbe ◄ ►</span>
     </span>
   );
 }
 // Guide visuel : rappel clavier, sans icône.
 function ArrowHintIcon() {
-  const en = useLang() === "en";
   return (
     <span className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 text-[0.65rem] font-medium !text-black shadow-sm">
-      <span>{en ? "Keyboard keys ◀ ▶ = previous/next note" : "Touches clavier ◀ ▶ = note précédente/suivante"}</span>
+      <span>{"Clavier <> : note préc./suiv."}</span>
     </span>
   );
 }
-
 
 /** Données de géométrie injectées par Recharts dans un enfant `Customized`. */
 type GuideChartProps = {
@@ -1780,24 +1780,12 @@ function Comparer() {
   }, [standardEnabled, sourceMode, comparedPiano]);
   const cloudIsEmpty = cloudActive && cloudSampleCount === 0;
   const cloudCounterText = cloudLoading
-    ? en ? "Computing cloud average…" : "Calcul de la moyenne cloud…"
+    ? "Calcul de la moyenne cloud…"
     : cloudSampleCount === 0
       ? ""
       : cloudSampleCount === 1
-        ? en ? "> 1 identical model piano shared by users" : "> 1 piano de modèle identique partagé par les utilisateurs"
-        : en
-          ? `> ${cloudSampleCount} identical model pianos shared by users`
-          : `> ${cloudSampleCount} pianos de modèle identique partagés par les utilisateurs`;
-
-  // Étiquette de la cible constructeur, traduite à l'affichage (marque conservée).
-  const displayStandardLabel = !en
-    ? standardLabel
-    : standardLabel.startsWith("CIBLE : GÉNÉRIQUE ")
-      ? `TARGET: GENERIC ${standardLabel.slice("CIBLE : GÉNÉRIQUE ".length)}`
-      : standardLabel === "CIBLE (Internet)"
-        ? "TARGET (Internet)"
-        : standardLabel;
-
+        ? "> 1 piano de modèle identique enregistré par les utilisateurs"
+        : `Moyennes sur ${cloudSampleCount} pianos de modèle identique enregistrés par les utilisateurs`;
 
   // Pages 1 à 3 du rapport : profil du piano actuel seul, courbes séparées.
   const mirrorChartData = useMemo(() => buildChartData(mine, null, null), [mine]);
@@ -1842,18 +1830,17 @@ function Comparer() {
               <div ref={averagesRef} data-pdf-expand data-pdf-lock-w="980" className="sticky top-[127px] z-50 mb-[50px] w-full bg-white pb-2 relative">
                 <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span>{en ? "Averages" : "Moyennes"}</span>} className="h-fit">
                   {/* Séparateurs affichés uniquement si au moins deux sources sont présentes. */}
-                  <div className={(comparedPiano !== null || sourceMode === "cloud" || standardEnabled) ? "mb-3 border-b border-gray-400 pb-3" : ""}><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">{en ? "Current piano" : "Piano actuel"} : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
+                  <div className={(comparedPiano !== null || sourceMode === "cloud" || standardEnabled) ? "mb-3 border-b border-gray-400 pb-3" : ""}><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">Piano actuel : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
                   {(comparedPiano !== null || sourceMode === "cloud") && (
                     <div className={standardEnabled ? "mb-3 border-b border-gray-400 pb-3" : ""}>
                       <div className={`mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide ${comparedPiano ? "!text-blue-600" : "!text-orange-600"}`}>{comparedPiano ? <>IMPORT CSV : <span className="normal-case">{csvIdentity}{csvStats}</span></> : <>Cloud</>}{cloudActive && <span className="ml-2 normal-case text-orange-600">{cloudCounterText}{countKeys(cloudProfile?.wa)}</span>}</div>
                       <AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} csv={comparedPiano !== null} />
-                      {cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">{en ? "Sample too small to generate an average" : "Échantillon trop faible pour générer une moyenne"}</p>}
+                      {cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">Échantillon trop faible pour générer une moyenne</p>}
                     </div>
                   )}
                   {standardEnabled && (
                     <div>
-                      <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-green-600">{displayStandardLabel}<BrandTargetInfoIcon variant={/standard/i.test(standardLabel) ? "standard" : "brand"} /></div>
-
+                      <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-green-600">{standardLabel}<BrandTargetInfoIcon variant={/standard/i.test(standardLabel) ? "standard" : "brand"} /></div>
                       <StandardRow chartData={chartData} />
                     </div>
                   )}
