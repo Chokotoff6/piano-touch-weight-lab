@@ -1966,7 +1966,7 @@ function Index() {
       historyRows: info["sn_num"]?.trim() ? getTopbarState().historyRows : [],
     });
     // Jalon persistant : le seuil minimal de pesée débloque le bouton "Résultats".
-    setGateReady(badgeVisible);
+    setGateReady(badgeVisible && requiredSheetFieldsComplete);
     return () => {
       setTopbarState({
         exportReady: false,
