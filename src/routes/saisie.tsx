@@ -1165,9 +1165,10 @@ function Index() {
 
   /** Une touche est-elle visible avec le filtre courant ? */
   const isVisibleKey = (index: number) => {
-    if (viewFilter === "white") return !isBlack(index);
-    if (viewFilter === "black") return isBlack(index);
+    if (viewFilter === "white") return !BLACK_KEYS.has(index + 1);
+    if (viewFilter === "black") return BLACK_KEYS.has(index + 1);
     return true;
+
   };
 
   /** Prochaine touche visible dans la direction demandée (ou null). */
