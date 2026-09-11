@@ -2306,7 +2306,7 @@ function Index() {
             <fieldset className={FIELD_LABEL_CLASS} data-keep-model-open>
               <legend>{en ? "Piano type" : "Type de piano"}</legend>
               <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 bg-white px-2">
-                {["Droit", "à Queue"].map((t) => (
+                {["Droit", "Queue"].map((t) => (
                   <label key={t} className="flex items-center gap-1 text-sm text-foreground">
                     <input
                       type="radio"
