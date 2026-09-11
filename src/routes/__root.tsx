@@ -300,7 +300,6 @@ function RootComponent() {
                 <DropdownMenuTrigger asChild>
                   <Button
 
-                  <Button
                     ref={saveBtnRef}
                     variant="outline"
                     size="sm"
