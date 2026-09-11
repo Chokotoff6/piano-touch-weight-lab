@@ -780,10 +780,13 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
     // l'étiquette haute remonte de 12 px et l'étiquette basse descend de 12 px.
     const adjusted = entries.map((entry) => ({ ...entry, off: 0 }));
     for (let i = 0; i < adjusted.length - 1; i += 1) {
-      const gap = adjusted[i + 1].y + adjusted[i + 1].off - (adjusted[i].y + adjusted[i].off);
+      const upper = adjusted[i];
+      const lower = adjusted[i + 1];
+      if (!upper || !lower) continue;
+      const gap = lower.y + lower.off - (upper.y + upper.off);
       if (gap < 24) {
-        adjusted[i].off -= 12;
-        adjusted[i + 1].off += 12;
+        upper.off -= 12;
+        lower.off += 12;
       }
     }
     adjusted.forEach((entry) => map.set(entry.key, Math.round(entry.off)));
