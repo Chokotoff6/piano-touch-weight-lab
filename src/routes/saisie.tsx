@@ -406,6 +406,21 @@ function Index() {
   const coherenceDismissed = useRef<Set<number>>(new Set());
   /** Mode pesée : formulaire masqué, bandeau résumé affiché. */
   const [weighingMode, setWeighingMode] = useState(false);
+  /** Retour depuis Résultats / Comparer : on rouvre directement l'écran clavier. */
+  useEffect(() => {
+    try {
+      if (window.sessionStorage.getItem("ptw_weighing_mode") === "1") setWeighingMode(true);
+    } catch {
+      /* stockage indisponible */
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem("ptw_weighing_mode", weighingMode ? "1" : "0");
+    } catch {
+      /* stockage indisponible */
+    }
+  }, [weighingMode]);
   const weighingBtnRef = useRef<HTMLButtonElement | null>(null);
   const [coherenceIndex, setCoherenceIndex] = useState<number | null>(null);
   const [coherenceAnchor, setCoherenceAnchor] = useState<{ x: number; y: number } | null>(null);
@@ -2209,6 +2224,7 @@ function Index() {
               type="button"
               onClick={() => setConfirmReset("info")}
               title={en ? "Reset the information sheet only" : "Réinitialiser uniquement la fiche d'informations"}
+              style={{ transform: "scale(1.15)", transformOrigin: "top right" }}
               className="rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
             >
               Reset
@@ -2481,8 +2497,8 @@ function Index() {
             ref={weighingBtnRef}
             type="button"
             onClick={onValidateWeighing}
-            // Toujours activable : texte noir net et bordure noire standard.
-            className="rounded-md border-2 border-black bg-white px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors hover:bg-gray-100"
+            // Toujours activable : noir par défaut, vert dès que la fiche est complète.
+            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors ${requiredSheetFieldsComplete ? "!border-green-600 !bg-green-100" : "border-black bg-white hover:bg-gray-100"}`}
           >
             {en ? "Key measurements >" : "Mesures clavier >"}
           </button>
