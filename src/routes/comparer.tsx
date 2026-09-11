@@ -1052,6 +1052,9 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       // Le clavier prend la main : verrou immédiat.
       keyboardModeRef.current = true;
       setKeyboardMode(true);
+      // Source unique : la note active partagée (écrite par la souris ET par le
+      // clavier). La souris ayant effacé kbNoteRef en reprenant la main, la
+      // flèche repart toujours de la dernière position réellement pointée.
       const base = kbNoteRef.current ?? lastMouseNote.current ?? Math.round(zoomStartRef.current + ZOOM_WINDOW / 2);
       const next = Math.min(Math.max(base + step, 1), 88);
       kbNoteRef.current = next;
