@@ -177,30 +177,6 @@ function RootComponent() {
   /** Message flash au survol du bouton de soutien (3 s maximum). */
   const [supportHint, setSupportHint] = useState(false);
   const supportHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /** Apparition temporisée du bouton LIKED : 5 s invisible, puis fondu 2 s.
-      Le cycle se réinitialise à chaque entrée sur Résultats/Comparer. */
-  const [likedVisible, setLikedVisible] = useState(false);
-  const likedFadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const likedActivePages = pathname === "/resultats" || pathname === "/comparer";
-  useEffect(() => {
-    if (!likedActivePages) {
-      if (likedFadeTimer.current) {
-        clearTimeout(likedFadeTimer.current);
-        likedFadeTimer.current = null;
-      }
-      setLikedVisible(false);
-      return;
-    }
-    // Démarre invisible, puis fondu après 5 s.
-    setLikedVisible(false);
-    likedFadeTimer.current = setTimeout(() => setLikedVisible(true), 5000);
-    return () => {
-      if (likedFadeTimer.current) {
-        clearTimeout(likedFadeTimer.current);
-        likedFadeTimer.current = null;
-      }
-    };
-  }, [likedActivePages]);
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
   /** Infobulle « Importer » : visible au survol, masquée après 3 secondes. */
   const [importHint, setImportHint] = useState(false);
@@ -524,9 +500,8 @@ function RootComponent() {
                      </Button>
                    </div>
                    {(pathname === "/resultats" || pathname === "/comparer") && (
-                    <div
-                       className="relative ml-3 translate-y-[16px] transition-opacity duration-[2000ms] ease-in-out"
-                       style={{ opacity: likedVisible ? 1 : 0, pointerEvents: likedVisible ? "auto" : "none" }}
+                   <div
+                      className="relative ml-3 translate-y-[16px]"
                      onMouseEnter={() => {
                        if (supportHintTimer.current) clearTimeout(supportHintTimer.current);
                        setSupportHint(true);
