@@ -767,6 +767,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
     const plotH = (zoomed ? 560 : 250) - 37;
     const scale = plotH / (domain[1] - domain[0]);
     const entries = lines
+      .filter((line) => !line.hidden)
       .map((line) => {
         const value = chartData[lastIn(line.dataKey)]?.[line.dataKey];
         if (typeof value !== "number" || !Number.isFinite(value)) return null;
@@ -777,7 +778,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
     const map = new Map(dyRight);
     let previous = -Infinity;
     entries.forEach((entry) => {
-      const target = Math.max(entry.y, previous + 14);
+      const target = Math.max(entry.y, previous + 18);
       map.set(entry.key, Math.round(target - entry.y));
       previous = target;
     });
