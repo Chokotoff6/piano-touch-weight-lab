@@ -2674,13 +2674,8 @@ function Index() {
             type="button"
             data-pdf-hide
             onClick={() => setWeighingMode(false)}
-            className="rounded-md border-2 !border-green-600 !bg-green-100 px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors"
-            style={{
-              backgroundColor: "#dcfce7",
-              borderColor: "#16a34a",
-              color: "#000000",
-              fontWeight: "bold",
-            }}
+            className="rounded-md border-2 border-input bg-background px-4 py-1.5 text-[0.9rem] font-bold !text-gray-800 transition-colors hover:bg-muted"
+
           >
             {en ? "< Edit piano information" : "< Modifier informations piano"}
           </button>
