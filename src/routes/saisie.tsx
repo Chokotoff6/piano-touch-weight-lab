@@ -814,17 +814,8 @@ function Index() {
         setMissingFlash(false);
         missingFlashTimeout.current = null;
       }, 3000);
-
-      if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
-      const r = weighingBtnRef.current?.getBoundingClientRect();
-      setBlockAnchor(
-        r ? { x: Math.max(8, r.left - 340), y: Math.max(8, r.top - 12), text: FORM_INCOMPLETE_MESSAGE } : { x: window.innerWidth / 2 - 144, y: 120, text: FORM_INCOMPLETE_MESSAGE },
-      );
-      blockAnchorTimeout.current = setTimeout(() => {
-        setBlockAnchor(null);
-        blockAnchorTimeout.current = null;
-      }, 3000);
       return;
+
     }
     if (remarquesInvalid) {
       if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
