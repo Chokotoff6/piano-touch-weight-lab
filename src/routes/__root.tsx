@@ -29,7 +29,8 @@ import { createPortal } from "react-dom";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
-import premiumCoffeeAsset from "@/assets/premium-coffee.png.asset.json";
+import supportEuroAsset from "@/assets/support-euro.svg.asset.json";
+import supportDollarAsset from "@/assets/support-dollar.svg.asset.json";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -165,6 +166,8 @@ function RootComponent() {
   const topbar = useTopbarState();
   const lang = useLang();
   const [consentOpen, setConsentOpen] = useState(false);
+  /** Fenêtre interne de soutien collaboratif (bilingue). */
+  const [supportOpen, setSupportOpen] = useState(false);
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
   /** Infobulle « Importer » : visible au survol, masquée après 3 secondes. */
   const [importHint, setImportHint] = useState(false);
