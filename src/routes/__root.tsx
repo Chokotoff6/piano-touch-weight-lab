@@ -407,14 +407,15 @@ function RootComponent() {
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-pdf")}>
                           {lang === "en"
-                            ? "Blank form - table format (Paper - re-importable)"
-                            : "Formulaire vierge format tableau (Papier - re-importable)"}
+                            ? "Blank form table format (re-importable)"
+                            : "Formulaire vierge format tableau (re-importable)"}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-keyboard-pdf")}>
                           {lang === "en"
-                            ? "Blank form - keyboard drawing format (Paper - re-importable)"
-                            : "Formulaire vierge format dessin clavier (Papier - re-importable)"}
+                            ? "Blank form keyboard design format (re-importable)"
+                            : "Formulaire vierge format dessin clavier (re-importable)"}
                         </DropdownMenuItem>
+
                       </DropdownMenuSubContent>
                     </DropdownMenuSub>
                   </>
