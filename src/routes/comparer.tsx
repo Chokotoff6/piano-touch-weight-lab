@@ -1789,6 +1789,15 @@ function Comparer() {
           ? `> ${cloudSampleCount} identical model pianos shared by users`
           : `> ${cloudSampleCount} pianos de modèle identique partagés par les utilisateurs`;
 
+  // Étiquette de la cible constructeur, traduite à l'affichage (marque conservée).
+  const displayStandardLabel = !en
+    ? standardLabel
+    : standardLabel.startsWith("CIBLE : GÉNÉRIQUE ")
+      ? `TARGET: GENERIC ${standardLabel.slice("CIBLE : GÉNÉRIQUE ".length)}`
+      : standardLabel === "CIBLE (Internet)"
+        ? "TARGET (Internet)"
+        : standardLabel;
+
 
   // Pages 1 à 3 du rapport : profil du piano actuel seul, courbes séparées.
   const mirrorChartData = useMemo(() => buildChartData(mine, null, null), [mine]);
