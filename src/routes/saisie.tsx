@@ -2448,9 +2448,6 @@ function Index() {
             <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
               <span className="inline-flex items-center">
                 {en ? "Remarks" : "Remarques"}
-                {remarquesRequired && (
-                  
-                )}
               </span>
               <input
                 ref={remarquesRef}
