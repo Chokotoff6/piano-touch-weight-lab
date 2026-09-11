@@ -36,8 +36,7 @@ import { createPortal } from "react-dom";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
-import supportEuroAsset from "@/assets/support-euro.svg.asset.json";
-import supportDollarAsset from "@/assets/support-dollar.svg.asset.json";
+import supportHandsAsset from "@/assets/support-hands.png.asset.json";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 

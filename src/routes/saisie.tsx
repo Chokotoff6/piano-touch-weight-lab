@@ -367,7 +367,7 @@ function useSnappedGrid(from: number, to: number) {
 export const Route = createFileRoute("/saisie")({
   head: () => ({
     meta: [
-      { title: "Saisie des mesures — Touchweight statique piano" },
+      { title: "KeyWeight" },
       {
         name: "description",
         content:
