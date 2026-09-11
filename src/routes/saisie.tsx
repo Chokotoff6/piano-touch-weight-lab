@@ -2467,28 +2467,52 @@ function Index() {
 
           </div>
         </Frame>
-        {/* Bouton de navigation placé sous le cadre, calé à droite. */}
-        <div className="mt-3 flex w-full items-center justify-end gap-4 pl-2 pr-2">
-          {missingFlash && (
-            <span className="text-sm font-semibold !text-gray-600">
-              {en ? "Complete: " : "Complétez : "}
-              {missingSheetFields.length > 0
-                ? missingSheetFields.join(", ")
-                : en
-                  ? "Measurements"
-                  : "Pesées"}
-            </span>
-          )}
-          <button
-            ref={weighingBtnRef}
-            type="button"
-            onClick={onValidateWeighing}
-            // Toujours activable : noir par défaut, vert dès que la fiche est complète.
-            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors ${requiredSheetFieldsComplete ? "!border-green-600 !bg-green-100" : "border-black bg-white hover:bg-gray-100"}`}
-          >
-            {en ? "Key measurements >" : "Mesures clavier >"}
-          </button>
+        {/* Sous le cadre : Reset centré, bouton de navigation à droite. */}
+        <div className="mt-3 grid w-full grid-cols-[1fr_auto_1fr] items-center gap-4 pl-2 pr-2">
+          <div />
 
+          <div className="relative flex items-center justify-center">
+            {confirmReset === "info" && (
+              <div
+                className="absolute left-1/2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
+                style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
+              >
+                <span>{en ? "Do you want to erase all entered piano information?" : "Voulez-vous effacer toutes les infos piano saisies ?"}</span>
+                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { resetInfo(); setConfirmReset(null); }}>Oui</button>
+                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setConfirmReset("info")}
+              title={en ? "Reset the information sheet only" : "Réinitialiser uniquement la fiche d'informations"}
+              className="relative z-10 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.96rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+            >
+              Reset
+            </button>
+          </div>
+
+          <div className="flex items-center justify-end gap-4">
+            {missingFlash && (
+              <span className="text-sm font-semibold !text-gray-600">
+                {en ? "Complete: " : "Complétez : "}
+                {missingSheetFields.length > 0
+                  ? missingSheetFields.join(", ")
+                  : en
+                    ? "Measurements"
+                    : "Pesées"}
+              </span>
+            )}
+            <button
+              ref={weighingBtnRef}
+              type="button"
+              onClick={onValidateWeighing}
+              // Toujours activable : noir par défaut, vert dès que la fiche est complète.
+              className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors ${requiredSheetFieldsComplete ? "!border-green-600 !bg-green-100" : "border-black bg-white hover:bg-gray-100"}`}
+            >
+              {en ? "Key measurements >" : "Mesures clavier >"}
+            </button>
+          </div>
         </div>
 
       </div>
