@@ -292,7 +292,7 @@ function RootComponent() {
                       filesEnabled ? "!text-black" : "!text-gray-400"
                     }`}
                   >
-                    {lang === "en" ? "Export" : "Exporter"}
+                    {lang === "en" ? "Files" : "Fichiers"}
                     <ChevronDown className="ml-1 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -377,13 +377,11 @@ function RootComponent() {
               <Button
                 variant="outline"
                 size="sm"
-                title="Importer un fichier CSV (Keyweight) depuis votre stockage local."
                 className="border border-gray-300 bg-white text-lg font-bold !text-black"
                 onClick={() => dispatchAction("piano-import-csv")}
               >
                 Importer
               </Button>
-
               {topbar.alert?.anchor === "import" && (
                 <div
                   className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
@@ -396,15 +394,29 @@ function RootComponent() {
              )}
 
              <div className="ml-auto flex items-center mr-[-1rem] sm:mr-[-1.5rem]">
-               {/* Langues puis café : le café passe à droite du sélecteur,
-                   à 60 px du texte EN / FR, à la même hauteur que le logo. */}
-               <div className="flex -translate-x-[60px] items-center">
-                 <div className="flex shrink-0 translate-y-[19px] items-center gap-0 text-[1.14rem] font-semibold">
+               {/* Café + langues : bloc décalé de 60 px vers la gauche.
+                   Le café est calé à 60 px à gauche du texte EN / FR. */}
+               <div className="flex items-center -translate-x-[60px]">
+                 <a
+                   href="https://buymeacoffee.com"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
+                   aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
+                   className="relative z-10 flex shrink-0 translate-y-[19px] items-center justify-center rounded-lg bg-transparent transition-transform hover:scale-105"
+                 >
+                   <img
+                     src={premiumCoffeeAsset.url}
+                     alt="Buy me a coffee"
+                     className="!h-[64px] !w-auto rounded-lg object-contain"
+                   />
+                 </a>
+                 <div className="ml-[60px] flex shrink-0 items-center gap-1 text-[1.14rem] font-semibold">
                    <Button
                      variant="ghost"
                      size="sm"
                      onClick={() => setLang("en")}
-                     className={`px-1 text-[1.14rem] ${lang === "en" ? "!text-gray-900 underline" : "!text-gray-400"}`}
+                     className={`text-[1.14rem] ${lang === "en" ? "!text-gray-900 underline" : "!text-gray-400"}`}
                    >
                      EN
                    </Button>
@@ -414,36 +426,21 @@ function RootComponent() {
                      variant="ghost"
                      size="sm"
                      onClick={() => setLang("fr")}
-                     className={`px-1 text-[1.14rem] ${lang === "fr" ? "!text-gray-900 underline" : "!text-gray-400"}`}
+                     className={`text-[1.14rem] ${lang === "fr" ? "!text-gray-900 underline" : "!text-gray-400"}`}
                    >
                      FR
                    </Button>
                  </div>
-                 <a
-                   href="https://buymeacoffee.com"
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
-                   aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
-                   className="relative z-10 ml-[60px] flex shrink-0 translate-y-[19px] items-center justify-center rounded-lg bg-transparent transition-transform hover:scale-105"
-                 >
-                   <img
-                     src={premiumCoffeeAsset.url}
-                     alt="Buy me a coffee"
-                     className="!h-[64px] !w-auto rounded-lg object-contain"
-                   />
-                 </a>
                </div>
 
                {/* Logo officiel KeyWeight : 30 px à gauche du bord droit,
-                   descendu d'1 px pour un calage parfait sur la ligne grise. */}
+                   le mot KEYWEIGHT coupé en son milieu par la ligne grise. */}
                <img
                  src={keyweightLogo.url}
                  alt="KeyWeight"
                  style={{ height: "64px", width: "auto" }}
-                 className="relative z-10 shrink-0 -translate-x-[30px] translate-y-[20px] object-contain"
+                 className="relative z-10 shrink-0 -translate-x-[30px] translate-y-[19px] object-contain"
                />
-
              </div>
 
 

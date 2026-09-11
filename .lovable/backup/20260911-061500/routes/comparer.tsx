@@ -1290,9 +1290,8 @@ function SidebarPanel(props: SidebarPanelProps) {
   const usageLabel = props.usageLevel === "low" ? "FAIBLE" : props.usageLevel === "medium" ? "MOYEN" : "INTENSIF";
   const changesLabel = props.importantChanges === "included" ? "INCLUS" : props.importantChanges === "excluded" ? "EXCLUS" : "SEULS";
   const tipCloud = en
-    ? "Compare your piano with others of the same model."
-    : "Comparez votre piano avec d'autres du même modèle.";
-
+    ? "Compare your piano with the same model shared by other users."
+    : "Comparez votre piano avec ceux du même modèle partagés par d'autres utilisateurs.";
   const tipTarget = en
     ? "Generic values generally expected for a piano keyboard."
     : "Valeurs génériques généralement attendues pour un clavier de piano.";
@@ -1398,9 +1397,7 @@ function Comparer() {
   // noire du piano actuel s'affiche.
   const [sourceMode, setSourceMode] = useState<SourceMode>("none");
   const [standardEnabled, setStandardEnabled] = useState(false);
-  // Arrivée sur Comparer : les 4 graphiques démarrent en « N/B : séparées ».
-  const [keyFilter, setKeyFilter] = useState<KeyFilter>("split");
-
+  const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
   const [sameClimate, setSameClimate] = useState(true);
   const [sameYear, setSameYear] = useState(false);
   const [importantChanges, setImportantChanges] = useState<ChangesFilter>("excluded");

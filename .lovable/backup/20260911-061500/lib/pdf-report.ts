@@ -622,9 +622,7 @@ function drawRow(pdf: jsPDF, blocks: Capture[], topOffset: number) {
  */
 function drawTitle(pdf: jsPDF, title: string, underline = true, logo?: LogoImage | null): number {
   // Titre souligné (page 4) : 30 px de respiration supplémentaire en haut.
-  // Titre souligné (analyse comparative) : 30 px + 50 px de respiration.
-  const TOP = underline ? 24 + 13.2 : 8;
-
+  const TOP = underline ? 24 : 8; // ≈ 30 px (+30 px) de marge vide au-dessus
 
   const BOTTOM = 8; // ≈ 30 px de marge vide en dessous
   pdf.setTextColor(0);

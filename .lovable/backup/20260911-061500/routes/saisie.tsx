@@ -597,20 +597,6 @@ function Index() {
     [info],
   );
 
-  /** Liste dynamique des champs obligatoires encore vides de la fiche piano. */
-  const missingSheetFields = useMemo(() => {
-    const checks: Array<[string, string]> = [
-      ["marque", en ? "Brand" : "Marque"],
-      ["modele", en ? "Model" : "Modèle"],
-      ["sn_num", en ? "Serial number" : "N° de série"],
-      ["type_piano", en ? "Type" : "Type"],
-      ["pays", en ? "Country" : "Pays"],
-      ["entretien", en ? "Maintenance" : "Entretien"],
-    ];
-    return checks.filter(([key]) => !String(info[key] ?? "").trim()).map(([, label]) => label);
-  }, [info, en]);
-
-
   const exportReady = useMemo(
     () => Boolean(info["marque"]?.trim() && info["sn_num"]?.trim()),
     [info],
@@ -2453,39 +2439,16 @@ function Index() {
             />
 
 
-            <div className="mt-2 flex items-center justify-end gap-4 sm:col-span-2 md:col-span-4">
-              {/* Message d'alerte contextuel : liste en temps réel ce qui manque. */}
-              {(missingSheetFields.length > 0 ||
-                !rows.some((r) => String(r.wa ?? "").trim() || String(r.wd ?? "").trim())) && (
-                <span className="text-sm font-semibold !text-gray-600">
-                  {en ? "Complete: " : "Complétez : "}
-                  {missingSheetFields.length > 0
-                    ? missingSheetFields.join(", ")
-                    : en
-                      ? "Measurements"
-                      : "Pesées"}
-                </span>
-              )}
+            <div className="mt-2 flex justify-end sm:col-span-2 md:col-span-4">
               <button
                 ref={weighingBtnRef}
                 type="button"
                 onClick={onValidateWeighing}
-                className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${requiredSheetFieldsComplete ? "!border-green-600 !bg-green-100 !text-black" : "border-input bg-background !text-gray-400 opacity-60"}`}
-                style={
-                  requiredSheetFieldsComplete
-                    ? {
-                        backgroundColor: "#dcfce7",
-                        borderColor: "#16a34a",
-                        color: "#000000",
-                        fontWeight: "bold",
-                      }
-                    : undefined
-                }
+                className={`rounded-md !border !border-gray-300 px-5 py-2 text-sm font-bold transition-colors hover:bg-accent ${requiredSheetFieldsComplete ? "!bg-gray-100 !text-gray-600" : "!bg-white !text-gray-400"}`}
               >
-                {en ? "Keyboard measurements >" : "Mesures clavier >"}
+                Données de pesée ➔
               </button>
             </div>
-
 
           </div>
         </Frame>
@@ -2559,12 +2522,12 @@ function Index() {
                 i
               </span>
               <span
-                className="pointer-events-none absolute left-5 top-1/2 hidden w-max max-w-none -translate-y-1/2 whitespace-nowrap rounded-md border border-gray-300 px-3 py-2 text-left text-[13px] font-medium normal-case text-gray-950 shadow-lg group-hover:block"
+                className="pointer-events-none absolute left-5 top-1/2 hidden w-[360px] -translate-y-1/2 rounded-md border border-gray-300 px-3 py-2 text-left text-[13px] font-medium normal-case text-gray-950 shadow-lg group-hover:block"
                 style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
               >
-                <span className="block whitespace-nowrap">• TAB : avance d&apos;une zone de saisie</span>
-                <span className="block whitespace-nowrap">• Shift + TAB : recule d&apos;une zone de saisie</span>
-                <span className="block whitespace-nowrap">
+                <span className="block">• TAB : avance d&apos;une zone de saisie</span>
+                <span className="block">• Shift + TAB : recule d&apos;une zone de saisie</span>
+                <span className="block">
                   • ALT + TAB (Option{" "}
                   <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 align-middle text-[11px] leading-none">
                     ⌥
@@ -2572,7 +2535,6 @@ function Index() {
                   sur Mac) : saute directement au DO suivant
                 </span>
               </span>
-
             </span>
           </>
         }
@@ -2589,6 +2551,15 @@ function Index() {
           mesuresRef.current = node;
         }}
       >
+        <button
+          type="button"
+          data-pdf-hide
+          onClick={() => setWeighingMode(false)}
+          style={{ marginLeft: "400px" }}
+          className="absolute left-1/2 -top-4 z-10 -translate-x-1/2 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+        >
+          {en ? "Edit piano information" : "Modifier Informations piano"}
+        </button>
         <div className="absolute left-[calc(1rem+4rem)] top-12 z-10 -translate-x-1/2 -translate-y-1/2">
           <div className="flex flex-col items-stretch gap-1">
 
@@ -2661,23 +2632,7 @@ function Index() {
       {/* Bouton de navigation officiel : placé sous le cadre « Mesures poids
           statiques » (et non plus à l'intérieur), donc jamais capturé au PDF. */}
       {weighingMode && (
-        <div className="mt-3 flex w-full items-center justify-between pl-2 pr-2">
-          {/* Retour à la fiche piano : même ligne, calé à gauche. */}
-          <button
-            type="button"
-            data-pdf-hide
-            onClick={() => setWeighingMode(false)}
-            className="rounded-md border-2 !border-green-600 !bg-green-100 px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors"
-            style={{
-              backgroundColor: "#dcfce7",
-              borderColor: "#16a34a",
-              color: "#000000",
-              fontWeight: "bold",
-            }}
-          >
-            {en ? "< Edit piano information" : "< Modifier informations piano"}
-          </button>
-
+        <div className="mt-3 flex w-full justify-end pr-2">
           <button
             type="button"
             data-pdf-hide
