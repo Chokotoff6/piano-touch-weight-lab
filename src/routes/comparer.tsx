@@ -1780,12 +1780,15 @@ function Comparer() {
   }, [standardEnabled, sourceMode, comparedPiano]);
   const cloudIsEmpty = cloudActive && cloudSampleCount === 0;
   const cloudCounterText = cloudLoading
-    ? "Calcul de la moyenne cloud…"
+    ? en ? "Computing cloud average…" : "Calcul de la moyenne cloud…"
     : cloudSampleCount === 0
       ? ""
       : cloudSampleCount === 1
-        ? "> 1 piano de modèle identique enregistré par les utilisateurs"
-        : `Moyennes sur ${cloudSampleCount} pianos de modèle identique enregistrés par les utilisateurs`;
+        ? en ? "> 1 identical model piano shared by users" : "> 1 piano de modèle identique partagé par les utilisateurs"
+        : en
+          ? `> ${cloudSampleCount} identical model pianos shared by users`
+          : `> ${cloudSampleCount} pianos de modèle identique partagés par les utilisateurs`;
+
 
   // Pages 1 à 3 du rapport : profil du piano actuel seul, courbes séparées.
   const mirrorChartData = useMemo(() => buildChartData(mine, null, null), [mine]);
