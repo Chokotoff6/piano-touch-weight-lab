@@ -2451,7 +2451,7 @@ function Index() {
                 data-pdf-hide
                 onClick={() => {
                   const current = MAINTENANCE_OPTIONS.indexOf(
-                    info["entretien"] ?? MAINTENANCE_OPTIONS[0],
+                    (info["entretien"] ?? MAINTENANCE_OPTIONS[0]) as (typeof MAINTENANCE_OPTIONS)[number],
                   );
                   const next =
                     MAINTENANCE_OPTIONS[(current + 1) % MAINTENANCE_OPTIONS.length];
