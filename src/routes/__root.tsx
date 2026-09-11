@@ -499,42 +499,44 @@ function RootComponent() {
                        FR
                      </Button>
                    </div>
+                   {(pathname === "/resultats" || pathname === "/comparer") && (
                    <div
-                     className="relative ml-3 translate-y-[14px]"
-                    onMouseEnter={() => {
-                      if (supportHintTimer.current) clearTimeout(supportHintTimer.current);
-                      setSupportHint(true);
-                      supportHintTimer.current = setTimeout(() => setSupportHint(false), 3000);
-                    }}
-                    onMouseLeave={() => {
-                      if (supportHintTimer.current) clearTimeout(supportHintTimer.current);
-                      setSupportHint(false);
-                    }}
-                  >
-                       {/* Logo LIKED réduit de 20 % (≈40 px). */}
-                       <Button
-                        type="button"
-                         variant="ghost"
-                         size="sm"
-                        onClick={() => setSupportOpen(true)}
-                        aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                         style={{ height: "40px", width: "auto" }}
-                         className="relative z-10 flex shrink-0 items-center justify-center overflow-hidden p-0 transition-transform hover:scale-105 hover:bg-transparent"
-                     >
-                       <img
-                          src={likedLogoAsset.url}
-                         alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
+                      className="relative ml-3 translate-y-[16px]"
+                     onMouseEnter={() => {
+                       if (supportHintTimer.current) clearTimeout(supportHintTimer.current);
+                       setSupportHint(true);
+                       supportHintTimer.current = setTimeout(() => setSupportHint(false), 3000);
+                     }}
+                     onMouseLeave={() => {
+                       if (supportHintTimer.current) clearTimeout(supportHintTimer.current);
+                       setSupportHint(false);
+                     }}
+                   >
+                        {/* Logo LIKED réduit de 20 % (≈40 px). */}
+                        <Button
+                         type="button"
+                          variant="ghost"
+                          size="sm"
+                         onClick={() => setSupportOpen(true)}
+                         aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
                           style={{ height: "40px", width: "auto" }}
-                         className="block max-w-none object-contain"
-                       />
-                     </Button>
+                          className="relative z-10 flex shrink-0 items-center justify-center overflow-hidden p-0 transition-transform hover:scale-105 hover:bg-transparent"
+                      >
+                        <img
+                           src={likedLogoAsset.url}
+                          alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
+                           style={{ height: "40px", width: "auto" }}
+                          className="block max-w-none object-contain"
+                        />
+                      </Button>
 
-                    {supportHint && (
-                      <div className="pointer-events-none absolute left-1/2 top-full z-[9999] mt-[6px] -translate-x-1/2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium !text-gray-900 shadow-md">
-                        {lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                      </div>
-                    )}
-                  </div>
+                     {supportHint && (
+                       <div className="pointer-events-none absolute left-1/2 top-full z-[9999] mt-[6px] -translate-x-1/2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium !text-gray-900 shadow-md">
+                         {lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
+                       </div>
+                     )}
+                   </div>
+                   )}
                 </div>
 
 
