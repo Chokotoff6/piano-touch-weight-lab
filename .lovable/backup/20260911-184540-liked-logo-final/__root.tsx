@@ -36,7 +36,7 @@ import { createPortal } from "react-dom";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
-import likedLogoAsset from "@/assets/image_FRybPM.png.asset.json";
+import supportHandsAsset from "@/assets/support-hands.png.asset.json";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -476,8 +476,29 @@ function RootComponent() {
              )}
 
              <div className="ml-auto flex items-center mr-[-1rem] sm:mr-[-1.5rem]">
-               {/* Bouton de soutien immédiatement à gauche du sélecteur EN / FR. */}
+               {/* Sélecteur EN / FR puis bouton de soutien à sa droite, calé sur
+                   la même hauteur physique et la même ligne de base que le logo. */}
                <div className="flex -translate-x-[60px] items-center">
+                 <div className="flex shrink-0 translate-y-[19px] items-center gap-0 text-[1.14rem] font-semibold">
+                   <Button
+                     variant="ghost"
+                     size="sm"
+                     onClick={() => setLang("en")}
+                     className={`px-1 text-[1.14rem] ${lang === "en" ? "!text-gray-900 underline" : "!text-gray-400"}`}
+                   >
+                     EN
+                   </Button>
+                   <span className="!text-gray-300">|</span>
+                   <Button
+                     type="button"
+                     variant="ghost"
+                     size="sm"
+                     onClick={() => setLang("fr")}
+                     className={`px-1 text-[1.14rem] ${lang === "fr" ? "!text-gray-900 underline" : "!text-gray-400"}`}
+                   >
+                     FR
+                   </Button>
+                 </div>
                  <div
                    className="relative"
                    onMouseEnter={() => {
@@ -490,24 +511,23 @@ function RootComponent() {
                      setSupportHint(false);
                    }}
                  >
-                     {/* Le clavier occupe 37,45 px dans le logo affiché à 85 px :
-                         24,97 px correspond exactement à ses deux tiers. */}
-                     <Button
+                    {/* Carré parfait calé sur le dessin des touches du logo :
+                        hauteur 55px, bord supérieur aligné sur le haut du dessin
+                        (mesuré : dessin à y=34, bouton à y=49 -> translate 15px). */}
+                    <button
                       type="button"
-                       variant="ghost"
-                       size="sm"
                       onClick={() => setSupportOpen(true)}
                       aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                       style={{ height: "24.97px", width: "auto" }}
-                       className="relative z-10 mr-3 flex shrink-0 items-center justify-center overflow-hidden p-0 transition-transform hover:scale-105 hover:bg-transparent"
+                      style={{ height: "55px", width: "55px" }}
+                      className="relative z-10 ml-[30px] flex shrink-0 translate-y-[15px] items-center justify-center overflow-hidden rounded-lg bg-transparent transition-transform hover:scale-105"
                    >
                      <img
-                        src={likedLogoAsset.url}
+                       src={supportHandsAsset.url}
                        alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                        style={{ height: "24.97px", width: "auto" }}
-                        className="block max-w-none object-contain"
+                       style={{ height: "55px", width: "55px" }}
+                       className="rounded-lg object-cover"
                      />
-                    </Button>
+                   </button>
 
                    {supportHint && (
                      <div className="pointer-events-none absolute left-1/2 top-full z-[9999] mt-[6px] -translate-x-1/2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium !text-gray-900 shadow-md">
@@ -515,26 +535,6 @@ function RootComponent() {
                      </div>
                    )}
                  </div>
-                  <div className="flex shrink-0 translate-y-[19px] items-center gap-0 text-[1.14rem] font-semibold">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setLang("en")}
-                      className={`px-1 text-[1.14rem] ${lang === "en" ? "!text-gray-900 underline" : "!text-gray-400"}`}
-                    >
-                      EN
-                    </Button>
-                    <span className="!text-gray-300">|</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setLang("fr")}
-                      className={`px-1 text-[1.14rem] ${lang === "fr" ? "!text-gray-900 underline" : "!text-gray-400"}`}
-                    >
-                      FR
-                    </Button>
-                  </div>
                </div>
 
 
