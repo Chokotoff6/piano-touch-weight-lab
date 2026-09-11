@@ -865,7 +865,6 @@ function Index() {
   const resetInfo = () => {
     try {
       window.localStorage.removeItem(DRAFT_INFO_KEY);
-      window.sessionStorage.setItem("ptw_weighing_mode", "0");
     } catch {
       /* stockage indisponible */
     }
@@ -874,13 +873,8 @@ function Index() {
     setCurrentDbId(null);
     setErrors({});
     fabricationTouched.current = false;
-    // Verrou de sécurité : le bouton « Mesures clavier » redevient neutre et inactif.
-    setWeighingMode(false);
-    setGateReady(false);
-    setTopbarState({ measuresReady: false, exportReady: false });
     markDirty();
   };
-
 
   // --- Messages temporaires ---------------------------------------------------
 
@@ -1163,41 +1157,6 @@ function Index() {
     inputs.current[`${index}-${field}`]?.select();
   };
 
-  /** Une touche est-elle visible avec le filtre courant ? */
-  const isVisibleKey = (index: number) => {
-    if (viewFilter === "white") return !BLACK_KEYS.has(index + 1);
-    if (viewFilter === "black") return BLACK_KEYS.has(index + 1);
-    return true;
-
-  };
-
-  /** Prochaine touche visible dans la direction demandée (ou null). */
-  const nextVisibleKey = (index: number, direction: 1 | -1): number | null => {
-    for (let i = index + direction; i >= 0 && i <= 87; i += direction) {
-      if (isVisibleKey(i)) return i;
-    }
-    return null;
-  };
-
-  /** Déplacement fluide : Wa → Wd → touche visible suivante (et inverse). */
-  const moveFocus = (index: number, field: "wa" | "wd", direction: 1 | -1) => {
-    if (direction === 1) {
-      if (field === "wa") {
-        focusCell(index, "wd");
-        return;
-      }
-      const next = nextVisibleKey(index, 1);
-      if (next !== null) focusCell(next, "wa");
-      return;
-    }
-    if (field === "wd") {
-      focusCell(index, "wa");
-      return;
-    }
-    const prev = nextVisibleKey(index, -1);
-    if (prev !== null) focusCell(prev, "wd");
-  };
-
   const onKeyDown = (e: React.KeyboardEvent, index: number, field: "wa" | "wd") => {
     // Verrou absolu du binôme : erreur mécanique, hors fourchette ou binôme
     // incomplet. Seuls les déplacements INTERNES au binôme restent permis.
@@ -1221,19 +1180,20 @@ function Index() {
     // TAB : avance d'une zone ; Shift + TAB : recule d'une zone.
     if (e.key === "Tab") {
       e.preventDefault();
-      moveFocus(index, field, e.shiftKey ? -1 : 1);
-      return;
-    }
-    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
-      e.preventDefault();
-      moveFocus(index, field, e.key === "ArrowRight" ? 1 : -1);
+      if (e.shiftKey) {
+        if (field === "wd") focusCell(index, "wa");
+        else if (index > 0) focusCell(index - 1, "wd");
+      } else {
+        if (field === "wa") focusCell(index, "wd");
+        else if (index < 87) focusCell(index + 1, "wa");
+      }
       return;
     }
     if (e.key !== "Enter") return;
     e.preventDefault();
-    moveFocus(index, field, 1);
+    if (field === "wa") focusCell(index, "wd");
+    else if (index < 87) focusCell(index + 1, "wa");
   };
-
 
 
   /** Met à jour une cellule (Wa/Wd) et renvoie la ligne résultante. */
@@ -1715,7 +1675,7 @@ function Index() {
       fabricationTouched.current = true;
       setCurrentDbId(null);
       markDirty();
-      // Importation silencieuse : aucun message de confirmation à l'écran.
+      showTopbarAlert("import", "Fichier CSV importé.");
     } catch {
       showTopbarAlert("import", INVALID_CSV_MESSAGE);
     }
