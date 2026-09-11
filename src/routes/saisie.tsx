@@ -2207,15 +2207,56 @@ function Index() {
 
   // --- Rendu : une section de 44 touches -----------------------------------------
 
-  const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void, pdfMirror = false) => (
+  const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void, pdfMirror = false) => {
+    const anchorSection = from === 45 && !pdfMirror;
+    return (
     <section
       className="mt-2 flex w-full flex-col items-center"
       aria-label={`Touches ${from} à ${to}`}
     >
-      <div className="technical-sheet">
+      <div
+        className="technical-sheet"
+        style={anchorSection ? { position: "relative" } : undefined}
+        ref={anchorSection ? sheet2Ref : undefined}
+      >
+        {anchorSection && (
+          <div
+            ref={undoGroupRef}
+            data-pdf-hide
+            className="absolute z-20 flex items-center gap-2"
+            style={{
+              left: undoPos ? `${undoPos.left}px` : "0px",
+              top: undoPos ? `${undoPos.top}px` : "0px",
+              visibility: undoPos ? "visible" : "hidden",
+            }}
+          >
+            <button
+              type="button"
+              data-pdf-hide
+              disabled={undoStack.length === 0}
+              onClick={undoRows}
+              aria-label="Annuler"
+              title={en ? "Undo the last entry (20 max)" : "Annuler la dernière saisie (20 maximum)"}
+              className={`flex h-[34px] w-9 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${undoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "text-muted-foreground"}`}
+            >
+              <Undo2 className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              data-pdf-hide
+              disabled={redoStack.length === 0}
+              onClick={redoRows}
+              aria-label="Rétablir"
+              title={en ? "Redo the cancelled entry (20 max)" : "Rétablir la saisie annulée (20 maximum)"}
+              className={`flex h-[34px] w-9 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${redoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "text-muted-foreground"}`}
+            >
+              <Redo2 className="h-4 w-4" />
+            </button>
+          </div>
+        )}
         <div className={`technical-labels ${SIDE_LABEL_CLASS}`} aria-hidden="true">
           <div className="label-key" />
-          <div className="label-wa">{en ? "Downweight" : "Poids descendant"}</div>
+          <div className="label-wa" ref={anchorSection ? waLabel2Ref : undefined}>{en ? "Downweight" : "Poids descendant"}</div>
           <div className="label-wd">{en ? "Upweight" : "Poids remontant"}</div>
           <div className="label-wa-white">{en ? "Downweight" : "Poids descendant"}</div>
           <div className="label-wd-white">{en ? "Upweight" : "Poids remontant"}</div>
@@ -2235,7 +2276,10 @@ function Index() {
                 key={index}
                 className={`piano-measure-column ${black ? "is-black" : "is-white"} ${shift} ${NATURAL_KEY_BREAKS.has(index + 1) ? "natural-key-break" : ""} ${index + 1 === to ? "is-last-key" : ""}`}
               >
-                <div className={`key-number ${C_KEYS.has(index + 1) ? "is-c-key" : ""}`}>
+                <div
+                  className={`key-number ${C_KEYS.has(index + 1) ? "is-c-key" : ""}`}
+                  ref={anchorSection && index + 1 === 45 ? key45Ref : undefined}
+                >
                   {index + 1}
                 </div>
                 {/* Le dessin de la touche reste toujours intact : seules les
@@ -2250,6 +2294,7 @@ function Index() {
 
         </div>
       </div>
+
       <div data-pdf-result-frame className={pdfMirror ? "w-full h-auto max-h-none overflow-visible opacity-100 pointer-events-none" : "w-full h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none"}>
       {(["friction", "balance"] as const).map((kind) => (
         <div className="result-sheet" key={kind}>
