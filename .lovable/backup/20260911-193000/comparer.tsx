@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, type SetStateAction, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, type SetStateAction, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { useLang, getLang } from "@/data/translations";
 import { RefreshCw, Square, SquareX } from "lucide-react";
@@ -685,8 +685,6 @@ type SubChartCtx = {
   lastMouseY: RefObject<number | null>;
   keyboardModeRef: RefObject<boolean>;
   lastMouseNote: RefObject<number | null>;
-  // Reprise de main par la souris : écrit la note active partagée et efface l'état clavier.
-  onMouseTakeover: (note: number | null) => void;
 };
 
 // SubChart est déclaré au niveau module (et non imbriqué dans ComparisonChart) pour
@@ -694,7 +692,7 @@ type SubChartCtx = {
 // remontage détruit le SVG Recharts au moment exact du dispatch synthétique, ce qui
 // empêchait les flèches ◄ ► d'allumer la pastille.
 function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[number]; zoomed?: boolean; ctx: SubChartCtx }) {
-  const { chartData, keyFilter: baseKeyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, filters, cycleFor, lang, zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode, plotRef, lastMouseY, keyboardModeRef, lastMouseNote, onMouseTakeover } = ctx;
+  const { chartData, keyFilter: baseKeyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, filters, cycleFor, lang, zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode, plotRef, lastMouseY, keyboardModeRef, lastMouseNote } = ctx;
   // Réglage N/B strictement indépendant pour chaque cadre graphique.
   const keyFilter = filters[family.id] ?? baseKeyFilter;
   const bwLabel = bwLabelFor(keyFilter, lang);
@@ -844,19 +842,15 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           if (keyboardModeRef.current) return;
           const rect = event.currentTarget.getBoundingClientRect();
           lastMouseY.current = Math.round(event.clientY - rect.top);
-          // La souris reprend la main : l'état clavier est effacé pour que la
-          // prochaine flèche reparte de la note réellement survolée.
-          onMouseTakeover(null);
         }}
       >
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
             onMouseMove={(state: { activeLabel?: string | number }) => {
-              // Verrou lu sur le ref (synchrone) et non sur l'état React.
-              if (keyboardModeRef.current) return;
+              if (keyboardMode) return;
               const note = Number(state?.activeLabel);
-              if (Number.isFinite(note)) onMouseTakeover(note);
+              if (Number.isFinite(note)) lastMouseNote.current = note;
             }}
             onMouseLeave={() => { setHoveredFamily(null); }}
             // Anti-chevauchement : la marge droite garantit toujours la place
@@ -970,26 +964,15 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const keyboardModeRef = useRef(false);
   const kbNoteRef = useRef<number | null>(null);
   const zoomStartRef = useRef(1);
-  // Le verrou clavier et la note clavier vivent EXCLUSIVEMENT dans les refs :
-  // les réécrire pendant le rendu relâchait le verrou lors d'un rendu externe
-  // (molette, changement de filtre) et désynchronisait les deux entrées.
+  keyboardModeRef.current = keyboardMode;
+  kbNoteRef.current = kbNote;
   zoomStartRef.current = zoomStart;
   
 
   // Dernière hauteur (Y) décidée par la souris : la FF pilotée au clavier y reste figée.
   const lastMouseY = useRef<number | null>(null);
-  // Note active PARTAGÉE (source unique) : écrite par la souris comme par le clavier.
+  // Dernière note (index X) survolée par la souris : point de départ du pilotage clavier.
   const lastMouseNote = useRef<number | null>(null);
-
-  // Reprise de main par la souris : met à jour la note active partagée et efface
-  // l'état clavier, pour que la prochaine flèche reparte de la note survolée.
-  const onMouseTakeover = useCallback((note: number | null) => {
-    if (note !== null) lastMouseNote.current = note;
-    if (kbNoteRef.current !== null) {
-      kbNoteRef.current = null;
-      setKbNote(null);
-    }
-  }, []);
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<HTMLDivElement>(null);
   // Zone de tracé du cadre zoomé : sert à rejouer un survol réel à la note pilotée au clavier.
@@ -1000,7 +983,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const subCtx: SubChartCtx = {
     chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, filters, cycleFor, lang,
     zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode,
-    plotRef, lastMouseY, keyboardModeRef, lastMouseNote, onMouseTakeover,
+    plotRef, lastMouseY, keyboardModeRef, lastMouseNote,
   };
 
   // Capture de la molette en mode zoom : glissement continu de la fenêtre de 44 touches.
@@ -1052,9 +1035,6 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       // Le clavier prend la main : verrou immédiat.
       keyboardModeRef.current = true;
       setKeyboardMode(true);
-      // Source unique : la note active partagée (écrite par la souris ET par le
-      // clavier). La souris ayant effacé kbNoteRef en reprenant la main, la
-      // flèche repart toujours de la dernière position réellement pointée.
       const base = kbNoteRef.current ?? lastMouseNote.current ?? Math.round(zoomStartRef.current + ZOOM_WINDOW / 2);
       const next = Math.min(Math.max(base + step, 1), 88);
       kbNoteRef.current = next;
