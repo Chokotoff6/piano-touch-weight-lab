@@ -709,9 +709,9 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   // Chaque courbe est ancrée sur SON propre premier / dernier point défini
   // (indispensable en vue éclatée où blanches et noires ne partagent pas les mêmes index).
   const start = zoomed ? zoomStart : 1;
-  // Même géométrie sur Résultats et Comparer : hors zoom, le domaine démarre
-  // avant la touche 1 afin de préserver l'espace entre l'axe et les courbes.
-  const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [-3, 88];
+  // Axe vertical isolé : sur les cadres gradués, le domaine horizontal démarre
+  // avant la touche 1 pour que l'axe ne touche jamais le départ des courbes.
+  const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [autoDomain ? -3 : 1, 88];
   const firstIn = (key: SeriesKey) => firstDefinedIndexIn(chartData, key, domainX[0], domainX[1]);
   const lastIn = (key: SeriesKey) => lastDefinedIndexIn(chartData, key, domainX[0], domainX[1]);
   const endpointOffsets = (side: "left" | "right") => new Map(
@@ -732,28 +732,15 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
     ...comparisonLinesFor(family.id, "all", comparisonLabel, comparisonShort, csvActive),
     ...otherLines,
   ];
-  const measuredDomain = paddedDomain(
-    chartData.flatMap((point) =>
-      groupedLines.filter((line) => !line.hidden).map((line) => point[line.dataKey] as number | null),
-    ),
-  );
-  // Cinq graduations entières équidistantes définissent quatre intervalles
-  // rigoureusement égaux. Les trois valeurs intérieures servent aussi de repères.
-  const regularScale = (() => {
-    const lo = Math.floor(measuredDomain[0]);
-    const hi = Math.ceil(measuredDomain[1]);
-    let step = Math.max(1, Math.ceil((hi - lo) / 4));
-    let lower = Math.floor(lo / step) * step;
-    while (lower + 4 * step < hi) {
-      step += 1;
-      lower = Math.floor(lo / step) * step;
-    }
-    const ticks = Array.from({ length: 5 }, (_, index) => lower + index * step);
-    return { domain: [ticks[0], ticks[4]] as [number, number], ticks };
-  })();
-  const yDomain = regularScale.domain;
-  const yTicks = regularScale.ticks;
-  const guideTicks = yTicks.slice(1, -1);
+  const yDomain = autoDomain
+    ? paddedDomain(
+        chartData.flatMap((point) =>
+          groupedLines.filter((line) => !line.hidden).map((line) => point[line.dataKey] as number | null),
+        ),
+      )
+    : undefined;
+  // Graduations entières calculées à la main : elles servent à la fois à l'axe
+  // et aux lignes de repère horizontales (jamais la première ni la dernière).
   // px : l'axe vertical est placé exactement à mi-chemin entre le bord gauche du
   // cadre et le début du tracé (marge gauche = sideMargin + 46, axe = 44 px).
   // Recalage final : l'axe est décalé de 10 px supplémentaires vers la droite.
@@ -763,10 +750,46 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   // recale de +30 px, et le tracé est élargi de 30 px de chaque côté.
   const groupedShift = !zoomed && keyFilter === "all" ? 30 : 0;
   const axisShift = Y_AXIS_SHIFT - groupedShift;
+  // Graduations entières réutilisables : même règle sur Résultats (domaine
+  // auto) et sur Comparer (domaine figé par famille).
+  const integerTicks = (domain: [number, number] | undefined) => {
+    if (!domain) return undefined;
+    const [lo, hi] = domain;
+    const min = Math.ceil(lo);
+    const max = Math.floor(hi);
+    if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) return undefined;
+    const step = Math.max(1, Math.ceil((max - min) / 5));
+    const ticks: number[] = [];
+    for (let v = min; v <= max; v += step) ticks.push(v);
+    return ticks;
+  };
+  const yTicks = integerTicks(yDomain as [number, number] | undefined);
+  // Page Comparer : axe gradué bâti sur le domaine de la famille.
+  const familyTicks = autoDomain
+    ? undefined
+    : integerTicks(family.domain as [number, number] | undefined);
+  // Cadres condensés : au plus 3 lignes de repère, hors première et dernière
+  // graduation (déjà portées par le cadre).
+  const guideTicks = (() => {
+    const source = autoDomain ? yTicks : familyTicks;
+    if (!source || source.length <= 2) return undefined;
+    const inner = source.slice(1, -1);
+    if (autoDomain || inner.length <= 3) return inner;
+    const picked: number[] = [];
+    for (let i = 1; i <= 3; i += 1) {
+      const value = inner[Math.round((i * (inner.length + 1)) / 4) - 1];
+      if (value !== undefined && !picked.includes(value)) picked.push(value);
+    }
+    return picked;
+  })();
+
   // Anti-chevauchement réel des libellés de droite : on convertit les valeurs en
   // pixels puis on écarte verticalement toute paire trop proche (14 px minimum).
   const spacedDyRight = (() => {
-    const domain = yDomain;
+    // Page Comparer : le domaine vertical est figé par la famille (pas d'autoDomain).
+    // On retombe donc sur `family.domain` pour appliquer la MÊME règle d'écartement
+    // que sur la page Résultats.
+    const domain = ((yDomain as [number, number] | undefined) ?? (family.domain as [number, number] | undefined)) ?? undefined;
     if (!domain || domain[1] <= domain[0]) return dyRight;
     const plotH = (zoomed ? 560 : 250) - 37;
     const scale = plotH / (domain[1] - domain[0]);
@@ -860,34 +883,50 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             onMouseLeave={() => { setHoveredFamily(null); }}
             // Anti-chevauchement : la marge droite garantit toujours la place
             // du libellé « Moy: xx.xg », la marge gauche celle des noms courts.
-            margin={{ top: 22, right: Math.max(sideMargin, 80) + groupedShift, bottom: 15, left: Math.max(sideMargin + 46, 70) - groupedShift }}
+            margin={{ top: 22, right: Math.max(sideMargin, 80) + groupedShift, bottom: 15, left: Math.max(autoDomain ? sideMargin + 46 : sideMargin, 70) - groupedShift }}
           >
             <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
             <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
-            {/* Axe commun aux deux pages : même domaine, mêmes graduations et
-                même translation que les lignes horizontales. */}
-            <YAxis
-              width={44}
-              tickMargin={8}
-              domain={yDomain}
-              ticks={yTicks}
-              allowDecimals={false}
-              tick={{ fontSize: 10, fill: "#111827", dx: -axisShift }}
-              axisLine={{ stroke: "#111827", transform: `translate(${-axisShift},0)` }}
-              tickLine={{ stroke: "#111827", transform: `translate(${-axisShift},0)` }}
-            />
+            {autoDomain ? (
+              // Axe vertical gradué : STRICTEMENT immobile, y compris quand le
+              // bloc est translaté de 30 px vers la gauche en « N/B groupées ».
+              <YAxis
+                width={44}
+                tickMargin={8}
+                domain={yDomain ?? ["auto", "auto"]}
+                {...(yTicks ? { ticks: yTicks } : {})}
+                allowDecimals={false}
+                tick={{ fontSize: 10, fill: "#111827", dx: -axisShift }}
+                axisLine={{ stroke: "#111827", transform: `translate(${-axisShift},0)` }}
+                tickLine={{ stroke: "#111827", transform: `translate(${-axisShift},0)` }}
+              />
+
+            ) : (
+              // Page Comparer : axe vertical gradué en grammes, logé dans la
+              // marge gauche existante (aucun décalage du tracé).
+              <YAxis
+                width={44}
+                tickMargin={8}
+                domain={family.domain}
+                {...(familyTicks ? { ticks: familyTicks } : {})}
+                allowDecimals={false}
+                tick={{ fontSize: 10, fill: "#111827" }}
+                axisLine={{ stroke: "#111827" }}
+                tickLine={{ stroke: "#111827" }}
+              />
+            )}
 
             {/* Lignes de repère horizontales : géométrie brute imposée —
                 début à 5 px à droite de l'axe vertical, fin à 5 px à gauche du
                 repère vertical de la touche 88. Hors première et dernière
                 graduation. */}
-            {guideTicks.length > 0 && (
+            {guideTicks && guideTicks.length > 0 && (
               <Customized
                 component={(props: unknown) => (
                   <HorizontalGuides
                     {...(props as GuideChartProps)}
                     ticks={guideTicks}
-                    axisShift={axisShift}
+                    axisShift={autoDomain ? Y_AXIS_SHIFT : 0}
                   />
                 )}
               />
