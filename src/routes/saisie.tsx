@@ -2457,7 +2457,7 @@ function Index() {
               />
             </label>
 
-            <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 sm:col-span-2 md:col-span-4">
+            <div className="mt-4 flex flex-wrap items-start justify-start gap-6 sm:col-span-2 md:col-span-4">
               <label className={FIELD_LABEL_CLASS}>
                 <span className="block">{en ? "Maintenance type" : "Type d'entretien"}</span>
                 <select
