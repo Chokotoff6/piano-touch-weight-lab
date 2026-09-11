@@ -194,6 +194,13 @@ const MAINTENANCE_OPTIONS = [
 
 const USAGE_OPTIONS = ["Low", "Medium", "Intensive"] as const;
 
+/** Traduction d'affichage des options d'entretien (valeurs stockées en FR). */
+const MAINTENANCE_LABELS_EN: Record<string, string> = {
+  "Entretien usuel uniquement": "Routine maintenance only",
+  "Réglages personnalisés": "Custom regulations",
+  "Modifications importantes": "Major modifications",
+};
+
 const BLACK_RATIO = 0.605;
 
 // décalages réels des touches noires (en largeur de touche blanche),
@@ -2396,7 +2403,7 @@ function Index() {
                       }
                     }}
                   />
-                  {t}
+                  {en ? MAINTENANCE_LABELS_EN[t] : t}
                 </label>
               ))}
             </div>
