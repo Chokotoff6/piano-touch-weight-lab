@@ -694,7 +694,7 @@ type SubChartCtx = {
 // remontage détruit le SVG Recharts au moment exact du dispatch synthétique, ce qui
 // empêchait les flèches ◄ ► d'allumer la pastille.
 function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[number]; zoomed?: boolean; ctx: SubChartCtx }) {
-  const { chartData, keyFilter: baseKeyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, filters, cycleFor, lang, zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode, plotRef, lastMouseY, keyboardModeRef, lastMouseNote } = ctx;
+  const { chartData, keyFilter: baseKeyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, filters, cycleFor, lang, zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode, plotRef, lastMouseY, keyboardModeRef, lastMouseNote, onMouseTakeover } = ctx;
   // Réglage N/B strictement indépendant pour chaque cadre graphique.
   const keyFilter = filters[family.id] ?? baseKeyFilter;
   const bwLabel = bwLabelFor(keyFilter, lang);
