@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Redo2, RefreshCw, Undo2 } from "lucide-react";
 import {
   hasAnyMeasurement,
@@ -509,13 +509,6 @@ function Index() {
   const [pedalAlert, setPedalAlert] = useState(false);
   const [undoStack, setUndoStack] = useState<Row[][]>([]);
   const [redoStack, setRedoStack] = useState<Row[][]>([]);
-  /** Ancrages de calage des boutons Undo/Redo dans le bloc de touches 45-88. */
-  const sheet2Ref = useRef<HTMLDivElement | null>(null);
-  const key45Ref = useRef<HTMLDivElement | null>(null);
-  const waLabel2Ref = useRef<HTMLDivElement | null>(null);
-  const undoGroupRef = useRef<HTMLDivElement | null>(null);
-  const [undoPos, setUndoPos] = useState<{ left: number; top: number } | null>(null);
-
   const pedalCount = useRef(0);
   const pedalOrigin = useRef<{ index: number; field: "wa" | "wd" } | null>(null);
 
@@ -624,7 +617,6 @@ function Index() {
           info["modele"]?.trim() &&
           info["sn_num"]?.trim() &&
           info["type_piano"] &&
-          info["fabrication"]?.trim() &&
           info["pays"]?.trim() &&
           info["ville"]?.trim() &&
           info["entretien"] &&
@@ -640,7 +632,6 @@ function Index() {
           info["modele"]?.trim() &&
           info["sn_num"]?.trim() &&
           info["type_piano"] &&
-          info["fabrication"]?.trim() &&
           info["pays"]?.trim() &&
           info["ville"]?.trim() &&
           info["entretien"] &&
@@ -656,7 +647,6 @@ function Index() {
       ["modele", en ? "Model" : "Modèle"],
       ["sn_num", en ? "Serial number" : "N° de série"],
       ["type_piano", en ? "Type" : "Type"],
-      ["fabrication", en ? "Manufacturing date" : "Date fabrication"],
       ["pays", en ? "Country" : "Pays"],
       ["ville", en ? "City" : "Ville"],
       ["entretien", en ? "Maintenance" : "Entretien"],
@@ -667,10 +657,9 @@ function Index() {
 
 
   const exportReady = useMemo(
-    () => Boolean(info["marque"]?.trim() && info["sn_num"]?.trim() && requiredSheetFieldsComplete),
-    [info, requiredSheetFieldsComplete],
+    () => Boolean(info["marque"]?.trim() && info["sn_num"]?.trim()),
+    [info],
   );
-
 
   const serialFormatValid = useMemo(
     () =>
@@ -1966,7 +1955,7 @@ function Index() {
       historyRows: info["sn_num"]?.trim() ? getTopbarState().historyRows : [],
     });
     // Jalon persistant : le seuil minimal de pesée débloque le bouton "Résultats".
-    setGateReady(badgeVisible && requiredSheetFieldsComplete);
+    setGateReady(badgeVisible);
     return () => {
       setTopbarState({
         exportReady: false,
@@ -2211,56 +2200,15 @@ function Index() {
 
   // --- Rendu : une section de 44 touches -----------------------------------------
 
-  const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void, pdfMirror = false) => {
-    const anchorSection = from === 45 && !pdfMirror;
-    return (
+  const renderSection = (from: number, to: number, gridRef: (n: HTMLDivElement | null) => void, pdfMirror = false) => (
     <section
       className="mt-2 flex w-full flex-col items-center"
       aria-label={`Touches ${from} à ${to}`}
     >
-      <div
-        className="technical-sheet"
-        style={anchorSection ? { position: "relative" } : undefined}
-        ref={anchorSection ? sheet2Ref : undefined}
-      >
-        {anchorSection && (
-          <div
-            ref={undoGroupRef}
-            data-pdf-hide
-            className="absolute z-20 flex items-center gap-2"
-            style={{
-              left: undoPos ? `${undoPos.left}px` : "0px",
-              top: undoPos ? `${undoPos.top}px` : "0px",
-              visibility: undoPos ? "visible" : "hidden",
-            }}
-          >
-            <button
-              type="button"
-              data-pdf-hide
-              disabled={undoStack.length === 0}
-              onClick={undoRows}
-              aria-label="Annuler"
-              title={en ? "Undo the last entry (20 max)" : "Annuler la dernière saisie (20 maximum)"}
-              className={`flex h-[34px] w-9 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${undoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "text-muted-foreground"}`}
-            >
-              <Undo2 className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              data-pdf-hide
-              disabled={redoStack.length === 0}
-              onClick={redoRows}
-              aria-label="Rétablir"
-              title={en ? "Redo the cancelled entry (20 max)" : "Rétablir la saisie annulée (20 maximum)"}
-              className={`flex h-[34px] w-9 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${redoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "text-muted-foreground"}`}
-            >
-              <Redo2 className="h-4 w-4" />
-            </button>
-          </div>
-        )}
+      <div className="technical-sheet">
         <div className={`technical-labels ${SIDE_LABEL_CLASS}`} aria-hidden="true">
           <div className="label-key" />
-          <div className="label-wa" ref={anchorSection ? waLabel2Ref : undefined}>{en ? "Downweight" : "Poids descendant"}</div>
+          <div className="label-wa">{en ? "Downweight" : "Poids descendant"}</div>
           <div className="label-wd">{en ? "Upweight" : "Poids remontant"}</div>
           <div className="label-wa-white">{en ? "Downweight" : "Poids descendant"}</div>
           <div className="label-wd-white">{en ? "Upweight" : "Poids remontant"}</div>
@@ -2280,10 +2228,7 @@ function Index() {
                 key={index}
                 className={`piano-measure-column ${black ? "is-black" : "is-white"} ${shift} ${NATURAL_KEY_BREAKS.has(index + 1) ? "natural-key-break" : ""} ${index + 1 === to ? "is-last-key" : ""}`}
               >
-                <div
-                  className={`key-number ${C_KEYS.has(index + 1) ? "is-c-key" : ""}`}
-                  ref={anchorSection && index + 1 === 45 ? key45Ref : undefined}
-                >
+                <div className={`key-number ${C_KEYS.has(index + 1) ? "is-c-key" : ""}`}>
                   {index + 1}
                 </div>
                 {/* Le dessin de la touche reste toujours intact : seules les
@@ -2298,7 +2243,6 @@ function Index() {
 
         </div>
       </div>
-
       <div data-pdf-result-frame className={pdfMirror ? "w-full h-auto max-h-none overflow-visible opacity-100 pointer-events-none" : "w-full h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none"}>
       {(["friction", "balance"] as const).map((kind) => (
         <div className="result-sheet" key={kind}>
@@ -2326,31 +2270,7 @@ function Index() {
       ))}
       </div>
     </section>
-    );
-  };
-
-  /** Calage au pixel près des boutons Undo/Redo dans le bloc de touches 45-88. */
-  useLayoutEffect(() => {
-    const place = () => {
-      const sheet = sheet2Ref.current;
-      const key45 = key45Ref.current;
-      const label = waLabel2Ref.current;
-      const group = undoGroupRef.current;
-      if (!sheet || !key45 || !label || !group) return;
-      const s = sheet.getBoundingClientRect();
-      const k = key45.getBoundingClientRect();
-      const l = label.getBoundingClientRect();
-      const g = group.getBoundingClientRect();
-      setUndoPos({
-        left: k.left - s.left - 35 - g.width,
-        top: l.top - s.top - 35 - g.height,
-      });
-    };
-    place();
-    window.addEventListener("resize", place);
-    return () => window.removeEventListener("resize", place);
-  }, [weighingMode, viewFilter, en]);
-
+  );
 
   // --- Rendu : page ----------------------------------------------------------------
 
@@ -2803,10 +2723,30 @@ function Index() {
             {en ? "< Edit piano information" : "< Modifier informations piano"}
           </button>
 
-          {/* Barre d'outils d'atelier centrée : touches, reset.
-              Undo / Redo sont désormais calés dans le cadre des mesures. */}
+          {/* Barre d'outils d'atelier centrée : undo, redo, touches, reset. */}
           <div className="flex items-center gap-2">
-
+            <button
+              type="button"
+              data-pdf-hide
+              disabled={undoStack.length === 0}
+              onClick={undoRows}
+              aria-label="Annuler"
+              title={en ? "Undo the last entry (20 max)" : "Annuler la dernière saisie (20 maximum)"}
+              className={`flex h-[34px] w-9 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${undoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "text-muted-foreground"}`}
+            >
+              <Undo2 className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              data-pdf-hide
+              disabled={redoStack.length === 0}
+              onClick={redoRows}
+              aria-label="Rétablir"
+              title={en ? "Redo the cancelled entry (20 max)" : "Rétablir la saisie annulée (20 maximum)"}
+              className={`flex h-[34px] w-9 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${redoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "text-muted-foreground"}`}
+            >
+              <Redo2 className="h-4 w-4" />
+            </button>
 
             <button
               type="button"
