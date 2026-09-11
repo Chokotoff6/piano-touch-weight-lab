@@ -475,80 +475,80 @@ function RootComponent() {
              </div>
              )}
 
-              <div className="ml-auto flex items-center mr-[-1rem] sm:mr-[-1.5rem]">
-                {/* Bouton de soutien à droite du sélecteur EN / FR,
-                    taille 2× (~50 px) et descendu de 10 px. */}
-                <div className="flex -translate-x-[60px] items-center">
-                   <div className="flex shrink-0 translate-y-[19px] items-center gap-0 text-[1.14rem] font-semibold">
+             <div className="ml-auto flex items-center mr-[-1rem] sm:mr-[-1.5rem]">
+               {/* Bouton de soutien immédiatement à gauche du sélecteur EN / FR. */}
+               <div className="flex -translate-x-[60px] items-center">
+                 <div
+                   className="relative"
+                   onMouseEnter={() => {
+                     if (supportHintTimer.current) clearTimeout(supportHintTimer.current);
+                     setSupportHint(true);
+                     supportHintTimer.current = setTimeout(() => setSupportHint(false), 3000);
+                   }}
+                   onMouseLeave={() => {
+                     if (supportHintTimer.current) clearTimeout(supportHintTimer.current);
+                     setSupportHint(false);
+                   }}
+                 >
+                     {/* Le clavier occupe 37,45 px dans le logo affiché à 85 px :
+                         24,97 px correspond exactement à ses deux tiers. */}
                      <Button
+                      type="button"
                        variant="ghost"
                        size="sm"
-                       onClick={() => setLang("en")}
-                       className={`px-1 text-[1.14rem] ${lang === "en" ? "!text-gray-900 underline" : "!text-gray-400"}`}
-                     >
-                       EN
-                     </Button>
-                     <span className="!text-gray-300">|</span>
-                     <Button
-                       type="button"
-                       variant="ghost"
-                       size="sm"
-                       onClick={() => setLang("fr")}
-                       className={`px-1 text-[1.14rem] ${lang === "fr" ? "!text-gray-900 underline" : "!text-gray-400"}`}
-                     >
-                       FR
-                     </Button>
-                   </div>
-                  <div
-                    className="relative ml-3 translate-y-[29px]"
-                    onMouseEnter={() => {
-                      if (supportHintTimer.current) clearTimeout(supportHintTimer.current);
-                      setSupportHint(true);
-                      supportHintTimer.current = setTimeout(() => setSupportHint(false), 3000);
-                    }}
-                    onMouseLeave={() => {
-                      if (supportHintTimer.current) clearTimeout(supportHintTimer.current);
-                      setSupportHint(false);
-                    }}
-                  >
-                      {/* Logo LIKED agrandi 2× (≈50 px) et descendu de 10 px. */}
-                      <Button
-                       type="button"
-                        variant="ghost"
-                        size="sm"
-                       onClick={() => setSupportOpen(true)}
-                       aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                        style={{ height: "50px", width: "auto" }}
-                        className="relative z-10 flex shrink-0 items-center justify-center overflow-hidden p-0 transition-transform hover:scale-105 hover:bg-transparent"
-                    >
-                      <img
-                         src={likedLogoAsset.url}
-                        alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                         style={{ height: "50px", width: "auto" }}
+                      onClick={() => setSupportOpen(true)}
+                      aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
+                       style={{ height: "24.97px", width: "auto" }}
+                       className="relative z-10 mr-3 flex shrink-0 items-center justify-center overflow-hidden p-0 transition-transform hover:scale-105 hover:bg-transparent"
+                   >
+                     <img
+                        src={likedLogoAsset.url}
+                       alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
+                        style={{ height: "24.97px", width: "auto" }}
                         className="block max-w-none object-contain"
-                      />
-                     </Button>
+                     />
+                    </Button>
 
-                    {supportHint && (
-                      <div className="pointer-events-none absolute left-1/2 top-full z-[9999] mt-[6px] -translate-x-1/2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium !text-gray-900 shadow-md">
-                        {lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                      </div>
-                    )}
+                   {supportHint && (
+                     <div className="pointer-events-none absolute left-1/2 top-full z-[9999] mt-[6px] -translate-x-1/2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium !text-gray-900 shadow-md">
+                       {lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
+                     </div>
+                   )}
+                 </div>
+                  <div className="flex shrink-0 translate-y-[19px] items-center gap-0 text-[1.14rem] font-semibold">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setLang("en")}
+                      className={`px-1 text-[1.14rem] ${lang === "en" ? "!text-gray-900 underline" : "!text-gray-400"}`}
+                    >
+                      EN
+                    </Button>
+                    <span className="!text-gray-300">|</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setLang("fr")}
+                      className={`px-1 text-[1.14rem] ${lang === "fr" ? "!text-gray-900 underline" : "!text-gray-400"}`}
+                    >
+                      FR
+                    </Button>
                   </div>
-                </div>
+               </div>
 
 
-                {/* Logo officiel KeyWeight : 30 px à gauche du bord droit,
-                    assis sur sa ligne de base, agrandi de 15 %. */}
-                <img
-                  src={keyweightLogo.url}
-                  alt="KeyWeight"
-                  style={{ height: "85px", width: "auto" }}
-                  className="relative z-10 shrink-0 -translate-x-[30px] translate-y-[26px] object-contain"
-                />
+               {/* Logo officiel KeyWeight : 30 px à gauche du bord droit,
+                   assis sur sa ligne de base, agrandi de 15 %. */}
+               <img
+                 src={keyweightLogo.url}
+                 alt="KeyWeight"
+                 style={{ height: "85px", width: "auto" }}
+                 className="relative z-10 shrink-0 -translate-x-[30px] translate-y-[26px] object-contain"
+               />
 
 
-              </div>
+             </div>
 
 
 
