@@ -2554,6 +2554,12 @@ function Index() {
                 style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
               >
                 <span className="block whitespace-nowrap">
+                  {en
+                    ? "Enter at least the values for every C and C# to access the results."
+                    : "Saisir au minimum les valeurs pour tous les Do et Do# pour accéder aux résultats."}
+                </span>
+                <span className="block whitespace-nowrap">
+
                   {en ? "• TAB: move forward one input field" : "• TAB : avance d'une zone de saisie"}
                 </span>
                 <span className="block whitespace-nowrap">
@@ -2583,35 +2589,8 @@ function Index() {
           mesuresRef.current = node;
         }}
       >
-        <div className="absolute left-[calc(1rem+4rem)] top-12 z-10 -translate-x-1/2 -translate-y-1/2">
-          <div className="flex flex-col items-stretch gap-1">
+        {/* Undo / Redo déplacés dans la barre d'outils centrale du bas. */}
 
-            <div className="flex flex-row items-center justify-center gap-1">
-              <button
-                type="button"
-                data-pdf-hide
-                disabled={undoStack.length === 0}
-                onClick={undoRows}
-                aria-label="Annuler"
-                title="Annuler la dernière saisie (20 maximum)"
-                className={`flex h-6 w-7 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${undoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "!text-black"}`}
-              >
-                <Undo2 className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                data-pdf-hide
-                disabled={redoStack.length === 0}
-                onClick={redoRows}
-                aria-label="Rétablir"
-                title="Rétablir la saisie annulée (20 maximum)"
-                className={`flex h-6 w-7 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${redoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "!text-black"}`}
-              >
-                <Redo2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-        </div>
         {badgeVisible && (
           <div
             data-pdf-hide
