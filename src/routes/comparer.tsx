@@ -762,7 +762,10 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   // Anti-chevauchement réel des libellés de droite : on convertit les valeurs en
   // pixels puis on écarte verticalement toute paire trop proche (14 px minimum).
   const spacedDyRight = (() => {
-    const domain = (yDomain as [number, number] | undefined) ?? undefined;
+    // Page Comparer : le domaine vertical est figé par la famille (pas d'autoDomain).
+    // On retombe donc sur `family.domain` pour appliquer la MÊME règle d'écartement
+    // que sur la page Résultats.
+    const domain = ((yDomain as [number, number] | undefined) ?? (family.domain as [number, number] | undefined)) ?? undefined;
     if (!domain || domain[1] <= domain[0]) return dyRight;
     const plotH = (zoomed ? 560 : 250) - 37;
     const scale = plotH / (domain[1] - domain[0]);
