@@ -98,7 +98,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Touchweight statique piano" },
+      { title: "KeyWeight" },
       { name: "description", content: "Outil technique de mesure du touchweight statique d’un piano." },
       { name: "author", content: "Touchweight piano" },
       { property: "og:type", content: "website" },

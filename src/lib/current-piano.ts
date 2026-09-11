@@ -99,8 +99,10 @@ export function buildCurrentPiano(input: {
     climate_zone: input.climate_zone,
     maintenance_type: input.maintenance_type,
     usage_level: input.usage_level,
-    ville: input.ville,
-    pays: input.pays,
+    // Encodage strict UTF-8 (NFC) et nettoyage : « Bruxelles » / « Belgique »
+    // ne doivent jamais partir vides ou mal encodés vers la base.
+    ville: String(input.ville ?? "").normalize("NFC").trim(),
+    pays: String(input.pays ?? "").normalize("NFC").trim(),
     remarques: input.remarques,
     wa_values: wa,
     wd_values: wd,

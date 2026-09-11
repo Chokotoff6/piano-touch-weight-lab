@@ -15,7 +15,7 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      { title: "Accueil — Touchweight statique piano" },
+      { title: "KeyWeight" },
       {
         name: "description",
         content:

@@ -1209,12 +1209,16 @@ function Index() {
       return;
     }
 
-    // ALT + TAB (Option + TAB sur Mac) : saute directement au DO suivant.
+    // ALT + TAB (Option + TAB sur Mac) : saute directement au DO suivant
+    // (ou au DO# suivant lorsque seules les touches noires sont affichées).
     if (e.altKey && e.key === "Tab") {
-      const nextCKey = Array.from(C_KEYS).find((key) => key > index + 1);
-      if (nextCKey !== undefined) {
+      const octaveKeys = viewFilter === "black" ? C_SHARP_KEYS : C_KEYS;
+      const nextKey = Array.from(octaveKeys)
+        .sort((a, b) => a - b)
+        .find((key) => key > index + 1);
+      if (nextKey !== undefined) {
         e.preventDefault();
-        focusCell(nextCKey - 1, "wa");
+        focusCell(nextKey - 1, "wa");
       }
       return;
     }
