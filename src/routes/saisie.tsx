@@ -2827,7 +2827,7 @@ function Index() {
                       ? "Keys: Whites"
                       : "Keys: Blacks"
                   : viewFilter === "all"
-                    ? "Touches : Toutes"
+                    ? "Touches piano : Toutes"
                     : viewFilter === "white"
                       ? "Touches : Blanches"
                       : "Touches : Noires"}
