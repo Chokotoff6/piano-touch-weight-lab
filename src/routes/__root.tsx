@@ -499,8 +499,8 @@ function RootComponent() {
                        FR
                      </Button>
                    </div>
-                  <div
-                    className="relative ml-3 translate-y-[29px]"
+                   <div
+                     className="relative ml-3 translate-y-[9px]"
                     onMouseEnter={() => {
                       if (supportHintTimer.current) clearTimeout(supportHintTimer.current);
                       setSupportHint(true);
