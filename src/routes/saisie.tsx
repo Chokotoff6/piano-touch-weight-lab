@@ -2322,7 +2322,31 @@ function Index() {
       ))}
       </div>
     </section>
-  );
+    );
+  };
+
+  /** Calage au pixel près des boutons Undo/Redo dans le bloc de touches 45-88. */
+  useLayoutEffect(() => {
+    const place = () => {
+      const sheet = sheet2Ref.current;
+      const key45 = key45Ref.current;
+      const label = waLabel2Ref.current;
+      const group = undoGroupRef.current;
+      if (!sheet || !key45 || !label || !group) return;
+      const s = sheet.getBoundingClientRect();
+      const k = key45.getBoundingClientRect();
+      const l = label.getBoundingClientRect();
+      const g = group.getBoundingClientRect();
+      setUndoPos({
+        left: k.left - s.left - 35 - g.width,
+        top: l.top - s.top - 35 - g.height,
+      });
+    };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [weighingMode, viewFilter, en]);
+
 
   // --- Rendu : page ----------------------------------------------------------------
 
