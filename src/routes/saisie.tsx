@@ -2219,24 +2219,6 @@ function Index() {
         data-climate-zone={climateZone ?? ""}
       >
         <Frame title={en ? "Piano information" : "Informations piano"} className="mt-10 [&_input]:border-foreground/60">
-          <div className="absolute right-10 top-10 z-10">
-            {confirmReset === "info" && (
-              <div className="absolute bottom-full right-0 mb-2 flex min-w-max items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
-                <span>{en ? "Do you want to erase all entered piano information?" : "Voulez-vous effacer toutes les infos piano saisies ?"}</span>
-                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { resetInfo(); setConfirmReset(null); }}>Oui</button>
-                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => setConfirmReset("info")}
-              title={en ? "Reset the information sheet only" : "Réinitialiser uniquement la fiche d'informations"}
-              style={{ transform: "scale(1.15)", transformOrigin: "top right" }}
-              className="rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
-            >
-              Reset
-            </button>
-          </div>
           <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-[1fr_210px_1fr_1fr]">
             <label className={FIELD_LABEL_CLASS}>
               {en ? "Brand" : "Marque"}
