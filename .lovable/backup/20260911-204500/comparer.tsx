@@ -750,11 +750,9 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   // recale de +30 px, et le tracé est élargi de 30 px de chaque côté.
   const groupedShift = !zoomed && keyFilter === "all" ? 30 : 0;
   const axisShift = Y_AXIS_SHIFT - groupedShift;
-  // Graduations entières réutilisables : même règle sur Résultats (domaine
-  // auto) et sur Comparer (domaine figé par famille).
-  const integerTicks = (domain: [number, number] | undefined) => {
-    if (!domain) return undefined;
-    const [lo, hi] = domain;
+  const yTicks = (() => {
+    if (!yDomain) return undefined;
+    const [lo, hi] = yDomain as [number, number];
     const min = Math.ceil(lo);
     const max = Math.floor(hi);
     if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) return undefined;
@@ -762,27 +760,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
     const ticks: number[] = [];
     for (let v = min; v <= max; v += step) ticks.push(v);
     return ticks;
-  };
-  const yTicks = integerTicks(yDomain as [number, number] | undefined);
-  // Page Comparer : axe gradué bâti sur le domaine de la famille.
-  const familyTicks = autoDomain
-    ? undefined
-    : integerTicks(family.domain as [number, number] | undefined);
-  // Cadres condensés : au plus 3 lignes de repère, hors première et dernière
-  // graduation (déjà portées par le cadre).
-  const guideTicks = (() => {
-    const source = autoDomain ? yTicks : familyTicks;
-    if (!source || source.length <= 2) return undefined;
-    const inner = source.slice(1, -1);
-    if (autoDomain || inner.length <= 3) return inner;
-    const picked: number[] = [];
-    for (let i = 1; i <= 3; i += 1) {
-      const value = inner[Math.round((i * (inner.length + 1)) / 4) - 1];
-      if (value !== undefined && !picked.includes(value)) picked.push(value);
-    }
-    return picked;
   })();
-
   // Anti-chevauchement réel des libellés de droite : on convertit les valeurs en
   // pixels puis on écarte verticalement toute paire trop proche (14 px minimum).
   const spacedDyRight = (() => {
@@ -902,36 +880,24 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               />
 
             ) : (
-              // Page Comparer : axe vertical gradué en grammes, logé dans la
-              // marge gauche existante (aucun décalage du tracé).
-              <YAxis
-                width={44}
-                tickMargin={8}
-                domain={family.domain}
-                {...(familyTicks ? { ticks: familyTicks } : {})}
-                allowDecimals={false}
-                tick={{ fontSize: 10, fill: "#111827" }}
-                axisLine={{ stroke: "#111827" }}
-                tickLine={{ stroke: "#111827" }}
-              />
+              <YAxis width={0} tick={false} axisLine={false} tickLine={false} domain={family.domain} />
             )}
 
             {/* Lignes de repère horizontales : géométrie brute imposée —
                 début à 5 px à droite de l'axe vertical, fin à 5 px à gauche du
                 repère vertical de la touche 88. Hors première et dernière
                 graduation. */}
-            {guideTicks && guideTicks.length > 0 && (
+            {autoDomain && yTicks && yTicks.length > 2 && (
               <Customized
                 component={(props: unknown) => (
                   <HorizontalGuides
                     {...(props as GuideChartProps)}
-                    ticks={guideTicks}
-                    axisShift={autoDomain ? Y_AXIS_SHIFT : 0}
+                    ticks={yTicks.slice(1, -1)}
+                    axisShift={Y_AXIS_SHIFT}
                   />
                 )}
               />
             )}
-
 
 
 
