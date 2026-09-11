@@ -1513,7 +1513,8 @@ function Index() {
     if (!passesBotChecks(honeypot)) return false;
     const formIncomplete =
       !canEnterWeights ||
-      (info["entretien"] === "Modifications importantes" && !(info["remarques"] ?? "").trim());
+      (parseMaintenance(info["entretien"]).includes("Modifications importantes") &&
+        !(info["remarques"] ?? "").trim());
     if (formIncomplete) {
       showTopbarAlert(anchor, FORM_INCOMPLETE_MESSAGE);
       return false;
