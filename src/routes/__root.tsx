@@ -466,7 +466,7 @@ function RootComponent() {
 
 
 
-            {!isComparer && (
+            {!isComparer && pathname !== "/resultats" && (
             <div className="relative flex items-center">
               {/* Importer : chargement d'un fichier CSV local uniquement. */}
               <Button
