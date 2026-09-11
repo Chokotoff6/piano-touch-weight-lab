@@ -2465,46 +2465,40 @@ function Index() {
               className="pointer-events-none absolute -z-10 h-0 w-0 opacity-0"
             />
 
-
-            <div className="mt-2 flex items-center justify-end gap-4 sm:col-span-2 md:col-span-4">
-              {/* Message d'alerte contextuel : liste en temps réel ce qui manque. */}
-              {(missingSheetFields.length > 0 ||
-                !rows.some((r) => String(r.wa ?? "").trim() || String(r.wd ?? "").trim())) && (
-                <span className="text-sm font-semibold !text-gray-600">
-                  {en ? "Complete: " : "Complétez : "}
-                  {missingSheetFields.length > 0
-                    ? missingSheetFields.join(", ")
-                    : en
-                      ? "Measurements"
-                      : "Pesées"}
-                </span>
-              )}
-              <button
-                ref={weighingBtnRef}
-                type="button"
-                onClick={onValidateWeighing}
-                className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${requiredSheetFieldsComplete ? "!border-green-600 !bg-green-100 !text-black" : "border-input bg-background !text-gray-400 opacity-60"}`}
-                style={
-                  requiredSheetFieldsComplete
-                    ? {
-                        backgroundColor: "#dcfce7",
-                        borderColor: "#16a34a",
-                        color: "#000000",
-                        fontWeight: "bold",
-                      }
-                    : undefined
-                }
-              >
-                {en ? "Keyboard measurements >" : "Mesures clavier >"}
-              </button>
-            </div>
-
-
           </div>
         </Frame>
-        <p className="mt-1 pl-0 text-left text-sm text-foreground">
-          <span className="not-italic">*</span> <em className="italic">Champs obligatoires</em>
-        </p>
+        {/* Bouton de navigation placé sous le cadre, calé à droite. */}
+        <div className="mt-3 flex w-full items-center justify-end gap-4 pl-2 pr-2">
+          {missingFlash && (
+            <span className="text-sm font-semibold !text-gray-600">
+              {en ? "Complete: " : "Complétez : "}
+              {missingSheetFields.length > 0
+                ? missingSheetFields.join(", ")
+                : en
+                  ? "Measurements"
+                  : "Pesées"}
+            </span>
+          )}
+          <button
+            ref={weighingBtnRef}
+            type="button"
+            onClick={onValidateWeighing}
+            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${requiredSheetFieldsComplete ? "!border-green-600 !bg-green-100 !text-black" : "border-input bg-background !text-gray-400 opacity-60"}`}
+            style={
+              requiredSheetFieldsComplete
+                ? {
+                    backgroundColor: "#dcfce7",
+                    borderColor: "#16a34a",
+                    color: "#000000",
+                    fontWeight: "bold",
+                  }
+                : undefined
+            }
+          >
+            {en ? "Keyboard measurements >" : "Mesures clavier >"}
+          </button>
+        </div>
+
       </div>
 
       )}
