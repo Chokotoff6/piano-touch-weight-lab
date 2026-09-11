@@ -431,13 +431,17 @@ function RootComponent() {
               <Button
                 variant="outline"
                 size="sm"
-                onMouseEnter={showImportHint}
+                onMouseEnter={() => {
+                  closeMenuNow();
+                  showImportHint();
+                }}
                 onMouseLeave={hideImportHint}
                 className="border border-gray-300 bg-white text-lg font-bold !text-black"
                 onClick={() => dispatchAction("piano-import-csv")}
               >
-                Importer
+                {lang === "en" ? "Import" : "Importer"}
               </Button>
+
 
               {(importHint || topbar.alert?.anchor === "import") && (
                 <div
