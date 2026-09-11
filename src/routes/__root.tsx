@@ -385,14 +385,6 @@ function RootComponent() {
                   </DropdownMenuItem>
                 ) : (
                   <>
-                    <DropdownMenuItem
-                      disabled={!filesEnabled}
-                      onClick={() => requireConsent(() => dispatchAction("piano-export-csv"))}
-                    >
-                      {lang === "en"
-                        ? "Save entered data as CSV (re-importable)"
-                        : "Sauver données saisies au format CSV (re-importable)"}
-                    </DropdownMenuItem>
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger>
                         {lang === "en" ? "Export PDF" : "Exporter PDF"}
@@ -422,6 +414,15 @@ function RootComponent() {
 
                       </DropdownMenuSubContent>
                     </DropdownMenuSub>
+                    {/* Sauvegarde CSV : placée sous l'option globale « Exporter PDF ». */}
+                    <DropdownMenuItem
+                      disabled={!filesEnabled}
+                      onClick={() => requireConsent(() => dispatchAction("piano-export-csv"))}
+                    >
+                      {lang === "en"
+                        ? "Save entered data as CSV (re-importable)"
+                        : "Sauver données saisies au format CSV (re-importable)"}
+                    </DropdownMenuItem>
                   </>
                 )}
               </DropdownMenuContent>
