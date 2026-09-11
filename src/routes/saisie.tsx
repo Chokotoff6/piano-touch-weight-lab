@@ -2822,7 +2822,7 @@ function Index() {
               <span>
                 {en
                   ? viewFilter === "all"
-                    ? "Keys: All"
+                    ? "Piano Keys: All"
                     : viewFilter === "white"
                       ? "Keys: Whites"
                       : "Keys: Blacks"
