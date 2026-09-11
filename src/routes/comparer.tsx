@@ -1398,6 +1398,8 @@ function countKeys(values: number[] | undefined) {
 function Comparer() {
   // Arrivée sur la page : aucune source de comparaison active, seule la courbe
   // noire du piano actuel s'affiche.
+  const lang = useLang();
+  const en = lang === "en";
   const [sourceMode, setSourceMode] = useState<SourceMode>("none");
   const [standardEnabled, setStandardEnabled] = useState(false);
   // Arrivée sur Comparer : les 4 graphiques démarrent en « N/B : séparées ».
