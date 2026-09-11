@@ -499,7 +499,7 @@ function RootComponent() {
                       onClick={() => setSupportOpen(true)}
                       aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
                        style={{ height: "24.97px", width: "auto" }}
-                       className="relative z-10 mr-3 flex shrink-0 -translate-y-[1.15px] items-center justify-center overflow-hidden p-0 transition-transform hover:scale-105 hover:bg-transparent"
+                       className="relative z-10 mr-3 flex shrink-0 items-center justify-center overflow-hidden p-0 transition-transform hover:scale-105 hover:bg-transparent"
                    >
                      <img
                         src={likedLogoAsset.url}
