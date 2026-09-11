@@ -230,22 +230,26 @@ function RootComponent() {
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
               <Link to="/" className={linkClass} activeOptions={{ exact: true }} activeProps={{ className: activeLinkClass }}>
-                Accueil
+                {lang === "en" ? "Home" : "Accueil"}
               </Link>
               <Link to="/saisie" className={linkClass} activeProps={{ className: activeLinkClass }}>
-                Saisie
+                {lang === "en" ? "Inputs" : "Saisie"}
               </Link>
               {topbar.gateReady ? (
                 <Link to="/resultats" className={linkClass} activeProps={{ className: activeLinkClass }}>
-                  Résultats
+                  {lang === "en" ? "Results" : "Résultats"}
                 </Link>
               ) : (
                 <span
                   className={lockedLinkClass}
                   aria-disabled="true"
-                  title="Complétez le seuil minimal de pesée sur la page Saisie."
+                  title={
+                    lang === "en"
+                      ? "Complete the minimum weighing threshold on the Inputs page."
+                      : "Complétez le seuil minimal de pesée sur la page Saisie."
+                  }
                 >
-                  Résultats
+                  {lang === "en" ? "Results" : "Résultats"}
                 </span>
               )}
               <div className="relative">
@@ -255,17 +259,22 @@ function RootComponent() {
                     className={linkClass}
                     activeProps={{ className: activeLinkClass }}
                   >
-                    Comparer
+                    {lang === "en" ? "Compare" : "Comparer"}
                   </Link>
                 ) : (
                   <span
                     className={lockedLinkClass}
                     aria-disabled="true"
-                    title="Le témoin « Saisie conforme » doit être vert, puis passez par la page Résultats."
+                    title={
+                      lang === "en"
+                        ? "The « Valid entry » indicator must be green, then visit the Results page."
+                        : "Le témoin « Saisie conforme » doit être vert, puis passez par la page Résultats."
+                    }
                   >
-                    Comparer
+                    {lang === "en" ? "Compare" : "Comparer"}
                   </span>
                 )}
+
 
 
                 {topbar.alert?.anchor === "compare" && (
