@@ -2189,11 +2189,11 @@ function Index() {
         data-saved-at={savedAt ?? ""}
         data-climate-zone={climateZone ?? ""}
       >
-        <Frame title="Informations piano" className="mt-10 [&_input]:border-foreground/60">
+        <Frame title={en ? "Piano information" : "Informations piano"} className="mt-10 [&_input]:border-foreground/60">
           <div className="absolute right-10 top-10 z-10">
             {confirmReset === "info" && (
               <div className="absolute bottom-full right-0 mb-2 flex min-w-max items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
-                <span>Voulez-vous effacer toutes les infos piano saisies ?</span>
+                <span>{en ? "Do you want to erase all entered piano information?" : "Voulez-vous effacer toutes les infos piano saisies ?"}</span>
                 <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { resetInfo(); setConfirmReset(null); }}>Oui</button>
                 <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
               </div>
@@ -2201,7 +2201,7 @@ function Index() {
             <button
               type="button"
               onClick={() => setConfirmReset("info")}
-              title="Réinitialiser uniquement la fiche d'informations"
+              title={en ? "Reset the information sheet only" : "Réinitialiser uniquement la fiche d'informations"}
               className="rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
             >
               Reset
@@ -2209,11 +2209,11 @@ function Index() {
           </div>
           <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-[1fr_210px_1fr_1fr]">
             <label className={FIELD_LABEL_CLASS}>
-              Marque<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
+              {en ? "Brand" : "Marque"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
               <SmartCombobox
                 value={info["marque"] ?? ""}
                 options={BRAND_SUGGESTIONS}
-                placeholder="Saisissez une marque (ex: YAMAHA, PLEYEL...)"
+                placeholder={en ? "Type a brand (e.g. YAMAHA, PLEYEL...)" : "Saisissez une marque (ex: YAMAHA, PLEYEL...)"}
                 onTyping={markDirty}
                 onCommit={(v) => {
                   updateInfo("marque", v);
@@ -2223,7 +2223,7 @@ function Index() {
             </label>
 
             <fieldset className={FIELD_LABEL_CLASS} data-keep-model-open>
-              <legend>Type de piano<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></legend>
+              <legend>{en ? "Piano type" : "Type de piano"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></legend>
               <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 bg-white px-2">
                 {["Droit", "à Queue"].map((t) => (
                   <label key={t} className="flex items-center gap-1 text-sm text-foreground">
@@ -2241,14 +2241,14 @@ function Index() {
                         modelComboRef.current?.open();
                       }}
                     />
-                    {t}
+                    {en ? (t === "Droit" ? "Upright" : "Grand") : t}
                   </label>
                 ))}
               </div>
             </fieldset>
 
             <label className={FIELD_LABEL_CLASS}>
-              Modèle<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
+              {en ? "Model" : "Modèle"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
               <SmartCombobox
                 ref={modelComboRef}
                 value={info["modele"] ?? ""}
@@ -2258,7 +2258,7 @@ function Index() {
                 openOnFocus
                 keepOpenSelector="[data-keep-model-open]"
                 className="!bg-white"
-                placeholder="Saisissez ou cherchez un modèle..."
+                placeholder={en ? "Type or search a model..." : "Saisissez ou cherchez un modèle..."}
                 onTyping={markDirty}
                 onCommit={(v) => {
                   updateInfo("modele", v);
@@ -2269,14 +2269,14 @@ function Index() {
             </label>
 
             <div className="text-xs text-muted-foreground sm:col-span-2 md:col-span-4" style={{ marginTop: "12px", paddingTop: "0px", display: "block" }}>
-              <span className={FIELD_LABEL_CLASS}>Numéro de série<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></span>{" "}
+              <span className={FIELD_LABEL_CLASS}>{en ? "Serial number" : "Numéro de série"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></span>{" "}
               <span className="text-muted-foreground">
-                (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
+                {en ? "(Locate the number on the metal frame - include letters if any)." : "(Reportez le numéro du cadre métallique - inclure les lettres si existantes)."}
               </span>
               <div className="mt-1 flex items-end justify-start gap-4">
                 <div className="flex items-end gap-2">
                   <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
-                     <span className="block whitespace-nowrap">Lettre</span>
+                     <span className="block whitespace-nowrap">{en ? "Letter" : "Lettre"}</span>
                     <input
                       ref={(el) => {
                         snRef.current["sn_prefix"] = el;
@@ -2289,7 +2289,7 @@ function Index() {
                     />
                   </label>
                   <label className={`min-w-[150px] ${SUB_LABEL_CLASS}`}>
-                    <span className="block whitespace-nowrap">N° de série<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></span>
+                    <span className="block whitespace-nowrap">{en ? "Serial N°" : "N° de série"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></span>
                     <input
                       ref={(el) => {
                         snRef.current["sn_num"] = el;
@@ -2298,12 +2298,12 @@ function Index() {
                       onChange={(e) => updateInfo("sn_num", e.target.value.replace(/[^0-9]/g, ""))}
                       required
                       inputMode="numeric"
-                      placeholder="Chiffres"
+                      placeholder={en ? "Digits" : "Chiffres"}
                       className={`${INPUT_CLASS} max-w-[150px]`}
                     />
                   </label>
                   <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
-                    <span className="block whitespace-nowrap">Lettre fin</span>
+                    <span className="block whitespace-nowrap">{en ? "End letter" : "Lettre fin"}</span>
                     <input
                       value={info["sn_suffix"] ?? ""}
                       onChange={(e) =>
@@ -2316,7 +2316,7 @@ function Index() {
                   </label>
                 </div>
                 <label className={`min-w-[120px] ${SUB_LABEL_CLASS}`}>
-                  <span className="block whitespace-nowrap">Date fabrication</span>
+                  <span className="block whitespace-nowrap">{en ? "Manufacturing date" : "Date fabrication"}</span>
                   <input
                     value={info["fabrication"] ?? ""}
                     onChange={(e) => {
@@ -2337,13 +2337,13 @@ function Index() {
             </div>
 
             <label className={`mt-4 ${FIELD_LABEL_CLASS}`}>
-              Pays<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
+              {en ? "Country" : "Pays"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
               <SmartCombobox
                 value={info["pays"] ?? ""}
                 options={ALL_COUNTRIES}
                 groups={[
-                  { label: "Suggestions fréquentes", options: FREQUENT_COUNTRIES },
-                  { label: "Tous les pays", options: SUGGESTED_COUNTRIES },
+                  { label: en ? "Frequent suggestions" : "Suggestions fréquentes", options: FREQUENT_COUNTRIES },
+                  { label: en ? "All countries" : "Tous les pays", options: SUGGESTED_COUNTRIES },
                 ]}
                 onTyping={markDirty}
                 onCommit={(v) => updateInfo("pays", v)}
@@ -2352,8 +2352,8 @@ function Index() {
 
             <label className={`mt-4 ${FIELD_LABEL_CLASS}`}>
               <span className="flex items-center gap-2">
-                Ville<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
-                {isGeocoding && <span className="text-[0.65rem] italic">Vérification…</span>}
+                {en ? "City" : "Ville"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
+                {isGeocoding && <span className="text-[0.65rem] italic">{en ? "Checking…" : "Vérification…"}</span>}
               </span>
               <input
                 value={info["ville"] ?? ""}
@@ -2380,7 +2380,7 @@ function Index() {
               className={`!flex !flex-row !items-center !flex-nowrap !gap-6 !w-full mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}
               style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", gap: "24px", width: "100%" }}
             >
-              <span className="shrink-0">Type d'entretien<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></span>
+              <span className="shrink-0">{en ? "Maintenance type" : "Type d'entretien"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></span>
               {MAINTENANCE_OPTIONS.map((t) => (
                 <label key={t} className="flex shrink-0 items-center gap-1 text-sm text-foreground">
                   <input
@@ -2402,13 +2402,13 @@ function Index() {
             </div>
 
             <label className={`mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
-              <span className="inline-flex items-center">Niveau d'usage</span>
+              <span className="inline-flex items-center">{en ? "Usage level" : "Niveau d'usage"}</span>
               <select
                 value={info["usage_level"] ?? ""}
                 onChange={(e) => updateInfo("usage_level", e.target.value)}
                 className={`${INPUT_CLASS} !bg-white`}
               >
-                <option value="">— Sélectionner —</option>
+                <option value="">{en ? "— Select —" : "— Sélectionner —"}</option>
                 {USAGE_OPTIONS.map((option) => (
                   <option key={option} value={option}>{option}</option>
                 ))}
@@ -2417,7 +2417,7 @@ function Index() {
 
             <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
               <span className="inline-flex items-center">
-                Remarques
+                {en ? "Remarks" : "Remarques"}
                 {remarquesRequired && (
                   <span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
                 )}
@@ -2427,7 +2427,7 @@ function Index() {
                 required={remarquesRequired}
                 aria-invalid={remarquesInvalid}
                 placeholder={
-                  remarquesRequired ? "⚠️ Veuillez indiquer les modifications" : undefined
+                  remarquesRequired ? (en ? "⚠️ Please describe the modifications" : "⚠️ Veuillez indiquer les modifications") : undefined
                 }
                 value={info["remarques"] ?? ""}
                 onChange={(e) => updateInfo("remarques", e.target.value)}
