@@ -515,17 +515,15 @@ function RootComponent() {
                      type="button"
                      onClick={() => setSupportOpen(true)}
                      aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                     style={{ height: "42px", width: "42px" }}
                      className="relative z-10 ml-[30px] flex shrink-0 translate-y-[26px] items-center justify-center overflow-hidden rounded-lg bg-transparent transition-transform hover:scale-105"
                    >
                      <img
                        src={supportHandsAsset.url}
                        alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                       style={{ height: "42px", width: "42px" }}
+                       style={{ height: "85px", width: "auto" }}
                        className="rounded-lg object-contain"
                      />
                    </button>
-
                    {supportHint && (
                      <div className="pointer-events-none absolute left-1/2 top-full z-[9999] mt-[6px] -translate-x-1/2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium !text-gray-900 shadow-md">
                        {lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
