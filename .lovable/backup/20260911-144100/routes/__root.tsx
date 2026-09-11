@@ -36,7 +36,8 @@ import { createPortal } from "react-dom";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
-import supportHandsAsset from "@/assets/support-hands.png.asset.json";
+import supportEuroAsset from "@/assets/support-euro.svg.asset.json";
+import supportDollarAsset from "@/assets/support-dollar.svg.asset.json";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -476,9 +477,40 @@ function RootComponent() {
              )}
 
              <div className="ml-auto flex items-center mr-[-1rem] sm:mr-[-1.5rem]">
-               {/* Sélecteur EN / FR puis bouton de soutien à sa droite, calé sur
-                   la même hauteur physique et la même ligne de base que le logo. */}
+               {/* Bouton de soutien à gauche du sélecteur EN / FR, calé sur la
+                   même hauteur physique et la même ligne de base que le logo. */}
                <div className="flex -translate-x-[60px] items-center">
+                 <div
+                   className="relative"
+                   onMouseEnter={() => {
+                     if (supportHintTimer.current) clearTimeout(supportHintTimer.current);
+                     setSupportHint(true);
+                     supportHintTimer.current = setTimeout(() => setSupportHint(false), 3000);
+                   }}
+                   onMouseLeave={() => {
+                     if (supportHintTimer.current) clearTimeout(supportHintTimer.current);
+                     setSupportHint(false);
+                   }}
+                 >
+                   <button
+                     type="button"
+                     onClick={() => setSupportOpen(true)}
+                     aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
+                     className="relative z-10 mr-[30px] flex shrink-0 translate-y-[26px] items-center justify-center overflow-hidden rounded-lg bg-transparent transition-transform hover:scale-105"
+                   >
+                     <img
+                       src={lang === "en" ? supportDollarAsset.url : supportEuroAsset.url}
+                       alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
+                       style={{ height: "85px", width: "auto" }}
+                       className="rounded-lg object-contain"
+                     />
+                   </button>
+                   {supportHint && (
+                     <div className="pointer-events-none absolute left-1/2 top-full z-[9999] mt-[6px] -translate-x-1/2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium !text-gray-900 shadow-md">
+                       {lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
+                     </div>
+                   )}
+                 </div>
                  <div className="flex shrink-0 translate-y-[19px] items-center gap-0 text-[1.14rem] font-semibold">
                    <Button
                      variant="ghost"
@@ -499,39 +531,7 @@ function RootComponent() {
                      FR
                    </Button>
                  </div>
-                 <div
-                   className="relative"
-                   onMouseEnter={() => {
-                     if (supportHintTimer.current) clearTimeout(supportHintTimer.current);
-                     setSupportHint(true);
-                     supportHintTimer.current = setTimeout(() => setSupportHint(false), 3000);
-                   }}
-                   onMouseLeave={() => {
-                     if (supportHintTimer.current) clearTimeout(supportHintTimer.current);
-                     setSupportHint(false);
-                   }}
-                 >
-                   <button
-                     type="button"
-                     onClick={() => setSupportOpen(true)}
-                     aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                     className="relative z-10 ml-[30px] flex shrink-0 translate-y-[26px] items-center justify-center overflow-hidden rounded-lg bg-transparent transition-transform hover:scale-105"
-                   >
-                     <img
-                       src={supportHandsAsset.url}
-                       alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                       style={{ height: "85px", width: "auto" }}
-                       className="rounded-lg object-contain"
-                     />
-                   </button>
-                   {supportHint && (
-                     <div className="pointer-events-none absolute left-1/2 top-full z-[9999] mt-[6px] -translate-x-1/2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium !text-gray-900 shadow-md">
-                       {lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                     </div>
-                   )}
-                 </div>
                </div>
-
 
                {/* Logo officiel KeyWeight : 30 px à gauche du bord droit,
                    assis sur sa ligne de base, agrandi de 15 %. */}
