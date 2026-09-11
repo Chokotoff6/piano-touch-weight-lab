@@ -2442,36 +2442,28 @@ function Index() {
             </label>
 
             <div
-              className={`!flex !flex-row !items-center !flex-nowrap !gap-3 !w-full mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}
-              style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", gap: "12px", width: "100%" }}
+              className={`!flex !flex-row !items-center !flex-nowrap !gap-6 !w-full mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}
+              style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", gap: "24px", width: "100%" }}
             >
               <span className="shrink-0">{en ? "Maintenance type" : "Type d'entretien"}</span>
-              <button
-                type="button"
-                data-pdf-hide
-                onClick={() => {
-                  const current = MAINTENANCE_OPTIONS.indexOf(
-                    (info["entretien"] ?? MAINTENANCE_OPTIONS[0]) as (typeof MAINTENANCE_OPTIONS)[number],
-                  );
-                  const next =
-                    MAINTENANCE_OPTIONS[(current + 1) % MAINTENANCE_OPTIONS.length] ??
-                    MAINTENANCE_OPTIONS[0];
-                  updateInfo("entretien", next);
-                  if (next === "Modifications importantes") {
-                    setTimeout(() => remarquesRef.current?.focus(), 0);
-                  }
-                }}
-                className="flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
-              >
-                <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
-                <span>
-                  {en
-                    ? MAINTENANCE_LABELS_EN[
-                        info["entretien"] ?? MAINTENANCE_OPTIONS[0]
-                      ]
-                    : info["entretien"] ?? MAINTENANCE_OPTIONS[0]}
-                </span>
-              </button>
+              {MAINTENANCE_OPTIONS.map((t) => (
+                <label key={t} className="flex shrink-0 items-center gap-1 text-sm text-foreground">
+                  <input
+                    type="radio"
+                    name="entretien"
+                    value={t}
+                    required
+                    checked={info["entretien"] === t}
+                    onChange={() => {
+                      updateInfo("entretien", t);
+                      if (t === "Modifications importantes") {
+                        setTimeout(() => remarquesRef.current?.focus(), 0);
+                      }
+                    }}
+                  />
+                  {en ? MAINTENANCE_LABELS_EN[t] : t}
+                </label>
+              ))}
             </div>
 
             <label className={`mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
