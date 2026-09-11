@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Redo2, Undo2 } from "lucide-react";
+import { Redo2, RefreshCw, Undo2 } from "lucide-react";
 import {
   hasAnyMeasurement,
   incompleteOctaves,
@@ -2647,42 +2647,19 @@ function Index() {
           statiques » (et non plus à l'intérieur), donc jamais capturé au PDF. */}
       {weighingMode && (
         <div className="mt-3 flex w-full items-center justify-between pl-2 pr-2">
-          {/* Retour à la fiche piano : bordure noire nette, jamais verte. */}
+          {/* Retour à la fiche piano : bordure grise standard. */}
           <button
             type="button"
             data-pdf-hide
             onClick={() => setWeighingMode(false)}
-            className="rounded-md border-2 border-black bg-white px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors hover:bg-gray-100"
+            className="rounded-md border border-input bg-background px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors hover:bg-accent"
 
           >
             {en ? "< Edit piano information" : "< Modifier informations piano"}
           </button>
 
-          {/* Barre d'outils d'atelier centrée : vue, undo, redo, reset. */}
+          {/* Barre d'outils d'atelier centrée : undo, redo, touches, reset. */}
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              data-pdf-hide
-              onClick={() =>
-                setViewFilter((current) =>
-                  current === "all" ? "white" : current === "white" ? "black" : "all",
-                )
-              }
-              className="rounded-md border border-input bg-background px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
-            >
-              {en
-                ? viewFilter === "all"
-                  ? "View: All"
-                  : viewFilter === "white"
-                    ? "View: Whites"
-                    : "View: Blacks"
-                : viewFilter === "all"
-                  ? "Vue : Toutes"
-                  : viewFilter === "white"
-                    ? "Vue : Blanches"
-                    : "Vue : Noires"}
-            </button>
-
             <button
               type="button"
               data-pdf-hide
@@ -2704,6 +2681,32 @@ function Index() {
               className={`flex h-[34px] w-9 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${redoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "text-muted-foreground"}`}
             >
               <Redo2 className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              data-pdf-hide
+              onClick={() =>
+                setViewFilter((current) =>
+                  current === "all" ? "white" : current === "white" ? "black" : "all",
+                )
+              }
+              className="flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+            >
+              <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
+              <span>
+                {en
+                  ? viewFilter === "all"
+                    ? "Keys: All"
+                    : viewFilter === "white"
+                      ? "Keys: Whites"
+                      : "Keys: Blacks"
+                  : viewFilter === "all"
+                    ? "Touches : Toutes"
+                    : viewFilter === "white"
+                      ? "Touches : Blanches"
+                      : "Touches : Noires"}
+              </span>
             </button>
 
             <div className="relative flex items-center">
