@@ -2436,7 +2436,7 @@ function Index() {
               <select
                 value={info["usage_level"] ?? ""}
                 onChange={(e) => updateInfo("usage_level", e.target.value)}
-                className={`${INPUT_CLASS} !bg-white`}
+                className={`${INPUT_CLASS} !bg-white !w-auto !max-w-[300px]`}
               >
                 <option value="">{en ? "— Select —" : "— Sélectionner —"}</option>
                 {USAGE_OPTIONS.map((option) => (
