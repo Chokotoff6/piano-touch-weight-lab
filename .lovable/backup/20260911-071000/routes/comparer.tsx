@@ -1111,7 +1111,6 @@ const TONE_CLASS: Record<Tone, string> = {
 
 // Bloc de moyenne façon page Saisie : moyenne globale en grand + détail Blanches/Noires.
 function AverageBlock({ label, global, white, black, tone }: { label: string; global: string; white: string; black: string; tone: Tone }) {
-  const lang = useLang();
   const toneClass = TONE_CLASS[tone];
   const val = (v: string) => v === "—" ? <span className={toneClass}>—</span> : <>{v}<span className="!text-xs !font-medium"> gr.</span></>;
   const sub = (v: string) => v === "—" ? "—" : <>{v}<span className={toneClass}> gr.</span></>;
@@ -1125,9 +1124,9 @@ function AverageBlock({ label, global, white, black, tone }: { label: string; gl
         <span>{sub(black)}</span>
       </div>
       <div className={`flex items-end justify-center gap-2 text-[0.55rem] tabular-nums ${toneClass}`}>
-        <span className="!text-xs font-medium">{lang === "en" ? "White" : "Blanches"}</span>
+        <span className="!text-xs font-medium">Blanches</span>
         <span className="invisible">/</span>
-        <span className="!text-xs font-medium">{lang === "en" ? "Black" : "Noires"}</span>
+        <span className="!text-xs font-medium">Noires</span>
       </div>
     </div>
   );
@@ -1182,8 +1181,7 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
   return (
     <div className="grid grid-cols-4 gap-3">
       {STD_KEYS.map(({ key, globalKey }) => {
-        const col = COLUMNS.find((c) => c.key === key)!;
-        const label = lang === "en" ? col.labelEn : col.label;
+        const { label } = COLUMNS.find((col) => col.key === key)!;
         const value = seriesAverage(chartData, globalKey);
         return (
           <div key={key} className="flex h-full flex-col justify-end rounded bg-muted px-2 py-1.5 text-center">
@@ -1330,22 +1328,22 @@ function SidebarPanel(props: SidebarPanelProps) {
     `${PILL_BASE} flex w-full items-center justify-start gap-2 bg-white !opacity-100 disabled:!opacity-100 !border-black ${active ? activeText : "!text-black"} [&_svg]:!opacity-100`;
 
   return (
-    <Frame title={en ? "Settings" : "Réglages"} className="flex flex-1 flex-col">
+    <Frame title="Réglages" className="flex flex-1 flex-col">
       <div className="flex h-auto flex-col items-stretch justify-start gap-2 pt-2">
           <div className="text-sm font-bold !text-black">{en ? "Compare current piano with:" : "Comparer piano actuel avec :"}</div>
           <FastTip text={tipTarget}><Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><span className="w-full text-center font-bold uppercase">{en ? "Target" : "Cible"}</span></Button></FastTip>
           <FastTip text={tipCloud}><Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={sourceButtonClass(props.cloudEnabled, "!text-orange-600")}><span className="w-full text-center font-bold uppercase">Cloud</span></Button></FastTip>
-           <FastTip text={tipCsv}><Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} ${props.csvActive ? "!border-black !text-blue-700 [&_svg]:!text-blue-700" : "!border-black !text-black"}`}><span className="w-full text-center font-bold uppercase">{en ? "IMPORT CSV" : "IMPORT CVS"}</span></Button></FastTip>
+           <FastTip text={tipCsv}><Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} ${props.csvActive ? "!border-black !text-blue-700 [&_svg]:!text-blue-700" : "!border-black !text-black"}`}><span className="w-full text-center font-bold uppercase">{en ? "Imported CSV" : "IMPORT CVS"}</span></Button></FastTip>
           <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
           {props.cloudEnabled && (
             <>
           <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold" style={{ color: "#f97316" }}>{en ? "CLOUD filters" : "Filtres CLOUD"}</div>
-          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.usageLevel !== "low" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">{en ? "Instrument usage: " : "Usage instrument : "}<span className="!text-black font-semibold uppercase">{usageLabel}</span></span></Button>
-          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.importantChanges !== "excluded" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">{en ? "Major modifications: " : "Modifications importantes : "}<span className="!text-black font-semibold uppercase">{changesLabel}</span></span></Button>
+          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.usageLevel !== "low" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">Usage instrument : <span className="!text-black font-semibold uppercase">{usageLabel}</span></span></Button>
+          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.importantChanges !== "excluded" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">Modifications importantes : <span className="!text-black font-semibold uppercase">{changesLabel}</span></span></Button>
 
-          {cycleRow(en ? "Same climate zone" : "Même zone climatique", props.sameClimate, props.setSameClimate)}
-          {cycleRow(en ? "Same manufacturing year" : "Même année de fabrication", props.sameYear, props.setSameYear)}
-          {cycleRow(en ? "Pianos under 5 years old" : "Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
+          {cycleRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
+          {cycleRow("Même année de fabrication", props.sameYear, props.setSameYear)}
+          {cycleRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
           <div className="text-center font-bold leading-tight" style={{ color: "#f97316", marginTop: "15px", fontSize: "0.85rem" }}>
             {(!Number(props.cloudSampleCount) || !Number(props.cloudTotalCount)) ? (
               <>
@@ -1398,8 +1396,6 @@ function countKeys(values: number[] | undefined) {
 function Comparer() {
   // Arrivée sur la page : aucune source de comparaison active, seule la courbe
   // noire du piano actuel s'affiche.
-  const lang = useLang();
-  const en = lang === "en";
   const [sourceMode, setSourceMode] = useState<SourceMode>("none");
   const [standardEnabled, setStandardEnabled] = useState(false);
   // Arrivée sur Comparer : les 4 graphiques démarrent en « N/B : séparées ».
@@ -1456,7 +1452,7 @@ function Comparer() {
               {
                 blocks: keep([mirrorAveragesRef.current, mirrorSheetRef.current]),
                 layout: "column" as const,
-                title: en ? "WORKSHOP REPORT" : "RAPPORT D'ATELIER",
+                title: "RAPPORT D'ATELIER",
                 underline: false,
               },
               { blocks: keep([mirror("wa"), mirror("wd")]), layout: "column" as const },
@@ -1467,7 +1463,7 @@ function Comparer() {
               {
                 blocks: keep([settingsRef.current, averagesRef.current]),
                 layout: "row" as const,
-                title: en ? "COMPARATIVE ANALYSIS" : "ANALYSE COMPARATIVE",
+                title: "ANALYSE COMPARATIVE",
                 underline: true,
               },
               // Poids descendant (haut) et Poids remontant (bas).
@@ -1780,7 +1776,7 @@ function Comparer() {
             <div className="min-w-0">
               
               <div ref={averagesRef} data-pdf-expand data-pdf-lock-w="980" className="sticky top-[127px] z-50 mb-[50px] w-full bg-white pb-2 relative">
-                <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span>{en ? "Averages" : "Moyennes"}</span>} className="h-fit">
+                <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span>Moyennes</span>} className="h-fit">
                   {/* Séparateurs affichés uniquement si au moins deux sources sont présentes. */}
                   <div className={(comparedPiano !== null || sourceMode === "cloud" || standardEnabled) ? "mb-3 border-b border-gray-400 pb-3" : ""}><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">Piano actuel : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
                   {(comparedPiano !== null || sourceMode === "cloud") && (

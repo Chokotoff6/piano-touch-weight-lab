@@ -179,21 +179,6 @@ function RootComponent() {
     importHintTimer.current = null;
     setImportHint(false);
   };
-  /** Fermeture du menu « Exporter » dès que la souris quitte le bouton ou le menu. */
-  const menuCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const cancelMenuClose = () => {
-    if (menuCloseTimer.current) clearTimeout(menuCloseTimer.current);
-    menuCloseTimer.current = null;
-  };
-  const scheduleMenuClose = () => {
-    cancelMenuClose();
-    menuCloseTimer.current = setTimeout(() => setSaveMenuOpen(false), 180);
-  };
-  const closeMenuNow = () => {
-    cancelMenuClose();
-    setSaveMenuOpen(false);
-  };
-
   // La jauge verte est imbriquée sous le bouton « Sauver » (10 px, à droite) :
   // aucun calcul de position n'est nécessaire.
   const saveBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -245,26 +230,22 @@ function RootComponent() {
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
               <Link to="/" className={linkClass} activeOptions={{ exact: true }} activeProps={{ className: activeLinkClass }}>
-                {lang === "en" ? "Home" : "Accueil"}
+                Accueil
               </Link>
               <Link to="/saisie" className={linkClass} activeProps={{ className: activeLinkClass }}>
-                {lang === "en" ? "Inputs" : "Saisie"}
+                Saisie
               </Link>
               {topbar.gateReady ? (
                 <Link to="/resultats" className={linkClass} activeProps={{ className: activeLinkClass }}>
-                  {lang === "en" ? "Results" : "Résultats"}
+                  Résultats
                 </Link>
               ) : (
                 <span
                   className={lockedLinkClass}
                   aria-disabled="true"
-                  title={
-                    lang === "en"
-                      ? "Complete the minimum weighing threshold on the Inputs page."
-                      : "Complétez le seuil minimal de pesée sur la page Saisie."
-                  }
+                  title="Complétez le seuil minimal de pesée sur la page Saisie."
                 >
-                  {lang === "en" ? "Results" : "Résultats"}
+                  Résultats
                 </span>
               )}
               <div className="relative">
@@ -274,22 +255,17 @@ function RootComponent() {
                     className={linkClass}
                     activeProps={{ className: activeLinkClass }}
                   >
-                    {lang === "en" ? "Compare" : "Comparer"}
+                    Comparer
                   </Link>
                 ) : (
                   <span
                     className={lockedLinkClass}
                     aria-disabled="true"
-                    title={
-                      lang === "en"
-                        ? "The « Valid entry » indicator must be green, then visit the Results page."
-                        : "Le témoin « Saisie conforme » doit être vert, puis passez par la page Résultats."
-                    }
+                    title="Le témoin « Saisie conforme » doit être vert, puis passez par la page Résultats."
                   >
-                    {lang === "en" ? "Compare" : "Comparer"}
+                    Comparer
                   </span>
                 )}
-
 
 
                 {topbar.alert?.anchor === "compare" && (
@@ -306,15 +282,10 @@ function RootComponent() {
 
             <div className="mx-10 h-6 w-[2px] bg-gray-400" aria-hidden="true" />
 
-            <DropdownMenu open={saveMenuOpen} onOpenChange={setSaveMenuOpen} modal={false}>
-              <div
-                className="relative flex items-center"
-                onMouseEnter={cancelMenuClose}
-                onMouseLeave={scheduleMenuClose}
-              >
+            <DropdownMenu open={saveMenuOpen} onOpenChange={setSaveMenuOpen}>
+              <div className="relative flex items-center">
                 <DropdownMenuTrigger asChild>
                   <Button
-
                     ref={saveBtnRef}
                     variant="outline"
                     size="sm"
@@ -363,13 +334,7 @@ function RootComponent() {
                   </div>
                 )}
               </div>
-              <DropdownMenuContent
-                align="start"
-                className="max-w-[520px]"
-                onMouseEnter={cancelMenuClose}
-                onMouseLeave={scheduleMenuClose}
-              >
-
+              <DropdownMenuContent align="start" className="max-w-[520px]">
                 {isComparer ? (
                   /* Page Comparer : une seule ligne directe (algorithme adaptatif 3/4/6 pages). */
                   <DropdownMenuItem
@@ -407,15 +372,14 @@ function RootComponent() {
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-pdf")}>
                           {lang === "en"
-                            ? "Blank form table format (re-importable)"
-                            : "Formulaire vierge format tableau (re-importable)"}
+                            ? "Blank form - table format (Paper - re-importable)"
+                            : "Formulaire vierge format tableau (Papier - re-importable)"}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-keyboard-pdf")}>
                           {lang === "en"
-                            ? "Blank form keyboard design format (re-importable)"
-                            : "Formulaire vierge format dessin clavier (re-importable)"}
+                            ? "Blank form - keyboard drawing format (Paper - re-importable)"
+                            : "Formulaire vierge format dessin clavier (Papier - re-importable)"}
                         </DropdownMenuItem>
-
                       </DropdownMenuSubContent>
                     </DropdownMenuSub>
                   </>
@@ -431,17 +395,13 @@ function RootComponent() {
               <Button
                 variant="outline"
                 size="sm"
-                onMouseEnter={() => {
-                  closeMenuNow();
-                  showImportHint();
-                }}
+                onMouseEnter={showImportHint}
                 onMouseLeave={hideImportHint}
                 className="border border-gray-300 bg-white text-lg font-bold !text-black"
                 onClick={() => dispatchAction("piano-import-csv")}
               >
-                {lang === "en" ? "Import" : "Importer"}
+                Importer
               </Button>
-
 
               {(importHint || topbar.alert?.anchor === "import") && (
                 <div

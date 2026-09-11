@@ -194,13 +194,6 @@ const MAINTENANCE_OPTIONS = [
 
 const USAGE_OPTIONS = ["Low", "Medium", "Intensive"] as const;
 
-/** Traduction d'affichage des options d'entretien (valeurs stockées en FR). */
-const MAINTENANCE_LABELS_EN: Record<string, string> = {
-  "Entretien usuel uniquement": "Routine maintenance only",
-  "Réglages personnalisés": "Custom regulations",
-  "Modifications importantes": "Major modifications",
-};
-
 const BLACK_RATIO = 0.605;
 
 // décalages réels des touches noires (en largeur de touche blanche),
@@ -821,8 +814,17 @@ function Index() {
         setMissingFlash(false);
         missingFlashTimeout.current = null;
       }, 3000);
-      return;
 
+      if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
+      const r = weighingBtnRef.current?.getBoundingClientRect();
+      setBlockAnchor(
+        r ? { x: Math.max(8, r.left - 340), y: Math.max(8, r.top - 12), text: FORM_INCOMPLETE_MESSAGE } : { x: window.innerWidth / 2 - 144, y: 120, text: FORM_INCOMPLETE_MESSAGE },
+      );
+      blockAnchorTimeout.current = setTimeout(() => {
+        setBlockAnchor(null);
+        blockAnchorTimeout.current = null;
+      }, 3000);
+      return;
     }
     if (remarquesInvalid) {
       if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
@@ -2196,11 +2198,11 @@ function Index() {
         data-saved-at={savedAt ?? ""}
         data-climate-zone={climateZone ?? ""}
       >
-        <Frame title={en ? "Piano information" : "Informations piano"} className="mt-10 [&_input]:border-foreground/60">
+        <Frame title="Informations piano" className="mt-10 [&_input]:border-foreground/60">
           <div className="absolute right-10 top-10 z-10">
             {confirmReset === "info" && (
               <div className="absolute bottom-full right-0 mb-2 flex min-w-max items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
-                <span>{en ? "Do you want to erase all entered piano information?" : "Voulez-vous effacer toutes les infos piano saisies ?"}</span>
+                <span>Voulez-vous effacer toutes les infos piano saisies ?</span>
                 <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { resetInfo(); setConfirmReset(null); }}>Oui</button>
                 <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
               </div>
@@ -2208,7 +2210,7 @@ function Index() {
             <button
               type="button"
               onClick={() => setConfirmReset("info")}
-              title={en ? "Reset the information sheet only" : "Réinitialiser uniquement la fiche d'informations"}
+              title="Réinitialiser uniquement la fiche d'informations"
               className="rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
             >
               Reset
@@ -2216,11 +2218,11 @@ function Index() {
           </div>
           <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-[1fr_210px_1fr_1fr]">
             <label className={FIELD_LABEL_CLASS}>
-              {en ? "Brand" : "Marque"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
+              Marque<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
               <SmartCombobox
                 value={info["marque"] ?? ""}
                 options={BRAND_SUGGESTIONS}
-                placeholder={en ? "Type a brand (e.g. YAMAHA, PLEYEL...)" : "Saisissez une marque (ex: YAMAHA, PLEYEL...)"}
+                placeholder="Saisissez une marque (ex: YAMAHA, PLEYEL...)"
                 onTyping={markDirty}
                 onCommit={(v) => {
                   updateInfo("marque", v);
@@ -2230,7 +2232,7 @@ function Index() {
             </label>
 
             <fieldset className={FIELD_LABEL_CLASS} data-keep-model-open>
-              <legend>{en ? "Piano type" : "Type de piano"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></legend>
+              <legend>Type de piano<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></legend>
               <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 bg-white px-2">
                 {["Droit", "à Queue"].map((t) => (
                   <label key={t} className="flex items-center gap-1 text-sm text-foreground">
@@ -2248,14 +2250,14 @@ function Index() {
                         modelComboRef.current?.open();
                       }}
                     />
-                    {en ? (t === "Droit" ? "Upright" : "Grand") : t}
+                    {t}
                   </label>
                 ))}
               </div>
             </fieldset>
 
             <label className={FIELD_LABEL_CLASS}>
-              {en ? "Model" : "Modèle"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
+              Modèle<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
               <SmartCombobox
                 ref={modelComboRef}
                 value={info["modele"] ?? ""}
@@ -2265,7 +2267,7 @@ function Index() {
                 openOnFocus
                 keepOpenSelector="[data-keep-model-open]"
                 className="!bg-white"
-                placeholder={en ? "Type or search a model..." : "Saisissez ou cherchez un modèle..."}
+                placeholder="Saisissez ou cherchez un modèle..."
                 onTyping={markDirty}
                 onCommit={(v) => {
                   updateInfo("modele", v);
@@ -2276,14 +2278,14 @@ function Index() {
             </label>
 
             <div className="text-xs text-muted-foreground sm:col-span-2 md:col-span-4" style={{ marginTop: "12px", paddingTop: "0px", display: "block" }}>
-              <span className={FIELD_LABEL_CLASS}>{en ? "Serial number" : "Numéro de série"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></span>{" "}
+              <span className={FIELD_LABEL_CLASS}>Numéro de série<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></span>{" "}
               <span className="text-muted-foreground">
-                {en ? "(Locate the number on the metal frame - include letters if any)." : "(Reportez le numéro du cadre métallique - inclure les lettres si existantes)."}
+                (Reportez le numéro du cadre métallique - inclure les lettres si existantes).
               </span>
               <div className="mt-1 flex items-end justify-start gap-4">
                 <div className="flex items-end gap-2">
                   <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
-                     <span className="block whitespace-nowrap">{en ? "Letter" : "Lettre"}</span>
+                     <span className="block whitespace-nowrap">Lettre</span>
                     <input
                       ref={(el) => {
                         snRef.current["sn_prefix"] = el;
@@ -2296,7 +2298,7 @@ function Index() {
                     />
                   </label>
                   <label className={`min-w-[150px] ${SUB_LABEL_CLASS}`}>
-                    <span className="block whitespace-nowrap">{en ? "Serial N°" : "N° de série"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></span>
+                    <span className="block whitespace-nowrap">N° de série<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></span>
                     <input
                       ref={(el) => {
                         snRef.current["sn_num"] = el;
@@ -2305,12 +2307,12 @@ function Index() {
                       onChange={(e) => updateInfo("sn_num", e.target.value.replace(/[^0-9]/g, ""))}
                       required
                       inputMode="numeric"
-                      placeholder={en ? "Digits" : "Chiffres"}
+                      placeholder="Chiffres"
                       className={`${INPUT_CLASS} max-w-[150px]`}
                     />
                   </label>
                   <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
-                    <span className="block whitespace-nowrap">{en ? "End letter" : "Lettre fin"}</span>
+                    <span className="block whitespace-nowrap">Lettre fin</span>
                     <input
                       value={info["sn_suffix"] ?? ""}
                       onChange={(e) =>
@@ -2323,7 +2325,7 @@ function Index() {
                   </label>
                 </div>
                 <label className={`min-w-[120px] ${SUB_LABEL_CLASS}`}>
-                  <span className="block whitespace-nowrap">{en ? "Manufacturing date" : "Date fabrication"}</span>
+                  <span className="block whitespace-nowrap">Date fabrication</span>
                   <input
                     value={info["fabrication"] ?? ""}
                     onChange={(e) => {
@@ -2344,13 +2346,13 @@ function Index() {
             </div>
 
             <label className={`mt-4 ${FIELD_LABEL_CLASS}`}>
-              {en ? "Country" : "Pays"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
+              Pays<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
               <SmartCombobox
                 value={info["pays"] ?? ""}
                 options={ALL_COUNTRIES}
                 groups={[
-                  { label: en ? "Frequent suggestions" : "Suggestions fréquentes", options: FREQUENT_COUNTRIES },
-                  { label: en ? "All countries" : "Tous les pays", options: SUGGESTED_COUNTRIES },
+                  { label: "Suggestions fréquentes", options: FREQUENT_COUNTRIES },
+                  { label: "Tous les pays", options: SUGGESTED_COUNTRIES },
                 ]}
                 onTyping={markDirty}
                 onCommit={(v) => updateInfo("pays", v)}
@@ -2359,8 +2361,8 @@ function Index() {
 
             <label className={`mt-4 ${FIELD_LABEL_CLASS}`}>
               <span className="flex items-center gap-2">
-                {en ? "City" : "Ville"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
-                {isGeocoding && <span className="text-[0.65rem] italic">{en ? "Checking…" : "Vérification…"}</span>}
+                Ville<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
+                {isGeocoding && <span className="text-[0.65rem] italic">Vérification…</span>}
               </span>
               <input
                 value={info["ville"] ?? ""}
@@ -2387,7 +2389,7 @@ function Index() {
               className={`!flex !flex-row !items-center !flex-nowrap !gap-6 !w-full mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}
               style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", gap: "24px", width: "100%" }}
             >
-              <span className="shrink-0">{en ? "Maintenance type" : "Type d'entretien"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></span>
+              <span className="shrink-0">Type d'entretien<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></span>
               {MAINTENANCE_OPTIONS.map((t) => (
                 <label key={t} className="flex shrink-0 items-center gap-1 text-sm text-foreground">
                   <input
@@ -2403,19 +2405,19 @@ function Index() {
                       }
                     }}
                   />
-                  {en ? MAINTENANCE_LABELS_EN[t] : t}
+                  {t}
                 </label>
               ))}
             </div>
 
             <label className={`mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
-              <span className="inline-flex items-center">{en ? "Usage level" : "Niveau d'usage"}</span>
+              <span className="inline-flex items-center">Niveau d'usage</span>
               <select
                 value={info["usage_level"] ?? ""}
                 onChange={(e) => updateInfo("usage_level", e.target.value)}
                 className={`${INPUT_CLASS} !bg-white`}
               >
-                <option value="">{en ? "— Select —" : "— Sélectionner —"}</option>
+                <option value="">— Sélectionner —</option>
                 {USAGE_OPTIONS.map((option) => (
                   <option key={option} value={option}>{option}</option>
                 ))}
@@ -2424,7 +2426,7 @@ function Index() {
 
             <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
               <span className="inline-flex items-center">
-                {en ? "Remarks" : "Remarques"}
+                Remarques
                 {remarquesRequired && (
                   <span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
                 )}
@@ -2434,7 +2436,7 @@ function Index() {
                 required={remarquesRequired}
                 aria-invalid={remarquesInvalid}
                 placeholder={
-                  remarquesRequired ? (en ? "⚠️ Please describe the modifications" : "⚠️ Veuillez indiquer les modifications") : undefined
+                  remarquesRequired ? "⚠️ Veuillez indiquer les modifications" : undefined
                 }
                 value={info["remarques"] ?? ""}
                 onChange={(e) => updateInfo("remarques", e.target.value)}
@@ -2481,12 +2483,20 @@ function Index() {
             ref={weighingBtnRef}
             type="button"
             onClick={onValidateWeighing}
-            // Toujours activable : texte noir net et bordure noire standard.
-            className="rounded-md border-2 border-black bg-white px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors hover:bg-gray-100"
+            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${requiredSheetFieldsComplete ? "!border-green-600 !bg-green-100 !text-black" : "border-input bg-background !text-gray-400 opacity-60"}`}
+            style={
+              requiredSheetFieldsComplete
+                ? {
+                    backgroundColor: "#dcfce7",
+                    borderColor: "#16a34a",
+                    color: "#000000",
+                    fontWeight: "bold",
+                  }
+                : undefined
+            }
           >
-            {en ? "Key measurements >" : "Mesures clavier >"}
+            {en ? "Keyboard measurements >" : "Mesures clavier >"}
           </button>
-
         </div>
 
       </div>
@@ -2559,18 +2569,15 @@ function Index() {
                 className="pointer-events-none absolute left-5 top-1/2 hidden w-max max-w-none -translate-y-1/2 whitespace-nowrap rounded-md border border-gray-300 px-3 py-2 text-left text-[13px] font-medium normal-case text-gray-950 shadow-lg group-hover:block"
                 style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
               >
+                <span className="block whitespace-nowrap">• TAB : avance d&apos;une zone de saisie</span>
+                <span className="block whitespace-nowrap">• Shift + TAB : recule d&apos;une zone de saisie</span>
                 <span className="block whitespace-nowrap">
-                  {en ? "• TAB: move forward one input field" : "• TAB : avance d'une zone de saisie"}
+                  • ALT + TAB (Option{" "}
+                  <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 align-middle text-[11px] leading-none">
+                    ⌥
+                  </span>{" "}
+                  sur Mac) : saute directement au DO suivant
                 </span>
-                <span className="block whitespace-nowrap">
-                  {en ? "• Shift + TAB: move back one input field" : "• Shift + TAB : recule d'une zone de saisie"}
-                </span>
-                <span className="block whitespace-nowrap">
-                  {en
-                    ? "• ALT + TAB (Option ⌥ on Mac): jump straight to the next C"
-                    : "• ALT + TAB (Option ⌥ sur Mac) : saute directement au DO suivant"}
-                </span>
-
               </span>
 
             </span>

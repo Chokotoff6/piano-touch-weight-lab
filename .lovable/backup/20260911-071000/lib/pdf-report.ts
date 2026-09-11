@@ -1,6 +1,5 @@
 // Génération du rapport PDF Premium (A4 paysage, 2 pages, téléchargement direct).
 import jsPDF from "jspdf";
-import { getLang } from "@/data/translations";
 import html2canvas from "html2canvas-pro";
 import { setExportProgress } from "@/lib/topbar-store";
 
@@ -456,7 +455,7 @@ export async function buildReportPdf(
     // Charte PDF : page 1 titrée « Poids statique » (centré, 30 px de marge
     // haute et basse) avec le logo KeyWeight de 42 px tout en haut à droite.
     const topOffset = index === 0
-      ? drawTitle(pdf, getLang() === "en" ? "WORKSHOP REPORT" : "RAPPORT D'ATELIER", false, logo)
+      ? drawTitle(pdf, "RAPPORT D'ATELIER", false, logo)
       : withHeader
         ? HEADER_H
         : 0;
@@ -513,7 +512,7 @@ function drawFooter(pdf: jsPDF, page: number, total: number, stamp: string) {
   pdf.setFontSize(7);
   pdf.setTextColor(120);
   pdf.text(`Page ${page} / ${total}`, PAGE_W - MARGIN, PAGE_H - MARGIN - 3, { align: "right" });
-  pdf.text(`${getLang() === "en" ? "Exported on:" : "Exporté le :"} ${stamp}`, PAGE_W - MARGIN, PAGE_H - MARGIN, { align: "right" });
+  pdf.text(`Exporté le : ${stamp}`, PAGE_W - MARGIN, PAGE_H - MARGIN, { align: "right" });
   // Signature obligatoire, en bas à gauche de chaque page.
   pdf.text("Keyweight.com © 2026", MARGIN, PAGE_H - MARGIN, { align: "left" });
   pdf.setTextColor(0);
@@ -576,7 +575,7 @@ export async function generatePortraitReport(
     pdf.setFontSize(7);
     pdf.setTextColor(120);
     pdf.text(`Page ${startPage + index} / ${total}`, P_W - MARGIN, P_H - MARGIN - 3, { align: "right" });
-    pdf.text(`${getLang() === "en" ? "Exported on:" : "Exporté le :"} ${stamp}`, P_W - MARGIN, P_H - MARGIN, { align: "right" });
+    pdf.text(`Exporté le : ${stamp}`, P_W - MARGIN, P_H - MARGIN, { align: "right" });
     pdf.text("Keyweight.com © 2026", MARGIN, P_H - MARGIN, { align: "left" });
     pdf.setTextColor(0);
   });
