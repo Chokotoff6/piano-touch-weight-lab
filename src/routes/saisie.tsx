@@ -802,6 +802,13 @@ function Index() {
   /** Validation consciente de la fiche : alerte si incomplète, sinon mode pesée. */
   const onValidateWeighing = useCallback(() => {
     if (!requiredSheetFieldsComplete) {
+      setMissingFlash(true);
+      if (missingFlashTimeout.current) clearTimeout(missingFlashTimeout.current);
+      missingFlashTimeout.current = setTimeout(() => {
+        setMissingFlash(false);
+        missingFlashTimeout.current = null;
+      }, 3000);
+
       if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
       const r = weighingBtnRef.current?.getBoundingClientRect();
       setBlockAnchor(
