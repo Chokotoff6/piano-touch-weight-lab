@@ -1454,7 +1454,7 @@ function Comparer() {
               {
                 blocks: keep([mirrorAveragesRef.current, mirrorSheetRef.current]),
                 layout: "column" as const,
-                title: "RAPPORT D'ATELIER",
+                title: en ? "WORKSHOP REPORT" : "RAPPORT D'ATELIER",
                 underline: false,
               },
               { blocks: keep([mirror("wa"), mirror("wd")]), layout: "column" as const },
@@ -1465,7 +1465,7 @@ function Comparer() {
               {
                 blocks: keep([settingsRef.current, averagesRef.current]),
                 layout: "row" as const,
-                title: "ANALYSE COMPARATIVE",
+                title: en ? "COMPARATIVE ANALYSIS" : "ANALYSE COMPARATIVE",
                 underline: true,
               },
               // Poids descendant (haut) et Poids remontant (bas).
@@ -1778,7 +1778,7 @@ function Comparer() {
             <div className="min-w-0">
               
               <div ref={averagesRef} data-pdf-expand data-pdf-lock-w="980" className="sticky top-[127px] z-50 mb-[50px] w-full bg-white pb-2 relative">
-                <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span>Moyennes</span>} className="h-fit">
+                <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span>{en ? "Averages" : "Moyennes"}</span>} className="h-fit">
                   {/* Séparateurs affichés uniquement si au moins deux sources sont présentes. */}
                   <div className={(comparedPiano !== null || sourceMode === "cloud" || standardEnabled) ? "mb-3 border-b border-gray-400 pb-3" : ""}><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">Piano actuel : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
                   {(comparedPiano !== null || sourceMode === "cloud") && (
