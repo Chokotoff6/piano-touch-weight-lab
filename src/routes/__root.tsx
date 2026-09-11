@@ -538,21 +538,28 @@ function RootComponent() {
                        setSupportHint(false);
                      }}
                    >
-                        {/* Logo LIKED réduit de 20 % (≈40 px). */}
+                         {/* Gabarit historique validé du logo LIKED : 85 × 40 px. */}
                         <Button
                          type="button"
                           variant="ghost"
                           size="sm"
                          onClick={() => setSupportOpen(true)}
                          aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                          style={{ height: "40px", width: "auto" }}
+                           style={{ height: "40px", width: "85px" }}
                           className="relative z-10 flex shrink-0 items-center justify-center overflow-hidden p-0 transition-transform hover:scale-105 hover:bg-transparent"
                       >
                          <img
                             src={lang === "en" ? likedLogoEnAsset.url : likedLogoFrAsset.url}
                           alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                           style={{ height: "40px", width: "auto" }}
-                          className="block max-w-none object-contain"
+                            style={{
+                              height: "111.44px",
+                              width: "111.44px",
+                              maxHeight: "none",
+                              maxWidth: "none",
+                              left: "-11.71px",
+                              top: "-36.37px",
+                            }}
+                           className="absolute block object-contain"
                         />
                       </Button>
 
