@@ -1330,22 +1330,22 @@ function SidebarPanel(props: SidebarPanelProps) {
     `${PILL_BASE} flex w-full items-center justify-start gap-2 bg-white !opacity-100 disabled:!opacity-100 !border-black ${active ? activeText : "!text-black"} [&_svg]:!opacity-100`;
 
   return (
-    <Frame title="Réglages" className="flex flex-1 flex-col">
+    <Frame title={en ? "Settings" : "Réglages"} className="flex flex-1 flex-col">
       <div className="flex h-auto flex-col items-stretch justify-start gap-2 pt-2">
           <div className="text-sm font-bold !text-black">{en ? "Compare current piano with:" : "Comparer piano actuel avec :"}</div>
           <FastTip text={tipTarget}><Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><span className="w-full text-center font-bold uppercase">{en ? "Target" : "Cible"}</span></Button></FastTip>
           <FastTip text={tipCloud}><Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={sourceButtonClass(props.cloudEnabled, "!text-orange-600")}><span className="w-full text-center font-bold uppercase">Cloud</span></Button></FastTip>
-           <FastTip text={tipCsv}><Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} ${props.csvActive ? "!border-black !text-blue-700 [&_svg]:!text-blue-700" : "!border-black !text-black"}`}><span className="w-full text-center font-bold uppercase">{en ? "Imported CSV" : "IMPORT CVS"}</span></Button></FastTip>
+           <FastTip text={tipCsv}><Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} ${props.csvActive ? "!border-black !text-blue-700 [&_svg]:!text-blue-700" : "!border-black !text-black"}`}><span className="w-full text-center font-bold uppercase">{en ? "IMPORT CSV" : "IMPORT CVS"}</span></Button></FastTip>
           <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
           {props.cloudEnabled && (
             <>
           <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold" style={{ color: "#f97316" }}>{en ? "CLOUD filters" : "Filtres CLOUD"}</div>
-          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.usageLevel !== "low" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">Usage instrument : <span className="!text-black font-semibold uppercase">{usageLabel}</span></span></Button>
-          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.importantChanges !== "excluded" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">Modifications importantes : <span className="!text-black font-semibold uppercase">{changesLabel}</span></span></Button>
+          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.usageLevel !== "low" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">{en ? "Instrument usage: " : "Usage instrument : "}<span className="!text-black font-semibold uppercase">{usageLabel}</span></span></Button>
+          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.importantChanges !== "excluded" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">{en ? "Major modifications: " : "Modifications importantes : "}<span className="!text-black font-semibold uppercase">{changesLabel}</span></span></Button>
 
-          {cycleRow("Même zone climatique", props.sameClimate, props.setSameClimate)}
-          {cycleRow("Même année de fabrication", props.sameYear, props.setSameYear)}
-          {cycleRow("Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
+          {cycleRow(en ? "Same climate zone" : "Même zone climatique", props.sameClimate, props.setSameClimate)}
+          {cycleRow(en ? "Same manufacturing year" : "Même année de fabrication", props.sameYear, props.setSameYear)}
+          {cycleRow(en ? "Pianos under 5 years old" : "Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
           <div className="text-center font-bold leading-tight" style={{ color: "#f97316", marginTop: "15px", fontSize: "0.85rem" }}>
             {(!Number(props.cloudSampleCount) || !Number(props.cloudTotalCount)) ? (
               <>
