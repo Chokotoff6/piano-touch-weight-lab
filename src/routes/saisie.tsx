@@ -798,8 +798,10 @@ function Index() {
     };
   }, [keyboardValid]);
 
+  /** Choix multiples d'entretien (stockés sous forme de texte séparé par des virgules). */
+  const maintenanceList = parseMaintenance(info["entretien"]);
   /** Remarques obligatoires dès que des modifications importantes sont déclarées. */
-  const remarquesRequired = info["entretien"] === "Modifications importantes";
+  const remarquesRequired = maintenanceList.includes("Modifications importantes");
   const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
 
   /**
