@@ -685,6 +685,8 @@ type SubChartCtx = {
   lastMouseY: RefObject<number | null>;
   keyboardModeRef: RefObject<boolean>;
   lastMouseNote: RefObject<number | null>;
+  // Reprise de main par la souris : écrit la note active partagée et efface l'état clavier.
+  onMouseTakeover: (note: number | null) => void;
 };
 
 // SubChart est déclaré au niveau module (et non imbriqué dans ComparisonChart) pour
