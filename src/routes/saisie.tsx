@@ -597,6 +597,20 @@ function Index() {
     [info],
   );
 
+  /** Liste dynamique des champs obligatoires encore vides de la fiche piano. */
+  const missingSheetFields = useMemo(() => {
+    const checks: Array<[string, string]> = [
+      ["marque", en ? "Brand" : "Marque"],
+      ["modele", en ? "Model" : "Modèle"],
+      ["sn_num", en ? "Serial number" : "N° de série"],
+      ["type_piano", en ? "Type" : "Type"],
+      ["pays", en ? "Country" : "Pays"],
+      ["entretien", en ? "Maintenance" : "Entretien"],
+    ];
+    return checks.filter(([key]) => !String(info[key] ?? "").trim()).map(([, label]) => label);
+  }, [info, en]);
+
+
   const exportReady = useMemo(
     () => Boolean(info["marque"]?.trim() && info["sn_num"]?.trim()),
     [info],
