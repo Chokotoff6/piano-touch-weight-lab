@@ -624,6 +624,7 @@ function Index() {
           info["modele"]?.trim() &&
           info["sn_num"]?.trim() &&
           info["type_piano"] &&
+          info["fabrication"]?.trim() &&
           info["pays"]?.trim() &&
           info["ville"]?.trim() &&
           info["entretien"] &&
@@ -639,6 +640,7 @@ function Index() {
           info["modele"]?.trim() &&
           info["sn_num"]?.trim() &&
           info["type_piano"] &&
+          info["fabrication"]?.trim() &&
           info["pays"]?.trim() &&
           info["ville"]?.trim() &&
           info["entretien"] &&
@@ -654,6 +656,7 @@ function Index() {
       ["modele", en ? "Model" : "Modèle"],
       ["sn_num", en ? "Serial number" : "N° de série"],
       ["type_piano", en ? "Type" : "Type"],
+      ["fabrication", en ? "Manufacturing date" : "Date fabrication"],
       ["pays", en ? "Country" : "Pays"],
       ["ville", en ? "City" : "Ville"],
       ["entretien", en ? "Maintenance" : "Entretien"],
@@ -664,9 +667,10 @@ function Index() {
 
 
   const exportReady = useMemo(
-    () => Boolean(info["marque"]?.trim() && info["sn_num"]?.trim()),
-    [info],
+    () => Boolean(info["marque"]?.trim() && info["sn_num"]?.trim() && requiredSheetFieldsComplete),
+    [info, requiredSheetFieldsComplete],
   );
+
 
   const serialFormatValid = useMemo(
     () =>
