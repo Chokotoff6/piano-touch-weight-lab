@@ -2017,9 +2017,16 @@ function Index() {
 
   // --- Rendu : champ de saisie d'un poids (Wa ou Wd) ------------------------------
 
-  const renderWeightInput = (index: number, field: "wa" | "wd", isBlack: boolean, pdfMirror = false) => (
+  const renderWeightInput = (
+    index: number,
+    field: "wa" | "wd",
+    isBlack: boolean,
+    pdfMirror = false,
+    hidden = false,
+  ) => (
     <div
       className={`weight-fields weight-fields-${field}`}
+      style={hidden ? { visibility: "hidden" } : undefined}
       onClick={() => {
         if (!canEnterWeights) showBlockMessage(index, field);
       }}
@@ -2159,9 +2166,11 @@ function Index() {
                 <div className={`key-number ${C_KEYS.has(index + 1) ? "is-c-key" : ""}`}>
                   {index + 1}
                 </div>
-                <div className="key-body" style={hiddenByView ? { visibility: "hidden" } : undefined}>
-                  {renderWeightInput(index, "wa", black, pdfMirror)}
-                  {renderWeightInput(index, "wd", black, pdfMirror)}
+                {/* Le dessin de la touche reste toujours intact : seules les
+                    cases de saisie se masquent selon le filtre « Touches ». */}
+                <div className="key-body">
+                  {renderWeightInput(index, "wa", black, pdfMirror, hiddenByView)}
+                  {renderWeightInput(index, "wd", black, pdfMirror, hiddenByView)}
                 </div>
               </div>
             );
