@@ -1593,7 +1593,7 @@ function Comparer() {
   useEffect(() => {
     if (status !== "ok") return;
     const clamp = () => {
-      const frame = document.querySelector('[data-frame="fric"]');
+      const frame = liveChartsRef.current?.querySelector('[data-frame="fric"]');
       if (!frame) return;
       const frameTop = frame.getBoundingClientRect().top + window.scrollY;
       // -5 : laisse un fin filet d'air de 5 px entre le cadre « Moyennes »
