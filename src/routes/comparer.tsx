@@ -1791,7 +1791,7 @@ function Comparer() {
   const mirrorChartData = useMemo(() => buildChartData(mine, null, null), [mine]);
 
   return (
-    <main className="mx-auto w-full max-w-[1400px] px-6 py-10">
+    <main className="mx-auto w-full max-w-[1400px] px-6 pb-10 pt-20">
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-x-0 top-[77px] z-40 h-[50px] bg-white"

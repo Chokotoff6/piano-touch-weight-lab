@@ -511,18 +511,21 @@ function RootComponent() {
                      setSupportHint(false);
                    }}
                  >
+                   {/* Carré parfait calé sur le dessin des touches du logo :
+                       hauteur 55px, bord supérieur aligné (logo 85px, dessin
+                       commençant à ~4px sous le haut de l'image). */}
                    <button
                      type="button"
                      onClick={() => setSupportOpen(true)}
                      aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                     style={{ height: "42px", width: "42px" }}
-                     className="relative z-10 ml-[30px] flex shrink-0 translate-y-[26px] items-center justify-center overflow-hidden rounded-lg bg-transparent transition-transform hover:scale-105"
+                     style={{ height: "55px", width: "55px" }}
+                     className="relative z-10 ml-[30px] flex shrink-0 translate-y-[30px] items-center justify-center overflow-hidden rounded-lg bg-transparent transition-transform hover:scale-105"
                    >
                      <img
                        src={supportHandsAsset.url}
                        alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                       style={{ height: "42px", width: "42px" }}
-                       className="rounded-lg object-contain"
+                       style={{ height: "55px", width: "55px" }}
+                       className="rounded-lg object-cover"
                      />
                    </button>
 
