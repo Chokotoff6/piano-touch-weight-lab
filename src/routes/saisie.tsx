@@ -2483,20 +2483,12 @@ function Index() {
             ref={weighingBtnRef}
             type="button"
             onClick={onValidateWeighing}
-            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${requiredSheetFieldsComplete ? "!border-green-600 !bg-green-100 !text-black" : "border-input bg-background !text-gray-400 opacity-60"}`}
-            style={
-              requiredSheetFieldsComplete
-                ? {
-                    backgroundColor: "#dcfce7",
-                    borderColor: "#16a34a",
-                    color: "#000000",
-                    fontWeight: "bold",
-                  }
-                : undefined
-            }
+            // Toujours activable : texte noir net et bordure noire standard.
+            className="rounded-md border-2 border-black bg-white px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors hover:bg-gray-100"
           >
-            {en ? "Keyboard measurements >" : "Mesures clavier >"}
+            {en ? "Key measurements >" : "Mesures clavier >"}
           </button>
+
         </div>
 
       </div>
