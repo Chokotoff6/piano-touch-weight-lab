@@ -509,6 +509,13 @@ function Index() {
   const [pedalAlert, setPedalAlert] = useState(false);
   const [undoStack, setUndoStack] = useState<Row[][]>([]);
   const [redoStack, setRedoStack] = useState<Row[][]>([]);
+  /** Ancrages de calage des boutons Undo/Redo dans le bloc de touches 45-88. */
+  const sheet2Ref = useRef<HTMLDivElement | null>(null);
+  const key45Ref = useRef<HTMLDivElement | null>(null);
+  const waLabel2Ref = useRef<HTMLDivElement | null>(null);
+  const undoGroupRef = useRef<HTMLDivElement | null>(null);
+  const [undoPos, setUndoPos] = useState<{ left: number; top: number } | null>(null);
+
   const pedalCount = useRef(0);
   const pedalOrigin = useRef<{ index: number; field: "wa" | "wd" } | null>(null);
 
