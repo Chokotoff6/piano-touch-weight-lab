@@ -326,23 +326,20 @@ function profileFromSpec(spec: FactorySpecRow): RefProfile {
 }
 
 
-// Pastilles épurées : une tous les 6 demi-tons à partir de la touche 4 (Do et Fa#).
-// En mode zoom chirurgical la granularité passe à une touche sur deux.
-const DOT_NOTES = new Set(Array.from({ length: 15 }, (_, i) => 4 + i * 6));
-const makeSampleDot = (step: number) => {
-  const Dot = (props: { cx?: number; cy?: number; payload?: { key?: number } }) => {
-    const { cx, cy, payload } = props;
+// Pastilles permanentes : un point sur CHAQUE touche réellement mesurée,
+// à la couleur de sa courbe. Le survol agrandit le point (activeDot).
+const makeSampleDot = (radius: number) => {
+  const Dot = (props: { cx?: number; cy?: number; stroke?: string; value?: number | null }) => {
+    const { cx, cy, stroke, value } = props;
     if (typeof cx !== "number" || typeof cy !== "number") return null;
-    const note = payload?.key;
-    if (typeof note !== "number") return null;
-    const visible = step === 2 ? note % 2 === 0 : DOT_NOTES.has(note);
-    if (!visible) return null;
-    return <circle cx={cx} cy={cy} r={2} fill="#000000" />;
+    if (value === null || value === undefined || !Number.isFinite(value as number)) return null;
+    return <circle cx={cx} cy={cy} r={radius} fill={stroke ?? "#000000"} stroke="none" />;
   };
   return Dot;
 };
-const SampleDot = makeSampleDot(6);
-const ZoomDot = makeSampleDot(2);
+const SampleDot = makeSampleDot(2.2);
+const ZoomDot = makeSampleDot(3);
+
 
 
 type EndLabelOptions = {
