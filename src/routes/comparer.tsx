@@ -1000,7 +1000,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   const subCtx: SubChartCtx = {
     chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, filters, cycleFor, lang,
     zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode,
-    plotRef, lastMouseY, keyboardModeRef, lastMouseNote,
+    plotRef, lastMouseY, keyboardModeRef, lastMouseNote, onMouseTakeover,
   };
 
   // Capture de la molette en mode zoom : glissement continu de la fenêtre de 44 touches.
