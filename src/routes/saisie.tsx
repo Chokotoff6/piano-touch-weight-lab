@@ -2454,7 +2454,8 @@ function Index() {
                     (info["entretien"] ?? MAINTENANCE_OPTIONS[0]) as (typeof MAINTENANCE_OPTIONS)[number],
                   );
                   const next =
-                    MAINTENANCE_OPTIONS[(current + 1) % MAINTENANCE_OPTIONS.length];
+                    MAINTENANCE_OPTIONS[(current + 1) % MAINTENANCE_OPTIONS.length] ??
+                    MAINTENANCE_OPTIONS[0];
                   updateInfo("entretien", next);
                   if (next === "Modifications importantes") {
                     setTimeout(() => remarquesRef.current?.focus(), 0);
