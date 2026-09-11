@@ -2342,8 +2342,8 @@ function Index() {
       const l = label.getBoundingClientRect();
       const g = group.getBoundingClientRect();
       setUndoPos({
-        left: k.left - s.left - 35 - g.width,
-        top: l.top - s.top - 35 - g.height - 8,
+        left: k.left - s.left - 27 - g.width,
+        top: l.top - s.top - 35 - g.height - 20,
       });
     };
     place();
