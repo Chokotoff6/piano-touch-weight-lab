@@ -1163,6 +1163,40 @@ function Index() {
     inputs.current[`${index}-${field}`]?.select();
   };
 
+  /** Une touche est-elle visible avec le filtre courant ? */
+  const isVisibleKey = (index: number) => {
+    if (viewFilter === "white") return !isBlack(index);
+    if (viewFilter === "black") return isBlack(index);
+    return true;
+  };
+
+  /** Prochaine touche visible dans la direction demandée (ou null). */
+  const nextVisibleKey = (index: number, direction: 1 | -1): number | null => {
+    for (let i = index + direction; i >= 0 && i <= 87; i += direction) {
+      if (isVisibleKey(i)) return i;
+    }
+    return null;
+  };
+
+  /** Déplacement fluide : Wa → Wd → touche visible suivante (et inverse). */
+  const moveFocus = (index: number, field: "wa" | "wd", direction: 1 | -1) => {
+    if (direction === 1) {
+      if (field === "wa") {
+        focusCell(index, "wd");
+        return;
+      }
+      const next = nextVisibleKey(index, 1);
+      if (next !== null) focusCell(next, "wa");
+      return;
+    }
+    if (field === "wd") {
+      focusCell(index, "wa");
+      return;
+    }
+    const prev = nextVisibleKey(index, -1);
+    if (prev !== null) focusCell(prev, "wd");
+  };
+
   const onKeyDown = (e: React.KeyboardEvent, index: number, field: "wa" | "wd") => {
     // Verrou absolu du binôme : erreur mécanique, hors fourchette ou binôme
     // incomplet. Seuls les déplacements INTERNES au binôme restent permis.
@@ -1186,20 +1220,19 @@ function Index() {
     // TAB : avance d'une zone ; Shift + TAB : recule d'une zone.
     if (e.key === "Tab") {
       e.preventDefault();
-      if (e.shiftKey) {
-        if (field === "wd") focusCell(index, "wa");
-        else if (index > 0) focusCell(index - 1, "wd");
-      } else {
-        if (field === "wa") focusCell(index, "wd");
-        else if (index < 87) focusCell(index + 1, "wa");
-      }
+      moveFocus(index, field, e.shiftKey ? -1 : 1);
+      return;
+    }
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      moveFocus(index, field, e.key === "ArrowRight" ? 1 : -1);
       return;
     }
     if (e.key !== "Enter") return;
     e.preventDefault();
-    if (field === "wa") focusCell(index, "wd");
-    else if (index < 87) focusCell(index + 1, "wa");
+    moveFocus(index, field, 1);
   };
+
 
 
   /** Met à jour une cellule (Wa/Wd) et renvoie la ligne résultante. */
