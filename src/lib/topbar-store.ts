@@ -21,6 +21,8 @@ type TopbarState = {
   compareUnlocked: boolean;
   /** La page Résultats a été visitée au moins une fois. */
   resultsVisited: boolean;
+  /** Au moins une source de comparaison active sur la page Comparer. */
+  comparisonActive: boolean;
 };
 
 const GATE_KEY = "ptw_gate_ready";
@@ -40,6 +42,7 @@ let state: TopbarState = {
   gateReady: false,
   compareUnlocked: false,
   resultsVisited: false,
+  comparisonActive: false,
 };
 const listeners = new Set<() => void>();
 
