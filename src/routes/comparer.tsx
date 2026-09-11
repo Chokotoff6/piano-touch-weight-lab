@@ -750,9 +750,11 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   // recale de +30 px, et le tracé est élargi de 30 px de chaque côté.
   const groupedShift = !zoomed && keyFilter === "all" ? 30 : 0;
   const axisShift = Y_AXIS_SHIFT - groupedShift;
-  const yTicks = (() => {
-    if (!yDomain) return undefined;
-    const [lo, hi] = yDomain as [number, number];
+  // Graduations entières réutilisables : même règle sur Résultats (domaine
+  // auto) et sur Comparer (domaine figé par famille).
+  const integerTicks = (domain: [number, number] | undefined) => {
+    if (!domain) return undefined;
+    const [lo, hi] = domain;
     const min = Math.ceil(lo);
     const max = Math.floor(hi);
     if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) return undefined;
@@ -760,7 +762,27 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
     const ticks: number[] = [];
     for (let v = min; v <= max; v += step) ticks.push(v);
     return ticks;
+  };
+  const yTicks = integerTicks(yDomain as [number, number] | undefined);
+  // Page Comparer : axe gradué bâti sur le domaine de la famille.
+  const familyTicks = autoDomain
+    ? undefined
+    : integerTicks(family.domain as [number, number] | undefined);
+  // Cadres condensés : au plus 3 lignes de repère, hors première et dernière
+  // graduation (déjà portées par le cadre).
+  const guideTicks = (() => {
+    const source = autoDomain ? yTicks : familyTicks;
+    if (!source || source.length <= 2) return undefined;
+    const inner = source.slice(1, -1);
+    if (autoDomain || inner.length <= 3) return inner;
+    const picked: number[] = [];
+    for (let i = 1; i <= 3; i += 1) {
+      const value = inner[Math.round((i * (inner.length + 1)) / 4) - 1];
+      if (value !== undefined && !picked.includes(value)) picked.push(value);
+    }
+    return picked;
   })();
+
   // Anti-chevauchement réel des libellés de droite : on convertit les valeurs en
   // pixels puis on écarte verticalement toute paire trop proche (14 px minimum).
   const spacedDyRight = (() => {
