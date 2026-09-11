@@ -406,6 +406,9 @@ function Index() {
   const coherenceDismissed = useRef<Set<number>>(new Set());
   /** Mode pesée : formulaire masqué, bandeau résumé affiché. */
   const [weighingMode, setWeighingMode] = useState(false);
+  /** Filtrage visuel cyclique des touches affichées à l'écran. */
+  const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
+
   /** Retour depuis Résultats / Comparer : on rouvre directement l'écran clavier. */
   useEffect(() => {
     try {
@@ -2145,6 +2148,9 @@ function Index() {
             const leftBlack = !black && BLACK_KEYS.has(index);
             const rightBlack = !black && BLACK_KEYS.has(index + 2);
             const shift = leftBlack === rightBlack ? "" : leftBlack ? "shift-left" : "shift-right";
+            const hiddenByView =
+              !pdfMirror &&
+              ((viewFilter === "white" && black) || (viewFilter === "black" && !black));
             return (
               <div
                 key={index}
@@ -2153,13 +2159,14 @@ function Index() {
                 <div className={`key-number ${C_KEYS.has(index + 1) ? "is-c-key" : ""}`}>
                   {index + 1}
                 </div>
-                <div className="key-body">
+                <div className="key-body" style={hiddenByView ? { visibility: "hidden" } : undefined}>
                   {renderWeightInput(index, "wa", black, pdfMirror)}
                   {renderWeightInput(index, "wd", black, pdfMirror)}
                 </div>
               </div>
             );
           })}
+
         </div>
       </div>
       <div data-pdf-result-frame className={pdfMirror ? "w-full h-auto max-h-none overflow-visible opacity-100 pointer-events-none" : "w-full h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none"}>
