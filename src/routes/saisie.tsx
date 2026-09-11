@@ -2453,16 +2453,39 @@ function Index() {
             />
 
 
-            <div className="mt-2 flex justify-end sm:col-span-2 md:col-span-4">
+            <div className="mt-2 flex items-center justify-end gap-4 sm:col-span-2 md:col-span-4">
+              {/* Message d'alerte contextuel : liste en temps réel ce qui manque. */}
+              {(missingSheetFields.length > 0 ||
+                !rows.some((r) => String(r.wa ?? "").trim() || String(r.wd ?? "").trim())) && (
+                <span className="text-sm font-semibold !text-gray-600">
+                  {en ? "Complete: " : "Complétez : "}
+                  {missingSheetFields.length > 0
+                    ? missingSheetFields.join(", ")
+                    : en
+                      ? "Measurements"
+                      : "Pesées"}
+                </span>
+              )}
               <button
                 ref={weighingBtnRef}
                 type="button"
                 onClick={onValidateWeighing}
-                className={`rounded-md !border !border-gray-300 px-5 py-2 text-sm font-bold transition-colors hover:bg-accent ${requiredSheetFieldsComplete ? "!bg-gray-100 !text-gray-600" : "!bg-white !text-gray-400"}`}
+                className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${requiredSheetFieldsComplete ? "!border-green-600 !bg-green-100 !text-black" : "border-input bg-background !text-gray-400 opacity-60"}`}
+                style={
+                  requiredSheetFieldsComplete
+                    ? {
+                        backgroundColor: "#dcfce7",
+                        borderColor: "#16a34a",
+                        color: "#000000",
+                        fontWeight: "bold",
+                      }
+                    : undefined
+                }
               >
-                Données de pesée ➔
+                {en ? "Keyboard measurements >" : "Mesures clavier >"}
               </button>
             </div>
+
 
           </div>
         </Frame>
