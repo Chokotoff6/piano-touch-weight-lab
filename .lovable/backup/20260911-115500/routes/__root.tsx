@@ -15,13 +15,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   Outlet,
   Link,
   createRootRouteWithContext,
@@ -36,8 +29,7 @@ import { createPortal } from "react-dom";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
-import supportEuroAsset from "@/assets/support-euro.svg.asset.json";
-import supportDollarAsset from "@/assets/support-dollar.svg.asset.json";
+import premiumCoffeeAsset from "@/assets/premium-coffee.png.asset.json";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -173,8 +165,6 @@ function RootComponent() {
   const topbar = useTopbarState();
   const lang = useLang();
   const [consentOpen, setConsentOpen] = useState(false);
-  /** Fenêtre interne de soutien collaboratif (bilingue). */
-  const [supportOpen, setSupportOpen] = useState(false);
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
   /** Infobulle « Importer » : visible au survol, masquée après 3 secondes. */
   const [importHint, setImportHint] = useState(false);
@@ -497,20 +487,20 @@ function RootComponent() {
                      FR
                    </Button>
                  </div>
-                 <button
-                   type="button"
-                   onClick={() => setSupportOpen(true)}
-                   title={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                   aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                   className="relative z-10 ml-[60px] flex shrink-0 translate-y-[24px] items-center justify-center overflow-hidden rounded-lg bg-transparent transition-transform hover:scale-105"
+                 <a
+                   href="https://buymeacoffee.com"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
+                   aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
+                   className="relative z-10 ml-[60px] flex shrink-0 translate-y-[24px] items-center justify-center rounded-lg bg-transparent transition-transform hover:scale-105"
                  >
                    <img
-                     src={lang === "en" ? supportDollarAsset.url : supportEuroAsset.url}
-                     alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                     style={{ height: "38px", width: "auto" }}
-                     className="rounded-lg object-contain"
+                     src={premiumCoffeeAsset.url}
+                     alt="Buy me a coffee"
+                     className="!h-[85px] !w-auto rounded-lg object-contain"
                    />
-                 </button>
+                 </a>
                </div>
 
                {/* Logo officiel KeyWeight : 30 px à gauche du bord droit,
@@ -552,40 +542,6 @@ function RootComponent() {
         )}
 
 
-
-      <Dialog open={supportOpen} onOpenChange={setSupportOpen}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <DialogTitle>
-              {lang === "en"
-                ? "Support the KeyWeight collaborative project"
-                : "Soutenir le projet collaboratif KeyWeight"}
-            </DialogTitle>
-            <DialogDescription className="text-left text-sm leading-relaxed !text-gray-800">
-              {lang === "en"
-                ? "KeyWeight is an independent tool created for pianists and piano technicians. To develop this platform, several hundred euros have been personally invested. If this tool saves you time and precision on a daily basis, you can actively participate in its maintenance and future developments through a free financial support. Thank you!"
-                : "KeyWeight est un outil indépendant créé pour les pianistes et facteurs de piano. Pour développer cette plateforme, plusieurs centaines d'euros ont été investis personnellement. Si cet outil vous fait gagner du temps et de la précision au quotidien, vous pouvez participer activement à sa maintenance et à ses futures évolutions via un soutien financier libre. Merci !"}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
-            {[
-              lang === "en" ? "Support: 10 $" : "Soutenir : 10 €",
-              lang === "en" ? "Support: 20 $" : "Soutenir : 20 €",
-              lang === "en" ? "Custom amount" : "Montant libre",
-            ].map((label) => (
-              <a
-                key={label}
-                href="#"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium !text-gray-900 transition-colors hover:bg-gray-50"
-              >
-                {label}
-              </a>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
