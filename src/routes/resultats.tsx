@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useLang } from "@/data/translations";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -97,6 +98,8 @@ function profileFromRows(rows: Row[]): RefProfile {
 const hasAnyValue = (profile: RefProfile) => profile.wa.some((value) => Number.isFinite(value));
 
 function Resultats() {
+  const lang = useLang();
+  const en = lang === "en";
   const topbar = useTopbarState();
   const [draft, setDraft] = useState<{ rows: Row[]; info: Info }>(() => ({
     rows: Array.from({ length: 88 }, () => ({ wa: "", wd: "" })),
@@ -165,9 +168,9 @@ function Resultats() {
         }),
       );
       setDraft({ rows: nextRows, info: nextInfo });
-      toast.success("Fichier CSV importé.");
+      toast.success(en ? "CSV file imported." : "Fichier CSV importé.");
     } catch {
-      toast.error("Fichier CSV invalide.");
+      toast.error(en ? "Invalid CSV file." : "Fichier CSV invalide.");
     }
   };
 
@@ -227,8 +230,8 @@ function Resultats() {
     });
     return {
       main: `${brand} ${model} (${year}) - SN ${sn}`,
-      time: `Mesure ${dd}-${mm}-${now.getFullYear()} - ${hh}:${mi}`,
-      count: ` - ${white} Blanches / ${black} Noires`,
+      time: `${en ? "Measurement" : "Mesure"} ${dd}-${mm}-${now.getFullYear()} - ${hh}:${mi}`,
+      count: ` - ${white} ${en ? "White" : "Blanches"} / ${black} ${en ? "Black" : "Noires"}`,
     };
   }, [info, rows]);
 
@@ -256,23 +259,23 @@ function Resultats() {
     if (busy || unlocked) return;
     setConsent(true);
     setBusy(true);
-    const toastId = toast.loading("Partage collaboratif en cours…");
+    const toastId = toast.loading(en ? "Collaborative sharing in progress…" : "Partage collaboratif en cours…");
     try {
       const piano = buildPiano();
       saveCurrentPiano(piano);
       // Double écriture synchrone : ligne pivot (is_buffer) puis archivage historique.
       const buffer = await upsertCurrentPianoBuffer(piano);
       if (!buffer.ok) {
-        toast.error(`Écriture cloud impossible : ${buffer.error ?? "erreur réseau"}`, { id: toastId });
+        toast.error(`${en ? "Cloud write failed:" : "Écriture cloud impossible :"} ${buffer.error ?? (en ? "network error" : "erreur réseau")}`, { id: toastId });
         return;
       }
       const historyId = await findHistoryProfileId(piano.serial_number);
       const history = await saveCurrentPianoToCloud(piano, historyId);
       if (!history.ok) {
-        toast.error(`Archivage impossible : ${history.error ?? "erreur réseau"}`, { id: toastId });
+        toast.error(`${en ? "Archiving failed:" : "Archivage impossible :"} ${history.error ?? (en ? "network error" : "erreur réseau")}`, { id: toastId });
         return;
       }
-      toast.success("Mesures partagées : graphique et comparaison débloqués.", { id: toastId });
+      toast.success(en ? "Measurements shared: chart and comparison unlocked." : "Mesures partagées : graphique et comparaison débloqués.", { id: toastId });
       setCompareUnlocked(true);
     } finally {
       setBusy(false);
@@ -294,7 +297,7 @@ function Resultats() {
           if (!file) return;
           const reader = new FileReader();
           reader.onload = () => importCsvContent(String(reader.result ?? ""));
-          reader.onerror = () => toast.error("Lecture du fichier impossible.");
+          reader.onerror = () => toast.error(en ? "Unable to read the file." : "Lecture du fichier impossible.");
           reader.readAsText(file, "utf-8");
         }}
       />
@@ -309,7 +312,7 @@ function Resultats() {
                 titleClassName="absolute -top-4 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground"
                 title={
                   <span className="flex items-baseline gap-2">
-                    <span>Moyennes</span>
+                    <span>{en ? "Averages" : "Moyennes"}</span>
                     <span className="text-slate-400">-</span>
                     <span className="text-lg font-semibold !text-black">{summary.main}</span>
                     <span className="text-xs font-medium !text-black">{summary.time}</span>
