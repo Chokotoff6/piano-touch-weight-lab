@@ -238,8 +238,10 @@
 
   .key-number.is-c-key {
     font-weight: 900;
-    font-size: clamp(0.48rem, 0.864vw, 0.84rem);
+    font-size: clamp(0.52rem, 0.92vw, 0.9rem);
+    -webkit-text-stroke: 0.35px currentColor;
   }
+
 
   .key-body {
     position: relative;

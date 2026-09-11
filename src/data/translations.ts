@@ -28,8 +28,15 @@ export function initLang() {
   if (stored === "en" || stored === "fr") {
     lang = stored;
     listeners.forEach((l) => l());
+    return;
   }
+  // Détection automatique : tout code commençant par « fr » ouvre en français,
+  // toutes les autres langues système ouvrent en anglais.
+  const codes = [...(navigator.languages ?? []), navigator.language ?? ""];
+  lang = codes.some((code) => String(code).toLowerCase().startsWith("fr")) ? "fr" : "en";
+  listeners.forEach((l) => l());
 }
+
 
 export function setLang(next: Lang) {
   lang = next;
