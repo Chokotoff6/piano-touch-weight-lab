@@ -511,22 +511,22 @@ function RootComponent() {
                       setSupportHint(false);
                     }}
                   >
-                      {/* Logo LIKED agrandi 2× (≈50 px) et descendu de 10 px. */}
-                      <Button
-                       type="button"
-                        variant="ghost"
-                        size="sm"
-                       onClick={() => setSupportOpen(true)}
-                       aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                        style={{ height: "50px", width: "auto" }}
-                        className="relative z-10 flex shrink-0 items-center justify-center overflow-hidden p-0 transition-transform hover:scale-105 hover:bg-transparent"
-                    >
-                      <img
-                         src={likedLogoAsset.url}
-                        alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                         style={{ height: "50px", width: "auto" }}
-                        className="block max-w-none object-contain"
-                      />
+                       {/* Logo LIKED réduit de 20 % (≈40 px). */}
+                       <Button
+                        type="button"
+                         variant="ghost"
+                         size="sm"
+                        onClick={() => setSupportOpen(true)}
+                        aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
+                         style={{ height: "40px", width: "auto" }}
+                         className="relative z-10 flex shrink-0 items-center justify-center overflow-hidden p-0 transition-transform hover:scale-105 hover:bg-transparent"
+                     >
+                       <img
+                          src={likedLogoAsset.url}
+                         alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
+                          style={{ height: "40px", width: "auto" }}
+                         className="block max-w-none object-contain"
+                       />
                      </Button>
 
                     {supportHint && (
