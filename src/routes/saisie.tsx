@@ -2441,52 +2441,52 @@ function Index() {
               />
             </label>
 
-            <div
-              className={`!flex !flex-row !items-center !flex-nowrap !gap-3 !w-full mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}
-              style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", gap: "12px", width: "100%" }}
-            >
-              <span className="shrink-0">{en ? "Maintenance type" : "Type d'entretien"}</span>
-              <button
-                type="button"
-                data-pdf-hide
-                onClick={() => {
-                  const current = MAINTENANCE_OPTIONS.indexOf(
-                    (info["entretien"] ?? MAINTENANCE_OPTIONS[0]) as (typeof MAINTENANCE_OPTIONS)[number],
-                  );
-                  const next =
-                    MAINTENANCE_OPTIONS[(current + 1) % MAINTENANCE_OPTIONS.length] ??
-                    MAINTENANCE_OPTIONS[0];
-                  updateInfo("entretien", next);
-                  if (next === "Modifications importantes") {
-                    setTimeout(() => remarquesRef.current?.focus(), 0);
-                  }
-                }}
-                className="flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
-              >
-                <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
-                <span>
-                  {en
-                    ? MAINTENANCE_LABELS_EN[
-                        info["entretien"] ?? MAINTENANCE_OPTIONS[0]
-                      ]
-                    : info["entretien"] ?? MAINTENANCE_OPTIONS[0]}
-                </span>
-              </button>
+            <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 sm:col-span-2 md:col-span-4">
+              <div className={FIELD_LABEL_CLASS}>
+                <span className="block">{en ? "Maintenance type" : "Type d'entretien"}</span>
+                <div className="mt-2 flex flex-col gap-1.5">
+                  {MAINTENANCE_OPTIONS.map((option) => {
+                    const checked = maintenanceList.includes(option);
+                    return (
+                      <label key={option} className="flex items-center gap-2 font-normal">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => {
+                            const next = e.target.checked
+                              ? [...MAINTENANCE_OPTIONS].filter(
+                                  (o) => o === option || maintenanceList.includes(o),
+                                )
+                              : maintenanceList.filter((o) => o !== option);
+                            updateInfo("entretien", next.join(", "));
+                            if (e.target.checked && option === "Modifications importantes") {
+                              setTimeout(() => remarquesRef.current?.focus(), 0);
+                            }
+                          }}
+                          className="h-4 w-4 shrink-0 accent-foreground"
+                        />
+                        <span>{en ? MAINTENANCE_LABELS_EN[option] : MAINTENANCE_LABELS_FR[option]}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <label className={FIELD_LABEL_CLASS}>
+                <span className="block">{en ? "Usage level" : "Niveau d'usage"}</span>
+                <select
+                  value={info["usage_level"] ?? ""}
+                  onChange={(e) => updateInfo("usage_level", e.target.value)}
+                  className={`${INPUT_CLASS} !bg-white !block !w-auto !max-w-[300px] mt-2`}
+                >
+                  <option value="">{en ? "— Select —" : "— Sélectionner —"}</option>
+                  {USAGE_OPTIONS.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </label>
             </div>
 
-            <label className={`mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
-              <span className="block">{en ? "Usage level" : "Niveau d'usage"}</span>
-              <select
-                value={info["usage_level"] ?? ""}
-                onChange={(e) => updateInfo("usage_level", e.target.value)}
-                className={`${INPUT_CLASS} !bg-white !block !w-auto !max-w-[300px]`}
-              >
-                <option value="">{en ? "— Select —" : "— Sélectionner —"}</option>
-                {USAGE_OPTIONS.map((option) => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-            </label>
 
             <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
               <span className="inline-flex items-center">
