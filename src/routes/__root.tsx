@@ -175,6 +175,9 @@ function RootComponent() {
   const [consentOpen, setConsentOpen] = useState(false);
   /** Fenêtre interne de soutien collaboratif (bilingue). */
   const [supportOpen, setSupportOpen] = useState(false);
+  /** Message flash au survol du bouton de soutien (3 s maximum). */
+  const [supportHint, setSupportHint] = useState(false);
+  const supportHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
   /** Infobulle « Importer » : visible au survol, masquée après 3 secondes. */
   const [importHint, setImportHint] = useState(false);
