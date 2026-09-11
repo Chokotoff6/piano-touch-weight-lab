@@ -1290,8 +1290,9 @@ function SidebarPanel(props: SidebarPanelProps) {
   const usageLabel = props.usageLevel === "low" ? "FAIBLE" : props.usageLevel === "medium" ? "MOYEN" : "INTENSIF";
   const changesLabel = props.importantChanges === "included" ? "INCLUS" : props.importantChanges === "excluded" ? "EXCLUS" : "SEULS";
   const tipCloud = en
-    ? "Compare your piano with the same model shared by other users."
-    : "Comparez votre piano avec ceux du même modèle partagés par d'autres utilisateurs.";
+    ? "Compare your piano with others of the same model."
+    : "Comparez votre piano avec d'autres du même modèle.";
+
   const tipTarget = en
     ? "Generic values generally expected for a piano keyboard."
     : "Valeurs génériques généralement attendues pour un clavier de piano.";
