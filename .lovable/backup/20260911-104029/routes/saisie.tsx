@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Redo2, RefreshCw, Undo2 } from "lucide-react";
+import { Redo2, Undo2 } from "lucide-react";
 import {
   hasAnyMeasurement,
   incompleteOctaves,
@@ -2017,16 +2017,9 @@ function Index() {
 
   // --- Rendu : champ de saisie d'un poids (Wa ou Wd) ------------------------------
 
-  const renderWeightInput = (
-    index: number,
-    field: "wa" | "wd",
-    isBlack: boolean,
-    pdfMirror = false,
-    hidden = false,
-  ) => (
+  const renderWeightInput = (index: number, field: "wa" | "wd", isBlack: boolean, pdfMirror = false) => (
     <div
       className={`weight-fields weight-fields-${field}`}
-      style={hidden ? { visibility: "hidden" } : undefined}
       onClick={() => {
         if (!canEnterWeights) showBlockMessage(index, field);
       }}
@@ -2166,11 +2159,9 @@ function Index() {
                 <div className={`key-number ${C_KEYS.has(index + 1) ? "is-c-key" : ""}`}>
                   {index + 1}
                 </div>
-                {/* Le dessin de la touche reste toujours intact : seules les
-                    cases de saisie se masquent selon le filtre « Touches ». */}
-                <div className="key-body">
-                  {renderWeightInput(index, "wa", black, pdfMirror, hiddenByView)}
-                  {renderWeightInput(index, "wd", black, pdfMirror, hiddenByView)}
+                <div className="key-body" style={hiddenByView ? { visibility: "hidden" } : undefined}>
+                  {renderWeightInput(index, "wa", black, pdfMirror)}
+                  {renderWeightInput(index, "wd", black, pdfMirror)}
                 </div>
               </div>
             );
@@ -2228,9 +2219,27 @@ function Index() {
         data-climate-zone={climateZone ?? ""}
       >
         <Frame title={en ? "Piano information" : "Informations piano"} className="mt-10 [&_input]:border-foreground/60">
+          <div className="absolute right-10 top-10 z-10">
+            {confirmReset === "info" && (
+              <div className="absolute bottom-full right-0 mb-2 flex min-w-max items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg">
+                <span>{en ? "Do you want to erase all entered piano information?" : "Voulez-vous effacer toutes les infos piano saisies ?"}</span>
+                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { resetInfo(); setConfirmReset(null); }}>Oui</button>
+                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setConfirmReset("info")}
+              title={en ? "Reset the information sheet only" : "Réinitialiser uniquement la fiche d'informations"}
+              style={{ transform: "scale(1.15)", transformOrigin: "top right" }}
+              className="rounded-md border border-input bg-background px-4 py-1.5 !text-[0.8rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+            >
+              Reset
+            </button>
+          </div>
           <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-[1fr_210px_1fr_1fr]">
             <label className={FIELD_LABEL_CLASS}>
-              {en ? "Brand" : "Marque"}
+              {en ? "Brand" : "Marque"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
               <SmartCombobox
                 value={info["marque"] ?? ""}
                 options={BRAND_SUGGESTIONS}
@@ -2244,7 +2253,7 @@ function Index() {
             </label>
 
             <fieldset className={FIELD_LABEL_CLASS} data-keep-model-open>
-              <legend>{en ? "Piano type" : "Type de piano"}</legend>
+              <legend>{en ? "Piano type" : "Type de piano"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></legend>
               <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 bg-white px-2">
                 {["Droit", "à Queue"].map((t) => (
                   <label key={t} className="flex items-center gap-1 text-sm text-foreground">
@@ -2269,7 +2278,7 @@ function Index() {
             </fieldset>
 
             <label className={FIELD_LABEL_CLASS}>
-              {en ? "Model" : "Modèle"}
+              {en ? "Model" : "Modèle"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
               <SmartCombobox
                 ref={modelComboRef}
                 value={info["modele"] ?? ""}
@@ -2290,7 +2299,7 @@ function Index() {
             </label>
 
             <div className="text-xs text-muted-foreground sm:col-span-2 md:col-span-4" style={{ marginTop: "12px", paddingTop: "0px", display: "block" }}>
-              <span className={FIELD_LABEL_CLASS}>{en ? "Serial number" : "Numéro de série"}</span>{" "}
+              <span className={FIELD_LABEL_CLASS}>{en ? "Serial number" : "Numéro de série"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></span>{" "}
               <span className="text-muted-foreground">
                 {en ? "(Locate the number on the metal frame - include letters if any)." : "(Reportez le numéro du cadre métallique - inclure les lettres si existantes)."}
               </span>
@@ -2310,7 +2319,7 @@ function Index() {
                     />
                   </label>
                   <label className={`min-w-[150px] ${SUB_LABEL_CLASS}`}>
-                    <span className="block whitespace-nowrap">{en ? "Serial N°" : "N° de série"}</span>
+                    <span className="block whitespace-nowrap">{en ? "Serial N°" : "N° de série"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></span>
                     <input
                       ref={(el) => {
                         snRef.current["sn_num"] = el;
@@ -2358,7 +2367,7 @@ function Index() {
             </div>
 
             <label className={`mt-4 ${FIELD_LABEL_CLASS}`}>
-              {en ? "Country" : "Pays"}
+              {en ? "Country" : "Pays"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
               <SmartCombobox
                 value={info["pays"] ?? ""}
                 options={ALL_COUNTRIES}
@@ -2373,7 +2382,7 @@ function Index() {
 
             <label className={`mt-4 ${FIELD_LABEL_CLASS}`}>
               <span className="flex items-center gap-2">
-                {en ? "City" : "Ville"}
+                {en ? "City" : "Ville"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
                 {isGeocoding && <span className="text-[0.65rem] italic">{en ? "Checking…" : "Vérification…"}</span>}
               </span>
               <input
@@ -2401,7 +2410,7 @@ function Index() {
               className={`!flex !flex-row !items-center !flex-nowrap !gap-6 !w-full mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}
               style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", gap: "24px", width: "100%" }}
             >
-              <span className="shrink-0">{en ? "Maintenance type" : "Type d'entretien"}</span>
+              <span className="shrink-0">{en ? "Maintenance type" : "Type d'entretien"}<span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span></span>
               {MAINTENANCE_OPTIONS.map((t) => (
                 <label key={t} className="flex shrink-0 items-center gap-1 text-sm text-foreground">
                   <input
@@ -2423,11 +2432,11 @@ function Index() {
             </div>
 
             <label className={`mt-4 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
-              <span className="block">{en ? "Usage level" : "Niveau d'usage"}</span>
+              <span className="inline-flex items-center">{en ? "Usage level" : "Niveau d'usage"}</span>
               <select
                 value={info["usage_level"] ?? ""}
                 onChange={(e) => updateInfo("usage_level", e.target.value)}
-                className={`${INPUT_CLASS} !bg-white !block !w-auto !max-w-[300px]`}
+                className={`${INPUT_CLASS} !bg-white !w-auto !max-w-[300px]`}
               >
                 <option value="">{en ? "— Select —" : "— Sélectionner —"}</option>
                 {USAGE_OPTIONS.map((option) => (
@@ -2439,6 +2448,9 @@ function Index() {
             <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
               <span className="inline-flex items-center">
                 {en ? "Remarks" : "Remarques"}
+                {remarquesRequired && (
+                  <span className="!text-sm !font-bold !text-gray-950 !ml-1 inline-block">*</span>
+                )}
               </span>
               <input
                 ref={remarquesRef}
@@ -2476,52 +2488,28 @@ function Index() {
 
           </div>
         </Frame>
-        {/* Sous le cadre : Reset centré, bouton de navigation à droite. */}
-        <div className="mt-3 grid w-full grid-cols-[1fr_auto_1fr] items-center gap-4 pl-2 pr-2">
-          <div />
+        {/* Bouton de navigation placé sous le cadre, calé à droite. */}
+        <div className="mt-3 flex w-full items-center justify-end gap-4 pl-2 pr-2">
+          {missingFlash && (
+            <span className="text-sm font-semibold !text-gray-600">
+              {en ? "Complete: " : "Complétez : "}
+              {missingSheetFields.length > 0
+                ? missingSheetFields.join(", ")
+                : en
+                  ? "Measurements"
+                  : "Pesées"}
+            </span>
+          )}
+          <button
+            ref={weighingBtnRef}
+            type="button"
+            onClick={onValidateWeighing}
+            // Toujours activable : noir par défaut, vert dès que la fiche est complète.
+            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors ${requiredSheetFieldsComplete ? "!border-green-600 !bg-green-100" : "border-black bg-white hover:bg-gray-100"}`}
+          >
+            {en ? "Key measurements >" : "Mesures clavier >"}
+          </button>
 
-          <div className="relative flex items-center justify-center">
-            {confirmReset === "info" && (
-              <div
-                className="absolute left-1/2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
-                style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
-              >
-                <span>{en ? "Do you want to erase all entered piano information?" : "Voulez-vous effacer toutes les infos piano saisies ?"}</span>
-                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { resetInfo(); setConfirmReset(null); }}>Oui</button>
-                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => setConfirmReset("info")}
-              title={en ? "Reset the information sheet only" : "Réinitialiser uniquement la fiche d'informations"}
-              className="relative z-10 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.96rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
-            >
-              Reset
-            </button>
-          </div>
-
-          <div className="flex items-center justify-end gap-4">
-            {missingFlash && (
-              <span className="text-sm font-semibold !text-gray-600">
-                {en ? "Complete: " : "Complétez : "}
-                {missingSheetFields.length > 0
-                  ? missingSheetFields.join(", ")
-                  : en
-                    ? "Measurements"
-                    : "Pesées"}
-              </span>
-            )}
-            <button
-              ref={weighingBtnRef}
-              type="button"
-              onClick={onValidateWeighing}
-              // Toujours activable : noir par défaut, vert dès que la fiche est complète.
-              className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors ${requiredSheetFieldsComplete ? "!border-green-600 !bg-green-100" : "border-black bg-white hover:bg-gray-100"}`}
-            >
-              {en ? "Key measurements >" : "Mesures clavier >"}
-            </button>
-          </div>
         </div>
 
       </div>
@@ -2647,19 +2635,42 @@ function Index() {
           statiques » (et non plus à l'intérieur), donc jamais capturé au PDF. */}
       {weighingMode && (
         <div className="mt-3 flex w-full items-center justify-between pl-2 pr-2">
-          {/* Retour à la fiche piano : bordure grise standard. */}
+          {/* Retour à la fiche piano : bordure noire nette, jamais verte. */}
           <button
             type="button"
             data-pdf-hide
             onClick={() => setWeighingMode(false)}
-            className="rounded-md border border-input bg-background px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors hover:bg-accent"
+            className="rounded-md border-2 border-black bg-white px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors hover:bg-gray-100"
 
           >
             {en ? "< Edit piano information" : "< Modifier informations piano"}
           </button>
 
-          {/* Barre d'outils d'atelier centrée : undo, redo, touches, reset. */}
+          {/* Barre d'outils d'atelier centrée : vue, undo, redo, reset. */}
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              data-pdf-hide
+              onClick={() =>
+                setViewFilter((current) =>
+                  current === "all" ? "white" : current === "white" ? "black" : "all",
+                )
+              }
+              className="rounded-md border border-input bg-background px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+            >
+              {en
+                ? viewFilter === "all"
+                  ? "View: All"
+                  : viewFilter === "white"
+                    ? "View: Whites"
+                    : "View: Blacks"
+                : viewFilter === "all"
+                  ? "Vue : Toutes"
+                  : viewFilter === "white"
+                    ? "Vue : Blanches"
+                    : "Vue : Noires"}
+            </button>
+
             <button
               type="button"
               data-pdf-hide
@@ -2681,32 +2692,6 @@ function Index() {
               className={`flex h-[34px] w-9 items-center justify-center rounded-md border border-input bg-background p-0 transition-colors hover:bg-accent ${redoStack.length === 0 ? "!text-gray-400 cursor-not-allowed" : "text-muted-foreground"}`}
             >
               <Redo2 className="h-4 w-4" />
-            </button>
-
-            <button
-              type="button"
-              data-pdf-hide
-              onClick={() =>
-                setViewFilter((current) =>
-                  current === "all" ? "white" : current === "white" ? "black" : "all",
-                )
-              }
-              className="flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
-            >
-              <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
-              <span>
-                {en
-                  ? viewFilter === "all"
-                    ? "Keys: All"
-                    : viewFilter === "white"
-                      ? "Keys: Whites"
-                      : "Keys: Blacks"
-                  : viewFilter === "all"
-                    ? "Touches : Toutes"
-                    : viewFilter === "white"
-                      ? "Touches : Blanches"
-                      : "Touches : Noires"}
-              </span>
             </button>
 
             <div className="relative flex items-center">

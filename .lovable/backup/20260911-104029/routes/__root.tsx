@@ -241,7 +241,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <nav className="!sticky !top-0 !z-[50] !bg-white !shadow-md border-b border-border">
-        <div className="mx-auto max-w-[1400px] px-4 py-1 sm:px-6">
+        <div className="mx-auto max-w-[1400px] px-4 py-2 sm:px-6">
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
               <Link to="/" className={linkClass} activeOptions={{ exact: true }} activeProps={{ className: activeLinkClass }}>
@@ -385,6 +385,14 @@ function RootComponent() {
                   </DropdownMenuItem>
                 ) : (
                   <>
+                    <DropdownMenuItem
+                      disabled={!filesEnabled}
+                      onClick={() => requireConsent(() => dispatchAction("piano-export-csv"))}
+                    >
+                      {lang === "en"
+                        ? "Save entered data as CSV (re-importable)"
+                        : "Sauver données saisies au format CSV (re-importable)"}
+                    </DropdownMenuItem>
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger>
                         {lang === "en" ? "Export PDF" : "Exporter PDF"}
@@ -414,15 +422,6 @@ function RootComponent() {
 
                       </DropdownMenuSubContent>
                     </DropdownMenuSub>
-                    {/* Sauvegarde CSV : placée sous l'option globale « Exporter PDF ». */}
-                    <DropdownMenuItem
-                      disabled={!filesEnabled}
-                      onClick={() => requireConsent(() => dispatchAction("piano-export-csv"))}
-                    >
-                      {lang === "en"
-                        ? "Save entered data as CSV (re-importable)"
-                        : "Sauver données saisies au format CSV (re-importable)"}
-                    </DropdownMenuItem>
                   </>
                 )}
               </DropdownMenuContent>
@@ -493,7 +492,7 @@ function RootComponent() {
                    rel="noopener noreferrer"
                    title="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
                    aria-label="Soutenir le projet — Offrir un café pour aider au maintien en ligne du site développé bénévolement"
-                   className="relative z-10 ml-[60px] flex shrink-0 translate-y-[24px] items-center justify-center rounded-lg bg-transparent transition-transform hover:scale-105"
+                   className="relative z-10 ml-[60px] flex shrink-0 -translate-y-[2px] items-center justify-center rounded-lg bg-transparent transition-transform hover:scale-105"
                  >
                    <img
                      src={premiumCoffeeAsset.url}
@@ -509,7 +508,7 @@ function RootComponent() {
                  src={keyweightLogo.url}
                  alt="KeyWeight"
                  style={{ height: "85px", width: "auto" }}
-                 className="relative z-10 shrink-0 -translate-x-[30px] translate-y-[26px] object-contain"
+                 className="relative z-10 shrink-0 -translate-x-[30px] -translate-y-[1px] object-contain"
                />
 
 
