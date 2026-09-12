@@ -243,6 +243,8 @@ function RootComponent() {
     initJourneyFlags();
   }, []);
   const isComparer = pathname === "/comparer";
+  /** Accueil épuré : seuls le logo, la FAQ et EN | FR restent visibles. */
+  const isHome = pathname === "/";
 
   /** Affiche le consentement RGPD/CGU au premier clic Sauver/Importer de la
       session, puis exécute l'action différée après acceptation. */
@@ -283,6 +285,7 @@ function RootComponent() {
       <nav className="!sticky !top-0 !z-[50] !bg-white !shadow-md border-b border-border">
         <div className="mx-auto max-w-[1400px] px-4 py-1 sm:px-6">
           <div className="flex flex-wrap items-center gap-2">
+            {!isHome && (
             <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
               <Link to="/" className={linkClass} activeOptions={{ exact: true }} activeProps={{ className: activeLinkClass }}>
                 {lang === "en" ? "Home" : "Accueil"}
@@ -342,10 +345,11 @@ function RootComponent() {
                 )}
               </div>
             </div>
+            )}
 
+            {!isHome && <div className="mx-10 h-6 w-[2px] bg-gray-400" aria-hidden="true" />}
 
-            <div className="mx-10 h-6 w-[2px] bg-gray-400" aria-hidden="true" />
-
+            {!isHome && (
             <DropdownMenu open={saveMenuOpen} onOpenChange={setSaveMenuOpen} modal={false}>
               <div
                 className="relative flex items-center"
@@ -467,10 +471,9 @@ function RootComponent() {
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
+            )}
 
-
-
-            {!isComparer && pathname !== "/resultats" && (
+            {!isHome && !isComparer && pathname !== "/resultats" && (
             <div className="relative flex items-center">
               {/* Importer : chargement d'un fichier CSV local uniquement. */}
               <Button
