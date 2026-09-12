@@ -153,29 +153,37 @@ function Accueil() {
         </Link>
       </div>
 
-      <div className="mx-auto w-full max-w-4xl" style={{ marginTop: "250px" }}>
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={() => setLegalOpen((open) => !open)}
-            className="text-xs !text-gray-500 underline transition-colors hover:!text-gray-800"
-          >
-            {en ? "Legal Notice" : "Mentions Légales"}
-          </button>
-        </div>
+      <div
+        className="mx-auto w-full max-w-4xl"
+        style={{ marginTop: "250px", paddingTop: 0, marginBottom: 0 }}
+      >
+        <button
+          type="button"
+          onClick={() => setLegalOpen((open) => !open)}
+          className="block w-full text-center text-xs !text-gray-500 underline transition-colors hover:!text-gray-800"
+          style={{ marginTop: 0, paddingTop: 0, paddingBottom: 0 }}
+        >
+          {en ? "Legal Notice" : "Mentions Légales"}
+        </button>
 
         {legalOpen && (
-          <div
-            className="space-y-2 text-left text-xs leading-relaxed !text-gray-700"
-            style={{ marginTop: "10px", marginBottom: "0px" }}
-          >
-            <p className="font-semibold !text-gray-900">{LEGAL_TITLE}</p>
+          <>
+            <p
+              className="text-left text-xs font-semibold leading-relaxed !text-gray-900"
+              style={{ marginTop: "10px", paddingTop: 0, marginBottom: "4px" }}
+            >
+              {LEGAL_TITLE}
+            </p>
             {LEGAL_BLOCKS.map(([label, text]) => (
-              <p key={label}>
+              <p
+                key={label}
+                className="text-left text-xs leading-relaxed !text-gray-700"
+                style={{ marginTop: 0, marginBottom: "6px" }}
+              >
                 <strong>{label}</strong> {text}
               </p>
             ))}
-          </div>
+          </>
         )}
       </div>
     </main>
