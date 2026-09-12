@@ -496,6 +496,15 @@
 
 }
 
+@keyframes liked-breathing {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+.liked-breathing {
+  animation: liked-breathing 3.5s ease-in-out infinite;
+}
+
 @layer base {
   * {
     border-color: var(--color-border);

@@ -559,7 +559,7 @@ function RootComponent() {
                               left: "-11.71px",
                               top: "-36.37px",
                             }}
-                           className="absolute block object-contain liked-breathing"
+                           className="absolute block object-contain"
                         />
                       </Button>
 
