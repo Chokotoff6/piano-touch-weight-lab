@@ -38,7 +38,7 @@ import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 import likedLogoFrAsset from "@/assets/image_soutien_v5.png.asset.json";
 import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
-import { ensureDemoDefault, enableDemoMode, isDemoClicked, markDemoClicked } from "@/lib/demo-mode";
+import { ensureDemoDefault, disableDemoMode, isDemoClicked, markDemoClicked } from "@/lib/demo-mode";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { FaqDialog } from "@/components/FaqDialog";
 import type { FaqPage } from "@/components/FaqContent";
@@ -628,9 +628,10 @@ function RootComponent() {
             <button
               type="button"
               onClick={() => {
-                enableDemoMode();
+                disableDemoMode();
                 markDemoClicked();
                 setDemoVisible(false);
+                window.location.reload();
               }}
               className="whitespace-nowrap rounded-md border-2 border-black bg-black px-4 py-2 text-xs font-bold uppercase tracking-wide !text-white transition-colors hover:bg-gray-800"
             >
