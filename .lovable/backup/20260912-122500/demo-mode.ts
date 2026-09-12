@@ -12,14 +12,22 @@ export const DEMO_CLICKED_KEY = "ptw_demo_clicked";
 
 /** Vrai si l'utilisateur a déjà cliqué sur le bouton « Mode démo ». */
 export function isDemoClicked(): boolean {
-  // Mémoire désactivée (phase de tests) : le bouton réapparaît à chaque chargement.
-  return false;
+  if (typeof window === "undefined") return true;
+  try {
+    return window.localStorage.getItem(DEMO_CLICKED_KEY) === "1";
+  } catch {
+    return true;
+  }
 }
 
 /** Enregistre le clic sur « Mode démo ». */
 export function markDemoClicked() {
   if (typeof window === "undefined") return;
-  /* Mémoire désactivée (phase de tests). */
+  try {
+    window.localStorage.setItem(DEMO_CLICKED_KEY, "1");
+  } catch {
+    /* stockage indisponible */
+  }
 }
 
 export const DEMO_INFO: Record<string, string> = {

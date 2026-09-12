@@ -2400,7 +2400,6 @@ function Index() {
                     <input
                       type="radio"
                       name="type_piano"
-                      style={{ accentColor: "#111111" }}
                       value={t}
                       checked={info["type_piano"] === t}
                       onChange={() => {
@@ -2614,7 +2613,7 @@ function Index() {
 
 
             <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4 flex items-end gap-3`}>
-              <span className="inline-block leading-none pb-[6px]">
+              <span className="inline-flex items-center leading-8">
                 {en ? "Remarks" : "Remarques"}
               </span>
               <textarea
