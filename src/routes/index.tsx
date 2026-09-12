@@ -178,50 +178,31 @@ function Accueil() {
         </Link>
       </div>
 
-      <div className="mt-[120px] flex justify-center">
-        <button
-          type="button"
-          onClick={() => setLegalOpen(true)}
-          className="text-xs !text-gray-500 underline transition-colors hover:!text-gray-800"
-        >
-          {en ? "Legal Notice" : "Mentions Légales"}
-        </button>
-      </div>
-
-      {legalOpen && (
-        <div
-          className="fixed inset-0 z-[99997] flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.15)" }}
-          onClick={() => setLegalOpen(false)}
-          role="presentation"
-        >
-          <div
-            className="max-h-[80vh] w-full max-w-xl overflow-y-auto rounded-lg border border-gray-300 bg-white p-6 shadow-xl"
-            onClick={(event) => event.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-label={LEGAL_TITLE}
+      <div className="mx-auto w-full max-w-4xl" style={{ marginTop: "150px" }}>
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={() => setLegalOpen((open) => !open)}
+            className="text-xs !text-gray-500 underline transition-colors hover:!text-gray-800"
           >
-            <h2 className="text-base font-semibold !text-gray-900">{LEGAL_TITLE}</h2>
-            <div className="mt-3 space-y-3 text-sm leading-relaxed !text-gray-800">
-              {LEGAL_BLOCKS.map(([label, text]) => (
-                <p key={label}>
-                  <strong>{label}</strong> {text}
-                </p>
-              ))}
-            </div>
-            <div className="mt-4 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setLegalOpen(false)}
-                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium !text-gray-900 hover:bg-gray-50"
-              >
-                {en ? "Close" : "Fermer"}
-              </button>
-            </div>
-          </div>
+            {en ? "Legal Notice" : "Mentions Légales"}
+          </button>
         </div>
-      )}
+
+        {legalOpen && (
+          <div
+            className="space-y-2 text-left text-xs leading-relaxed !text-gray-700"
+            style={{ marginTop: "10px", marginBottom: "0px" }}
+          >
+            <p className="font-semibold !text-gray-900">{LEGAL_TITLE}</p>
+            {LEGAL_BLOCKS.map(([label, text]) => (
+              <p key={label}>
+                <strong>{label}</strong> {text}
+              </p>
+            ))}
+          </div>
+        )}
+      </div>
     </main>
   );
 }
