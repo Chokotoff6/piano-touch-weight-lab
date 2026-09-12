@@ -564,8 +564,8 @@ function FaqComparer() {
 }
 
 /** Contenu FAQ dédié à la page courante. */
-export function FaqContent({ page }: { page: FaqPage }) {
-  if (page === "saisie") return <FaqSaisie />;
+export function FaqContent({ page, en = false }: { page: FaqPage; en?: boolean }) {
+  if (page === "saisie") return <FaqSaisie en={en} />;
   if (page === "resultats") return <FaqResultats />;
   if (page === "comparer") return <FaqComparer />;
   return <FaqHome />;
