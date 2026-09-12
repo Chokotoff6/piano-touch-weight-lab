@@ -16,12 +16,15 @@ première page du site.
 Contenu :
 - Logo KeyWeight en filigrane plein écran, centré, couvrant, opacité 0.07,
   sans animation, texte parfaitement lisible par-dessus.
-- Texte de présentation aéré. Le texte actuel est conservé tel quel en
-  attendant le texte exact que vous devez fournir ; dès réception, il sera
-  substitué sans autre changement.
+- Texte de présentation remplacé mot à mot par le texte fourni
+  (« Bienvenue sur KeyWeight ! … Des FAQ dédiées à chaque module répondent à
+  toutes les questions pratiques et techniques. »), en mise en page aérée :
+  accroche, « Mon piano est-il trop dur ? », « 2 MODULES DE DIAGNOSTIC »,
+  « FLEXIBILITÉ », puis la question finale.
 - Bouton d'accès à la Saisie conservé.
 - En bas au centre : lien discret « Mentions Légales » ouvrant une fenêtre
-  avec le texte officiel fourni.
+  avec le texte officiel intégral fourni (Édition, Hébergement, Propriété
+  intellectuelle, Responsabilité).
 
 Le long bloc FAQ actuellement en bas de l'accueil est déplacé dans la fenêtre
 flottante FAQ (point 4).
@@ -70,7 +73,5 @@ flottante FAQ (point 4).
 - Le reste (exports PDF/CSV, Comparer, Cloud, logo de soutien) n'est pas
   touché. Typecheck et build vérifiés en fin d'exécution.
 
-## Point à confirmer
-
-Le texte exact de présentation de l'accueil n'a pas encore été fourni : le
-texte existant est conservé provisoirement.
+Les textes d'accueil, RGPD et mentions légales sont repris mot à mot tels que
+fournis.
