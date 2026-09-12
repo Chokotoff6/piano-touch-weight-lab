@@ -103,7 +103,7 @@ function Accueil() {
             </li>
             <li>
               {en
-                ? "PDF Reporting: Save the regulation history of an instrument or export comprehensive analytical reports and charts."
+                ? "CSV & PDF Reporting: Save the regulation history of an instrument or export comprehensive analytical reports and charts."
                 : "Rapports CSV et PDF : sauvegardez l'historique d'un instrument ou exportez les rapports graphiques et d'analyse"}
             </li>
           </ul>
