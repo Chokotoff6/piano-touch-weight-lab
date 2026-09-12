@@ -81,7 +81,7 @@ function Accueil() {
                 ? "Data Entry & Management: Fast logging and clear visualization of static touch weight data across all 88 keys"
                 : "Saisie et gestion : enregistrement rapide et visualisation des poids statiques des 88 touches"}
             </li>
-            <li className="whitespace-nowrap">
+            <li className={en ? undefined : "whitespace-nowrap"}>
               {en
                 ? "Comparative Analysis: Graphical comparison against standard industry regulation targets and community crowd-sourced data (Collaborative Cloud)."
                 : "Analyse comparative : comparaison graphique par rapport aux cibles usuelles et aux données de la communauté (Cloud collaboratif)."}
@@ -94,7 +94,7 @@ function Accueil() {
             {en ? "Workshop flexibility" : "Flexibilité"}
           </h2>
           <ul className="list-disc space-y-1 pl-5">
-            <li className="whitespace-nowrap">
+            <li className={en ? undefined : "whitespace-nowrap"}>
               {en
                 ? "Online or Off-line: Take measurements directly on the web page, or on the field using a simple printable PDF weigh-out sheet, then log them later."
                 : "En ligne ou Off-line : pesez directement sur la page Web, ou sur le terrain à l'aide d'une simple fiche de pesée PDF"}
