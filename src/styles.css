@@ -496,17 +496,8 @@
 
 }
 
-@keyframes liked-breathing {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.04); }
-}
-
 .liked-breathing {
-  animation: liked-breathing 3.5s ease-in-out infinite;
   transform-origin: center center;
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-  filter: contrast(1.08);
 }
 
 @layer base {
