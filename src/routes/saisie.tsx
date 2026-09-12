@@ -442,7 +442,7 @@ function Index() {
   const weighingBtnRef = useRef<HTMLButtonElement | null>(null);
   const [coherenceIndex, setCoherenceIndex] = useState<number | null>(null);
   const [coherenceAnchor, setCoherenceAnchor] = useState<{ x: number; y: number } | null>(null);
-  const remarquesRef = useRef<HTMLInputElement | null>(null);
+  const remarquesRef = useRef<HTMLTextAreaElement | null>(null);
   const modelComboRef = useRef<SmartComboboxHandle | null>(null);
   const blockTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const coherenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);

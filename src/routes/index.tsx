@@ -63,7 +63,9 @@ function Accueil() {
         </h1>
 
         <section className="space-y-2">
-          <h2 className="text-base font-semibold">Mon piano est-il trop dur ?</h2>
+          <h2 className="text-base font-semibold">
+            {en ? "Is my piano action too heavy?" : "Mon piano est-il trop dur ?"}
+          </h2>
           <p>
             {en
               ? "Heavy touch, finger fatigue...? KeyWeight allows you to quickly objectify these physical sensations by measuring whether downweight, upweight, friction, and balance reveal a regulation defect."
@@ -96,12 +98,12 @@ function Accueil() {
           <ul className="list-disc space-y-1 pl-5">
             <li className={en ? undefined : "whitespace-nowrap"}>
               {en
-                ? "Online or Off-line: Take measurements directly on the web page, or on the field using a simple printable PDF weigh-out sheet, then log them later."
+                ? "Online or Off-line: Take measurements directly on the web page, or on the field using a simple printable PDF weigh-out sheet, then import them later."
                 : "En ligne ou Off-line : pesez directement sur la page Web, ou sur le terrain à l'aide d'une simple fiche de pesée PDF"}
             </li>
             <li>
               {en
-                ? "PDF Reporting: Save the regulation history of an instrument or export comprehensive analytical reports and charts for your clients."
+                ? "PDF Reporting: Save the regulation history of an instrument or export comprehensive analytical reports and charts."
                 : "Rapports PDF : sauvegardez l'historique d'un instrument ou exportez les rapports graphiques et d'analyse"}
             </li>
           </ul>
@@ -114,22 +116,22 @@ function Accueil() {
         </p>
       </div>
 
-      <div className="mt-8 flex justify-center">
+      <div className="mt-6 flex justify-center">
         <Link
           to="/saisie"
           className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
-          Commencer votre diagnostic
+          {en ? "Start your diagnosis" : "Commencer votre diagnostic"}
         </Link>
       </div>
 
-      <div className="mt-auto flex justify-center pt-6">
+      <div className="flex justify-center pt-[60px]">
         <button
           type="button"
           onClick={() => setLegalOpen(true)}
           className="text-xs !text-gray-500 underline transition-colors hover:!text-gray-800"
         >
-          Mentions Légales
+          {en ? "Legal Notice" : "Mentions Légales"}
         </button>
       </div>
 
