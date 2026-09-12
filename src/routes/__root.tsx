@@ -607,6 +607,17 @@ function RootComponent() {
                   className="relative z-10 shrink-0 -translate-x-[30px] translate-y-[26px] object-contain"
                 />
 
+                {/* Bouton « Mode démo » : à droite du logo principal, sur toutes
+                    les pages, jusqu'au premier clic. */}
+                {demoVisible && (
+                  <button
+                    type="button"
+                    onClick={activateDemo}
+                    className="relative z-10 ml-[-10px] shrink-0 translate-y-[22px] whitespace-nowrap rounded-md border-2 border-black bg-black px-3 py-1.5 text-xs font-bold uppercase tracking-wide !text-white transition-colors hover:bg-gray-800"
+                  >
+                    {lang === "en" ? "Demo mode" : "Mode démo"}
+                  </button>
+                )}
 
               </div>
 
