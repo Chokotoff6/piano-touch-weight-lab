@@ -2613,8 +2613,8 @@ function Index() {
 
 
 
-            <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4 flex items-end gap-3`}>
-              <span className="inline-block leading-none" style={{ paddingBottom: 0, alignSelf: "flex-end" }}>
+            <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4 flex items-center gap-3`}>
+              <span className="inline-block leading-none">
                 {en ? "Remarks" : "Remarques"}
               </span>
               <textarea

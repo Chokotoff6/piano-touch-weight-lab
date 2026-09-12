@@ -40,7 +40,7 @@ export function InfoDot({
           role="presentation"
         >
           <div
-            className="relative max-h-[80vh] w-full max-w-md overflow-y-auto rounded-lg border border-gray-300 p-6 text-left text-sm font-normal normal-case leading-relaxed !text-gray-900 shadow-xl"
+            className="relative max-h-[80vh] w-auto max-w-md overflow-y-auto rounded-lg border border-gray-300 py-5 pl-5 pr-9 text-left text-sm font-normal normal-case leading-relaxed !text-gray-900 shadow-xl"
             style={{ backgroundColor: "#FFFFFF" }}
             onClick={(event) => event.stopPropagation()}
             role="dialog"
