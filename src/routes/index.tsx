@@ -60,6 +60,15 @@ function Accueil() {
   const en = lang === "en";
 
   useEffect(() => {
+    // Ré-affichage forcé du bouton (une seule fois) après le correctif.
+    try {
+      if (window.localStorage.getItem("ptw_demo_reset_v2") !== "1") {
+        window.localStorage.removeItem("ptw_demo_clicked");
+        window.localStorage.setItem("ptw_demo_reset_v2", "1");
+      }
+    } catch {
+      /* stockage indisponible */
+    }
     setDemoVisible(!isDemoClicked());
   }, []);
 
