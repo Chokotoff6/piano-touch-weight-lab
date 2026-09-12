@@ -39,6 +39,8 @@ import appCss from "../styles.css?url";
 import likedLogoFrAsset from "@/assets/image_soutien_v5.png.asset.json";
 import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
+import { FaqDialog } from "@/components/FaqDialog";
+import type { FaqPage } from "@/components/FaqContent";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -173,6 +175,7 @@ function RootComponent() {
   const topbar = useTopbarState();
   const lang = useLang();
   const [consentOpen, setConsentOpen] = useState(false);
+  const [faqOpen, setFaqOpen] = useState(false);
   /** Fenêtre interne de soutien collaboratif (bilingue). */
   const [supportOpen, setSupportOpen] = useState(false);
   /** Message flash au survol du bouton de soutien (3 s maximum). */
@@ -504,6 +507,13 @@ function RootComponent() {
                 {/* Bouton de soutien à droite du sélecteur EN / FR,
                     taille 2× (~50 px) et descendu de 10 px. */}
                 <div className="flex -translate-x-[60px] items-center">
+                   <button
+                     type="button"
+                     onClick={() => setFaqOpen(true)}
+                     className="mr-2 shrink-0 -translate-x-[50px] translate-y-[19px] rounded-md border border-gray-400 bg-white px-2 py-0.5 text-[1rem] font-semibold !text-gray-900 transition-colors hover:bg-gray-100"
+                   >
+                     FAQ
+                   </button>
                    <div className="flex shrink-0 -translate-x-[50px] translate-y-[19px] items-center gap-0 text-[1.14rem] font-semibold">
                      <Button
                        variant="ghost"
@@ -588,10 +598,25 @@ function RootComponent() {
           </div>
         </nav>
 
+      <FaqDialog
+        open={faqOpen}
+        onClose={() => setFaqOpen(false)}
+        page={
+          (pathname === "/saisie"
+            ? "saisie"
+            : pathname === "/resultats"
+              ? "resultats"
+              : pathname === "/comparer"
+                ? "comparer"
+                : "home") as FaqPage
+        }
+        en={lang === "en"}
+      />
+
       {consentOpen &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 p-4">
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.15)" }}>
             <div className="w-full max-w-lg rounded-lg border border-black bg-white p-6 shadow-xl">
               <p className="text-sm leading-relaxed text-gray-950">{RGPD_CONSENT_TEXT}</p>
               <div className="mt-4 flex justify-end">
