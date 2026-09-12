@@ -2439,19 +2439,11 @@ function Index() {
 
             <div className="text-xs text-muted-foreground sm:col-span-2 md:col-span-4" style={{ marginTop: "12px", paddingTop: "0px", display: "block" }}>
               <span className={FIELD_LABEL_CLASS}>{en ? "Serial number" : "Numéro de série"}</span>{" "}
-              <span className="group relative inline-flex align-middle">
-                <span
-                  tabIndex={0}
-                  role="button"
-                  aria-label={en ? "Locate the number on the metal frame - include letters if any." : "Reportez le numéro du cadre métallique - inclure les lettres si existantes."}
-                  className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-foreground/60 text-[10px] font-bold leading-none text-foreground/70"
-                >
-                  i
-                </span>
-                <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium !text-gray-900 shadow-md group-hover:block group-focus-within:block">
-                  {en ? "Locate the number on the metal frame - include letters if any." : "Reportez le numéro du cadre métallique - inclure les lettres si existantes."}
-                </span>
-              </span>
+              <InfoDot label={en ? "Serial number" : "Numéro de série"}>
+                {en
+                  ? "Enter the number from the metallic plate - include letters if any."
+                  : "Reportez le numéro du cadre métallique - inclure les lettres si existantes."}
+              </InfoDot>
               <div className="mt-1 flex items-end justify-start gap-4">
                 <div className="flex items-end gap-2">
                   <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
