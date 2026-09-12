@@ -3133,6 +3133,87 @@ Moyennes{" "}
           </div>
         </div>
       )}
+      {/* Fenêtre flottante « Complétez : » — saisie rapide de l'identité du piano
+          au tout premier accès de la session. Le cadre reste accessible ensuite. */}
+      {infoPromptOpen && (
+        <div
+          className="fixed inset-0 z-[99998] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.15)" }}
+          role="presentation"
+        >
+          <div
+            className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-gray-300 bg-white p-6 shadow-xl"
+            role="dialog"
+            aria-modal="true"
+          >
+            <h2 className="text-lg font-bold !text-gray-900">
+              {en ? "Complete:" : "Complétez :"}
+            </h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {[
+                { key: "marque", fr: "Marque", en: "Brand" },
+                { key: "modele", fr: "Modèle", en: "Model" },
+                { key: "sn_num", fr: "N° de série", en: "Serial number" },
+                { key: "fabrication", fr: "Date fabrication", en: "Manufacturing date" },
+                { key: "pays", fr: "Pays", en: "Country" },
+                { key: "ville", fr: "Ville", en: "City" },
+                { key: "entretien", fr: "Entretien", en: "Maintenance" },
+                { key: "usage_level", fr: "Niveau d'usage", en: "Usage level" },
+                { key: "remarques", fr: "Note d'atelier", en: "Workshop note" },
+              ].map((field) => (
+                <label key={field.key} className="text-sm font-semibold !text-gray-900">
+                  <span className="block">{en ? field.en : field.fr}</span>
+                  <input
+                    value={info[field.key] ?? ""}
+                    onChange={(e) => updateInfo(field.key, e.target.value)}
+                    className="mt-1 h-8 w-full rounded border border-gray-300 bg-white px-2 text-sm !text-gray-900 outline-none focus:border-gray-500"
+                  />
+                </label>
+              ))}
+
+              <fieldset className="text-sm font-semibold !text-gray-900">
+                <legend>{en ? "Type" : "Type"}</legend>
+                <div className="mt-1 flex h-8 items-center gap-4 rounded border border-gray-300 bg-white px-2">
+                  {["Droit", "Queue"].map((t) => (
+                    <label key={t} className="flex items-center gap-1 text-sm font-normal !text-gray-900">
+                      <input
+                        type="radio"
+                        name="ff_type_piano"
+                        value={t}
+                        checked={info["type_piano"] === t}
+                        onChange={() => updateInfo("type_piano", t)}
+                      />
+                      {en ? (t === "Droit" ? "Upright" : "Grand") : t}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              <label className="text-sm font-semibold !text-gray-900">
+                <span className="block">{en ? "Entry profile" : "Profil de saisie"}</span>
+                <select
+                  value={info["profil_saisie"] ?? ""}
+                  onChange={(e) => updateInfo("profil_saisie", e.target.value)}
+                  className="mt-1 h-8 w-full rounded border border-gray-300 bg-white px-2 text-sm !text-gray-900"
+                >
+                  <option value="">{en ? "— Select —" : "— Sélectionner —"}</option>
+                  <option value="Amateur">{en ? "Amateur" : "Amateur"}</option>
+                  <option value="Professionnel">{en ? "Professional" : "Professionnel"}</option>
+                </select>
+              </label>
+            </div>
+            <div className="mt-5 flex justify-end">
+              <button
+                type="button"
+                onClick={closeInfoPrompt}
+                className="rounded-md border-2 border-black bg-white px-4 py-1.5 text-sm font-bold !text-black transition-colors hover:bg-gray-100"
+              >
+                {en ? "Continue" : "Continuer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
