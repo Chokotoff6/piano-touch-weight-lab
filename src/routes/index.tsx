@@ -25,7 +25,7 @@ export const Route = createFileRoute("/")({
   component: Accueil,
 });
 
-const LEGAL_TITLE = "Mentions Légales & RGPD";
+const LEGAL_TITLE = "Mentions Légales, RGPD & Conditions d'utilisation";
 const LEGAL_BLOCKS: Array<[string, string]> = [
   [
     "Édition du site :",
@@ -37,7 +37,7 @@ const LEGAL_BLOCKS: Array<[string, string]> = [
   ],
   [
     "Propriété intellectuelle :",
-    "L'architecture de calcul et les graphiques de diagnostic sont mis à disposition des professionnels et pianistes pour un usage technique d'atelier.",
+    "L'architecture de calcul et les graphiques de diagnostic de KeyWeight sont mis à disposition des professionnels et pianistes pour un usage technique d'atelier.",
   ],
   [
     "Responsabilité :",
@@ -45,17 +45,44 @@ const LEGAL_BLOCKS: Array<[string, string]> = [
   ],
   [
     "Gestion des données (RGPD) :",
-    "KeyWeight collecte exclusivement les données techniques anonymes liées au piano (modèle, numéro de série, mesures). Aucune donnée nominative n'est stockée. Pour toute demande légale de retrait ou exercice de vos droits, contactez : rgpd@keyweight.app (Usage exclusif RGPD : cette adresse sert uniquement aux obligations légales. Aucun message de support, de question technique ou de discussion sur le produit ne sera lu ou traité).",
+    "KeyWeight collecte exclusivement les données techniques anonymes liées au piano (modèle, numéro de série, mesures). Aucune donnée nominative n'est stockée. Pour toute demande légale de retrait ou exercice de vos droits, contactez : rgpd@keyweight.app (Usage exclusif RGPD : cette adresse sert uniquement aux obligations légales. Aucun message de support ou de discussion sur le produit ne sera traité).",
+  ],
+  [
+    "Conditions d'utilisation et clause de non-garantie — Service en l'état :",
+    "Ce site est un outil expérimental collaboratif mis à disposition gratuitement. L'éditeur ne fournit aucune garantie quant à la disponibilité du service, l'exactitude des calculs ou la conservation des données. L'éditeur se réserve le droit de modifier, restreindre ou fermer l'accès, ainsi que de supprimer l'historique des saisies à tout moment, sans préavis ni indemnité. L'éditeur reste libre d'introduire des fonctionnalités payantes pour les développements futurs de l'appli, mais le cœur collaboratif du projet a pour vocation de rester libre.",
   ],
 ];
 
 function Accueil() {
   const [legalOpen, setLegalOpen] = useState(false);
+  const [demoVisible, setDemoVisible] = useState(false);
   const lang = useLang();
   const en = lang === "en";
 
+  useEffect(() => {
+    setDemoVisible(!isDemoClicked());
+  }, []);
+
+  const activateDemo = () => {
+    enableDemoMode();
+    markDemoClicked();
+    setDemoVisible(false);
+  };
+
   return (
-    <main className="relative mx-auto flex min-h-[calc(100vh-64px)] max-w-[1400px] flex-col px-6 pb-2 pt-6">
+    <main className="relative mx-auto flex max-w-[1400px] flex-col px-6 pb-6 pt-2">
+      {demoVisible && (
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={activateDemo}
+            className="whitespace-nowrap rounded-md border-2 border-black bg-black px-4 py-2 text-xs font-bold uppercase tracking-wide !text-white transition-colors hover:bg-gray-800"
+          >
+            {en ? "Demo mode" : "Mode démo"}
+          </button>
+        </div>
+      )}
+
       <div className="mx-auto mt-4 w-full max-w-4xl space-y-8 text-left text-sm leading-relaxed text-foreground">
         <h1 className="text-xl font-semibold leading-snug">
           {en
@@ -80,14 +107,16 @@ function Accueil() {
           </h2>
           <ul className="list-disc space-y-1 pl-5">
             <li>
+              <strong>{en ? "Data Entry & Management:" : "Saisie et gestion :"}</strong>{" "}
               {en
-                ? "Data Entry & Management: Fast logging and clear visualization of static touch weight data across all 88 keys"
-                : "Saisie et gestion : enregistrement rapide et visualisation des poids statiques des 88 touches"}
+                ? "Fast logging and clear visualization of static touch weight data across all 88 keys"
+                : "enregistrement rapide et visualisation des poids statiques des 88 touches"}
             </li>
             <li className={en ? undefined : "whitespace-nowrap"}>
+              <strong>{en ? "Comparative Analysis:" : "Analyse comparative :"}</strong>{" "}
               {en
-                ? "Comparative Analysis: Graphical comparison against standard industry regulation targets and community crowd-sourced data (Collaborative Cloud)."
-                : "Analyse comparative : comparaison graphique par rapport aux cibles usuelles et aux données de la communauté (Cloud collaboratif)."}
+                ? "Graphical comparison against standard industry regulation targets and community crowd-sourced data (Collaborative Cloud)."
+                : "comparaison graphique par rapport aux cibles usuelles et aux données de la communauté (Cloud collaboratif)."}
             </li>
           </ul>
         </section>
@@ -98,14 +127,16 @@ function Accueil() {
           </h2>
           <ul className="list-disc space-y-1 pl-5">
             <li className={en ? undefined : "whitespace-nowrap"}>
+              <strong>{en ? "Online or Off-line:" : "En ligne ou Off-line :"}</strong>{" "}
               {en
-                ? "Online or Off-line: Take measurements directly on the web page, or on the field using a simple printable PDF weigh-out sheet, then import them later."
-                : "En ligne ou Off-line : pesez directement sur la page Web, ou sur le terrain à l'aide d'une simple fiche de pesée PDF"}
+                ? "Take measurements directly on the web page, or on the field using a simple printable PDF weigh-out sheet, then import them later."
+                : "pezez directement sur la page Web, ou sur le terrain à l'aide d'une simple fiche de pesée PDF"}
             </li>
             <li>
+              <strong>{en ? "CSV and PDF Reporting:" : "Rapports CSV et PDF :"}</strong>{" "}
               {en
-                ? "CSV & PDF Reporting: Save the regulation history of an instrument or export comprehensive analytical reports and charts."
-                : "Rapports CSV et PDF : sauvegardez l'historique d'un instrument ou exportez les rapports graphiques et d'analyse"}
+                ? "Save the regulation history of an instrument or export comprehensive analytical reports and charts."
+                : "sauvegardez l'historique d'un instrument ou exportez les rapports graphiques et d'analyse"}
             </li>
           </ul>
         </section>
@@ -126,7 +157,7 @@ function Accueil() {
         </Link>
       </div>
 
-      <div className="flex justify-center pt-[60px]">
+      <div className="mt-[120px] flex justify-center">
         <button
           type="button"
           onClick={() => setLegalOpen(true)}
@@ -164,7 +195,7 @@ function Accueil() {
                 onClick={() => setLegalOpen(false)}
                 className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium !text-gray-900 hover:bg-gray-50"
               >
-                Fermer
+                {en ? "Close" : "Fermer"}
               </button>
             </div>
           </div>
