@@ -407,6 +407,25 @@ export const Route = createFileRoute("/saisie")({
 function Index() {
   const [rows, setRows] = useState<Row[]>(EMPTY);
   const [info, setInfo] = useState<Record<string, string>>({});
+  /** Fenêtre flottante « Complétez : » au tout premier accès de la session. */
+  const [infoPromptOpen, setInfoPromptOpen] = useState(false);
+  useEffect(() => {
+    try {
+      if (window.sessionStorage.getItem("ptw_info_prompt_done") !== "1") {
+        setInfoPromptOpen(true);
+      }
+    } catch {
+      /* stockage indisponible */
+    }
+  }, []);
+  const closeInfoPrompt = () => {
+    try {
+      window.sessionStorage.setItem("ptw_info_prompt_done", "1");
+    } catch {
+      /* stockage indisponible */
+    }
+    setInfoPromptOpen(false);
+  };
   const [isDirty, setIsDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [blockMessage, setBlockMessage] = useState<string | null>(null);
