@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { BrandTargetInfoContent } from "@/components/BrandTargetInfo";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
-import { enableDemoMode, ensureDemoDefault } from "@/lib/demo-mode";
+import { disableDemoMode, enableDemoMode, ensureDemoDefault, isDemoActive } from "@/lib/demo-mode";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/")({
   component: Accueil,
 });
 
-const LEGAL_TITLE = "Mentions Légales & RGPD";
+const LEGAL_TITLE = "Mentions Légales";
 const LEGAL_BLOCKS: Array<[string, string]> = [
   [
     "Édition du site :",
@@ -37,33 +38,35 @@ const LEGAL_BLOCKS: Array<[string, string]> = [
   ],
   [
     "Propriété intellectuelle :",
-    "L'architecture de calcul et les graphiques de diagnostic sont mis à disposition des professionnels et pianistes pour un usage technique d'atelier.",
+    "L'architecture de calcul et les graphiques de diagnostic de KeyWeight sont mis à disposition des professionnels et pianistes pour un usage technique d'atelier.",
   ],
   [
     "Responsabilité :",
-    "L'éditeur fournit un outil de mesure et de diagnostic métrologique, mais ne saurait être tenu responsable des interventions mécaniques réalisées sur les instruments.",
-  ],
-  [
-    "Gestion des données (RGPD) :",
-    "KeyWeight collecte exclusivement les données techniques anonymes liées au piano (modèle, numéro de série, mesures). Aucune donnée nominative n'est stockée. Pour toute demande légale de retrait ou exercice de vos droits, contactez : rgpd@keyweight.app (Usage exclusif RGPD : cette adresse sert uniquement aux obligations légales. Aucun message de support, de question technique ou de discussion sur le produit ne sera lu ou traité).",
+    "L'éditeur fournit un outil de mesure et de diagnostic métrologique, mais ne saurait être tenu responsable de l'interprétation des données ou des interventions mécaniques réalisées sur les instruments.",
   ],
 ];
 
 function Accueil() {
-  const [demoVisible, setDemoVisible] = useState(true);
+  const [demo, setDemo] = useState(false);
   const [legalOpen, setLegalOpen] = useState(false);
 
   useEffect(() => {
     ensureDemoDefault();
+    setDemo(isDemoActive());
   }, []);
 
-  const activateDemo = () => {
-    enableDemoMode();
-    setDemoVisible(false);
+  const toggleDemo = () => {
+    if (isDemoActive()) {
+      disableDemoMode();
+      setDemo(false);
+    } else {
+      enableDemoMode();
+      setDemo(true);
+    }
   };
 
   return (
-    <main className="relative mx-auto flex min-h-[calc(100vh-64px)] max-w-[1400px] flex-col px-6 pb-2 pt-6">
+    <main className="relative mx-auto max-w-[1400px] px-6 py-10">
       {/* Filigrane : logo officiel en fond plein écran, discret et fixe. */}
       <div
         aria-hidden="true"
@@ -76,18 +79,21 @@ function Accueil() {
       />
 
       <div className="flex items-start justify-end">
-        {demoVisible && (
-          <button
-            type="button"
-            onClick={activateDemo}
-            className="rounded-md border-2 border-black bg-black px-4 py-2 text-sm font-bold uppercase tracking-wide !text-white transition-colors hover:bg-gray-800"
-          >
-            Mode démo
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={toggleDemo}
+          aria-pressed={demo}
+          className={`rounded-md border-2 px-4 py-2 text-sm font-bold uppercase tracking-wide transition-colors ${
+            demo
+              ? "border-black bg-black !text-white hover:bg-gray-800"
+              : "border-black bg-white !text-black hover:bg-gray-100"
+          }`}
+        >
+          {demo ? "Mode démo : activé" : "Mode démo : désactivé"}
+        </button>
       </div>
 
-      <div className="mx-auto mt-4 w-full max-w-4xl space-y-8 text-left text-sm leading-relaxed text-foreground">
+      <div className="mt-4 max-w-3xl space-y-8 text-sm leading-relaxed text-foreground">
         <h1 className="text-xl font-semibold leading-snug">
           Bienvenue sur KeyWeight ! Une application collaborative et indépendante
           pour pianistes et techniciens de piano.
@@ -123,7 +129,7 @@ function Accueil() {
             Flexibilité
           </h2>
           <ul className="list-disc space-y-1 pl-5">
-            <li className="whitespace-nowrap">
+            <li>
               En ligne ou Off-line : pesez directement sur la page Web, ou sur le
               terrain à l'aide d'une simple fiche de pesée PDF
             </li>
@@ -140,22 +146,29 @@ function Accueil() {
         </p>
       </div>
 
-      <div className="mt-8 flex justify-center">
+      <div className="mt-8">
         <Link
           to="/saisie"
           className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
-          Commencer votre diagnostic
+          Start your diagnosis
         </Link>
       </div>
 
-      <div className="mt-auto flex justify-center pt-6">
+      <section className="mx-auto mt-10 w-full max-w-3xl space-y-6 rounded-lg border border-black bg-white p-6">
+        <BrandTargetInfoContent variant="standard" />
+        <div className="border-t border-gray-300 pt-6">
+          <BrandTargetInfoContent variant="brand" />
+        </div>
+      </section>
+
+      <div className="mt-10 flex justify-center">
         <button
           type="button"
           onClick={() => setLegalOpen(true)}
           className="text-xs !text-gray-500 underline transition-colors hover:!text-gray-800"
         >
-          Mentions Légales
+          {LEGAL_TITLE}
         </button>
       </div>
 
