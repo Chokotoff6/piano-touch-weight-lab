@@ -619,6 +619,27 @@ function RootComponent() {
           </div>
         </nav>
 
+      {/* Bouton « Mode démo » : sous le Header, aligné sur le bord gauche
+          de l'onglet « Accueil », présent sur toutes les pages tant qu'il
+          n'a pas été cliqué. */}
+      {demoVisible && (
+        <div className="mx-auto max-w-[1400px] px-4 pt-2 sm:px-6">
+          <div className="pl-1">
+            <button
+              type="button"
+              onClick={() => {
+                enableDemoMode();
+                markDemoClicked();
+                setDemoVisible(false);
+              }}
+              className="whitespace-nowrap rounded-md border-2 border-black bg-black px-4 py-2 text-xs font-bold uppercase tracking-wide !text-white transition-colors hover:bg-gray-800"
+            >
+              {lang === "en" ? "Demo mode" : "Mode démo"}
+            </button>
+          </div>
+        </div>
+      )}
+
       <FaqDialog
         open={faqOpen}
         onClose={() => setFaqOpen(false)}
