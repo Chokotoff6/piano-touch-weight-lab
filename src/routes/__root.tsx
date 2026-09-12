@@ -545,19 +545,19 @@ function RootComponent() {
                            size="sm"
                           onClick={() => setSupportOpen(true)}
                           aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                            style={{ height: "40px", width: "auto" }}
-                           className="relative z-10 flex w-auto shrink-0 items-center justify-center overflow-visible rounded-none p-0 transition-transform hover:scale-105 hover:bg-transparent"
-                       >
-                          <img
-                             src={lang === "en" ? likedLogoEnAsset.url : likedLogoFrAsset.url}
-                           alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                             style={{
-                               height: "40px",
-                               width: "auto",
-                               maxWidth: "none",
-                             }}
-                            className="block object-contain liked-breathing"
-                         />
+                           style={{ height: "40px", width: "95px" }}
+                            className="relative z-10 flex w-[95px] shrink-0 items-center justify-center overflow-visible rounded-none p-0 transition-transform hover:scale-105 hover:bg-transparent"
+                        >
+                           <img
+                              src={lang === "en" ? likedLogoEnAsset.url : likedLogoFrAsset.url}
+                            alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
+                              style={{
+                                height: "40px",
+                                width: "95px",
+                                maxWidth: "none",
+                              }}
+                             className="block object-contain liked-breathing"
+                          />
                        </Button>
 
                      {supportHint && (
