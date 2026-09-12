@@ -38,7 +38,12 @@ import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 import likedLogoFrAsset from "@/assets/image_soutien_v5.png.asset.json";
 import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
-import { ensureDemoDefault } from "@/lib/demo-mode";
+import {
+  enableDemoMode,
+  ensureDemoDefault,
+  isDemoClicked,
+  markDemoClicked,
+} from "@/lib/demo-mode";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { FaqDialog } from "@/components/FaqDialog";
 import type { FaqPage } from "@/components/FaqContent";
@@ -239,12 +244,19 @@ function RootComponent() {
   // aucun calcul de position n'est nécessaire.
   const saveBtnRef = useRef<HTMLButtonElement | null>(null);
   const pendingActionRef = useRef<(() => void) | null>(null);
+  /** Bouton « Mode démo » : visible sur toutes les pages tant qu'il n'a pas été cliqué. */
+  const [demoVisible, setDemoVisible] = useState(false);
   useEffect(() => {
     initLang();
     initJourneyFlags();
     ensureDemoDefault();
+    setDemoVisible(!isDemoClicked());
   }, []);
-
+  const activateDemo = () => {
+    enableDemoMode();
+    markDemoClicked();
+    setDemoVisible(false);
+  };
   const isComparer = pathname === "/comparer";
   /** Accueil épuré : seuls le logo, la FAQ et EN | FR restent visibles. */
   const isHome = pathname === "/";
@@ -606,6 +618,15 @@ function RootComponent() {
                     style={{ height: "85px", width: "auto" }}
                     className="object-contain"
                   />
+                  {demoVisible && (
+                    <button
+                      type="button"
+                      onClick={activateDemo}
+                      className="mt-1 whitespace-nowrap rounded-md border-2 border-black bg-black px-3 py-1.5 text-xs font-bold uppercase tracking-wide !text-white transition-colors hover:bg-gray-800"
+                    >
+                      {lang === "en" ? "Demo mode" : "Mode démo"}
+                    </button>
+                  )}
                 </div>
 
 

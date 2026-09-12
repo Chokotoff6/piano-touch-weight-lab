@@ -2439,18 +2439,8 @@ function Index() {
 
             <div className="text-xs text-muted-foreground sm:col-span-2 md:col-span-4" style={{ marginTop: "12px", paddingTop: "0px", display: "block" }}>
               <span className={FIELD_LABEL_CLASS}>{en ? "Serial number" : "Numéro de série"}</span>{" "}
-              <span className="group relative inline-flex align-middle">
-                <span
-                  tabIndex={0}
-                  role="button"
-                  aria-label={en ? "Locate the number on the metal frame - include letters if any." : "Reportez le numéro du cadre métallique - inclure les lettres si existantes."}
-                  className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-foreground/60 text-[10px] font-bold leading-none text-foreground/70"
-                >
-                  i
-                </span>
-                <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium !text-gray-900 shadow-md group-hover:block group-focus-within:block">
-                  {en ? "Locate the number on the metal frame - include letters if any." : "Reportez le numéro du cadre métallique - inclure les lettres si existantes."}
-                </span>
+              <span className="text-muted-foreground">
+                {en ? "(Locate the number on the metal frame - include letters if any)." : "(Reportez le numéro du cadre métallique - inclure les lettres si existantes)."}
               </span>
               <div className="mt-1 flex items-end justify-start gap-4">
                 <div className="flex items-end gap-2">
@@ -2694,37 +2684,14 @@ function Index() {
 
           <div className="flex items-center justify-end gap-4">
             {missingFlash && (
-              <div
-                className="fixed inset-0 z-[99998] flex items-center justify-center p-4"
-                style={{ background: "rgba(0,0,0,0.15)" }}
-                onClick={() => setMissingFlash(false)}
-                role="presentation"
-              >
-                <div
-                  className="w-full max-w-md rounded-lg border border-gray-300 bg-white p-6 shadow-xl"
-                  onClick={(event) => event.stopPropagation()}
-                  role="dialog"
-                  aria-modal="true"
-                >
-                  <p className="text-sm font-semibold !text-gray-900">
-                    {en ? "Complete: " : "Complétez : "}
-                    {missingSheetFields.length > 0
-                      ? missingSheetFields.join(", ")
-                      : en
-                        ? "Measurements"
-                        : "Pesées"}
-                  </p>
-                  <div className="mt-4 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => setMissingFlash(false)}
-                      className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium !text-gray-900 hover:bg-gray-50"
-                    >
-                      {en ? "Close" : "Fermer"}
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <span className="text-sm font-semibold !text-gray-600">
+                {en ? "Complete: " : "Complétez : "}
+                {missingSheetFields.length > 0
+                  ? missingSheetFields.join(", ")
+                  : en
+                    ? "Measurements"
+                    : "Pesées"}
+              </span>
             )}
             <button
               ref={weighingBtnRef}
