@@ -153,24 +153,21 @@ function Accueil() {
         </Link>
       </div>
 
-      <div
-        className="mx-auto w-full max-w-4xl"
-        style={{ marginTop: "250px", paddingTop: 0, marginBottom: 0 }}
-      >
+      <div className="mx-auto w-full max-w-4xl" style={{ marginTop: "250px", padding: 0 }}>
         <button
           type="button"
           onClick={() => setLegalOpen((open) => !open)}
           className="block w-full text-center text-xs !text-gray-500 underline transition-colors hover:!text-gray-800"
-          style={{ marginTop: 0, paddingTop: 0, paddingBottom: 0 }}
+          style={{ margin: 0, padding: 0 }}
         >
           {en ? "Legal Notice" : "Mentions Légales"}
         </button>
 
         {legalOpen && (
-          <>
+          <div style={{ marginTop: "10px", padding: 0 }}>
             <p
               className="text-left text-xs font-semibold leading-relaxed !text-gray-900"
-              style={{ marginTop: "10px", paddingTop: 0, marginBottom: "4px" }}
+              style={{ margin: 0, padding: 0 }}
             >
               {LEGAL_TITLE}
             </p>
@@ -178,14 +175,15 @@ function Accueil() {
               <p
                 key={label}
                 className="text-left text-xs leading-relaxed !text-gray-700"
-                style={{ marginTop: 0, marginBottom: "6px" }}
+                style={{ marginTop: "6px", marginBottom: 0, padding: 0 }}
               >
                 <strong>{label}</strong> {text}
               </p>
             ))}
-          </>
+          </div>
         )}
       </div>
+
     </main>
   );
 }
