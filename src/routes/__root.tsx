@@ -658,7 +658,18 @@ function RootComponent() {
           <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.15)" }}>
             <div className="w-full max-w-lg rounded-lg border border-black bg-white p-6 shadow-xl">
               <p className="text-sm leading-relaxed text-gray-950">{RGPD_CONSENT_TEXT}</p>
-              <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex justify-end gap-2">
+                {/* Retour : ferme la fenêtre et laisse l'utilisateur sur la page active. */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    pendingActionRef.current = null;
+                    setConsentOpen(false);
+                  }}
+                  className="rounded-md border border-gray-300 bg-white px-4 py-1.5 text-sm font-medium !text-gray-900 transition-colors hover:bg-gray-50"
+                >
+                  {lang === "en" ? "Back" : "Retour"}
+                </button>
                 <button
                   type="button"
                   onClick={acceptConsent}
