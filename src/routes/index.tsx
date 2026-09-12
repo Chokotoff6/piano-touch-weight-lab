@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
-import { enableDemoMode, ensureDemoDefault } from "@/lib/demo-mode";
+import { useLang } from "@/data/translations";
 
 export const Route = createFileRoute("/")({
   head: () => ({
