@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useLang } from "@/data/translations";
-import { enableDemoMode, isDemoClicked, markDemoClicked } from "@/lib/demo-mode";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -131,9 +130,17 @@ function Accueil() {
         </section>
 
         <p>
-          {en
-            ? "Any questions? Dedicated FAQs for each module provide answers to all practical and technical inquiries."
-            : "Une question ? Des FAQ dédiées à chaque module répondent à toutes les questions pratiques et techniques."}
+          {en ? (
+            <>
+              Any questions? Dedicated <strong>FAQ</strong>s for each module provide answers to all
+              practical and technical inquiries.
+            </>
+          ) : (
+            <>
+              Une question ? Des <strong>FAQ</strong> dédiées à chaque module répondent à toutes les
+              questions pratiques et techniques.
+            </>
+          )}
         </p>
       </div>
 
@@ -146,7 +153,7 @@ function Accueil() {
         </Link>
       </div>
 
-      <div className="mx-auto w-full max-w-4xl" style={{ marginTop: "150px" }}>
+      <div className="mx-auto w-full max-w-4xl" style={{ marginTop: "250px" }}>
         <div className="flex justify-center">
           <button
             type="button"
