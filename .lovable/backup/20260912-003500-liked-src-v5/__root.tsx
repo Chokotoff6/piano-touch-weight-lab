@@ -36,8 +36,8 @@ import { createPortal } from "react-dom";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
-import likedLogoFrAsset from "@/assets/image_soutien_v5.png.asset.json";
-import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
+import likedLogoFrAsset from "@/assets/image_N48Ks9.png.asset.json";
+import likedLogoEnAsset from "@/assets/image_DVGujN.png.asset.json";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -539,25 +539,25 @@ function RootComponent() {
                      }}
                    >
                           {/* Hauteur historique conservée ; largeur dictée par les proportions natives du logo. */}
-                          <Button
-                           type="button"
-                            variant="ghost"
-                            size="sm"
-                           onClick={() => setSupportOpen(true)}
-                           aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                            style={{ height: "40px" }}
-                             className="relative z-10 flex w-auto shrink-0 items-center justify-center overflow-visible rounded-none p-0 transition-transform hover:scale-105 hover:bg-transparent"
-                         >
-                            <img
-                               src={lang === "en" ? likedLogoEnAsset.url : likedLogoFrAsset.url}
-                             alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                               style={{
-                                 height: "40px",
-                                 width: "auto",
-                                 maxWidth: "none",
-                               }}
-                              className="block object-contain liked-breathing"
-                           />
+                         <Button
+                          type="button"
+                           variant="ghost"
+                           size="sm"
+                          onClick={() => setSupportOpen(true)}
+                          aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
+                           style={{ height: "40px", width: "95px" }}
+                            className="relative z-10 flex w-[95px] shrink-0 items-center justify-center overflow-visible rounded-none p-0 transition-transform hover:scale-105 hover:bg-transparent"
+                        >
+                           <img
+                              src={lang === "en" ? likedLogoEnAsset.url : likedLogoFrAsset.url}
+                            alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
+                              style={{
+                                height: "40px",
+                                width: "95px",
+                                maxWidth: "none",
+                              }}
+                             className="block object-contain liked-breathing"
+                          />
                        </Button>
 
                      {supportHint && (
