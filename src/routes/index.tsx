@@ -49,93 +49,68 @@ const LEGAL_BLOCKS: Array<[string, string]> = [
 ];
 
 function Accueil() {
-  const [demoVisible, setDemoVisible] = useState(true);
   const [legalOpen, setLegalOpen] = useState(false);
-
-  useEffect(() => {
-    ensureDemoDefault();
-  }, []);
-
-  const activateDemo = () => {
-    enableDemoMode();
-    setDemoVisible(false);
-  };
+  const lang = useLang();
+  const en = lang === "en";
 
   return (
     <main className="relative mx-auto flex min-h-[calc(100vh-64px)] max-w-[1400px] flex-col px-6 pb-2 pt-6">
-      {/* Filigrane : logo officiel en fond plein écran, discret et fixe. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-10 bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url(${keyweightLogo.url})`,
-          backgroundSize: "min(70vw, 70vh) auto",
-          opacity: 0.07,
-        }}
-      />
-
-      <div className="flex items-start justify-end">
-        {demoVisible && (
-          <button
-            type="button"
-            onClick={activateDemo}
-            className="rounded-md border-2 border-black bg-black px-4 py-2 text-sm font-bold uppercase tracking-wide !text-white transition-colors hover:bg-gray-800"
-          >
-            Mode démo
-          </button>
-        )}
-      </div>
-
       <div className="mx-auto mt-4 w-full max-w-4xl space-y-8 text-left text-sm leading-relaxed text-foreground">
         <h1 className="text-xl font-semibold leading-snug">
-          Bienvenue sur KeyWeight ! Une application collaborative et indépendante
-          pour pianistes et techniciens de piano.
+          {en
+            ? "Welcome to KeyWeight! A collaborative and independent web application tailored for pianists and piano technicians."
+            : "Bienvenue sur KeyWeight ! Une application collaborative et indépendante pour pianistes et techniciens de piano."}
         </h1>
 
         <section className="space-y-2">
           <h2 className="text-base font-semibold">Mon piano est-il trop dur ?</h2>
           <p>
-            Toucher trop lourd, fatigue... ? KeyWeight vous permet d'objectiver
-            rapidement si les poids de descente, de remontée, la friction et la
-            balance de votre clavier révèlent un éventuel problème de régulation.
+            {en
+              ? "Heavy touch, finger fatigue...? KeyWeight allows you to quickly objectify these physical sensations by measuring whether downweight, upweight, friction, and balance reveal a regulation defect."
+              : "Toucher trop lourd, fatigue... ? KeyWeight vous permet d'objectiver rapidement si les poids de descente, de remontée, la friction et la balance de votre clavier révèlent un éventuel problème de régulation."}
           </p>
         </section>
 
         <section className="space-y-2">
           <h2 className="text-base font-semibold uppercase tracking-wide">
-            2 modules de diagnostic
+            {en ? "2 diagnostic modules" : "2 modules de diagnostic"}
           </h2>
           <ul className="list-disc space-y-1 pl-5">
             <li>
-              Saisie et gestion : enregistrement rapide et visualisation des poids
-              statiques des 88 touches
+              {en
+                ? "Data Entry & Management: Fast logging and clear visualization of static touch weight data across all 88 keys"
+                : "Saisie et gestion : enregistrement rapide et visualisation des poids statiques des 88 touches"}
             </li>
-            <li>
-              Analyse comparative : comparaison graphique par rapport aux cibles
-              usuelles et aux données de la communauté (Cloud collaboratif).
+            <li className="whitespace-nowrap">
+              {en
+                ? "Comparative Analysis: Graphical comparison against standard industry regulation targets and community crowd-sourced data (Collaborative Cloud)."
+                : "Analyse comparative : comparaison graphique par rapport aux cibles usuelles et aux données de la communauté (Cloud collaboratif)."}
             </li>
           </ul>
         </section>
 
         <section className="space-y-2">
           <h2 className="text-base font-semibold uppercase tracking-wide">
-            Flexibilité
+            {en ? "Workshop flexibility" : "Flexibilité"}
           </h2>
           <ul className="list-disc space-y-1 pl-5">
             <li className="whitespace-nowrap">
-              En ligne ou Off-line : pesez directement sur la page Web, ou sur le
-              terrain à l'aide d'une simple fiche de pesée PDF
+              {en
+                ? "Online or Off-line: Take measurements directly on the web page, or on the field using a simple printable PDF weigh-out sheet, then log them later."
+                : "En ligne ou Off-line : pesez directement sur la page Web, ou sur le terrain à l'aide d'une simple fiche de pesée PDF"}
             </li>
             <li>
-              Rapports PDF : sauvegardez l'historique d'un instrument ou exportez
-              les rapports graphiques et d'analyse
+              {en
+                ? "PDF Reporting: Save the regulation history of an instrument or export comprehensive analytical reports and charts for your clients."
+                : "Rapports PDF : sauvegardez l'historique d'un instrument ou exportez les rapports graphiques et d'analyse"}
             </li>
           </ul>
         </section>
 
         <p>
-          Une question ? Des FAQ dédiées à chaque module répondent à toutes les
-          questions pratiques et techniques.
+          {en
+            ? "Any questions? Dedicated FAQs for each module provide answers to all practical and technical inquiries."
+            : "Une question ? Des FAQ dédiées à chaque module répondent à toutes les questions pratiques et techniques."}
         </p>
       </div>
 
