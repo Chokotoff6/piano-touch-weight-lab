@@ -175,9 +175,21 @@ function FaqHome() {
   );
 }
 
-function FaqSaisie() {
+function FaqSaisie({ en }: { en: boolean }) {
   return (
     <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="profil">
+            <AccordionTrigger>
+              {en
+                ? "Why do you need to specify if you are a Pianist or a Technician?"
+                : "Pourquoi devez-vous indiquer si vous êtes Pianiste ou Technicien ?"}
+            </AccordionTrigger>
+            <AccordionContent>
+              {en
+                ? "This anonymous classification ensures the accuracy and advanced filtering of comparative charts within the Collaborative Cloud. Professional technicians can thus choose to filter and compare data exclusively against certified workshop metrics."
+                : "Cette information anonyme permet de classifier la saisie afin de garantir la pertinence et le filtrage des graphiques comparatifs au sein du Cloud collaboratif. Les professionnels de l'accord peuvent ainsi choisir de comparer leurs données uniquement avec des pesées certifiées d'ateliers."}
+            </AccordionContent>
+          </AccordionItem>
           <AccordionItem value="q2">
             <AccordionTrigger>
               Why are Down Weight (Wa) and Up Weight (Wd) both necessary?
