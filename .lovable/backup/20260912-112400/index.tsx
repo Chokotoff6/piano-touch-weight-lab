@@ -60,15 +60,6 @@ function Accueil() {
   const en = lang === "en";
 
   useEffect(() => {
-    // Ré-affichage forcé du bouton (une seule fois) après le correctif.
-    try {
-      if (window.localStorage.getItem("ptw_demo_reset_v2") !== "1") {
-        window.localStorage.removeItem("ptw_demo_clicked");
-        window.localStorage.setItem("ptw_demo_reset_v2", "1");
-      }
-    } catch {
-      /* stockage indisponible */
-    }
     setDemoVisible(!isDemoClicked());
   }, []);
 
@@ -121,23 +112,11 @@ function Accueil() {
                 ? "Fast logging and clear visualization of static touch weight data across all 88 keys"
                 : "enregistrement rapide et visualisation des poids statiques des 88 touches"}
             </li>
-            <li>
+            <li className={en ? undefined : "whitespace-nowrap"}>
               <strong>{en ? "Comparative Analysis:" : "Analyse comparative :"}</strong>{" "}
-              {en ? (
-                <>
-                  Graphical comparison against standard industry regulation targets and community
-                  crowd-sourced data
-                  <br />
-                  (Collaborative Cloud).
-                </>
-              ) : (
-                <>
-                  comparaison graphique par rapport aux cibles usuelles et aux données de la
-                  communauté
-                  <br />
-                  (Cloud collaboratif).
-                </>
-              )}
+              {en
+                ? "Graphical comparison against standard industry regulation targets and community crowd-sourced data (Collaborative Cloud)."
+                : "comparaison graphique par rapport aux cibles usuelles et aux données de la communauté (Cloud collaboratif)."}
             </li>
           </ul>
         </section>
@@ -178,31 +157,50 @@ function Accueil() {
         </Link>
       </div>
 
-      <div className="mx-auto w-full max-w-4xl" style={{ marginTop: "150px" }}>
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={() => setLegalOpen((open) => !open)}
-            className="text-xs !text-gray-500 underline transition-colors hover:!text-gray-800"
-          >
-            {en ? "Legal Notice" : "Mentions Légales"}
-          </button>
-        </div>
-
-        {legalOpen && (
-          <div
-            className="space-y-2 text-left text-xs leading-relaxed !text-gray-700"
-            style={{ marginTop: "10px", marginBottom: "0px" }}
-          >
-            <p className="font-semibold !text-gray-900">{LEGAL_TITLE}</p>
-            {LEGAL_BLOCKS.map(([label, text]) => (
-              <p key={label}>
-                <strong>{label}</strong> {text}
-              </p>
-            ))}
-          </div>
-        )}
+      <div className="mt-[120px] flex justify-center">
+        <button
+          type="button"
+          onClick={() => setLegalOpen(true)}
+          className="text-xs !text-gray-500 underline transition-colors hover:!text-gray-800"
+        >
+          {en ? "Legal Notice" : "Mentions Légales"}
+        </button>
       </div>
+
+      {legalOpen && (
+        <div
+          className="fixed inset-0 z-[99997] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.15)" }}
+          onClick={() => setLegalOpen(false)}
+          role="presentation"
+        >
+          <div
+            className="max-h-[80vh] w-full max-w-xl overflow-y-auto rounded-lg border border-gray-300 bg-white p-6 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label={LEGAL_TITLE}
+          >
+            <h2 className="text-base font-semibold !text-gray-900">{LEGAL_TITLE}</h2>
+            <div className="mt-3 space-y-3 text-sm leading-relaxed !text-gray-800">
+              {LEGAL_BLOCKS.map(([label, text]) => (
+                <p key={label}>
+                  <strong>{label}</strong> {text}
+                </p>
+              ))}
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setLegalOpen(false)}
+                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium !text-gray-900 hover:bg-gray-50"
+              >
+                {en ? "Close" : "Fermer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

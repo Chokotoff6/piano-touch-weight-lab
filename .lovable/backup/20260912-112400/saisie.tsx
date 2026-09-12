@@ -8,7 +8,6 @@ import {
   saisieGate,
 } from "@/lib/required-keys";
 import { SmartCombobox, type SmartComboboxHandle } from "@/components/SmartCombobox";
-import { InfoDot } from "@/components/InfoDot";
 
 import { modelsFor, modelGroupsFor, inferTypeFromModel } from "@/data/pianoModels";
 import {
@@ -2440,11 +2439,19 @@ function Index() {
 
             <div className="text-xs text-muted-foreground sm:col-span-2 md:col-span-4" style={{ marginTop: "12px", paddingTop: "0px", display: "block" }}>
               <span className={FIELD_LABEL_CLASS}>{en ? "Serial number" : "Numéro de série"}</span>{" "}
-              <InfoDot label={en ? "Serial number" : "Numéro de série"}>
-                {en
-                  ? "Enter the number from the metallic plate - include letters if any."
-                  : "Reportez le numéro du cadre métallique - inclure les lettres si existantes."}
-              </InfoDot>
+              <span className="group relative inline-flex align-middle">
+                <span
+                  tabIndex={0}
+                  role="button"
+                  aria-label={en ? "Locate the number on the metal frame - include letters if any." : "Reportez le numéro du cadre métallique - inclure les lettres si existantes."}
+                  className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-foreground/60 text-[10px] font-bold leading-none text-foreground/70"
+                >
+                  i
+                </span>
+                <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium !text-gray-900 shadow-md group-hover:block group-focus-within:block">
+                  {en ? "Locate the number on the metal frame - include letters if any." : "Reportez le numéro du cadre métallique - inclure les lettres si existantes."}
+                </span>
+              </span>
               <div className="mt-1 flex items-end justify-start gap-4">
                 <div className="flex items-end gap-2">
                   <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
@@ -2572,12 +2579,7 @@ function Index() {
               </label>
 
               <label className={FIELD_LABEL_CLASS}>
-                <span className="flex items-center gap-1">
-                  {en ? "Usage level" : "Niveau d'usage"}
-                  <InfoDot label={en ? "Usage level" : "Niveau d'usage"}>
-                    {en ? "Piano condition." : "État du piano."}
-                  </InfoDot>
-                </span>
+                <span className="block">{en ? "Usage level" : "Niveau d'usage"}</span>
                 <select
                   value={info["usage_level"] ?? ""}
                   onChange={(e) => updateInfo("usage_level", e.target.value)}
@@ -2594,9 +2596,19 @@ function Index() {
               <label className={FIELD_LABEL_CLASS}>
                 <span className="flex items-center gap-1">
                   {en ? "User" : "Utilisateur"}
-                  <InfoDot label={en ? "User" : "Utilisateur"}>
-                    {en ? "Who is performing the weigh-out?" : "Qui effectue la pesée ?"}
-                  </InfoDot>
+                  <span className="group relative inline-flex">
+                    <span
+                      tabIndex={0}
+                      role="button"
+                      aria-label={en ? "Who is performing the weigh-out?" : "Qui effectue la pesée ?"}
+                      className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-foreground/60 text-[10px] font-bold leading-none text-foreground/70"
+                    >
+                      i
+                    </span>
+                    <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium !text-gray-900 shadow-md group-hover:block group-focus-within:block">
+                      {en ? "Who is performing the weigh-out?" : "Qui effectue la pesée ?"}
+                    </span>
+                  </span>
                 </span>
                 <select
                   value={info["profil_saisie"] ?? ""}
@@ -2759,25 +2771,34 @@ function Index() {
         title={
           <>
             {en ? "Static touch weight measurements" : "Mesures poids statiques"}{" "}
-            <span data-pdf-hide className="inline-flex items-center align-middle">
-              <InfoDot label={en ? "Static touch weight measurements" : "Mesures poids statiques"}>
-                <span className="block">
+            <span data-pdf-hide className="group relative inline-flex items-center align-middle">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full border border-black text-[10px] font-bold normal-case !text-black">
+                i
+              </span>
+              <span
+                className="pointer-events-none absolute left-5 top-1/2 hidden w-max max-w-none -translate-y-1/2 whitespace-nowrap rounded-md border border-gray-300 px-3 py-2 text-left text-[13px] font-medium normal-case text-gray-950 shadow-lg group-hover:block"
+                style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
+              >
+                <span className="block whitespace-nowrap">
                   {en
                     ? "Enter at least the values for every C and C# to access the results."
                     : "Saisir au minimum les valeurs pour tous les Do et Do# pour accéder aux résultats."}
                 </span>
-                <span className="mt-2 block">
+                <span className="block whitespace-nowrap">
+
                   {en ? "• TAB: move forward one input field" : "• TAB : avance d'une zone de saisie"}
                 </span>
-                <span className="block">
+                <span className="block whitespace-nowrap">
                   {en ? "• Shift + TAB: move back one input field" : "• Shift + TAB : recule d'une zone de saisie"}
                 </span>
-                <span className="block">
+                <span className="block whitespace-nowrap">
                   {en
                     ? "• ALT + TAB (Option ⌥ on Mac): jump straight to the next C"
                     : "• ALT + TAB (Option ⌥ sur Mac) : saute directement au DO suivant"}
                 </span>
-              </InfoDot>
+
+              </span>
+
             </span>
           </>
         }
