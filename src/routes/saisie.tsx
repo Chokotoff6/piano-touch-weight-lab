@@ -2694,14 +2694,37 @@ function Index() {
 
           <div className="flex items-center justify-end gap-4">
             {missingFlash && (
-              <span className="text-sm font-semibold !text-gray-600">
-                {en ? "Complete: " : "Complétez : "}
-                {missingSheetFields.length > 0
-                  ? missingSheetFields.join(", ")
-                  : en
-                    ? "Measurements"
-                    : "Pesées"}
-              </span>
+              <div
+                className="fixed inset-0 z-[99998] flex items-center justify-center p-4"
+                style={{ background: "rgba(0,0,0,0.15)" }}
+                onClick={() => setMissingFlash(false)}
+                role="presentation"
+              >
+                <div
+                  className="w-full max-w-md rounded-lg border border-gray-300 bg-white p-6 shadow-xl"
+                  onClick={(event) => event.stopPropagation()}
+                  role="dialog"
+                  aria-modal="true"
+                >
+                  <p className="text-sm font-semibold !text-gray-900">
+                    {en ? "Complete: " : "Complétez : "}
+                    {missingSheetFields.length > 0
+                      ? missingSheetFields.join(", ")
+                      : en
+                        ? "Measurements"
+                        : "Pesées"}
+                  </p>
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setMissingFlash(false)}
+                      className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium !text-gray-900 hover:bg-gray-50"
+                    >
+                      {en ? "Close" : "Fermer"}
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
             <button
               ref={weighingBtnRef}
