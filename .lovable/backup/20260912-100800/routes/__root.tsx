@@ -38,12 +38,6 @@ import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 import likedLogoFrAsset from "@/assets/image_soutien_v5.png.asset.json";
 import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
-import {
-  enableDemoMode,
-  ensureDemoDefault,
-  isDemoClicked,
-  markDemoClicked,
-} from "@/lib/demo-mode";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { FaqDialog } from "@/components/FaqDialog";
 import type { FaqPage } from "@/components/FaqContent";
@@ -244,19 +238,10 @@ function RootComponent() {
   // aucun calcul de position n'est nécessaire.
   const saveBtnRef = useRef<HTMLButtonElement | null>(null);
   const pendingActionRef = useRef<(() => void) | null>(null);
-  /** Bouton « Mode démo » : visible sur toutes les pages tant qu'il n'a pas été cliqué. */
-  const [demoVisible, setDemoVisible] = useState(false);
   useEffect(() => {
     initLang();
     initJourneyFlags();
-    ensureDemoDefault();
-    setDemoVisible(!isDemoClicked());
   }, []);
-  const activateDemo = () => {
-    enableDemoMode();
-    markDemoClicked();
-    setDemoVisible(false);
-  };
   const isComparer = pathname === "/comparer";
   /** Accueil épuré : seuls le logo, la FAQ et EN | FR restent visibles. */
   const isHome = pathname === "/";
@@ -297,16 +282,6 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Filigrane : logo officiel KeyWeight en fond, sur toutes les pages. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-10 bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url(${keyweightLogo.url})`,
-          backgroundSize: "min(70vw, 70vh) auto",
-          opacity: 0.07,
-        }}
-      />
       <nav className="!sticky !top-0 !z-[50] !bg-white !shadow-md border-b border-border">
         <div className="mx-auto max-w-[1400px] px-4 py-1 sm:px-6">
           <div className="flex flex-wrap items-center gap-2">
@@ -617,17 +592,6 @@ function RootComponent() {
                   className="relative z-10 shrink-0 -translate-x-[30px] translate-y-[26px] object-contain"
                 />
 
-                {/* Bouton « Mode démo » : à droite du logo principal, sur toutes
-                    les pages, jusqu'au premier clic. */}
-                {demoVisible && (
-                  <button
-                    type="button"
-                    onClick={activateDemo}
-                    className="relative z-10 ml-[-10px] shrink-0 translate-y-[22px] whitespace-nowrap rounded-md border-2 border-black bg-black px-3 py-1.5 text-xs font-bold uppercase tracking-wide !text-white transition-colors hover:bg-gray-800"
-                  >
-                    {lang === "en" ? "Demo mode" : "Mode démo"}
-                  </button>
-                )}
 
               </div>
 
@@ -658,18 +622,7 @@ function RootComponent() {
           <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.15)" }}>
             <div className="w-full max-w-lg rounded-lg border border-black bg-white p-6 shadow-xl">
               <p className="text-sm leading-relaxed text-gray-950">{RGPD_CONSENT_TEXT}</p>
-              <div className="mt-4 flex justify-end gap-2">
-                {/* Retour : ferme la fenêtre et laisse l'utilisateur sur la page active. */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    pendingActionRef.current = null;
-                    setConsentOpen(false);
-                  }}
-                  className="rounded-md border border-gray-300 bg-white px-4 py-1.5 text-sm font-medium !text-gray-900 transition-colors hover:bg-gray-50"
-                >
-                  {lang === "en" ? "Back" : "Retour"}
-                </button>
+              <div className="mt-4 flex justify-end">
                 <button
                   type="button"
                   onClick={acceptConsent}
