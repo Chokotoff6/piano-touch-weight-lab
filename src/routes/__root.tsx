@@ -538,30 +538,27 @@ function RootComponent() {
                        setSupportHint(false);
                      }}
                    >
-                         {/* Gabarit historique validé du logo LIKED : 85 × 40 px. */}
-                        <Button
-                         type="button"
-                          variant="ghost"
-                          size="sm"
-                         onClick={() => setSupportOpen(true)}
-                         aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                           style={{ height: "40px", width: "85px" }}
-                          className="relative z-10 flex shrink-0 items-center justify-center overflow-hidden p-0 transition-transform hover:scale-105 hover:bg-transparent"
-                      >
-                         <img
-                            src={lang === "en" ? likedLogoEnAsset.url : likedLogoFrAsset.url}
-                          alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
-                            style={{
-                              height: "111.44px",
-                              width: "111.44px",
-                              maxHeight: "none",
-                              maxWidth: "none",
-                              left: "-11.71px",
-                              top: "-36.37px",
-                            }}
-                           className="absolute block object-contain liked-breathing"
-                        />
-                      </Button>
+                          {/* Hauteur historique conservée ; largeur dictée par les proportions natives du logo. */}
+                         <Button
+                          type="button"
+                           variant="ghost"
+                           size="sm"
+                          onClick={() => setSupportOpen(true)}
+                          aria-label={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
+                            style={{ height: "40px", width: "auto" }}
+                           className="relative z-10 flex w-auto shrink-0 items-center justify-center overflow-visible rounded-none p-0 transition-transform hover:scale-105 hover:bg-transparent"
+                       >
+                          <img
+                             src={lang === "en" ? likedLogoEnAsset.url : likedLogoFrAsset.url}
+                           alt={lang === "en" ? "Support the KeyWeight project" : "Soutenir le projet KeyWeight"}
+                             style={{
+                               height: "40px",
+                               width: "auto",
+                               maxWidth: "none",
+                             }}
+                            className="block object-contain liked-breathing"
+                         />
+                       </Button>
 
                      {supportHint && (
                        <div className="pointer-events-none absolute left-1/2 top-full z-[9999] mt-[6px] -translate-x-1/2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium !text-gray-900 shadow-md">
