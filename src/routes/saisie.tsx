@@ -2593,19 +2593,9 @@ function Index() {
               <label className={FIELD_LABEL_CLASS}>
                 <span className="flex items-center gap-1">
                   {en ? "User" : "Utilisateur"}
-                  <span className="group relative inline-flex">
-                    <span
-                      tabIndex={0}
-                      role="button"
-                      aria-label={en ? "Who is performing the weigh-out?" : "Qui effectue la pesée ?"}
-                      className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-foreground/60 text-[10px] font-bold leading-none text-foreground/70"
-                    >
-                      i
-                    </span>
-                    <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium !text-gray-900 shadow-md group-hover:block group-focus-within:block">
-                      {en ? "Who is performing the weigh-out?" : "Qui effectue la pesée ?"}
-                    </span>
-                  </span>
+                  <InfoDot label={en ? "User" : "Utilisateur"}>
+                    {en ? "Who is performing the weigh-out?" : "Qui effectue la pesée ?"}
+                  </InfoDot>
                 </span>
                 <select
                   value={info["profil_saisie"] ?? ""}
