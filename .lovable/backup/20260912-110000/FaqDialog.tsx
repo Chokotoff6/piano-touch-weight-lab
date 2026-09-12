@@ -46,7 +46,7 @@ export function FaqDialog({
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-4 text-sm leading-relaxed !text-gray-800">
-          <FaqContent page={page} en={en} />
+          <FaqContent page={page} />
         </div>
       </div>
     </div>,

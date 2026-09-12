@@ -175,21 +175,9 @@ function FaqHome() {
   );
 }
 
-function FaqSaisie({ en }: { en: boolean }) {
+function FaqSaisie() {
   return (
     <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value="profil">
-            <AccordionTrigger>
-              {en
-                ? "Why do you need to specify if you are a Pianist or a Technician?"
-                : "Pourquoi devez-vous indiquer si vous êtes Pianiste ou Technicien ?"}
-            </AccordionTrigger>
-            <AccordionContent>
-              {en
-                ? "This anonymous classification ensures the accuracy and advanced filtering of comparative charts within the Collaborative Cloud. Professional technicians can thus choose to filter and compare data exclusively against certified workshop metrics."
-                : "Cette information anonyme permet de classifier la saisie afin de garantir la pertinence et le filtrage des graphiques comparatifs au sein du Cloud collaboratif. Les professionnels de l'accord peuvent ainsi choisir de comparer leurs données uniquement avec des pesées certifiées d'ateliers."}
-            </AccordionContent>
-          </AccordionItem>
           <AccordionItem value="q2">
             <AccordionTrigger>
               Why are Down Weight (Wa) and Up Weight (Wd) both necessary?
@@ -576,8 +564,8 @@ function FaqComparer() {
 }
 
 /** Contenu FAQ dédié à la page courante. */
-export function FaqContent({ page, en = false }: { page: FaqPage; en?: boolean }) {
-  if (page === "saisie") return <FaqSaisie en={en} />;
+export function FaqContent({ page }: { page: FaqPage }) {
+  if (page === "saisie") return <FaqSaisie />;
   if (page === "resultats") return <FaqResultats />;
   if (page === "comparer") return <FaqComparer />;
   return <FaqHome />;
