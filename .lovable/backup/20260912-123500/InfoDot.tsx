@@ -20,10 +20,13 @@ export function InfoDot({
       <button
         type="button"
         aria-label={label ?? "Info"}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();
-          setOpen(true);
         }}
         className={`inline-flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-full border border-foreground/60 align-middle text-[10px] font-bold normal-case leading-none text-foreground/70 ${className ?? ""}`}
       >
@@ -40,29 +43,16 @@ export function InfoDot({
           role="presentation"
         >
           <div
-            className="relative max-h-[80vh] w-full max-w-md overflow-y-auto rounded-lg border border-gray-300 p-6 text-left text-sm font-normal normal-case leading-relaxed !text-gray-900 shadow-xl"
+            className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-lg border border-gray-300 p-6 text-left text-sm font-normal normal-case leading-relaxed !text-gray-900 shadow-xl"
             style={{ backgroundColor: "#FFFFFF" }}
             onClick={(event) => event.stopPropagation()}
             role="dialog"
             aria-modal="true"
           >
-            <button
-              type="button"
-              aria-label="Fermer"
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                setOpen(false);
-              }}
-              className="absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full text-base leading-none !text-gray-500 hover:!text-gray-900"
-            >
-              ×
-            </button>
             {children}
           </div>
         </div>
       )}
-
     </>
   );
 }
