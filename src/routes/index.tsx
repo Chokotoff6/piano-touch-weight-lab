@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BrandTargetInfoContent } from "@/components/BrandTargetInfo";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
-import { disableDemoMode, enableDemoMode, ensureDemoDefault, isDemoActive } from "@/lib/demo-mode";
+import { enableDemoMode, ensureDemoDefault } from "@/lib/demo-mode";
 
 export const Route = createFileRoute("/")({
   head: () => ({
