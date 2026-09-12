@@ -623,8 +623,8 @@ function RootComponent() {
           de l'onglet « Accueil », présent sur toutes les pages tant qu'il
           n'a pas été cliqué. */}
       {demoVisible && (
-        <div className="mx-auto max-w-[1400px] px-4 pt-2 sm:px-6">
-          <div className="pl-1">
+        <div className="relative !z-[60] mx-auto max-w-[1400px] overflow-visible px-4 pb-2 pt-3 sm:px-6">
+          <div className="relative !z-[60] pl-1">
             <button
               type="button"
               onClick={() => {
