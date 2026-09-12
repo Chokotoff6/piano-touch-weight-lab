@@ -25,6 +25,7 @@ export const Route = createFileRoute("/")({
 });
 
 const LEGAL_TITLE = "Mentions Légales, RGPD & Conditions d'utilisation";
+const LEGAL_TITLE_EN = "Legal Notice, GDPR & Terms of Use";
 const LEGAL_BLOCKS: Array<[string, string]> = [
   [
     "Édition du site :",
@@ -48,12 +49,32 @@ const LEGAL_BLOCKS: Array<[string, string]> = [
   ],
   [
     "Conditions d'utilisation et clause de non-garantie — Service en l'état :",
-    "Ce site est un outil expérimental collaboratif mis à disposition gratuitement. L'éditeur ne fournit aucune garantie quant à la disponibilité du service, l'exactitude des calculs ou la conservation des données. L'éditeur se réserve le droit de modifier, restreindre ou fermer l'accès, ainsi que de supprimer l'historique des saisies à tout moment, sans préavis ni indemnité. L'éditeur reste libre d'introduire des fonctionnalités payantes pour les développements futurs de l'appli, mais le cœur collaboratif du projet a pour vocation de rester libre.",
+    "Ce site est un outil expérimental collaboratif mis à disposition gratuitement. L'éditeur ne fournit aucune garantie quant à la disponibilité du service, l'exactitude des calculs ou la conservation des données. L'éditeur se réserve le droit de modifier, restreindre ou fermer l'accès, ainsi que de supprimer l'historique des saisies à tout moment, sans préavis ni indemnité. L'éditeur reste libre d'introduire des fonctionnalités payantes pour les développements futurs de l'appli, mais le module de Saisie de l'application a pour vocation de rester libre.",
+  ],
+];
+const LEGAL_BLOCKS_EN: Array<[string, string]> = [
+  ["Site publisher:", "The KeyWeight application is an independent collaborative tool."],
+  ["Hosting:", "The website and its database are secured and hosted by Supabase."],
+  [
+    "Intellectual property:",
+    "KeyWeight's calculation architecture and diagnostic charts are made available to professionals and pianists for technical workshop use.",
+  ],
+  [
+    "Liability:",
+    "The publisher provides a measurement and metrological diagnostic tool, and cannot be held liable for any mechanical work carried out on instruments.",
+  ],
+  [
+    "Data management (GDPR):",
+    "KeyWeight collects exclusively anonymous technical data related to the piano (model, serial number, measurements). No personal data is stored. For any legal removal request or to exercise your rights, contact: rgpd@keyweight.app (GDPR use only: this address is reserved for legal obligations. No support or product discussion message will be processed).",
+  ],
+  [
+    "Terms of use and disclaimer — Service as is:",
+    "This site is an experimental collaborative tool made available free of charge. The publisher gives no warranty as to service availability, the accuracy of calculations or data retention. The publisher reserves the right to modify, restrict or close access, and to delete entry history at any time, without notice or compensation. The publisher remains free to introduce paid features for future developments of the app, but the Data Entry module is intended to remain free.",
   ],
 ];
 
 function Accueil() {
-  const [legalOpen, setLegalOpen] = useState(true);
+  const [legalOpen, setLegalOpen] = useState(false);
   const lang = useLang();
   const en = lang === "en";
 
