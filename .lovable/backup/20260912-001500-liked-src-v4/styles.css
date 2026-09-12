@@ -503,7 +503,6 @@
 
 .liked-breathing {
   animation: liked-breathing 3.5s ease-in-out infinite;
-  transform-origin: center center;
 }
 
 @layer base {

@@ -36,8 +36,8 @@ import { createPortal } from "react-dom";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
-import likedLogoFrAsset from "@/assets/image_N48Ks9.png.asset.json";
-import likedLogoEnAsset from "@/assets/image_DVGujN.png.asset.json";
+import likedLogoFrAsset from "@/assets/image_tgFMOW.png.asset.json";
+import likedLogoEnAsset from "@/assets/image_zyFJ0c.png.asset.json";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
