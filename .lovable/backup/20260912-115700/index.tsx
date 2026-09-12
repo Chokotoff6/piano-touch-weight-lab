@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useLang } from "@/data/translations";
+import { enableDemoMode, isDemoClicked, markDemoClicked } from "@/lib/demo-mode";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -54,11 +55,43 @@ const LEGAL_BLOCKS: Array<[string, string]> = [
 
 function Accueil() {
   const [legalOpen, setLegalOpen] = useState(false);
+  const [demoVisible, setDemoVisible] = useState(false);
   const lang = useLang();
   const en = lang === "en";
 
+  useEffect(() => {
+    // Ré-affichage forcé du bouton (une seule fois) après le correctif.
+    try {
+      if (window.localStorage.getItem("ptw_demo_reset_v2") !== "1") {
+        window.localStorage.removeItem("ptw_demo_clicked");
+        window.localStorage.setItem("ptw_demo_reset_v2", "1");
+      }
+    } catch {
+      /* stockage indisponible */
+    }
+    setDemoVisible(!isDemoClicked());
+  }, []);
+
+  const activateDemo = () => {
+    enableDemoMode();
+    markDemoClicked();
+    setDemoVisible(false);
+  };
+
   return (
     <main className="relative mx-auto flex max-w-[1400px] flex-col px-6 pb-6 pt-2">
+      {demoVisible && (
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={activateDemo}
+            className="whitespace-nowrap rounded-md border-2 border-black bg-black px-4 py-2 text-xs font-bold uppercase tracking-wide !text-white transition-colors hover:bg-gray-800"
+          >
+            {en ? "Demo mode" : "Mode démo"}
+          </button>
+        </div>
+      )}
+
       <div className="mx-auto mt-4 w-full max-w-4xl space-y-8 text-left text-sm leading-relaxed text-foreground">
         <h1 className="text-xl font-semibold leading-snug">
           {en
@@ -130,17 +163,9 @@ function Accueil() {
         </section>
 
         <p>
-          {en ? (
-            <>
-              Any questions? Dedicated <strong>FAQ</strong>s for each module provide answers to all
-              practical and technical inquiries.
-            </>
-          ) : (
-            <>
-              Une question ? Des <strong>FAQ</strong> dédiées à chaque module répondent à toutes les
-              questions pratiques et techniques.
-            </>
-          )}
+          {en
+            ? "Any questions? Dedicated FAQs for each module provide answers to all practical and technical inquiries."
+            : "Une question ? Des FAQ dédiées à chaque module répondent à toutes les questions pratiques et techniques."}
         </p>
       </div>
 
@@ -153,7 +178,7 @@ function Accueil() {
         </Link>
       </div>
 
-      <div className="mx-auto w-full max-w-4xl" style={{ marginTop: "250px" }}>
+      <div className="mx-auto w-full max-w-4xl" style={{ marginTop: "150px" }}>
         <div className="flex justify-center">
           <button
             type="button"

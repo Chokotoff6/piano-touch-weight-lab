@@ -20,15 +20,12 @@ export function InfoDot({
       <button
         type="button"
         aria-label={label ?? "Info"}
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setOpen(false)}
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();
+          setOpen(true);
         }}
-        className={`inline-flex h-4 w-4 shrink-0 cursor-help items-center justify-center rounded-full border border-foreground/60 align-middle text-[10px] font-bold normal-case leading-none text-foreground/70 ${className ?? ""}`}
+        className={`inline-flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-full border border-foreground/60 align-middle text-[10px] font-bold normal-case leading-none text-foreground/70 ${className ?? ""}`}
       >
         i
       </button>

@@ -18,54 +18,6 @@ export function faqTitle(page: FaqPage, en: boolean): string {
 function FaqHome() {
   return (
     <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value="genese">
-            <AccordionTrigger>
-              Pourquoi ce site a-t-il été créé ? (La genèse du projet)
-            </AccordionTrigger>
-            <AccordionContent>
-              <p>
-                Ce projet est né d'une frustration personnelle et d'un constat partagé par de
-                nombreux musiciens. Face à un piano ressenti comme « trop dur » (causant fatigue et
-                tendinites aux doigts), la réponse reçue se limitait souvent à un jugement
-                subjectif : 'votre piano semble correct, il y en a des bien plus durs'. De plus,
-                obtenir les spécifications d'usine précises des constructeurs s'avère souvent être
-                un parcours du combattant. Pour briser cette opacité et remplacer le ressenti par la
-                mesure, KeyWeight a été conçu comme un laboratoire de métrologie indépendant pour
-                objectiver précisément la régulation d'un clavier à l'aide de données chiffrées
-                incontestables.
-              </p>
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="gratuite">
-            <AccordionTrigger>L'application KeyWeight est-elle gratuite ?</AccordionTrigger>
-            <AccordionContent>
-              <p>
-                Oui, l'accès à l'outil de Saisie et de gestion des 88 touches est entièrement
-                gratuit. KeyWeight repose sur un modèle collaboratif et indépendant : le site met à
-                disposition son moteur de calcul initial, et en contrepartie, la communauté peut
-                enrichir anonymement la base de données. Durant cette phase de développement,
-                l'accès au module d'Analyse comparative est offert afin de tester la puissance du
-                Cloud collaboratif. Des développements futurs ou des services d'analyse avancés
-                pourront faire l'objet d'options distinctes, mais le cœur de saisie de l'application
-                a pour vocation de rester libre. L'utilisateur dispose à tout moment du droit de
-                sauver de manière autonome ses données ainsi que les rapports générés par KeyWeight,
-                sous forme de fichiers CSV ou PDF.
-              </p>
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="classification">
-            <AccordionTrigger>
-              Pourquoi devez-vous indiquer si vous êtes Pianiste ou Technicien ?
-            </AccordionTrigger>
-            <AccordionContent>
-              <p>
-                Cette information anonyme permet de classifier la saisie afin de garantir la
-                pertinence et le filtrage des graphiques comparatifs au sein du Cloud collaboratif.
-                Les professionnels de l'accord peuvent ainsi choisir de comparer leurs données
-                uniquement avec des pesées certifiées d'ateliers.
-              </p>
-            </AccordionContent>
-          </AccordionItem>
           <AccordionItem value="rgpd">
             <AccordionTrigger>
               Protection des données (RGPD) : Comment sont gérées mes pesées ?
