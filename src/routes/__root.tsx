@@ -478,9 +478,19 @@ function RootComponent() {
                       disabled={!filesEnabled}
                       onClick={() => requireConsent(() => dispatchAction("piano-export-csv"))}
                     >
-                      {lang === "en"
-                        ? "Save entered data as CSV (re-importable)"
-                        : "Sauver données saisies au format CSV (re-importable)"}
+                      {lang === "en" ? (
+                        <span className="block leading-snug">
+                          Save entered data
+                          <br />
+                          as CSV (re-importable)
+                        </span>
+                      ) : (
+                        <span className="block leading-snug">
+                          Sauver données saisies au format
+                          <br />
+                          CSV (re-importable)
+                        </span>
+                      )}
                     </DropdownMenuItem>
                   </>
                 )}
