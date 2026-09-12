@@ -53,7 +53,7 @@ const LEGAL_BLOCKS: Array<[string, string]> = [
 ];
 
 function Accueil() {
-  const [legalOpen, setLegalOpen] = useState(false);
+  const [legalOpen, setLegalOpen] = useState(true);
   const lang = useLang();
   const en = lang === "en";
 
