@@ -2571,7 +2571,12 @@ function Index() {
               </label>
 
               <label className={FIELD_LABEL_CLASS}>
-                <span className="block">{en ? "Usage level" : "Niveau d'usage"}</span>
+                <span className="flex items-center gap-1">
+                  {en ? "Usage level" : "Niveau d'usage"}
+                  <InfoDot label={en ? "Usage level" : "Niveau d'usage"}>
+                    {en ? "Piano condition." : "État du piano."}
+                  </InfoDot>
+                </span>
                 <select
                   value={info["usage_level"] ?? ""}
                   onChange={(e) => updateInfo("usage_level", e.target.value)}
