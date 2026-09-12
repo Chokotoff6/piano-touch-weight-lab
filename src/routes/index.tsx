@@ -121,11 +121,23 @@ function Accueil() {
                 ? "Fast logging and clear visualization of static touch weight data across all 88 keys"
                 : "enregistrement rapide et visualisation des poids statiques des 88 touches"}
             </li>
-            <li className={en ? undefined : "whitespace-nowrap"}>
+            <li>
               <strong>{en ? "Comparative Analysis:" : "Analyse comparative :"}</strong>{" "}
-              {en
-                ? "Graphical comparison against standard industry regulation targets and community crowd-sourced data (Collaborative Cloud)."
-                : "comparaison graphique par rapport aux cibles usuelles et aux données de la communauté (Cloud collaboratif)."}
+              {en ? (
+                <>
+                  Graphical comparison against standard industry regulation targets and community
+                  crowd-sourced data
+                  <br />
+                  (Collaborative Cloud).
+                </>
+              ) : (
+                <>
+                  comparaison graphique par rapport aux cibles usuelles et aux données de la
+                  communauté
+                  <br />
+                  (Cloud collaboratif).
+                </>
+              )}
             </li>
           </ul>
         </section>
