@@ -73,7 +73,5 @@ flottante FAQ (point 4).
 - Le reste (exports PDF/CSV, Comparer, Cloud, logo de soutien) n'est pas
   touché. Typecheck et build vérifiés en fin d'exécution.
 
-## Point à confirmer
-
-Le texte exact de présentation de l'accueil n'a pas encore été fourni : le
-texte existant est conservé provisoirement.
+Les textes d'accueil, RGPD et mentions légales sont repris mot à mot tels que
+fournis.
