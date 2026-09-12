@@ -2,7 +2,7 @@
 // écrit dans les mêmes clés locales que la page Saisie, afin que Résultats et
 // Comparer affichent immédiatement des graphiques.
 import { buildCurrentPiano, saveCurrentPiano, CURRENT_PIANO_KEY } from "@/lib/current-piano";
-import { setGateReady } from "@/lib/topbar-store";
+import { setCompareUnlocked, setGateReady, setResultsVisited } from "@/lib/topbar-store";
 
 const DRAFT_ROWS_KEY = "ptw_draft_rows";
 const DRAFT_INFO_KEY = "ptw_draft_info";
@@ -73,14 +73,17 @@ export function enableDemoMode() {
         ville: DEMO_INFO["ville"] ?? "",
         pays: DEMO_INFO["pays"] ?? "",
         remarques: DEMO_INFO["remarques"] ?? "",
-        rows,
-      } as Parameters<typeof buildCurrentPiano>[0]),
+        wa: rows.map((r) => r.wa),
+        wd: rows.map((r) => r.wd),
+      }),
     );
   } catch {
     /* construction indisponible */
   }
   try {
     setGateReady(true);
+    setResultsVisited(true);
+    setCompareUnlocked(true);
   } catch {
     /* store indisponible */
   }
@@ -99,6 +102,8 @@ export function disableDemoMode() {
   }
   try {
     setGateReady(false);
+    setResultsVisited(false);
+    setCompareUnlocked(false);
   } catch {
     /* store indisponible */
   }
