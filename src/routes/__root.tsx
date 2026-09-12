@@ -38,12 +38,7 @@ import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 import likedLogoFrAsset from "@/assets/image_soutien_v5.png.asset.json";
 import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
-import {
-  enableDemoMode,
-  ensureDemoDefault,
-  isDemoClicked,
-  markDemoClicked,
-} from "@/lib/demo-mode";
+import { ensureDemoDefault } from "@/lib/demo-mode";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { FaqDialog } from "@/components/FaqDialog";
 import type { FaqPage } from "@/components/FaqContent";

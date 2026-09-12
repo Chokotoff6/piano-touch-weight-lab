@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useLang } from "@/data/translations";
+import { enableDemoMode, isDemoClicked, markDemoClicked } from "@/lib/demo-mode";
 
 export const Route = createFileRoute("/")({
   head: () => ({
