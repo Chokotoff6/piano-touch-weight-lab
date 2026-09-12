@@ -2758,34 +2758,25 @@ function Index() {
         title={
           <>
             {en ? "Static touch weight measurements" : "Mesures poids statiques"}{" "}
-            <span data-pdf-hide className="group relative inline-flex items-center align-middle">
-              <span className="flex h-4 w-4 items-center justify-center rounded-full border border-black text-[10px] font-bold normal-case !text-black">
-                i
-              </span>
-              <span
-                className="pointer-events-none absolute left-5 top-1/2 hidden w-max max-w-none -translate-y-1/2 whitespace-nowrap rounded-md border border-gray-300 px-3 py-2 text-left text-[13px] font-medium normal-case text-gray-950 shadow-lg group-hover:block"
-                style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
-              >
-                <span className="block whitespace-nowrap">
+            <span data-pdf-hide className="inline-flex items-center align-middle">
+              <InfoDot label={en ? "Static touch weight measurements" : "Mesures poids statiques"}>
+                <span className="block">
                   {en
                     ? "Enter at least the values for every C and C# to access the results."
                     : "Saisir au minimum les valeurs pour tous les Do et Do# pour accéder aux résultats."}
                 </span>
-                <span className="block whitespace-nowrap">
-
+                <span className="mt-2 block">
                   {en ? "• TAB: move forward one input field" : "• TAB : avance d'une zone de saisie"}
                 </span>
-                <span className="block whitespace-nowrap">
+                <span className="block">
                   {en ? "• Shift + TAB: move back one input field" : "• Shift + TAB : recule d'une zone de saisie"}
                 </span>
-                <span className="block whitespace-nowrap">
+                <span className="block">
                   {en
                     ? "• ALT + TAB (Option ⌥ on Mac): jump straight to the next C"
                     : "• ALT + TAB (Option ⌥ sur Mac) : saute directement au DO suivant"}
                 </span>
-
-              </span>
-
+              </InfoDot>
             </span>
           </>
         }
