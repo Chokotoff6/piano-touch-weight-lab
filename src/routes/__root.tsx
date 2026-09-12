@@ -38,7 +38,7 @@ import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 import likedLogoFrAsset from "@/assets/image_soutien_v5.png.asset.json";
 import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
-import { ensureDemoDefault } from "@/lib/demo-mode";
+import { ensureDemoDefault, enableDemoMode, isDemoClicked, markDemoClicked } from "@/lib/demo-mode";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { FaqDialog } from "@/components/FaqDialog";
 import type { FaqPage } from "@/components/FaqContent";
@@ -239,10 +239,12 @@ function RootComponent() {
   // aucun calcul de position n'est nécessaire.
   const saveBtnRef = useRef<HTMLButtonElement | null>(null);
   const pendingActionRef = useRef<(() => void) | null>(null);
+  const [demoVisible, setDemoVisible] = useState(false);
   useEffect(() => {
     initLang();
     initJourneyFlags();
     ensureDemoDefault();
+    setDemoVisible(!isDemoClicked());
   }, []);
 
   const isComparer = pathname === "/comparer";
@@ -526,7 +528,7 @@ function RootComponent() {
                    <button
                      type="button"
                      onClick={() => setFaqOpen(true)}
-                     className="mr-2 shrink-0 -translate-x-[50px] translate-y-[19px] rounded-md border border-gray-400 bg-white px-2 py-0.5 text-[1rem] font-semibold !text-gray-900 transition-colors hover:bg-gray-100"
+                     className="mr-2 shrink-0 -translate-x-[50px] translate-y-[19px] rounded-md border border-gray-400 bg-white px-2 py-0.5 text-[1rem] font-bold !text-gray-900 transition-colors hover:bg-gray-100"
                    >
                      FAQ
                    </button>
