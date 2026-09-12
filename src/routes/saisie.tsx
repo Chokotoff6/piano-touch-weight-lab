@@ -2597,7 +2597,22 @@ function Index() {
                   ))}
                 </select>
               </label>
+
+              {/* Profil de saisie : variable de filtrage futur du Cloud collaboratif. */}
+              <label className={FIELD_LABEL_CLASS}>
+                <span className="block">{en ? "Entry profile" : "Profil de saisie"}</span>
+                <select
+                  value={info["profil_saisie"] ?? ""}
+                  onChange={(e) => updateInfo("profil_saisie", e.target.value)}
+                  className={`${INPUT_CLASS} !bg-white !block !w-fit !min-w-0 !max-w-full mt-2`}
+                >
+                  <option value="">{en ? "— Select —" : "— Sélectionner —"}</option>
+                  <option value="Amateur">{en ? "Amateur" : "Amateur"}</option>
+                  <option value="Professionnel">{en ? "Professional" : "Professionnel"}</option>
+                </select>
+              </label>
             </div>
+
 
 
             <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
