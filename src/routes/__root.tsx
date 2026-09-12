@@ -297,6 +297,16 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      {/* Filigrane : logo officiel KeyWeight en fond, sur toutes les pages. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 -z-10 bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url(${keyweightLogo.url})`,
+          backgroundSize: "min(70vw, 70vh) auto",
+          opacity: 0.07,
+        }}
+      />
       <nav className="!sticky !top-0 !z-[50] !bg-white !shadow-md border-b border-border">
         <div className="mx-auto max-w-[1400px] px-4 py-1 sm:px-6">
           <div className="flex flex-wrap items-center gap-2">
