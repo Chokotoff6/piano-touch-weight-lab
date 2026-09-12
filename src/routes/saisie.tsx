@@ -628,7 +628,8 @@ function Index() {
           info["pays"]?.trim() &&
           info["ville"]?.trim() &&
           info["entretien"] &&
-          info["usage_level"],
+          info["usage_level"] &&
+          info["profil_saisie"],
       ),
     [info],
   );
@@ -644,7 +645,8 @@ function Index() {
           info["pays"]?.trim() &&
           info["ville"]?.trim() &&
           info["entretien"] &&
-          info["usage_level"],
+          info["usage_level"] &&
+          info["profil_saisie"],
       ),
     [info],
   );
@@ -661,6 +663,7 @@ function Index() {
       ["ville", en ? "City" : "Ville"],
       ["entretien", en ? "Maintenance" : "Entretien"],
       ["usage_level", en ? "Usage level" : "Niveau d'usage"],
+      ["profil_saisie", en ? "User" : "Utilisateur"],
     ];
     return checks.filter(([key]) => !String(info[key] ?? "").trim()).map(([, label]) => label);
   }, [info, en]);
@@ -2372,7 +2375,7 @@ function Index() {
         data-saved-at={savedAt ?? ""}
         data-climate-zone={climateZone ?? ""}
       >
-        <Frame title={en ? "Piano information" : "Informations piano"} className="mt-10 [&_input]:border-foreground/60">
+        <Frame title={en ? "Piano information" : "Informations piano"} className="mt-10 mx-auto w-4/5 max-w-[80%] [&_input]:border-foreground/60">
           <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-[1fr_210px_1fr_1fr]">
             <label className={FIELD_LABEL_CLASS}>
               {en ? "Brand" : "Marque"}
@@ -2581,7 +2584,22 @@ function Index() {
 
               {/* Utilisateur : variable de filtrage futur du Cloud collaboratif. */}
               <label className={FIELD_LABEL_CLASS}>
-                <span className="block">{en ? "User (who performs the weighing?)" : "Utilisateur (qui effectue la pesée ?)"}</span>
+                <span className="flex items-center gap-1">
+                  {en ? "User" : "Utilisateur"}
+                  <span className="group relative inline-flex">
+                    <span
+                      tabIndex={0}
+                      role="button"
+                      aria-label={en ? "Who is performing the weigh-out?" : "Qui effectue la pesée ?"}
+                      className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-foreground/60 text-[10px] font-bold leading-none text-foreground/70"
+                    >
+                      i
+                    </span>
+                    <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium !text-gray-900 shadow-md group-hover:block group-focus-within:block">
+                      {en ? "Who is performing the weigh-out?" : "Qui effectue la pesée ?"}
+                    </span>
+                  </span>
+                </span>
                 <select
                   value={info["profil_saisie"] ?? ""}
                   onChange={(e) => updateInfo("profil_saisie", e.target.value)}
@@ -2596,8 +2614,8 @@ function Index() {
 
 
 
-            <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4`}>
-              <span className="inline-flex items-center">
+            <label className={`mt-6 ${FIELD_LABEL_CLASS} sm:col-span-2 md:col-span-4 flex items-end gap-3`}>
+              <span className="inline-flex items-center leading-8">
                 {en ? "Remarks" : "Remarques"}
               </span>
               <textarea
@@ -2611,13 +2629,11 @@ function Index() {
                 value={info["remarques"] ?? ""}
                 onChange={(e) => {
                   updateInfo("remarques", e.target.value);
-                  e.currentTarget.style.height = "auto";
-                  e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`;
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") e.preventDefault();
                 }}
-                className={`${INPUT_CLASS} !h-auto !w-1/2 resize-none overflow-hidden placeholder:text-foreground placeholder:font-medium ${
+                className={`${INPUT_CLASS} !mt-0 !h-8 !w-1/2 resize-none overflow-hidden py-1 leading-6 placeholder:text-foreground placeholder:font-medium ${
                   remarquesInvalid
                     ? "border-destructive placeholder:text-foreground focus:border-destructive focus:ring-destructive"
                     : ""

@@ -609,25 +609,26 @@ function RootComponent() {
 
 
                 {/* Logo officiel KeyWeight : 30 px à gauche du bord droit,
-                    assis sur sa ligne de base, agrandi de 15 %. */}
-                <img
-                  src={keyweightLogo.url}
-                  alt="KeyWeight"
-                  style={{ height: "85px", width: "auto" }}
-                  className="relative z-10 shrink-0 -translate-x-[30px] translate-y-[26px] object-contain"
-                />
+                    assis sur sa ligne de base, agrandi de 15 %.
+                    Le bouton « Mode démo » est centré juste en dessous. */}
+                <div className="relative z-10 flex shrink-0 flex-col items-center -translate-x-[30px] translate-y-[26px]">
+                  <img
+                    src={keyweightLogo.url}
+                    alt="KeyWeight"
+                    style={{ height: "85px", width: "auto" }}
+                    className="object-contain"
+                  />
+                  {demoVisible && (
+                    <button
+                      type="button"
+                      onClick={activateDemo}
+                      className="mt-1 whitespace-nowrap rounded-md border-2 border-black bg-black px-3 py-1.5 text-xs font-bold uppercase tracking-wide !text-white transition-colors hover:bg-gray-800"
+                    >
+                      {lang === "en" ? "Demo mode" : "Mode démo"}
+                    </button>
+                  )}
+                </div>
 
-                {/* Bouton « Mode démo » : à droite du logo principal, sur toutes
-                    les pages, jusqu'au premier clic. */}
-                {demoVisible && (
-                  <button
-                    type="button"
-                    onClick={activateDemo}
-                    className="relative z-10 ml-[-10px] shrink-0 translate-y-[22px] whitespace-nowrap rounded-md border-2 border-black bg-black px-3 py-1.5 text-xs font-bold uppercase tracking-wide !text-white transition-colors hover:bg-gray-800"
-                  >
-                    {lang === "en" ? "Demo mode" : "Mode démo"}
-                  </button>
-                )}
 
               </div>
 
