@@ -64,80 +64,33 @@ export const TARGET_LEGAL_PARAGRAPHS = [
 
 export const TARGET_LEGAL_TEXT = [TARGET_LEGAL_TITLE, ...TARGET_LEGAL_PARAGRAPHS].join("\n\n");
 
-/** Petit "i" noir net, affiché à côté de « Cible » : tooltip légal au survol
-    et bascule au clic (pour le tactile). */
+/** Petit "i" noir net, affiché à côté de « Cible » : fenêtre légale au clic. */
 export function TargetLegalInfoIcon() {
-  const [pinned, setPinned] = useState(false);
   return (
-    <span
-      className="group relative inline-flex items-center align-middle"
-      onMouseLeave={() => setPinned(false)}
-    >
-      <button
-        type="button"
-        aria-label="Avertissement sur les données cibles"
-        onClick={(event) => {
-          event.stopPropagation();
-          setPinned((v) => !v);
-        }}
-        className="flex h-4 w-4 items-center justify-center rounded-full border border-black text-[10px] font-bold !text-black"
-      >
-        i
-      </button>
-      <span
-        className={`absolute left-5 top-1/2 w-[420px] -translate-y-1/2 rounded-md border border-gray-300 px-3 py-2 text-left text-[12.5px] font-medium normal-case leading-snug text-gray-950 shadow-lg group-hover:block ${pinned ? "block" : "hidden"}`}
-        style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
-      >
-        <span className="mb-1 block font-bold">{TARGET_LEGAL_TITLE}</span>
-        {TARGET_LEGAL_PARAGRAPHS.map((paragraph) => (
-          <span key={paragraph} className="mb-1 block last:mb-0">
-            {paragraph}
-          </span>
-        ))}
-      </span>
-    </span>
+    <InfoDot label="Avertissement sur les données cibles" width={420} className="!border-black !text-black">
+      <span className="mb-1 block font-bold">{TARGET_LEGAL_TITLE}</span>
+      {TARGET_LEGAL_PARAGRAPHS.map((paragraph) => (
+        <span key={paragraph} className="mb-1 block last:mb-0">
+          {paragraph}
+        </span>
+      ))}
+    </InfoDot>
   );
 }
 
 
-/** Petite icône "i" verte ouvrant l'overlay d'information juridique. */
+/** Petite icône "i" verte ouvrant la fenêtre d'information juridique. */
 export function BrandTargetInfoIcon({ variant = "brand" }: { variant?: TargetVariant }) {
-  const [open, setOpen] = useState(false);
   const en = useLang() === "en";
-  const overlay = (
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4"
-      onClick={() => setOpen(false)}
-    >
-      <div
-        className="relative w-full max-w-lg rounded-lg border border-black bg-white p-6 shadow-xl"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <button
-          type="button"
-          aria-label={en ? "Close" : "Fermer"}
-          onClick={() => setOpen(false)}
-          className="absolute right-3 top-3 text-gray-500 transition-colors hover:!text-black"
-        >
-          <X size={18} />
-        </button>
-        <BrandTargetInfoContent variant={variant} />
-      </div>
-    </div>
-  );
   return (
-    <>
-      <button
-        type="button"
-        aria-label={en ? "About generic target curves" : "À propos des cibles génériques"}
-        onClick={(event) => { event.stopPropagation(); setOpen(true); }}
-        className="ml-1 inline-flex translate-y-[-2px] align-middle"
-        style={{ color: "#10b981" }}
-      >
-        <Info size={14} color="#10b981" />
-      </button>
-      {open && typeof document !== "undefined" ? createPortal(overlay, document.body) : null}
-    </>
+    <InfoDot
+      label={en ? "About generic target curves" : "À propos des cibles génériques"}
+      width={420}
+      className="ml-1 translate-y-[-2px]"
+      icon={<Info size={14} color="#10b981" />}
+    >
+      <BrandTargetInfoContent variant={variant} />
+    </InfoDot>
   );
 }
 
