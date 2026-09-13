@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { createPortal } from "react-dom";
-import { Info, X } from "lucide-react";
+import { Info } from "lucide-react";
 import { useLang } from "@/data/translations";
+import { InfoDot } from "@/components/InfoDot";
 
 export type TargetVariant = "standard" | "brand";
 
