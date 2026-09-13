@@ -44,6 +44,8 @@ const PROFILE_FIELDS = "id,serial_number,brand,model,type_piano,mesure_date,manu
 export type KeyFilter = "all" | "split" | "white" | "black";
 type SourceMode = "none" | "cloud";
 type UsageLevel = "low" | "medium" | "intensive";
+/** Auteur de la pesée : particulier ou professionnel. */
+type WhoFilter = "private" | "pro";
 // Filtre modifications importantes : incluses, exclues, ou uniquement celles-ci.
 type ChangesFilter = "included" | "excluded" | "only";
 
@@ -1340,6 +1342,8 @@ type SidebarPanelProps = {
   setImportantChanges: (value: ChangesFilter) => void;
   setYoungOnly: (value: boolean) => void;
   cycleUsage: () => void;
+  whoFilter: WhoFilter;
+  cycleWho: () => void;
 
 };
 
@@ -1487,6 +1491,8 @@ function Comparer() {
   const [importantChanges, setImportantChanges] = useState<ChangesFilter>("excluded");
   const [youngOnly, setYoungOnly] = useState(false);
   const [usageLevel, setUsageLevel] = useState<UsageLevel>("low");
+  // Filtre « QUI » : trie les courbes de la communauté selon l'auteur de la pesée.
+  const [whoFilter, setWhoFilter] = useState<WhoFilter>("private");
   const [mine, setMine] = useState<ProfileRecord | null>(null);
   const [draftKeyCounts, setDraftKeyCounts] = useState<{ white: number; black: number } | null>(null);
   const [standard, setStandard] = useState<RefProfile>(FACTORY_STANDARD);
