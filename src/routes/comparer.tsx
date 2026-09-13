@@ -1353,6 +1353,7 @@ function SidebarPanel(props: SidebarPanelProps) {
   const en = lang === "en";
   const usageLabel = props.usageLevel === "low" ? "FAIBLE" : props.usageLevel === "medium" ? "MOYEN" : "INTENSIF";
   const changesLabel = props.importantChanges === "included" ? "INCLUS" : props.importantChanges === "excluded" ? "EXCLUS" : "SEULS";
+  const whoLabel = props.whoFilter === "pro" ? (en ? "PRO" : "PRO") : (en ? "PRIVATE OWNERS" : "PARTICULIERS");
   const tipCloud = en
     ? "Compare your piano with others of the same model."
     : "Comparez votre piano avec d'autres du même modèle.";
