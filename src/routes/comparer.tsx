@@ -1742,13 +1742,24 @@ function Comparer() {
         setCloudSampleCount(0);
         return;
       }
-      const matching = (result.data as ExternalPianoProfileRow[]).map(profileFromRow);
+      // Filtre QUI : appliqué sur l'auteur de la pesée lorsque la donnée existe.
+      const rows = (result.data as ExternalPianoProfileRow[]).filter((row) => {
+        const raw = String(
+          (row as unknown as Record<string, unknown>)["user_profile"] ??
+            (row as unknown as Record<string, unknown>)["profil_saisie"] ??
+            "",
+        ).toLowerCase();
+        if (!raw) return true;
+        const isPro = raw.includes("techni") || raw.includes("facteur") || raw.includes("pro");
+        return whoFilter === "pro" ? isPro : !isPro;
+      });
+      const matching = rows.map(profileFromRow);
       setCloudSampleCount(matching.length);
       setCloudProfile(averageProfiles(matching));
     }
     void loadCloudAverage();
     return () => { cancelled = true; };
-  }, [mine, sourceMode, sameClimate, sameYear, importantChanges, youngOnly, usageLevel]);
+  }, [mine, sourceMode, sameClimate, sameYear, importantChanges, youngOnly, usageLevel, whoFilter]);
 
   // Arbitrage de la courbe orange : CSV importé en priorité, sinon moyenne Cloud.
   const comparisonProfile = comparedPiano ?? (sourceMode === "cloud" ? cloudProfile : null);
@@ -1805,6 +1816,10 @@ function Comparer() {
     setSourceMode("cloud");
   }
 
+
+  function cycleWho() {
+    setWhoFilter((value) => (value === "private" ? "pro" : "private"));
+  }
 
   function cycleUsage() {
     setUsageLevel((value) => value === "low" ? "medium" : value === "medium" ? "intensive" : "low");
