@@ -1,12 +1,10 @@
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { FaqContent, faqTitle, type FaqPage } from "@/components/FaqContent";
-import { useFadeClose } from "@/lib/use-fade-close";
 
 /**
  * Fenêtre flottante (FF) des FAQ : fond blanc pur, 80 % de la largeur et de la
  * hauteur de l'écran, voile de fond très léger rgba(0,0,0,0.15).
- * Ouverture instantanée, fermeture en fondu d'une seconde.
  */
 export function FaqDialog({
   open,
@@ -19,14 +17,13 @@ export function FaqDialog({
   page: FaqPage;
   en: boolean;
 }) {
-  const { rendered, closing, requestClose } = useFadeClose(open, onClose);
-  if (!rendered || typeof document === "undefined") return null;
+  if (!open || typeof document === "undefined") return null;
 
   return createPortal(
     <div
-      className={`fixed inset-0 z-[99998] flex items-center justify-center ${closing ? "ff-closing" : ""}`}
+      className="fixed inset-0 z-[99998] flex items-center justify-center"
       style={{ background: "rgba(0,0,0,0.15)" }}
-      onClick={requestClose}
+      onClick={onClose}
       role="presentation"
     >
       <div
@@ -41,7 +38,7 @@ export function FaqDialog({
           <h2 className="text-base font-semibold !text-gray-900">{faqTitle(page, en)}</h2>
           <button
             type="button"
-            onClick={requestClose}
+            onClick={onClose}
             aria-label={en ? "Close" : "Fermer"}
             className="rounded-md p-1 !text-gray-600 transition-colors hover:bg-gray-100"
           >
