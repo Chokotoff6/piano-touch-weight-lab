@@ -4,7 +4,8 @@ import { useFadeClose } from "@/lib/use-fade-close";
 
 /**
  * Bouton « i » standardisé de toute l'application.
- * - Ouverture au clic uniquement (aucun survol).
+ * - Ouverture au clic uniquement (aucun survol), instantanée (aucune animation).
+ * - Fermeture en fondu d'exactement 1 seconde.
  * - Fenêtre blanche contextuelle placée juste à côté de l'icône cliquée.
  * - Taille ajustée au texte, fermeture au clic extérieur ou sur la croix.
  * - Voile de fond unique et léger : rgba(0,0,0,0.15). Aucun « ? ».
@@ -27,9 +28,10 @@ export function InfoDot({
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const anchorRef = useRef<HTMLButtonElement>(null);
+  const { rendered, closing, requestClose } = useFadeClose(open, () => setOpen(false));
 
   useEffect(() => {
-    if (!open) return;
+    if (!rendered) return;
     const place = () => {
       const rect = anchorRef.current?.getBoundingClientRect();
       if (!rect) return;
@@ -48,15 +50,15 @@ export function InfoDot({
       window.removeEventListener("resize", place);
       window.removeEventListener("scroll", place, true);
     };
-  }, [open, width]);
+  }, [rendered, width]);
 
   const overlay = (
     <div
-      className="fixed inset-0 z-[99999]"
+      className={`fixed inset-0 z-[99999] ${closing ? "ff-closing" : ""}`}
       style={{ background: "rgba(0,0,0,0.15)" }}
       onClick={(event) => {
         event.stopPropagation();
-        setOpen(false);
+        requestClose();
       }}
       role="presentation"
     >
@@ -82,7 +84,7 @@ export function InfoDot({
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
-            setOpen(false);
+            requestClose();
           }}
           className="absolute right-1 top-1 inline-flex h-5 w-5 items-center justify-center rounded-full text-sm leading-none !text-gray-500 hover:!text-gray-900"
         >
@@ -112,7 +114,7 @@ export function InfoDot({
       >
         {icon ?? "i"}
       </button>
-      {open && typeof document !== "undefined" ? createPortal(overlay, document.body) : null}
+      {rendered && typeof document !== "undefined" ? createPortal(overlay, document.body) : null}
     </>
   );
 }
