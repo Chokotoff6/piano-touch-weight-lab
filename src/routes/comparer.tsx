@@ -289,8 +289,8 @@ function databaseClimate(value: string | null) {
   return value?.trim() || null;
 }
 
-function databaseUsage(value: UsageLevel) {
-  return value === "low" ? "Low" : value === "medium" ? "Medium" : value === "intensive" ? "Intensive" : null;
+function databaseUsage(value: Exclude<UsageLevel, "all">) {
+  return value === "low" ? "Low" : value === "medium" ? "Medium" : "Intensive";
 }
 
 // Abaque théorique d'usine calculé en local (aucun appel réseau).
@@ -1053,7 +1053,14 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       // clavier). La souris ayant effacé kbNoteRef en reprenant la main, la
       // flèche repart toujours de la dernière position réellement pointée.
       const base = kbNoteRef.current ?? lastMouseNote.current ?? Math.round(zoomStartRef.current + ZOOM_WINDOW / 2);
-      const next = Math.min(Math.max(base + step, 1), 88);
+      // Affichage exclusif Blanches/Noires : la navigation saute les touches
+      // masquées et passe directement à la note visible suivante.
+      const activeFilter = filtersRef.current[zoomId] ?? keyFilterRef.current;
+      const visible = (note: number) =>
+        activeFilter === "white" ? !isBlackKey(note) : activeFilter === "black" ? isBlackKey(note) : true;
+      let candidate = base + step;
+      while (candidate >= 1 && candidate <= 88 && !visible(candidate)) candidate += step;
+      const next = Math.min(Math.max(visible(candidate) ? candidate : base, 1), 88);
       kbNoteRef.current = next;
       lastMouseNote.current = next;
       setKbNote(next);
