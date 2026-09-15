@@ -161,6 +161,8 @@ function RootComponent() {
   const topbar = useTopbarState();
   const lang = useLang();
   const [consentOpen, setConsentOpen] = useState(false);
+  /** Fenêtre juridique complète, ouvrable depuis le message de consentement. */
+  const [legalOpen, setLegalOpen] = useState(false);
   const [faqOpen, setFaqOpen] = useState(false);
   /** Fenêtre interne de soutien collaboratif (bilingue). */
   const [supportOpen, setSupportOpen] = useState(false);
