@@ -41,6 +41,9 @@ import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
 import { ensureDemoDefault, disableDemoMode, isDemoClicked, markDemoClicked } from "@/lib/demo-mode";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { FaqDialog } from "@/components/FaqDialog";
+import { LegalDialog } from "@/data/legal";
+import { InfoDot } from "@/components/InfoDot";
+import { DEMO_INFO_EN, DEMO_INFO_FR } from "@/components/DemoIntro";
 import type { FaqPage } from "@/components/FaqContent";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -150,25 +153,7 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-const LEGAL_TEXT =
-  "Conditions d'utilisation et clause de non-garantie Service en l'état : Ce site est un outil expérimental collaboratif mis à disposition gratuitement. L'éditeur ne fournit aucune garantie quant à la disponibilité du service, l'exactitude des calculs ou la conservation des données. L'éditeur se réserve le droit de modifier, restreindre ou fermer l'accès, ainsi que de supprimer l'historique des saisies à tout moment, sans préavis ni indemnité. L'éditeur reste libre d'introduire des fonctionnalités payantes. Sauf fermeture définitive du service, les numéros de série enregistrés durant la phase gratuite conserveront un accès préférentiel gratuit aux fonctionnalités de base existantes, sans que cela ne constitue un droit opposable.";
-
 const RGPD_CONSENT_KEY = "rgpd-cgu-consent";
-const consentLinkClass =
-  "underline font-semibold text-blue-700 hover:text-blue-900";
-const RGPD_CONSENT_TEXT = (
-  <span>
-    En poursuivant, vous acceptez notre{" "}
-    <a href="/politique-confidentialite" target="_blank" rel="noopener noreferrer" className={consentLinkClass}>
-      Politique de confidentialité (RGPD)
-    </a>{" "}
-    ainsi que nos{" "}
-    <a href="/cgu" target="_blank" rel="noopener noreferrer" className={consentLinkClass}>
-      CGU
-    </a>
-    . Vous êtes informés que les données de régulation cibles fournies le sont à titre purement indicatif, de recherche et d'aide au diagnostic indépendant, sans affiliation officielle avec les constructeurs cités.
-  </span>
-);
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -176,6 +161,8 @@ function RootComponent() {
   const topbar = useTopbarState();
   const lang = useLang();
   const [consentOpen, setConsentOpen] = useState(false);
+  /** Fenêtre juridique complète, ouvrable depuis le message de consentement. */
+  const [legalOpen, setLegalOpen] = useState(false);
   const [faqOpen, setFaqOpen] = useState(false);
   /** Fenêtre interne de soutien collaboratif (bilingue). */
   const [supportOpen, setSupportOpen] = useState(false);
@@ -634,7 +621,7 @@ function RootComponent() {
           n'a pas été cliqué. */}
       {demoVisible && (
         <div className="relative !z-[60] mx-auto max-w-[1400px] overflow-visible px-4 pb-2 pt-3 sm:px-6">
-          <div className="relative !z-[60] pl-1">
+          <div className="relative !z-[60] flex items-center gap-2 pl-1">
             <button
               type="button"
               onClick={() => {
@@ -647,6 +634,9 @@ function RootComponent() {
             >
               {lang === "en" ? "Demo mode" : "Mode démo"}
             </button>
+            <InfoDot label={lang === "en" ? "Demo mode" : "Mode démo"} width={340}>
+              {lang === "en" ? DEMO_INFO_EN : DEMO_INFO_FR}
+            </InfoDot>
           </div>
         </div>
       )}
@@ -670,32 +660,36 @@ function RootComponent() {
         typeof document !== "undefined" &&
         createPortal(
           <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.15)" }}>
-            <div className="w-full max-w-lg rounded-lg border border-black bg-white p-6 shadow-xl">
-              <p className="text-sm leading-relaxed text-gray-950">{RGPD_CONSENT_TEXT}</p>
-              <div className="mt-4 flex justify-end gap-2">
-                {/* Retour : ferme la fenêtre et laisse l'utilisateur sur la page active. */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    pendingActionRef.current = null;
-                    setConsentOpen(false);
-                  }}
-                  className="rounded-md border border-gray-300 bg-white px-4 py-1.5 text-sm font-medium !text-gray-900 transition-colors hover:bg-gray-50"
-                >
-                  {lang === "en" ? "Back" : "Retour"}
-                </button>
+            <div className="w-full max-w-lg rounded-lg border border-black bg-white p-6 text-center shadow-xl">
+              <p className="text-base font-medium leading-relaxed !text-gray-900">
+                {lang === "en"
+                  ? "Your piano profile will complete the KeyWeight CLOUD database. Thank you for your collaboration!"
+                  : "Votre profil de piano va compléter la base de données CLOUD KeyWeight. Merci de votre collaboration !"}
+              </p>
+              <div className="mt-5 flex justify-center">
                 <button
                   type="button"
                   onClick={acceptConsent}
-                  className="rounded-md border-2 border-black bg-white px-4 py-1.5 text-sm font-bold !text-black transition-colors hover:bg-gray-100"
+                  className="rounded-md border-2 border-black bg-white px-6 py-2 text-sm font-bold !text-black transition-colors hover:bg-gray-100"
                 >
-                  {lang === "en" ? "I accept" : "J'accepte"}
+                  {lang === "en" ? "OK" : "D'accord"}
                 </button>
               </div>
+              <button
+                type="button"
+                onClick={() => setLegalOpen(true)}
+                className="mt-3 text-[11px] !text-gray-500 underline transition-colors hover:!text-gray-800"
+              >
+                {lang === "en"
+                  ? "(View Legal Notice & GDPR)"
+                  : "(Consulter les Mentions Légales & RGPD)"}
+              </button>
             </div>
           </div>,
           document.body,
         )}
+
+      <LegalDialog open={legalOpen} onClose={() => setLegalOpen(false)} en={lang === "en"} zIndex={100001} />
 
 
 
