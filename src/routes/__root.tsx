@@ -41,6 +41,9 @@ import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
 import { ensureDemoDefault, disableDemoMode, isDemoClicked, markDemoClicked } from "@/lib/demo-mode";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { FaqDialog } from "@/components/FaqDialog";
+import { LegalDialog } from "@/data/legal";
+import { InfoDot } from "@/components/InfoDot";
+import { DEMO_INFO_EN, DEMO_INFO_FR } from "@/components/DemoIntro";
 import type { FaqPage } from "@/components/FaqContent";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
