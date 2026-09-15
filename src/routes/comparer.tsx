@@ -43,9 +43,9 @@ const PROFILE_FIELDS = "id,serial_number,brand,model,type_piano,mesure_date,manu
 
 export type KeyFilter = "all" | "split" | "white" | "black";
 type SourceMode = "none" | "cloud";
-type UsageLevel = "low" | "medium" | "intensive";
+type UsageLevel = "all" | "low" | "medium" | "intensive";
 /** Auteur de la pesée : particulier ou professionnel. */
-type WhoFilter = "private" | "pro";
+type WhoFilter = "all" | "private" | "pro";
 // Filtre modifications importantes : incluses, exclues, ou uniquement celles-ci.
 type ChangesFilter = "included" | "excluded" | "only";
 
@@ -290,7 +290,7 @@ function databaseClimate(value: string | null) {
 }
 
 function databaseUsage(value: UsageLevel) {
-  return value === "low" ? "Low" : value === "medium" ? "Medium" : "Intensive";
+  return value === "low" ? "Low" : value === "medium" ? "Medium" : value === "intensive" ? "Intensive" : null;
 }
 
 // Abaque théorique d'usine calculé en local (aucun appel réseau).
@@ -585,7 +585,7 @@ export function nextKeyFilter(keyFilter: KeyFilter): KeyFilter {
 
 function MagnifyIcon() {
   return (
-    <svg aria-hidden="true" className="h-[1.3rem] w-[1.3rem]" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+    <svg aria-hidden="true" className="h-[1.69rem] w-[1.69rem]" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
       <circle cx="9" cy="9" r="5.5" />
       <path d="m13.5 13.5 3.5 3.5M7 9h4M9 7v4" />
     </svg>
@@ -809,7 +809,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           <button type="button" data-pdf-hide aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
         )}
         {!zoomed && (
-          <button type="button" data-pdf-hide aria-label={`Zoom sur ${title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-2 !text-black hover:bg-gray-100"><MagnifyIcon /></button>
+          <button type="button" data-pdf-hide aria-label={`Zoom sur ${title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-[5px] !text-black hover:bg-gray-100"><MagnifyIcon /></button>
         )}
         {onCycleKeyFilter && (
           <button
@@ -818,7 +818,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             onClick={() => cycleFor(family.id)}
             className="flex items-center gap-1 rounded-full border border-gray-300 bg-white px-2 py-0.5 text-[0.68rem] font-medium !text-black hover:bg-gray-100"
           >
-            <PianoKeysIcon />
+            <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
             <span className="!text-black">{bwLabel}</span>
           </button>
         )}
@@ -1351,9 +1351,9 @@ function SidebarPanel(props: SidebarPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const lang = useLang();
   const en = lang === "en";
-  const usageLabel = props.usageLevel === "low" ? "FAIBLE" : props.usageLevel === "medium" ? "MOYEN" : "INTENSIF";
-  const changesLabel = props.importantChanges === "included" ? "INCLUS" : props.importantChanges === "excluded" ? "EXCLUS" : "SEULS";
-  const whoLabel = props.whoFilter === "pro" ? (en ? "PRO" : "PRO") : (en ? "PRIVATE OWNERS" : "PARTICULIERS");
+  const usageLabel = props.usageLevel === "all" ? (en ? "ALL" : "TOUS") : props.usageLevel === "low" ? "FAIBLE" : props.usageLevel === "medium" ? "MOYEN" : "INTENSIF";
+  const changesLabel = props.importantChanges === "included" ? (en ? "ALL" : "TOUS") : props.importantChanges === "excluded" ? "EXCLUS" : "SEULS";
+  const whoLabel = props.whoFilter === "all" ? (en ? "ALL" : "TOUS") : props.whoFilter === "pro" ? "PRO" : (en ? "PRIVATE OWNERS" : "PARTICULIERS");
   const tipCloud = en
     ? "Compare your piano with others of the same model."
     : "Comparez votre piano avec d'autres du même modèle.";
@@ -1403,9 +1403,9 @@ function SidebarPanel(props: SidebarPanelProps) {
           {props.cloudEnabled && (
             <>
           <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold" style={{ color: "#f97316" }}>{en ? "CLOUD filters" : "Filtres CLOUD"}</div>
-          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.usageLevel !== "low" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">{en ? "Instrument usage: " : "Usage instrument : "}<span className="!text-black font-semibold uppercase">{usageLabel}</span></span></Button>
-          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.importantChanges !== "excluded" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">{en ? "Major modifications: " : "Modifications importantes : "}<span className="!text-black font-semibold uppercase">{changesLabel}</span></span></Button>
-          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleWho} aria-label={`QUI : ${whoLabel}`} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.whoFilter === "pro" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">{en ? "WHO: " : "QUI : "}<span className="!text-black font-semibold uppercase">{whoLabel}</span></span></Button>
+          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.usageLevel !== "all" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">{en ? "Instrument usage: " : "Usage instrument : "}<span className="!text-black font-semibold uppercase">{usageLabel}</span></span></Button>
+          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.importantChanges !== "included" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">{en ? "Major modifications: " : "Modifications importantes : "}<span className="!text-black font-semibold uppercase">{changesLabel}</span></span></Button>
+          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleWho} aria-label={`QUI : ${whoLabel}`} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.whoFilter !== "all" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">{en ? "WHO: " : "QUI : "}<span className="!text-black font-semibold uppercase">{whoLabel}</span></span></Button>
 
 
           {cycleRow(en ? "Same climate zone" : "Même zone climatique", props.sameClimate, props.setSameClimate)}
@@ -1414,9 +1414,11 @@ function SidebarPanel(props: SidebarPanelProps) {
           <div className="text-center font-bold leading-tight" style={{ color: "#f97316", marginTop: "15px", fontSize: "0.85rem" }}>
             {(!Number(props.cloudSampleCount) || !Number(props.cloudTotalCount)) ? (
               <>
-                <div>{en ? "0 pianos of this model on the Cloud yet" : "0 piano de ce modèle pour l'instant"}</div>
-                <div>{en ? "Be the first to contribute" : "Soyez le 1er à contribuer"}</div>
-                <div>{en ? "for this model!" : "pour ce modèle !"}</div>
+                <div>
+                  {en
+                    ? "There is no piano of your model in the CLOUD database yet."
+                    : "Il n\u2019y a pas encore de piano de votre mod\u00e8le dans la base de donn\u00e9es CLOUD."}
+                </div>
               </>
             ) : (
               <>
@@ -1491,11 +1493,11 @@ function Comparer() {
 
   const [sameClimate, setSameClimate] = useState(true);
   const [sameYear, setSameYear] = useState(false);
-  const [importantChanges, setImportantChanges] = useState<ChangesFilter>("excluded");
+  const [importantChanges, setImportantChanges] = useState<ChangesFilter>("included");
   const [youngOnly, setYoungOnly] = useState(false);
-  const [usageLevel, setUsageLevel] = useState<UsageLevel>("low");
+  const [usageLevel, setUsageLevel] = useState<UsageLevel>("all");
   // Filtre « QUI » : trie les courbes de la communauté selon l'auteur de la pesée.
-  const [whoFilter, setWhoFilter] = useState<WhoFilter>("private");
+  const [whoFilter, setWhoFilter] = useState<WhoFilter>("all");
   const [mine, setMine] = useState<ProfileRecord | null>(null);
   const [draftKeyCounts, setDraftKeyCounts] = useState<{ white: number; black: number } | null>(null);
   const [standard, setStandard] = useState<RefProfile>(FACTORY_STANDARD);
@@ -1730,9 +1732,8 @@ function Comparer() {
       if (sameYear && mine.year !== null) query = query.eq("manufacture_year", mine.year);
       if (importantChanges === "only") query = query.eq("maintenance_type", "Major modifications");
       else if (importantChanges === "excluded") query = query.neq("maintenance_type", "Major modifications");
-      else query = query.not("maintenance_type", "eq", "Major modifications");
       if (youngOnly) query = query.gte("manufacture_year", new Date().getFullYear() - 5);
-      query = query.eq("usage_level", databaseUsage(usageLevel));
+      if (usageLevel !== "all") query = query.eq("usage_level", databaseUsage(usageLevel));
 
       const result = await query;
       if (cancelled) return;
@@ -1749,6 +1750,7 @@ function Comparer() {
             (row as unknown as Record<string, unknown>)["profil_saisie"] ??
             "",
         ).toLowerCase();
+        if (whoFilter === "all") return true;
         if (!raw) return true;
         const isPro = raw.includes("techni") || raw.includes("facteur") || raw.includes("pro");
         return whoFilter === "pro" ? isPro : !isPro;
@@ -1818,11 +1820,11 @@ function Comparer() {
 
 
   function cycleWho() {
-    setWhoFilter((value) => (value === "private" ? "pro" : "private"));
+    setWhoFilter((value) => (value === "all" ? "private" : value === "private" ? "pro" : "all"));
   }
 
   function cycleUsage() {
-    setUsageLevel((value) => value === "low" ? "medium" : value === "medium" ? "intensive" : "low");
+    setUsageLevel((value) => value === "all" ? "low" : value === "low" ? "medium" : value === "medium" ? "intensive" : "all");
   }
 
   function cycleKeyFilter() {
