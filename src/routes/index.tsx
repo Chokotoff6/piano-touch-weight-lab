@@ -142,45 +142,9 @@ function Accueil() {
 
       </div>
 
-      {legalOpen && (
-        <div
-          className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.15)" }}
-          onClick={() => setLegalOpen(false)}
-          role="presentation"
-        >
-          <div
-            className="relative max-h-[80vh] w-auto max-w-2xl overflow-y-auto rounded-lg border border-gray-300 py-5 pl-5 pr-9 text-left shadow-xl"
-            style={{ backgroundColor: "#FFFFFF" }}
-            onClick={(event) => event.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-          >
-            <button
-              type="button"
-              aria-label={en ? "Close" : "Fermer"}
-              onClick={() => setLegalOpen(false)}
-              className="absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full text-base leading-none !text-gray-500 hover:!text-gray-900"
-            >
-              ×
-            </button>
-            <p className="text-sm font-semibold leading-relaxed !text-gray-900" style={{ margin: 0 }}>
-              {en ? LEGAL_TITLE_EN : LEGAL_TITLE}
-            </p>
-            {(en ? LEGAL_BLOCKS_EN : LEGAL_BLOCKS).map(([label, text]) => (
-              <p
-                key={label}
-                className="text-xs leading-relaxed !text-gray-700"
-                style={{ marginTop: "8px", marginBottom: 0 }}
-              >
-                <strong>{label}</strong> {text}
-              </p>
-            ))}
-          </div>
-        </div>
-      )}
+      <LegalDialog open={legalOpen} onClose={() => setLegalOpen(false)} en={en} />
 
-
+      <DemoIntro en={en} />
     </main>
   );
 }
