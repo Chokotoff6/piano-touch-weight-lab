@@ -652,32 +652,36 @@ function RootComponent() {
         typeof document !== "undefined" &&
         createPortal(
           <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.15)" }}>
-            <div className="w-full max-w-lg rounded-lg border border-black bg-white p-6 shadow-xl">
-              <p className="text-sm leading-relaxed text-gray-950">{RGPD_CONSENT_TEXT}</p>
-              <div className="mt-4 flex justify-end gap-2">
-                {/* Retour : ferme la fenêtre et laisse l'utilisateur sur la page active. */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    pendingActionRef.current = null;
-                    setConsentOpen(false);
-                  }}
-                  className="rounded-md border border-gray-300 bg-white px-4 py-1.5 text-sm font-medium !text-gray-900 transition-colors hover:bg-gray-50"
-                >
-                  {lang === "en" ? "Back" : "Retour"}
-                </button>
+            <div className="w-full max-w-lg rounded-lg border border-black bg-white p-6 text-center shadow-xl">
+              <p className="text-base font-medium leading-relaxed !text-gray-900">
+                {lang === "en"
+                  ? "Your piano profile will complete the KeyWeight CLOUD database. Thank you for your collaboration!"
+                  : "Votre profil de piano va compléter la base de données CLOUD KeyWeight. Merci de votre collaboration !"}
+              </p>
+              <div className="mt-5 flex justify-center">
                 <button
                   type="button"
                   onClick={acceptConsent}
-                  className="rounded-md border-2 border-black bg-white px-4 py-1.5 text-sm font-bold !text-black transition-colors hover:bg-gray-100"
+                  className="rounded-md border-2 border-black bg-white px-6 py-2 text-sm font-bold !text-black transition-colors hover:bg-gray-100"
                 >
-                  {lang === "en" ? "I accept" : "J'accepte"}
+                  {lang === "en" ? "OK" : "D'accord"}
                 </button>
               </div>
+              <button
+                type="button"
+                onClick={() => setLegalOpen(true)}
+                className="mt-3 text-[11px] !text-gray-500 underline transition-colors hover:!text-gray-800"
+              >
+                {lang === "en"
+                  ? "(View Legal Notice & GDPR)"
+                  : "(Consulter les Mentions Légales & RGPD)"}
+              </button>
             </div>
           </div>,
           document.body,
         )}
+
+      <LegalDialog open={legalOpen} onClose={() => setLegalOpen(false)} en={lang === "en"} zIndex={100001} />
 
 
 
