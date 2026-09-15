@@ -621,7 +621,7 @@ function RootComponent() {
           n'a pas été cliqué. */}
       {demoVisible && (
         <div className="relative !z-[60] mx-auto max-w-[1400px] overflow-visible px-4 pb-2 pt-3 sm:px-6">
-          <div className="relative !z-[60] pl-1">
+          <div className="relative !z-[60] flex items-center gap-2 pl-1">
             <button
               type="button"
               onClick={() => {
