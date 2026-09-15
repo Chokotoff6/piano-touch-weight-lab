@@ -971,6 +971,11 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
   // les réécrire pendant le rendu relâchait le verrou lors d'un rendu externe
   // (molette, changement de filtre) et désynchronisait les deux entrées.
   zoomStartRef.current = zoomStart;
+  // Filtres N/B courants, lus par la navigation clavier du mode zoom.
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
+  const keyFilterRef = useRef(keyFilter);
+  keyFilterRef.current = keyFilter;
   
 
   // Dernière hauteur (Y) décidée par la souris : la FF pilotée au clavier y reste figée.
@@ -1055,7 +1060,7 @@ export function ComparisonChart({ chartData, keyFilter, comparisonLabel, compari
       const base = kbNoteRef.current ?? lastMouseNote.current ?? Math.round(zoomStartRef.current + ZOOM_WINDOW / 2);
       // Affichage exclusif Blanches/Noires : la navigation saute les touches
       // masquées et passe directement à la note visible suivante.
-      const activeFilter = filtersRef.current[zoomId] ?? keyFilterRef.current;
+      const activeFilter = (zoomId ? filtersRef.current[zoomId] : undefined) ?? keyFilterRef.current;
       const visible = (note: number) =>
         activeFilter === "white" ? !isBlackKey(note) : activeFilter === "black" ? isBlackKey(note) : true;
       let candidate = base + step;
