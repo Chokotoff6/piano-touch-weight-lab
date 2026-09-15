@@ -58,10 +58,12 @@ function Accueil() {
           </h2>
           <ul className="list-disc space-y-1 pl-5">
             <li>
-              <strong>{en ? "Data Entry & Management:" : "Saisie et gestion :"}</strong>{" "}
+              <strong>
+                {en ? "Data Entry & Workshop Report:" : "Saisie et rapport d'atelier :"}
+              </strong>{" "}
               {en
-                ? "Fast logging and clear visualization of static touch weight data across all 88 keys"
-                : "enregistrement rapide et visualisation des poids statiques des 88 touches"}
+                ? "Rapid logging of the 88-key static weights and report creation"
+                : "Encodage rapide des poids statiques des 88 touches et création de rapports"}
             </li>
             <li>
               <strong>{en ? "Comparative Analysis:" : "Analyse comparative :"}</strong>{" "}
