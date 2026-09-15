@@ -634,6 +634,9 @@ function RootComponent() {
             >
               {lang === "en" ? "Demo mode" : "Mode démo"}
             </button>
+            <InfoDot label={lang === "en" ? "Demo mode" : "Mode démo"} width={340}>
+              {lang === "en" ? DEMO_INFO_EN : DEMO_INFO_FR}
+            </InfoDot>
           </div>
         </div>
       )}
