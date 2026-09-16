@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useFadeClose } from "@/lib/use-fade-close";
 
@@ -16,8 +16,6 @@ export function InfoDot({
   className,
   width = 320,
   icon,
-  autoOpenSessionKey,
-  autoCloseMs = 5000,
 }: {
   children: ReactNode;
   label?: string;
@@ -26,33 +24,11 @@ export function InfoDot({
   width?: number;
   /** Contenu du déclencheur (par défaut la lettre « i »). */
   icon?: ReactNode;
-  /** Ouvre une seule fois par session l'infobulle dès son apparition. */
-  autoOpenSessionKey?: string;
-  /** Durée d'ouverture avant le début du fondu automatique. */
-  autoCloseMs?: number;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const anchorRef = useRef<HTMLButtonElement>(null);
-  const finishClose = useCallback(() => setOpen(false), []);
-  const { rendered, closing, requestClose } = useFadeClose(open, finishClose);
-
-  useEffect(() => {
-    if (!autoOpenSessionKey) return;
-    try {
-      if (window.sessionStorage.getItem(autoOpenSessionKey) === "1") return;
-      window.sessionStorage.setItem(autoOpenSessionKey, "1");
-    } catch {
-      /* stockage indisponible : l'aide reste utilisable manuellement */
-    }
-    setOpen(true);
-  }, [autoOpenSessionKey]);
-
-  useEffect(() => {
-    if (!open || !autoOpenSessionKey) return;
-    const timer = window.setTimeout(() => requestClose(), autoCloseMs);
-    return () => window.clearTimeout(timer);
-  }, [autoCloseMs, autoOpenSessionKey, open, requestClose]);
+  const { rendered, closing, requestClose } = useFadeClose(open, () => setOpen(false));
 
   useEffect(() => {
     if (!rendered) return;
