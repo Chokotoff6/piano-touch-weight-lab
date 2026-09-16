@@ -171,6 +171,7 @@ function Resultats() {
         }),
       );
       setDraft({ rows: nextRows, info: nextInfo });
+      markCsvOrigin(true);
       toast.success(en ? "CSV file imported." : "Fichier CSV importé.");
     } catch {
       toast.error(en ? "Invalid CSV file." : "Fichier CSV invalide.");
