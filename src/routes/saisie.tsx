@@ -2390,6 +2390,7 @@ function Index() {
               {en ? "Brand" : "Marque"}
               <SmartCombobox
                 value={info["marque"] ?? ""}
+                disabled={identityLocked}
                 options={BRAND_SUGGESTIONS}
                 placeholder={en ? "Type a brand (e.g. YAMAHA, PLEYEL...)" : "Saisissez une marque (ex: YAMAHA, PLEYEL...)"}
                 onTyping={markDirty}
@@ -2410,6 +2411,7 @@ function Index() {
                       name="type_piano"
                       style={{ accentColor: "#111111" }}
                       value={t}
+                      disabled={identityLocked}
                       checked={info["type_piano"] === t}
                       onChange={() => {
                         updateInfo("type_piano", t);
@@ -2433,7 +2435,7 @@ function Index() {
                 value={info["modele"] ?? ""}
                 options={modelsFor(info["marque"] ?? "", info["type_piano"])}
                 groups={modelGroupsFor(info["marque"] ?? "", info["type_piano"])}
-                disabled={!info["marque"]?.trim()}
+                disabled={identityLocked || !info["marque"]?.trim()}
                 openOnFocus
                 keepOpenSelector="[data-keep-model-open]"
                 className="!bg-white"
@@ -2464,7 +2466,7 @@ function Index() {
                       }}
                       value={info["sn_prefix"] ?? ""}
                       onChange={(e) => onPrefixChange(e.target.value)}
-                      disabled={!rule.prefix}
+                      disabled={identityLocked || !rule.prefix}
                       placeholder="ex: J, F"
                       className={`${INPUT_CLASS} max-w-[80px]`}
                     />
@@ -2477,6 +2479,7 @@ function Index() {
                       }}
                       value={info["sn_num"] ?? ""}
                       onChange={(e) => updateInfo("sn_num", e.target.value.replace(/[^0-9]/g, ""))}
+                      disabled={identityLocked}
                       required
                       inputMode="numeric"
                       placeholder={en ? "Digits" : "Chiffres"}
@@ -2490,7 +2493,7 @@ function Index() {
                       onChange={(e) =>
                         updateInfo("sn_suffix", e.target.value.toUpperCase().slice(0, 3))
                       }
-                      disabled={!rule.suffix}
+                      disabled={identityLocked || !rule.suffix}
                       placeholder="ex: A, B"
                       className={`${INPUT_CLASS} max-w-[80px]`}
                     />
@@ -2504,12 +2507,20 @@ function Index() {
                       fabricationTouched.current = true;
                       updateInfo("fabrication", e.target.value);
                     }}
+                    disabled={identityLocked}
                     className={`${INPUT_CLASS} max-w-[120px]`}
                   />
                 </label>
                 <div className="flex h-8 items-end gap-1 text-xs text-black" />
 
               </div>
+              {identityLocked && (
+                <p className="mt-2 text-center text-[0.78rem] font-medium leading-snug text-muted-foreground">
+                  {en
+                    ? "Fields locked to preserve profile integrity. To create a new piano, click the 'Reset' button."
+                    : "Champs verrouillés pour préserver l'intégrité du profil. Pour créer un nouveau piano, cliquez sur le bouton « Reset »."}
+                </p>
+              )}
               {!serialFormatValid && (
                 <p className="mt-1 text-[0.7rem] leading-snug text-destructive">
                   {SERIAL_FORMAT_ERROR}
