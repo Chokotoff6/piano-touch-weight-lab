@@ -35,7 +35,7 @@ function Accueil() {
         <h1 className="text-xl font-semibold leading-snug">
           {en
             ? "Welcome to KeyWeight! A collaborative and independent web application tailored for pianists and piano technicians."
-            : "Bienvenue sur KeyWeight ! Une application collaborative et indépendante pour pianistes et techniciens de piano."}
+            : "Bienvenue sur KeyWeight ! Une application collaborative et indépendante\npour pianistes et techniciens de piano."}
         </h1>
 
         <section className="space-y-2">
