@@ -2404,6 +2404,7 @@ function Index() {
 
   return (
     <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
+      <SaisieIntro en={en} />
       <input
         ref={importInputRef}
         type="file"
