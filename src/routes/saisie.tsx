@@ -2720,6 +2720,14 @@ function Index() {
           <div className="relative flex items-center justify-center">
             {confirmReset === "info" && (
               <div
+                className="fixed inset-0"
+                style={{ background: "rgba(0,0,0,0.15)", zIndex: 40 }}
+                onClick={() => setConfirmReset(null)}
+                role="presentation"
+              />
+            )}
+            {confirmReset === "info" && (
+              <div
                 className="absolute left-1/2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
                 style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
               >
@@ -2941,6 +2949,14 @@ function Index() {
             </button>
 
             <div className="relative flex items-center">
+              {confirmReset === "rows" && (
+                <div
+                  className="fixed inset-0"
+                  style={{ background: "rgba(0,0,0,0.15)", zIndex: 40 }}
+                  onClick={() => setConfirmReset(null)}
+                  role="presentation"
+                />
+              )}
               {confirmReset === "rows" && (
                 <div
                   className="absolute left-1/2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
