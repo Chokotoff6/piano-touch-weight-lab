@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useLang } from "@/data/translations";
+import { DemoIntro } from "@/components/DemoIntro";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -121,6 +122,8 @@ function Accueil() {
           {en ? "Start your diagnosis" : "Commencer votre diagnostic"}
         </Link>
       </div>
+
+      <DemoIntro en={en} />
     </main>
   );
 }

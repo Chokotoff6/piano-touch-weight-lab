@@ -9,7 +9,7 @@ import {
 } from "@/lib/required-keys";
 import { SmartCombobox, type SmartComboboxHandle } from "@/components/SmartCombobox";
 import { InfoDot } from "@/components/InfoDot";
-import { DemoIntro } from "@/components/DemoIntro";
+import { SaisieIntro } from "@/components/SaisieIntro";
 
 import { modelsFor, modelGroupsFor, inferTypeFromModel } from "@/data/pianoModels";
 import {
@@ -2405,7 +2405,7 @@ function Index() {
 
   return (
     <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
-      <DemoIntro en={en} />
+      <SaisieIntro en={en} />
       <input
         ref={importInputRef}
         type="file"

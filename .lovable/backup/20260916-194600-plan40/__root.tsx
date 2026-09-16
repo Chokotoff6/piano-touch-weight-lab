@@ -302,7 +302,7 @@ function RootComponent() {
               </Link>
             </div>
             {!isHome && (
-            <div className="flex translate-x-[100px] translate-y-[9px] flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
+            <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
               <Link to="/saisie" className={linkClass} activeProps={{ className: activeLinkClass }}>
                 {lang === "en" ? "Inputs" : "Saisie"}
               </Link>
@@ -616,8 +616,8 @@ function RootComponent() {
           de l'onglet « Accueil », présent sur toutes les pages tant qu'il
           n'a pas été cliqué. */}
       {demoVisible && !isHome && (
-        <div className="relative !z-[60] mx-auto w-full max-w-7xl overflow-visible px-[100px] pb-2 pt-3">
-          <div className="relative !z-[60] flex items-center justify-end gap-2">
+        <div className="relative !z-[60] mx-auto max-w-[1400px] overflow-visible px-4 pb-2 pt-3 sm:px-6">
+          <div className="relative !z-[60] flex items-center gap-2 pl-1">
             <button
               type="button"
               onClick={() => {
@@ -636,7 +636,7 @@ function RootComponent() {
               }}
               className={`whitespace-nowrap rounded-md border-2 px-4 py-2 text-xs font-bold uppercase tracking-wide transition-colors ${
                 demoActive
-                  ? "border-[#22c55e] bg-gray-100 !text-black hover:bg-gray-200"
+                  ? "border-green-600 bg-green-100 !text-black hover:bg-green-200"
                   : "border-black bg-black !text-white hover:bg-gray-800"
               }`}
             >
