@@ -24,7 +24,7 @@ import {
   isSerialFormatValid,
   SERIAL_FORMAT_ERROR,
 } from "@/lib/serial-dating";
-import { HONEYPOT_NAME, markSubmission, passesBotChecks } from "@/lib/anti-bot";
+import { HONEYPOT_NAME, markCsvOrigin, markSubmission, passesBotChecks } from "@/lib/anti-bot";
 import { buildCsv, buildExportFilename, downloadCsv, formatLocalDateTime } from "@/lib/export-csv";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { getLang, useLang } from "@/data/translations";
@@ -46,7 +46,8 @@ import {
   type DiagnosticPayload,
   type DiagnosticHistoryRow,
 } from "@/lib/diagnostics";
-import { getTopbarState, setGateReady, setTopbarState, showTopbarAlert } from "@/lib/topbar-store";
+import { getTopbarState, setGateReady, setTopbarState, showTopbarAlert, useTopbarState } from "@/lib/topbar-store";
+import { decideCloudAction, resetConsent, startSheetTimer } from "@/lib/cloud-gate";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -473,6 +474,13 @@ function Index() {
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [climateZone, setClimateZone] = useState<ClimateZone | null>(null);
   const [honeypot, setHoneypot] = useState("");
+  const topbarState = useTopbarState();
+  // Protection d'ADN : identité figée dès que le profil est accepté au cloud.
+  const identityLocked = topbarState.compareUnlocked;
+  // Chronomètre d'ouverture de fiche (base du contrôle anti-robot temporel).
+  useEffect(() => {
+    startSheetTimer();
+  }, []);
   const [currentDbId, setCurrentDbId] = useState<string | null>(null);
   const [askUpdate, setAskUpdate] = useState(false);
   // Export demandé en attente de la décision cloud (modale INSERT/UPSERT).
@@ -913,6 +921,9 @@ function Index() {
     setWeighingMode(false);
     setGateReady(false);
     setTopbarState({ measuresReady: false, exportReady: false });
+    // Reset complet : l'accord cloud repart à « non accepté » pour le prochain piano.
+    resetConsent();
+    markCsvOrigin(false);
     markDirty();
   };
 
@@ -1754,6 +1765,7 @@ function Index() {
       }));
       fabricationTouched.current = true;
       setCurrentDbId(null);
+      markCsvOrigin(true);
       markDirty();
       // Importation silencieuse : aucun message de confirmation à l'écran.
     } catch {
@@ -2382,6 +2394,7 @@ function Index() {
               {en ? "Brand" : "Marque"}
               <SmartCombobox
                 value={info["marque"] ?? ""}
+                disabled={identityLocked}
                 options={BRAND_SUGGESTIONS}
                 placeholder={en ? "Type a brand (e.g. YAMAHA, PLEYEL...)" : "Saisissez une marque (ex: YAMAHA, PLEYEL...)"}
                 onTyping={markDirty}
@@ -2402,6 +2415,7 @@ function Index() {
                       name="type_piano"
                       style={{ accentColor: "#111111" }}
                       value={t}
+                      disabled={identityLocked}
                       checked={info["type_piano"] === t}
                       onChange={() => {
                         updateInfo("type_piano", t);
@@ -2425,7 +2439,7 @@ function Index() {
                 value={info["modele"] ?? ""}
                 options={modelsFor(info["marque"] ?? "", info["type_piano"])}
                 groups={modelGroupsFor(info["marque"] ?? "", info["type_piano"])}
-                disabled={!info["marque"]?.trim()}
+                disabled={identityLocked || !info["marque"]?.trim()}
                 openOnFocus
                 keepOpenSelector="[data-keep-model-open]"
                 className="!bg-white"
@@ -2456,7 +2470,7 @@ function Index() {
                       }}
                       value={info["sn_prefix"] ?? ""}
                       onChange={(e) => onPrefixChange(e.target.value)}
-                      disabled={!rule.prefix}
+                      disabled={identityLocked || !rule.prefix}
                       placeholder="ex: J, F"
                       className={`${INPUT_CLASS} max-w-[80px]`}
                     />
@@ -2469,6 +2483,7 @@ function Index() {
                       }}
                       value={info["sn_num"] ?? ""}
                       onChange={(e) => updateInfo("sn_num", e.target.value.replace(/[^0-9]/g, ""))}
+                      disabled={identityLocked}
                       required
                       inputMode="numeric"
                       placeholder={en ? "Digits" : "Chiffres"}
@@ -2482,7 +2497,7 @@ function Index() {
                       onChange={(e) =>
                         updateInfo("sn_suffix", e.target.value.toUpperCase().slice(0, 3))
                       }
-                      disabled={!rule.suffix}
+                      disabled={identityLocked || !rule.suffix}
                       placeholder="ex: A, B"
                       className={`${INPUT_CLASS} max-w-[80px]`}
                     />
@@ -2496,12 +2511,20 @@ function Index() {
                       fabricationTouched.current = true;
                       updateInfo("fabrication", e.target.value);
                     }}
+                    disabled={identityLocked}
                     className={`${INPUT_CLASS} max-w-[120px]`}
                   />
                 </label>
                 <div className="flex h-8 items-end gap-1 text-xs text-black" />
 
               </div>
+              {identityLocked && (
+                <p className="mt-2 text-center text-[0.78rem] font-medium leading-snug text-muted-foreground">
+                  {en
+                    ? "Fields locked to preserve profile integrity. To create a new piano, click the 'Reset' button."
+                    : "Champs verrouillés pour préserver l'intégrité du profil. Pour créer un nouveau piano, cliquez sur le bouton « Reset »."}
+                </p>
+              )}
               {!serialFormatValid && (
                 <p className="mt-1 text-[0.7rem] leading-snug text-destructive">
                   {SERIAL_FORMAT_ERROR}
@@ -2890,7 +2913,7 @@ function Index() {
                   style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
                 >
                   <span>{en ? "Do you want to erase all entered weight data?" : "Voulez-vous effacer toutes les données de poids saisies ?"}</span>
-                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); setBlockAnchor(null); rangeDismissed.current.clear(); coherenceDismissed.current.clear(); setIncompletePairs([]); lockedPairRef.current = null; setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; focusFirstWeight(); }}>Oui</button>
+                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); setBlockAnchor(null); rangeDismissed.current.clear(); coherenceDismissed.current.clear(); setIncompletePairs([]); lockedPairRef.current = null; setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; resetConsent(); markCsvOrigin(false); focusFirstWeight(); }}>Oui</button>
                   <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
                 </div>
               )}
@@ -2914,6 +2937,16 @@ function Index() {
             disabled={!badgeVisible}
             onClick={() => {
               if (!badgeVisible) return;
+              // Étape 1 de l'aiguilleur : filtre anti-robot avant toute navigation.
+              if (!passesBotChecks(honeypot)) {
+                resetConsent();
+                return;
+              }
+              const decision = decideCloudAction({ honeypot, accepted: topbarState.compareUnlocked, rows });
+              if (decision.kind === "blocked") {
+                resetConsent();
+                return;
+              }
               navigate({ to: "/resultats" });
             }}
             className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100 !text-black" : "cursor-not-allowed border-input bg-background !text-gray-400 opacity-60"}`}

@@ -2,7 +2,30 @@
 export const HONEYPOT_NAME = "additional_notes_backup";
 
 const RATE_LIMIT_KEY = "ptw_last_submit_at";
+const CSV_ORIGIN_KEY = "ptw_csv_origin";
 export const RATE_LIMIT_MS = 15_000;
+
+/**
+ * Origine « import CSV d'atelier » : quand elle est vraie, les verrous de
+ * chronométrage (temps de remplissage, ratio temps-par-touche) sont ignorés.
+ */
+export function markCsvOrigin(value: boolean): void {
+  try {
+    if (value) window.sessionStorage.setItem(CSV_ORIGIN_KEY, "1");
+    else window.sessionStorage.removeItem(CSV_ORIGIN_KEY);
+  } catch {
+    /* stockage indisponible */
+  }
+}
+
+/** Vrai si les données à l'écran proviennent d'un import ou ré-import CSV. */
+export function isCsvOrigin(): boolean {
+  try {
+    return window.sessionStorage.getItem(CSV_ORIGIN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
 /** Vrai si le champ piège a été rempli (robot). */
 export function isHoneypotTripped(value: string | undefined | null): boolean {

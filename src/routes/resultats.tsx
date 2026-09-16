@@ -22,6 +22,8 @@ import {
 } from "@/lib/current-piano";
 import { fallbackZone } from "@/lib/climate";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
+import { decideCloudAction, markCloudSync, resetConsent } from "@/lib/cloud-gate";
+import { markCsvOrigin } from "@/lib/anti-bot";
 
 export const Route = createFileRoute("/resultats")({
   head: () => ({
@@ -109,6 +111,7 @@ function Resultats() {
   // État initial imposé : touches blanches et noires affichées séparément.
   const [keyFilter, setKeyFilter] = useState<KeyFilter>("split");
   const [busy, setBusy] = useState(false);
+  const [blocked, setBlocked] = useState(false);
   const averagesRef = useRef<HTMLDivElement>(null);
   const [averagesHeight, setAveragesHeight] = useState(0);
   const importInputRef = useRef<HTMLInputElement | null>(null);
@@ -168,6 +171,7 @@ function Resultats() {
         }),
       );
       setDraft({ rows: nextRows, info: nextInfo });
+      markCsvOrigin(true);
       toast.success(en ? "CSV file imported." : "Fichier CSV importé.");
     } catch {
       toast.error(en ? "Invalid CSV file." : "Fichier CSV invalide.");
@@ -255,34 +259,62 @@ function Resultats() {
     });
   };
 
-  const unlock = async () => {
-    if (busy || unlocked) return;
+  const unlocked = topbar.compareUnlocked;
+
+  /**
+   * Écriture cloud unique (création au clic sur « J'accepte », ou mise à jour
+   * silencieuse en arrière-plan). `silent` supprime les messages à l'écran.
+   */
+  const writeCloud = async (silent = false) => {
+    if (busy) return;
     setConsent(true);
     setBusy(true);
-    const toastId = toast.loading(en ? "Collaborative sharing in progress…" : "Partage collaboratif en cours…");
+    const toastId: string | number = silent
+      ? `cloud-silent-${Date.now()}`
+      : toast.loading(en ? "Collaborative sharing in progress…" : "Partage collaboratif en cours…");
     try {
       const piano = buildPiano();
       saveCurrentPiano(piano);
       // Double écriture synchrone : ligne pivot (is_buffer) puis archivage historique.
       const buffer = await upsertCurrentPianoBuffer(piano);
       if (!buffer.ok) {
-        toast.error(`${en ? "Cloud write failed:" : "Écriture cloud impossible :"} ${buffer.error ?? (en ? "network error" : "erreur réseau")}`, { id: toastId });
+        if (!silent) {
+          toast.error(`${en ? "Cloud write failed:" : "Écriture cloud impossible :"} ${buffer.error ?? (en ? "network error" : "erreur réseau")}`, { id: toastId });
+        }
         return;
       }
       const historyId = await findHistoryProfileId(piano.serial_number);
       const history = await saveCurrentPianoToCloud(piano, historyId);
       if (!history.ok) {
-        toast.error(`${en ? "Archiving failed:" : "Archivage impossible :"} ${history.error ?? (en ? "network error" : "erreur réseau")}`, { id: toastId });
+        if (!silent) {
+          toast.error(`${en ? "Archiving failed:" : "Archivage impossible :"} ${history.error ?? (en ? "network error" : "erreur réseau")}`, { id: toastId });
+        }
         return;
       }
-      toast.success(en ? "Measurements shared: chart and comparison unlocked." : "Mesures partagées : graphique et comparaison débloqués.", { id: toastId });
+      markCloudSync(rows);
+      markCsvOrigin(false);
+      if (!silent) {
+        toast.success(en ? "Measurements shared: chart and comparison unlocked." : "Mesures partagées : graphique et comparaison débloqués.", { id: toastId });
+      }
       setCompareUnlocked(true);
     } finally {
       setBusy(false);
     }
   };
 
-  const unlocked = topbar.compareUnlocked;
+  // Aiguilleur central : exécuté à chaque arrivée sur la page Résultats.
+  const gateRan = useRef(false);
+  useEffect(() => {
+    if (gateRan.current || !hasData) return;
+    gateRan.current = true;
+    const decision = decideCloudAction({ accepted: unlocked, rows });
+    if (decision.kind === "blocked") {
+      setBlocked(true);
+      resetConsent();
+      return;
+    }
+    if (decision.kind === "silentUpsert") void writeCloud(true);
+  }, [hasData, unlocked, rows]);
 
   return (
     <main className="mx-auto w-full max-w-[1120px] px-6 pb-10 pt-20">
@@ -343,26 +375,42 @@ function Resultats() {
 
             {!unlocked && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 p-4">
-                <div className="w-full max-w-3xl rounded-md border border-gray-300 bg-white p-5 shadow-lg">
-                  <label className="flex items-start gap-2 text-sm font-medium !text-gray-900">
-                    <input
-                      type="checkbox"
-                      checked={consent}
-                      disabled={busy}
-                      onChange={(e) => {
-                        if (e.target.checked) void unlock();
-                      }}
-                      className="mt-1 h-4 w-4"
-                    />
-                    <span>
-                      J&apos;accepte de partager anonymement ces mesures (Marque, Modèle, N° de série,
-                      Friction) pour enrichir la base de données mondiale des techniciens.
-                    </span>
-                  </label>
-                  {busy && (
-                    <p className="mt-3 text-sm font-medium !text-gray-900">
-                      Partage collaboratif en cours…
+                <div className="w-full max-w-2xl rounded-md border border-gray-300 bg-white p-8 text-center shadow-lg">
+                  {blocked ? (
+                    <p className="text-base font-semibold !text-gray-900">
+                      {en
+                        ? "Sharing temporarily locked. Please continue your measurements in the workshop."
+                        : "Partage temporairement verrouillé. Poursuivez vos mesures en atelier."}
                     </p>
+                  ) : (
+                    <>
+                      <p className="text-[1.05rem] font-semibold leading-relaxed !text-gray-900">
+                        Le profil de ce piano va compléter la base de données de la communauté CLOUD
+                        KeyWeight. Merci de votre collaboration !
+                      </p>
+                      <p className="mt-3 text-[0.95rem] font-medium leading-relaxed !text-gray-600">
+                        This piano&apos;s profile will be added to the CLOUD KeyWeight community
+                        database. Thank you for your contribution!
+                      </p>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void writeCloud()}
+                        className="mt-7 rounded-md border-2 px-8 py-2 text-base font-bold transition-colors"
+                        style={{
+                          backgroundColor: busy ? "#e5e7eb" : "#dcfce7",
+                          borderColor: "#16a34a",
+                          color: "#000000",
+                        }}
+                      >
+                        {en ? "I accept" : "J'accepte"}
+                      </button>
+                      {busy && (
+                        <p className="mt-4 text-sm font-medium !text-gray-900">
+                          {en ? "Collaborative sharing in progress…" : "Partage collaboratif en cours…"}
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
