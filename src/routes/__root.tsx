@@ -365,7 +365,7 @@ function RootComponent() {
             {!isHome && (
             <DropdownMenu open={saveMenuOpen} onOpenChange={setSaveMenuOpen} modal={false}>
               <div
-                className="relative flex translate-y-[9px] items-center"
+                className="relative flex translate-y-[15px] items-center"
                 onMouseEnter={cancelMenuClose}
                 onMouseLeave={scheduleMenuClose}
               >
@@ -497,7 +497,7 @@ function RootComponent() {
             )}
 
             {!isHome && !isComparer && pathname !== "/resultats" && (
-            <div className="relative flex translate-y-[9px] items-center">
+            <div className="relative flex translate-y-[15px] items-center">
               {/* Importer : chargement d'un fichier CSV local uniquement. */}
               <Button
                 variant="outline"
