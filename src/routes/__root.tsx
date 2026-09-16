@@ -621,24 +621,15 @@ function RootComponent() {
             <button
               type="button"
               onClick={() => {
-                if (demoActive) {
-                  // 2e clic : sortie du mode démo, nettoyage et disparition pour la session.
-                  disableDemoMode();
-                  markDemoClicked();
-                  setDemoActive(false);
-                  setDemoVisible(false);
-                } else {
-                  // 1er clic : injection du jeu de démonstration (88 touches).
-                  enableDemoMode();
-                  setDemoActive(true);
-                }
+                // Clic : destruction définitive du bouton pour toute la session,
+                // remise à blanc complète des données Info Piano et Saisie.
+                markDemoClicked();
+                disableDemoMode();
+                setDemoActive(false);
+                setDemoVisible(false);
                 window.location.reload();
               }}
-              className={`whitespace-nowrap rounded-md border-2 px-4 py-2 text-xs font-bold uppercase tracking-wide transition-colors ${
-                demoActive
-                  ? "border-[#22c55e] bg-gray-100 !text-black hover:bg-gray-200"
-                  : "border-black bg-black !text-white hover:bg-gray-800"
-              }`}
+              className="whitespace-nowrap rounded-md border-2 border-black bg-black px-4 py-2 text-xs font-bold uppercase tracking-wide !text-white transition-colors hover:bg-gray-800"
             >
               {lang === "en" ? "Demo mode" : "Mode démo"}
             </button>
@@ -646,7 +637,7 @@ function RootComponent() {
               label={lang === "en" ? "Demo mode" : "Mode démo"}
               width={340}
               {...(pathname === "/saisie" ? { autoOpenSessionKey: "ptw_demo_intro_seen" } : {})}
-              autoCloseMs={5000}
+              autoCloseMs={10000}
             >
               {lang === "en" ? DEMO_INFO_EN : DEMO_INFO_FR}
             </InfoDot>
