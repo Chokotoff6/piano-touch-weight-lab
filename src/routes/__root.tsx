@@ -38,7 +38,7 @@ import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 import likedLogoFrAsset from "@/assets/image_soutien_v5.png.asset.json";
 import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
-import { ensureDemoDefault, disableDemoMode, enableDemoMode, isDemoActive, isDemoClicked, markDemoClicked } from "@/lib/demo-mode";
+import { ensureDemoDefault, disableDemoMode, isDemoClicked, markDemoClicked } from "@/lib/demo-mode";
 import { AppFooter } from "@/components/AppFooter";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { FaqDialog } from "@/components/FaqDialog";
@@ -228,13 +228,11 @@ function RootComponent() {
   const saveBtnRef = useRef<HTMLButtonElement | null>(null);
   const pendingActionRef = useRef<(() => void) | null>(null);
   const [demoVisible, setDemoVisible] = useState(false);
-  const [demoActive, setDemoActive] = useState(false);
   useEffect(() => {
     initLang();
     initJourneyFlags();
     ensureDemoDefault();
     setDemoVisible(!isDemoClicked());
-    setDemoActive(isDemoActive());
   }, []);
 
   const isComparer = pathname === "/comparer";
@@ -625,7 +623,6 @@ function RootComponent() {
                 // remise à blanc complète des données Info Piano et Saisie.
                 markDemoClicked();
                 disableDemoMode();
-                setDemoActive(false);
                 setDemoVisible(false);
                 window.location.reload();
               }}
