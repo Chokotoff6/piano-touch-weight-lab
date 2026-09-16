@@ -3,9 +3,9 @@ import { createPortal } from "react-dom";
 import { useFadeClose } from "@/lib/use-fade-close";
 
 export const DEMO_INFO_FR =
-  "Le Mode Démo pré-remplit instantanément l'application avec un jeu complet de données permettant de tester les différents modules. La base de données CLOUD utilisée est également fictive. Pour sortir de ce mode, cliquez sur le bouton Mode Démo.";
+  "Le Mode Démo pré-remplit instantanément l'application avec un jeu complet de données de test (88 touches) permettant de tester les différents modules et la base de données de profils de pianos CLOUD est fictive.";
 export const DEMO_INFO_EN =
-  "Demo Mode instantly pre-populates the application with a complete dataset, allowing you to test the different modules. The cloud database used is also virtual. To exit this mode, click the Demo Mode button.";
+  "Demo Mode instantly pre-populates the app with a complete test dataset (88 keys) to test the different modules and the CLOUD piano profile database is fictitious.";
 
 const SEEN_KEY = "ptw_demo_intro_seen";
 

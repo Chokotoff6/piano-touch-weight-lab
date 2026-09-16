@@ -38,8 +38,7 @@ import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 import likedLogoFrAsset from "@/assets/image_soutien_v5.png.asset.json";
 import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
-import { ensureDemoDefault, disableDemoMode, enableDemoMode, isDemoActive, isDemoClicked, markDemoClicked } from "@/lib/demo-mode";
-import { AppFooter } from "@/components/AppFooter";
+import { ensureDemoDefault, disableDemoMode, isDemoClicked, markDemoClicked } from "@/lib/demo-mode";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { FaqDialog } from "@/components/FaqDialog";
 import { LegalDialog } from "@/data/legal";
@@ -228,13 +227,11 @@ function RootComponent() {
   const saveBtnRef = useRef<HTMLButtonElement | null>(null);
   const pendingActionRef = useRef<(() => void) | null>(null);
   const [demoVisible, setDemoVisible] = useState(false);
-  const [demoActive, setDemoActive] = useState(false);
   useEffect(() => {
     initLang();
     initJourneyFlags();
     ensureDemoDefault();
     setDemoVisible(!isDemoClicked());
-    setDemoActive(isDemoActive());
   }, []);
 
   const isComparer = pathname === "/comparer";
@@ -288,10 +285,13 @@ function RootComponent() {
         }}
       />
       <nav className="!sticky !top-0 !z-[50] !bg-white !shadow-md border-b border-border">
-        <div className="mx-auto max-w-[1400px] px-4 pb-1 pt-[2px] sm:px-6">
+        <div className="mx-auto max-w-[1400px] px-4 py-1 sm:px-6">
           <div className="flex flex-wrap items-center gap-2">
             {!isHome && (
             <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
+              <Link to="/" className={linkClass} activeOptions={{ exact: true }} activeProps={{ className: activeLinkClass }}>
+                {lang === "en" ? "Home" : "Accueil"}
+              </Link>
               <Link to="/saisie" className={linkClass} activeProps={{ className: activeLinkClass }}>
                 {lang === "en" ? "Inputs" : "Saisie"}
               </Link>
@@ -599,14 +599,12 @@ function RootComponent() {
                     assis sur sa ligne de base, agrandi de 15 %.
                     Le bouton « Mode démo » est centré juste en dessous. */}
                 <div className="relative z-10 flex shrink-0 flex-col items-center -translate-x-[30px] translate-y-[26px]">
-                  <Link to="/" aria-label={lang === "en" ? "Home" : "Accueil"} className="block">
-                    <img
-                      src={keyweightLogo.url}
-                      alt="KeyWeight"
-                      style={{ height: "85px", width: "auto" }}
-                      className="object-contain"
-                    />
-                  </Link>
+                  <img
+                    src={keyweightLogo.url}
+                    alt="KeyWeight"
+                    style={{ height: "85px", width: "auto" }}
+                    className="object-contain"
+                  />
                 </div>
 
 
@@ -621,30 +619,18 @@ function RootComponent() {
       {/* Bouton « Mode démo » : sous le Header, aligné sur le bord gauche
           de l'onglet « Accueil », présent sur toutes les pages tant qu'il
           n'a pas été cliqué. */}
-      {demoVisible && !isHome && (
+      {demoVisible && (
         <div className="relative !z-[60] mx-auto max-w-[1400px] overflow-visible px-4 pb-2 pt-3 sm:px-6">
           <div className="relative !z-[60] flex items-center gap-2 pl-1">
             <button
               type="button"
               onClick={() => {
-                if (demoActive) {
-                  // 2e clic : sortie du mode démo, nettoyage et disparition pour la session.
-                  disableDemoMode();
-                  markDemoClicked();
-                  setDemoActive(false);
-                  setDemoVisible(false);
-                } else {
-                  // 1er clic : injection du jeu de démonstration (88 touches).
-                  enableDemoMode();
-                  setDemoActive(true);
-                }
+                disableDemoMode();
+                markDemoClicked();
+                setDemoVisible(false);
                 window.location.reload();
               }}
-              className={`whitespace-nowrap rounded-md border-2 px-4 py-2 text-xs font-bold uppercase tracking-wide transition-colors ${
-                demoActive
-                  ? "border-green-600 bg-green-100 !text-black hover:bg-green-200"
-                  : "border-black bg-black !text-white hover:bg-gray-800"
-              }`}
+              className="whitespace-nowrap rounded-md border-2 border-black bg-black px-4 py-2 text-xs font-bold uppercase tracking-wide !text-white transition-colors hover:bg-gray-800"
             >
               {lang === "en" ? "Demo mode" : "Mode démo"}
             </button>
@@ -716,27 +702,20 @@ function RootComponent() {
                 : "Soutenir le projet collaboratif KeyWeight"}
             </DialogTitle>
             <DialogDescription className="text-left text-sm leading-relaxed !text-gray-800">
-              <span className="block">
-                KeyWeight est un outil indépendant partagé, créé par un passionné de pianos. Si cette
-                application collaborative vous a été utile, soutenez son développement et sa
-                maintenance !
-              </span>
-              <span className="mt-2 block italic">
-                KeyWeight is an independent shared tool, built by a piano enthusiast. If this
-                collaborative application has been useful to you, support its development and
-                maintenance!
-              </span>
+              {lang === "en"
+                ? "KeyWeight is an independent tool created for pianists and piano technicians. To develop this platform, several hundred euros have been personally invested. If this tool saves you time and precision on a daily basis, you can actively participate in its maintenance and future developments through a free financial support. Thank you!"
+                : "KeyWeight est un outil indépendant créé pour les pianistes et facteurs de piano. Pour développer cette plateforme, plusieurs centaines d'euros ont été investis personnellement. Si cet outil vous fait gagner du temps et de la précision au quotidien, vous pouvez participer activement à sa maintenance et à ses futures évolutions via un soutien financier libre. Merci !"}
             </DialogDescription>
           </DialogHeader>
           <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
             {[
-              { label: lang === "en" ? "Support: 10 €" : "Soutenir : 10 €", href: "https://buy.stripe.com/4gMaEP2RB9xMg6NdJHfEk04" },
-              { label: lang === "en" ? "Support: 20 €" : "Soutenir : 20 €", href: "https://buy.stripe.com/28EeV5ak325k7Ah5dbfEk03" },
-              { label: lang === "en" ? "Custom amount" : "Montant libre", href: "https://buy.stripe.com/cNi7sDbo78tIg6N7ljfEk01" },
-            ].map(({ label, href }) => (
+              lang === "en" ? "Support: 10 $" : "Soutenir : 10 €",
+              lang === "en" ? "Support: 20 $" : "Soutenir : 20 €",
+              lang === "en" ? "Custom amount" : "Montant libre",
+            ].map((label) => (
               <a
                 key={label}
-                href={href}
+                href="#"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium !text-gray-900 transition-colors hover:bg-gray-50"
@@ -750,8 +729,6 @@ function RootComponent() {
 
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
-
-      <AppFooter en={lang === "en"} />
 
       <Toaster />
 

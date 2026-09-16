@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useLang } from "@/data/translations";
+import { LegalDialog } from "@/data/legal";
 import { DemoIntro } from "@/components/DemoIntro";
 
 export const Route = createFileRoute("/")({
@@ -26,6 +28,7 @@ export const Route = createFileRoute("/")({
 
 
 function Accueil() {
+  const [legalOpen, setLegalOpen] = useState(false);
   const lang = useLang();
   const en = lang === "en";
 
@@ -55,16 +58,30 @@ function Accueil() {
           </h2>
           <ul className="list-disc space-y-1 pl-5">
             <li>
-              <strong>{en ? "Data Entry & report:" : "Saisie & rapport :"}</strong>{" "}
+              <strong>
+                {en ? "Data Entry & Workshop Report:" : "Saisie et rapport d'atelier :"}
+              </strong>{" "}
               {en
-                ? "rapid encoding of static weights, interactive dashboard and creation of a workshop report"
-                : "encodage rapide des poids statiques, tableau de bord interactif et création d'un rapport d'atelier"}
+                ? "Rapid logging of the 88-key static weights and report creation"
+                : "Encodage rapide des poids statiques des 88 touches et création de rapports"}
             </li>
             <li>
               <strong>{en ? "Comparative Analysis:" : "Analyse comparative :"}</strong>{" "}
-              {en
-                ? "graphical comparison before/after regulation - graphical comparison with standard regulatory curves, or community data (Cloud)"
-                : "comparaison graphiques avant/après régulation - comparaison graphique avec courbes de régulation standard, ou données de la communauté (Cloud)"}
+              {en ? (
+                <>
+                  Graphical comparison against standard industry regulation targets and community
+                  crowd-sourced data
+                  <br />
+                  (Collaborative Cloud).
+                </>
+              ) : (
+                <>
+                  comparaison graphique par rapport aux cibles usuelles et aux données de la
+                  communauté
+                  <br />
+                  (Cloud collaboratif).
+                </>
+              )}
             </li>
           </ul>
         </section>
@@ -112,6 +129,20 @@ function Accueil() {
           {en ? "Start your diagnosis" : "Commencer votre diagnostic"}
         </Link>
       </div>
+
+      <div className="mx-auto w-full max-w-4xl" style={{ marginTop: "250px", padding: 0 }}>
+        <button
+          type="button"
+          onClick={() => setLegalOpen((open) => !open)}
+          className="block w-full text-center text-xs !text-gray-500 underline transition-colors hover:!text-gray-800"
+          style={{ margin: 0, padding: 0 }}
+        >
+          {en ? "Legal Notice" : "Mentions Légales"}
+        </button>
+
+      </div>
+
+      <LegalDialog open={legalOpen} onClose={() => setLegalOpen(false)} en={en} />
 
       <DemoIntro en={en} />
     </main>

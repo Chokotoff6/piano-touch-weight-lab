@@ -515,7 +515,7 @@ function drawFooter(pdf: jsPDF, page: number, total: number, stamp: string) {
   pdf.text(`Page ${page} / ${total}`, PAGE_W - MARGIN, PAGE_H - MARGIN - 3, { align: "right" });
   pdf.text(`${getLang() === "en" ? "Exported on:" : "Exporté le :"} ${stamp}`, PAGE_W - MARGIN, PAGE_H - MARGIN, { align: "right" });
   // Signature obligatoire, en bas à gauche de chaque page.
-  pdf.text("Keyweight.com © 2026", MARGIN, PAGE_H - MARGIN, { align: "left" });
+  pdf.text("Keyweight.app © 2026", MARGIN, PAGE_H - MARGIN, { align: "left" });
   pdf.setTextColor(0);
 }
 
@@ -577,7 +577,7 @@ export async function generatePortraitReport(
     pdf.setTextColor(120);
     pdf.text(`Page ${startPage + index} / ${total}`, P_W - MARGIN, P_H - MARGIN - 3, { align: "right" });
     pdf.text(`${getLang() === "en" ? "Exported on:" : "Exporté le :"} ${stamp}`, P_W - MARGIN, P_H - MARGIN, { align: "right" });
-    pdf.text("Keyweight.com © 2026", MARGIN, P_H - MARGIN, { align: "left" });
+    pdf.text("Keyweight.app © 2026", MARGIN, P_H - MARGIN, { align: "left" });
     pdf.setTextColor(0);
   });
   setExportProgress(1);
