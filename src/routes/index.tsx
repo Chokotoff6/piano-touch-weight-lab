@@ -58,7 +58,7 @@ function Accueil() {
               <strong>{en ? "Data Entry & report:" : "Saisie & rapport :"}</strong>{" "}
               {en
                 ? "rapid encoding of static weights, interactive dashboard and creation of workshop reports"
-                : "encodage rapide des poids statiques, tableau de bord interactif et création d'un rapport d'atelier"}
+                : "encodage rapide des poids statiques, tableau de bord interactif et création de rapports d'atelier"}
             </li>
             <li>
               <strong>{en ? "Comparative Analysis:" : "Analyse comparative :"}</strong>{" "}
