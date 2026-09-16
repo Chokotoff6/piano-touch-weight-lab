@@ -64,7 +64,7 @@ function Accueil() {
               <strong>{en ? "Comparative Analysis:" : "Analyse comparative :"}</strong>{" "}
               {en
                 ? "graphical comparison before/after regulation - graphical comparison with standard regulatory curves, or community data (Cloud)"
-                : "comparaison graphiques avant/après régulation - comparaison graphique avec courbes de régulation standard, ou données de la communauté (Cloud)"}
+                : "comparaisons graphiques avant/après régulation, courbes de régulation standard, et données de la communauté (Cloud)"}
             </li>
           </ul>
         </section>
