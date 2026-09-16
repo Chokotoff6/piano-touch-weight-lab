@@ -78,7 +78,7 @@ function Accueil() {
               <strong>{en ? "Online or Off-line:" : "En ligne ou Off-line :"}</strong>{" "}
               {en
                 ? "take measurements directly on the web page, or on the field using using a PDF form file, that can be importated later\u00a0"
-                : "pesez directement sur l'appli Web, ou sur le terrain à l'aide d'un simple formulaire PDF"}
+                : "\u00a0encodez les pesées\u00a0directement sur l'appli Web, ou sur un simple formulaire PDF"}
             </li>
             <li>
               <strong>{en ? "CSV and PDF Reporting:" : "Rapports CSV et PDF :"}</strong>{" "}
