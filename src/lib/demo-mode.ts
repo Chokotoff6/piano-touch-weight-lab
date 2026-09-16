@@ -7,8 +7,8 @@ import { setCompareUnlocked, setGateReady, setResultsVisited } from "@/lib/topba
 const DRAFT_ROWS_KEY = "ptw_draft_rows";
 const DRAFT_INFO_KEY = "ptw_draft_info";
 export const DEMO_MODE_KEY = "ptw_demo_mode";
-/** Mémorise le clic sur « Mode démo » : le bouton disparaît définitivement. */
-export const DEMO_CLICKED_KEY = "ptw_demo_clicked";
+/** Mémorise la sortie du mode démo : le bouton disparaît pour la session. */
+export const DEMO_CLICKED_KEY = "ptw_demo_exited";
 
 /** Vrai si l'utilisateur a déjà cliqué sur le bouton « Mode démo ». */
 export function isDemoClicked(): boolean {
