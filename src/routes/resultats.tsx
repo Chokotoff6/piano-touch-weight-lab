@@ -255,34 +255,64 @@ function Resultats() {
     });
   };
 
-  const unlock = async () => {
-    if (busy || unlocked) return;
+  const unlocked = topbar.compareUnlocked;
+
+  /**
+   * Écriture cloud unique (création au clic sur « J'accepte », ou mise à jour
+   * silencieuse en arrière-plan). `silent` supprime les messages à l'écran.
+   */
+  const writeCloud = async (silent = false) => {
+    if (busy) return;
     setConsent(true);
     setBusy(true);
-    const toastId = toast.loading(en ? "Collaborative sharing in progress…" : "Partage collaboratif en cours…");
+    const toastId = silent
+      ? undefined
+      : toast.loading(en ? "Collaborative sharing in progress…" : "Partage collaboratif en cours…");
     try {
       const piano = buildPiano();
       saveCurrentPiano(piano);
       // Double écriture synchrone : ligne pivot (is_buffer) puis archivage historique.
       const buffer = await upsertCurrentPianoBuffer(piano);
       if (!buffer.ok) {
-        toast.error(`${en ? "Cloud write failed:" : "Écriture cloud impossible :"} ${buffer.error ?? (en ? "network error" : "erreur réseau")}`, { id: toastId });
+        if (!silent) {
+          toast.error(`${en ? "Cloud write failed:" : "Écriture cloud impossible :"} ${buffer.error ?? (en ? "network error" : "erreur réseau")}`, { id: toastId });
+        }
         return;
       }
       const historyId = await findHistoryProfileId(piano.serial_number);
       const history = await saveCurrentPianoToCloud(piano, historyId);
       if (!history.ok) {
-        toast.error(`${en ? "Archiving failed:" : "Archivage impossible :"} ${history.error ?? (en ? "network error" : "erreur réseau")}`, { id: toastId });
+        if (!silent) {
+          toast.error(`${en ? "Archiving failed:" : "Archivage impossible :"} ${history.error ?? (en ? "network error" : "erreur réseau")}`, { id: toastId });
+        }
         return;
       }
-      toast.success(en ? "Measurements shared: chart and comparison unlocked." : "Mesures partagées : graphique et comparaison débloqués.", { id: toastId });
+      markCloudSync(rows);
+      markCsvOrigin(false);
+      if (!silent) {
+        toast.success(en ? "Measurements shared: chart and comparison unlocked." : "Mesures partagées : graphique et comparaison débloqués.", { id: toastId });
+      } else if (toastId) {
+        toast.dismiss(toastId);
+      }
       setCompareUnlocked(true);
     } finally {
       setBusy(false);
     }
   };
 
-  const unlocked = topbar.compareUnlocked;
+  // Aiguilleur central : exécuté à chaque arrivée sur la page Résultats.
+  const gateRan = useRef(false);
+  useEffect(() => {
+    if (gateRan.current || !hasData) return;
+    gateRan.current = true;
+    const decision = decideCloudAction({ accepted: unlocked, rows });
+    if (decision.kind === "blocked") {
+      setBlocked(true);
+      resetConsent();
+      return;
+    }
+    if (decision.kind === "silentUpsert") void writeCloud(true);
+  }, [hasData, unlocked, rows]);
 
   return (
     <main className="mx-auto w-full max-w-[1120px] px-6 pb-10 pt-20">
