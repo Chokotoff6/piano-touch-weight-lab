@@ -12,14 +12,22 @@ export const DEMO_CLICKED_KEY = "ptw_demo_clicked";
 
 /** Vrai si l'utilisateur a déjà cliqué sur le bouton « Mode démo ». */
 export function isDemoClicked(): boolean {
-  // Mémoire désactivée (phase de tests) : le bouton réapparaît à chaque chargement.
-  return false;
+  if (!isBrowser()) return false;
+  try {
+    return window.sessionStorage.getItem(DEMO_CLICKED_KEY) === "1";
+  } catch {
+    return false;
+  }
 }
 
 /** Enregistre le clic sur « Mode démo ». */
 export function markDemoClicked() {
-  if (typeof window === "undefined") return;
-  /* Mémoire désactivée (phase de tests). */
+  if (!isBrowser()) return;
+  try {
+    window.sessionStorage.setItem(DEMO_CLICKED_KEY, "1");
+  } catch {
+    /* stockage indisponible */
+  }
 }
 
 export const DEMO_INFO: Record<string, string> = {
@@ -52,11 +60,11 @@ function isBrowser() {
   return typeof window !== "undefined";
 }
 
-/** Vrai si le mode démo est actif (actif par défaut tant qu'aucun choix). */
+/** Vrai si le mode démo est actif (inactif par défaut). */
 export function isDemoActive(): boolean {
   if (!isBrowser()) return false;
   try {
-    return window.localStorage.getItem(DEMO_MODE_KEY) !== "0";
+    return window.localStorage.getItem(DEMO_MODE_KEY) === "1";
   } catch {
     return false;
   }
@@ -123,14 +131,14 @@ export function disableDemoMode() {
   }
 }
 
-/** Applique le mode démo par défaut au premier chargement du navigateur. */
+/** Le mode démo n'est plus activé par défaut : il se déclenche au 1er clic. */
 export function ensureDemoDefault() {
   if (!isBrowser()) return;
-  let flag: string | null = null;
   try {
-    flag = window.localStorage.getItem(DEMO_MODE_KEY);
+    if (window.localStorage.getItem(DEMO_MODE_KEY) === null) {
+      window.localStorage.setItem(DEMO_MODE_KEY, "0");
+    }
   } catch {
-    return;
+    /* stockage indisponible */
   }
-  if (flag === null) enableDemoMode();
 }
