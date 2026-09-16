@@ -518,18 +518,18 @@ function RootComponent() {
              </div>
              )}
 
-              <div className="ml-auto flex items-center mr-[-1rem] sm:mr-[-1.5rem]">
+              <div className="ml-auto flex items-center">
                 {/* Bouton de soutien à droite du sélecteur EN / FR,
                     taille 2× (~50 px) et descendu de 10 px. */}
-                <div className="flex -translate-x-[60px] items-center">
+                <div className="flex items-center">
                    <button
                      type="button"
                      onClick={() => setFaqOpen(true)}
-                     className="mr-2 shrink-0 -translate-x-[50px] translate-y-[19px] rounded-md border border-gray-400 bg-white px-2 py-0.5 text-[1rem] font-bold !text-gray-900 transition-colors hover:bg-gray-100"
+                     className="mr-2 shrink-0 translate-y-[19px] rounded-md border border-gray-400 bg-white px-2 py-0.5 text-[1rem] font-bold !text-gray-900 transition-colors hover:bg-gray-100"
                    >
                      FAQ
                    </button>
-                   <div className="flex shrink-0 -translate-x-[50px] translate-y-[19px] items-center gap-0 text-[1.14rem] font-semibold">
+                   <div className="flex shrink-0 translate-y-[19px] items-center gap-0 text-[1.14rem] font-semibold">
                      <Button
                        variant="ghost"
                        size="sm"
