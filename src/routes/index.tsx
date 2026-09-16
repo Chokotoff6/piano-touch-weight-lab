@@ -63,7 +63,7 @@ function Accueil() {
             <li>
               <strong>{en ? "Comparative Analysis:" : "Graphiques d'analyse comparative :"}</strong>{" "}
               {en
-                ? "graphical comparison before/after regulation, with standard regulatory curves and community data (Cloud)"
+                ? "before/after regulation graphs, standard reference curves, community data (Cloud)"
                 : "\u00a0graphiques avant/après régulation, courbe référence standard, données de la communauté (Cloud)"}
             </li>
           </ul>
