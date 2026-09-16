@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useFadeClose } from "@/lib/use-fade-close";
 
@@ -34,7 +34,8 @@ export function InfoDot({
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const anchorRef = useRef<HTMLButtonElement>(null);
-  const { rendered, closing, requestClose } = useFadeClose(open, () => setOpen(false));
+  const finishClose = useCallback(() => setOpen(false), []);
+  const { rendered, closing, requestClose } = useFadeClose(open, finishClose);
 
   useEffect(() => {
     if (!autoOpenSessionKey) return;
