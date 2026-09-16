@@ -477,6 +477,10 @@ function Index() {
   const topbarState = useTopbarState();
   // Protection d'ADN : identité figée dès que le profil est accepté au cloud.
   const identityLocked = topbarState.compareUnlocked;
+  // Chronomètre d'ouverture de fiche (base du contrôle anti-robot temporel).
+  useEffect(() => {
+    startSheetTimer();
+  }, []);
   const [currentDbId, setCurrentDbId] = useState<string | null>(null);
   const [askUpdate, setAskUpdate] = useState(false);
   // Export demandé en attente de la décision cloud (modale INSERT/UPSERT).
