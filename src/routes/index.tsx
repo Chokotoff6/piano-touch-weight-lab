@@ -77,7 +77,7 @@ function Accueil() {
             <li className={en ? undefined : "whitespace-nowrap"}>
               <strong>{en ? "Online or Off-line:" : "En ligne ou Off-line :"}</strong>{" "}
               {en
-                ? "Take measurements directly on the web page, or on the field using a simple printable PDF weigh-out sheet, then import them later."
+                ? "take measurements directly on the web page, or on the field using using a PDF form file, that can be importated later\u00a0"
                 : "pesez directement sur la page Web, ou sur le terrain à l'aide d'un simple formulaire PDF"}
             </li>
             <li>
