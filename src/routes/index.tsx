@@ -55,9 +55,9 @@ function Accueil() {
           </h2>
           <ul className="list-disc space-y-1 pl-5">
             <li>
-              <strong>{en ? "Data Entry & report:" : "Saisie optimisée & rapports d'atelier :"}</strong>{" "}
+              <strong>{en ? "Optimized data entry & workshop reports:\u00a0" : "Saisie optimisée & rapports d'atelier :"}</strong>{" "}
               {en
-                ? "rapid encoding of static weights, interactive dashboard and creation of workshop reports"
+                ? "fast measurement encoding, interactive dashboard and PDF report creation"
                 : "encodage rapide des mesures, tableau de bord interactif et création de rapports PDF"}
             </li>
             <li>
