@@ -33,19 +33,9 @@ function Accueil() {
     <main className="relative mx-auto flex max-w-[1400px] flex-col px-6 pb-6 pt-2">
       <div className="mx-auto mt-[116px] w-full max-w-4xl space-y-8 text-left text-sm leading-relaxed text-foreground">
         <h1 className="text-xl font-semibold leading-snug">
-          {en ? (
-            <>
-              Welcome to KeyWeight! A collaborative and independent application
-              <br />
-              for pianists and piano technicians.
-            </>
-          ) : (
-            <>
-              Bienvenue sur KeyWeight ! Une application collaborative et indépendante
-              <br />
-              pour pianistes et techniciens de piano.
-            </>
-          )}
+          {en
+            ? "Welcome to KeyWeight! A collaborative and independent web application\ntailored for pianists and piano technicians."
+            : "Bienvenue sur KeyWeight ! Une application collaborative et indépendante\npour pianistes et techniciens de piano."}
         </h1>
 
         <section className="space-y-2">
@@ -87,13 +77,13 @@ function Accueil() {
             <li className={en ? undefined : "whitespace-nowrap"}>
               <strong>{en ? "Online or Off-line:" : "En ligne ou Off-line :"}</strong>{" "}
               {en
-                ? "weigh directly on the Web app, or using a simple PDF form"
-                : "pesez directement sur l'appli Web, ou à l'aide d'un simple formulaire PDF"}
+                ? "take measurements directly on the web page, or on the field using using a PDF form file, that can be importated later\u00a0"
+                : "\u00a0encodez les pesées\u00a0directement sur l'appli Web, ou sur un simple formulaire PDF"}
             </li>
             <li>
-              <strong>{en ? "CSV and PDF Reports:" : "Rapports CSV et PDF :"}</strong>{" "}
+              <strong>{en ? "CSV and PDF Reporting:" : "Rapports CSV et PDF :"}</strong>{" "}
               {en
-                ? "save an instrument's history and export comparative graphical analysis reports"
+                ? "Save the regulation history of an instrument or export comprehensive analytical reports and charts."
                 : "sauvegardez l'historique d'un instrument et exportez les rapports graphiques d'analyse comparative"}
             </li>
           </ul>

@@ -374,34 +374,39 @@ function Resultats() {
 
 
             {!unlocked && (
-              <div
-                className="fixed inset-0 z-50 flex items-center justify-center p-4"
-                style={{ background: "rgba(0,0,0,0.15)" }}
-              >
-                <div className="w-full max-w-lg rounded-md border border-gray-300 bg-white p-6 text-center shadow-lg">
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 p-4">
+                <div className="w-full max-w-2xl rounded-md border border-gray-300 bg-white p-8 text-center shadow-lg">
                   {blocked ? (
-                    <p className="text-sm font-semibold !text-gray-900">
+                    <p className="text-base font-semibold !text-gray-900">
                       {en
                         ? "Sharing temporarily locked. Please continue your measurements in the workshop."
                         : "Partage temporairement verrouillé. Poursuivez vos mesures en atelier."}
                     </p>
                   ) : (
                     <>
-                      <p className="text-[0.85rem] font-medium leading-relaxed !text-gray-900">
-                        {en
-                          ? "This piano's profile will be added to the CLOUD KeyWeight community database. Thank you for your contribution!"
-                          : "Le profil de ce piano va compléter la base de données de la communauté CLOUD KeyWeight. Merci de votre collaboration !"}
+                      <p className="text-[1.05rem] font-semibold leading-relaxed !text-gray-900">
+                        Le profil de ce piano va compléter la base de données de la communauté CLOUD
+                        KeyWeight. Merci de votre collaboration !
+                      </p>
+                      <p className="mt-3 text-[0.95rem] font-medium leading-relaxed !text-gray-600">
+                        This piano&apos;s profile will be added to the CLOUD KeyWeight community
+                        database. Thank you for your contribution!
                       </p>
                       <button
                         type="button"
                         disabled={busy}
                         onClick={() => void writeCloud()}
-                        className="mt-5 rounded-md border-2 border-black bg-white px-6 py-1.5 text-[0.85rem] font-bold !text-black transition-colors hover:bg-gray-100 disabled:opacity-60"
+                        className="mt-7 rounded-md border-2 px-8 py-2 text-base font-bold transition-colors"
+                        style={{
+                          backgroundColor: busy ? "#e5e7eb" : "#dcfce7",
+                          borderColor: "#16a34a",
+                          color: "#000000",
+                        }}
                       >
                         {en ? "I accept" : "J'accepte"}
                       </button>
                       {busy && (
-                        <p className="mt-4 text-xs font-medium !text-gray-900">
+                        <p className="mt-4 text-sm font-medium !text-gray-900">
                           {en ? "Collaborative sharing in progress…" : "Partage collaboratif en cours…"}
                         </p>
                       )}
