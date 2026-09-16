@@ -593,23 +593,6 @@ function RootComponent() {
                    </div>
                    )}
                 </div>
-
-
-                {/* Logo officiel KeyWeight : 30 px à gauche du bord droit,
-                    assis sur sa ligne de base, agrandi de 15 %.
-                    Le bouton « Mode démo » est centré juste en dessous. */}
-                <div className="relative z-10 flex shrink-0 flex-col items-center -translate-x-[30px] translate-y-[26px]">
-                  <Link to="/" aria-label={lang === "en" ? "Home" : "Accueil"} className="block">
-                    <img
-                      src={keyweightLogo.url}
-                      alt="KeyWeight"
-                      style={{ height: "85px", width: "auto" }}
-                      className="object-contain"
-                    />
-                  </Link>
-                </div>
-
-
               </div>
 
 
