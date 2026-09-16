@@ -22,6 +22,8 @@ import {
 } from "@/lib/current-piano";
 import { fallbackZone } from "@/lib/climate";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
+import { decideCloudAction, markCloudSync, resetConsent } from "@/lib/cloud-gate";
+import { markCsvOrigin } from "@/lib/anti-bot";
 
 export const Route = createFileRoute("/resultats")({
   head: () => ({
@@ -109,6 +111,7 @@ function Resultats() {
   // État initial imposé : touches blanches et noires affichées séparément.
   const [keyFilter, setKeyFilter] = useState<KeyFilter>("split");
   const [busy, setBusy] = useState(false);
+  const [blocked, setBlocked] = useState(false);
   const averagesRef = useRef<HTMLDivElement>(null);
   const [averagesHeight, setAveragesHeight] = useState(0);
   const importInputRef = useRef<HTMLInputElement | null>(null);
