@@ -288,7 +288,7 @@ function RootComponent() {
         }}
       />
       <nav className="!sticky !top-0 !z-[50] !bg-white !shadow-md border-b border-border">
-        <div className="mx-auto w-full max-w-7xl pb-1 pt-[2px] px-[100px]">
+        <div className="w-full pb-1 pt-[2px] px-4 lg:px-[100px]">
           <div className="flex flex-wrap items-center gap-2">
             {/* Logo officiel KeyWeight : calé à gauche, retour à l'accueil. */}
             <div className="relative z-10 flex shrink-0 flex-col items-center translate-y-[26px]">
