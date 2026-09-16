@@ -228,6 +228,7 @@ function RootComponent() {
   const saveBtnRef = useRef<HTMLButtonElement | null>(null);
   const pendingActionRef = useRef<(() => void) | null>(null);
   const [demoVisible, setDemoVisible] = useState(false);
+  const [demoActive, setDemoActive] = useState(false);
   useEffect(() => {
     initLang();
     initJourneyFlags();
