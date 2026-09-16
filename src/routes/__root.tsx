@@ -551,7 +551,7 @@ function RootComponent() {
                    </div>
                    {(pathname === "/resultats" || pathname === "/comparer") && (
                     <div
-                       className="relative ml-3 translate-y-[16px] transition-opacity duration-[2000ms] ease-in-out"
+                       className="relative order-first mr-4 translate-y-[16px] transition-opacity duration-[2000ms] ease-in-out"
                        style={{ opacity: likedVisible ? 1 : 0, pointerEvents: likedVisible ? "auto" : "none" }}
                      onMouseEnter={() => {
                        if (supportHintTimer.current) clearTimeout(supportHintTimer.current);
