@@ -1245,6 +1245,18 @@ function Index() {
   };
 
   const onKeyDown = (e: React.KeyboardEvent, index: number, field: "wa" | "wd") => {
+    // Alerte « valeur élevée » active : le curseur reste verrouillé dans la case
+    // tant que la valeur n'est pas corrigée ou validée.
+    if (
+      pedalAlert &&
+      pedalOrigin.current?.index === index &&
+      pedalOrigin.current?.field === field &&
+      (e.key === "Tab" || e.key === "Enter" || e.key.startsWith("Arrow"))
+    ) {
+      e.preventDefault();
+      focusCell(index, field);
+      return;
+    }
     // Verrou absolu du binôme : erreur mécanique, hors fourchette ou binôme
     // incomplet. Seuls les déplacements INTERNES au binôme restent permis.
     if (pairHasError(index) && (e.key === "Tab" || e.key === "Enter")) {
@@ -1345,6 +1357,16 @@ function Index() {
     // Valeur redevenue conforme : nettoyage instantané du cadre rouge et du FF.
     if (!mechanicalError) clearError(`${index}-${field}`);
     hideRangeMessage();
+    // Valeur redescendue sous le seuil : l'alerte et son verrou de focus tombent.
+    if (
+      num !== null &&
+      num <= 75 &&
+      pedalOrigin.current?.index === index &&
+      pedalOrigin.current?.field === field
+    ) {
+      pedalOrigin.current = null;
+      setPedalAlert(false);
+    }
     // Alerte sustain : toute valeur conforme strictement supérieure à 75 g.
     if (num !== null && num > 75 && !hidePedalAlert) {
       pedalCount.current += 1;
@@ -1394,6 +1416,16 @@ function Index() {
 
   const handleBlur = (index: number, field: "wa" | "wd", value: string) => {
     const key = `${index}-${field}`;
+    // Verrou de focus : tant que l'alerte « valeur élevée » est affichée pour
+    // cette case, le curseur y est ramené.
+    if (
+      pedalAlert &&
+      pedalOrigin.current?.index === index &&
+      pedalOrigin.current?.field === field
+    ) {
+      setTimeout(() => focusCell(index, field), 0);
+      return;
+    }
     const cleaned = cleanWeight(value);
     if (cleaned === "") {
       clearError(key);
@@ -2698,7 +2730,7 @@ function Index() {
               type="button"
               onClick={() => setConfirmReset("info")}
               title={en ? "Reset the information sheet only" : "Réinitialiser uniquement la fiche d'informations"}
-              className="relative z-10 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.96rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+              className="relative z-10 rounded-md border border-input bg-background px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
             >
               Reset
             </button>
@@ -2791,15 +2823,15 @@ function Index() {
                     : "Saisir au minimum les valeurs pour tous les Do et Do# pour accéder aux résultats."}
                 </span>
                 <span className="mt-2 block">
-                  {en ? "• TAB: move forward one input field" : "• TAB : avance d'une zone de saisie"}
+                  {en ? "• TAB: move forward one key" : "• TAB : avance d'une touche"}
                 </span>
                 <span className="block">
-                  {en ? "• Shift + TAB: move back one input field" : "• Shift + TAB : recule d'une zone de saisie"}
+                  {en ? "• Shift + TAB: move backward one key" : "• Shift + TAB : recule d'une touche"}
                 </span>
                 <span className="block">
                   {en
-                    ? "• ALT + TAB (Option ⌥ on Mac): jump straight to the next C"
-                    : "• ALT + TAB (Option ⌥ sur Mac) : saute directement au DO suivant"}
+                    ? "• ALT + TAB (Option ⌥ on Mac): jump to the next C"
+                    : "• ALT + TAB (Option ⌥ sur Mac) : saute au DO suivant"}
                 </span>
               </InfoDot>
             </span>
@@ -2921,7 +2953,7 @@ function Index() {
                 type="button"
                 data-pdf-hide
                 onClick={() => setConfirmReset("rows")}
-                className="relative z-10 rounded-md border border-input bg-background px-4 py-1.5 !text-[0.96rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+                className="relative z-10 rounded-md border border-input bg-background px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
               >
                 Reset
               </button>
