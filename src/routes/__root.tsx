@@ -645,7 +645,7 @@ function RootComponent() {
             <InfoDot
               label={lang === "en" ? "Demo mode" : "Mode démo"}
               width={340}
-              autoOpenSessionKey={pathname === "/saisie" ? "ptw_demo_intro_seen" : undefined}
+              {...(pathname === "/saisie" ? { autoOpenSessionKey: "ptw_demo_intro_seen" } : {})}
               autoCloseMs={5000}
             >
               {lang === "en" ? DEMO_INFO_EN : DEMO_INFO_FR}
