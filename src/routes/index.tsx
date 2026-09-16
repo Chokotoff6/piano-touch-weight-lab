@@ -55,16 +55,16 @@ function Accueil() {
           </h2>
           <ul className="list-disc space-y-1 pl-5">
             <li>
-              <strong>{en ? "Data Entry & report:" : "Saisie & rapport :"}</strong>{" "}
+              <strong>{en ? "Data Entry & report:" : "Saisie optimisée & rapports d'atelier :"}</strong>{" "}
               {en
                 ? "rapid encoding of static weights, interactive dashboard and creation of workshop reports"
-                : "encodage rapide des poids statiques, tableau de bord interactif et création de rapports d'atelier"}
+                : "encodage rapide des mesures, tableau de bord interactif et création de rapports PDF"}
             </li>
             <li>
-              <strong>{en ? "Comparative Analysis:" : "Analyse comparative :"}</strong>{" "}
+              <strong>{en ? "Comparative Analysis:" : "Graphiques d'analyse comparative :"}</strong>{" "}
               {en
                 ? "graphical comparison before/after regulation, with standard regulatory curves and community data (Cloud)"
-                : "comparaisons graphiques avant/après régulation, avec courbes de régulation standard, et données de la communauté (Cloud)"}
+                : "\u00a0graphiques avant/après régulation, courbe référence standard, données de la communauté (Cloud)"}
             </li>
           </ul>
         </section>
