@@ -20,8 +20,8 @@ export function DemoIntro({ en }: { en: boolean }) {
 
   useEffect(() => {
     try {
-      if (window.localStorage.getItem(SEEN_KEY) === "1") return;
-      window.localStorage.setItem(SEEN_KEY, "1");
+      if (window.sessionStorage.getItem(SEEN_KEY) === "1") return;
+      window.sessionStorage.setItem(SEEN_KEY, "1");
     } catch {
       /* stockage indisponible */
     }
