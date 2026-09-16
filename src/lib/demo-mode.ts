@@ -131,12 +131,13 @@ export function disableDemoMode() {
   }
 }
 
-/** Le mode démo n'est plus activé par défaut : il se déclenche au 1er clic. */
+/** Le mode démo est actif par défaut (bouton vert) tant qu'il n'a pas été quitté. */
 export function ensureDemoDefault() {
   if (!isBrowser()) return;
   try {
+    if (isDemoClicked()) return;
     if (window.localStorage.getItem(DEMO_MODE_KEY) === null) {
-      window.localStorage.setItem(DEMO_MODE_KEY, "0");
+      enableDemoMode();
     }
   } catch {
     /* stockage indisponible */

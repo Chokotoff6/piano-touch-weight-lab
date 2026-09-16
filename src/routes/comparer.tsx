@@ -904,7 +904,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             <Tooltip
               trigger="hover"
               content={<CustomTooltipContent chartData={chartData} />}
-              cursor={{ stroke: "#d1d5db", strokeWidth: 1 }}
+              cursor={{ stroke: "#000000", strokeWidth: 1.4 }}
               allowEscapeViewBox={{ x: true, y: true }}
               wrapperStyle={{ pointerEvents: "none", zIndex: 100 }}
               isAnimationActive={false}
