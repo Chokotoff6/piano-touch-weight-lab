@@ -523,3 +523,8 @@
   animation: ff-fade-out 1s ease forwards;
   pointer-events: none;
 }
+
+/* Espace réservé au pied de page permanent (lien Mentions légales). */
+body {
+  padding-bottom: 32px;
+}
