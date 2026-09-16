@@ -78,13 +78,13 @@ function Accueil() {
               <strong>{en ? "Online or Off-line:" : "En ligne ou Off-line :"}</strong>{" "}
               {en
                 ? "Take measurements directly on the web page, or on the field using a simple printable PDF weigh-out sheet, then import them later."
-                : "pesez directement sur la page Web, ou sur le terrain à l'aide d'une simple fiche de pesée PDF"}
+                : "pesez directement sur la page Web, ou sur le terrain à l'aide d'un simple formulaire PDF"}
             </li>
             <li>
               <strong>{en ? "CSV and PDF Reporting:" : "Rapports CSV et PDF :"}</strong>{" "}
               {en
                 ? "Save the regulation history of an instrument or export comprehensive analytical reports and charts."
-                : "sauvegardez l'historique d'un instrument ou exportez les rapports graphiques et d'analyse"}
+                : "sauvegardez l'historique d'un instrument et exportez les rapports graphiques d'analyse"}
             </li>
           </ul>
         </section>
