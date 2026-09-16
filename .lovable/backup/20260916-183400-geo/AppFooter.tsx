@@ -11,7 +11,7 @@ export function AppFooter({ en }: { en: boolean }) {
     <>
       <footer
         data-pdf-hide
-        className="fixed inset-x-0 bottom-0 z-[40] border-t border-border bg-white py-[19px] text-center print:hidden"
+        className="fixed inset-x-0 bottom-0 z-[40] border-t border-border bg-white py-1 text-center print:hidden"
       >
         <button
           type="button"

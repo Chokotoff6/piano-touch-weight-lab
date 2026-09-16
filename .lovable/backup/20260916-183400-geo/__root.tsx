@@ -288,19 +288,8 @@ function RootComponent() {
         }}
       />
       <nav className="!sticky !top-0 !z-[50] !bg-white !shadow-md border-b border-border">
-        <div className="w-full pb-1 pt-[2px] px-4 lg:px-[100px]">
+        <div className="mx-auto max-w-[1400px] px-4 pb-1 pt-[2px] sm:px-6">
           <div className="flex flex-wrap items-center gap-2">
-            {/* Logo officiel KeyWeight : calé à gauche, retour à l'accueil. */}
-            <div className="relative z-10 flex shrink-0 flex-col items-center translate-y-[26px]">
-              <Link to="/" aria-label={lang === "en" ? "Home" : "Accueil"} className="block">
-                <img
-                  src={keyweightLogo.url}
-                  alt="KeyWeight"
-                  style={{ height: "85px", width: "auto" }}
-                  className="object-contain"
-                />
-              </Link>
-            </div>
             {!isHome && (
             <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
               <Link to="/saisie" className={linkClass} activeProps={{ className: activeLinkClass }}>
@@ -529,18 +518,18 @@ function RootComponent() {
              </div>
              )}
 
-              <div className="ml-auto flex items-center">
+              <div className="ml-auto flex items-center mr-[-1rem] sm:mr-[-1.5rem]">
                 {/* Bouton de soutien à droite du sélecteur EN / FR,
                     taille 2× (~50 px) et descendu de 10 px. */}
-                <div className="flex items-center">
+                <div className="flex -translate-x-[60px] items-center">
                    <button
                      type="button"
                      onClick={() => setFaqOpen(true)}
-                     className="mr-2 shrink-0 translate-y-[19px] rounded-md border border-gray-400 bg-white px-2 py-0.5 text-[1rem] font-bold !text-gray-900 transition-colors hover:bg-gray-100"
+                     className="mr-2 shrink-0 -translate-x-[50px] translate-y-[19px] rounded-md border border-gray-400 bg-white px-2 py-0.5 text-[1rem] font-bold !text-gray-900 transition-colors hover:bg-gray-100"
                    >
                      FAQ
                    </button>
-                   <div className="flex shrink-0 translate-y-[19px] items-center gap-0 text-[1.14rem] font-semibold">
+                   <div className="flex shrink-0 -translate-x-[50px] translate-y-[19px] items-center gap-0 text-[1.14rem] font-semibold">
                      <Button
                        variant="ghost"
                        size="sm"
@@ -562,7 +551,7 @@ function RootComponent() {
                    </div>
                    {(pathname === "/resultats" || pathname === "/comparer") && (
                     <div
-                       className="relative order-first mr-4 translate-y-[16px] transition-opacity duration-[2000ms] ease-in-out"
+                       className="relative ml-3 translate-y-[16px] transition-opacity duration-[2000ms] ease-in-out"
                        style={{ opacity: likedVisible ? 1 : 0, pointerEvents: likedVisible ? "auto" : "none" }}
                      onMouseEnter={() => {
                        if (supportHintTimer.current) clearTimeout(supportHintTimer.current);
@@ -604,6 +593,23 @@ function RootComponent() {
                    </div>
                    )}
                 </div>
+
+
+                {/* Logo officiel KeyWeight : 30 px à gauche du bord droit,
+                    assis sur sa ligne de base, agrandi de 15 %.
+                    Le bouton « Mode démo » est centré juste en dessous. */}
+                <div className="relative z-10 flex shrink-0 flex-col items-center -translate-x-[30px] translate-y-[26px]">
+                  <Link to="/" aria-label={lang === "en" ? "Home" : "Accueil"} className="block">
+                    <img
+                      src={keyweightLogo.url}
+                      alt="KeyWeight"
+                      style={{ height: "85px", width: "auto" }}
+                      className="object-contain"
+                    />
+                  </Link>
+                </div>
+
+
               </div>
 
 
