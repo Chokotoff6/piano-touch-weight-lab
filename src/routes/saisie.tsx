@@ -9,6 +9,7 @@ import {
 } from "@/lib/required-keys";
 import { SmartCombobox, type SmartComboboxHandle } from "@/components/SmartCombobox";
 import { InfoDot } from "@/components/InfoDot";
+import { SaisieIntro } from "@/components/SaisieIntro";
 
 import { modelsFor, modelGroupsFor, inferTypeFromModel } from "@/data/pianoModels";
 import {
