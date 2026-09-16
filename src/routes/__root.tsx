@@ -288,8 +288,19 @@ function RootComponent() {
         }}
       />
       <nav className="!sticky !top-0 !z-[50] !bg-white !shadow-md border-b border-border">
-        <div className="mx-auto max-w-[1400px] px-4 pb-1 pt-[2px] sm:px-6">
+        <div className="w-full pb-1 pt-[2px] px-4 lg:px-[100px]">
           <div className="flex flex-wrap items-center gap-2">
+            {/* Logo officiel KeyWeight : calé à gauche, retour à l'accueil. */}
+            <div className="relative z-10 flex shrink-0 flex-col items-center translate-y-[26px]">
+              <Link to="/" aria-label={lang === "en" ? "Home" : "Accueil"} className="block">
+                <img
+                  src={keyweightLogo.url}
+                  alt="KeyWeight"
+                  style={{ height: "85px", width: "auto" }}
+                  className="object-contain"
+                />
+              </Link>
+            </div>
             {!isHome && (
             <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
               <Link to="/saisie" className={linkClass} activeProps={{ className: activeLinkClass }}>
