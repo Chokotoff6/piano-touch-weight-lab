@@ -1429,7 +1429,7 @@ function SidebarPanel(props: SidebarPanelProps) {
                 <div>
                   {en
                     ? "There is no piano of your model in the CLOUD database yet. Activate TARGET button to display a standard regulation curve."
-                    : "Il n\u2019y a pas encore de piano de votre mod\u00e8le dans la base de donn\u00e9es CLOUD."}
+                    : "Il n\u2019y a pas encore de piano de votre mod\u00e8le dans la base de donn\u00e9es CLOUD. Activez le bouton CIBLE pour afficher une courbe de r\u00e9gulation standard."}
                 </div>
               </>
             ) : (
