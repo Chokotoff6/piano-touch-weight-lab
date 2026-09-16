@@ -269,8 +269,8 @@ function Resultats() {
     if (busy) return;
     setConsent(true);
     setBusy(true);
-    const toastId = silent
-      ? undefined
+    const toastId: string | number = silent
+      ? `cloud-silent-${Date.now()}`
       : toast.loading(en ? "Collaborative sharing in progress…" : "Partage collaboratif en cours…");
     try {
       const piano = buildPiano();
@@ -295,8 +295,6 @@ function Resultats() {
       markCsvOrigin(false);
       if (!silent) {
         toast.success(en ? "Measurements shared: chart and comparison unlocked." : "Mesures partagées : graphique et comparaison débloqués.", { id: toastId });
-      } else if (toastId) {
-        toast.dismiss(toastId);
       }
       setCompareUnlocked(true);
     } finally {
