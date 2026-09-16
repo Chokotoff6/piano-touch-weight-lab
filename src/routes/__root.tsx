@@ -302,7 +302,7 @@ function RootComponent() {
               </Link>
             </div>
             {!isHome && (
-            <div className="flex translate-x-[100px] translate-y-[9px] flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
+            <div className="flex translate-x-[50px] translate-y-[9px] flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
               <Link to="/saisie" className={linkClass} activeProps={{ className: activeLinkClass }}>
                 {lang === "en" ? "Inputs" : "Saisie"}
               </Link>
@@ -365,7 +365,7 @@ function RootComponent() {
             {!isHome && (
             <DropdownMenu open={saveMenuOpen} onOpenChange={setSaveMenuOpen} modal={false}>
               <div
-                className="relative flex items-center"
+                className="relative flex translate-y-[9px] items-center"
                 onMouseEnter={cancelMenuClose}
                 onMouseLeave={scheduleMenuClose}
               >
@@ -497,7 +497,7 @@ function RootComponent() {
             )}
 
             {!isHome && !isComparer && pathname !== "/resultats" && (
-            <div className="relative flex items-center">
+            <div className="relative flex translate-y-[9px] items-center">
               {/* Importer : chargement d'un fichier CSV local uniquement. */}
               <Button
                 variant="outline"
@@ -642,7 +642,12 @@ function RootComponent() {
             >
               {lang === "en" ? "Demo mode" : "Mode démo"}
             </button>
-            <InfoDot label={lang === "en" ? "Demo mode" : "Mode démo"} width={340}>
+            <InfoDot
+              label={lang === "en" ? "Demo mode" : "Mode démo"}
+              width={340}
+              autoOpenSessionKey={pathname === "/saisie" ? "ptw_demo_intro_seen" : undefined}
+              autoCloseMs={5000}
+            >
               {lang === "en" ? DEMO_INFO_EN : DEMO_INFO_FR}
             </InfoDot>
           </div>
