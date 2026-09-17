@@ -1718,9 +1718,7 @@ function Comparer() {
         externalSupabase
           .from("piano_profiles")
           .select("id", { count: "exact", head: true })
-          .neq("id", CURRENT_PIANO_BUFFER_UUID)
-          // Exclusion stricte de toutes les lignes tampon (état écran).
-          .neq("is_buffer", true),
+          .neq("id", CURRENT_PIANO_BUFFER_UUID),
       );
       if (!cancelled && typeof count === "number") setCloudTotalCount(count);
     })();
@@ -1744,8 +1742,7 @@ function Comparer() {
           .eq("model", mine.model)
           .neq("serial_number", mine.serialNumber)
           // Exclusion de la ligne tampon (état écran) de la moyenne globale.
-          .neq("id", CURRENT_PIANO_BUFFER_UUID)
-          .neq("is_buffer", true),
+          .neq("id", CURRENT_PIANO_BUFFER_UUID),
       );
       const climate = databaseClimate(mine.climate);
       if (sameClimate && climate) query = query.eq("climate_zone", climate);
