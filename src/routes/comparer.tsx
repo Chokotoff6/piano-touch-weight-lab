@@ -39,7 +39,7 @@ const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];
 const SAMPLE_NOTES = Array.from({ length: 88 }, (_, index) => index + 1);
 const BLACK_MODULOS = new Set([2, 5, 7, 10, 0]);
 const isBlackKey = (noteIndex: number) => BLACK_MODULOS.has(noteIndex % 12);
-const PROFILE_FIELDS = "id,serial_number,brand,model,type_piano,mesure_date,manufacture_year,climate_zone,maintenance_type,ville,pays,remarques,wa_values,wd_values,friction_values,balance_values,usage_level,created_at";
+const PROFILE_FIELDS = "id,serial_number,brand,model,type_piano,measurement_date,manufacture_year,climate_zone,maintenance_type,city,country,remarks,wa_values,wd_values,friction_values,balance_values,usage_level,who,created_at";
 
 export type KeyFilter = "all" | "split" | "white" | "black";
 type SourceMode = "none" | "cloud";
@@ -243,8 +243,8 @@ function profileFromCurrentPiano(piano: CurrentPiano): ProfileRecord {
     climate: piano.climate_zone,
     maintenance: piano.maintenance_type,
     usageLevel: piano.usage_level ?? null,
-    measureDate: piano.mesure_date,
-    measureTime: localMeasureTime(piano.created_at) ?? parseMeasureDateTime(piano.mesure_date).time,
+    measureDate: piano.measurement_date,
+    measureTime: localMeasureTime(piano.created_at) ?? parseMeasureDateTime(piano.measurement_date).time,
   };
 }
 
@@ -273,8 +273,8 @@ function profileFromRow(row: ExternalPianoProfileRow): ProfileRecord {
     climate: row.climate_zone ?? null,
     maintenance: row.maintenance_type ?? null,
     usageLevel: row.usage_level ?? null,
-    measureDate: row.mesure_date ?? null,
-    measureTime: localMeasureTime(row.created_at) ?? parseMeasureDateTime(row.mesure_date).time,
+    measureDate: row.measurement_date ?? null,
+    measureTime: localMeasureTime(row.created_at) ?? parseMeasureDateTime(row.measurement_date).time,
   };
 }
 
@@ -1757,11 +1757,7 @@ function Comparer() {
       }
       // Filtre QUI : appliqué sur l'auteur de la pesée lorsque la donnée existe.
       const rows = (result.data as ExternalPianoProfileRow[]).filter((row) => {
-        const raw = String(
-          (row as unknown as Record<string, unknown>)["user_profile"] ??
-            (row as unknown as Record<string, unknown>)["profil_saisie"] ??
-            "",
-        ).toLowerCase();
+        const raw = String(row.who ?? "").toLowerCase();
         if (whoFilter === "all") return true;
         if (!raw) return true;
         const isPro = raw.includes("techni") || raw.includes("facteur") || raw.includes("pro");
@@ -1809,12 +1805,12 @@ function Comparer() {
         climate_zone: parsed.fields["climate_zone"] ?? "",
         maintenance_type: parsed.fields["maintenance_type"] ?? "",
         usage_level: parsed.fields["usage_level"] ?? "",
-        ville: parsed.fields["ville"] ?? "",
-        pays: parsed.fields["pays"] ?? "",
-        remarques: parsed.fields["remarques"] ?? "",
+        city: parsed.fields["city"] ?? "",
+        country: parsed.fields["country"] ?? "",
+        remarks: parsed.fields["remarks"] ?? "",
         wa: parsed.rows.map((row) => row.wa),
         wd: parsed.rows.map((row) => row.wd),
-        mesureDateRaw: parsed.fields["mesure_date"] || undefined,
+        mesureDateRaw: parsed.fields["measurement_date"] || undefined,
       });
       // Aucun accès à current_piano ni au buffer PIANO_ACTUEL :
       // le CSV devient seulement la référence orange de comparaison.

@@ -1772,9 +1772,9 @@ function Index() {
         climate_zone: fields["climate_zone"] ?? "",
         maintenance_type: fields["maintenance_type"] ?? "",
         usage_level: fields["usage_level"] ?? "",
-        ville: fields["ville"] ?? "",
-        pays: fields["pays"] ?? "",
-        remarques: fields["remarques"] ?? "",
+        city: fields["city"] ?? "",
+        country: fields["country"] ?? "",
+        remarks: fields["remarks"] ?? "",
         wa: imported.map((row) => row.wa),
         wd: imported.map((row) => row.wd),
       });
@@ -1789,11 +1789,11 @@ function Index() {
         sn_num: serial || prev["sn_num"] || "",
         sn_suffix: prev["sn_suffix"] ?? "",
         fabrication: fields["manufacture_year"] ?? prev["fabrication"] ?? "",
-        pays: fields["pays"] ?? prev["pays"] ?? "",
-        ville: fields["ville"] ?? prev["ville"] ?? "",
+        pays: fields["country"] ?? prev["pays"] ?? "",
+        ville: fields["city"] ?? prev["ville"] ?? "",
         entretien: fields["maintenance_type"] ?? prev["entretien"] ?? "",
         usage_level: fields["usage_level"] ?? prev["usage_level"] ?? "",
-        remarques: fields["remarques"] ?? prev["remarques"] ?? "",
+        remarques: fields["remarks"] ?? prev["remarques"] ?? "",
       }));
       fabricationTouched.current = true;
       setCurrentDbId(null);
@@ -1916,9 +1916,9 @@ function Index() {
       climate_zone: payload.zone_climatique,
       maintenance_type: payload.type_entretien,
       usage_level: info["usage_level"] ?? "",
-      ville: payload.ville,
-      pays: payload.pays,
-      remarques: payload.remarques,
+      city: payload.ville,
+      country: payload.pays,
+      remarks: payload.remarques,
       wa: payload.mesures_wa,
       wd: payload.mesures_wd,
     });
@@ -1961,7 +1961,7 @@ function Index() {
         setCurrentDbId(id);
       }
       savedSerialRef.current = payload.numero_central ?? "";
-      savedDateRef.current = currentPiano.mesure_date;
+      savedDateRef.current = currentPiano.measurement_date;
       savedRowsRef.current = rows.map((row) => ({ ...row }));
       try {
         window.sessionStorage.setItem(
