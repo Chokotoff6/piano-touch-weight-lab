@@ -9,8 +9,7 @@ import { PianoSheetMirror } from "@/components/PianoSheetMirror";
 import { generateComparisonReport, type LandscapePage } from "@/lib/pdf-report";
 import { setTopbarState } from "@/lib/topbar-store";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
-import { scopeDemo, demoScopeActive } from "@/lib/demo-scope";
-import { rearmDemoMode } from "@/lib/demo-mode";
+import { scopeDemo } from "@/lib/demo-scope";
 import {
   buildCurrentPiano,
   loadCurrentPiano,
@@ -282,20 +281,6 @@ function profileFromRow(row: ExternalPianoProfileRow): ProfileRecord {
 
 function normalizeValue(value: string | null | undefined) {
   return (value ?? "").trim().toLocaleLowerCase();
-}
-
-/** Numéros de série « voisins » (chiffres seuls, l'un contenu dans l'autre) = même piano. */
-function isSameSerial(a: string | null | undefined, b: string | null | undefined) {
-  const x = String(a ?? "").replace(/\D+/g, "");
-  const y = String(b ?? "").replace(/\D+/g, "");
-  if (!x || !y || x.length < 4 || y.length < 4) return false;
-  return x === y || x.includes(y) || y.includes(x);
-}
-
-/** Deux séries de mesures strictement identiques (clone du piano actuel). */
-function sameSeries(a: Array<number | null>, b: Array<number | null>) {
-  if (!a.length || a.length !== b.length) return false;
-  return a.every((value, index) => value === b[index]);
 }
 
 function databaseClimate(value: string | null) {
@@ -1355,8 +1340,6 @@ type SidebarPanelProps = {
   cloudSampleCount: number;
   cloudTotalCount: number;
   cloudLoading: boolean;
-  demoScope: boolean;
-  onRearmDemo: () => void;
   onToggleCloud: () => void;
   onToggleStandard: () => void;
   onImport: (file: File) => void;
@@ -1457,16 +1440,6 @@ function SidebarPanel(props: SidebarPanelProps) {
                 <div className="uppercase">{en ? "on the Cloud" : "sur le Cloud"}</div>
               </>
             )}
-            <div className="mt-1 text-[0.7rem] font-semibold normal-case !text-black">
-              {props.demoScope
-                ? en ? "(demo records included)" : "(fiches démo incluses)"
-                : en ? "(demo records excluded)" : "(hors fiches démo)"}
-            </div>
-            {!props.demoScope && (
-              <button type="button" onClick={props.onRearmDemo} className="mt-0.5 text-[0.7rem] font-semibold underline normal-case !text-black">
-                {en ? "Re-enable demo mode" : "Réactiver le mode démo"}
-              </button>
-            )}
           </div>
             </>
           )}
@@ -1547,9 +1520,6 @@ function Comparer() {
   const [cloudSampleCount, setCloudSampleCount] = useState(0);
   const [cloudTotalCount, setCloudTotalCount] = useState(0);
   const [cloudLoading, setCloudLoading] = useState(false);
-  // Périmètre de lecture Cloud : fiches de démonstration incluses ou non.
-  const [demoScope, setDemoScope] = useState(false);
-  useEffect(() => { setDemoScope(demoScopeActive()); }, []);
   // État indépendant : le CSV importé alimente UNIQUEMENT la courbe orange.
   // current_piano (courbe Live noire) et le buffer PIANO_ACTUEL ne sont jamais touchés.
   const [comparedPiano, setComparedPiano] = useState<ProfileRecord | null>(null);
@@ -1802,10 +1772,6 @@ function Comparer() {
       }
       // Filtre QUI : appliqué sur l'auteur de la pesée lorsque la donnée existe.
       const rows = (result.data as ExternalPianoProfileRow[]).filter((row) => {
-        // Bannissement des clones du piano actuel (doublons enregistrés avec un
-        // numéro de série tronqué ou voisin) : mesures identiques => même piano.
-        if (isSameSerial(row.serial_number, mine.serialNumber) || isSameSerial(row.serial_number, localSerial)) return false;
-        if (sameSeries(profileValues(row.wa_values), mine.wa) && sameSeries(profileValues(row.wd_values), mine.wd)) return false;
         const raw = String(row.who ?? "").toLowerCase();
         if (whoFilter === "all") return true;
         if (!raw) return true;
@@ -1987,7 +1953,7 @@ function Comparer() {
                 <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible"} onCycleKeyFilter={cycleKeyFilter} currentBaseName={en ? "Current piano" : "Piano actuel"} />
               </div>
             </div>
-            <aside className="min-w-0"><div ref={settingsRef} data-pdf-expand className="sticky top-[127px] z-50 flex flex-col overflow-visible" ><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} demoScope={demoScope} onRearmDemo={() => { rearmDemoMode(); window.location.reload(); }} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} whoFilter={whoFilter} cycleWho={cycleWho} /></div></aside>
+            <aside className="min-w-0"><div ref={settingsRef} data-pdf-expand className="sticky top-[127px] z-50 flex flex-col overflow-visible" ><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} whoFilter={whoFilter} cycleWho={cycleWho} /></div></aside>
           </div>
         </>
       )}
