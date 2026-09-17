@@ -111,10 +111,10 @@ const META_ALIASES: { key: string; match: string[] }[] = [
   { key: "usage_level", match: ["usage_level", "niveau d'usage", "niveau dusage", "usage"] },
   { key: "type_piano", match: ["type de piano"] },
   { key: "climate_zone", match: ["zone climatique", "climate"] },
-  { key: "ville", match: ["ville", "city"] },
-  { key: "pays", match: ["pays", "country"] },
-  { key: "remarques", match: ["remarque"] },
-  { key: "mesure_date", match: ["date et heure de saisie", "date de mesure"] },
+  { key: "city", match: ["ville", "city"] },
+  { key: "country", match: ["pays", "country"] },
+  { key: "remarks", match: ["remarque"] },
+  { key: "measurement_date", match: ["date et heure de saisie", "date de mesure"] },
 ];
 
 function canonicalMetaKey(label: string): string | null {
