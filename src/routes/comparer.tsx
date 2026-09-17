@@ -1734,13 +1734,15 @@ function Comparer() {
         return;
       }
       setCloudLoading(true);
-      let query = externalSupabase
-        .from("piano_profiles")
-        .select(PROFILE_FIELDS)
-        .eq("model", mine.model)
-        .neq("serial_number", mine.serialNumber)
-        // Exclusion de la ligne tampon (état écran) de la moyenne globale.
-        .neq("id", CURRENT_PIANO_BUFFER_UUID);
+      let query = scopeDemo(
+        externalSupabase
+          .from("piano_profiles")
+          .select(PROFILE_FIELDS)
+          .eq("model", mine.model)
+          .neq("serial_number", mine.serialNumber)
+          // Exclusion de la ligne tampon (état écran) de la moyenne globale.
+          .neq("id", CURRENT_PIANO_BUFFER_UUID),
+      );
       const climate = databaseClimate(mine.climate);
       if (sameClimate && climate) query = query.eq("climate_zone", climate);
       if (sameYear && mine.year !== null) query = query.eq("manufacture_year", mine.year);
