@@ -1737,10 +1737,6 @@ function Comparer() {
         return;
       }
       setCloudLoading(true);
-      // Exclut aussi le serial du piano local (catche les doublons démo/réels
-      // dont le numéro diffère d'un chiffre du tampon DB mais les wa_values sont identiques).
-      const localPiano = loadCurrentPiano();
-      const localSerial = localPiano?.serial_number ?? "";
       let query = scopeDemo(
         externalSupabase
           .from("piano_profiles")
@@ -1751,9 +1747,6 @@ function Comparer() {
           .neq("id", CURRENT_PIANO_BUFFER_UUID)
           .neq("is_buffer", true),
       );
-      if (localSerial && localSerial !== mine.serialNumber) {
-        query = query.neq("serial_number", localSerial);
-      }
       const climate = databaseClimate(mine.climate);
       if (sameClimate && climate) query = query.eq("climate_zone", climate);
       if (sameYear && mine.year !== null) query = query.eq("manufacture_year", mine.year);
