@@ -93,7 +93,7 @@ export function enableDemoMode() {
         serial_number: DEMO_INFO["sn_num"] ?? "",
         type_piano: DEMO_INFO["type_piano"] ?? "",
         manufacture_year: Number(DEMO_INFO["fabrication"]) || null,
-        climate_zone: "EU",
+        climate_zone: "Standard",
         maintenance_type: DEMO_INFO["entretien"] ?? "",
         usage_level: DEMO_INFO["usage_level"] ?? "",
         city: DEMO_INFO["ville"] ?? "",
