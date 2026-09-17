@@ -10,7 +10,7 @@ import {
   type KeyFilter,
   type RefProfile,
 } from "@/routes/comparer";
-import { setCloudProfileSaved, setCompareUnlocked, setResultsVisited, useTopbarState } from "@/lib/topbar-store";
+import { setCompareUnlocked, setResultsVisited, useTopbarState } from "@/lib/topbar-store";
 import {
   buildCurrentPiano,
   loadCurrentPiano,
@@ -295,7 +295,6 @@ function Resultats() {
       markCsvOrigin(false);
       if (!silent) {
         toast.success(en ? "Measurements shared: chart and comparison unlocked." : "Mesures partagées : graphique et comparaison débloqués.", { id: toastId });
-        setCloudProfileSaved(true);
       }
       setCompareUnlocked(true);
     } finally {

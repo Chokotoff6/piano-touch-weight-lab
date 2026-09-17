@@ -3,7 +3,7 @@
 // ratio temps-par-touche et décision finale (blocked / needsConsent /
 // silentUpsert / skip). Aucune écriture n'est faite ici : ce module décide.
 import { isCsvOrigin, isHoneypotTripped } from "@/lib/anti-bot";
-import { setCloudProfileSaved, setCompareUnlocked } from "@/lib/topbar-store";
+import { setCompareUnlocked } from "@/lib/topbar-store";
 
 /** Temps minimal humain pour remplir une fiche neuve en atelier. */
 export const HUMAN_MIN_SHEET_MS = 45_000;
@@ -140,6 +140,5 @@ export function resetConsent() {
     /* stockage indisponible */
   }
   setCompareUnlocked(false);
-  setCloudProfileSaved(false);
   startSheetTimer(true);
 }
