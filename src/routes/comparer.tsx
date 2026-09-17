@@ -1713,10 +1713,12 @@ function Comparer() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const { count } = await externalSupabase
-        .from("piano_profiles")
-        .select("id", { count: "exact", head: true })
-        .neq("id", CURRENT_PIANO_BUFFER_UUID);
+      const { count } = await scopeDemo(
+        externalSupabase
+          .from("piano_profiles")
+          .select("id", { count: "exact", head: true })
+          .neq("id", CURRENT_PIANO_BUFFER_UUID),
+      );
       if (!cancelled && typeof count === "number") setCloudTotalCount(count);
     })();
     return () => { cancelled = true; };
