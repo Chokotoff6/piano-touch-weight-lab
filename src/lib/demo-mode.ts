@@ -30,6 +30,17 @@ export function markDemoClicked() {
   }
 }
 
+/** Réarme le mode démo pour la session (bouton noir réaffiché, fiches démo relues). */
+export function rearmDemoMode() {
+  if (!isBrowser()) return;
+  try {
+    window.sessionStorage.removeItem(DEMO_CLICKED_KEY);
+  } catch {
+    /* stockage indisponible */
+  }
+  enableDemoMode();
+}
+
 // Jumeau exact de la fiche tampon de démonstration en base (YAMAHA U3 Upright,
 // 2020, climat Standard) : indispensable pour que la requête Cloud de la page
 // Comparer (.eq("model", …), climat, année) trouve l'échantillon de démo.
