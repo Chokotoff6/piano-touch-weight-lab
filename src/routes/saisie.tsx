@@ -475,8 +475,8 @@ function Index() {
   const [climateZone, setClimateZone] = useState<ClimateZone | null>(null);
   const [honeypot, setHoneypot] = useState("");
   const topbarState = useTopbarState();
-  // Protection d'ADN : identité figée dès que le profil est accepté au cloud.
-  const identityLocked = topbarState.compareUnlocked;
+  // Protection d'ADN : identité figée uniquement après enregistrement définitif au cloud via « J'accepte ».
+  const identityLocked = topbarState.cloudProfileSaved;
   // Chronomètre d'ouverture de fiche (base du contrôle anti-robot temporel).
   useEffect(() => {
     startSheetTimer();
