@@ -9,6 +9,7 @@ import { PianoSheetMirror } from "@/components/PianoSheetMirror";
 import { generateComparisonReport, type LandscapePage } from "@/lib/pdf-report";
 import { setTopbarState } from "@/lib/topbar-store";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
+import { scopeDemo } from "@/lib/demo-scope";
 import {
   buildCurrentPiano,
   loadCurrentPiano,
