@@ -30,18 +30,22 @@ export function markDemoClicked() {
   }
 }
 
+// Jumeau exact de la fiche tampon de démonstration en base (YAMAHA U3 Upright,
+// 2020, climat Standard) : indispensable pour que la requête Cloud de la page
+// Comparer (.eq("model", …), climat, année) trouve l'échantillon de démo.
 export const DEMO_INFO: Record<string, string> = {
   marque: "YAMAHA",
-  modele: "C3 (démo)",
-  type_piano: "Queue",
-  sn_num: "6543210",
-  fabrication: "1998",
-  pays: "Belgique",
-  ville: "Bruxelles",
-  entretien: "Entretien régulier",
-  usage_level: "Usage domestique",
-  remarques: "Jeu de données de démonstration (piano fictif).",
+  modele: "U3",
+  type_piano: "Upright",
+  sn_num: "652444",
+  fabrication: "2020",
+  pays: "Belgium",
+  ville: "Brussels",
+  entretien: "Standard maintenance only",
+  usage_level: "Medium",
+  remarques: "Virtual demonstration piano profile.",
 };
+
 
 /** Courbes douces et plausibles : Wa décroît des graves vers les aigus. */
 export function buildDemoRows(): Array<{ wa: string; wd: string }> {
