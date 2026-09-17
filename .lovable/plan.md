@@ -52,10 +52,16 @@ Aucune autre ligne de filtre n'est touchée : le code envoie déjà exclusivemen
 les termes anglais (`Low`/`Medium`/`Intensive`, `Dry`/`Humid`,
 `Major modifications`) et l'âge repose sur `manufacture_year >= 2021`.
 
-### 3. Étanchéité — inchangée
-`scopeDemo()` continue d'ajouter `or(demo.is.null,demo.eq.false)` hors Mode démo :
-dès le clic sur le bouton noir, les 109 fiches disparaissent et seules vos fiches
-d'atelier restent (dont le KAWAI `…0000`).
+### 3. Bouton noir « MODE DÉMO » — cinématique de sortie
+Le bouton reste visible tant que l'utilisateur travaille en Mode démo. Au clic :
+écriture `sessionStorage.setItem("demo_mode_destroyed", "true")`, disparition
+immédiate du bouton sur toutes les pages, purge des données de démo locales et
+rechargement — `scopeDemo()` ajoute alors `or(demo.is.null,demo.eq.false)` et
+seules vos fiches d'atelier restent (dont le KAWAI `…0000`).
+
+### 4. Point de restauration
+Sauvegarde préalable des fichiers touchés sous `.lovable/backup/<horodatage>`.
+
 
 ## Complément SQL facultatif (à exécuter de votre côté)
 
