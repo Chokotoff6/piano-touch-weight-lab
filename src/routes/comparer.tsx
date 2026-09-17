@@ -283,6 +283,20 @@ function normalizeValue(value: string | null | undefined) {
   return (value ?? "").trim().toLocaleLowerCase();
 }
 
+/** Numéros de série « voisins » (chiffres seuls, l'un contenu dans l'autre) = même piano. */
+function isSameSerial(a: string | null | undefined, b: string | null | undefined) {
+  const x = String(a ?? "").replace(/\D+/g, "");
+  const y = String(b ?? "").replace(/\D+/g, "");
+  if (!x || !y || x.length < 4 || y.length < 4) return false;
+  return x === y || x.includes(y) || y.includes(x);
+}
+
+/** Deux séries de mesures strictement identiques (clone du piano actuel). */
+function sameSeries(a: Array<number | null>, b: Array<number | null>) {
+  if (!a.length || a.length !== b.length) return false;
+  return a.every((value, index) => value === b[index]);
+}
+
 function databaseClimate(value: string | null) {
   const normalized = normalizeValue(value);
   if (normalized.includes("humid")) return "Humid";
