@@ -1355,8 +1355,6 @@ type SidebarPanelProps = {
   cloudSampleCount: number;
   cloudTotalCount: number;
   cloudLoading: boolean;
-  demoScope: boolean;
-  onRearmDemo: () => void;
   onToggleCloud: () => void;
   onToggleStandard: () => void;
   onImport: (file: File) => void;
