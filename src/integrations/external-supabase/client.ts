@@ -41,8 +41,8 @@ export type ExternalPianoProfileRow = {
   remarks: string | null;
   /** Auteur de la pesée (filtre « QUI »). */
   who: string | null;
-  /** Colonne DEMO (booléen) : présente en base, pas encore exploitée par l'interface. */
-  DEMO: boolean | null;
+  /** Colonne demo (booléen) : fiches de démonstration, visibles uniquement en Mode démo. */
+  demo: boolean | null;
   wa_values: number[] | string;
   wd_values: number[] | string;
   friction_values: number[] | string;
