@@ -1,7 +1,6 @@
 // Entité globale "current_piano" : source de vérité locale du piano mesuré.
 // Elle est écrite à la sauvegarde (page Saisie) et lue en priorité par /comparer.
 import { externalSupabase } from "@/integrations/external-supabase/client";
-import { scopeDemo } from "@/lib/demo-scope";
 
 export const CURRENT_PIANO_KEY = "current_piano";
 
@@ -206,13 +205,11 @@ export async function saveCurrentPianoToCloud(
 /** Recherche l'ID de la fiche historique (is_buffer=false) d'un numéro de série. */
 export async function findHistoryProfileId(serialNumber: string): Promise<string | null> {
   try {
-    const { data, error } = await scopeDemo(
-      externalSupabase
-        .from("piano_profiles")
-        .select("id")
-        .eq("serial_number", serialNumber)
-        .eq("is_buffer", false),
-    )
+    const { data, error } = await externalSupabase
+      .from("piano_profiles")
+      .select("id")
+      .eq("serial_number", serialNumber)
+      .eq("is_buffer", false)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();

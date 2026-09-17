@@ -9,7 +9,6 @@ import { PianoSheetMirror } from "@/components/PianoSheetMirror";
 import { generateComparisonReport, type LandscapePage } from "@/lib/pdf-report";
 import { setTopbarState } from "@/lib/topbar-store";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
-import { scopeDemo } from "@/lib/demo-scope";
 import {
   buildCurrentPiano,
   loadCurrentPiano,
@@ -1714,12 +1713,10 @@ function Comparer() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const { count } = await scopeDemo(
-        externalSupabase
-          .from("piano_profiles")
-          .select("id", { count: "exact", head: true })
-          .neq("id", CURRENT_PIANO_BUFFER_UUID),
-      );
+      const { count } = await externalSupabase
+        .from("piano_profiles")
+        .select("id", { count: "exact", head: true })
+        .neq("id", CURRENT_PIANO_BUFFER_UUID);
       if (!cancelled && typeof count === "number") setCloudTotalCount(count);
     })();
     return () => { cancelled = true; };
@@ -1735,15 +1732,13 @@ function Comparer() {
         return;
       }
       setCloudLoading(true);
-      let query = scopeDemo(
-        externalSupabase
-          .from("piano_profiles")
-          .select(PROFILE_FIELDS)
-          .eq("model", mine.model)
-          .neq("serial_number", mine.serialNumber)
-          // Exclusion de la ligne tampon (état écran) de la moyenne globale.
-          .neq("id", CURRENT_PIANO_BUFFER_UUID),
-      );
+      let query = externalSupabase
+        .from("piano_profiles")
+        .select(PROFILE_FIELDS)
+        .eq("model", mine.model)
+        .neq("serial_number", mine.serialNumber)
+        // Exclusion de la ligne tampon (état écran) de la moyenne globale.
+        .neq("id", CURRENT_PIANO_BUFFER_UUID);
       const climate = databaseClimate(mine.climate);
       if (sameClimate && climate) query = query.eq("climate_zone", climate);
       if (sameYear && mine.year !== null) query = query.eq("manufacture_year", mine.year);
