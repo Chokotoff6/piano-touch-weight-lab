@@ -1456,6 +1456,16 @@ function SidebarPanel(props: SidebarPanelProps) {
                 <div className="uppercase">{en ? "on the Cloud" : "sur le Cloud"}</div>
               </>
             )}
+            <div className="mt-1 text-[0.7rem] font-semibold normal-case !text-black">
+              {props.demoScope
+                ? en ? "(demo records included)" : "(fiches démo incluses)"
+                : en ? "(demo records excluded)" : "(hors fiches démo)"}
+            </div>
+            {!props.demoScope && (
+              <button type="button" onClick={props.onRearmDemo} className="mt-0.5 text-[0.7rem] font-semibold underline normal-case !text-black">
+                {en ? "Re-enable demo mode" : "Réactiver le mode démo"}
+              </button>
+            )}
           </div>
             </>
           )}
