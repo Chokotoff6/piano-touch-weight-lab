@@ -1772,6 +1772,10 @@ function Comparer() {
       }
       // Filtre QUI : appliqué sur l'auteur de la pesée lorsque la donnée existe.
       const rows = (result.data as ExternalPianoProfileRow[]).filter((row) => {
+        // Bannissement des clones du piano actuel (doublons enregistrés avec un
+        // numéro de série tronqué ou voisin) : mesures identiques => même piano.
+        if (isSameSerial(row.serial_number, mine.serialNumber) || isSameSerial(row.serial_number, localSerial)) return false;
+        if (sameSeries(profileValues(row.wa_values), mine.wa) && sameSeries(profileValues(row.wd_values), mine.wd)) return false;
         const raw = String(row.who ?? "").toLowerCase();
         if (whoFilter === "all") return true;
         if (!raw) return true;
