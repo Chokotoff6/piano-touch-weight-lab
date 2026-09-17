@@ -19,6 +19,8 @@ type TopbarState = {
   gateReady: boolean;
   /** Consentement RGPD validé sur la page Résultats (débloque "Comparer"). */
   compareUnlocked: boolean;
+  /** Profil définitivement enregistré dans la base via « J'accepte » (verrouille l'identité). */
+  cloudProfileSaved: boolean;
   /** La page Résultats a été visitée au moins une fois. */
   resultsVisited: boolean;
   /** Au moins une source de comparaison active sur la page Comparer. */
@@ -27,6 +29,7 @@ type TopbarState = {
 
 const GATE_KEY = "ptw_gate_ready";
 const UNLOCK_KEY = "ptw_compare_unlocked";
+const PROFILE_SAVED_KEY = "ptw_cloud_profile_saved";
 const VISITED_KEY = "ptw_results_visited";
 
 let state: TopbarState = {
@@ -41,6 +44,7 @@ let state: TopbarState = {
   historyRows: [],
   gateReady: false,
   compareUnlocked: false,
+  cloudProfileSaved: false,
   resultsVisited: false,
   comparisonActive: false,
 };
@@ -62,6 +66,7 @@ export function initJourneyFlags() {
     setTopbarState({
       gateReady: window.localStorage.getItem(GATE_KEY) === "1",
       compareUnlocked: window.localStorage.getItem(UNLOCK_KEY) === "1",
+      cloudProfileSaved: window.localStorage.getItem(PROFILE_SAVED_KEY) === "1",
       resultsVisited: window.localStorage.getItem(VISITED_KEY) === "1",
     });
   } catch {
@@ -95,6 +100,16 @@ export function setCompareUnlocked(unlocked: boolean) {
     /* stockage indisponible */
   }
   setTopbarState({ compareUnlocked: unlocked });
+}
+
+/** Marque le profil comme définitivement enregistré (verrouille l'identité en Saisie). */
+export function setCloudProfileSaved(saved: boolean) {
+  try {
+    window.localStorage.setItem(PROFILE_SAVED_KEY, saved ? "1" : "0");
+  } catch {
+    /* stockage indisponible */
+  }
+  setTopbarState({ cloudProfileSaved: saved });
 }
 
 let alertTimer: ReturnType<typeof setTimeout> | null = null;
