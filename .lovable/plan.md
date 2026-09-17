@@ -1,78 +1,75 @@
-# Diagnostic filtres Comparer + alignement 100 % anglais des fiches démo
+# Débloquer l'échantillon Cloud en Mode démo (aligné sur l'export CSV du 17/09)
 
-## 1. Pourquoi la page affiche « aucune donnée Cloud »
+## Ce que montre le nouvel export
 
-La cause principale n'est **aucun** de vos cinq filtres manuels. La requête Cloud
-applique toujours, avant tout filtre :
+- 109 fiches `demo = true`, toutes **YAMAHA / U3 / Upright**, années 2020 et 2024,
+  `usage_level` Low·Medium·Intensive, `climate_zone` Dry·Humid·Standard,
+  `maintenance_type` Standard maintenance only · Custom regulations · Major modifications,
+  `who` Private owner · Pro. Tout est conforme au code de filtrage : aucune valeur n'est rejetée.
+- Ligne tampon démo `…0001` (is_buffer, demo = true) bien présente.
+- Ligne tampon réelle `…0000` : YAMAHA U3 mais encore `type_piano = Droit`,
+  `climate_zone = 1`, `maintenance_type = Entretien usuel uniquement`, `demo` vide.
 
-```
-.eq("model", mine.model)          // modèle du piano en cours de saisie
-.neq("serial_number", mine.serialNumber)
-.neq("id", <ligne tampon>)
-+ scopeDemo()                      // demo=true visible seulement en Mode démo
-```
+## Le vrai blocage restant
 
-Les 108 fiches démo sont toutes `brand = YAMAHA`, `model = U3`. Elles ne
-ressortent donc que si le piano saisi à l'écran a **exactement** `model = "U3"`
-**et** que le Mode démo est encore actif (bouton noir non cliqué). Vos 3 fiches
-réelles sont K-500, A114, D-274 : avec l'une d'elles à l'écran, l'échantillon est
-vide quoi que fassent les filtres.
+Le « piano courant » de la page Comparer n'est **pas** lu en base : il vient du
+stockage local du navigateur, alimenté par le Mode démo. Or le piano de démo de
+l'application est encore un **YAMAHA « C3 (démo) », Queue, 1998, climat « EU »**.
+La requête Cloud fait `.eq("model", mine.model)` → `model = 'C3 (démo)'` → 0 fiche,
+et si le filtre Climat est coché → `climate_zone = 'EU'` → 0 fiche. D'où le message
+d'absence de données quels que soient les filtres.
 
-## 2. Valeurs du CSV réellement rejetées ou ignorées
+## Modifications
 
-| Colonne | Valeur CSV (demo=true) | Statut vis-à-vis du code |
-|---|---|---|
-| usage_level | Low / Medium / Intensive | OK (`.eq`, casse exacte) |
-| maintenance_type | Standard maintenance only / Custom regulations / Major modifications | OK |
-| climate_zone | Dry / Humid / Standard | OK ; `Standard` n'est filtré que si le piano courant est « Standard » |
-| who | Pro / Particulier | Fonctionne (filtre côté client par sous-chaîne) mais « Particulier » est du français |
-| manufacture_year | 2020 / 2024 | OK — le tri « moins de 5 ans » utilise **manufacture_year**, pas measurement_date |
-| type_piano | Droit | Jamais utilisé par un filtre, mais français |
-| country / city | Japon, Etats-Unis / — | Français, non filtré |
-| remarks | « Données virtuelles d'étalonnage métrologique. » | Français, non filtré |
+### 1. `src/lib/demo-mode.ts` — piano de démo aligné sur la base
+`DEMO_INFO` devient le jumeau exact de la ligne tampon démo `…0001` :
 
-Aucune valeur n'est donc « coincée » au sens d'un rejet SQL : le blocage vient du
-verrou `model`.
+| champ | valeur |
+|---|---|
+| marque | YAMAHA |
+| modèle | U3 |
+| type_piano | Upright |
+| sn_num | 652444 |
+| fabrication | 2020 |
+| pays / ville | Belgium / Brussels |
+| entretien | Standard maintenance only |
+| usage_level | Medium |
+| climat (buildCurrentPiano) | Standard |
+| remarques | Virtual demonstration piano profile. |
 
-## 3. Critère d'âge
+Ainsi `model = 'U3'`, `climate_zone = 'Standard'` et `manufacture_year = 2020`
+matchent l'échantillon démo, et les cinq filtres manuels réagissent :
+Usage (Low/Medium/Intensive), Modifications importantes (Major modifications),
+QUI (Pro / Private owner), Climat (Standard), Âge (< 5 ans → ne garde que les 2024).
 
-`youngOnly` fait `manufacture_year >= annéeCourante - 5`, soit `>= 2021` en 2026.
-Les fiches démo 2024 passent, les 2020 sont exclues : le jeu de données est déjà
-correct. `measurement_date` (2024-09-17 / 2020-09-17) n'intervient pas dans l'âge,
-uniquement dans l'affichage ; elle reste cohérente, rien à corriger côté dates.
+### 2. `src/routes/comparer.tsx` — exclusion de toutes les lignes tampon
+Remplacer `.neq("id", CURRENT_PIANO_BUFFER_UUID)` par une exclusion des lignes
+tampon (`.neq("is_buffer", true)` + exclusion de l'id tampon), pour que la
+nouvelle ligne `…0001` ne soit jamais comptée dans la moyenne Cloud ni dans le
+compteur global.
 
-## 4. Ce que je propose de faire
+Aucune autre ligne de filtre n'est touchée : le code envoie déjà exclusivement
+les termes anglais (`Low`/`Medium`/`Intensive`, `Dry`/`Humid`,
+`Major modifications`) et l'âge repose sur `manufacture_year >= 2021`.
 
-**A. SQL (à exécuter par vous sur votre base de production, `demo = true` uniquement)**
-— traduction intégrale : `type_piano` → `Upright`, `country` Japon → `Japan`,
-Etats-Unis → `United States`, `who` Particulier → `Private owner` (Pro inchangé),
-`remarks` → « Virtual metrological calibration data. ». Aucune ligne
-`demo = false` touchée.
+### 3. Étanchéité — inchangée
+`scopeDemo()` continue d'ajouter `or(demo.is.null,demo.eq.false)` hors Mode démo :
+dès le clic sur le bouton noir, les 109 fiches disparaissent et seules vos fiches
+d'atelier restent (dont le KAWAI `…0000`).
 
-**B. Code (`src/routes/comparer.tsx`) — une seule modification**
-Rendre l'échantillon Cloud atteignable en Mode démo : quand le Mode démo est
-actif et que le piano courant n'a pas de modèle renseigné, ne pas appliquer le
-verrou `.eq("model", …)`. Aucun autre filtre, aucun style, aucun texte modifié.
-Le filtre QUI reconnaîtra `Private owner` comme particulier et `Pro` comme pro,
-sans changement de code.
+## Complément SQL facultatif (à exécuter de votre côté)
 
-## 5. Script SQL chirurgical
+Pour aligner aussi la ligne tampon réelle sur la charte anglaise :
 
 ```sql
-update public.piano_profiles set type_piano = 'Upright' where demo = true;
-update public.piano_profiles set country = 'Japan' where demo = true and country = 'Japon';
-update public.piano_profiles set country = 'United States' where demo = true and country = 'Etats-Unis';
-update public.piano_profiles set who = 'Private owner' where demo = true and who = 'Particulier';
-update public.piano_profiles set remarks = 'Virtual metrological calibration data.' where demo = true;
+update public.piano_profiles
+set type_piano = 'Upright',
+    climate_zone = 'Standard',
+    maintenance_type = 'Standard maintenance only'
+where id = '00000000-0000-0000-0000-000000000000';
 ```
 
-(`usage_level`, `climate_zone`, `maintenance_type`, `city`, `manufacture_year`,
-`measurement_date` sont déjà conformes — aucune requête nécessaire.)
-
-## 6. Détails techniques
-
-- `scopeDemo()` ajoute `or(demo.is.null,demo.eq.false)` hors Mode démo : une fois
-  le bouton noir cliqué, les 108 fiches disparaissent — comportement voulu, inchangé.
-- La ligne tampon (`is_buffer = true`, id `00000000-…`) porte encore
-  `maintenance_type = 'Modifications importantes'` et `type_piano = 'Droit'` :
-  c'est une fiche réelle (`demo = false`), je n'y touche pas.
+## Validation
+Build vérifié après modification (`tsgo --noEmit` + build), puis contrôle à
+l'écran : Mode démo actif → l'échantillon Cloud affiche un nombre de fiches non nul
+et réagit à chacun des cinq filtres.
