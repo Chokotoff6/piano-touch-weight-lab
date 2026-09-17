@@ -566,11 +566,11 @@ function Index() {
           type_piano: saved.type_piano ?? "",
           sn_num: saved.serial_number ?? "",
           fabrication: saved.manufacture_year ? String(saved.manufacture_year) : "",
-          pays: saved.pays ?? "",
-          ville: saved.ville ?? "",
+          pays: saved.country ?? "",
+          ville: saved.city ?? "",
           entretien: saved.maintenance_type ?? "",
           usage_level: saved.usage_level ?? "",
-          remarques: saved.remarques ?? "",
+          remarques: saved.remarks ?? "",
         });
       }
     } catch {
