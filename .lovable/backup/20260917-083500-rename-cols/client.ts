@@ -32,17 +32,13 @@ export type ExternalPianoProfileRow = {
   brand: string | null;
   model: string | null;
   type_piano: string | null;
-  measurement_date: string | null;
+  mesure_date: string | null;
   manufacture_year: number | null;
   climate_zone: string | null;
   maintenance_type: string | null;
-  city: string | null;
-  country: string | null;
-  remarks: string | null;
-  /** Auteur de la pesée (filtre « QUI »). */
-  who: string | null;
-  /** Colonne DEMO (booléen) : présente en base, pas encore exploitée par l'interface. */
-  DEMO: boolean | null;
+  ville: string | null;
+  pays: string | null;
+  remarques: string | null;
   wa_values: number[] | string;
   wd_values: number[] | string;
   friction_values: number[] | string;

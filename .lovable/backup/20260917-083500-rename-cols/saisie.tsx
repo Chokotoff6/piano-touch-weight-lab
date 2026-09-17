@@ -566,11 +566,11 @@ function Index() {
           type_piano: saved.type_piano ?? "",
           sn_num: saved.serial_number ?? "",
           fabrication: saved.manufacture_year ? String(saved.manufacture_year) : "",
-          pays: saved.country ?? "",
-          ville: saved.city ?? "",
+          pays: saved.pays ?? "",
+          ville: saved.ville ?? "",
           entretien: saved.maintenance_type ?? "",
           usage_level: saved.usage_level ?? "",
-          remarques: saved.remarks ?? "",
+          remarques: saved.remarques ?? "",
         });
       }
     } catch {
@@ -1772,9 +1772,9 @@ function Index() {
         climate_zone: fields["climate_zone"] ?? "",
         maintenance_type: fields["maintenance_type"] ?? "",
         usage_level: fields["usage_level"] ?? "",
-        city: fields["city"] ?? "",
-        country: fields["country"] ?? "",
-        remarks: fields["remarks"] ?? "",
+        ville: fields["ville"] ?? "",
+        pays: fields["pays"] ?? "",
+        remarques: fields["remarques"] ?? "",
         wa: imported.map((row) => row.wa),
         wd: imported.map((row) => row.wd),
       });
@@ -1789,11 +1789,11 @@ function Index() {
         sn_num: serial || prev["sn_num"] || "",
         sn_suffix: prev["sn_suffix"] ?? "",
         fabrication: fields["manufacture_year"] ?? prev["fabrication"] ?? "",
-        pays: fields["country"] ?? prev["pays"] ?? "",
-        ville: fields["city"] ?? prev["ville"] ?? "",
+        pays: fields["pays"] ?? prev["pays"] ?? "",
+        ville: fields["ville"] ?? prev["ville"] ?? "",
         entretien: fields["maintenance_type"] ?? prev["entretien"] ?? "",
         usage_level: fields["usage_level"] ?? prev["usage_level"] ?? "",
-        remarques: fields["remarks"] ?? prev["remarques"] ?? "",
+        remarques: fields["remarques"] ?? prev["remarques"] ?? "",
       }));
       fabricationTouched.current = true;
       setCurrentDbId(null);
@@ -1916,9 +1916,9 @@ function Index() {
       climate_zone: payload.zone_climatique,
       maintenance_type: payload.type_entretien,
       usage_level: info["usage_level"] ?? "",
-      city: payload.ville,
-      country: payload.pays,
-      remarks: payload.remarques,
+      ville: payload.ville,
+      pays: payload.pays,
+      remarques: payload.remarques,
       wa: payload.mesures_wa,
       wd: payload.mesures_wd,
     });
@@ -1961,7 +1961,7 @@ function Index() {
         setCurrentDbId(id);
       }
       savedSerialRef.current = payload.numero_central ?? "";
-      savedDateRef.current = currentPiano.measurement_date;
+      savedDateRef.current = currentPiano.mesure_date;
       savedRowsRef.current = rows.map((row) => ({ ...row }));
       try {
         window.sessionStorage.setItem(

@@ -9,16 +9,16 @@ export type CurrentPiano = {
   model: string;
   serial_number: string;
   type_piano: string;
-  measurement_date: string; // YYYY-MM-DD
+  mesure_date: string; // YYYY-MM-DD
   /** Horodatage complet (ISO ou litéral DB) servant à afficher l'heure de saisie. */
   created_at?: string | undefined;
   manufacture_year: number | null;
   climate_zone: string;
   maintenance_type: string;
   usage_level: string;
-  city: string;
-  country: string;
-  remarks: string;
+  ville: string;
+  pays: string;
+  remarques: string;
   wa_values: number[];
   wd_values: number[];
   friction_values: number[];
@@ -57,9 +57,9 @@ export function buildCurrentPiano(input: {
   climate_zone: string;
   maintenance_type: string;
   usage_level: string;
-  city: string;
-  country: string;
-  remarks: string;
+  ville: string;
+  pays: string;
+  remarques: string;
   wa: Array<string | number>;
   wd: Array<string | number>;
   mesureDate?: Date;
@@ -81,11 +81,11 @@ export function buildCurrentPiano(input: {
       : Number.NaN;
   });
   const date = input.mesureDate ?? new Date();
-  let measurement_date = date.toISOString().slice(0, 10);
+  let mesure_date = date.toISOString().slice(0, 10);
   let created_at: string | undefined;
   if (input.mesureDateRaw) {
     const parsed = parseMeasureDateTime(input.mesureDateRaw);
-    if (parsed.date) measurement_date = parsed.date;
+    if (parsed.date) mesure_date = parsed.date;
     if (parsed.time) created_at = `${parsed.date}T${parsed.time}`;
   }
   return {
@@ -93,7 +93,7 @@ export function buildCurrentPiano(input: {
     model: input.model,
     serial_number: input.serial_number,
     type_piano: input.type_piano,
-    measurement_date,
+    mesure_date,
     created_at,
     manufacture_year: input.manufacture_year,
     climate_zone: input.climate_zone,
@@ -101,9 +101,9 @@ export function buildCurrentPiano(input: {
     usage_level: input.usage_level,
     // Encodage strict UTF-8 (NFC) et nettoyage : « Bruxelles » / « Belgique »
     // ne doivent jamais partir vides ou mal encodés vers la base.
-    city: String(input.city ?? "").normalize("NFC").trim(),
-    country: String(input.country ?? "").normalize("NFC").trim(),
-    remarks: input.remarks,
+    ville: String(input.ville ?? "").normalize("NFC").trim(),
+    pays: String(input.pays ?? "").normalize("NFC").trim(),
+    remarques: input.remarques,
     wa_values: wa,
     wd_values: wd,
     friction_values: friction,
@@ -167,14 +167,14 @@ export async function saveCurrentPianoToCloud(
     serial_number: piano.serial_number,
     is_buffer: false,
     type_piano: piano.type_piano,
-    measurement_date: piano.measurement_date,
+    mesure_date: piano.mesure_date,
     manufacture_year: piano.manufacture_year,
     climate_zone: piano.climate_zone,
     maintenance_type: piano.maintenance_type,
     usage_level: piano.usage_level,
-    city: piano.city,
-    country: piano.country,
-    remarks: piano.remarks,
+    ville: piano.ville,
+    pays: piano.pays,
+    remarques: piano.remarques,
     wa_values: toPgArray(piano.wa_values),
     wd_values: toPgArray(piano.wd_values),
     friction_values: toPgArray(piano.friction_values),
@@ -235,14 +235,14 @@ function bufferPayload(piano: CurrentPiano) {
     serial_number: piano.serial_number,
     is_buffer: true,
     type_piano: piano.type_piano,
-    measurement_date: piano.measurement_date,
+    mesure_date: piano.mesure_date,
     manufacture_year: piano.manufacture_year,
     climate_zone: piano.climate_zone,
     maintenance_type: piano.maintenance_type,
     usage_level: piano.usage_level,
-    city: piano.city,
-    country: piano.country,
-    remarks: piano.remarks,
+    ville: piano.ville,
+    pays: piano.pays,
+    remarques: piano.remarques,
     wa_values: toPgArray(piano.wa_values),
     wd_values: toPgArray(piano.wd_values),
     friction_values: toPgArray(piano.friction_values),
@@ -266,7 +266,7 @@ export async function upsertCurrentPianoBuffer(
   const payload = {
     id: CURRENT_PIANO_BUFFER_UUID,
     ...bufferPayload(piano),
-    measurement_date: now.toISOString().slice(0, 10),
+    mesure_date: now.toISOString().slice(0, 10),
     created_at: now.toISOString(),
   };
   try {
@@ -296,7 +296,7 @@ export async function loadCurrentPianoFromCloud(): Promise<CurrentPiano | null> 
       model: String(row["model"] ?? ""),
       serial_number: String(row["serial_number"] ?? ""),
       type_piano: String(row["type_piano"] ?? ""),
-      measurement_date: String(row["measurement_date"] ?? new Date().toISOString().slice(0, 10)),
+      mesure_date: String(row["mesure_date"] ?? new Date().toISOString().slice(0, 10)),
       created_at: row["created_at"] ? String(row["created_at"]) : undefined,
       manufacture_year:
         row["manufacture_year"] === null || row["manufacture_year"] === undefined
@@ -305,9 +305,9 @@ export async function loadCurrentPianoFromCloud(): Promise<CurrentPiano | null> 
       climate_zone: String(row["climate_zone"] ?? ""),
       maintenance_type: String(row["maintenance_type"] ?? ""),
       usage_level: String(row["usage_level"] ?? ""),
-      city: String(row["city"] ?? ""),
-      country: String(row["country"] ?? ""),
-      remarks: String(row["remarks"] ?? ""),
+      ville: String(row["ville"] ?? ""),
+      pays: String(row["pays"] ?? ""),
+      remarques: String(row["remarques"] ?? ""),
       wa_values: wa,
       wd_values: fromPgArray(row["wd_values"]),
       friction_values: fromPgArray(row["friction_values"]),
