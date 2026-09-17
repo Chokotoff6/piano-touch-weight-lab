@@ -1546,6 +1546,9 @@ function Comparer() {
   const [cloudSampleCount, setCloudSampleCount] = useState(0);
   const [cloudTotalCount, setCloudTotalCount] = useState(0);
   const [cloudLoading, setCloudLoading] = useState(false);
+  // Périmètre de lecture Cloud : fiches de démonstration incluses ou non.
+  const [demoScope, setDemoScope] = useState(false);
+  useEffect(() => { setDemoScope(demoScopeActive()); }, []);
   // État indépendant : le CSV importé alimente UNIQUEMENT la courbe orange.
   // current_piano (courbe Live noire) et le buffer PIANO_ACTUEL ne sont jamais touchés.
   const [comparedPiano, setComparedPiano] = useState<ProfileRecord | null>(null);
