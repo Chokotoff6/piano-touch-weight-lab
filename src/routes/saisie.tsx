@@ -595,6 +595,28 @@ function Index() {
     draftLoaded.current = true;
   }, []);
 
+  // Le Mode démo lit sa fiche en base : dès qu'elle arrive, l'écran se recale.
+  useEffect(() => {
+    const onDemoLoaded = () => {
+      try {
+        const rawInfo = window.localStorage.getItem(DRAFT_INFO_KEY);
+        const parsedInfo = rawInfo ? (JSON.parse(rawInfo) as Record<string, string>) : null;
+        if (parsedInfo && typeof parsedInfo === "object" && Object.keys(parsedInfo).length > 0) {
+          setInfo(parsedInfo);
+        }
+        const rawRows = window.localStorage.getItem(DRAFT_ROWS_KEY);
+        const parsedRows = rawRows ? (JSON.parse(rawRows) as Row[]) : null;
+        if (Array.isArray(parsedRows) && parsedRows.length === 88) {
+          setRows(parsedRows);
+        }
+      } catch {
+        /* stockage indisponible */
+      }
+    };
+    window.addEventListener(DEMO_LOADED_EVENT, onDemoLoaded);
+    return () => window.removeEventListener(DEMO_LOADED_EVENT, onDemoLoaded);
+  }, []);
+
   // Maintien des miroirs réactifs (rows / mode pesée) pour les lectures différées.
   useEffect(() => {
     rowsRef.current = rows;
