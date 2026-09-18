@@ -39,40 +39,6 @@ export function setDemoOff(off: boolean) {
   }
 }
 
-
-// Jumeau exact de la fiche tampon de démonstration en base (YAMAHA U3 Upright,
-// 2020, climat Standard) : indispensable pour que la requête Cloud de la page
-// Comparer (.eq("model", …), climat, année) trouve l'échantillon de démo.
-export const DEMO_INFO: Record<string, string> = {
-  marque: "YAMAHA",
-  modele: "U3",
-  // Valeur interne du formulaire (affichée « Upright » en anglais à l'écran).
-  type_piano: "Droit",
-  sn_num: "652444",
-  fabrication: "2020",
-  measurement_date: "2020-09-17",
-  pays: "Belgium",
-  ville: "Brussels",
-  entretien: "Standard maintenance only",
-  usage_level: "Medium",
-  profil_saisie: "Pianiste / Particulier",
-  remarques: "Virtual demonstration piano profile.",
-};
-
-
-/** Courbes douces et plausibles : Wa décroît des graves vers les aigus. */
-export function buildDemoRows(): Array<{ wa: string; wd: string }> {
-  return Array.from({ length: 88 }, (_, i) => {
-    const t = i / 87;
-    const wave = Math.sin(i / 6) * 0.8 + Math.sin(i / 2.3) * 0.4;
-    const friction = 14 - 3 * t + wave * 0.25;
-    const balance = 41.5 - 3.5 * t + wave * 0.5;
-    const wa = balance + friction;
-    const wd = balance - friction;
-    return { wa: wa.toFixed(1), wd: wd.toFixed(1) };
-  });
-}
-
 function isBrowser() {
   return typeof window !== "undefined";
 }
@@ -137,72 +103,56 @@ function applyDemoData(info: Record<string, string>, rows: DemoRows) {
 /** Mémorise que la fiche de démo a bien été lue en base pour cette session. */
 const DEMO_SYNCED_KEY = "ptw_demo_synced";
 
-/** Charge le piano de secours (objet local) : affichage immédiat, sans réseau. */
-export function enableDemoMode() {
-  if (!isBrowser()) return;
-  applyDemoData(DEMO_INFO, buildDemoRows());
-}
-
 /**
  * Charge le VRAI piano de démonstration depuis la base (ligne tampon
- * `00000000-0000-0000-0000-000000000001`). L'objet local reste un filet de
- * sécurité si la base est injoignable.
+ * `00000000-0000-0000-0000-000000000001`). Aucune donnée locale de secours :
+ * si la base est injoignable, l'erreur réseau est propagée.
  */
 export async function enableDemoModeAsync() {
   if (!isBrowser()) return;
-  enableDemoMode();
+  const profile = await loadPianoProfileById(DEMO_PIANO_BUFFER_UUID, false);
+  if (!profile) throw new Error("Fiche de démonstration introuvable en base.");
   try {
-    const profile = await loadPianoProfileById(DEMO_PIANO_BUFFER_UUID, false);
-    if (!profile) return;
-    try {
-      window.sessionStorage.setItem(DEMO_SYNCED_KEY, "1");
-    } catch {
-      /* stockage indisponible */
-    }
-    const info: Record<string, string> = {
-      marque: profile.brand ?? "",
-      modele: profile.model ?? "",
-      type_piano: normalizeTypePiano(profile.type_piano),
-      sn_num: profile.serial_number ?? "",
-      fabrication: profile.manufacture_year ? String(profile.manufacture_year) : "",
-      measurement_date: profile.measurement_date ?? "",
-      pays: profile.country ?? "",
-      ville: profile.city ?? "",
-      climate_zone: profile.climate_zone ?? "",
-      entretien: profile.maintenance_type ?? "",
-      usage_level: profile.usage_level ?? "",
-      profil_saisie: normalizeWho(profile.who),
-      remarques: profile.remarks ?? "",
-    };
-    const hasMeasures =
-      Array.isArray(profile.wa_values) && profile.wa_values.length === 88;
-    // Filet de sécurité propre à la fiche démo : si la série est entièrement
-    // inversée (remontée > descente sur chaque touche renseignée), on permute
-    // wa/wd au chargement pour que Résultats puisse valider et tracer.
-    const pairs = hasMeasures
-      ? profile.wa_values.map((wa, i) => ({ wa, wd: profile.wd_values?.[i] }))
-      : [];
-    const filled = pairs.filter(
-      (p) => Number.isFinite(p.wa) && Number.isFinite(p.wd),
-    );
-    const inverted =
-      filled.length > 0 && filled.every((p) => (p.wd as number) > (p.wa as number));
-    const rows: DemoRows = hasMeasures
-      ? pairs.map(({ wa, wd }) => {
-          const a = Number.isFinite(wa) ? (wa as number) : null;
-          const d = Number.isFinite(wd) ? (wd as number) : null;
-          const down = inverted ? d : a;
-          const up = inverted ? a : d;
-          return {
-            wa: down === null ? "" : String(down),
-            wd: up === null ? "" : String(up),
-          };
-        })
-      : buildDemoRows();
-    applyDemoData(info, rows);
+    window.sessionStorage.setItem(DEMO_SYNCED_KEY, "1");
   } catch {
-    /* base injoignable : on garde le jeu local */
+    /* stockage indisponible */
   }
+  const info: Record<string, string> = {
+    marque: profile.brand ?? "",
+    modele: profile.model ?? "",
+    type_piano: normalizeTypePiano(profile.type_piano),
+    sn_num: profile.serial_number ?? "",
+    fabrication: profile.manufacture_year ? String(profile.manufacture_year) : "",
+    measurement_date: profile.measurement_date ?? "",
+    pays: profile.country ?? "",
+    ville: profile.city ?? "",
+    climate_zone: profile.climate_zone ?? "",
+    entretien: profile.maintenance_type ?? "",
+    usage_level: profile.usage_level ?? "",
+    profil_saisie: normalizeWho(profile.who),
+    remarques: profile.remarks ?? "",
+  };
+  const waValues = Array.isArray(profile.wa_values) ? profile.wa_values : [];
+  // Filet de sécurité propre à la fiche démo : si la série est entièrement
+  // inversée (remontée > descente sur chaque touche renseignée), on permute
+  // wa/wd au chargement pour que Résultats puisse valider et tracer.
+  const pairs = waValues.map((wa, i) => ({ wa, wd: profile.wd_values?.[i] }));
+  const filled = pairs.filter(
+    (p) => Number.isFinite(p.wa) && Number.isFinite(p.wd),
+  );
+  const inverted =
+    filled.length > 0 && filled.every((p) => (p.wd as number) > (p.wa as number));
+  const rows: DemoRows = pairs.map(({ wa, wd }) => {
+    const a = Number.isFinite(wa) ? (wa as number) : null;
+    const d = Number.isFinite(wd) ? (wd as number) : null;
+    const down = inverted ? d : a;
+    const up = inverted ? a : d;
+    return {
+      wa: down === null ? "" : String(down),
+      wd: up === null ? "" : String(up),
+    };
+  });
+  applyDemoData(info, rows);
 }
 
 /** Retire toutes les données de démonstration. */
@@ -235,7 +185,7 @@ export function ensureDemoDefault() {
     if (isDemoOff()) return;
     const synced = window.sessionStorage.getItem(DEMO_SYNCED_KEY) === "1";
     if (!synced || window.localStorage.getItem(DEMO_MODE_KEY) !== "1") {
-      void enableDemoModeAsync();
+      void enableDemoModeAsync().catch((e) => console.error("Mode démo : lecture Cloud impossible", e));
     }
   } catch {
     /* stockage indisponible */
@@ -259,7 +209,7 @@ export function toggleDemoMode(): boolean {
     } catch {
       /* stockage indisponible */
     }
-    void enableDemoModeAsync();
+    void enableDemoModeAsync().catch((e) => console.error("Mode démo : lecture Cloud impossible", e));
   } else {
     disableDemoMode();
     try {
