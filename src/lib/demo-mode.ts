@@ -130,6 +130,9 @@ function applyDemoData(info: Record<string, string>, rows: DemoRows) {
   }
 }
 
+/** Mémorise que la fiche de démo a bien été lue en base pour cette session. */
+const DEMO_SYNCED_KEY = "ptw_demo_synced";
+
 /** Charge le piano de secours (objet local) : affichage immédiat, sans réseau. */
 export function enableDemoMode() {
   if (!isBrowser()) return;
