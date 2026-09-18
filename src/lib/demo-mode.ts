@@ -74,32 +74,35 @@ export function isDemoActive(): boolean {
 }
 
 
-/** Charge le piano fictif et les 88 pesées dans le stockage local. */
-export function enableDemoMode() {
-  if (!isBrowser()) return;
-  const rows = buildDemoRows();
+/** Évènement émis quand le jeu de démonstration est (re)chargé. */
+export const DEMO_LOADED_EVENT = "ptw-demo-loaded";
+
+type DemoRows = Array<{ wa: string; wd: string }>;
+
+/** Écrit le jeu de démonstration (fiche + pesées) dans le stockage local. */
+function applyDemoData(info: Record<string, string>, rows: DemoRows) {
   try {
     window.localStorage.setItem(DEMO_MODE_KEY, "1");
     window.localStorage.setItem(DRAFT_ROWS_KEY, JSON.stringify(rows));
-    window.localStorage.setItem(DRAFT_INFO_KEY, JSON.stringify(DEMO_INFO));
+    window.localStorage.setItem(DRAFT_INFO_KEY, JSON.stringify(info));
   } catch {
     /* stockage indisponible */
   }
   try {
     saveCurrentPiano(
       buildCurrentPiano({
-        brand: DEMO_INFO["marque"] ?? "",
-        model: DEMO_INFO["modele"] ?? "",
-        serial_number: DEMO_INFO["sn_num"] ?? "",
-        type_piano: DEMO_INFO["type_piano"] ?? "",
-        manufacture_year: Number(DEMO_INFO["fabrication"]) || null,
-        climate_zone: "Standard",
-        maintenance_type: DEMO_INFO["entretien"] ?? "",
-        usage_level: DEMO_INFO["usage_level"] ?? "",
-        city: DEMO_INFO["ville"] ?? "",
-        country: DEMO_INFO["pays"] ?? "",
-        remarks: DEMO_INFO["remarques"] ?? "",
-        mesureDateRaw: DEMO_INFO["measurement_date"] ?? "",
+        brand: info["marque"] ?? "",
+        model: info["modele"] ?? "",
+        serial_number: info["sn_num"] ?? "",
+        type_piano: info["type_piano"] ?? "",
+        manufacture_year: Number(info["fabrication"]) || null,
+        climate_zone: info["climate_zone"] || "Standard",
+        maintenance_type: info["entretien"] ?? "",
+        usage_level: info["usage_level"] ?? "",
+        city: info["ville"] ?? "",
+        country: info["pays"] ?? "",
+        remarks: info["remarques"] ?? "",
+        mesureDateRaw: info["measurement_date"] ?? "",
         wa: rows.map((r) => r.wa),
         wd: rows.map((r) => r.wd),
       }),
@@ -113,6 +116,56 @@ export function enableDemoMode() {
     setCompareUnlocked(true);
   } catch {
     /* store indisponible */
+  }
+  try {
+    window.dispatchEvent(new CustomEvent(DEMO_LOADED_EVENT));
+  } catch {
+    /* évènement indisponible */
+  }
+}
+
+/** Charge le piano de secours (objet local) : affichage immédiat, sans réseau. */
+export function enableDemoMode() {
+  if (!isBrowser()) return;
+  applyDemoData(DEMO_INFO, buildDemoRows());
+}
+
+/**
+ * Charge le VRAI piano de démonstration depuis la base (ligne tampon
+ * `00000000-0000-0000-0000-000000000001`). L'objet local reste un filet de
+ * sécurité si la base est injoignable.
+ */
+export async function enableDemoModeAsync() {
+  if (!isBrowser()) return;
+  enableDemoMode();
+  try {
+    const profile = await loadPianoProfileById(DEMO_PIANO_BUFFER_UUID, false);
+    if (!profile) return;
+    const info: Record<string, string> = {
+      marque: profile.brand ?? "",
+      modele: profile.model ?? "",
+      type_piano: profile.type_piano ?? "",
+      sn_num: profile.serial_number ?? "",
+      fabrication: profile.manufacture_year ? String(profile.manufacture_year) : "",
+      measurement_date: profile.measurement_date ?? "",
+      pays: profile.country ?? "",
+      ville: profile.city ?? "",
+      climate_zone: profile.climate_zone ?? "",
+      entretien: profile.maintenance_type ?? "",
+      usage_level: profile.usage_level ?? "",
+      remarques: profile.remarks ?? "",
+    };
+    const hasMeasures =
+      Array.isArray(profile.wa_values) && profile.wa_values.length === 88;
+    const rows: DemoRows = hasMeasures
+      ? profile.wa_values.map((wa, i) => ({
+          wa: Number.isFinite(wa) ? String(wa) : "",
+          wd: Number.isFinite(profile.wd_values?.[i]) ? String(profile.wd_values[i]) : "",
+        }))
+      : buildDemoRows();
+    applyDemoData(info, rows);
+  } catch {
+    /* base injoignable : on garde le jeu local */
   }
 }
 
