@@ -2,6 +2,7 @@
 
 ## Résultat attendu
 - En Mode Zoom uniquement, un mini-panneau apparaît en bas à gauche à l'intérieur du cadre du graphique, à côté du bouton de cycle centré.
+- Condition d'affichage stricte : le mini-panneau n'est rendu QUE si les 3 sources sont actives (piano actuel présent, Cloud ou import CSV actif, cible activée). Si l'une manque (affichage simplifié), le panneau est entièrement masqué.
 - Il liste les 3 courbes avec leur libellé réel, coloré comme leur ligne :
   - « Piano actuel » / « Piano actuel N+B » (FR) ou équivalents EN → texte noir
   - « Cloud » / « Cloud N+B » (ou « Import CSV ») → texte orange (bleu si import CSV)
@@ -26,7 +27,7 @@
 ## Modifications (uniquement `src/routes/comparer.tsx`)
 1. Ajouter dans `SubChart` un état local `curveToggles: { current: boolean; reference: boolean; target: boolean }`, initialisé quand `zoomed` passe à `true` depuis l'état hérité du panneau latéral (référence : cloud/CSV actif ; cible : `standardEnabled` ; piano actuel : ON).
 2. Appliquer le filtre : les lignes d'un groupe OFF reçoivent `hidden: true` (en plus du `hidden` existant) — courbe, points et étiquette de fin disparaissent instantanément.
-3. Rendre le mini-panneau en `absolute bottom-2 left-2` à l'intérieur du `Frame`, uniquement en Mode Zoom :
+3. Rendre le mini-panneau en `absolute bottom-2 left-2` à l'intérieur du `Frame`, uniquement en Mode Zoom ET seulement si les 3 sources sont actives (`mine` présent, cloud/CSV actif, `standardEnabled`) — sinon rendu conditionnel JSX à `null` :
    - fond blanc, bordure discrète, coins arrondis, petit texte ;
    - 3 boutons texte colorés (noir `#000000`, orange `#f97316` — ou bleu `#2563EB` en CSV —, vert de la cible), `opacity-100` ON / `opacity-40` OFF ;
    - libellés = noms réellement affichés sur le graphique (suffixe « N+B » / « B+W » en vue groupée), bilingues FR/EN ;
