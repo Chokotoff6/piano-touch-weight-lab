@@ -39,40 +39,6 @@ export function setDemoOff(off: boolean) {
   }
 }
 
-
-// Jumeau exact de la fiche tampon de démonstration en base (YAMAHA U3 Upright,
-// 2020, climat Standard) : indispensable pour que la requête Cloud de la page
-// Comparer (.eq("model", …), climat, année) trouve l'échantillon de démo.
-export const DEMO_INFO: Record<string, string> = {
-  marque: "YAMAHA",
-  modele: "U3",
-  // Valeur interne du formulaire (affichée « Upright » en anglais à l'écran).
-  type_piano: "Droit",
-  sn_num: "652444",
-  fabrication: "2020",
-  measurement_date: "2020-09-17",
-  pays: "Belgium",
-  ville: "Brussels",
-  entretien: "Standard maintenance only",
-  usage_level: "Medium",
-  profil_saisie: "Pianiste / Particulier",
-  remarques: "Virtual demonstration piano profile.",
-};
-
-
-/** Courbes douces et plausibles : Wa décroît des graves vers les aigus. */
-export function buildDemoRows(): Array<{ wa: string; wd: string }> {
-  return Array.from({ length: 88 }, (_, i) => {
-    const t = i / 87;
-    const wave = Math.sin(i / 6) * 0.8 + Math.sin(i / 2.3) * 0.4;
-    const friction = 14 - 3 * t + wave * 0.25;
-    const balance = 41.5 - 3.5 * t + wave * 0.5;
-    const wa = balance + friction;
-    const wd = balance - friction;
-    return { wa: wa.toFixed(1), wd: wd.toFixed(1) };
-  });
-}
-
 function isBrowser() {
   return typeof window !== "undefined";
 }
