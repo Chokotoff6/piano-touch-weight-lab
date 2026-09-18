@@ -715,8 +715,6 @@ type SubChartCtx = {
 function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[number]; zoomed?: boolean; ctx: SubChartCtx }) {
   const { chartData, keyFilter: baseKeyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, filters, cycleFor, lang, zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode, plotRef, lastMouseY, keyboardModeRef, lastMouseNote, onMouseTakeover } = ctx;
   const [showZoomHelp, setShowZoomHelp] = useState(false);
-  // Interrupteurs ON/OFF des trois courbes, propres à la session de zoom.
-  const [zoomCurveOff, setZoomCurveOff] = useState<{ current: boolean; reference: boolean; target: boolean }>({ current: false, reference: false, target: false });
   // Réglage N/B strictement indépendant pour chaque cadre graphique.
   const keyFilter = filters[family.id] ?? baseKeyFilter;
   const bwLabel = bwLabelFor(keyFilter, lang);
@@ -727,21 +725,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   const otherLines = family.lines
     .filter((line) => line.name !== "Cloud")
     .map((line) => (line.name === "Cible" ? { ...line, name: targetLabel } : line));
-  const currentLines = currentLinesFor(family.id, keyFilter, currentBaseName);
-  // Disponibilité réelle de chaque source : une courbe désactivée dans le
-  // panneau latéral n'a aucune donnée dans chartData (héritage de l'état).
-  const groupHasData = (defs: LineDef[]) =>
-    chartData.some((point) => defs.some((def) => typeof point[def.dataKey] === "number" && Number.isFinite(point[def.dataKey] as number)));
-  const currentAvailable = groupHasData(currentLines);
-  const referenceAvailable = groupHasData(referenceLines);
-  const targetAvailable = groupHasData(otherLines);
-  // Le mini-panneau n'existe que si les trois sources sont actives.
-  const showCurveToggles = currentAvailable && referenceAvailable && targetAvailable;
-  const lines = [
-    ...currentLines.map((line) => (zoomed && zoomCurveOff.current ? { ...line, hidden: true } : line)),
-    ...referenceLines.map((line) => (zoomed && zoomCurveOff.reference ? { ...line, hidden: true } : line)),
-    ...otherLines.map((line) => (zoomed && zoomCurveOff.target ? { ...line, hidden: true } : line)),
-  ];
+  const lines = [...currentLinesFor(family.id, keyFilter, currentBaseName), ...referenceLines, ...otherLines];
   // Chaque courbe est ancrée sur SON propre premier / dernier point défini
   // (indispensable en vue éclatée où blanches et noires ne partagent pas les mêmes index).
   const start = zoomed ? zoomStart : 1;
@@ -877,31 +861,6 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           <RefreshCw size={zoomed ? 25.2 : 14} strokeWidth={2.5} className="shrink-0" />
           <span className="!text-black">{bwLabel}</span>
         </button>
-      )}
-      {zoomed && showCurveToggles && (
-        <div
-          data-pdf-hide
-          className="absolute bottom-2 left-2 z-20 flex flex-col gap-0.5 rounded-lg border border-gray-300 bg-white px-2 py-1 shadow-sm"
-          onClick={(event) => event.stopPropagation()}
-        >
-          {([
-            { group: "current" as const, label: keyFilter === "all" ? currentLines[0]?.name ?? currentBaseName : currentBaseName, color: "#000000", off: zoomCurveOff.current },
-            { group: "reference" as const, label: keyFilter === "all" ? referenceLines[0]?.name ?? comparisonLabel : comparisonLabel, color: csvActive ? "#2563EB" : "#f97316", off: zoomCurveOff.reference },
-            { group: "target" as const, label: targetLabel, color: "#10b981", off: zoomCurveOff.target },
-          ]).map((entry) => (
-            <button
-              key={entry.group}
-              type="button"
-              aria-pressed={!entry.off}
-              aria-label={entry.label}
-              onClick={() => setZoomCurveOff((state) => ({ ...state, [entry.group]: !state[entry.group] }))}
-              className={`text-left text-[0.68rem] font-semibold leading-tight transition-opacity ${entry.off ? "opacity-40" : "opacity-100"}`}
-              style={{ color: entry.color }}
-            >
-              {entry.label}
-            </button>
-          ))}
-        </div>
       )}
       {zoomed && showZoomHelp && (
         <div className="pointer-events-none absolute inset-x-0 top-11 z-10 flex flex-col items-center gap-1">
