@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, type SetStateAction, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { useLang, getLang } from "@/data/translations";
-import { RefreshCw, Square, SquareX } from "lucide-react";
+import { Info, RefreshCw, Square, SquareX } from "lucide-react";
 import { BrandTargetInfoIcon } from "@/components/BrandTargetInfo";
 import { paddedDomain } from "@/components/PdfReportBlocks";
 import { PianoSheetMirror } from "@/components/PianoSheetMirror";
@@ -714,6 +714,7 @@ type SubChartCtx = {
 // empêchait les flèches ◄ ► d'allumer la pastille.
 function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[number]; zoomed?: boolean; ctx: SubChartCtx }) {
   const { chartData, keyFilter: baseKeyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, filters, cycleFor, lang, zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode, plotRef, lastMouseY, keyboardModeRef, lastMouseNote, onMouseTakeover } = ctx;
+  const [showZoomHelp, setShowZoomHelp] = useState(false);
   // Réglage N/B strictement indépendant pour chaque cadre graphique.
   const keyFilter = filters[family.id] ?? baseKeyFilter;
   const bwLabel = bwLabelFor(keyFilter, lang);
@@ -820,10 +821,32 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
 
 
   return (
-    <Frame dataFrame={family.id} title={title} className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}>
+    <Frame
+      dataFrame={family.id}
+      title={title}
+      onClick={zoomed && showZoomHelp ? () => setShowZoomHelp(false) : undefined}
+      className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}
+    >
       <div className={`absolute right-3 z-20 flex flex-col items-end gap-1.5 ${zoomed ? "top-14" : "top-2"}`}>
         {zoomed && (
-          <button type="button" data-pdf-hide aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              data-pdf-hide
+              aria-label={lang === "en" ? "Zoom navigation help" : "Aide à la navigation du zoom"}
+              aria-expanded={showZoomHelp}
+              onClick={(event) => {
+                event.stopPropagation();
+                setShowZoomHelp((visible) => !visible);
+              }}
+              className="h-7 w-7 rounded-full border-gray-300 bg-white p-0 !text-black hover:bg-gray-100"
+            >
+              <Info className="h-4 w-4" strokeWidth={2} />
+            </Button>
+            <button type="button" data-pdf-hide aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
+          </div>
         )}
         {!zoomed && (
           <button type="button" data-pdf-hide aria-label={`Zoom sur ${title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-[5px] !text-black hover:bg-gray-100"><MagnifyIcon /></button>
@@ -833,14 +856,14 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             type="button"
             aria-label={bwLabel}
             onClick={() => cycleFor(family.id)}
-            className="flex items-center gap-1 rounded-full border border-gray-300 bg-white px-2 py-0.5 text-[0.68rem] font-medium !text-black hover:bg-gray-100"
+            className={`flex items-center rounded-full border !border-green-600 bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-2 px-4 py-1 text-[1.36rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"}`}
           >
-            <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
+            <RefreshCw size={zoomed ? 28 : 14} strokeWidth={2.5} className="shrink-0" />
             <span className="!text-black">{bwLabel}</span>
           </button>
         )}
       </div>
-      {zoomed && (
+      {zoomed && showZoomHelp && (
         <div className="pointer-events-none absolute inset-x-0 top-[58px] z-10 flex flex-col items-center gap-1">
           <WheelHintIcon />
           <ArrowHintIcon />
@@ -1176,8 +1199,8 @@ export const Route = createFileRoute("/comparer")({
 
 const FRAME_CLASS = "relative rounded-md border-2 border-foreground bg-card p-4 pt-5";
 const FRAME_TITLE_CLASS = "absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black";
-export function Frame({ title, className = "", titleClassName, dataFrame, children }: { title: ReactNode; className?: string; titleClassName?: string; dataFrame?: string | undefined; children: ReactNode }) {
-  return <section data-frame={dataFrame} className={`${FRAME_CLASS} ${className}`}><h2 className={titleClassName ?? FRAME_TITLE_CLASS}>{title}</h2>{children}</section>;
+export function Frame({ title, className = "", titleClassName, dataFrame, onClick, children }: { title: ReactNode; className?: string; titleClassName?: string; dataFrame?: string | undefined; onClick?: (() => void) | undefined; children: ReactNode }) {
+  return <section data-frame={dataFrame} onClick={onClick} className={`${FRAME_CLASS} ${className}`}><h2 className={titleClassName ?? FRAME_TITLE_CLASS}>{title}</h2>{children}</section>;
 }
 
 const COLUMNS = [
