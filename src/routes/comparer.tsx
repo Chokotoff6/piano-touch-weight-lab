@@ -524,7 +524,7 @@ function currentLinesFor(familyId: string, keyFilter: KeyFilter, baseName = "Pia
   const white = baseName ? `${baseName} ${whiteWord}` : whiteWord;
   const black = baseName ? `${baseName} ${blackWord}` : blackWord;
   // Blanches = pointillés « 5 5 », noires = trait continu ; couleurs d'origine inchangées.
-  const whiteLine: LineDef = { dataKey: metric[1], name: white, shortName: white, color: "#6b7280", real: true, dashed: true };
+  const whiteLine: LineDef = { dataKey: metric[1], name: white, shortName: white, color: "#1a1a1a", real: true, dashed: true };
   const blackLine: LineDef = { dataKey: metric[2], name: black, shortName: black, color: "#000000", real: true };
   if (keyFilter === "split") return [whiteLine, blackLine];
   if (keyFilter === "white") return [whiteLine];
@@ -541,7 +541,7 @@ function comparisonLinesFor(familyId: string, keyFilter: KeyFilter, name: string
   if (!metric) return [];
   // Bleu intense pour l'import CSV, orange pour la moyenne Cloud.
   const strong = isCsv ? "#2563EB" : "#f97316";
-  const light = isCsv ? "#93c5fd" : "#fdba74";
+  const light = isCsv ? "#93c5fd" : "#B45309";
   const whiteWord = getLang() === "en" ? "whites" : "blanches";
   const blackWord = getLang() === "en" ? "blacks" : "noires";
   const whiteLine: LineDef = { dataKey: metric[1], name: `${name} ${whiteWord}`, shortName: `${short} ${whiteWord}`, color: light, dashed: true };
@@ -727,7 +727,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   // Le libellé de la courbe verte reprend l'identité complète de la cible sélectionnée.
   const otherLines = family.lines
     .filter((line) => line.name !== "Cloud")
-    .map((line) => (line.name === "Cible" ? { ...line, name: targetLabel } : line));
+    .map((line) => (line.name === "Cible" && !zoomed ? { ...line, name: targetLabel } : line));
   const currentLines = currentLinesFor(family.id, keyFilter, currentBaseName);
   // Disponibilité réelle de chaque source : une courbe désactivée dans le
   // panneau latéral n'a aucune donnée dans chartData (héritage de l'état).
@@ -882,13 +882,14 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
       {zoomed && showCurveToggles && (
         <div
           data-pdf-hide
-          className="absolute bottom-2 left-2 z-20 flex flex-col gap-0.5 rounded-lg border border-gray-300 bg-white px-2 py-1 shadow-sm"
+          className="absolute bottom-2 right-2 z-20 flex flex-col gap-0.5 rounded-lg border border-gray-300 bg-white px-2 py-1 shadow-sm"
           onClick={(event) => event.stopPropagation()}
         >
+          <span className="text-[0.62rem] font-bold leading-tight" style={{ color: "#000000" }}>Afficher/masquer</span>
           {([
             { group: "current" as const, label: keyFilter === "all" ? currentLines[0]?.name ?? currentBaseName : currentBaseName, color: "#000000", off: zoomCurveOff.current },
             { group: "reference" as const, label: keyFilter === "all" ? referenceLines[0]?.name ?? comparisonLabel : comparisonLabel, color: csvActive ? "#2563EB" : "#f97316", off: zoomCurveOff.reference },
-            { group: "target" as const, label: targetLabel, color: "#10b981", off: zoomCurveOff.target },
+            { group: "target" as const, label: "Cible", color: "#10b981", off: zoomCurveOff.target },
           ]).map((entry) => (
             <button
               key={entry.group}
