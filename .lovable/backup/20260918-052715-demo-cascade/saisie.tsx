@@ -48,13 +48,7 @@ import {
 } from "@/lib/diagnostics";
 import { getTopbarState, setGateReady, setTopbarState, showTopbarAlert, useTopbarState } from "@/lib/topbar-store";
 import { decideCloudAction, resetConsent, startSheetTimer } from "@/lib/cloud-gate";
-import {
-  DEMO_LOADED_EVENT,
-  DEMO_CASCADE_INTERVAL_MS,
-  hasSeenDemoCascade,
-  isDemoActive,
-  markDemoCascadeSeen,
-} from "@/lib/demo-mode";
+import { DEMO_LOADED_EVENT } from "@/lib/demo-mode";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -542,79 +536,6 @@ function Index() {
   // --- Persistance locale (filet de sécurité) -------------------------------
 
   const draftLoaded = useRef(false);
-
-  // --- Animation cascade Mode Démo (une seule fois par session) ------------
-  const cascadeTimer = useRef<number | null>(null);
-  const cascadeTarget = useRef<Row[] | null>(null);
-  const cascadeIndex = useRef(0);
-  const cascadeStarted = useRef(false);
-
-  const stopCascadeTimer = () => {
-    if (cascadeTimer.current !== null) {
-      window.clearInterval(cascadeTimer.current);
-      cascadeTimer.current = null;
-    }
-  };
-
-  /**
-   * Démarre le remplissage animé des 88 touches (Mode Démo uniquement,
-   * première visite de la session). Renvoie true si la cascade a démarré —
-   * l'appelant ne doit alors PAS appliquer les lignes directement.
-   */
-  const maybeStartCascade = (fullRows: Row[]): boolean => {
-    if (cascadeStarted.current) return false;
-    if (!isDemoActive() || hasSeenDemoCascade()) return false;
-    if (!Array.isArray(fullRows) || fullRows.length !== 88) return false;
-    if (!fullRows.some((r) => r.wa || r.wd)) return false;
-    cascadeStarted.current = true;
-    cascadeTarget.current = fullRows;
-    cascadeIndex.current = 0;
-    setRows(EMPTY.map((r) => ({ ...r })));
-    // Cadence basée sur le temps écoulé : même si le navigateur ralentit les
-    // minuteurs d'un onglet inactif, la durée totale reste de 15 secondes.
-    const startedAt = performance.now();
-    cascadeTimer.current = window.setInterval(() => {
-      const target = cascadeTarget.current;
-      if (!target) {
-        stopCascadeTimer();
-        return;
-      }
-      const due = Math.min(
-        88,
-        Math.floor((performance.now() - startedAt) / DEMO_CASCADE_INTERVAL_MS),
-      );
-      if (due > cascadeIndex.current) {
-        const from = cascadeIndex.current;
-        cascadeIndex.current = due;
-        setRows((prev) =>
-          prev.map((r, idx) => (idx >= from && idx < due ? { ...target[idx]! } : r)),
-        );
-      }
-      if (due >= 88) {
-        stopCascadeTimer();
-        cascadeTarget.current = null;
-        markDemoCascadeSeen();
-      }
-    }, DEMO_CASCADE_INTERVAL_MS);
-    return true;
-  };
-
-  /**
-   * Frappe utilisateur pendant la cascade : on termine instantanément en
-   * remplissant les touches restantes sans écraser ce qui est déjà saisi.
-   */
-  const finishCascadeEarly = () => {
-    const target = cascadeTarget.current;
-    if (!target) return;
-    stopCascadeTimer();
-    setRows((prev) => prev.map((r, i) => (r.wa || r.wd ? r : { ...target[i]! })));
-    cascadeTarget.current = null;
-    markDemoCascadeSeen();
-  };
-
-  // Nettoyage du minuteur à la sortie de la page.
-  useEffect(() => stopCascadeTimer, []);
-
   useEffect(() => {
     // Hydratation au démarrage : le brouillon local prime, sinon current_piano.
     const saved = loadCurrentPiano();
@@ -622,7 +543,7 @@ function Index() {
       const raw = window.localStorage.getItem(DRAFT_ROWS_KEY);
       const parsed = raw ? (JSON.parse(raw) as Row[]) : null;
       if (Array.isArray(parsed) && parsed.length === 88 && parsed.some((r) => r.wa || r.wd)) {
-        if (!maybeStartCascade(parsed)) setRows(parsed);
+        setRows(parsed);
       } else if (saved && Array.isArray(saved.wa_values) && saved.wa_values.length === 88) {
         setRows(
           saved.wa_values.map((wa, i) => ({
@@ -688,7 +609,7 @@ function Index() {
         const rawRows = window.localStorage.getItem(DRAFT_ROWS_KEY);
         const parsedRows = rawRows ? (JSON.parse(rawRows) as Row[]) : null;
         if (Array.isArray(parsedRows) && parsedRows.length === 88) {
-          if (!maybeStartCascade(parsedRows)) setRows(parsedRows);
+          setRows(parsedRows);
         }
       } catch {
         /* stockage indisponible */
@@ -1417,8 +1338,6 @@ function Index() {
     });
 
   const setValue = (index: number, field: "wa" | "wd", value: string) => {
-    // Frappe pendant la cascade démo : on la termine sans écraser la saisie.
-    finishCascadeEarly();
     markDirty();
     clearError(`${index}-${field}`);
     // Nouvelle frappe : l'état figé est levé, les alertes redeviennent autorisées.

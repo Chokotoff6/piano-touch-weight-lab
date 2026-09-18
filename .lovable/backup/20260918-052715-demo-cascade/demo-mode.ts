@@ -103,31 +103,6 @@ function applyDemoData(info: Record<string, string>, rows: DemoRows) {
 /** Mémorise que la fiche de démo a bien été lue en base pour cette session. */
 const DEMO_SYNCED_KEY = "ptw_demo_synced";
 
-/** Animation cascade des 88 touches : une seule fois par session. */
-const DEMO_CASCADE_SEEN_KEY = "ptw_demo_cascade_seen";
-/** Intervalle strict entre deux touches (88 × 170,5 ms ≈ 15,0 s). */
-export const DEMO_CASCADE_INTERVAL_MS = 170.5;
-
-/** Vrai si la cascade d'entrée des 88 touches a déjà été jouée cette session. */
-export function hasSeenDemoCascade(): boolean {
-  if (!isBrowser()) return true;
-  try {
-    return window.sessionStorage.getItem(DEMO_CASCADE_SEEN_KEY) === "1";
-  } catch {
-    return true;
-  }
-}
-
-/** Marque la cascade comme jouée pour le reste de la session. */
-export function markDemoCascadeSeen() {
-  if (!isBrowser()) return;
-  try {
-    window.sessionStorage.setItem(DEMO_CASCADE_SEEN_KEY, "1");
-  } catch {
-    /* stockage indisponible */
-  }
-}
-
 /**
  * Charge le VRAI piano de démonstration depuis la base (ligne tampon
  * `00000000-0000-0000-0000-000000000001`). Aucune donnée locale de secours :
