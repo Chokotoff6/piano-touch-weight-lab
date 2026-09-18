@@ -176,11 +176,28 @@ export async function enableDemoModeAsync() {
     };
     const hasMeasures =
       Array.isArray(profile.wa_values) && profile.wa_values.length === 88;
+    // Filet de sécurité propre à la fiche démo : si la série est entièrement
+    // inversée (remontée > descente sur chaque touche renseignée), on permute
+    // wa/wd au chargement pour que Résultats puisse valider et tracer.
+    const pairs = hasMeasures
+      ? profile.wa_values.map((wa, i) => ({ wa, wd: profile.wd_values?.[i] }))
+      : [];
+    const filled = pairs.filter(
+      (p) => Number.isFinite(p.wa) && Number.isFinite(p.wd),
+    );
+    const inverted =
+      filled.length > 0 && filled.every((p) => (p.wd as number) > (p.wa as number));
     const rows: DemoRows = hasMeasures
-      ? profile.wa_values.map((wa, i) => ({
-          wa: Number.isFinite(wa) ? String(wa) : "",
-          wd: Number.isFinite(profile.wd_values?.[i]) ? String(profile.wd_values[i]) : "",
-        }))
+      ? pairs.map(({ wa, wd }) => {
+          const a = Number.isFinite(wa) ? (wa as number) : null;
+          const d = Number.isFinite(wd) ? (wd as number) : null;
+          const down = inverted ? d : a;
+          const up = inverted ? a : d;
+          return {
+            wa: down === null ? "" : String(down),
+            wd: up === null ? "" : String(up),
+          };
+        })
       : buildDemoRows();
     applyDemoData(info, rows);
   } catch {
