@@ -570,19 +570,27 @@ function Index() {
     cascadeTarget.current = fullRows;
     cascadeIndex.current = 0;
     setRows(EMPTY.map((r) => ({ ...r })));
+    // Cadence basée sur le temps écoulé : même si le navigateur ralentit les
+    // minuteurs d'un onglet inactif, la durée totale reste de 15 secondes.
+    const startedAt = performance.now();
     cascadeTimer.current = window.setInterval(() => {
       const target = cascadeTarget.current;
       if (!target) {
         stopCascadeTimer();
         return;
       }
-      const i = cascadeIndex.current;
-      const row = target[i];
-      if (row) {
-        setRows((prev) => prev.map((r, idx) => (idx === i ? { ...row } : r)));
+      const due = Math.min(
+        88,
+        Math.floor((performance.now() - startedAt) / DEMO_CASCADE_INTERVAL_MS),
+      );
+      if (due > cascadeIndex.current) {
+        const from = cascadeIndex.current;
+        cascadeIndex.current = due;
+        setRows((prev) =>
+          prev.map((r, idx) => (idx >= from && idx < due ? { ...target[idx]! } : r)),
+        );
       }
-      cascadeIndex.current = i + 1;
-      if (i + 1 >= 88) {
+      if (due >= 88) {
         stopCascadeTimer();
         cascadeTarget.current = null;
         markDemoCascadeSeen();
