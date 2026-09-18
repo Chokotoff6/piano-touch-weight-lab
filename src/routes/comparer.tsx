@@ -715,6 +715,8 @@ type SubChartCtx = {
 function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[number]; zoomed?: boolean; ctx: SubChartCtx }) {
   const { chartData, keyFilter: baseKeyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, filters, cycleFor, lang, zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode, plotRef, lastMouseY, keyboardModeRef, lastMouseNote, onMouseTakeover } = ctx;
   const [showZoomHelp, setShowZoomHelp] = useState(false);
+  // Interrupteurs ON/OFF des trois courbes, propres à la session de zoom.
+  const [zoomCurveOff, setZoomCurveOff] = useState<{ current: boolean; reference: boolean; target: boolean }>({ current: false, reference: false, target: false });
   // Réglage N/B strictement indépendant pour chaque cadre graphique.
   const keyFilter = filters[family.id] ?? baseKeyFilter;
   const bwLabel = bwLabelFor(keyFilter, lang);
@@ -725,7 +727,21 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   const otherLines = family.lines
     .filter((line) => line.name !== "Cloud")
     .map((line) => (line.name === "Cible" ? { ...line, name: targetLabel } : line));
-  const lines = [...currentLinesFor(family.id, keyFilter, currentBaseName), ...referenceLines, ...otherLines];
+  const currentLines = currentLinesFor(family.id, keyFilter, currentBaseName);
+  // Disponibilité réelle de chaque source : une courbe désactivée dans le
+  // panneau latéral n'a aucune donnée dans chartData (héritage de l'état).
+  const groupHasData = (defs: LineDef[]) =>
+    chartData.some((point) => defs.some((def) => typeof point[def.dataKey] === "number" && Number.isFinite(point[def.dataKey] as number)));
+  const currentAvailable = groupHasData(currentLines);
+  const referenceAvailable = groupHasData(referenceLines);
+  const targetAvailable = groupHasData(otherLines);
+  // Le mini-panneau n'existe que si les trois sources sont actives.
+  const showCurveToggles = currentAvailable && referenceAvailable && targetAvailable;
+  const lines = [
+    ...currentLines.map((line) => (zoomed && zoomCurveOff.current ? { ...line, hidden: true } : line)),
+    ...referenceLines.map((line) => (zoomed && zoomCurveOff.reference ? { ...line, hidden: true } : line)),
+    ...otherLines.map((line) => (zoomed && zoomCurveOff.target ? { ...line, hidden: true } : line)),
+  ];
   // Chaque courbe est ancrée sur SON propre premier / dernier point défini
   // (indispensable en vue éclatée où blanches et noires ne partagent pas les mêmes index).
   const start = zoomed ? zoomStart : 1;
