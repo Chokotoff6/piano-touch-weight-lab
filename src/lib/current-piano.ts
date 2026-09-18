@@ -345,7 +345,7 @@ export async function loadPianoProfileById(
       brand: String(row["brand"] ?? ""),
       model: String(row["model"] ?? ""),
       serial_number: String(row["serial_number"] ?? ""),
-      type_piano: String(row["type_piano"] ?? ""),
+      type_piano: normalizeTypePiano(row["type_piano"] as string | null | undefined),
       measurement_date: String(row["measurement_date"] ?? new Date().toISOString().slice(0, 10)),
       created_at: row["created_at"] ? String(row["created_at"]) : undefined,
       manufacture_year:
@@ -358,6 +358,7 @@ export async function loadPianoProfileById(
       city: String(row["city"] ?? ""),
       country: String(row["country"] ?? ""),
       remarks: String(row["remarks"] ?? ""),
+      who: normalizeWho(row["who"] as string | null | undefined),
       wa_values: wa,
       wd_values: fromPgArray(row["wd_values"]),
       friction_values: fromPgArray(row["friction_values"]),
