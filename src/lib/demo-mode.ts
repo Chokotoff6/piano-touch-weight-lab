@@ -210,7 +210,8 @@ export function ensureDemoDefault() {
   if (!isBrowser()) return;
   try {
     if (isDemoOff()) return;
-    if (window.localStorage.getItem(DEMO_MODE_KEY) !== "1") {
+    const synced = window.sessionStorage.getItem(DEMO_SYNCED_KEY) === "1";
+    if (!synced || window.localStorage.getItem(DEMO_MODE_KEY) !== "1") {
       void enableDemoModeAsync();
     }
   } catch {
