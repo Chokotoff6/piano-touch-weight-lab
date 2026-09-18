@@ -680,7 +680,7 @@ function Index() {
         const rawRows = window.localStorage.getItem(DRAFT_ROWS_KEY);
         const parsedRows = rawRows ? (JSON.parse(rawRows) as Row[]) : null;
         if (Array.isArray(parsedRows) && parsedRows.length === 88) {
-          setRows(parsedRows);
+          if (!maybeStartCascade(parsedRows)) setRows(parsedRows);
         }
       } catch {
         /* stockage indisponible */
