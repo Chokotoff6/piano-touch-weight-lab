@@ -7,8 +7,6 @@ import {
   loadPianoProfileById,
   DEMO_PIANO_BUFFER_UUID,
   CURRENT_PIANO_KEY,
-  normalizeTypePiano,
-  normalizeWho,
 } from "@/lib/current-piano";
 import { setCompareUnlocked, setGateReady, setResultsVisited } from "@/lib/topbar-store";
 import { resetConsent } from "@/lib/cloud-gate";
@@ -46,8 +44,7 @@ export function setDemoOff(off: boolean) {
 export const DEMO_INFO: Record<string, string> = {
   marque: "YAMAHA",
   modele: "U3",
-  // Valeur interne du formulaire (affichée « Upright » en anglais à l'écran).
-  type_piano: "Droit",
+  type_piano: "Upright",
   sn_num: "652444",
   fabrication: "2020",
   measurement_date: "2020-09-17",
@@ -55,7 +52,6 @@ export const DEMO_INFO: Record<string, string> = {
   ville: "Brussels",
   entretien: "Standard maintenance only",
   usage_level: "Medium",
-  profil_saisie: "Pianiste / Particulier",
   remarques: "Virtual demonstration piano profile.",
 };
 
@@ -162,7 +158,7 @@ export async function enableDemoModeAsync() {
     const info: Record<string, string> = {
       marque: profile.brand ?? "",
       modele: profile.model ?? "",
-      type_piano: normalizeTypePiano(profile.type_piano),
+      type_piano: profile.type_piano ?? "",
       sn_num: profile.serial_number ?? "",
       fabrication: profile.manufacture_year ? String(profile.manufacture_year) : "",
       measurement_date: profile.measurement_date ?? "",
@@ -171,7 +167,6 @@ export async function enableDemoModeAsync() {
       climate_zone: profile.climate_zone ?? "",
       entretien: profile.maintenance_type ?? "",
       usage_level: profile.usage_level ?? "",
-      profil_saisie: normalizeWho(profile.who),
       remarques: profile.remarks ?? "",
     };
     const hasMeasures =
