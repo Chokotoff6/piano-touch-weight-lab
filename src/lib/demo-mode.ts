@@ -67,11 +67,12 @@ function isBrowser() {
   return typeof window !== "undefined";
 }
 
-/** Actif tant que le bouton noir n'a pas été cliqué dans la session. */
+/** Actif tant que l'interrupteur n'est pas sur OFF. */
 export function isDemoActive(): boolean {
   if (!isBrowser()) return false;
-  return !isDemoClicked();
+  return !isDemoOff();
 }
+
 
 /** Charge le piano fictif et les 88 pesées dans le stockage local. */
 export function enableDemoMode() {
