@@ -231,6 +231,11 @@ export function toggleDemoMode(): boolean {
   const nextActive = isDemoOff();
   setDemoOff(!nextActive);
   if (nextActive) {
+    try {
+      window.sessionStorage.removeItem(DEMO_SYNCED_KEY);
+    } catch {
+      /* stockage indisponible */
+    }
     void enableDemoModeAsync();
   } else {
     disableDemoMode();
