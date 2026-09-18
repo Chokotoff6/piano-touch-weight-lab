@@ -48,6 +48,7 @@ import {
 } from "@/lib/diagnostics";
 import { getTopbarState, setGateReady, setTopbarState, showTopbarAlert, useTopbarState } from "@/lib/topbar-store";
 import { decideCloudAction, resetConsent, startSheetTimer } from "@/lib/cloud-gate";
+import { DEMO_LOADED_EVENT } from "@/lib/demo-mode";
 import { toast } from "sonner";
 import {
   AlertDialog,
