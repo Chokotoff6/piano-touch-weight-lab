@@ -38,7 +38,7 @@ import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 import likedLogoFrAsset from "@/assets/image_soutien_v5.png.asset.json";
 import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
-import { ensureDemoDefault, disableDemoMode, isDemoClicked, markDemoClicked } from "@/lib/demo-mode";
+import { ensureDemoDefault, isDemoOff, toggleDemoMode } from "@/lib/demo-mode";
 import { AppFooter } from "@/components/AppFooter";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { FaqDialog } from "@/components/FaqDialog";
@@ -232,7 +232,7 @@ function RootComponent() {
     initLang();
     initJourneyFlags();
     ensureDemoDefault();
-    setDemoVisible(!isDemoClicked());
+    setDemoVisible(!isDemoOff());
   }, []);
 
   const isComparer = pathname === "/comparer";
