@@ -24,7 +24,7 @@ import { fallbackZone } from "@/lib/climate";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { decideCloudAction, markCloudSync, resetConsent } from "@/lib/cloud-gate";
 import { markCsvOrigin } from "@/lib/anti-bot";
-import { DEMO_LOADED_EVENT } from "@/lib/demo-mode";
+import { DEMO_LOADED_EVENT, isDemoActive } from "@/lib/demo-mode";
 
 export const Route = createFileRoute("/resultats")({
   head: () => ({
@@ -265,7 +265,8 @@ function Resultats() {
     });
   };
 
-  const unlocked = topbar.compareUnlocked;
+  const demoActive = isDemoActive();
+  const unlocked = demoActive || topbar.compareUnlocked;
 
   /**
    * Écriture cloud unique (création au clic sur « J'accepte », ou mise à jour
@@ -314,6 +315,13 @@ function Resultats() {
   useEffect(() => {
     if (gateRan.current || !hasData) return;
     gateRan.current = true;
+    // La fiche de démonstration ne doit jamais être soumise aux délais
+    // anti-robot ni au dialogue d'écriture réservé aux vrais pianos.
+    if (demoActive) {
+      setBlocked(false);
+      setCompareUnlocked(true);
+      return;
+    }
     const decision = decideCloudAction({ accepted: unlocked, rows });
     if (decision.kind === "blocked") {
       setBlocked(true);
@@ -321,7 +329,7 @@ function Resultats() {
       return;
     }
     if (decision.kind === "silentUpsert") void writeCloud(true);
-  }, [hasData, unlocked, rows]);
+  }, [demoActive, hasData, unlocked, rows]);
 
   return (
     <main className="mx-auto w-full max-w-[1120px] px-6 pb-10 pt-20">

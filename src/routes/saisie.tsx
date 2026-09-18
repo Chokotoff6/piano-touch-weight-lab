@@ -3094,6 +3094,13 @@ function Index() {
             disabled={!badgeVisible}
             onClick={() => {
               if (!badgeVisible) return;
+              // Le jeu de démonstration est déjà isolé du Cloud réel et chargé
+              // depuis sa fiche tampon dédiée : aucun filtre temporel humain ni
+              // aucune décision d'écriture ne doivent bloquer sa consultation.
+              if (isDemoActive()) {
+                navigate({ to: "/resultats" });
+                return;
+              }
               // Étape 1 de l'aiguilleur : filtre anti-robot avant toute navigation.
               if (!passesBotChecks(honeypot)) {
                 resetConsent();
