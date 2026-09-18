@@ -7,6 +7,8 @@ import {
   loadPianoProfileById,
   DEMO_PIANO_BUFFER_UUID,
   CURRENT_PIANO_KEY,
+  normalizeTypePiano,
+  normalizeWho,
 } from "@/lib/current-piano";
 import { setCompareUnlocked, setGateReady, setResultsVisited } from "@/lib/topbar-store";
 import { resetConsent } from "@/lib/cloud-gate";
