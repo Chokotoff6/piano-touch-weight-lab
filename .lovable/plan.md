@@ -2,6 +2,7 @@
 
 ## Résultat attendu
 - En Mode Zoom uniquement, un mini-panneau apparaît en bas à gauche à l'intérieur du cadre du graphique, à côté du bouton de cycle centré.
+- Condition d'affichage stricte : le mini-panneau n'est rendu QUE si les 3 sources sont actives (piano actuel présent, Cloud ou import CSV actif, cible activée). Si l'une manque (affichage simplifié), le panneau est entièrement masqué.
 - Il liste les 3 courbes avec leur libellé réel, coloré comme leur ligne :
   - « Piano actuel » / « Piano actuel N+B » (FR) ou équivalents EN → texte noir
   - « Cloud » / « Cloud N+B » (ou « Import CSV ») → texte orange (bleu si import CSV)
