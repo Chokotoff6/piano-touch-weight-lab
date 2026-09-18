@@ -137,13 +137,12 @@ export function disableDemoMode() {
 }
 
 /**
- * Le mode démo est actif à chaque nouvelle session tant que le bouton noir
- * n'a pas été cliqué, même si l'interrupteur permanent était resté sur "0".
+ * Le mode démo est actif par défaut tant que l'interrupteur n'est pas sur OFF.
  */
 export function ensureDemoDefault() {
   if (!isBrowser()) return;
   try {
-    if (isDemoClicked()) return;
+    if (isDemoOff()) return;
     if (window.localStorage.getItem(DEMO_MODE_KEY) !== "1") {
       enableDemoMode();
     }
