@@ -528,7 +528,8 @@ function currentLinesFor(familyId: string, keyFilter: KeyFilter, baseName = "Pia
   if (keyFilter === "split") return [whiteLine, blackLine];
   if (keyFilter === "white") return [whiteLine];
   if (keyFilter === "black") return [blackLine];
-  return [{ dataKey: metric[0], name: baseName, shortName: baseName, color: "#000000", real: true }];
+  const groupedSuffix = getLang() === "en" ? "B+W" : "N+B";
+  return [{ dataKey: metric[0], name: `${baseName} ${groupedSuffix}`, shortName: `${baseName} ${groupedSuffix}`, color: "#000000", real: true }];
 }
 
 // La vue clavier pilote aussi la courbe de référence (Cloud ou CSV) : en vue éclatée
@@ -547,7 +548,8 @@ function comparisonLinesFor(familyId: string, keyFilter: KeyFilter, name: string
   if (keyFilter === "split") return [whiteLine, blackLine];
   if (keyFilter === "white") return [whiteLine];
   if (keyFilter === "black") return [blackLine];
-  return [{ dataKey: metric[0], name, shortName: short, color: strong }];
+  const groupedSuffix = getLang() === "en" ? "B+W" : "N+B";
+  return [{ dataKey: metric[0], name: `${name} ${groupedSuffix}`, shortName: `${short} ${groupedSuffix}`, color: strong }];
 }
 
 
