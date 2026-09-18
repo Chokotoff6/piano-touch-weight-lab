@@ -38,7 +38,7 @@ import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 import likedLogoFrAsset from "@/assets/image_soutien_v5.png.asset.json";
 import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
-import { ensureDemoDefault, isDemoOff, toggleDemoMode } from "@/lib/demo-mode";
+import { ensureDemoDefault, disableDemoMode, isDemoClicked, markDemoClicked } from "@/lib/demo-mode";
 import { AppFooter } from "@/components/AppFooter";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { FaqDialog } from "@/components/FaqDialog";
@@ -232,7 +232,7 @@ function RootComponent() {
     initLang();
     initJourneyFlags();
     ensureDemoDefault();
-    setDemoVisible(!isDemoOff());
+    setDemoVisible(!isDemoClicked());
   }, []);
 
   const isComparer = pathname === "/comparer";
@@ -610,39 +610,34 @@ function RootComponent() {
           </div>
         </nav>
 
-      {/* Bouton « Mode démo » : interrupteur bistable permanent, présent sur
-          toutes les pages (hors accueil). Mauve pâle = ON, gris clair = OFF. */}
-      {!isHome && (
+      {/* Bouton « Mode démo » : sous le Header, aligné sur le bord gauche
+          de l'onglet « Accueil », présent sur toutes les pages tant qu'il
+          n'a pas été cliqué. */}
+      {demoVisible && !isHome && (
         <div className="relative !z-[60] mx-auto w-full max-w-7xl overflow-visible px-[100px] pb-2 pt-3">
           <div className="relative !z-[60] flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={() => {
-                const active = toggleDemoMode();
-                setDemoVisible(active);
-                window.location.href = "/saisie";
+                // Clic : destruction définitive du bouton pour toute la session,
+                // remise à blanc complète des données Info Piano et Saisie.
+                markDemoClicked();
+                disableDemoMode();
+                setDemoVisible(false);
+                window.location.reload();
               }}
-              aria-pressed={demoVisible}
-              className={
-                demoVisible
-                  ? "whitespace-nowrap rounded-md border-2 border-[#c4b5fd] bg-[#ede9fe] px-4 py-2 text-xs font-bold uppercase tracking-wide !text-[#4c1d95] transition-colors hover:bg-[#ddd6fe]"
-                  : "whitespace-nowrap rounded-md border-2 border-gray-300 bg-gray-100 px-4 py-2 text-xs font-bold uppercase tracking-wide !text-black transition-colors hover:bg-gray-200"
-              }
+              className="whitespace-nowrap rounded-md border-2 border-black bg-black px-4 py-2 text-xs font-bold uppercase tracking-wide !text-white transition-colors hover:bg-gray-800"
             >
               {lang === "en" ? "Demo mode" : "Mode démo"}
             </button>
-            {demoVisible && (
-              <InfoDot
-                label={lang === "en" ? "Demo mode" : "Mode démo"}
-                width={340}
-                {...(pathname === "/saisie" ? { autoOpenSessionKey: "ptw_demo_intro_seen" } : {})}
-                autoCloseMs={10000}
-              >
-                <span className="block whitespace-pre-line text-[14.5px]">
-                  {lang === "en" ? DEMO_INFO_EN : DEMO_INFO_FR}
-                </span>
-              </InfoDot>
-            )}
+            <InfoDot
+              label={lang === "en" ? "Demo mode" : "Mode démo"}
+              width={340}
+              {...(pathname === "/saisie" ? { autoOpenSessionKey: "ptw_demo_intro_seen" } : {})}
+              autoCloseMs={10000}
+            >
+              {lang === "en" ? DEMO_INFO_EN : DEMO_INFO_FR}
+            </InfoDot>
           </div>
         </div>
       )}

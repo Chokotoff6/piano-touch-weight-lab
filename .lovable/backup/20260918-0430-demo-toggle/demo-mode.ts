@@ -3,29 +3,28 @@
 // Comparer affichent immédiatement des graphiques.
 import { buildCurrentPiano, saveCurrentPiano, CURRENT_PIANO_KEY } from "@/lib/current-piano";
 import { setCompareUnlocked, setGateReady, setResultsVisited } from "@/lib/topbar-store";
-import { resetConsent } from "@/lib/cloud-gate";
 
 const DRAFT_ROWS_KEY = "ptw_draft_rows";
 const DRAFT_INFO_KEY = "ptw_draft_info";
 export const DEMO_MODE_KEY = "ptw_demo_mode";
-/** Interrupteur bistable : "1" = Mode démo sur OFF (sinon ON par défaut). */
-export const DEMO_OFF_KEY = "ptw_demo_off";
+/** Mémorise la sortie du mode démo : le bouton disparaît pour la session. */
+export const DEMO_CLICKED_KEY = "demo_mode_destroyed";
 
-/** Vrai si l'interrupteur « Mode démo » est sur OFF. */
-export function isDemoOff(): boolean {
+/** Vrai si l'utilisateur a déjà cliqué sur le bouton « Mode démo ». */
+export function isDemoClicked(): boolean {
   if (!isBrowser()) return false;
   try {
-    return window.sessionStorage.getItem(DEMO_OFF_KEY) === "1";
+    return window.sessionStorage.getItem(DEMO_CLICKED_KEY) === "true";
   } catch {
     return false;
   }
 }
 
-/** Positionne l'interrupteur bistable. */
-export function setDemoOff(off: boolean) {
+/** Enregistre le clic sur « Mode démo ». */
+export function markDemoClicked() {
   if (!isBrowser()) return;
   try {
-    window.sessionStorage.setItem(DEMO_OFF_KEY, off ? "1" : "0");
+    window.sessionStorage.setItem(DEMO_CLICKED_KEY, "true");
   } catch {
     /* stockage indisponible */
   }
@@ -67,12 +66,11 @@ function isBrowser() {
   return typeof window !== "undefined";
 }
 
-/** Actif tant que l'interrupteur n'est pas sur OFF. */
+/** Actif tant que le bouton noir n'a pas été cliqué dans la session. */
 export function isDemoActive(): boolean {
   if (!isBrowser()) return false;
-  return !isDemoOff();
+  return !isDemoClicked();
 }
-
 
 /** Charge le piano fictif et les 88 pesées dans le stockage local. */
 export function enableDemoMode() {
@@ -137,40 +135,17 @@ export function disableDemoMode() {
 }
 
 /**
- * Le mode démo est actif par défaut tant que l'interrupteur n'est pas sur OFF.
+ * Le mode démo est actif à chaque nouvelle session tant que le bouton noir
+ * n'a pas été cliqué, même si l'interrupteur permanent était resté sur "0".
  */
 export function ensureDemoDefault() {
   if (!isBrowser()) return;
   try {
-    if (isDemoOff()) return;
+    if (isDemoClicked()) return;
     if (window.localStorage.getItem(DEMO_MODE_KEY) !== "1") {
       enableDemoMode();
     }
   } catch {
     /* stockage indisponible */
   }
-}
-
-/**
- * Bascule l'interrupteur bistable.
- * - ON → OFF : purge des données de démo, accord d'enregistrement remis à
- *   « non accepté » (tous les champs Info Piano redeviennent modifiables) ;
- * - OFF → ON : rechargement du jeu de démonstration.
- * Retourne le nouvel état (true = Mode démo actif).
- */
-export function toggleDemoMode(): boolean {
-  if (!isBrowser()) return false;
-  const nextActive = isDemoOff();
-  setDemoOff(!nextActive);
-  if (nextActive) {
-    enableDemoMode();
-  } else {
-    disableDemoMode();
-    try {
-      resetConsent();
-    } catch {
-      /* store indisponible */
-    }
-  }
-  return nextActive;
 }

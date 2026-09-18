@@ -3,9 +3,9 @@ import { createPortal } from "react-dom";
 import { useFadeClose } from "@/lib/use-fade-close";
 
 export const DEMO_INFO_FR =
-  "Mode Démo pré-remplit l'application avec un jeu de données permettant de tester les différents modules.\nLa base de données CLOUD utilisée est également fictive.";
+  "Le Mode Démo pré-remplit instantanément l'application avec un jeu complet de données permettant de tester les différents modules. La base de données CLOUD utilisée est également fictive. Pour sortir de ce mode, cliquez sur le bouton Mode Démo.";
 export const DEMO_INFO_EN =
-  "Demo Mode pre-populates the application with a dataset allowing you to test the different modules.\nThe CLOUD database used is also virtual.";
+  "Demo Mode instantly pre-populates the application with a complete dataset, allowing you to test the different modules. The cloud database used is also virtual. To exit this mode, click the Demo Mode button.";
 
 const SEEN_KEY = "ptw_demo_intro_seen";
 
@@ -44,7 +44,7 @@ export function DemoIntro({ en }: { en: boolean }) {
       role="presentation"
     >
       <div
-        className="max-w-md whitespace-pre-line rounded-lg border border-gray-300 p-5 text-left text-base leading-relaxed !text-gray-900 shadow-xl"
+        className="max-w-md rounded-lg border border-gray-300 p-5 text-left text-sm leading-relaxed !text-gray-900 shadow-xl"
         style={{ backgroundColor: "#FFFFFF" }}
         onClick={(event) => event.stopPropagation()}
         role="dialog"
