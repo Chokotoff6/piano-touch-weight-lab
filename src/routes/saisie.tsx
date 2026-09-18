@@ -1409,6 +1409,8 @@ function Index() {
     });
 
   const setValue = (index: number, field: "wa" | "wd", value: string) => {
+    // Frappe pendant la cascade démo : on la termine sans écraser la saisie.
+    finishCascadeEarly();
     markDirty();
     clearError(`${index}-${field}`);
     // Nouvelle frappe : l'état figé est levé, les alertes redeviennent autorisées.
