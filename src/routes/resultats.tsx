@@ -24,6 +24,7 @@ import { fallbackZone } from "@/lib/climate";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { decideCloudAction, markCloudSync, resetConsent } from "@/lib/cloud-gate";
 import { markCsvOrigin } from "@/lib/anti-bot";
+import { DEMO_LOADED_EVENT } from "@/lib/demo-mode";
 
 export const Route = createFileRoute("/resultats")({
   head: () => ({
