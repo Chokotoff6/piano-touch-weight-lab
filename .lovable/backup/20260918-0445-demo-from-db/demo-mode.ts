@@ -1,13 +1,7 @@
 // Mode démonstration : jeu de données fictif (piano + 88 pesées cohérentes)
 // écrit dans les mêmes clés locales que la page Saisie, afin que Résultats et
 // Comparer affichent immédiatement des graphiques.
-import {
-  buildCurrentPiano,
-  saveCurrentPiano,
-  loadPianoProfileById,
-  DEMO_PIANO_BUFFER_UUID,
-  CURRENT_PIANO_KEY,
-} from "@/lib/current-piano";
+import { buildCurrentPiano, saveCurrentPiano, CURRENT_PIANO_KEY } from "@/lib/current-piano";
 import { setCompareUnlocked, setGateReady, setResultsVisited } from "@/lib/topbar-store";
 import { resetConsent } from "@/lib/cloud-gate";
 
@@ -80,35 +74,32 @@ export function isDemoActive(): boolean {
 }
 
 
-/** Évènement émis quand le jeu de démonstration est (re)chargé. */
-export const DEMO_LOADED_EVENT = "ptw-demo-loaded";
-
-type DemoRows = Array<{ wa: string; wd: string }>;
-
-/** Écrit le jeu de démonstration (fiche + pesées) dans le stockage local. */
-function applyDemoData(info: Record<string, string>, rows: DemoRows) {
+/** Charge le piano fictif et les 88 pesées dans le stockage local. */
+export function enableDemoMode() {
+  if (!isBrowser()) return;
+  const rows = buildDemoRows();
   try {
     window.localStorage.setItem(DEMO_MODE_KEY, "1");
     window.localStorage.setItem(DRAFT_ROWS_KEY, JSON.stringify(rows));
-    window.localStorage.setItem(DRAFT_INFO_KEY, JSON.stringify(info));
+    window.localStorage.setItem(DRAFT_INFO_KEY, JSON.stringify(DEMO_INFO));
   } catch {
     /* stockage indisponible */
   }
   try {
     saveCurrentPiano(
       buildCurrentPiano({
-        brand: info["marque"] ?? "",
-        model: info["modele"] ?? "",
-        serial_number: info["sn_num"] ?? "",
-        type_piano: info["type_piano"] ?? "",
-        manufacture_year: Number(info["fabrication"]) || null,
-        climate_zone: info["climate_zone"] || "Standard",
-        maintenance_type: info["entretien"] ?? "",
-        usage_level: info["usage_level"] ?? "",
-        city: info["ville"] ?? "",
-        country: info["pays"] ?? "",
-        remarks: info["remarques"] ?? "",
-        mesureDateRaw: info["measurement_date"] ?? "",
+        brand: DEMO_INFO["marque"] ?? "",
+        model: DEMO_INFO["modele"] ?? "",
+        serial_number: DEMO_INFO["sn_num"] ?? "",
+        type_piano: DEMO_INFO["type_piano"] ?? "",
+        manufacture_year: Number(DEMO_INFO["fabrication"]) || null,
+        climate_zone: "Standard",
+        maintenance_type: DEMO_INFO["entretien"] ?? "",
+        usage_level: DEMO_INFO["usage_level"] ?? "",
+        city: DEMO_INFO["ville"] ?? "",
+        country: DEMO_INFO["pays"] ?? "",
+        remarks: DEMO_INFO["remarques"] ?? "",
+        mesureDateRaw: DEMO_INFO["measurement_date"] ?? "",
         wa: rows.map((r) => r.wa),
         wd: rows.map((r) => r.wd),
       }),
@@ -123,64 +114,6 @@ function applyDemoData(info: Record<string, string>, rows: DemoRows) {
   } catch {
     /* store indisponible */
   }
-  try {
-    window.dispatchEvent(new CustomEvent(DEMO_LOADED_EVENT));
-  } catch {
-    /* évènement indisponible */
-  }
-}
-
-/** Mémorise que la fiche de démo a bien été lue en base pour cette session. */
-const DEMO_SYNCED_KEY = "ptw_demo_synced";
-
-/** Charge le piano de secours (objet local) : affichage immédiat, sans réseau. */
-export function enableDemoMode() {
-  if (!isBrowser()) return;
-  applyDemoData(DEMO_INFO, buildDemoRows());
-}
-
-/**
- * Charge le VRAI piano de démonstration depuis la base (ligne tampon
- * `00000000-0000-0000-0000-000000000001`). L'objet local reste un filet de
- * sécurité si la base est injoignable.
- */
-export async function enableDemoModeAsync() {
-  if (!isBrowser()) return;
-  enableDemoMode();
-  try {
-    const profile = await loadPianoProfileById(DEMO_PIANO_BUFFER_UUID, false);
-    if (!profile) return;
-    try {
-      window.sessionStorage.setItem(DEMO_SYNCED_KEY, "1");
-    } catch {
-      /* stockage indisponible */
-    }
-    const info: Record<string, string> = {
-      marque: profile.brand ?? "",
-      modele: profile.model ?? "",
-      type_piano: profile.type_piano ?? "",
-      sn_num: profile.serial_number ?? "",
-      fabrication: profile.manufacture_year ? String(profile.manufacture_year) : "",
-      measurement_date: profile.measurement_date ?? "",
-      pays: profile.country ?? "",
-      ville: profile.city ?? "",
-      climate_zone: profile.climate_zone ?? "",
-      entretien: profile.maintenance_type ?? "",
-      usage_level: profile.usage_level ?? "",
-      remarques: profile.remarks ?? "",
-    };
-    const hasMeasures =
-      Array.isArray(profile.wa_values) && profile.wa_values.length === 88;
-    const rows: DemoRows = hasMeasures
-      ? profile.wa_values.map((wa, i) => ({
-          wa: Number.isFinite(wa) ? String(wa) : "",
-          wd: Number.isFinite(profile.wd_values?.[i]) ? String(profile.wd_values[i]) : "",
-        }))
-      : buildDemoRows();
-    applyDemoData(info, rows);
-  } catch {
-    /* base injoignable : on garde le jeu local */
-  }
 }
 
 /** Retire toutes les données de démonstration. */
@@ -191,7 +124,6 @@ export function disableDemoMode() {
     window.localStorage.removeItem(DRAFT_ROWS_KEY);
     window.localStorage.removeItem(DRAFT_INFO_KEY);
     window.localStorage.removeItem(CURRENT_PIANO_KEY);
-    window.sessionStorage.removeItem(DEMO_SYNCED_KEY);
   } catch {
     /* stockage indisponible */
   }
@@ -211,9 +143,8 @@ export function ensureDemoDefault() {
   if (!isBrowser()) return;
   try {
     if (isDemoOff()) return;
-    const synced = window.sessionStorage.getItem(DEMO_SYNCED_KEY) === "1";
-    if (!synced || window.localStorage.getItem(DEMO_MODE_KEY) !== "1") {
-      void enableDemoModeAsync();
+    if (window.localStorage.getItem(DEMO_MODE_KEY) !== "1") {
+      enableDemoMode();
     }
   } catch {
     /* stockage indisponible */
@@ -232,12 +163,7 @@ export function toggleDemoMode(): boolean {
   const nextActive = isDemoOff();
   setDemoOff(!nextActive);
   if (nextActive) {
-    try {
-      window.sessionStorage.removeItem(DEMO_SYNCED_KEY);
-    } catch {
-      /* stockage indisponible */
-    }
-    void enableDemoModeAsync();
+    enableDemoMode();
   } else {
     disableDemoMode();
     try {
