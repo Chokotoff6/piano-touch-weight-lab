@@ -30,16 +30,6 @@ export function markDemoClicked() {
   }
 }
 
-/** Réarme le mode démo pour la session (bouton noir réaffiché, fiches démo relues). */
-export function rearmDemoMode() {
-  if (!isBrowser()) return;
-  try {
-    window.sessionStorage.removeItem(DEMO_CLICKED_KEY);
-  } catch {
-    /* stockage indisponible */
-  }
-  enableDemoMode();
-}
 
 // Jumeau exact de la fiche tampon de démonstration en base (YAMAHA U3 Upright,
 // 2020, climat Standard) : indispensable pour que la requête Cloud de la page
@@ -76,14 +66,10 @@ function isBrowser() {
   return typeof window !== "undefined";
 }
 
-/** Vrai si le mode démo est actif (inactif par défaut). */
+/** Actif tant que le bouton noir n'a pas été cliqué dans la session. */
 export function isDemoActive(): boolean {
   if (!isBrowser()) return false;
-  try {
-    return window.localStorage.getItem(DEMO_MODE_KEY) === "1";
-  } catch {
-    return false;
-  }
+  return !isDemoClicked();
 }
 
 /** Charge le piano fictif et les 88 pesées dans le stockage local. */
@@ -148,12 +134,15 @@ export function disableDemoMode() {
   }
 }
 
-/** Le mode démo est actif par défaut (bouton vert) tant qu'il n'a pas été quitté. */
+/**
+ * Le mode démo est actif à chaque nouvelle session tant que le bouton noir
+ * n'a pas été cliqué, même si l'interrupteur permanent était resté sur "0".
+ */
 export function ensureDemoDefault() {
   if (!isBrowser()) return;
   try {
     if (isDemoClicked()) return;
-    if (window.localStorage.getItem(DEMO_MODE_KEY) === null) {
+    if (window.localStorage.getItem(DEMO_MODE_KEY) !== "1") {
       enableDemoMode();
     }
   } catch {
