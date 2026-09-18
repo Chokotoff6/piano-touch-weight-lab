@@ -4,16 +4,16 @@
 // Lecture directe du stockage (pas d'import de demo-mode.ts) pour éviter
 // tout cycle d'import avec current-piano.ts.
 
-const DEMO_DESTROYED_KEY = "demo_mode_destroyed";
+const DEMO_OFF_KEY = "ptw_demo_off";
 
 /**
  * Règle unique, de session : le Mode démo est actif dès l'ouverture de
- * l'application et le reste tant que le bouton noir n'a pas été cliqué.
+ * l'application et le reste tant que l'interrupteur n'est pas sur OFF.
  */
 export function demoScopeActive(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    return window.sessionStorage.getItem(DEMO_DESTROYED_KEY) !== "true";
+    return window.sessionStorage.getItem(DEMO_OFF_KEY) !== "1";
   } catch {
     return false;
   }
