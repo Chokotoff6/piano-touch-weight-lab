@@ -1,7 +1,13 @@
 // Mode démonstration : jeu de données fictif (piano + 88 pesées cohérentes)
 // écrit dans les mêmes clés locales que la page Saisie, afin que Résultats et
 // Comparer affichent immédiatement des graphiques.
-import { buildCurrentPiano, saveCurrentPiano, CURRENT_PIANO_KEY } from "@/lib/current-piano";
+import {
+  buildCurrentPiano,
+  saveCurrentPiano,
+  loadPianoProfileById,
+  DEMO_PIANO_BUFFER_UUID,
+  CURRENT_PIANO_KEY,
+} from "@/lib/current-piano";
 import { setCompareUnlocked, setGateReady, setResultsVisited } from "@/lib/topbar-store";
 import { resetConsent } from "@/lib/cloud-gate";
 
