@@ -134,12 +134,15 @@ export function disableDemoMode() {
   }
 }
 
-/** Le mode démo est actif par défaut (bouton vert) tant qu'il n'a pas été quitté. */
+/**
+ * Le mode démo est actif à chaque nouvelle session tant que le bouton noir
+ * n'a pas été cliqué, même si l'interrupteur permanent était resté sur "0".
+ */
 export function ensureDemoDefault() {
   if (!isBrowser()) return;
   try {
     if (isDemoClicked()) return;
-    if (window.localStorage.getItem(DEMO_MODE_KEY) === null) {
+    if (window.localStorage.getItem(DEMO_MODE_KEY) !== "1") {
       enableDemoMode();
     }
   } catch {
