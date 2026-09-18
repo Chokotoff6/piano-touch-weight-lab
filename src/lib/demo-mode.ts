@@ -46,7 +46,8 @@ export function setDemoOff(off: boolean) {
 export const DEMO_INFO: Record<string, string> = {
   marque: "YAMAHA",
   modele: "U3",
-  type_piano: "Upright",
+  // Valeur interne du formulaire (affichée « Upright » en anglais à l'écran).
+  type_piano: "Droit",
   sn_num: "652444",
   fabrication: "2020",
   measurement_date: "2020-09-17",
@@ -54,6 +55,7 @@ export const DEMO_INFO: Record<string, string> = {
   ville: "Brussels",
   entretien: "Standard maintenance only",
   usage_level: "Medium",
+  profil_saisie: "Pianiste / Particulier",
   remarques: "Virtual demonstration piano profile.",
 };
 
