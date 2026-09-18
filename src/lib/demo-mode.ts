@@ -150,3 +150,27 @@ export function ensureDemoDefault() {
     /* stockage indisponible */
   }
 }
+
+/**
+ * Bascule l'interrupteur bistable.
+ * - ON → OFF : purge des données de démo, accord d'enregistrement remis à
+ *   « non accepté » (tous les champs Info Piano redeviennent modifiables) ;
+ * - OFF → ON : rechargement du jeu de démonstration.
+ * Retourne le nouvel état (true = Mode démo actif).
+ */
+export function toggleDemoMode(): boolean {
+  if (!isBrowser()) return false;
+  const nextActive = isDemoOff();
+  setDemoOff(!nextActive);
+  if (nextActive) {
+    enableDemoMode();
+  } else {
+    disableDemoMode();
+    try {
+      resetConsent();
+    } catch {
+      /* store indisponible */
+    }
+  }
+  return nextActive;
+}
