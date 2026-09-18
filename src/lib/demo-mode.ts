@@ -191,6 +191,7 @@ export function disableDemoMode() {
     window.localStorage.removeItem(DRAFT_ROWS_KEY);
     window.localStorage.removeItem(DRAFT_INFO_KEY);
     window.localStorage.removeItem(CURRENT_PIANO_KEY);
+    window.sessionStorage.removeItem(DEMO_SYNCED_KEY);
   } catch {
     /* stockage indisponible */
   }
