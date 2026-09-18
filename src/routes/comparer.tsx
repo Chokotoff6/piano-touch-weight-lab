@@ -484,7 +484,7 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
 
 
 
-type LineDef = { dataKey: SeriesKey; name: string; shortName: string; color: string; real?: boolean; hidden?: boolean };
+type LineDef = { dataKey: SeriesKey; name: string; shortName: string; color: string; real?: boolean; hidden?: boolean; dashed?: boolean };
 const FAMILIES: Array<{ id: string; title: string; domain: [number, number]; lines: LineDef[] }> = [
   { id: "wa", title: "Poids descendant", domain: [55, 85], lines: [{ dataKey: "sameWa", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWa", name: "Cible", shortName: "Cible", color: "#10b981" }] },
   { id: "wd", title: "Poids remontant", domain: [50, 70], lines: [{ dataKey: "sameWd", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWd", name: "Cible", shortName: "Cible", color: "#10b981" }] },
@@ -523,7 +523,8 @@ function currentLinesFor(familyId: string, keyFilter: KeyFilter, baseName = "Pia
   const blackWord = getLang() === "en" ? "blacks" : "noires";
   const white = baseName ? `${baseName} ${whiteWord}` : whiteWord;
   const black = baseName ? `${baseName} ${blackWord}` : blackWord;
-  const whiteLine: LineDef = { dataKey: metric[1], name: white, shortName: white, color: "#6b7280", real: true };
+  // Blanches = pointillés « 5 5 », noires = trait continu ; couleurs d'origine inchangées.
+  const whiteLine: LineDef = { dataKey: metric[1], name: white, shortName: white, color: "#6b7280", real: true, dashed: true };
   const blackLine: LineDef = { dataKey: metric[2], name: black, shortName: black, color: "#000000", real: true };
   if (keyFilter === "split") return [whiteLine, blackLine];
   if (keyFilter === "white") return [whiteLine];
@@ -543,7 +544,7 @@ function comparisonLinesFor(familyId: string, keyFilter: KeyFilter, name: string
   const light = isCsv ? "#93c5fd" : "#fdba74";
   const whiteWord = getLang() === "en" ? "whites" : "blanches";
   const blackWord = getLang() === "en" ? "blacks" : "noires";
-  const whiteLine: LineDef = { dataKey: metric[1], name: `${name} ${whiteWord}`, shortName: `${short} ${whiteWord}`, color: light };
+  const whiteLine: LineDef = { dataKey: metric[1], name: `${name} ${whiteWord}`, shortName: `${short} ${whiteWord}`, color: light, dashed: true };
   const blackLine: LineDef = { dataKey: metric[2], name: `${name} ${blackWord}`, shortName: `${short} ${blackWord}`, color: strong };
   if (keyFilter === "split") return [whiteLine, blackLine];
   if (keyFilter === "white") return [whiteLine];
@@ -1008,6 +1009,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
                 name={line.name}
                 stroke={line.hidden ? "transparent" : color}
                 strokeWidth={2}
+                strokeDasharray={line.dashed && !line.hidden ? "5 5" : undefined}
                 activeDot={line.hidden ? false : { r: zoomed ? 7.5 : 5, fill: color, stroke: "#ffffff", strokeWidth: 2 }}
                 dot={line.real ? <DotComp /> : false}
                 connectNulls={true}
