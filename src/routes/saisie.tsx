@@ -571,6 +571,7 @@ function Index() {
           ville: saved.city ?? "",
           entretien: saved.maintenance_type ?? "",
           usage_level: saved.usage_level ?? "",
+          profil_saisie: saved.who ?? "",
           remarques: saved.remarks ?? "",
         });
       }
