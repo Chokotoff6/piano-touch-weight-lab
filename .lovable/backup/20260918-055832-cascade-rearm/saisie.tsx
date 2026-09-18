@@ -543,7 +543,7 @@ function Index() {
 
   const draftLoaded = useRef(false);
 
-  // --- Animation cascade Mode Démo (rejouée à chaque réactivation) -------
+  // --- Animation cascade Mode Démo (une seule fois par session) ------------
   const cascadeTimer = useRef<number | null>(null);
   const cascadeTarget = useRef<Row[] | null>(null);
   const cascadeIndex = useRef(0);
@@ -688,11 +688,7 @@ function Index() {
         const rawRows = window.localStorage.getItem(DRAFT_ROWS_KEY);
         const parsedRows = rawRows ? (JSON.parse(rawRows) as Row[]) : null;
         if (Array.isArray(parsedRows) && parsedRows.length === 88) {
-          // Si la cascade est déjà en cours, on ne l'écrase pas avec la fiche
-          // arrivée du réseau : l'animation se termine avec ses propres données.
-          if (cascadeTimer.current === null && !maybeStartCascade(parsedRows)) {
-            setRows(parsedRows);
-          }
+          if (!maybeStartCascade(parsedRows)) setRows(parsedRows);
         }
       } catch {
         /* stockage indisponible */

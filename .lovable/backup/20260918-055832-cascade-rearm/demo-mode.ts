@@ -118,25 +118,11 @@ export function hasSeenDemoCascade(): boolean {
   }
 }
 
-/** Marque la cascade comme jouée (jusqu'au prochain réarmement du Mode Démo). */
+/** Marque la cascade comme jouée pour le reste de la session. */
 export function markDemoCascadeSeen() {
   if (!isBrowser()) return;
   try {
     window.sessionStorage.setItem(DEMO_CASCADE_SEEN_KEY, "1");
-  } catch {
-    /* stockage indisponible */
-  }
-}
-
-/**
- * Réarme l'animation : appelé à chaque bascule de l'interrupteur Mode Démo
- * (OFF et ON) pour que le scan des 88 touches se rejoue à la prochaine
- * entrée sur la page Mesures une fois le Mode Démo réactivé.
- */
-export function resetDemoCascadeSeen() {
-  if (!isBrowser()) return;
-  try {
-    window.sessionStorage.removeItem(DEMO_CASCADE_SEEN_KEY);
   } catch {
     /* stockage indisponible */
   }
@@ -242,9 +228,6 @@ export function toggleDemoMode(): boolean {
   if (!isBrowser()) return false;
   const nextActive = isDemoOff();
   setDemoOff(!nextActive);
-  // Réarmement systématique de l'animation cascade, quel que soit le sens
-  // de la bascule : OFF la remet à zéro, ON la rend prête à rejouer.
-  resetDemoCascadeSeen();
   if (nextActive) {
     try {
       window.sessionStorage.removeItem(DEMO_SYNCED_KEY);
