@@ -542,6 +542,71 @@ function Index() {
   // --- Persistance locale (filet de sécurité) -------------------------------
 
   const draftLoaded = useRef(false);
+
+  // --- Animation cascade Mode Démo (une seule fois par session) ------------
+  const cascadeTimer = useRef<number | null>(null);
+  const cascadeTarget = useRef<Row[] | null>(null);
+  const cascadeIndex = useRef(0);
+  const cascadeStarted = useRef(false);
+
+  const stopCascadeTimer = () => {
+    if (cascadeTimer.current !== null) {
+      window.clearInterval(cascadeTimer.current);
+      cascadeTimer.current = null;
+    }
+  };
+
+  /**
+   * Démarre le remplissage animé des 88 touches (Mode Démo uniquement,
+   * première visite de la session). Renvoie true si la cascade a démarré —
+   * l'appelant ne doit alors PAS appliquer les lignes directement.
+   */
+  const maybeStartCascade = (fullRows: Row[]): boolean => {
+    if (cascadeStarted.current) return false;
+    if (!isDemoActive() || hasSeenDemoCascade()) return false;
+    if (!Array.isArray(fullRows) || fullRows.length !== 88) return false;
+    if (!fullRows.some((r) => r.wa || r.wd)) return false;
+    cascadeStarted.current = true;
+    cascadeTarget.current = fullRows;
+    cascadeIndex.current = 0;
+    setRows(EMPTY.map((r) => ({ ...r })));
+    cascadeTimer.current = window.setInterval(() => {
+      const target = cascadeTarget.current;
+      if (!target) {
+        stopCascadeTimer();
+        return;
+      }
+      const i = cascadeIndex.current;
+      const row = target[i];
+      if (row) {
+        setRows((prev) => prev.map((r, idx) => (idx === i ? { ...row } : r)));
+      }
+      cascadeIndex.current = i + 1;
+      if (i + 1 >= 88) {
+        stopCascadeTimer();
+        cascadeTarget.current = null;
+        markDemoCascadeSeen();
+      }
+    }, DEMO_CASCADE_INTERVAL_MS);
+    return true;
+  };
+
+  /**
+   * Frappe utilisateur pendant la cascade : on termine instantanément en
+   * remplissant les touches restantes sans écraser ce qui est déjà saisi.
+   */
+  const finishCascadeEarly = () => {
+    const target = cascadeTarget.current;
+    if (!target) return;
+    stopCascadeTimer();
+    setRows((prev) => prev.map((r, i) => (r.wa || r.wd ? r : { ...target[i]! })));
+    cascadeTarget.current = null;
+    markDemoCascadeSeen();
+  };
+
+  // Nettoyage du minuteur à la sortie de la page.
+  useEffect(() => stopCascadeTimer, []);
+
   useEffect(() => {
     // Hydratation au démarrage : le brouillon local prime, sinon current_piano.
     const saved = loadCurrentPiano();
@@ -549,7 +614,7 @@ function Index() {
       const raw = window.localStorage.getItem(DRAFT_ROWS_KEY);
       const parsed = raw ? (JSON.parse(raw) as Row[]) : null;
       if (Array.isArray(parsed) && parsed.length === 88 && parsed.some((r) => r.wa || r.wd)) {
-        setRows(parsed);
+        if (!maybeStartCascade(parsed)) setRows(parsed);
       } else if (saved && Array.isArray(saved.wa_values) && saved.wa_values.length === 88) {
         setRows(
           saved.wa_values.map((wa, i) => ({
