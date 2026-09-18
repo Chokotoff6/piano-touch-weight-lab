@@ -20,11 +20,43 @@ export type CurrentPiano = {
   city: string;
   country: string;
   remarks: string;
+  /** Auteur de la mesure (colonne `who` en base) : pro ou particulier. */
+  who?: string | undefined;
   wa_values: number[];
   wd_values: number[];
   friction_values: number[];
   balance_values: number[];
 };
+
+/**
+ * Ramène toute écriture du type de piano (anglaise en base, française à
+ * l'écran) vers le vocabulaire interne attendu par les boutons radio.
+ */
+export function normalizeTypePiano(raw: string | null | undefined): string {
+  const s = String(raw ?? "").trim().toLowerCase();
+  if (!s) return "";
+  if (s.includes("upright") || s.includes("droit")) return "Droit";
+  if (s.includes("grand") || s.includes("queue")) return "Queue";
+  return "";
+}
+
+/** Valeurs internes du menu « Utilisateur » de la page Saisie. */
+export const PROFIL_SAISIE_PRO = "Technicien / Facteur de pianos";
+export const PROFIL_SAISIE_PRIVATE = "Pianiste / Particulier";
+
+/**
+ * Convertit la colonne `who` (base) vers l'option exacte du menu déroulant.
+ * Même règle de reconnaissance que le filtre QUI de la page Comparer.
+ */
+export function normalizeWho(raw: string | null | undefined): string {
+  const s = String(raw ?? "").trim().toLowerCase();
+  if (!s) return "";
+  if (s.includes("techni") || s.includes("facteur") || s.includes("pro")) return PROFIL_SAISIE_PRO;
+  if (s.includes("private") || s.includes("particulier") || s.includes("pianist")) {
+    return PROFIL_SAISIE_PRIVATE;
+  }
+  return "";
+}
 
 const num = (value: string | number | null | undefined) => {
   const raw = typeof value === "number" ? value : String(value ?? "").trim().replace(",", ".");
