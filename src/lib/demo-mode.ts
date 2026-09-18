@@ -160,7 +160,7 @@ export async function enableDemoModeAsync() {
     const info: Record<string, string> = {
       marque: profile.brand ?? "",
       modele: profile.model ?? "",
-      type_piano: profile.type_piano ?? "",
+      type_piano: normalizeTypePiano(profile.type_piano),
       sn_num: profile.serial_number ?? "",
       fabrication: profile.manufacture_year ? String(profile.manufacture_year) : "",
       measurement_date: profile.measurement_date ?? "",
@@ -169,6 +169,7 @@ export async function enableDemoModeAsync() {
       climate_zone: profile.climate_zone ?? "",
       entretien: profile.maintenance_type ?? "",
       usage_level: profile.usage_level ?? "",
+      profil_saisie: normalizeWho(profile.who),
       remarques: profile.remarks ?? "",
     };
     const hasMeasures =
