@@ -878,6 +878,31 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           <span className="!text-black">{bwLabel}</span>
         </button>
       )}
+      {zoomed && showCurveToggles && (
+        <div
+          data-pdf-hide
+          className="absolute bottom-2 left-2 z-20 flex flex-col gap-0.5 rounded-lg border border-gray-300 bg-white px-2 py-1 shadow-sm"
+          onClick={(event) => event.stopPropagation()}
+        >
+          {([
+            { group: "current" as const, label: keyFilter === "all" ? currentLines[0]?.name ?? currentBaseName : currentBaseName, color: "#000000", off: zoomCurveOff.current },
+            { group: "reference" as const, label: keyFilter === "all" ? referenceLines[0]?.name ?? comparisonLabel : comparisonLabel, color: csvActive ? "#2563EB" : "#f97316", off: zoomCurveOff.reference },
+            { group: "target" as const, label: targetLabel, color: "#10b981", off: zoomCurveOff.target },
+          ]).map((entry) => (
+            <button
+              key={entry.group}
+              type="button"
+              aria-pressed={!entry.off}
+              aria-label={entry.label}
+              onClick={() => setZoomCurveOff((state) => ({ ...state, [entry.group]: !state[entry.group] }))}
+              className={`text-left text-[0.68rem] font-semibold leading-tight transition-opacity ${entry.off ? "opacity-40" : "opacity-100"}`}
+              style={{ color: entry.color }}
+            >
+              {entry.label}
+            </button>
+          ))}
+        </div>
+      )}
       {zoomed && showZoomHelp && (
         <div className="pointer-events-none absolute inset-x-0 top-11 z-10 flex flex-col items-center gap-1">
           <WheelHintIcon />
