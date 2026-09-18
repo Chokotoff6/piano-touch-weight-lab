@@ -3,28 +3,29 @@
 // Comparer affichent immédiatement des graphiques.
 import { buildCurrentPiano, saveCurrentPiano, CURRENT_PIANO_KEY } from "@/lib/current-piano";
 import { setCompareUnlocked, setGateReady, setResultsVisited } from "@/lib/topbar-store";
+import { resetConsent } from "@/lib/cloud-gate";
 
 const DRAFT_ROWS_KEY = "ptw_draft_rows";
 const DRAFT_INFO_KEY = "ptw_draft_info";
 export const DEMO_MODE_KEY = "ptw_demo_mode";
-/** Mémorise la sortie du mode démo : le bouton disparaît pour la session. */
-export const DEMO_CLICKED_KEY = "demo_mode_destroyed";
+/** Interrupteur bistable : "1" = Mode démo sur OFF (sinon ON par défaut). */
+export const DEMO_OFF_KEY = "ptw_demo_off";
 
-/** Vrai si l'utilisateur a déjà cliqué sur le bouton « Mode démo ». */
-export function isDemoClicked(): boolean {
+/** Vrai si l'interrupteur « Mode démo » est sur OFF. */
+export function isDemoOff(): boolean {
   if (!isBrowser()) return false;
   try {
-    return window.sessionStorage.getItem(DEMO_CLICKED_KEY) === "true";
+    return window.sessionStorage.getItem(DEMO_OFF_KEY) === "1";
   } catch {
     return false;
   }
 }
 
-/** Enregistre le clic sur « Mode démo ». */
-export function markDemoClicked() {
+/** Positionne l'interrupteur bistable. */
+export function setDemoOff(off: boolean) {
   if (!isBrowser()) return;
   try {
-    window.sessionStorage.setItem(DEMO_CLICKED_KEY, "true");
+    window.sessionStorage.setItem(DEMO_OFF_KEY, off ? "1" : "0");
   } catch {
     /* stockage indisponible */
   }
