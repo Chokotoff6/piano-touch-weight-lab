@@ -147,6 +147,11 @@ export async function enableDemoModeAsync() {
   try {
     const profile = await loadPianoProfileById(DEMO_PIANO_BUFFER_UUID, false);
     if (!profile) return;
+    try {
+      window.sessionStorage.setItem(DEMO_SYNCED_KEY, "1");
+    } catch {
+      /* stockage indisponible */
+    }
     const info: Record<string, string> = {
       marque: profile.brand ?? "",
       modele: profile.model ?? "",
