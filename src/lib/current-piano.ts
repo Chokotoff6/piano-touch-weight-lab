@@ -282,18 +282,33 @@ export async function upsertCurrentPianoBuffer(
   }
 }
 
+/** UUID fixe de la ligne tampon « Piano actuel » du Mode démo. */
+export const DEMO_PIANO_BUFFER_UUID = "00000000-0000-0000-0000-000000000001";
+
 /** Lecture de la ligne tampon (is_buffer = true) : priorité absolue sur /comparer. */
 export async function loadCurrentPianoFromCloud(): Promise<CurrentPiano | null> {
+  return loadPianoProfileById(CURRENT_PIANO_BUFFER_UUID);
+}
+
+/**
+ * Lecture d'un profil par identifiant.
+ * `requireMeasures` = false autorise une fiche sans pesées (cas du Mode démo,
+ * où les 88 valeurs peuvent être générées localement).
+ */
+export async function loadPianoProfileById(
+  id: string,
+  requireMeasures = true,
+): Promise<CurrentPiano | null> {
   try {
     const { data, error } = await externalSupabase
       .from("piano_profiles")
       .select("*")
-      .eq("id", CURRENT_PIANO_BUFFER_UUID)
+      .eq("id", id)
       .maybeSingle();
     if (error || !data) return null;
     const row = data as Record<string, unknown>;
     const wa = fromPgArray(row["wa_values"]);
-    if (wa.length === 0) return null;
+    if (requireMeasures && wa.length === 0) return null;
     return {
       brand: String(row["brand"] ?? ""),
       model: String(row["model"] ?? ""),
