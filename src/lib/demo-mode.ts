@@ -66,14 +66,10 @@ function isBrowser() {
   return typeof window !== "undefined";
 }
 
-/** Vrai si le mode démo est actif (inactif par défaut). */
+/** Actif tant que le bouton noir n'a pas été cliqué dans la session. */
 export function isDemoActive(): boolean {
   if (!isBrowser()) return false;
-  try {
-    return window.localStorage.getItem(DEMO_MODE_KEY) === "1";
-  } catch {
-    return false;
-  }
+  return !isDemoClicked();
 }
 
 /** Charge le piano fictif et les 88 pesées dans le stockage local. */
