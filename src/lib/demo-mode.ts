@@ -105,8 +105,8 @@ const DEMO_SYNCED_KEY = "ptw_demo_synced";
 
 /** Animation cascade des 88 touches : une seule fois par session. */
 const DEMO_CASCADE_SEEN_KEY = "ptw_demo_cascade_seen";
-/** Intervalle strict entre deux touches (88 × 170,5 ms ≈ 15,0 s). */
-export const DEMO_CASCADE_INTERVAL_MS = 170.5;
+/** Intervalle strict entre deux touches (88 × 85,25 ms ≈ 7,5 s). */
+export const DEMO_CASCADE_INTERVAL_MS = 85.25;
 
 /** Vrai si la cascade d'entrée des 88 touches a déjà été jouée cette session. */
 export function hasSeenDemoCascade(): boolean {
