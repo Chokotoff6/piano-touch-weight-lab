@@ -203,7 +203,7 @@ export function ensureDemoDefault() {
   try {
     if (isDemoOff()) return;
     if (window.localStorage.getItem(DEMO_MODE_KEY) !== "1") {
-      enableDemoMode();
+      void enableDemoModeAsync();
     }
   } catch {
     /* stockage indisponible */
@@ -222,7 +222,7 @@ export function toggleDemoMode(): boolean {
   const nextActive = isDemoOff();
   setDemoOff(!nextActive);
   if (nextActive) {
-    enableDemoMode();
+    void enableDemoModeAsync();
   } else {
     disableDemoMode();
     try {
