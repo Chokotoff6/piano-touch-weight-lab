@@ -185,7 +185,7 @@ export function ensureDemoDefault() {
     if (isDemoOff()) return;
     const synced = window.sessionStorage.getItem(DEMO_SYNCED_KEY) === "1";
     if (!synced || window.localStorage.getItem(DEMO_MODE_KEY) !== "1") {
-      void enableDemoModeAsync();
+      void enableDemoModeAsync().catch((e) => console.error("Mode démo : lecture Cloud impossible", e));
     }
   } catch {
     /* stockage indisponible */
@@ -209,7 +209,7 @@ export function toggleDemoMode(): boolean {
     } catch {
       /* stockage indisponible */
     }
-    void enableDemoModeAsync();
+    void enableDemoModeAsync().catch((e) => console.error("Mode démo : lecture Cloud impossible", e));
   } else {
     disableDemoMode();
     try {
