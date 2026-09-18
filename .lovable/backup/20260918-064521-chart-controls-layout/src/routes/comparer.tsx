@@ -825,52 +825,53 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
       dataFrame={family.id}
       title={title}
       onClick={zoomed && showZoomHelp ? () => setShowZoomHelp(false) : undefined}
-      onWheelCapture={zoomed && showZoomHelp ? () => setShowZoomHelp(false) : undefined}
       className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}
     >
-      {zoomed && (
-        <>
-          <Button
+      <div className={`absolute right-3 z-20 flex flex-col items-end gap-1.5 ${zoomed ? "top-14" : "top-2"}`}>
+        {zoomed && (
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              data-pdf-hide
+              aria-label={lang === "en" ? "Zoom navigation help" : "Aide à la navigation du zoom"}
+              aria-expanded={showZoomHelp}
+              onClick={(event) => {
+                event.stopPropagation();
+                setShowZoomHelp((visible) => !visible);
+              }}
+              className="h-7 w-7 rounded-full border-gray-300 bg-white p-0 !text-black hover:bg-gray-100"
+            >
+              <Info className="h-4 w-4" strokeWidth={2} />
+            </Button>
+            <button type="button" data-pdf-hide aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
+          </div>
+        )}
+        {!zoomed && (
+          <button type="button" data-pdf-hide aria-label={`Zoom sur ${title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="rounded-full border border-gray-300 bg-white p-[5px] !text-black hover:bg-gray-100"><MagnifyIcon /></button>
+        )}
+        {onCycleKeyFilter && (
+          <button
             type="button"
-            variant="outline"
-            size="icon"
-            data-pdf-hide
-            aria-label={lang === "en" ? "Zoom navigation help" : "Aide à la navigation du zoom"}
-            aria-expanded={showZoomHelp}
-            onClick={(event) => {
-              event.stopPropagation();
-              setShowZoomHelp((visible) => !visible);
-            }}
-            className="absolute left-1/2 top-2 z-20 h-7 w-7 -translate-x-1/2 rounded-full border-gray-300 bg-white p-0 !text-black hover:bg-gray-100"
+            aria-label={bwLabel}
+            onClick={() => cycleFor(family.id)}
+            className={`flex items-center rounded-full border !border-green-600 bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-2 px-4 py-1 text-[1.36rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"}`}
           >
-            <Info className="h-4 w-4" strokeWidth={2} />
-          </Button>
-          <button type="button" data-pdf-hide aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="absolute right-3 top-2 z-20 rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
-        </>
-      )}
-      {!zoomed && (
-        <button type="button" data-pdf-hide aria-label={`Zoom sur ${title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="absolute right-3 top-2 z-20 rounded-full border border-gray-300 bg-white p-[5px] !text-black hover:bg-gray-100"><MagnifyIcon /></button>
-      )}
-      {onCycleKeyFilter && (
-        <button
-          type="button"
-          aria-label={bwLabel}
-          onClick={() => cycleFor(family.id)}
-          className={`absolute bottom-2 left-1/2 z-20 flex -translate-x-1/2 items-center rounded-full [border-width:1.3px] !border-green-600 bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-[0.45rem] px-[0.9rem] py-[0.225rem] text-[1.224rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"}`}
-        >
-          <RefreshCw size={zoomed ? 25.2 : 14} strokeWidth={2.5} className="shrink-0" />
-          <span className="!text-black">{bwLabel}</span>
-        </button>
-      )}
+            <RefreshCw size={zoomed ? 28 : 14} strokeWidth={2.5} className="shrink-0" />
+            <span className="!text-black">{bwLabel}</span>
+          </button>
+        )}
+      </div>
       {zoomed && showZoomHelp && (
-        <div className="pointer-events-none absolute inset-x-0 top-11 z-10 flex flex-col items-center gap-1">
+        <div className="pointer-events-none absolute inset-x-0 top-[58px] z-10 flex flex-col items-center gap-1">
           <WheelHintIcon />
           <ArrowHintIcon />
         </div>
       )}
       <div
         ref={zoomed ? plotRef : undefined}
-        className="h-[calc(100%_-_2.5rem)] w-full"
+        className="h-full w-full"
         // Mode non-zoom : tout le bloc graphique (axes, repères, courbes,
         // étiquettes) est translaté vers la gauche. En mode « N/B groupées »,
         // le décalage total est de 30 px. Les boutons ne bougent pas (frères).
@@ -1198,8 +1199,8 @@ export const Route = createFileRoute("/comparer")({
 
 const FRAME_CLASS = "relative rounded-md border-2 border-foreground bg-card p-4 pt-5";
 const FRAME_TITLE_CLASS = "absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black";
-export function Frame({ title, className = "", titleClassName, dataFrame, onClick, onWheelCapture, children }: { title: ReactNode; className?: string; titleClassName?: string; dataFrame?: string | undefined; onClick?: (() => void) | undefined; onWheelCapture?: (() => void) | undefined; children: ReactNode }) {
-  return <section data-frame={dataFrame} onClick={onClick} onWheelCapture={onWheelCapture} className={`${FRAME_CLASS} ${className}`}><h2 className={titleClassName ?? FRAME_TITLE_CLASS}>{title}</h2>{children}</section>;
+export function Frame({ title, className = "", titleClassName, dataFrame, onClick, children }: { title: ReactNode; className?: string; titleClassName?: string; dataFrame?: string | undefined; onClick?: (() => void) | undefined; children: ReactNode }) {
+  return <section data-frame={dataFrame} onClick={onClick} className={`${FRAME_CLASS} ${className}`}><h2 className={titleClassName ?? FRAME_TITLE_CLASS}>{title}</h2>{children}</section>;
 }
 
 const COLUMNS = [
