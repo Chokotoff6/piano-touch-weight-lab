@@ -24,7 +24,6 @@ import { fallbackZone } from "@/lib/climate";
 import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { decideCloudAction, markCloudSync, resetConsent } from "@/lib/cloud-gate";
 import { markCsvOrigin } from "@/lib/anti-bot";
-import { DEMO_LOADED_EVENT } from "@/lib/demo-mode";
 
 export const Route = createFileRoute("/resultats")({
   head: () => ({
@@ -121,11 +120,6 @@ function Resultats() {
     setDraft(readDraft());
     // Jalon de parcours : la visite de cette page débloque « Comparer ».
     setResultsVisited(true);
-    // La fiche démo peut arriver de la base après l'ouverture de la page :
-    // on relit alors le brouillon pour tracer moyennes et courbes.
-    const onDemoLoaded = () => setDraft(readDraft());
-    window.addEventListener(DEMO_LOADED_EVENT, onDemoLoaded);
-    return () => window.removeEventListener(DEMO_LOADED_EVENT, onDemoLoaded);
   }, []);
 
   // Bouton « Importer » de la barre supérieure : ouvre le sélecteur de fichier
