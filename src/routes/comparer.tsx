@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, type SetStateAction, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { useLang, getLang } from "@/data/translations";
-import { Info, RefreshCw, Square, SquareX } from "lucide-react";
+import { Info, RefreshCw, Square, SquareX, Waves } from "lucide-react";
 import { BrandTargetInfoIcon } from "@/components/BrandTargetInfo";
 import { paddedDomain } from "@/components/PdfReportBlocks";
 import { PianoSheetMirror } from "@/components/PianoSheetMirror";
