@@ -720,6 +720,8 @@ type SubChartCtx = {
   csvActive: boolean;
   targetLabel: string;
   onCycleKeyFilter: (() => void) | undefined;
+  smooth: boolean;
+  toggleSmooth: () => void;
   filters: Record<string, KeyFilter>;
   cycleFor: (familyId: string) => void;
   lang: string;
