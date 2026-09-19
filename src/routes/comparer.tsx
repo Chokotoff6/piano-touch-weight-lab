@@ -909,6 +909,24 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           <span className="!text-black">{bwLabel}</span>
         </button>
       )}
+      {onCycleKeyFilter && (
+        <button
+          type="button"
+          data-pdf-hide
+          aria-pressed={smooth}
+          aria-label={smooth ? (lang === "en" ? "Smoothed mode" : "Mode lissé") : lang === "en" ? "Raw mode" : "Mode réel"}
+          onClick={(event) => {
+            event.stopPropagation();
+            toggleSmooth();
+          }}
+          className={`absolute bottom-2 right-3 z-20 flex items-center rounded-full [border-width:1.3px] !border-green-600 bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-[0.45rem] px-[0.9rem] py-[0.225rem] text-[1.224rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"} ${smooth ? "opacity-100" : "opacity-60"}`}
+        >
+          <Waves size={zoomed ? 25.2 : 14} strokeWidth={2.5} className="shrink-0" />
+          <span className="!text-black">
+            {smooth ? (lang === "en" ? "Smoothed" : "Lissé") : lang === "en" ? "Raw" : "Réel"}
+          </span>
+        </button>
+      )}
       {zoomed && showCurveToggles && (
         <div
           data-pdf-hide
