@@ -1142,7 +1142,7 @@ export function ComparisonChart({ chartData: rawChartData, keyFilter, comparison
   // Contexte stable passé au SubChart (déclaré au niveau module) : évite le
   // démontage/remontage du graphique Recharts à chaque changement d'état clavier.
   const subCtx: SubChartCtx = {
-    chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, filters, cycleFor, lang,
+    chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, smooth, toggleSmooth, filters, cycleFor, lang,
     zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode,
     plotRef, lastMouseY, keyboardModeRef, lastMouseNote, onMouseTakeover,
   };
