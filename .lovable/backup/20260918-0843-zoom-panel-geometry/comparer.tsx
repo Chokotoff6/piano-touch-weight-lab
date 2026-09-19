@@ -882,29 +882,27 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
       {zoomed && showCurveToggles && (
         <div
           data-pdf-hide
-          className="absolute bottom-2 left-[58px] z-20 flex flex-col items-start"
+          className="absolute bottom-2 right-2 z-20 flex flex-col gap-0.5 rounded-lg border border-gray-300 bg-white px-2 py-1 shadow-sm"
           onClick={(event) => event.stopPropagation()}
         >
-          <span className="mb-0.5 text-[0.682rem] font-bold leading-tight" style={{ color: "#000000" }}>Afficher/masquer</span>
-          <div className="flex flex-col gap-0.5 rounded-lg border border-gray-300 bg-white px-2 py-1 shadow-sm">
-            {([
-              { group: "current" as const, label: keyFilter === "all" ? currentLines[0]?.name ?? currentBaseName : currentBaseName, color: "#000000", off: zoomCurveOff.current },
-              { group: "reference" as const, label: keyFilter === "all" ? referenceLines[0]?.name ?? comparisonLabel : comparisonLabel, color: csvActive ? "#2563EB" : "#f97316", off: zoomCurveOff.reference },
-              { group: "target" as const, label: "Cible", color: "#10b981", off: zoomCurveOff.target },
-            ]).map((entry) => (
-              <button
-                key={entry.group}
-                type="button"
-                aria-pressed={!entry.off}
-                aria-label={entry.label}
-                onClick={() => setZoomCurveOff((state) => ({ ...state, [entry.group]: !state[entry.group] }))}
-                className={`text-left text-[0.748rem] font-semibold leading-tight transition-opacity ${entry.off ? "opacity-40" : "opacity-100"}`}
-                style={{ color: entry.color }}
-              >
-                {entry.label}
-              </button>
-            ))}
-          </div>
+          <span className="text-[0.62rem] font-bold leading-tight" style={{ color: "#000000" }}>Afficher/masquer</span>
+          {([
+            { group: "current" as const, label: keyFilter === "all" ? currentLines[0]?.name ?? currentBaseName : currentBaseName, color: "#000000", off: zoomCurveOff.current },
+            { group: "reference" as const, label: keyFilter === "all" ? referenceLines[0]?.name ?? comparisonLabel : comparisonLabel, color: csvActive ? "#2563EB" : "#f97316", off: zoomCurveOff.reference },
+            { group: "target" as const, label: "Cible", color: "#10b981", off: zoomCurveOff.target },
+          ]).map((entry) => (
+            <button
+              key={entry.group}
+              type="button"
+              aria-pressed={!entry.off}
+              aria-label={entry.label}
+              onClick={() => setZoomCurveOff((state) => ({ ...state, [entry.group]: !state[entry.group] }))}
+              className={`text-left text-[0.68rem] font-semibold leading-tight transition-opacity ${entry.off ? "opacity-40" : "opacity-100"}`}
+              style={{ color: entry.color }}
+            >
+              {entry.label}
+            </button>
+          ))}
         </div>
       )}
       {zoomed && showZoomHelp && (
@@ -999,11 +997,9 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               // Page Résultats + captures PDF : rendu strictement noir & blanc
               // (aucune couleur bleue / verte / orange / violette résiduelle).
               const color = autoDomain
-                ? line.dashed && line.color === "#B45309"
-                  ? "#B45309"
-                  : line.color === "#1a1a1a"
-                    ? "#4b5563"
-                    : "#111827"
+                ? line.dataKey.toLowerCase().includes("white") || line.color === "#6b7280"
+                  ? "#4b5563"
+                  : "#111827"
                 : line.color;
               return (
               <Line
