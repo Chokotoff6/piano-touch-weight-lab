@@ -1081,6 +1081,13 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
 
 export function ComparisonChart({ chartData: rawChartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible", onCycleKeyFilter }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void }) {
   const lang = useLang();
+  // Lissage global (moyenne mobile sur 3 notes), actif par défaut. Purement local.
+  const [smooth, setSmooth] = useState(true);
+  const toggleSmooth = useCallback(() => setSmooth((value) => !value), []);
+  const chartData = useMemo(
+    () => (smooth ? smoothChartData(rawChartData) : rawChartData),
+    [smooth, rawChartData],
+  );
   // Chaque cadre graphique garde son propre réglage N/B (4 états cycliques).
   const [filters, setFilters] = useState<Record<string, KeyFilter>>({});
   const cycleFor = (familyId: string) =>
