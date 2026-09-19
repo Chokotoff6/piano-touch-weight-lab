@@ -199,6 +199,34 @@ export function buildChartData(
   return points.map((point) => ({ ...point, waMid, wdMid, balMid, fricMid }));
 }
 
+/**
+ * Lissage local (moyenne mobile glissante sur 3 notes) appliqué séparément à
+ * chaque série. Les extrémités de chaque série (première et dernière valeur
+ * définie) conservent leur valeur brute pour éviter tout effondrement.
+ * Calcul 100 % client : aucune requête réseau.
+ */
+const SMOOTH_SKIP: ReadonlySet<string> = new Set(["key", "isBlack", "waMid", "wdMid", "balMid", "fricMid"]);
+
+export function smoothChartData(points: ChartPoint[]): ChartPoint[] {
+  if (points.length < 3) return points;
+  const output = points.map((point) => ({ ...point }));
+  const keys = Object.keys(points[0] ?? {}).filter((key) => !SMOOTH_SKIP.has(key)) as SeriesKey[];
+  keys.forEach((key) => {
+    const defined: number[] = [];
+    points.forEach((point, index) => {
+      if (typeof point[key] === "number") defined.push(index);
+    });
+    if (defined.length < 3) return;
+    for (let position = 1; position < defined.length - 1; position += 1) {
+      const previous = points[defined[position - 1]!]![key] as number;
+      const current = points[defined[position]!]![key] as number;
+      const next = points[defined[position + 1]!]![key] as number;
+      output[defined[position]!]![key] = n1((previous + current + next) / 3);
+    }
+  });
+  return output;
+}
+
 function seriesAverage(data: ChartPoint[], key: SeriesKey): string {
   const values = data
     .map((point) => point[key])
