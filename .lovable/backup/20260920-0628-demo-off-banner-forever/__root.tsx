@@ -631,20 +631,18 @@ function RootComponent() {
             >
               {lang === "en" ? "Demo mode" : "Mode démo"}
             </button>
-            {/* Bouton « i » permanent (Mode démo ON ou OFF). Sur Saisie, sa
-                bannière ne s'auto-ouvre qu'une seule fois à vie (localStorage). */}
-            <InfoDot
-              label={lang === "en" ? "Demo mode" : "Mode démo"}
-              width={340}
-              {...(pathname === "/saisie"
-                ? { autoOpenForeverKey: "ptw_demo_banner_forever_dismissed" }
-                : {})}
-              autoCloseMs={10000}
-            >
-              <span className="block whitespace-pre-line text-[14.5px]">
-                {lang === "en" ? DEMO_INFO_EN : DEMO_INFO_FR}
-              </span>
-            </InfoDot>
+            {demoVisible && (
+              <InfoDot
+                label={lang === "en" ? "Demo mode" : "Mode démo"}
+                width={340}
+                {...(pathname === "/saisie" ? { autoOpenSessionKey: "ptw_demo_intro_seen" } : {})}
+                autoCloseMs={10000}
+              >
+                <span className="block whitespace-pre-line text-[14.5px]">
+                  {lang === "en" ? DEMO_INFO_EN : DEMO_INFO_FR}
+                </span>
+              </InfoDot>
+            )}
           </div>
         </div>
       )}

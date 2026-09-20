@@ -17,7 +17,6 @@ export function InfoDot({
   width = 320,
   icon,
   autoOpenSessionKey,
-  autoOpenForeverKey,
   autoCloseMs = 5000,
 }: {
   children: ReactNode;
@@ -29,9 +28,6 @@ export function InfoDot({
   icon?: ReactNode;
   /** Ouvre une seule fois par session l'infobulle dès son apparition. */
   autoOpenSessionKey?: string;
-  /** Ouvre l'infobulle une seule fois pour toute la vie du navigateur
-      (verrou persistant en localStorage, prioritaire sur autoOpenSessionKey). */
-  autoOpenForeverKey?: string;
   /** Durée d'ouverture avant le début du fondu automatique. */
   autoCloseMs?: number;
 }) {
@@ -42,18 +38,6 @@ export function InfoDot({
   const { rendered, closing, requestClose } = useFadeClose(open, finishClose);
 
   useEffect(() => {
-    if (autoOpenForeverKey) {
-      // Usage unique absolu : verrou localStorage lu puis écrit immédiatement,
-      // la bannière ne se rouvrira jamais (même après fermeture du navigateur).
-      try {
-        if (window.localStorage.getItem(autoOpenForeverKey) === "true") return;
-        window.localStorage.setItem(autoOpenForeverKey, "true");
-      } catch {
-        /* stockage indisponible : l'aide reste utilisable manuellement */
-      }
-      setOpen(true);
-      return;
-    }
     if (!autoOpenSessionKey) return;
     try {
       if (window.sessionStorage.getItem(autoOpenSessionKey) === "1") return;
@@ -62,7 +46,7 @@ export function InfoDot({
       /* stockage indisponible : l'aide reste utilisable manuellement */
     }
     setOpen(true);
-  }, [autoOpenSessionKey, autoOpenForeverKey]);
+  }, [autoOpenSessionKey]);
 
   useEffect(() => {
     if (!open || !autoOpenSessionKey) return;

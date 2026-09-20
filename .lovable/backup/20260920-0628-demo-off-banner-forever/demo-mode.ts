@@ -16,18 +16,16 @@ import { resetConsent } from "@/lib/cloud-gate";
 const DRAFT_ROWS_KEY = "ptw_draft_rows";
 const DRAFT_INFO_KEY = "ptw_draft_info";
 export const DEMO_MODE_KEY = "ptw_demo_mode";
-/** Interrupteur bistable : "0" = Mode démo sur ON (sinon OFF par défaut). */
+/** Interrupteur bistable : "1" = Mode démo sur OFF (sinon ON par défaut). */
 export const DEMO_OFF_KEY = "ptw_demo_off";
-/** Verrou à vie : la bannière d'aide de la page Saisie ne s'affiche qu'une fois. */
-export const DEMO_BANNER_FOREVER_KEY = "ptw_demo_banner_forever_dismissed";
 
-/** Vrai si l'interrupteur « Mode démo » est sur OFF (état par défaut au landing). */
+/** Vrai si l'interrupteur « Mode démo » est sur OFF. */
 export function isDemoOff(): boolean {
-  if (!isBrowser()) return true;
+  if (!isBrowser()) return false;
   try {
-    return window.sessionStorage.getItem(DEMO_OFF_KEY) !== "0";
+    return window.sessionStorage.getItem(DEMO_OFF_KEY) === "1";
   } catch {
-    return true;
+    return false;
   }
 }
 
@@ -251,9 +249,6 @@ export function toggleDemoMode(): boolean {
   if (nextActive) {
     try {
       window.sessionStorage.removeItem(DEMO_SYNCED_KEY);
-      // Première activation du Mode Démo : la bannière d'aide de la page
-      // Saisie a rempli son rôle, elle est verrouillée pour toujours.
-      window.localStorage.setItem(DEMO_BANNER_FOREVER_KEY, "true");
     } catch {
       /* stockage indisponible */
     }
