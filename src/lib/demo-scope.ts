@@ -7,13 +7,14 @@
 const DEMO_OFF_KEY = "ptw_demo_off";
 
 /**
- * Règle unique, de session : le Mode démo est actif dès l'ouverture de
- * l'application et le reste tant que l'interrupteur n'est pas sur OFF.
+ * Règle unique, de session : le Mode démo est inactif par défaut à
+ * l'ouverture de l'application et ne devient actif que si l'artisan
+ * bascule explicitement l'interrupteur sur ON ("0" = ON).
  */
 export function demoScopeActive(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    return window.sessionStorage.getItem(DEMO_OFF_KEY) !== "1";
+    return window.sessionStorage.getItem(DEMO_OFF_KEY) === "0";
   } catch {
     return false;
   }
