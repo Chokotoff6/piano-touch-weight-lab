@@ -38,33 +38,16 @@ export function InfoDot({
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const anchorRef = useRef<HTMLButtonElement>(null);
-
-  // Verrou à vie : écrit uniquement à la FERMETURE de la bannière (clic
-  // extérieur, croix ou fondu automatique) — jamais à l'ouverture, pour que
-  // la bannière se représente tant que l'artisan ne l'a pas réellement vue.
-  const writeForeverLock = useCallback(() => {
-    if (!autoOpenForeverKey) return;
-    try {
-      window.localStorage.setItem(autoOpenForeverKey, "true");
-    } catch {
-      /* stockage indisponible */
-    }
-  }, [autoOpenForeverKey]);
-
   const finishClose = useCallback(() => setOpen(false), []);
   const { rendered, closing, requestClose } = useFadeClose(open, finishClose);
-  const requestCloseAndLock = useCallback(() => {
-    writeForeverLock();
-    requestClose();
-  }, [requestClose, writeForeverLock]);
 
   useEffect(() => {
     if (autoOpenForeverKey) {
-      // Usage unique absolu : le verrou localStorage est lu ici ; il n'est
-      // écrit qu'à la fermeture (voir writeForeverLock). Une fois posé, la
-      // bannière ne se rouvrira jamais (même après fermeture du navigateur).
+      // Usage unique absolu : verrou localStorage lu puis écrit immédiatement,
+      // la bannière ne se rouvrira jamais (même après fermeture du navigateur).
       try {
         if (window.localStorage.getItem(autoOpenForeverKey) === "true") return;
+        window.localStorage.setItem(autoOpenForeverKey, "true");
       } catch {
         /* stockage indisponible : l'aide reste utilisable manuellement */
       }
@@ -83,9 +66,9 @@ export function InfoDot({
 
   useEffect(() => {
     if (!open || !autoOpenSessionKey) return;
-    const timer = window.setTimeout(() => requestCloseAndLock(), autoCloseMs);
+    const timer = window.setTimeout(() => requestClose(), autoCloseMs);
     return () => window.clearTimeout(timer);
-  }, [autoCloseMs, autoOpenSessionKey, open, requestCloseAndLock]);
+  }, [autoCloseMs, autoOpenSessionKey, open, requestClose]);
 
   useEffect(() => {
     if (!rendered) return;
@@ -115,7 +98,7 @@ export function InfoDot({
       style={{ background: "rgba(0,0,0,0.15)" }}
       onClick={(event) => {
         event.stopPropagation();
-        requestCloseAndLock();
+        requestClose();
       }}
       role="presentation"
     >
@@ -141,7 +124,7 @@ export function InfoDot({
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
-            requestCloseAndLock();
+            requestClose();
           }}
           className="absolute right-1 top-1 inline-flex h-5 w-5 items-center justify-center rounded-full text-sm leading-none !text-gray-500 hover:!text-gray-900"
         >
