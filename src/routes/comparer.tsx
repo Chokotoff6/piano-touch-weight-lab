@@ -10,11 +10,13 @@ import { generateComparisonReport, type LandscapePage } from "@/lib/pdf-report";
 import { setTopbarState } from "@/lib/topbar-store";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
 import { scopeDemo } from "@/lib/demo-scope";
+import { isDemoActive, DEMO_LOADED_EVENT } from "@/lib/demo-mode";
 import {
   buildCurrentPiano,
   loadCurrentPiano,
-  loadCurrentPianoFromCloud,
+  loadPianoProfileById,
   CURRENT_PIANO_BUFFER_UUID,
+  DEMO_PIANO_BUFFER_UUID,
   fromPgArray,
   parseMeasureDateTime,
   type CurrentPiano,
