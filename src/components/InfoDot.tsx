@@ -83,9 +83,9 @@ export function InfoDot({
 
   useEffect(() => {
     if (!open || !autoOpenSessionKey) return;
-    const timer = window.setTimeout(() => requestClose(), autoCloseMs);
+    const timer = window.setTimeout(() => requestCloseAndLock(), autoCloseMs);
     return () => window.clearTimeout(timer);
-  }, [autoCloseMs, autoOpenSessionKey, open, requestClose]);
+  }, [autoCloseMs, autoOpenSessionKey, open, requestCloseAndLock]);
 
   useEffect(() => {
     if (!rendered) return;
@@ -115,7 +115,7 @@ export function InfoDot({
       style={{ background: "rgba(0,0,0,0.15)" }}
       onClick={(event) => {
         event.stopPropagation();
-        requestClose();
+        requestCloseAndLock();
       }}
       role="presentation"
     >
@@ -141,7 +141,7 @@ export function InfoDot({
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
-            requestClose();
+            requestCloseAndLock();
           }}
           className="absolute right-1 top-1 inline-flex h-5 w-5 items-center justify-center rounded-full text-sm leading-none !text-gray-500 hover:!text-gray-900"
         >
