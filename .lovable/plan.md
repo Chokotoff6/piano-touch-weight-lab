@@ -1,55 +1,49 @@
-# Analyse : pourquoi la courbe Cloud reste vide sur Comparer
+# Comparer bloqué sur le K-500 en Mode démo — diagnostic et plan
 
-## 1. La fonction `get_model_averages` n'existe pas — et n'est pas utilisée
+Votre hypothèse est confirmée par le code. Elle explique le Cloud vide en Mode démo ; elle n'explique pas tout hors Mode démo (voir « Deuxième cause » plus bas).
 
-Vérifications faites :
+## Cause confirmée : Comparer lit toujours la fiche tampon réelle
 
-- Aucune occurrence de `get_model_averages` ni d'aucun appel `rpc(...)` dans tout le dossier `src/`.
-- L'appel REST `POST /rpc/get_model_averages` sur la base cloud répond **404** : la fonction stockée n'existe pas dans la base.
+- `src/routes/comparer.tsx` charge le piano courant avec `loadCurrentPianoFromCloud()`.
+- Dans `src/lib/current-piano.ts`, cette fonction lit **en dur** la ligne tampon `…0000`, c'est-à-dire le profil réel (KAWAI K-500). Le tampon de démonstration `…0001` (YAMAHA U3) porte un autre identifiant et n'est jamais lu.
+- La fiche locale (`loadCurrentPiano()`) n'est utilisée qu'en secours, **si le cloud ne répond pas**. Or le Mode démo, lui, écrit bien le U3 dans le stockage local. Le cloud répondant toujours, le K-500 gagne systématiquement.
+- Comparer n'écoute pas non plus l'évènement émis à l'activation du Mode démo : basculer ON pendant qu'on est sur la page ne déclenche aucun rechargement.
 
-La moyenne communautaire est calculée **côté application** : une lecture directe de la table `piano_profiles`, filtrée puis moyennée en JavaScript dans `src/routes/comparer.tsx`. Il n'y a donc aucun conflit possible entre une fonction SQL et la colonne `climate_zone`.
+Conséquence : le bandeau et les courbes affichent un K-500, et la recherche de fiches communautaires porte sur « model = K-500 » alors que la base démo ne contient que des U3 → aucune moyenne, cadre vide.
 
-## 2. Les règles d'accès (RLS) ne bloquent rien
+## Plan théorique : une seule source de vérité, réévaluée dynamiquement
 
-Lecture anonyme de `piano_profiles` : **HTTP 200, 115 fiches renvoyées**, toutes colonnes lisibles (`climate_zone`, `demo`, `is_buffer`, `wa_values`…). L'accès en lecture fonctionne normalement.
+1. **Choisir le tampon selon l'état du Mode démo.** Là où Comparer lit aujourd'hui la ligne réelle, il lira la ligne `…0001` quand le Mode démo est ON, la ligne `…0000` quand il est OFF. Même règle que celle déjà utilisée par les pages Saisie et Résultats, pour que les trois pages ne puissent plus diverger.
+2. **Repli local cohérent.** Si le tampon choisi est introuvable, on retombe sur la fiche du stockage local — qui contient déjà le bon piano dans les deux modes — au lieu de retomber silencieusement sur l'autre piano.
+3. **Réaction à chaud.** Comparer s'abonnera à l'évènement de chargement du Mode démo, en plus des évènements déjà écoutés (focus, changement de stockage, retour d'onglet). Bascule ON/OFF → le bandeau, les courbes et la requête Cloud se rafraîchissent sans rechargement de page.
+4. **Cohérence du filtre démo.** La règle « fiches de démo visibles seulement en Mode démo » reste inchangée ; elle s'appliquera simplement au bon modèle (U3 en démo, modèle réel sinon).
 
-## 3. Cause réelle : il ne reste aucune fiche comparable hors Mode démo
+Aucun changement de base de données, aucune modification des règles d'accès ni du verrouillage des partages.
 
-Contenu réel de la base (115 lignes) :
+## Deuxième cause, indépendante : aucune fiche comparable hors Mode démo
 
-| Modèle | demo | tampon | nombre |
+Vérifié directement dans la base cloud (lecture anonyme, 115 fiches, accès normal) :
+
+| Modèle | démo | tampon | nombre |
 |---|---|---|---|
-| U3 | true (démo) | non | 108 |
-| U3 | true (démo) | oui | 1 |
-| U3 | — | non | 1 |
-| K-500 | — | non | 1 |
-| K-500 | false | oui (tampon …0000) | 1 |
-| 200, D-274, A114 | — | non | 1 chacun |
+| U3 | oui | non | 108 |
+| U3 | oui | oui | 1 |
+| U3 | non | non | 1 |
+| K-500 | non | non | 1 |
+| K-500 | non | oui (tampon) | 1 |
+| 200 / D-274 / A114 | non | non | 1 chacun |
 
-Hors Mode démo, l'application ne garde que `demo = false` ou nul : il reste **6 fiches réelles, toutes de modèles différents**.
+Hors Mode démo il reste 6 fiches réelles, **toutes de modèles différents**. Pour un K-500, la seule autre fiche K-500 porte le même numéro de série et les mêmes 88 mesures que le piano courant : l'anti-doublon l'écarte, il reste 0 fiche → pas de moyenne. Ce n'est pas un bug de code, c'est le contenu actuel de la base.
 
-La requête des moyennes exige `model = modèle du piano courant`, puis écarte :
-- la ligne tampon …0000 et toute ligne `is_buffer = true` ;
-- le numéro de série du piano courant et du piano local ;
-- toute fiche dont les 88 valeurs wa **et** wd sont identiques au piano courant (anti-doublon).
+À décider : afficher un message explicite « aucune fiche comparable pour ce modèle » plutôt qu'un cadre vide, et éventuellement élargir la recherche (même marque) quand le modèle exact n'a aucun voisin.
 
-Pour un K-500, la seule autre fiche K-500 de la base est `serial 2752801`, avec exactement les mêmes mesures que le tampon K-500 — donc reconnue comme le même piano et écartée. Résultat : **0 fiche retenue → aucune moyenne → courbe orange absente**. Même situation pour tous les autres modèles : il n'existe qu'un seul exemplaire réel de chacun.
+## Points annexes constatés
 
-Ce n'est pas une régression de code : c'est l'effet du cloisonnement démo/réel mis en place récemment (les 108 fiches U3 qui alimentaient les moyennes sont marquées `demo = true` et deviennent invisibles dès que le Mode démo est sur OFF).
+- La fonction stockée `get_model_averages` n'existe pas dans la base (réponse 404) et n'est appelée nulle part dans le code : les moyennes sont calculées dans l'application. Aucun conflit possible avec la colonne `climate_zone` ni avec les règles d'accès.
+- Des fiches réelles portent encore des libellés français (`Modifications importantes`, `Entretien usuel uniquement`) alors que le filtre compare à l'anglais `Major modifications` : ce filtre ne peut jamais correspondre sur ces fiches. À uniformiser.
+- L'import CSV suit un chemin totalement indépendant du Cloud. Rien d'anormal trouvé dans le lecteur de fichier ; si le K-500 importé ne s'affiche toujours pas après le correctif ci-dessus, il faudra le reproduire avec le fichier exact.
 
-## 4. Incohérence secondaire confirmée (à corriger séparément)
+## Fichiers concernés par la correction
 
-La charte impose un stockage 100 % anglais, mais des fiches réelles portent encore des libellés français : `maintenance_type = "Modifications importantes"`, `"Entretien usuel uniquement"`. Le filtre de la page compare à `"Major modifications"` : le filtre « modifications importantes » ne peut donc jamais correspondre sur ces fiches.
-
-## 5. Point non confirmé : l'import CSV
-
-Le tracé issu d'un fichier CSV suit un chemin totalement indépendant du cloud (aucune requête base). L'analyse du lecteur CSV n'a révélé aucune rupture liée aux renommages de colonnes. Le fait qu'un K-500 importé ne s'affiche pas n'est donc **pas expliqué à ce stade** et demande une reproduction dans le navigateur avec le fichier concerné avant tout correctif.
-
-## Étapes proposées (à votre validation)
-
-1. Reproduire l'import CSV du K-500 dans le navigateur et relever l'erreur exacte (fichier rejeté, ou courbe filtrée à l'affichage).
-2. Choisir la règle de repli quand aucune fiche comparable n'existe : afficher un message explicite « aucune fiche comparable pour ce modèle » à la place d'un cadre vide silencieux.
-3. Décider si la comparaison doit pouvoir s'élargir (même marque, ou tous modèles) quand le modèle exact n'a aucun voisin.
-4. Uniformiser en anglais les valeurs `maintenance_type` encore en français dans la base.
-
-Aucun fichier n'est modifié tant que ces points ne sont pas tranchés.
+- `src/routes/comparer.tsx` — choix du tampon selon le mode, repli local, abonnement à l'évènement de démo.
+- `src/lib/current-piano.ts` — paramétrage du tampon lu (si nécessaire pour éviter de dupliquer la règle).
