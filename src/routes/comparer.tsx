@@ -1781,12 +1781,21 @@ function Comparer() {
 
 
   useEffect(() => {
-    // Priorité absolue : la ligne pivot 'PIANO_ACTUEL' de piano_profiles (tampon cloud).
+    // Source de vérité : le tampon cloud correspondant au mode courant —
+    // …0001 (fiche de démonstration) quand le Mode démo est actif,
+    // …0000 (piano réel en cours de saisie) sinon.
     // Le LocalStorage n'est qu'un secours hors ligne.
     let cancelled = false;
     const sync = async () => {
       setDraftKeyCounts(countDraftKeys());
-      const cloudPiano = await loadCurrentPianoFromCloud();
+      const demo = isDemoActive();
+      const bufferId = demo ? DEMO_PIANO_BUFFER_UUID : CURRENT_PIANO_BUFFER_UUID;
+      let cloudPiano: CurrentPiano | null = null;
+      try {
+        cloudPiano = await loadPianoProfileById(bufferId, false);
+      } catch {
+        cloudPiano = null;
+      }
       if (cancelled) return;
       const piano = cloudPiano ?? loadCurrentPiano();
       setMine(piano ? profileFromCurrentPiano(piano) : null);
@@ -1796,11 +1805,13 @@ function Comparer() {
     const onEvent = () => void sync();
     window.addEventListener("focus", onEvent);
     window.addEventListener("storage", onEvent);
+    window.addEventListener(DEMO_LOADED_EVENT, onEvent);
     document.addEventListener("visibilitychange", onEvent);
     return () => {
       cancelled = true;
       window.removeEventListener("focus", onEvent);
       window.removeEventListener("storage", onEvent);
+      window.removeEventListener(DEMO_LOADED_EVENT, onEvent);
       document.removeEventListener("visibilitychange", onEvent);
     };
   }, []);
