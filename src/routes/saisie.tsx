@@ -2712,12 +2712,12 @@ function Index() {
 
             <div className="mt-4 flex flex-wrap items-start justify-start gap-6 sm:col-span-2 md:col-span-4">
               <label className={FIELD_LABEL_CLASS}>
-                <span className="block">{en ? "Maintenance type" : "Type d'entretien"}</span>
+                <span className="block">{en ? "Piano history" : "Historique piano"}</span>
                 <select
                   value={info["entretien"] ?? ""}
                   onChange={(e) => {
                     updateInfo("entretien", e.target.value);
-                    if (e.target.value === "Modifications importantes") {
+                    if (e.target.value === "Major modifications") {
                       setTimeout(() => remarquesRef.current?.focus(), 0);
                     }
                   }}
@@ -2734,12 +2734,7 @@ function Index() {
               </label>
 
               <label className={FIELD_LABEL_CLASS}>
-                <span className="flex items-center gap-1">
-                  {en ? "Usage level" : "Niveau d'usage"}
-                  <InfoDot label={en ? "Usage level" : "Niveau d'usage"}>
-                    {en ? "Piano condition." : "État du piano."}
-                  </InfoDot>
-                </span>
+                <span className="block">{en ? "Usage intensity" : "Intensité d'usage"}</span>
                 <select
                   value={info["usage_level"] ?? ""}
                   onChange={(e) => updateInfo("usage_level", e.target.value)}
@@ -2747,27 +2742,27 @@ function Index() {
                 >
                   <option value="">{en ? "— Select —" : "— Sélectionner —"}</option>
                   {USAGE_OPTIONS.map((option) => (
-                    <option key={option} value={option}>{option}</option>
+                    <option key={option} value={option}>
+                      {en ? USAGE_LABELS_EN[option] : USAGE_LABELS_FR[option]}
+                    </option>
                   ))}
                 </select>
               </label>
 
-              {/* Utilisateur : variable de filtrage futur du Cloud collaboratif. */}
+              {/* Vous êtes : variable de filtrage du Cloud collaboratif. */}
               <label className={FIELD_LABEL_CLASS}>
-                <span className="flex items-center gap-1">
-                  {en ? "User" : "Utilisateur"}
-                  <InfoDot label={en ? "User" : "Utilisateur"}>
-                    {en ? "Who is performing the weigh-out?" : "Qui effectue la pesée ?"}
-                  </InfoDot>
-                </span>
+                <span className="block">{en ? "You are" : "Vous êtes"}</span>
                 <select
                   value={info["profil_saisie"] ?? ""}
                   onChange={(e) => updateInfo("profil_saisie", e.target.value)}
                   className={`${INPUT_CLASS} !bg-white !block !w-fit !min-w-0 !max-w-full mt-2`}
                 >
                   <option value="">{en ? "— Select —" : "— Sélectionner —"}</option>
-                  <option value="Pianiste / Particulier">{en ? "Pianist / Private owner" : "Pianiste / Particulier"}</option>
-                  <option value="Technicien / Facteur de pianos">{en ? "Technician / Piano builder" : "Technicien / Facteur de pianos"}</option>
+                  {WHO_CODES.map((option) => (
+                    <option key={option} value={option}>
+                      {en ? WHO_LABELS_EN[option] : WHO_LABELS_FR[option]}
+                    </option>
+                  ))}
                 </select>
               </label>
             </div>
