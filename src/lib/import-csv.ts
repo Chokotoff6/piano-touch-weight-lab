@@ -1,3 +1,9 @@
+import {
+  normalizeMaintenanceCode,
+  normalizeUsageCode,
+  normalizeWhoCode,
+} from "@/lib/field-codes";
+
 export type ImportedDiagnostic = {
   /** Métadonnées brutes telles qu'écrites dans le fichier. */
   meta: Record<string, string>;
@@ -108,7 +114,8 @@ const META_ALIASES: { key: string; match: string[] }[] = [
   { key: "serial_suffix", match: ["suffixe lettre", "suffixe"] },
   { key: "manufacture_year", match: ["date de fabrication", "annee de fabrication", "manufacture"] },
   { key: "maintenance_type", match: ["type d'entretien", "type dentretien", "maintenance"] },
-  { key: "usage_level", match: ["usage_level", "niveau d'usage", "niveau dusage", "usage"] },
+  { key: "usage_level", match: ["usage_level", "niveau d'usage", "niveau dusage", "intensite", "usage"] },
+  { key: "who", match: ["vous etes", "you are", "utilisateur", "profil", "who"] },
   { key: "type_piano", match: ["type de piano"] },
   { key: "climate_zone", match: ["zone climatique", "climate"] },
   { key: "city", match: ["ville", "city"] },
