@@ -55,6 +55,20 @@ import {
   isDemoActive,
   markDemoCascadeSeen,
 } from "@/lib/demo-mode";
+import {
+  MAINTENANCE_CODES,
+  USAGE_CODES,
+  WHO_CODES,
+  MAINTENANCE_LABELS_EN,
+  MAINTENANCE_LABELS_FR,
+  USAGE_LABELS_EN,
+  USAGE_LABELS_FR,
+  WHO_LABELS_EN,
+  WHO_LABELS_FR,
+  normalizeMaintenanceCode,
+  normalizeUsageCode,
+  normalizeWhoCode,
+} from "@/lib/field-codes";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -630,9 +644,9 @@ function Index() {
           fabrication: saved.manufacture_year ? String(saved.manufacture_year) : "",
           pays: saved.country ?? "",
           ville: saved.city ?? "",
-          entretien: saved.maintenance_type ?? "",
-          usage_level: saved.usage_level ?? "",
-          profil_saisie: saved.who ?? "",
+          entretien: normalizeMaintenanceCode(saved.maintenance_type),
+          usage_level: normalizeUsageCode(saved.usage_level),
+          profil_saisie: normalizeWhoCode(saved.who),
           remarques: saved.remarks ?? "",
         });
       }
@@ -759,9 +773,9 @@ function Index() {
       ["fabrication", en ? "Manufacturing date" : "Date fabrication"],
       ["pays", en ? "Country" : "Pays"],
       ["ville", en ? "City" : "Ville"],
-      ["entretien", en ? "Maintenance" : "Entretien"],
-      ["usage_level", en ? "Usage level" : "Niveau d'usage"],
-      ["profil_saisie", en ? "User" : "Utilisateur"],
+      ["entretien", en ? "Piano history" : "Historique piano"],
+      ["usage_level", en ? "Usage intensity" : "Intensité d'usage"],
+      ["profil_saisie", en ? "You are" : "Vous êtes"],
     ];
     return checks.filter(([key]) => !String(info[key] ?? "").trim()).map(([, label]) => label);
   }, [info, en]);
@@ -916,7 +930,7 @@ function Index() {
   }, [keyboardValid]);
 
   /** Remarques obligatoires dès que des modifications importantes sont déclarées. */
-  const remarquesRequired = (info["entretien"] ?? "").trim() === "Modifications importantes";
+  const remarquesRequired = (info["entretien"] ?? "").trim() === "Major modifications";
   const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
 
   /**
@@ -1665,7 +1679,7 @@ function Index() {
     if (!passesBotChecks(honeypot)) return false;
     const formIncomplete =
       !canEnterWeights ||
-      (parseMaintenance(info["entretien"]).includes("Modifications importantes") &&
+      (parseMaintenance(info["entretien"]).includes("Major modifications") &&
         !(info["remarques"] ?? "").trim());
     if (formIncomplete) {
       showTopbarAlert(anchor, FORM_INCOMPLETE_MESSAGE);
@@ -1882,8 +1896,9 @@ function Index() {
         fabrication: fields["manufacture_year"] ?? prev["fabrication"] ?? "",
         pays: fields["country"] ?? prev["pays"] ?? "",
         ville: fields["city"] ?? prev["ville"] ?? "",
-        entretien: fields["maintenance_type"] ?? prev["entretien"] ?? "",
-        usage_level: fields["usage_level"] ?? prev["usage_level"] ?? "",
+        entretien: normalizeMaintenanceCode(fields["maintenance_type"]) || prev["entretien"] || "",
+        usage_level: normalizeUsageCode(fields["usage_level"]) || prev["usage_level"] || "",
+        profil_saisie: normalizeWhoCode(fields["who"]) || prev["profil_saisie"] || "",
         remarques: fields["remarks"] ?? prev["remarques"] ?? "",
       }));
       fabricationTouched.current = true;
@@ -1968,7 +1983,7 @@ function Index() {
       fabrication: row.annee_fabrication ? String(row.annee_fabrication) : "",
       pays: row.pays ?? "",
       ville: row.ville ?? "",
-      entretien: row.type_entretien ?? "",
+      entretien: normalizeMaintenanceCode(row.type_entretien),
       remarques: row.remarques ?? "",
     }));
     fabricationTouched.current = true;
