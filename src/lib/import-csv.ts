@@ -1,3 +1,9 @@
+import {
+  normalizeMaintenanceCode,
+  normalizeUsageCode,
+  normalizeWhoCode,
+} from "@/lib/field-codes";
+
 export type ImportedDiagnostic = {
   /** Métadonnées brutes telles qu'écrites dans le fichier. */
   meta: Record<string, string>;
@@ -108,7 +114,8 @@ const META_ALIASES: { key: string; match: string[] }[] = [
   { key: "serial_suffix", match: ["suffixe lettre", "suffixe"] },
   { key: "manufacture_year", match: ["date de fabrication", "annee de fabrication", "manufacture"] },
   { key: "maintenance_type", match: ["type d'entretien", "type dentretien", "maintenance"] },
-  { key: "usage_level", match: ["usage_level", "niveau d'usage", "niveau dusage", "usage"] },
+  { key: "usage_level", match: ["usage_level", "niveau d'usage", "niveau dusage", "intensite", "usage"] },
+  { key: "who", match: ["vous etes", "you are", "utilisateur", "profil", "who"] },
   { key: "type_piano", match: ["type de piano"] },
   { key: "climate_zone", match: ["zone climatique", "climate"] },
   { key: "city", match: ["ville", "city"] },
@@ -233,6 +240,19 @@ export function parseDiagnosticCsv(content: string): ImportedDiagnostic {
   const full = `${fields["serial_prefix"] ?? ""}${fields["serial_number"] ?? ""}${fields["serial_suffix"] ?? ""}`.trim();
   if (full) fields["serial_number"] = full;
   else delete fields["serial_number"];
+
+  // Pare-balles : un CSV retouché à la main peut contenir des libellés français
+  // (« Modifications importantes », « Faible », « Professionnel »). On les ramène
+  // systématiquement aux codes anglais attendus par l'application et la base.
+  const maintenance = normalizeMaintenanceCode(fields["maintenance_type"]);
+  if (maintenance) fields["maintenance_type"] = maintenance;
+  else delete fields["maintenance_type"];
+  const usage = normalizeUsageCode(fields["usage_level"]);
+  if (usage) fields["usage_level"] = usage;
+  else delete fields["usage_level"];
+  const who = normalizeWhoCode(fields["who"]);
+  if (who) fields["who"] = who;
+  else delete fields["who"];
 
   return { meta, fields, rows, friction };
 }

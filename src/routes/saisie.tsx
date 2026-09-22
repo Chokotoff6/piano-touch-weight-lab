@@ -55,6 +55,20 @@ import {
   isDemoActive,
   markDemoCascadeSeen,
 } from "@/lib/demo-mode";
+import {
+  MAINTENANCE_CODES,
+  USAGE_CODES,
+  WHO_CODES,
+  MAINTENANCE_LABELS_EN,
+  MAINTENANCE_LABELS_FR,
+  USAGE_LABELS_EN,
+  USAGE_LABELS_FR,
+  WHO_LABELS_EN,
+  WHO_LABELS_FR,
+  normalizeMaintenanceCode,
+  normalizeUsageCode,
+  normalizeWhoCode,
+} from "@/lib/field-codes";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -195,27 +209,9 @@ const BRAND_RULES: Record<string, SerialRule> = {
 
 const DEFAULT_RULE: SerialRule = { prefix: true, suffix: true };
 
-const MAINTENANCE_OPTIONS = [
-  "Entretien usuel uniquement",
-  "Réglages personnalisés",
-  "Modifications importantes",
-] as const;
-
-const USAGE_OPTIONS = ["Low", "Medium", "Intensive"] as const;
-
-/** Traduction d'affichage des options d'entretien (valeurs stockées en FR). */
-const MAINTENANCE_LABELS_EN: Record<string, string> = {
-  "Entretien usuel uniquement": "Routine maintenance",
-  "Réglages personnalisés": "Custom regulations",
-  "Modifications importantes": "Major modifications",
-};
-
-/** Libellés d'affichage FR (valeurs stockées inchangées). */
-const MAINTENANCE_LABELS_FR: Record<string, string> = {
-  "Entretien usuel uniquement": "Entretien usuel",
-  "Réglages personnalisés": "Réglages personnalisés",
-  "Modifications importantes": "Modifications importantes",
-};
+// Valeurs stockées : codes anglais normalisés (cf. src/lib/field-codes.ts).
+const MAINTENANCE_OPTIONS = MAINTENANCE_CODES;
+const USAGE_OPTIONS = USAGE_CODES;
 
 /** Valeur stockée (texte) -> tableau de choix multiples. */
 function parseMaintenance(value: string | undefined): string[] {
@@ -648,9 +644,9 @@ function Index() {
           fabrication: saved.manufacture_year ? String(saved.manufacture_year) : "",
           pays: saved.country ?? "",
           ville: saved.city ?? "",
-          entretien: saved.maintenance_type ?? "",
-          usage_level: saved.usage_level ?? "",
-          profil_saisie: saved.who ?? "",
+          entretien: normalizeMaintenanceCode(saved.maintenance_type),
+          usage_level: normalizeUsageCode(saved.usage_level),
+          profil_saisie: normalizeWhoCode(saved.who),
           remarques: saved.remarks ?? "",
         });
       }
@@ -777,9 +773,9 @@ function Index() {
       ["fabrication", en ? "Manufacturing date" : "Date fabrication"],
       ["pays", en ? "Country" : "Pays"],
       ["ville", en ? "City" : "Ville"],
-      ["entretien", en ? "Maintenance" : "Entretien"],
-      ["usage_level", en ? "Usage level" : "Niveau d'usage"],
-      ["profil_saisie", en ? "User" : "Utilisateur"],
+      ["entretien", en ? "Piano history" : "Historique piano"],
+      ["usage_level", en ? "Usage intensity" : "Intensité d'usage"],
+      ["profil_saisie", en ? "You are" : "Vous êtes"],
     ];
     return checks.filter(([key]) => !String(info[key] ?? "").trim()).map(([, label]) => label);
   }, [info, en]);
@@ -934,7 +930,7 @@ function Index() {
   }, [keyboardValid]);
 
   /** Remarques obligatoires dès que des modifications importantes sont déclarées. */
-  const remarquesRequired = (info["entretien"] ?? "").trim() === "Modifications importantes";
+  const remarquesRequired = (info["entretien"] ?? "").trim() === "Major modifications";
   const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
 
   /**
@@ -1683,7 +1679,7 @@ function Index() {
     if (!passesBotChecks(honeypot)) return false;
     const formIncomplete =
       !canEnterWeights ||
-      (parseMaintenance(info["entretien"]).includes("Modifications importantes") &&
+      (parseMaintenance(info["entretien"]).includes("Major modifications") &&
         !(info["remarques"] ?? "").trim());
     if (formIncomplete) {
       showTopbarAlert(anchor, FORM_INCOMPLETE_MESSAGE);
@@ -1900,8 +1896,9 @@ function Index() {
         fabrication: fields["manufacture_year"] ?? prev["fabrication"] ?? "",
         pays: fields["country"] ?? prev["pays"] ?? "",
         ville: fields["city"] ?? prev["ville"] ?? "",
-        entretien: fields["maintenance_type"] ?? prev["entretien"] ?? "",
-        usage_level: fields["usage_level"] ?? prev["usage_level"] ?? "",
+        entretien: normalizeMaintenanceCode(fields["maintenance_type"]) || prev["entretien"] || "",
+        usage_level: normalizeUsageCode(fields["usage_level"]) || prev["usage_level"] || "",
+        profil_saisie: normalizeWhoCode(fields["who"]) || prev["profil_saisie"] || "",
         remarques: fields["remarks"] ?? prev["remarques"] ?? "",
       }));
       fabricationTouched.current = true;
@@ -1986,7 +1983,7 @@ function Index() {
       fabrication: row.annee_fabrication ? String(row.annee_fabrication) : "",
       pays: row.pays ?? "",
       ville: row.ville ?? "",
-      entretien: row.type_entretien ?? "",
+      entretien: normalizeMaintenanceCode(row.type_entretien),
       remarques: row.remarques ?? "",
     }));
     fabricationTouched.current = true;
@@ -2715,12 +2712,12 @@ function Index() {
 
             <div className="mt-4 flex flex-wrap items-start justify-start gap-6 sm:col-span-2 md:col-span-4">
               <label className={FIELD_LABEL_CLASS}>
-                <span className="block">{en ? "Maintenance type" : "Type d'entretien"}</span>
+                <span className="block">{en ? "Piano history" : "Historique piano"}</span>
                 <select
                   value={info["entretien"] ?? ""}
                   onChange={(e) => {
                     updateInfo("entretien", e.target.value);
-                    if (e.target.value === "Modifications importantes") {
+                    if (e.target.value === "Major modifications") {
                       setTimeout(() => remarquesRef.current?.focus(), 0);
                     }
                   }}
@@ -2737,12 +2734,7 @@ function Index() {
               </label>
 
               <label className={FIELD_LABEL_CLASS}>
-                <span className="flex items-center gap-1">
-                  {en ? "Usage level" : "Niveau d'usage"}
-                  <InfoDot label={en ? "Usage level" : "Niveau d'usage"}>
-                    {en ? "Piano condition." : "État du piano."}
-                  </InfoDot>
-                </span>
+                <span className="block">{en ? "Usage intensity" : "Intensité d'usage"}</span>
                 <select
                   value={info["usage_level"] ?? ""}
                   onChange={(e) => updateInfo("usage_level", e.target.value)}
@@ -2750,27 +2742,27 @@ function Index() {
                 >
                   <option value="">{en ? "— Select —" : "— Sélectionner —"}</option>
                   {USAGE_OPTIONS.map((option) => (
-                    <option key={option} value={option}>{option}</option>
+                    <option key={option} value={option}>
+                      {en ? USAGE_LABELS_EN[option] : USAGE_LABELS_FR[option]}
+                    </option>
                   ))}
                 </select>
               </label>
 
-              {/* Utilisateur : variable de filtrage futur du Cloud collaboratif. */}
+              {/* Vous êtes : variable de filtrage du Cloud collaboratif. */}
               <label className={FIELD_LABEL_CLASS}>
-                <span className="flex items-center gap-1">
-                  {en ? "User" : "Utilisateur"}
-                  <InfoDot label={en ? "User" : "Utilisateur"}>
-                    {en ? "Who is performing the weigh-out?" : "Qui effectue la pesée ?"}
-                  </InfoDot>
-                </span>
+                <span className="block">{en ? "You are" : "Vous êtes"}</span>
                 <select
                   value={info["profil_saisie"] ?? ""}
                   onChange={(e) => updateInfo("profil_saisie", e.target.value)}
                   className={`${INPUT_CLASS} !bg-white !block !w-fit !min-w-0 !max-w-full mt-2`}
                 >
                   <option value="">{en ? "— Select —" : "— Sélectionner —"}</option>
-                  <option value="Pianiste / Particulier">{en ? "Pianist / Private owner" : "Pianiste / Particulier"}</option>
-                  <option value="Technicien / Facteur de pianos">{en ? "Technician / Piano builder" : "Technicien / Facteur de pianos"}</option>
+                  {WHO_CODES.map((option) => (
+                    <option key={option} value={option}>
+                      {en ? WHO_LABELS_EN[option] : WHO_LABELS_FR[option]}
+                    </option>
+                  ))}
                 </select>
               </label>
             </div>

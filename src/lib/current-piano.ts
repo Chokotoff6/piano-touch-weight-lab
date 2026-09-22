@@ -2,6 +2,7 @@
 // Elle est écrite à la sauvegarde (page Saisie) et lue en priorité par /comparer.
 import { externalSupabase } from "@/integrations/external-supabase/client";
 import { scopeDemo } from "@/lib/demo-scope";
+import { WHO_PRO, WHO_PRIVATE, normalizeWhoCode } from "@/lib/field-codes";
 
 export const CURRENT_PIANO_KEY = "current_piano";
 
@@ -40,22 +41,16 @@ export function normalizeTypePiano(raw: string | null | undefined): string {
   return "";
 }
 
-/** Valeurs internes du menu « Utilisateur » de la page Saisie. */
-export const PROFIL_SAISIE_PRO = "Technicien / Facteur de pianos";
-export const PROFIL_SAISIE_PRIVATE = "Pianiste / Particulier";
+/** Codes anglais stockés pour le champ « Vous êtes ». */
+export const PROFIL_SAISIE_PRO = WHO_PRO;
+export const PROFIL_SAISIE_PRIVATE = WHO_PRIVATE;
 
 /**
- * Convertit la colonne `who` (base) vers l'option exacte du menu déroulant.
+ * Convertit la colonne `who` (base) vers le code anglais normalisé.
  * Même règle de reconnaissance que le filtre QUI de la page Comparer.
  */
 export function normalizeWho(raw: string | null | undefined): string {
-  const s = String(raw ?? "").trim().toLowerCase();
-  if (!s) return "";
-  if (s.includes("techni") || s.includes("facteur") || s.includes("pro")) return PROFIL_SAISIE_PRO;
-  if (s.includes("private") || s.includes("particulier") || s.includes("pianist")) {
-    return PROFIL_SAISIE_PRIVATE;
-  }
-  return "";
+  return normalizeWhoCode(raw);
 }
 
 const num = (value: string | number | null | undefined) => {
