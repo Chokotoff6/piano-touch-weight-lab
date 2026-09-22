@@ -195,27 +195,9 @@ const BRAND_RULES: Record<string, SerialRule> = {
 
 const DEFAULT_RULE: SerialRule = { prefix: true, suffix: true };
 
-const MAINTENANCE_OPTIONS = [
-  "Entretien usuel uniquement",
-  "Réglages personnalisés",
-  "Modifications importantes",
-] as const;
-
-const USAGE_OPTIONS = ["Low", "Medium", "Intensive"] as const;
-
-/** Traduction d'affichage des options d'entretien (valeurs stockées en FR). */
-const MAINTENANCE_LABELS_EN: Record<string, string> = {
-  "Entretien usuel uniquement": "Routine maintenance",
-  "Réglages personnalisés": "Custom regulations",
-  "Modifications importantes": "Major modifications",
-};
-
-/** Libellés d'affichage FR (valeurs stockées inchangées). */
-const MAINTENANCE_LABELS_FR: Record<string, string> = {
-  "Entretien usuel uniquement": "Entretien usuel",
-  "Réglages personnalisés": "Réglages personnalisés",
-  "Modifications importantes": "Modifications importantes",
-};
+// Valeurs stockées : codes anglais normalisés (cf. src/lib/field-codes.ts).
+const MAINTENANCE_OPTIONS = MAINTENANCE_CODES;
+const USAGE_OPTIONS = USAGE_CODES;
 
 /** Valeur stockée (texte) -> tableau de choix multiples. */
 function parseMaintenance(value: string | undefined): string[] {

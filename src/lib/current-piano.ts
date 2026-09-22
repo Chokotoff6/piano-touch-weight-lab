@@ -2,6 +2,7 @@
 // Elle est écrite à la sauvegarde (page Saisie) et lue en priorité par /comparer.
 import { externalSupabase } from "@/integrations/external-supabase/client";
 import { scopeDemo } from "@/lib/demo-scope";
+import { WHO_PRO, WHO_PRIVATE, normalizeWhoCode } from "@/lib/field-codes";
 
 export const CURRENT_PIANO_KEY = "current_piano";
 
