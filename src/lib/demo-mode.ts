@@ -216,6 +216,13 @@ export function disableDemoMode() {
   } catch {
     /* store indisponible */
   }
+  try {
+    // Même évènement qu'au chargement : les pages abonnées (Saisie, Résultats,
+    // Comparer) rebasculent à chaud sur la fiche réelle.
+    window.dispatchEvent(new CustomEvent(DEMO_LOADED_EVENT));
+  } catch {
+    /* évènement indisponible */
+  }
 }
 
 /**
