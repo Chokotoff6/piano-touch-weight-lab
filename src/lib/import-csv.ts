@@ -234,6 +234,19 @@ export function parseDiagnosticCsv(content: string): ImportedDiagnostic {
   if (full) fields["serial_number"] = full;
   else delete fields["serial_number"];
 
+  // Pare-balles : un CSV retouché à la main peut contenir des libellés français
+  // (« Modifications importantes », « Faible », « Professionnel »). On les ramène
+  // systématiquement aux codes anglais attendus par l'application et la base.
+  const maintenance = normalizeMaintenanceCode(fields["maintenance_type"]);
+  if (maintenance) fields["maintenance_type"] = maintenance;
+  else delete fields["maintenance_type"];
+  const usage = normalizeUsageCode(fields["usage_level"]);
+  if (usage) fields["usage_level"] = usage;
+  else delete fields["usage_level"];
+  const who = normalizeWhoCode(fields["who"]);
+  if (who) fields["who"] = who;
+  else delete fields["who"];
+
   return { meta, fields, rows, friction };
 }
 
