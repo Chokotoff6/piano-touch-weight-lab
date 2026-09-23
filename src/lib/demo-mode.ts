@@ -172,7 +172,7 @@ export async function enableDemoModeAsync() {
     entretien: profile.maintenance_type ?? "",
     usage_level: profile.usage_level ?? "",
     profil_saisie: normalizeWho(profile.who),
-    remarques: profile.remarks ?? "",
+    remarques: demoRemarksText(),
   };
   const waValues = Array.isArray(profile.wa_values) ? profile.wa_values : [];
   // Filet de sécurité propre à la fiche démo : si la série est entièrement
