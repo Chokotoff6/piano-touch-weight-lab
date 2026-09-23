@@ -54,6 +54,8 @@ import {
   hasSeenDemoCascade,
   isDemoActive,
   markDemoCascadeSeen,
+  demoRemarksText,
+  isDemoRemarks,
 } from "@/lib/demo-mode";
 import {
   MAINTENANCE_CODES,
