@@ -516,6 +516,42 @@ function Index() {
   const navigate = useNavigate();
   const lang = useLang();
   const en = lang === "en";
+
+  /** Bandeau mauve d'appel au Mode Démo : une seule fois à vie (localStorage). */
+  const [demoBannerOpen, setDemoBannerOpen] = useState(false);
+  useEffect(() => {
+    try {
+      const locked = window.localStorage.getItem(DEMO_BANNER_FOREVER_KEY) === "true";
+      setDemoBannerOpen(!locked && !isDemoActive());
+    } catch {
+      setDemoBannerOpen(false);
+    }
+  }, []);
+  const closeDemoBanner = useCallback(() => {
+    setDemoBannerOpen(false);
+    try {
+      window.localStorage.setItem(DEMO_BANNER_FOREVER_KEY, "true");
+    } catch {
+      /* stockage indisponible */
+    }
+  }, []);
+  useEffect(() => {
+    if (!demoBannerOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t?.closest("[data-demo-banner]")) return;
+      closeDemoBanner();
+    };
+    const onDemo = () => {
+      if (isDemoActive()) closeDemoBanner();
+    };
+    window.addEventListener("mousedown", onDown, true);
+    window.addEventListener(DEMO_LOADED_EVENT, onDemo);
+    return () => {
+      window.removeEventListener("mousedown", onDown, true);
+      window.removeEventListener(DEMO_LOADED_EVENT, onDemo);
+    };
+  }, [demoBannerOpen, closeDemoBanner]);
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
   const pdfGridRef1 = useSnappedGrid(1, 44);
