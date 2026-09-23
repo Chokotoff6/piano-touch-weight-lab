@@ -54,6 +54,8 @@ import {
   hasSeenDemoCascade,
   isDemoActive,
   markDemoCascadeSeen,
+  demoRemarksText,
+  isDemoRemarks,
 } from "@/lib/demo-mode";
 import {
   MAINTENANCE_CODES,
@@ -2781,7 +2783,11 @@ function Index() {
                 placeholder={
                   remarquesRequired ? (en ? "⚠️ Please describe the modifications" : "⚠️ Veuillez indiquer les modifications") : undefined
                 }
-                value={info["remarques"] ?? ""}
+                value={
+                  isDemoRemarks(info["remarques"])
+                    ? demoRemarksText(lang)
+                    : (info["remarques"] ?? "")
+                }
                 onChange={(e) => {
                   updateInfo("remarques", e.target.value);
                 }}
