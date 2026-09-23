@@ -55,6 +55,21 @@ export function isDemoActive(): boolean {
 /** Évènement émis quand le jeu de démonstration est (re)chargé. */
 export const DEMO_LOADED_EVENT = "ptw-demo-loaded";
 
+/** Remarques de la fiche de démonstration, traduites selon la langue active. */
+export const DEMO_REMARKS_FR = "Profil piano de démo.";
+export const DEMO_REMARKS_EN = "Demo piano profile.";
+
+export function demoRemarksText(lang?: "fr" | "en"): string {
+  const current = lang ?? getLang();
+  return current === "en" ? DEMO_REMARKS_EN : DEMO_REMARKS_FR;
+}
+
+/** Vrai si le texte correspond aux remarques de la fiche de démonstration. */
+export function isDemoRemarks(value: string | null | undefined): boolean {
+  const v = (value ?? "").trim();
+  return v === DEMO_REMARKS_FR || v === DEMO_REMARKS_EN;
+}
+
 type DemoRows = Array<{ wa: string; wd: string }>;
 
 /** Écrit le jeu de démonstration (fiche + pesées) dans le stockage local. */
