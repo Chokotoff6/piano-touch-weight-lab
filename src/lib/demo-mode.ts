@@ -11,6 +11,7 @@ import {
   normalizeWho,
 } from "@/lib/current-piano";
 import { setCompareUnlocked, setGateReady, setResultsVisited } from "@/lib/topbar-store";
+import { getLang } from "@/data/translations";
 import { resetConsent } from "@/lib/cloud-gate";
 
 const DRAFT_ROWS_KEY = "ptw_draft_rows";
