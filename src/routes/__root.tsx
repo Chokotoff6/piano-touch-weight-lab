@@ -615,36 +615,40 @@ function RootComponent() {
       {!isHome && (
         <div className="relative !z-[60] mx-auto w-full max-w-7xl overflow-visible px-[100px] pb-2 pt-3">
           <div className="relative !z-[60] flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                const active = toggleDemoMode();
-                setDemoVisible(active);
-                window.location.href = "/saisie";
-              }}
-              aria-pressed={demoVisible}
-              className={
-                demoVisible
-                  ? "whitespace-nowrap rounded-md border-2 border-[#c4b5fd] bg-[#ede9fe] px-4 py-2 text-xs font-bold uppercase tracking-wide !text-[#4c1d95] transition-colors hover:bg-[#ddd6fe]"
-                  : "whitespace-nowrap rounded-md border-2 border-gray-300 bg-gray-100 px-4 py-2 text-xs font-bold uppercase tracking-wide !text-black transition-colors hover:bg-gray-200"
-              }
+            {/* Infobulle au survol du libellé : fond noir, sans flèche ni croix. */}
+            <div
+              className="relative"
+              onMouseEnter={() => setDemoTipOpen(true)}
+              onMouseLeave={() => setDemoTipOpen(false)}
             >
-              {lang === "en" ? "Demo mode" : "Mode démo"}
-            </button>
-            {/* Bouton « i » permanent (Mode démo ON ou OFF). Sur Saisie, sa
-                bannière ne s'auto-ouvre qu'une seule fois à vie (localStorage). */}
-            <InfoDot
-              label={lang === "en" ? "Demo mode" : "Mode démo"}
-              width={340}
-              {...(pathname === "/saisie"
-                ? { autoOpenForeverKey: "ptw_demo_banner_forever_dismissed" }
-                : {})}
-              autoCloseMs={10000}
-            >
-              <span className="block whitespace-pre-line text-[14.5px]">
-                {lang === "en" ? DEMO_INFO_EN : DEMO_INFO_FR}
-              </span>
-            </InfoDot>
+              <button
+                type="button"
+                onClick={() => {
+                  const active = toggleDemoMode();
+                  setDemoVisible(active);
+                  setDemoTipOpen(false);
+                  window.location.href = "/saisie";
+                }}
+                aria-pressed={demoVisible}
+                className={
+                  demoVisible
+                    ? "whitespace-nowrap rounded-md border-2 border-[#c4b5fd] bg-[#ede9fe] px-4 py-2 text-xs font-bold uppercase tracking-wide !text-[#4c1d95] transition-colors hover:bg-[#ddd6fe]"
+                    : "whitespace-nowrap rounded-md border-2 border-gray-300 bg-gray-100 px-4 py-2 text-xs font-bold uppercase tracking-wide !text-black transition-colors hover:bg-gray-200"
+                }
+              >
+                {lang === "en" ? "Demo mode" : "Mode démo"}
+              </button>
+              {demoTipOpen && (
+                <div
+                  role="tooltip"
+                  className="absolute right-0 top-[calc(100%+8px)] z-[70] w-[340px] rounded-md bg-black px-3 py-2 text-left text-[13.5px] leading-snug text-white shadow-lg"
+                >
+                  {lang === "en"
+                    ? "Demo Mode pre-fills the app with a data set that lets you test the different modules. The CLOUD database used is also fictitious."
+                    : "Mode Démo pré-remplit l'application avec un jeu de données permettant de tester les différents modules. La base de données CLOUD utilisée est également fictive."}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
