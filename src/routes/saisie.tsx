@@ -50,6 +50,7 @@ import { getTopbarState, setGateReady, setTopbarState, showTopbarAlert, useTopba
 import { decideCloudAction, resetConsent, startSheetTimer } from "@/lib/cloud-gate";
 import {
   DEMO_LOADED_EVENT,
+  DEMO_BANNER_FOREVER_KEY,
   DEMO_CASCADE_INTERVAL_MS,
   hasSeenDemoCascade,
   isDemoActive,
