@@ -2548,6 +2548,27 @@ function Index() {
   // --- Rendu : page ----------------------------------------------------------------
 
   return (
+    <>
+    {demoBannerOpen && (
+      <div
+        data-demo-banner
+        className="flex w-full items-start gap-3 border-b border-purple-100 bg-purple-50 p-4 text-purple-900"
+      >
+        <p className="flex-1 text-sm font-medium">
+          {en
+            ? "💡 No piano on hand? Activate Demo Mode in 1 click to test the app with a mock profile."
+            : "💡 Pas encore de piano sous la main ? Activez le Mode Démo en 1 clic pour tester l'application avec un profil fictif."}
+        </p>
+        <button
+          type="button"
+          aria-label={en ? "Close" : "Fermer"}
+          onClick={closeDemoBanner}
+          className="shrink-0 rounded px-2 text-lg leading-none text-purple-900 hover:bg-purple-100"
+        >
+          ×
+        </button>
+      </div>
+    )}
     <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
       <input
         ref={importInputRef}
