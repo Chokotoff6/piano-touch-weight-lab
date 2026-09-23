@@ -50,6 +50,7 @@ import { getTopbarState, setGateReady, setTopbarState, showTopbarAlert, useTopba
 import { decideCloudAction, resetConsent, startSheetTimer } from "@/lib/cloud-gate";
 import {
   DEMO_LOADED_EVENT,
+  DEMO_BANNER_FOREVER_KEY,
   DEMO_CASCADE_INTERVAL_MS,
   hasSeenDemoCascade,
   isDemoActive,
@@ -515,6 +516,42 @@ function Index() {
   const navigate = useNavigate();
   const lang = useLang();
   const en = lang === "en";
+
+  /** Bandeau mauve d'appel au Mode Démo : une seule fois à vie (localStorage). */
+  const [demoBannerOpen, setDemoBannerOpen] = useState(false);
+  useEffect(() => {
+    try {
+      const locked = window.localStorage.getItem(DEMO_BANNER_FOREVER_KEY) === "true";
+      setDemoBannerOpen(!locked && !isDemoActive());
+    } catch {
+      setDemoBannerOpen(false);
+    }
+  }, []);
+  const closeDemoBanner = useCallback(() => {
+    setDemoBannerOpen(false);
+    try {
+      window.localStorage.setItem(DEMO_BANNER_FOREVER_KEY, "true");
+    } catch {
+      /* stockage indisponible */
+    }
+  }, []);
+  useEffect(() => {
+    if (!demoBannerOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t?.closest("[data-demo-banner]")) return;
+      closeDemoBanner();
+    };
+    const onDemo = () => {
+      if (isDemoActive()) closeDemoBanner();
+    };
+    window.addEventListener("mousedown", onDown, true);
+    window.addEventListener(DEMO_LOADED_EVENT, onDemo);
+    return () => {
+      window.removeEventListener("mousedown", onDown, true);
+      window.removeEventListener(DEMO_LOADED_EVENT, onDemo);
+    };
+  }, [demoBannerOpen, closeDemoBanner]);
   const gridRef1 = useSnappedGrid(1, 44);
   const gridRef2 = useSnappedGrid(45, 88);
   const pdfGridRef1 = useSnappedGrid(1, 44);
@@ -2511,6 +2548,27 @@ function Index() {
   // --- Rendu : page ----------------------------------------------------------------
 
   return (
+    <>
+    {demoBannerOpen && (
+      <div
+        data-demo-banner
+        className="flex w-full items-start gap-3 border-b border-purple-100 bg-purple-50 p-4 text-purple-900"
+      >
+        <p className="flex-1 text-sm font-medium">
+          {en
+            ? "💡 No piano on hand? Activate Demo Mode in 1 click to test the app with a mock profile."
+            : "💡 Pas encore de piano sous la main ? Activez le Mode Démo en 1 clic pour tester l'application avec un profil fictif."}
+        </p>
+        <button
+          type="button"
+          aria-label={en ? "Close" : "Fermer"}
+          onClick={closeDemoBanner}
+          className="shrink-0 rounded px-2 text-lg leading-none text-purple-900 hover:bg-purple-100"
+        >
+          ×
+        </button>
+      </div>
+    )}
     <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
       <input
         ref={importInputRef}
@@ -3344,5 +3402,6 @@ Moyennes{" "}
         </div>
       )}
     </main>
+    </>
   );
 }
