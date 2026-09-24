@@ -718,7 +718,14 @@ function Index() {
         const rawInfo = window.localStorage.getItem(DRAFT_INFO_KEY);
         const parsedInfo = rawInfo ? (JSON.parse(rawInfo) as Record<string, string>) : null;
         if (parsedInfo && typeof parsedInfo === "object" && Object.keys(parsedInfo).length > 0) {
-          setInfo(parsedInfo);
+          // Filet de sécurité : les libellés hérités de la base sont ramenés
+          // aux codes anglais attendus par les listes déroulantes.
+          setInfo({
+            ...parsedInfo,
+            entretien: normalizeMaintenanceCode(parsedInfo["entretien"]),
+            usage_level: normalizeUsageCode(parsedInfo["usage_level"]),
+            profil_saisie: normalizeWhoCode(parsedInfo["profil_saisie"]),
+          });
         }
         const rawRows = window.localStorage.getItem(DRAFT_ROWS_KEY);
         const parsedRows = rawRows ? (JSON.parse(rawRows) as Row[]) : null;
