@@ -10,6 +10,7 @@ import {
   normalizeTypePiano,
   normalizeWho,
 } from "@/lib/current-piano";
+import { normalizeMaintenanceCode, normalizeUsageCode } from "@/lib/field-codes";
 import { setCompareUnlocked, setGateReady, setResultsVisited } from "@/lib/topbar-store";
 import { getLang } from "@/data/translations";
 import { resetConsent } from "@/lib/cloud-gate";
