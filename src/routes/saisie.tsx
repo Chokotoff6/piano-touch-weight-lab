@@ -759,6 +759,29 @@ function Index() {
   }, [weighingMode]);
 
   useEffect(() => {
+    // Propreté au montage : hors Mode Démo, on purge les résidus de démo et
+    // toute saisie antérieure au jour même, pour une page strictement vierge.
+    try {
+      const DAY_KEY = "ptw_draft_day";
+      const d = new Date();
+      const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      if (!isDemoActive()) {
+        const storedDay = window.localStorage.getItem(DAY_KEY);
+        const demoResidue =
+          window.localStorage.getItem("ptw_demo_mode") === "1" ||
+          window.sessionStorage.getItem("ptw_demo_synced") === "1";
+        if (storedDay !== today || demoResidue) {
+          window.localStorage.removeItem(DRAFT_ROWS_KEY);
+          window.localStorage.removeItem(DRAFT_INFO_KEY);
+          window.localStorage.removeItem("current_piano");
+          window.sessionStorage.removeItem("ptw_demo_synced");
+          window.sessionStorage.removeItem(TYPEWRITER_PENDING_KEY);
+        }
+      }
+      window.localStorage.setItem(DAY_KEY, today);
+    } catch {
+      /* stockage indisponible */
+    }
     // Hydratation au démarrage : le brouillon local prime, sinon current_piano.
     const saved = loadCurrentPiano();
     try {
@@ -2669,7 +2692,7 @@ function Index() {
 
   return (
     <>
-    <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"} ${demoInk ? "demo-ink" : ""}`}>
+    <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
       <input
         ref={importInputRef}
         type="file"
@@ -2682,6 +2705,7 @@ function Index() {
       />
       {!weighingMode && (
       <div
+        className={demoInk && demoTyped && isDemoActive() ? "demo-typed" : undefined}
         data-dirty={isDirty}
         data-saved-at={savedAt ?? ""}
         data-climate-zone={climateZone ?? ""}
