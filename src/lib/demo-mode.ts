@@ -186,8 +186,8 @@ export async function enableDemoModeAsync() {
     pays: profile.country ?? "",
     ville: profile.city ?? "",
     climate_zone: profile.climate_zone ?? "",
-    entretien: profile.maintenance_type ?? "",
-    usage_level: profile.usage_level ?? "",
+    entretien: normalizeMaintenanceCode(profile.maintenance_type),
+    usage_level: normalizeUsageCode(profile.usage_level),
     profil_saisie: normalizeWho(profile.who),
     remarques: demoRemarksText(),
   };
