@@ -671,7 +671,7 @@ function RootComponent() {
               {demoTipOpen && (
                 <div
                   role="tooltip"
-                  className="absolute right-0 top-[calc(100%+8px)] z-[70] w-[340px] rounded-md bg-primary px-3 py-2 text-left text-[13.5px] leading-snug text-primary-foreground shadow-lg"
+                  className="absolute right-0 top-[calc(100%+8px)] z-[70] w-[340px] rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-left text-[13.5px] font-medium leading-snug !text-slate-100 shadow-lg"
                 >
                   {lang === "en"
                     ? "Demo Mode pre-fills the app with a data set that lets you test the different modules. The CLOUD database used is also fictitious."
