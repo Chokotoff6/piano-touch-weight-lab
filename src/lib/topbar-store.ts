@@ -23,6 +23,8 @@ type TopbarState = {
   cloudProfileSaved: boolean;
   /** La page Résultats a été visitée au moins une fois. */
   resultsVisited: boolean;
+  /** Page Saisie en vue clavier (true) ou formulaire initial (false). */
+  weighingMode: boolean;
   /** Au moins une source de comparaison active sur la page Comparer. */
   comparisonActive: boolean;
 };
@@ -46,6 +48,7 @@ let state: TopbarState = {
   compareUnlocked: false,
   cloudProfileSaved: false,
   resultsVisited: false,
+  weighingMode: false,
   comparisonActive: false,
 };
 const listeners = new Set<() => void>();

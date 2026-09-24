@@ -39,7 +39,7 @@ import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 import likedLogoFrAsset from "@/assets/image_soutien_v5.png.asset.json";
 import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
-import { ensureDemoDefault, isDemoOff, toggleDemoMode, DEMO_BANNER_FOREVER_KEY, isDemoActive, DEMO_LOADED_EVENT } from "@/lib/demo-mode";
+import { ensureDemoDefault, isDemoOff, toggleDemoMode, DEMO_BANNER_V2_KEY, isDemoActive, DEMO_LOADED_EVENT } from "@/lib/demo-mode";
 import { AppFooter } from "@/components/AppFooter";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import { FaqDialog } from "@/components/FaqDialog";
@@ -240,7 +240,7 @@ function RootComponent() {
     setDemoVisible(!isDemoOff());
     let locked = false;
     try {
-      locked = window.localStorage.getItem(DEMO_BANNER_FOREVER_KEY) === "true";
+      locked = window.localStorage.getItem(DEMO_BANNER_V2_KEY) === "true";
     } catch {
       /* stockage indisponible */
     }
@@ -249,7 +249,7 @@ function RootComponent() {
 
   const closeDemoBanner = useCallback(() => {
     try {
-      window.localStorage.setItem(DEMO_BANNER_FOREVER_KEY, "true");
+      window.localStorage.setItem(DEMO_BANNER_V2_KEY, "true");
     } catch {
       /* stockage indisponible */
     }
@@ -258,7 +258,8 @@ function RootComponent() {
 
   // Force brute : le bandeau s'affiche dès lors qu'il n'est pas verrouillé,
   // que le Mode Démo est OFF et que l'on se trouve sur la page Saisie.
-  const shouldShowBanner = !bannerDismissed && !demoVisible && pathname === "/saisie";
+  const shouldShowBanner =
+    !bannerDismissed && !demoVisible && pathname === "/saisie" && !topbar.weighingMode;
 
   // Fermeture définitive : croix du bandeau, survol du bouton MODE DÉMO,
   // clic extérieur (après 2 s d'affichage stable) ou passage du Mode Démo sur ON.
@@ -715,24 +716,38 @@ function RootComponent() {
               <div
                 ref={bannerRef}
                 data-demo-banner
-                className="absolute right-0 top-full z-[70] mt-2 flex w-[320px] items-start gap-2 rounded-lg border border-purple-200 bg-purple-50 p-3 text-sm text-purple-900 shadow-md"
+                className="absolute right-0 top-full z-[70] mt-2 flex w-[320px] flex-col rounded-lg border border-purple-200 bg-purple-50 p-3 text-sm text-purple-900 shadow-md"
               >
-                <p className="flex-1 font-medium leading-snug">
-                  {lang === "en"
-                    ? "💡 No piano on hand? Activate Demo Mode in 1 click to test the app with a mock profile."
-                    : "💡 Pas encore de piano sous la main ? Activez le Mode Démo en 1 clic pour tester l'application avec un profil fictif."}
-                </p>
-                <button
-                  type="button"
-                  aria-label={lang === "en" ? "Close" : "Fermer"}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    closeDemoBanner();
-                  }}
-                  className="shrink-0 rounded px-1.5 text-sm leading-none text-purple-900 hover:bg-purple-100"
-                >
-                  ×
-                </button>
+                <div className="flex items-start gap-2">
+                  <p className="flex-1 font-medium leading-snug">
+                    {lang === "en"
+                      ? "💡 No piano on hand? Activate Demo Mode in 1 click to test the app with a mock profile."
+                      : "💡 Pas encore de piano sous la main ? Activez le Mode Démo en 1 clic pour tester l'application avec un profil fictif."}
+                  </p>
+                  <button
+                    type="button"
+                    aria-label={lang === "en" ? "Close" : "Fermer"}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      closeDemoBanner();
+                    }}
+                    className="shrink-0 rounded px-1.5 text-sm leading-none text-purple-900 hover:bg-purple-100"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="mt-2 border-t border-purple-200 pt-2">
+                  <label className="flex cursor-pointer items-center gap-2 text-xs text-purple-900">
+                    <input
+                      type="checkbox"
+                      className="h-3.5 w-3.5 accent-purple-700"
+                      onChange={(e) => {
+                        if (e.target.checked) closeDemoBanner();
+                      }}
+                    />
+                    {lang === "en" ? "Don't show again" : "Ne plus afficher"}
+                  </label>
+                </div>
               </div>
             )}
           </div>
