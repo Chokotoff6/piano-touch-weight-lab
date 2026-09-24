@@ -228,6 +228,7 @@ function RootComponent() {
   const [demoVisible, setDemoVisible] = useState(false);
   const [demoTipOpen, setDemoTipOpen] = useState(false);
   const [demoBannerOpen, setDemoBannerOpen] = useState(false);
+  const bannerRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     initLang();
     initJourneyFlags();
@@ -238,26 +239,40 @@ function RootComponent() {
   // Bandeau mauve d'invitation au Mode Démo — affiché uniquement sur /saisie,
   // si le verrou à vie est absent et le Mode Démo OFF.
   useEffect(() => {
-    if (pathname !== "/saisie") return;
+    if (pathname !== "/saisie") {
+      setDemoBannerOpen(false);
+      return;
+    }
     const locked = window.localStorage.getItem(DEMO_BANNER_FOREVER_KEY) === "true";
     setDemoBannerOpen(!locked && !isDemoActive());
   }, [pathname]);
 
   const closeDemoBanner = useCallback(() => {
-    window.localStorage.setItem(DEMO_BANNER_FOREVER_KEY, "true");
+    try {
+      window.localStorage.setItem(DEMO_BANNER_FOREVER_KEY, "true");
+    } catch {
+      /* stockage indisponible */
+    }
     setDemoBannerOpen(false);
   }, []);
 
-  // Fermeture définitive uniquement sur : croix du bandeau, survol du bouton
-  // MODE DÉMO, ou passage du Mode Démo sur ON. Aucun clic ailleurs sur l'UI.
+  // Fermeture définitive : croix du bandeau, clic ailleurs sur l'UI, survol du
+  // bouton MODE DÉMO, ou passage du Mode Démo sur ON.
   useEffect(() => {
     if (!demoBannerOpen) return;
     const onDemoLoaded = () => {
       if (isDemoActive()) closeDemoBanner();
     };
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (bannerRef.current && target && bannerRef.current.contains(target)) return;
+      closeDemoBanner();
+    };
     window.addEventListener(DEMO_LOADED_EVENT, onDemoLoaded);
+    document.addEventListener("pointerdown", handlePointerDown);
     return () => {
       window.removeEventListener(DEMO_LOADED_EVENT, onDemoLoaded);
+      document.removeEventListener("pointerdown", handlePointerDown);
     };
   }, [demoBannerOpen, closeDemoBanner]);
 
@@ -642,12 +657,12 @@ function RootComponent() {
       {!isHome && (
         <div className="relative !z-[60] mx-auto w-full max-w-7xl overflow-visible px-[100px] pb-2 pt-3">
           <div className="relative !z-[60] flex items-center justify-end gap-2">
-            {/* Infobulle au survol du libellé : fond noir, sans flèche ni croix. */}
+            {/* Infobulle au survol du libellé : gris graphite, sans flèche ni croix. */}
             <div
               className="relative"
               onMouseEnter={() => {
-                setDemoTipOpen(true);
                 if (demoBannerOpen) closeDemoBanner();
+                setDemoTipOpen(true);
               }}
               onMouseLeave={() => setDemoTipOpen(false)}
             >
@@ -671,7 +686,7 @@ function RootComponent() {
               {demoTipOpen && (
                 <div
                   role="tooltip"
-                  className="absolute right-0 top-[calc(100%+8px)] z-[70] w-[340px] rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-left text-[13.5px] font-medium leading-snug !text-slate-100 shadow-lg"
+                  className="absolute right-0 top-[calc(100%+8px)] z-[70] w-[340px] rounded-md border border-slate-600 bg-slate-700 px-3 py-2 text-left text-[13.5px] font-medium leading-snug !text-slate-100 shadow-lg"
                 >
                   {lang === "en"
                     ? "Demo Mode pre-fills the app with a data set that lets you test the different modules. The CLOUD database used is also fictitious."
@@ -683,6 +698,7 @@ function RootComponent() {
                 aligné à droite, largeur = 2× la largeur du bouton. */}
             {demoBannerOpen && (
               <div
+                ref={bannerRef}
                 data-demo-banner
                 className="absolute right-0 top-full mt-2 z-[70] flex w-[234px] items-start gap-2 rounded-lg border border-purple-100 bg-purple-50 p-3 text-sm text-purple-900 shadow-sm"
               >
@@ -694,7 +710,10 @@ function RootComponent() {
                 <button
                   type="button"
                   aria-label={lang === "en" ? "Close" : "Fermer"}
-                  onClick={closeDemoBanner}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    closeDemoBanner();
+                  }}
                   className="shrink-0 rounded px-1.5 text-sm leading-none text-purple-900 hover:bg-purple-100"
                 >
                   ×
