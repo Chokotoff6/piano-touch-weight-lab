@@ -657,12 +657,12 @@ function RootComponent() {
       {!isHome && (
         <div className="relative !z-[60] mx-auto w-full max-w-7xl overflow-visible px-[100px] pb-2 pt-3">
           <div className="relative !z-[60] flex items-center justify-end gap-2">
-            {/* Infobulle au survol du libellé : fond noir, sans flèche ni croix. */}
+            {/* Infobulle au survol du libellé : gris graphite, sans flèche ni croix. */}
             <div
               className="relative"
               onMouseEnter={() => {
-                setDemoTipOpen(true);
                 if (demoBannerOpen) closeDemoBanner();
+                setDemoTipOpen(true);
               }}
               onMouseLeave={() => setDemoTipOpen(false)}
             >
