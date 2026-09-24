@@ -2370,7 +2370,12 @@ function Index() {
       historyRows: info["sn_num"]?.trim() ? getTopbarState().historyRows : [],
     });
     // Jalon persistant : le seuil minimal de pesée débloque le bouton "Résultats".
-    setGateReady(badgeVisible && requiredSheetFieldsComplete);
+    // Mode Démo : Résultats reste verrouillé tant que la cascade des 88 touches
+    // n'est pas terminée sur la vue Mesures (comportement identique au mode réel).
+    const demoCascadeOk =
+      !isDemoActive() ||
+      (weighingMode && hasSeenDemoCascade() && !cascadeTarget.current);
+    setGateReady(badgeVisible && requiredSheetFieldsComplete && demoCascadeOk);
     return () => {
       setTopbarState({
         exportReady: false,
@@ -2382,7 +2387,7 @@ function Index() {
         historyRows: [],
       });
     };
-  }, [exportReady, requiredSheetFieldsComplete, badgeVisible, info, isExporting, isDirty, currentDbId]);
+  }, [exportReady, requiredSheetFieldsComplete, badgeVisible, info, isExporting, isDirty, currentDbId, weighingMode, rows]);
 
   useEffect(() => {
     // Comparer et Exporter partagent exactement la même décision cloud.

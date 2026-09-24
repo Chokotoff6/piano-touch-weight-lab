@@ -108,9 +108,11 @@ function applyDemoData(info: Record<string, string>, rows: DemoRows) {
     /* construction indisponible */
   }
   try {
-    setGateReady(true);
-    setResultsVisited(true);
-    setCompareUnlocked(true);
+    // Aucun déblocage à l'aveugle : Résultats s'ouvre après la cascade,
+    // Comparer après une visite réelle de la page Résultats.
+    setGateReady(false);
+    setResultsVisited(false);
+    setCompareUnlocked(false);
   } catch {
     /* store indisponible */
   }
