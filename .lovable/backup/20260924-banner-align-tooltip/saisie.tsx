@@ -2552,9 +2552,9 @@ function Index() {
     {demoBannerOpen && (
       <div
         data-demo-banner
-        className="absolute right-4 top-2 z-[60] flex w-[250px] items-start gap-2 rounded-lg border border-purple-100 bg-purple-50 p-3 text-xs text-purple-900 shadow-sm"
+        className="flex w-full items-start gap-3 border-b border-purple-100 bg-purple-50 p-4 text-purple-900"
       >
-        <p className="flex-1 font-medium leading-snug">
+        <p className="flex-1 text-sm font-medium">
           {en
             ? "💡 No piano on hand? Activate Demo Mode in 1 click to test the app with a mock profile."
             : "💡 Pas encore de piano sous la main ? Activez le Mode Démo en 1 clic pour tester l'application avec un profil fictif."}
@@ -2563,7 +2563,7 @@ function Index() {
           type="button"
           aria-label={en ? "Close" : "Fermer"}
           onClick={closeDemoBanner}
-          className="shrink-0 rounded px-1.5 text-base leading-none text-purple-900 hover:bg-purple-100"
+          className="shrink-0 rounded px-2 text-lg leading-none text-purple-900 hover:bg-purple-100"
         >
           ×
         </button>
