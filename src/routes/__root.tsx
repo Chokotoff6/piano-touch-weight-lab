@@ -649,7 +649,10 @@ function RootComponent() {
             {/* Infobulle au survol du libellé : fond noir, sans flèche ni croix. */}
             <div
               className="relative"
-              onMouseEnter={() => setDemoTipOpen(true)}
+              onMouseEnter={() => {
+                setDemoTipOpen(true);
+                if (demoBannerOpen) closeDemoBanner();
+              }}
               onMouseLeave={() => setDemoTipOpen(false)}
             >
               <button
