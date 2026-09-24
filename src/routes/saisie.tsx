@@ -619,7 +619,12 @@ function Index() {
   // --- Couleur mauve et animation machine à écrire (Mode Démo) ------------
   const [demoInk, setDemoInk] = useState(false);
   const typewriterTimer = useRef<number | null>(null);
+  const typewriterDelayTimer = useRef<number | null>(null);
   const stopTypewriter = () => {
+    if (typewriterDelayTimer.current !== null) {
+      window.clearTimeout(typewriterDelayTimer.current);
+      typewriterDelayTimer.current = null;
+    }
     if (typewriterTimer.current !== null) {
       window.clearInterval(typewriterTimer.current);
       typewriterTimer.current = null;
@@ -683,7 +688,14 @@ function Index() {
     } catch {
       return false;
     }
-    animateDemoForm(target);
+    stopTypewriter();
+    setInfo({});
+    // Délai strict de 500 ms : formulaire vierge avant la première lettre.
+    typewriterDelayTimer.current = window.setTimeout(() => {
+      typewriterDelayTimer.current = null;
+      if (!isDemoActive() || weighingModeRef.current) return;
+      animateDemoForm(target);
+    }, 500);
     return true;
   };
 
@@ -2459,7 +2471,8 @@ function Index() {
         }}
         // Aucune coloration rouge : les cases restent d'apparence normale même
         // en anomalie. Seuls les messages FF et le blocage du focus subsistent.
-        className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"}`}
+        data-demo-measure-value={demoInk ? "" : undefined}
+        className={`weight-input !font-sans ${demoInk ? "!font-bold !text-[#4c1d95]" : "font-semibold !text-black"} focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"}`}
 
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
       />
@@ -2573,7 +2586,7 @@ function Index() {
                 <div key={index} className={`result-col ${black ? "is-black" : "is-white"}`}>
                   <div className="result-strip">{black ? formatResult(value) : null}</div>
                   <div className={`result-value ${(kind === "balance" || kind === "friction") && !black ? "!overflow-visible" : ""}`}>
-                    <span className={`rv-text !text-center !whitespace-nowrap !overflow-visible ${(kind === "balance" || kind === "friction") && !black ? "!w-[125%] !max-w-none !px-0" : "!w-full !px-0.5"}`}>
+                    <span data-demo-measure-value={demoInk && !pdfMirror ? "" : undefined} className={`${demoInk && !pdfMirror ? "!font-bold !text-[#4c1d95] " : ""}rv-text !text-center !whitespace-nowrap !overflow-visible ${(kind === "balance" || kind === "friction") && !black ? "!w-[125%] !max-w-none !px-0" : "!w-full !px-0.5"}`}>
                       {black ? null : formatResult(value)}
                     </span>
                   </div>
@@ -3061,7 +3074,7 @@ function Index() {
         // puisse toujours le rendre et le capturer, quelle que soit la page.
         className={
           weighingMode
-            ? `!mt-[100px] pb-4 ${demoInk ? "demo-keys" : ""}`
+            ? "!mt-[100px] pb-4"
             : "mt-8 pb-10 !absolute !-left-[9999px] !top-0 !w-[1100px] !opacity-0 pointer-events-none"
         }
 

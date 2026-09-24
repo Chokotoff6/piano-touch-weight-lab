@@ -88,6 +88,7 @@ export function buildCurrentPiano(input: {
   city: string;
   country: string;
   remarks: string;
+  who?: string | undefined;
   wa: Array<string | number>;
   wd: Array<string | number>;
   mesureDate?: Date;
@@ -132,6 +133,7 @@ export function buildCurrentPiano(input: {
     city: String(input.city ?? "").normalize("NFC").trim(),
     country: String(input.country ?? "").normalize("NFC").trim(),
     remarks: input.remarks,
+    who: input.who,
     wa_values: wa,
     wd_values: wd,
     friction_values: friction,
