@@ -2911,7 +2911,7 @@ function Index() {
                     : "Champs verrouillés pour préserver l'intégrité du profil. Pour créer un nouveau piano, cliquez sur le bouton « Reset »."}
                 </p>
               )}
-              {!serialFormatValid && (
+              {!serialFormatValid && !isDemoActive() && !demoInk && (
                 <p className="mt-1 text-[0.7rem] leading-snug text-destructive">
                   {SERIAL_FORMAT_ERROR}
                 </p>
@@ -3083,7 +3083,7 @@ function Index() {
                 style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
               >
                 <span>{en ? "Do you want to erase all entered piano information?" : "Voulez-vous effacer toutes les infos piano saisies ?"}</span>
-                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { resetInfo(); setConfirmReset(null); }}>Oui</button>
+                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleFullReset(); }}>Oui</button>
                 <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
               </div>
             )}
@@ -3314,7 +3314,7 @@ function Index() {
                   style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
                 >
                   <span>{en ? "Do you want to erase all entered weight data?" : "Voulez-vous effacer toutes les données de poids saisies ?"}</span>
-                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); setBlockAnchor(null); rangeDismissed.current.clear(); coherenceDismissed.current.clear(); setIncompletePairs([]); lockedPairRef.current = null; setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; resetConsent(); markCsvOrigin(false); focusFirstWeight(); }}>Oui</button>
+                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleFullReset(); }}>Oui</button>
                   <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
                 </div>
               )}
