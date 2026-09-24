@@ -248,23 +248,19 @@ function RootComponent() {
     setDemoBannerOpen(false);
   }, []);
 
+  // Fermeture définitive uniquement sur : croix du bandeau, survol du bouton
+  // MODE DÉMO, ou passage du Mode Démo sur ON. Aucun clic ailleurs sur l'UI.
   useEffect(() => {
     if (!demoBannerOpen) return;
-    const onMouseDown = (e: MouseEvent) => {
-      const t = e.target as HTMLElement | null;
-      if (t?.closest("[data-demo-banner]")) return;
-      closeDemoBanner();
-    };
     const onDemoLoaded = () => {
       if (isDemoActive()) closeDemoBanner();
     };
-    window.addEventListener("mousedown", onMouseDown);
     window.addEventListener(DEMO_LOADED_EVENT, onDemoLoaded);
     return () => {
-      window.removeEventListener("mousedown", onMouseDown);
       window.removeEventListener(DEMO_LOADED_EVENT, onDemoLoaded);
     };
   }, [demoBannerOpen, closeDemoBanner]);
+
 
   const isComparer = pathname === "/comparer";
   /** Accueil épuré : seuls le logo, la FAQ et EN | FR restent visibles. */
