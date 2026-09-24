@@ -618,9 +618,6 @@ function Index() {
 
   // --- Couleur mauve et animation machine à écrire (Mode Démo) ------------
   const [demoInk, setDemoInk] = useState(false);
-  /** Vrai uniquement tant que le formulaire affiche les valeurs écrites par l'animation. */
-  const [demoTyped, setDemoTyped] = useState(false);
-  const demoTargetRef = useRef<Record<string, string> | null>(null);
   const typewriterTimer = useRef<number | null>(null);
   const typewriterDelayTimer = useRef<number | null>(null);
   const stopTypewriter = () => {
@@ -636,34 +633,19 @@ function Index() {
   useEffect(() => {
     setDemoInk(isDemoActive());
     const sync = () => {
-      const active = isDemoActive();
-      setDemoInk(active);
+      setDemoInk(isDemoActive());
       // Réarmement : chaque bascule ON/OFF permet de rejouer la cascade.
       cascadeStarted.current = false;
-      if (!active) {
-        // Reset OFF : formulaire et clavier vierges, encre noire standard.
-        stopTypewriter();
-        stopCascadeTimer();
-        demoTargetRef.current = null;
-        setDemoTyped(false);
-        setInfo({});
-        setRows(EMPTY.map((r) => ({ ...r })));
-        setWeighingMode(false);
-      }
     };
     window.addEventListener(DEMO_LOADED_EVENT, sync);
     return () => {
       window.removeEventListener(DEMO_LOADED_EVENT, sync);
       stopTypewriter();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const DEMO_TYPE_DURATION_MS = 3000;
-  const DEMO_BLANK_PAUSE_MS = 500;
-
   /**
-   * Déverse la fiche démo (lue en base) dans le formulaire en exactement 3 s :
+   * Déverse progressivement la fiche démo (lue en base) dans le formulaire :
    * lettre par lettre pour les champs texte, apparition successive pour les listes.
    */
   const animateDemoForm = (target: Record<string, string>) => {
@@ -683,13 +665,7 @@ function Index() {
         steps.push([k, v]);
       }
     }
-    demoTargetRef.current = target;
-    setDemoTyped(true);
-    if (steps.length === 0) {
-      setInfo(target);
-      return;
-    }
-    const interval = Math.max(1, DEMO_TYPE_DURATION_MS / steps.length);
+    setInfo({});
     let i = 0;
     typewriterTimer.current = window.setInterval(() => {
       const step = steps[i++];
@@ -700,20 +676,7 @@ function Index() {
       }
       const [k, v] = step;
       setInfo((p) => ({ ...p, [k]: v }));
-    }, interval);
-  };
-
-  /** A (0 ms) reset noir → B (500 ms) pause vierge → C (3000 ms) écriture mauve. */
-  const runDemoSequence = (target: Record<string, string>) => {
-    stopTypewriter();
-    demoTargetRef.current = null;
-    setDemoTyped(false);
-    setInfo({});
-    typewriterDelayTimer.current = window.setTimeout(() => {
-      typewriterDelayTimer.current = null;
-      if (!isDemoActive() || weighingModeRef.current) return;
-      animateDemoForm(target);
-    }, DEMO_BLANK_PAUSE_MS);
+    }, 35);
   };
 
   const TYPEWRITER_PENDING_KEY = "ptw_demo_typewriter_pending";
@@ -725,20 +688,16 @@ function Index() {
     } catch {
       return false;
     }
-    runDemoSequence(target);
+    stopTypewriter();
+    setInfo({});
+    // Délai strict de 500 ms : formulaire vierge avant la première lettre.
+    typewriterDelayTimer.current = window.setTimeout(() => {
+      typewriterDelayTimer.current = null;
+      if (!isDemoActive() || weighingModeRef.current) return;
+      animateDemoForm(target);
+    }, 500);
     return true;
   };
-
-  // Toute saisie manuelle après l'animation repasse le formulaire en encre noire.
-  useEffect(() => {
-    if (!demoTyped) return;
-    if (typewriterTimer.current !== null || typewriterDelayTimer.current !== null) return;
-    const target = demoTargetRef.current;
-    if (!target || JSON.stringify(info) !== JSON.stringify(target)) {
-      setDemoTyped(false);
-      demoTargetRef.current = null;
-    }
-  }, [info, demoTyped]);
 
   // Passage au clavier : 1 seconde de clavier vierge, puis cascade des 88 touches.
   useEffect(() => {
@@ -759,29 +718,6 @@ function Index() {
   }, [weighingMode]);
 
   useEffect(() => {
-    // Propreté au montage : hors Mode Démo, on purge les résidus de démo et
-    // toute saisie antérieure au jour même, pour une page strictement vierge.
-    try {
-      const DAY_KEY = "ptw_draft_day";
-      const d = new Date();
-      const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      if (!isDemoActive()) {
-        const storedDay = window.localStorage.getItem(DAY_KEY);
-        const demoResidue =
-          window.localStorage.getItem("ptw_demo_mode") === "1" ||
-          window.sessionStorage.getItem("ptw_demo_synced") === "1";
-        if (storedDay !== today || demoResidue) {
-          window.localStorage.removeItem(DRAFT_ROWS_KEY);
-          window.localStorage.removeItem(DRAFT_INFO_KEY);
-          window.localStorage.removeItem("current_piano");
-          window.sessionStorage.removeItem("ptw_demo_synced");
-          window.sessionStorage.removeItem(TYPEWRITER_PENDING_KEY);
-        }
-      }
-      window.localStorage.setItem(DAY_KEY, today);
-    } catch {
-      /* stockage indisponible */
-    }
     // Hydratation au démarrage : le brouillon local prime, sinon current_piano.
     const saved = loadCurrentPiano();
     try {
@@ -2692,7 +2628,7 @@ function Index() {
 
   return (
     <>
-    <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
+    <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"} ${demoInk ? "demo-ink" : ""}`}>
       <input
         ref={importInputRef}
         type="file"
@@ -2705,7 +2641,6 @@ function Index() {
       />
       {!weighingMode && (
       <div
-        className={demoInk && demoTyped && isDemoActive() ? "demo-typed" : undefined}
         data-dirty={isDirty}
         data-saved-at={savedAt ?? ""}
         data-climate-zone={climateZone ?? ""}

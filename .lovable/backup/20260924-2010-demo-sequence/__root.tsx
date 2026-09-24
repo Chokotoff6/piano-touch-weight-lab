@@ -27,7 +27,6 @@ import {
   createRootRouteWithContext,
   useRouter,
   useRouterState,
-  useNavigate,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -158,7 +157,6 @@ const RGPD_CONSENT_KEY = "rgpd-cgu-consent";
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const rootNavigate = useNavigate();
   const topbar = useTopbarState();
   const lang = useLang();
   const [consentOpen, setConsentOpen] = useState(false);
@@ -265,9 +263,9 @@ function RootComponent() {
     const onDemoLoaded = () => {
       if (isDemoActive()) closeDemoBanner();
     };
-    // Écouteur armé seulement une fois le bandeau peint et stable (1 s),
+    // Écouteur armé seulement une fois le bandeau peint et stable (600 ms),
     // pour qu'un clic de navigation ne pose pas le verrou prématurément.
-    const armedAt = Date.now() + 1000;
+    const armedAt = Date.now() + 600;
     const handlePointerDown = (event: PointerEvent) => {
       if (Date.now() < armedAt || !event.isTrusted) return;
       const target = event.target as Node | null;
@@ -664,19 +662,21 @@ function RootComponent() {
         <div className="relative !z-[60] mx-auto w-full max-w-7xl overflow-visible px-[100px] pb-2 pt-3">
           <div className="relative !z-[60] flex items-center justify-end gap-2">
             {/* Infobulle au survol du libellé : gris graphite, sans flèche ni croix. */}
-            <div className="relative">
+            <div
+              className="relative"
+              onMouseEnter={() => {
+                if (demoBannerOpen) closeDemoBanner();
+                setDemoTipOpen(true);
+              }}
+              onMouseLeave={() => setDemoTipOpen(false)}
+            >
               <button
                 type="button"
-                onMouseEnter={() => {
-                  if (demoBannerOpen) closeDemoBanner();
-                  setDemoTipOpen(true);
-                }}
-                onMouseLeave={() => setDemoTipOpen(false)}
                 onClick={() => {
                   const active = toggleDemoMode();
                   setDemoVisible(active);
                   setDemoTipOpen(false);
-                  void rootNavigate({ to: "/saisie" });
+                  window.location.href = "/saisie";
                 }}
                 aria-pressed={demoVisible}
                 className={
