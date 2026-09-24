@@ -540,11 +540,7 @@ body {
   padding-bottom: 62px;
 }
 
-/* Mode Démo : écritures du formulaire et grammes du clavier en mauve foncé. */
-.demo-ink [data-dirty] :is(input, select, textarea, button[role="combobox"]) {
+/* Mode Démo : seules les valeurs écrites par l'animation passent en mauve. */
+.demo-typed :is(input, select, textarea, button[role="combobox"]) {
   color: #4c1d95 !important;
-}
-.demo-keys :is(input, td, [data-key-value]) {
-  color: #4c1d95 !important;
-  font-weight: 700 !important;
 }
