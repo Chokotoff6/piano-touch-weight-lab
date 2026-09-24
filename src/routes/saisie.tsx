@@ -1213,6 +1213,68 @@ function Index() {
     markDirty();
   };
 
+  /** RESET TOTAL — règle absolue : désactivation du Mode Démo, purge complète
+      des stockages et des états, retour immédiat sur la fiche Info piano,
+      entièrement vierge et en noir standard. */
+  const handleFullReset = () => {
+    // 1. Mode Démo impérativement OFF.
+    stopTypewriter();
+    demoTargetRef.current = null;
+    setDemoTyped(false);
+    setDemoInk(false);
+    cascadeStarted.current = false;
+    resetDemoCascadeSeen();
+    if (isDemoActive()) disableDemoMode();
+    // 2. Purge des stockages.
+    try {
+      window.localStorage.removeItem(DRAFT_INFO_KEY);
+      window.localStorage.removeItem(DRAFT_ROWS_KEY);
+      window.localStorage.removeItem(CURRENT_PIANO_KEY);
+      window.sessionStorage.setItem("ptw_weighing_mode", "0");
+      window.sessionStorage.removeItem("ptw_demo_typewriter_pending");
+      window.sessionStorage.removeItem("ptw_demo_synced");
+    } catch {
+      /* stockage indisponible */
+    }
+    // 3. Formulaire et pesées strictement vierges.
+    setInfo({});
+    setRows(EMPTY);
+    rowsRef.current = EMPTY;
+    setClimateZone(null);
+    setCurrentDbId(null);
+    setErrors({});
+    fabricationTouched.current = false;
+    setUndoStack([]);
+    setRedoStack([]);
+    setCoherenceIndex(null);
+    setCoherenceAnchor(null);
+    setPedalAlert(false);
+    setRangeAnchor(null);
+    setBlockAnchor(null);
+    rangeDismissed.current.clear();
+    coherenceDismissed.current.clear();
+    setIncompletePairs([]);
+    lockedPairRef.current = null;
+    setConfirmReset(null);
+    // 4. Retour sur la fiche Info piano et verrous de parcours réarmés.
+    setWeighingMode(false);
+    setGateReady(false);
+    setResultsVisited(false);
+    setCompareUnlocked(false);
+    setTopbarState({ measuresReady: false, exportReady: false });
+    resetConsent();
+    markCsvOrigin(false);
+    markDirty();
+    // 5. Synchronisation du bouton mauve de la barre de navigation.
+    try {
+      window.dispatchEvent(new CustomEvent("ptw-demo-off"));
+    } catch {
+      /* environnement sans fenêtre */
+    }
+  };
+
+
+
 
   // --- Messages temporaires ---------------------------------------------------
 
