@@ -2387,7 +2387,7 @@ function Index() {
         historyRows: [],
       });
     };
-  }, [exportReady, requiredSheetFieldsComplete, badgeVisible, info, isExporting, isDirty, currentDbId]);
+  }, [exportReady, requiredSheetFieldsComplete, badgeVisible, info, isExporting, isDirty, currentDbId, weighingMode, rows]);
 
   useEffect(() => {
     // Comparer et Exporter partagent exactement la même décision cloud.
