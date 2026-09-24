@@ -51,9 +51,11 @@ import { decideCloudAction, resetConsent, startSheetTimer } from "@/lib/cloud-ga
 import {
   DEMO_LOADED_EVENT,
   DEMO_CASCADE_INTERVAL_MS,
+  disableDemoMode,
   hasSeenDemoCascade,
   isDemoActive,
   markDemoCascadeSeen,
+  resetDemoCascadeSeen,
   demoRemarksText,
   isDemoRemarks,
 } from "@/lib/demo-mode";
