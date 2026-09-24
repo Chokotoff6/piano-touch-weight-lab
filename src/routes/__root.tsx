@@ -228,6 +228,7 @@ function RootComponent() {
   const [demoVisible, setDemoVisible] = useState(false);
   const [demoTipOpen, setDemoTipOpen] = useState(false);
   const [demoBannerOpen, setDemoBannerOpen] = useState(false);
+  const bannerRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     initLang();
     initJourneyFlags();
@@ -238,26 +239,40 @@ function RootComponent() {
   // Bandeau mauve d'invitation au Mode Démo — affiché uniquement sur /saisie,
   // si le verrou à vie est absent et le Mode Démo OFF.
   useEffect(() => {
-    if (pathname !== "/saisie") return;
+    if (pathname !== "/saisie") {
+      setDemoBannerOpen(false);
+      return;
+    }
     const locked = window.localStorage.getItem(DEMO_BANNER_FOREVER_KEY) === "true";
     setDemoBannerOpen(!locked && !isDemoActive());
   }, [pathname]);
 
   const closeDemoBanner = useCallback(() => {
-    window.localStorage.setItem(DEMO_BANNER_FOREVER_KEY, "true");
+    try {
+      window.localStorage.setItem(DEMO_BANNER_FOREVER_KEY, "true");
+    } catch {
+      /* stockage indisponible */
+    }
     setDemoBannerOpen(false);
   }, []);
 
-  // Fermeture définitive uniquement sur : croix du bandeau, survol du bouton
-  // MODE DÉMO, ou passage du Mode Démo sur ON. Aucun clic ailleurs sur l'UI.
+  // Fermeture définitive : croix du bandeau, clic ailleurs sur l'UI, survol du
+  // bouton MODE DÉMO, ou passage du Mode Démo sur ON.
   useEffect(() => {
     if (!demoBannerOpen) return;
     const onDemoLoaded = () => {
       if (isDemoActive()) closeDemoBanner();
     };
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (bannerRef.current && target && bannerRef.current.contains(target)) return;
+      closeDemoBanner();
+    };
     window.addEventListener(DEMO_LOADED_EVENT, onDemoLoaded);
+    document.addEventListener("pointerdown", handlePointerDown);
     return () => {
       window.removeEventListener(DEMO_LOADED_EVENT, onDemoLoaded);
+      document.removeEventListener("pointerdown", handlePointerDown);
     };
   }, [demoBannerOpen, closeDemoBanner]);
 
