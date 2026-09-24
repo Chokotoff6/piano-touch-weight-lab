@@ -377,7 +377,7 @@ function RootComponent() {
                 </span>
               )}
               <div className="relative">
-                {topbar.compareUnlocked && topbar.resultsVisited && topbar.gateReady ? (
+                {topbar.resultsVisited ? (
                   <Link
                     to="/comparer"
                     className={linkClass}
@@ -675,7 +675,7 @@ function RootComponent() {
               <button
                 type="button"
                 onMouseEnter={() => {
-                  if (demoBannerOpen) closeDemoBanner();
+                  if (shouldShowBanner) closeDemoBanner();
                   setDemoTipOpen(true);
                 }}
                 onMouseLeave={() => setDemoTipOpen(false)}
@@ -711,11 +711,11 @@ function RootComponent() {
             </div>
             {/* Bandeau mauve d'invitation — juste en-dessous du bouton MODE DÉMO,
                 aligné à droite, largeur = 2× la largeur du bouton. */}
-            {demoBannerOpen && (
+            {shouldShowBanner && (
               <div
                 ref={bannerRef}
                 data-demo-banner
-                className="absolute right-0 top-full mt-2 z-[70] flex w-[234px] items-start gap-2 rounded-lg border border-purple-100 bg-purple-50 p-3 text-sm text-purple-900 shadow-sm"
+                className="absolute right-0 top-full z-[70] mt-2 flex w-[320px] items-start gap-2 rounded-lg border border-purple-200 bg-purple-50 p-3 text-sm text-purple-900 shadow-md"
               >
                 <p className="flex-1 font-medium leading-snug">
                   {lang === "en"
