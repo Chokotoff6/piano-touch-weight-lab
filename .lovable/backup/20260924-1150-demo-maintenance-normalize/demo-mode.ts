@@ -10,7 +10,6 @@ import {
   normalizeTypePiano,
   normalizeWho,
 } from "@/lib/current-piano";
-import { normalizeMaintenanceCode, normalizeUsageCode } from "@/lib/field-codes";
 import { setCompareUnlocked, setGateReady, setResultsVisited } from "@/lib/topbar-store";
 import { getLang } from "@/data/translations";
 import { resetConsent } from "@/lib/cloud-gate";
@@ -186,8 +185,8 @@ export async function enableDemoModeAsync() {
     pays: profile.country ?? "",
     ville: profile.city ?? "",
     climate_zone: profile.climate_zone ?? "",
-    entretien: normalizeMaintenanceCode(profile.maintenance_type),
-    usage_level: normalizeUsageCode(profile.usage_level),
+    entretien: profile.maintenance_type ?? "",
+    usage_level: profile.usage_level ?? "",
     profil_saisie: normalizeWho(profile.who),
     remarques: demoRemarksText(),
   };
