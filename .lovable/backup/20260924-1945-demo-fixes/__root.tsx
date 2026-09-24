@@ -263,11 +263,7 @@ function RootComponent() {
     const onDemoLoaded = () => {
       if (isDemoActive()) closeDemoBanner();
     };
-    // Écouteur armé seulement une fois le bandeau peint et stable (600 ms),
-    // pour qu'un clic de navigation ne pose pas le verrou prématurément.
-    const armedAt = Date.now() + 600;
     const handlePointerDown = (event: PointerEvent) => {
-      if (Date.now() < armedAt || !event.isTrusted) return;
       const target = event.target as Node | null;
       if (bannerRef.current && target && bannerRef.current.contains(target)) return;
       closeDemoBanner();

@@ -10,7 +10,7 @@ import {
   normalizeTypePiano,
   normalizeWho,
 } from "@/lib/current-piano";
-import { normalizeMaintenanceCode, normalizeUsageCode, normalizeWhoCode } from "@/lib/field-codes";
+import { normalizeMaintenanceCode, normalizeUsageCode } from "@/lib/field-codes";
 import { setCompareUnlocked, setGateReady, setResultsVisited } from "@/lib/topbar-store";
 import { getLang } from "@/data/translations";
 import { resetConsent } from "@/lib/cloud-gate";
@@ -97,7 +97,6 @@ function applyDemoData(info: Record<string, string>, rows: DemoRows) {
         city: info["ville"] ?? "",
         country: info["pays"] ?? "",
         remarks: info["remarques"] ?? "",
-        who: normalizeWhoCode(info["profil_saisie"]),
         mesureDateRaw: info["measurement_date"] ?? "",
         wa: rows.map((r) => r.wa),
         wd: rows.map((r) => r.wd),
