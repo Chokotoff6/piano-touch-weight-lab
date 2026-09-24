@@ -698,6 +698,7 @@ function RootComponent() {
                 aligné à droite, largeur = 2× la largeur du bouton. */}
             {demoBannerOpen && (
               <div
+                ref={bannerRef}
                 data-demo-banner
                 className="absolute right-0 top-full mt-2 z-[70] flex w-[234px] items-start gap-2 rounded-lg border border-purple-100 bg-purple-50 p-3 text-sm text-purple-900 shadow-sm"
               >
@@ -709,7 +710,10 @@ function RootComponent() {
                 <button
                   type="button"
                   aria-label={lang === "en" ? "Close" : "Fermer"}
-                  onClick={closeDemoBanner}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    closeDemoBanner();
+                  }}
                   className="shrink-0 rounded px-1.5 text-sm leading-none text-purple-900 hover:bg-purple-100"
                 >
                   ×
