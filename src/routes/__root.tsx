@@ -391,8 +391,8 @@ function RootComponent() {
                     aria-disabled="true"
                     title={
                       lang === "en"
-                        ? "The « Valid entry » indicator must be green, then visit the Results page."
-                        : "Le témoin « Saisie conforme » doit être vert, puis passez par la page Résultats."
+                        ? "Visit the Results page first to unlock the Compare page."
+                        : "Consultez d'abord la page Résultats pour débloquer la Comparaison."
                     }
                   >
                     {lang === "en" ? "Compare" : "Comparer"}
