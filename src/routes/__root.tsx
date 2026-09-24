@@ -229,25 +229,23 @@ function RootComponent() {
   const pendingActionRef = useRef<(() => void) | null>(null);
   const [demoVisible, setDemoVisible] = useState(false);
   const [demoTipOpen, setDemoTipOpen] = useState(false);
-  const [demoBannerOpen, setDemoBannerOpen] = useState(false);
+  /** Verrou à vie du bandeau mauve : true tant que l'état réel n'est pas lu
+      (évite tout clignotement au rendu serveur). */
+  const [bannerDismissed, setBannerDismissed] = useState(true);
   const bannerRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     initLang();
     initJourneyFlags();
     ensureDemoDefault();
     setDemoVisible(!isDemoOff());
-  }, []);
-
-  // Bandeau mauve d'invitation au Mode Démo — affiché uniquement sur /saisie,
-  // si le verrou à vie est absent et le Mode Démo OFF.
-  useEffect(() => {
-    if (pathname !== "/saisie") {
-      setDemoBannerOpen(false);
-      return;
+    let locked = false;
+    try {
+      locked = window.localStorage.getItem(DEMO_BANNER_FOREVER_KEY) === "true";
+    } catch {
+      /* stockage indisponible */
     }
-    const locked = window.localStorage.getItem(DEMO_BANNER_FOREVER_KEY) === "true";
-    setDemoBannerOpen(!locked && !isDemoActive());
-  }, [pathname]);
+    setBannerDismissed(locked);
+  }, []);
 
   const closeDemoBanner = useCallback(() => {
     try {
@@ -255,19 +253,21 @@ function RootComponent() {
     } catch {
       /* stockage indisponible */
     }
-    setDemoBannerOpen(false);
+    setBannerDismissed(true);
   }, []);
 
-  // Fermeture définitive : croix du bandeau, clic ailleurs sur l'UI, survol du
-  // bouton MODE DÉMO, ou passage du Mode Démo sur ON.
+  // Force brute : le bandeau s'affiche dès lors qu'il n'est pas verrouillé,
+  // que le Mode Démo est OFF et que l'on se trouve sur la page Saisie.
+  const shouldShowBanner = !bannerDismissed && !demoVisible && pathname === "/saisie";
+
+  // Fermeture définitive : croix du bandeau, survol du bouton MODE DÉMO,
+  // clic extérieur (après 2 s d'affichage stable) ou passage du Mode Démo sur ON.
   useEffect(() => {
-    if (!demoBannerOpen) return;
+    if (!shouldShowBanner) return;
     const onDemoLoaded = () => {
       if (isDemoActive()) closeDemoBanner();
     };
-    // Écouteur armé seulement une fois le bandeau peint et stable (1 s),
-    // pour qu'un clic de navigation ne pose pas le verrou prématurément.
-    const armedAt = Date.now() + 1000;
+    const armedAt = Date.now() + 2000;
     const handlePointerDown = (event: PointerEvent) => {
       if (Date.now() < armedAt || !event.isTrusted) return;
       const target = event.target as Node | null;
@@ -280,7 +280,14 @@ function RootComponent() {
       window.removeEventListener(DEMO_LOADED_EVENT, onDemoLoaded);
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [demoBannerOpen, closeDemoBanner]);
+  }, [shouldShowBanner, closeDemoBanner]);
+
+  // Réinitialisation totale émise par la page Saisie : le bouton repasse en OFF.
+  useEffect(() => {
+    const onDemoOff = () => setDemoVisible(false);
+    window.addEventListener("ptw-demo-off", onDemoOff);
+    return () => window.removeEventListener("ptw-demo-off", onDemoOff);
+  }, []);
 
 
   const isComparer = pathname === "/comparer";
