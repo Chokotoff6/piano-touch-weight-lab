@@ -21,8 +21,7 @@ export const DEMO_MODE_KEY = "ptw_demo_mode";
 /** Interrupteur bistable : "0" = Mode démo sur ON (sinon OFF par défaut). */
 export const DEMO_OFF_KEY = "ptw_demo_off";
 /** Verrou à vie : la bannière d'aide de la page Saisie ne s'affiche qu'une fois. */
-export const DEMO_BANNER_FOREVER_KEY = "ptw_demo_banner_v2_dismissed";
-export const DEMO_BANNER_V2_KEY = DEMO_BANNER_FOREVER_KEY;
+export const DEMO_BANNER_FOREVER_KEY = "ptw_demo_banner_forever_dismissed";
 
 /** Vrai si l'interrupteur « Mode démo » est sur OFF (état par défaut au landing). */
 export function isDemoOff(): boolean {

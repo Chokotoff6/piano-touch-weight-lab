@@ -432,11 +432,6 @@ function Index() {
   const [weighingMode, setWeighingMode] = useState(false);
   /** Filtrage visuel cyclique des touches affichées à l'écran. */
   const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
-  /** Synchronise la vue (formulaire / clavier) avec la barre du haut. */
-  useEffect(() => {
-    setTopbarState({ weighingMode });
-  }, [weighingMode]);
-  useEffect(() => () => setTopbarState({ weighingMode: false }), []);
 
   /** Retour depuis Résultats / Comparer : on rouvre directement l'écran clavier. */
   useEffect(() => {
