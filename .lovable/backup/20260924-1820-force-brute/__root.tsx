@@ -229,23 +229,25 @@ function RootComponent() {
   const pendingActionRef = useRef<(() => void) | null>(null);
   const [demoVisible, setDemoVisible] = useState(false);
   const [demoTipOpen, setDemoTipOpen] = useState(false);
-  /** Verrou à vie du bandeau mauve : true tant que l'état réel n'est pas lu
-      (évite tout clignotement au rendu serveur). */
-  const [bannerDismissed, setBannerDismissed] = useState(true);
+  const [demoBannerOpen, setDemoBannerOpen] = useState(false);
   const bannerRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     initLang();
     initJourneyFlags();
     ensureDemoDefault();
     setDemoVisible(!isDemoOff());
-    let locked = false;
-    try {
-      locked = window.localStorage.getItem(DEMO_BANNER_FOREVER_KEY) === "true";
-    } catch {
-      /* stockage indisponible */
-    }
-    setBannerDismissed(locked);
   }, []);
+
+  // Bandeau mauve d'invitation au Mode Démo — affiché uniquement sur /saisie,
+  // si le verrou à vie est absent et le Mode Démo OFF.
+  useEffect(() => {
+    if (pathname !== "/saisie") {
+      setDemoBannerOpen(false);
+      return;
+    }
+    const locked = window.localStorage.getItem(DEMO_BANNER_FOREVER_KEY) === "true";
+    setDemoBannerOpen(!locked && !isDemoActive());
+  }, [pathname]);
 
   const closeDemoBanner = useCallback(() => {
     try {
@@ -253,21 +255,19 @@ function RootComponent() {
     } catch {
       /* stockage indisponible */
     }
-    setBannerDismissed(true);
+    setDemoBannerOpen(false);
   }, []);
 
-  // Force brute : le bandeau s'affiche dès lors qu'il n'est pas verrouillé,
-  // que le Mode Démo est OFF et que l'on se trouve sur la page Saisie.
-  const shouldShowBanner = !bannerDismissed && !demoVisible && pathname === "/saisie";
-
-  // Fermeture définitive : croix du bandeau, survol du bouton MODE DÉMO,
-  // clic extérieur (après 2 s d'affichage stable) ou passage du Mode Démo sur ON.
+  // Fermeture définitive : croix du bandeau, clic ailleurs sur l'UI, survol du
+  // bouton MODE DÉMO, ou passage du Mode Démo sur ON.
   useEffect(() => {
-    if (!shouldShowBanner) return;
+    if (!demoBannerOpen) return;
     const onDemoLoaded = () => {
       if (isDemoActive()) closeDemoBanner();
     };
-    const armedAt = Date.now() + 2000;
+    // Écouteur armé seulement une fois le bandeau peint et stable (1 s),
+    // pour qu'un clic de navigation ne pose pas le verrou prématurément.
+    const armedAt = Date.now() + 1000;
     const handlePointerDown = (event: PointerEvent) => {
       if (Date.now() < armedAt || !event.isTrusted) return;
       const target = event.target as Node | null;
@@ -280,14 +280,7 @@ function RootComponent() {
       window.removeEventListener(DEMO_LOADED_EVENT, onDemoLoaded);
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [shouldShowBanner, closeDemoBanner]);
-
-  // Réinitialisation totale émise par la page Saisie : le bouton repasse en OFF.
-  useEffect(() => {
-    const onDemoOff = () => setDemoVisible(false);
-    window.addEventListener("ptw-demo-off", onDemoOff);
-    return () => window.removeEventListener("ptw-demo-off", onDemoOff);
-  }, []);
+  }, [demoBannerOpen, closeDemoBanner]);
 
 
   const isComparer = pathname === "/comparer";
@@ -377,7 +370,7 @@ function RootComponent() {
                 </span>
               )}
               <div className="relative">
-                {topbar.resultsVisited ? (
+                {topbar.compareUnlocked && topbar.resultsVisited && topbar.gateReady ? (
                   <Link
                     to="/comparer"
                     className={linkClass}
@@ -391,8 +384,8 @@ function RootComponent() {
                     aria-disabled="true"
                     title={
                       lang === "en"
-                        ? "Visit the Results page first to unlock the Compare page."
-                        : "Consultez d'abord la page Résultats pour débloquer la Comparaison."
+                        ? "The « Valid entry » indicator must be green, then visit the Results page."
+                        : "Le témoin « Saisie conforme » doit être vert, puis passez par la page Résultats."
                     }
                   >
                     {lang === "en" ? "Compare" : "Comparer"}
@@ -675,7 +668,7 @@ function RootComponent() {
               <button
                 type="button"
                 onMouseEnter={() => {
-                  if (shouldShowBanner) closeDemoBanner();
+                  if (demoBannerOpen) closeDemoBanner();
                   setDemoTipOpen(true);
                 }}
                 onMouseLeave={() => setDemoTipOpen(false)}
@@ -711,11 +704,11 @@ function RootComponent() {
             </div>
             {/* Bandeau mauve d'invitation — juste en-dessous du bouton MODE DÉMO,
                 aligné à droite, largeur = 2× la largeur du bouton. */}
-            {shouldShowBanner && (
+            {demoBannerOpen && (
               <div
                 ref={bannerRef}
                 data-demo-banner
-                className="absolute right-0 top-full z-[70] mt-2 flex w-[320px] items-start gap-2 rounded-lg border border-purple-200 bg-purple-50 p-3 text-sm text-purple-900 shadow-md"
+                className="absolute right-0 top-full mt-2 z-[70] flex w-[234px] items-start gap-2 rounded-lg border border-purple-100 bg-purple-50 p-3 text-sm text-purple-900 shadow-sm"
               >
                 <p className="flex-1 font-medium leading-snug">
                   {lang === "en"

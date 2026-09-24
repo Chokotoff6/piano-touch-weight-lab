@@ -46,16 +46,14 @@ import {
   type DiagnosticPayload,
   type DiagnosticHistoryRow,
 } from "@/lib/diagnostics";
-import { getTopbarState, setCompareUnlocked, setGateReady, setResultsVisited, setTopbarState, showTopbarAlert, useTopbarState } from "@/lib/topbar-store";
+import { getTopbarState, setGateReady, setTopbarState, showTopbarAlert, useTopbarState } from "@/lib/topbar-store";
 import { decideCloudAction, resetConsent, startSheetTimer } from "@/lib/cloud-gate";
 import {
   DEMO_LOADED_EVENT,
   DEMO_CASCADE_INTERVAL_MS,
-  disableDemoMode,
   hasSeenDemoCascade,
   isDemoActive,
   markDemoCascadeSeen,
-  resetDemoCascadeSeen,
   demoRemarksText,
   isDemoRemarks,
 } from "@/lib/demo-mode";
@@ -1212,68 +1210,6 @@ function Index() {
     markCsvOrigin(false);
     markDirty();
   };
-
-  /** RESET TOTAL — règle absolue : désactivation du Mode Démo, purge complète
-      des stockages et des états, retour immédiat sur la fiche Info piano,
-      entièrement vierge et en noir standard. */
-  const handleFullReset = () => {
-    // 1. Mode Démo impérativement OFF.
-    stopTypewriter();
-    demoTargetRef.current = null;
-    setDemoTyped(false);
-    setDemoInk(false);
-    cascadeStarted.current = false;
-    resetDemoCascadeSeen();
-    if (isDemoActive()) disableDemoMode();
-    // 2. Purge des stockages.
-    try {
-      window.localStorage.removeItem(DRAFT_INFO_KEY);
-      window.localStorage.removeItem(DRAFT_ROWS_KEY);
-      window.localStorage.removeItem(CURRENT_PIANO_KEY);
-      window.sessionStorage.setItem("ptw_weighing_mode", "0");
-      window.sessionStorage.removeItem("ptw_demo_typewriter_pending");
-      window.sessionStorage.removeItem("ptw_demo_synced");
-    } catch {
-      /* stockage indisponible */
-    }
-    // 3. Formulaire et pesées strictement vierges.
-    setInfo({});
-    setRows(EMPTY);
-    rowsRef.current = EMPTY;
-    setClimateZone(null);
-    setCurrentDbId(null);
-    setErrors({});
-    fabricationTouched.current = false;
-    setUndoStack([]);
-    setRedoStack([]);
-    setCoherenceIndex(null);
-    setCoherenceAnchor(null);
-    setPedalAlert(false);
-    setRangeAnchor(null);
-    setBlockAnchor(null);
-    rangeDismissed.current.clear();
-    coherenceDismissed.current.clear();
-    setIncompletePairs([]);
-    lockedPairRef.current = null;
-    setConfirmReset(null);
-    // 4. Retour sur la fiche Info piano et verrous de parcours réarmés.
-    setWeighingMode(false);
-    setGateReady(false);
-    setResultsVisited(false);
-    setCompareUnlocked(false);
-    setTopbarState({ measuresReady: false, exportReady: false });
-    resetConsent();
-    markCsvOrigin(false);
-    markDirty();
-    // 5. Synchronisation du bouton mauve de la barre de navigation.
-    try {
-      window.dispatchEvent(new CustomEvent("ptw-demo-off"));
-    } catch {
-      /* environnement sans fenêtre */
-    }
-  };
-
-
 
 
   // --- Messages temporaires ---------------------------------------------------
@@ -2911,7 +2847,7 @@ function Index() {
                     : "Champs verrouillés pour préserver l'intégrité du profil. Pour créer un nouveau piano, cliquez sur le bouton « Reset »."}
                 </p>
               )}
-              {!serialFormatValid && !isDemoActive() && !demoInk && (
+              {!serialFormatValid && (
                 <p className="mt-1 text-[0.7rem] leading-snug text-destructive">
                   {SERIAL_FORMAT_ERROR}
                 </p>
@@ -3083,7 +3019,7 @@ function Index() {
                 style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
               >
                 <span>{en ? "Do you want to erase all entered piano information?" : "Voulez-vous effacer toutes les infos piano saisies ?"}</span>
-                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleFullReset(); }}>Oui</button>
+                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { resetInfo(); setConfirmReset(null); }}>Oui</button>
                 <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
               </div>
             )}
@@ -3314,7 +3250,7 @@ function Index() {
                   style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
                 >
                   <span>{en ? "Do you want to erase all entered weight data?" : "Voulez-vous effacer toutes les données de poids saisies ?"}</span>
-                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleFullReset(); }}>Oui</button>
+                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { try { window.localStorage.removeItem(CURRENT_PIANO_KEY); } catch { /* stockage indisponible */ } setRows(EMPTY); setErrors({}); setCoherenceIndex(null); setCoherenceAnchor(null); setPedalAlert(false); setRangeAnchor(null); setBlockAnchor(null); rangeDismissed.current.clear(); coherenceDismissed.current.clear(); setIncompletePairs([]); lockedPairRef.current = null; setUndoStack([]); setRedoStack([]); setConfirmReset(null); rowsRef.current = EMPTY; resetConsent(); markCsvOrigin(false); focusFirstWeight(); }}>Oui</button>
                   <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
                 </div>
               )}
