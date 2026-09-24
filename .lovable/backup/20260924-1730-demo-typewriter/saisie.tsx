@@ -562,8 +562,6 @@ function Index() {
    */
   const maybeStartCascade = (fullRows: Row[]): boolean => {
     if (cascadeStarted.current) return false;
-    // La cascade ne se joue que lorsque le clavier est réellement à l'écran.
-    if (!weighingModeRef.current) return false;
     if (!isDemoActive() || hasSeenDemoCascade()) return false;
     if (!Array.isArray(fullRows) || fullRows.length !== 88) return false;
     if (!fullRows.some((r) => r.wa || r.wd)) return false;
@@ -616,95 +614,6 @@ function Index() {
   // Nettoyage du minuteur à la sortie de la page.
   useEffect(() => stopCascadeTimer, []);
 
-  // --- Couleur mauve et animation machine à écrire (Mode Démo) ------------
-  const [demoInk, setDemoInk] = useState(false);
-  const typewriterTimer = useRef<number | null>(null);
-  const stopTypewriter = () => {
-    if (typewriterTimer.current !== null) {
-      window.clearInterval(typewriterTimer.current);
-      typewriterTimer.current = null;
-    }
-  };
-  useEffect(() => {
-    setDemoInk(isDemoActive());
-    const sync = () => {
-      setDemoInk(isDemoActive());
-      // Réarmement : chaque bascule ON/OFF permet de rejouer la cascade.
-      cascadeStarted.current = false;
-    };
-    window.addEventListener(DEMO_LOADED_EVENT, sync);
-    return () => {
-      window.removeEventListener(DEMO_LOADED_EVENT, sync);
-      stopTypewriter();
-    };
-  }, []);
-
-  /**
-   * Déverse progressivement la fiche démo (lue en base) dans le formulaire :
-   * lettre par lettre pour les champs texte, apparition successive pour les listes.
-   */
-  const animateDemoForm = (target: Record<string, string>) => {
-    stopTypewriter();
-    const TEXT_KEYS = new Set(["marque", "modele", "sn_num", "fabrication", "pays", "ville", "remarques"]);
-    const order = [
-      "marque", "modele", "type_piano", "sn_num", "fabrication", "measurement_date",
-      "pays", "ville", "climate_zone", "entretien", "usage_level", "profil_saisie", "remarques",
-    ];
-    const keys = [...order.filter((k) => k in target), ...Object.keys(target).filter((k) => !order.includes(k))];
-    const steps: Array<[string, string]> = [];
-    for (const k of keys) {
-      const v = target[k] ?? "";
-      if (TEXT_KEYS.has(k) && v.length > 1) {
-        for (let i = 1; i <= v.length; i++) steps.push([k, v.slice(0, i)]);
-      } else {
-        steps.push([k, v]);
-      }
-    }
-    setInfo({});
-    let i = 0;
-    typewriterTimer.current = window.setInterval(() => {
-      const step = steps[i++];
-      if (!step) {
-        stopTypewriter();
-        setInfo(target);
-        return;
-      }
-      const [k, v] = step;
-      setInfo((p) => ({ ...p, [k]: v }));
-    }, 35);
-  };
-
-  const TYPEWRITER_PENDING_KEY = "ptw_demo_typewriter_pending";
-  const consumeTypewriter = (target: Record<string, string>): boolean => {
-    try {
-      if (window.sessionStorage.getItem(TYPEWRITER_PENDING_KEY) !== "1") return false;
-      if (!isDemoActive() || weighingModeRef.current) return false;
-      window.sessionStorage.removeItem(TYPEWRITER_PENDING_KEY);
-    } catch {
-      return false;
-    }
-    animateDemoForm(target);
-    return true;
-  };
-
-  // Passage au clavier : 1 seconde de clavier vierge, puis cascade des 88 touches.
-  useEffect(() => {
-    if (!weighingMode) return;
-    if (!isDemoActive() || hasSeenDemoCascade() || cascadeStarted.current) return;
-    const target = rowsRef.current.map((r) => ({ ...r }));
-    if (target.length !== 88 || !target.some((r) => r.wa || r.wd)) return;
-    weighingModeRef.current = true;
-    setRows(EMPTY.map((r) => ({ ...r })));
-    const t = window.setTimeout(() => {
-      if (!maybeStartCascade(target)) setRows(target);
-    }, 1000);
-    return () => {
-      window.clearTimeout(t);
-      if (!cascadeStarted.current) setRows(target);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weighingMode]);
-
   useEffect(() => {
     // Hydratation au démarrage : le brouillon local prime, sinon current_piano.
     const saved = loadCurrentPiano();
@@ -728,7 +637,7 @@ function Index() {
       const rawInfo = window.localStorage.getItem(DRAFT_INFO_KEY);
       const parsedInfo = rawInfo ? (JSON.parse(rawInfo) as Record<string, string>) : null;
       if (parsedInfo && typeof parsedInfo === "object" && Object.keys(parsedInfo).length > 0) {
-        if (!consumeTypewriter(parsedInfo)) setInfo(parsedInfo);
+        setInfo(parsedInfo);
       } else if (saved) {
         setInfo({
           marque: saved.brand ?? "",
@@ -775,16 +684,12 @@ function Index() {
         if (parsedInfo && typeof parsedInfo === "object" && Object.keys(parsedInfo).length > 0) {
           // Filet de sécurité : les libellés hérités de la base sont ramenés
           // aux codes anglais attendus par les listes déroulantes.
-          const nextInfo = {
+          setInfo({
             ...parsedInfo,
             entretien: normalizeMaintenanceCode(parsedInfo["entretien"]),
             usage_level: normalizeUsageCode(parsedInfo["usage_level"]),
             profil_saisie: normalizeWhoCode(parsedInfo["profil_saisie"]),
-          };
-          if (!consumeTypewriter(nextInfo)) {
-            stopTypewriter();
-            setInfo(nextInfo);
-          }
+          });
         }
         const rawRows = window.localStorage.getItem(DRAFT_ROWS_KEY);
         const parsedRows = rawRows ? (JSON.parse(rawRows) as Row[]) : null;
@@ -2615,7 +2520,7 @@ function Index() {
 
   return (
     <>
-    <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"} ${demoInk ? "demo-ink" : ""}`}>
+    <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
       <input
         ref={importInputRef}
         type="file"
@@ -3061,7 +2966,7 @@ function Index() {
         // puisse toujours le rendre et le capturer, quelle que soit la page.
         className={
           weighingMode
-            ? `!mt-[100px] pb-4 ${demoInk ? "demo-keys" : ""}`
+            ? "!mt-[100px] pb-4"
             : "mt-8 pb-10 !absolute !-left-[9999px] !top-0 !w-[1100px] !opacity-0 pointer-events-none"
         }
 

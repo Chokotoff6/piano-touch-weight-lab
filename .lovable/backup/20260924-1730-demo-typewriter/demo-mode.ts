@@ -278,20 +278,11 @@ export function toggleDemoMode(): boolean {
       // Première activation du Mode Démo : la bannière d'aide de la page
       // Saisie a rempli son rôle, elle est verrouillée pour toujours.
       window.localStorage.setItem(DEMO_BANNER_FOREVER_KEY, "true");
-      // Animation machine à écrire du formulaire au prochain affichage de Saisie.
-      window.sessionStorage.setItem("ptw_demo_typewriter_pending", "1");
-      window.sessionStorage.setItem("ptw_weighing_mode", "0");
     } catch {
       /* stockage indisponible */
     }
     void enableDemoModeAsync().catch((e) => console.error("Mode démo : lecture Cloud impossible", e));
   } else {
-    try {
-      window.sessionStorage.removeItem("ptw_demo_typewriter_pending");
-      window.sessionStorage.setItem("ptw_weighing_mode", "0");
-    } catch {
-      /* stockage indisponible */
-    }
     disableDemoMode();
     try {
       resetConsent();
