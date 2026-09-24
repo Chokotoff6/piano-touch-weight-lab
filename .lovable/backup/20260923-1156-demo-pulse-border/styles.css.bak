@@ -519,17 +519,6 @@
   to { opacity: 0; }
 }
 
-/* Pulsation douce du contour de l'interrupteur MODE DÉMO (ON) :
-   cycle de 2 s entre mauve pâle et mauve soutenu. */
-@keyframes demo-border-pulse {
-  0%, 100% { border-color: #c4b5fd; }
-  50% { border-color: #7c3aed; }
-}
-
-.demo-border-pulse {
-  animation: demo-border-pulse 2s ease-in-out infinite;
-}
-
 .ff-closing {
   animation: ff-fade-out 1s ease forwards;
   pointer-events: none;
