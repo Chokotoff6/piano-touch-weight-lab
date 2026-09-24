@@ -686,11 +686,15 @@ function RootComponent() {
               {demoTipOpen && (
                 <div
                   role="tooltip"
-                  className="absolute right-0 top-[calc(100%+8px)] z-[70] w-[340px] rounded-md border border-slate-600 bg-slate-700 px-3 py-2 text-left text-[13.5px] font-medium leading-snug !text-slate-100 shadow-lg"
+                  className="absolute right-0 top-[calc(100%+8px)] z-50 w-[340px] rounded-md border border-gray-300 bg-white px-3 py-2 text-left text-[13.5px] font-medium leading-snug !text-gray-900 shadow-xl"
                 >
-                  {lang === "en"
-                    ? "Demo Mode pre-fills the app with a data set that lets you test the different modules. The CLOUD database used is also fictitious."
-                    : "Mode Démo pré-remplit l'application avec un jeu de données permettant de tester les différents modules. La base de données CLOUD utilisée est également fictive."}
+                  {demoVisible
+                    ? lang === "en"
+                      ? "⚠️ Disabling Demo Mode will erase all current data and return to the Piano Info page"
+                      : "⚠️ Désactiver le Mode Démo va effacer toutes les données actuelles et revenir page Info piano"
+                    : lang === "en"
+                      ? "Demo Mode pre-fills the app with a data set that lets you test the different modules. The CLOUD database used is also fictitious."
+                      : "Mode Démo pré-remplit l'application avec un jeu de données permettant de tester les différents modules. La base de données CLOUD utilisée est également fictive."}
                 </div>
               )}
             </div>
