@@ -618,6 +618,9 @@ function Index() {
 
   // --- Couleur mauve et animation machine à écrire (Mode Démo) ------------
   const [demoInk, setDemoInk] = useState(false);
+  /** Vrai uniquement tant que le formulaire affiche les valeurs écrites par l'animation. */
+  const [demoTyped, setDemoTyped] = useState(false);
+  const demoTargetRef = useRef<Record<string, string> | null>(null);
   const typewriterTimer = useRef<number | null>(null);
   const typewriterDelayTimer = useRef<number | null>(null);
   const stopTypewriter = () => {
@@ -633,19 +636,34 @@ function Index() {
   useEffect(() => {
     setDemoInk(isDemoActive());
     const sync = () => {
-      setDemoInk(isDemoActive());
+      const active = isDemoActive();
+      setDemoInk(active);
       // Réarmement : chaque bascule ON/OFF permet de rejouer la cascade.
       cascadeStarted.current = false;
+      if (!active) {
+        // Reset OFF : formulaire et clavier vierges, encre noire standard.
+        stopTypewriter();
+        stopCascadeTimer();
+        demoTargetRef.current = null;
+        setDemoTyped(false);
+        setInfo({});
+        setRows(EMPTY.map((r) => ({ ...r })));
+        setWeighingMode(false);
+      }
     };
     window.addEventListener(DEMO_LOADED_EVENT, sync);
     return () => {
       window.removeEventListener(DEMO_LOADED_EVENT, sync);
       stopTypewriter();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const DEMO_TYPE_DURATION_MS = 3000;
+  const DEMO_BLANK_PAUSE_MS = 500;
+
   /**
-   * Déverse progressivement la fiche démo (lue en base) dans le formulaire :
+   * Déverse la fiche démo (lue en base) dans le formulaire en exactement 3 s :
    * lettre par lettre pour les champs texte, apparition successive pour les listes.
    */
   const animateDemoForm = (target: Record<string, string>) => {
@@ -665,7 +683,13 @@ function Index() {
         steps.push([k, v]);
       }
     }
-    setInfo({});
+    demoTargetRef.current = target;
+    setDemoTyped(true);
+    if (steps.length === 0) {
+      setInfo(target);
+      return;
+    }
+    const interval = Math.max(1, DEMO_TYPE_DURATION_MS / steps.length);
     let i = 0;
     typewriterTimer.current = window.setInterval(() => {
       const step = steps[i++];
@@ -676,7 +700,20 @@ function Index() {
       }
       const [k, v] = step;
       setInfo((p) => ({ ...p, [k]: v }));
-    }, 35);
+    }, interval);
+  };
+
+  /** A (0 ms) reset noir → B (500 ms) pause vierge → C (3000 ms) écriture mauve. */
+  const runDemoSequence = (target: Record<string, string>) => {
+    stopTypewriter();
+    demoTargetRef.current = null;
+    setDemoTyped(false);
+    setInfo({});
+    typewriterDelayTimer.current = window.setTimeout(() => {
+      typewriterDelayTimer.current = null;
+      if (!isDemoActive() || weighingModeRef.current) return;
+      animateDemoForm(target);
+    }, DEMO_BLANK_PAUSE_MS);
   };
 
   const TYPEWRITER_PENDING_KEY = "ptw_demo_typewriter_pending";
@@ -688,16 +725,20 @@ function Index() {
     } catch {
       return false;
     }
-    stopTypewriter();
-    setInfo({});
-    // Délai strict de 500 ms : formulaire vierge avant la première lettre.
-    typewriterDelayTimer.current = window.setTimeout(() => {
-      typewriterDelayTimer.current = null;
-      if (!isDemoActive() || weighingModeRef.current) return;
-      animateDemoForm(target);
-    }, 500);
+    runDemoSequence(target);
     return true;
   };
+
+  // Toute saisie manuelle après l'animation repasse le formulaire en encre noire.
+  useEffect(() => {
+    if (!demoTyped) return;
+    if (typewriterTimer.current !== null || typewriterDelayTimer.current !== null) return;
+    const target = demoTargetRef.current;
+    if (!target || JSON.stringify(info) !== JSON.stringify(target)) {
+      setDemoTyped(false);
+      demoTargetRef.current = null;
+    }
+  }, [info, demoTyped]);
 
   // Passage au clavier : 1 seconde de clavier vierge, puis cascade des 88 touches.
   useEffect(() => {
