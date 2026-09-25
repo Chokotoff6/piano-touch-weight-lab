@@ -58,9 +58,6 @@ import {
   resetDemoCascadeSeen,
   demoRemarksText,
   isDemoRemarks,
-  setDemoOff,
-  enableDemoModeAsync,
-  DEMO_BANNER_FOREVER_KEY,
 } from "@/lib/demo-mode";
 import {
   MAINTENANCE_CODES,
@@ -409,8 +406,6 @@ export const Route = createFileRoute("/saisie")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  validateSearch: (search: Record<string, unknown>): { demo?: string } =>
-    typeof search["demo"] === "string" ? { demo: search["demo"] } : {},
   component: Index,
 });
 
@@ -647,28 +642,6 @@ function Index() {
       typewriterTimer.current = null;
     }
   };
-  // Lancement automatique du Mode Démo via /saisie?demo=true (lien de l'accueil).
-  const { demo: demoParam } = Route.useSearch();
-  useEffect(() => {
-    const fromUrl =
-      demoParam === "true" ||
-      new URLSearchParams(window.location.search).get("demo") === "true";
-    if (!fromUrl) return;
-    setDemoOff(false);
-    resetDemoCascadeSeen();
-    setDemoInk(true);
-    try {
-      window.sessionStorage.removeItem("ptw_demo_synced");
-      window.localStorage.setItem(DEMO_BANNER_FOREVER_KEY, "true");
-      window.sessionStorage.setItem("ptw_demo_typewriter_pending", "1");
-      window.sessionStorage.setItem("ptw_weighing_mode", "0");
-    } catch {
-      /* stockage indisponible */
-    }
-    window.history.replaceState({}, "", "/saisie");
-    void enableDemoModeAsync().catch((e) => console.error("Mode démo : lecture Cloud impossible", e));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   useEffect(() => {
     setDemoInk(isDemoActive());
     const sync = () => {
