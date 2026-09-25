@@ -20,8 +20,6 @@ const DRAFT_INFO_KEY = "ptw_draft_info";
 export const DEMO_MODE_KEY = "ptw_demo_mode";
 /** Interrupteur bistable : "0" = Mode démo sur ON (sinon OFF par défaut). */
 export const DEMO_OFF_KEY = "ptw_demo_off";
-/** Évènement interne : synchronise instantanément tous les affichages du Mode Démo. */
-export const DEMO_MODE_CHANGED_EVENT = "ptw-demo-mode-changed";
 /** Verrou à vie : la bannière d'aide de la page Saisie ne s'affiche qu'une fois. */
 export const DEMO_BANNER_FOREVER_KEY = "ptw_demo_banner_v2_dismissed";
 export const DEMO_BANNER_V2_KEY = DEMO_BANNER_FOREVER_KEY;
@@ -44,7 +42,6 @@ export function setDemoOff(off: boolean) {
   } catch {
     /* stockage indisponible */
   }
-  window.dispatchEvent(new CustomEvent(DEMO_MODE_CHANGED_EVENT));
 }
 
 function isBrowser() {

@@ -30,7 +30,7 @@ import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 import likedLogoFrAsset from "@/assets/image_soutien_v5.png.asset.json";
 import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
-import { ensureDemoDefault, toggleDemoMode, DEMO_BANNER_V2_KEY, isDemoActive, DEMO_LOADED_EVENT, DEMO_MODE_CHANGED_EVENT } from "@/lib/demo-mode";
+import { ensureDemoDefault, isDemoOff, toggleDemoMode, DEMO_BANNER_V2_KEY, isDemoActive, DEMO_LOADED_EVENT } from "@/lib/demo-mode";
 import { AppFooter } from "@/components/AppFooter";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import animatedKeyweightLogo from "@/assets/logo-kw-animated.svg?raw";
@@ -146,15 +146,6 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 const RGPD_CONSENT_KEY = "rgpd-cgu-consent";
-const staticKeyweightLogo = animatedKeyweightLogo.replace(
-  "</svg>",
-  `<style>
-    .draw { animation: none !important; stroke-dashoffset: 0 !important; }
-    .reveal { animation: none !important; transform: translateY(0) !important; }
-    #poids { animation: none !important; opacity: 1 !important; transform: none !important; }
-    #wordmark { animation: none !important; opacity: 1 !important; }
-  </style></svg>`,
-);
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -221,6 +212,7 @@ function RootComponent() {
     initLang();
     initJourneyFlags();
     ensureDemoDefault();
+    setDemoVisible(!isDemoOff());
     let locked = false;
     try {
       locked = window.localStorage.getItem(DEMO_BANNER_V2_KEY) === "true";
@@ -228,19 +220,6 @@ function RootComponent() {
       /* stockage indisponible */
     }
     setBannerDismissed(locked);
-  }, []);
-
-  useEffect(() => {
-    const syncDemoButton = () => setDemoVisible(isDemoActive());
-    window.addEventListener(DEMO_MODE_CHANGED_EVENT, syncDemoButton);
-    window.addEventListener(DEMO_LOADED_EVENT, syncDemoButton);
-    window.addEventListener("ptw-demo-off", syncDemoButton);
-    syncDemoButton();
-    return () => {
-      window.removeEventListener(DEMO_MODE_CHANGED_EVENT, syncDemoButton);
-      window.removeEventListener(DEMO_LOADED_EVENT, syncDemoButton);
-      window.removeEventListener("ptw-demo-off", syncDemoButton);
-    };
   }, []);
 
   const closeDemoBanner = useCallback(() => {
@@ -278,6 +257,14 @@ function RootComponent() {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
   }, [shouldShowBanner, closeDemoBanner]);
+
+  // Réinitialisation totale émise par la page Saisie : le bouton repasse en OFF.
+  useEffect(() => {
+    const onDemoOff = () => setDemoVisible(false);
+    window.addEventListener("ptw-demo-off", onDemoOff);
+    return () => window.removeEventListener("ptw-demo-off", onDemoOff);
+  }, []);
+
 
   const isComparer = pathname === "/comparer";
   /** Accueil épuré : seuls le logo, la FAQ et EN | FR restent visibles. */
@@ -345,9 +332,7 @@ function RootComponent() {
                   role="img"
                   aria-label="KeyWeight"
                   className="block h-[85px] w-auto [&>svg]:block [&>svg]:h-[85px] [&>svg]:w-auto"
-                  dangerouslySetInnerHTML={{
-                    __html: isHome ? animatedKeyweightLogo : staticKeyweightLogo,
-                  }}
+                  dangerouslySetInnerHTML={{ __html: animatedKeyweightLogo }}
                 />
               </Link>
             </div>
@@ -681,7 +666,8 @@ function RootComponent() {
                 }}
                 onMouseLeave={() => setDemoTipOpen(false)}
                 onClick={() => {
-                  toggleDemoMode();
+                  const active = toggleDemoMode();
+                  setDemoVisible(active);
                   setDemoTipOpen(false);
                   void rootNavigate({ to: "/saisie" });
                 }}
