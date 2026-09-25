@@ -475,13 +475,15 @@ function RootComponent() {
                         requireConsent(() => dispatchAction("piano-export-pdf"));
                       }}
                     >
-                      {topbar.comparisonActive
-                        ? lang === "en"
-                          ? "Export Workshop report + Comparative analysis as PDF"
-                          : "Exporter Rapport d'atelier + Analyse comparative au format PDF"
-                        : lang === "en"
-                          ? "Export Workshop report as PDF"
-                          : "Exporter Rapport d'atelier au format PDF"}
+                      <span className="pointer-events-none">
+                        {topbar.comparisonActive
+                          ? lang === "en"
+                            ? "Export Workshop report + Comparative analysis as PDF"
+                            : "Exporter Rapport d'atelier + Analyse comparative au format PDF"
+                          : lang === "en"
+                            ? "Export Workshop report as PDF"
+                            : "Exporter Rapport d'atelier au format PDF"}
+                      </span>
                     </button>
                   ) : (
                     <>
