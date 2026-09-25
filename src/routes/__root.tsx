@@ -195,6 +195,8 @@ function RootComponent() {
     };
   }, [likedActivePages]);
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
+  /** Sous-menu « Exporter PDF » (pure React, sans Portal). */
+  const [pdfSubOpen, setPdfSubOpen] = useState(false);
   /** Infobulle « Importer » : visible au survol, masquée après 3 secondes. */
   const [importHint, setImportHint] = useState(false);
   const importHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
