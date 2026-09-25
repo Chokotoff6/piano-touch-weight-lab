@@ -627,6 +627,8 @@ function Index() {
   const [demoInk, setDemoInk] = useState(false);
   /** Vrai uniquement tant que le formulaire affiche les valeurs écrites par l'animation. */
   const [demoTyped, setDemoTyped] = useState(false);
+  /** Encre mauve restaurée au retour sur la page alors que le Mode Démo est resté ON. */
+  const [demoPersistedInk, setDemoPersistedInk] = useState(false);
   const demoTargetRef = useRef<Record<string, string> | null>(null);
   const typewriterTimer = useRef<number | null>(null);
   const typewriterDelayTimer = useRef<number | null>(null);
