@@ -479,7 +479,8 @@ function RootComponent() {
               </div>
               <DropdownMenuContent
                 align="start"
-                className="max-w-[520px]"
+                sideOffset={0}
+                className="relative max-w-[520px] before:absolute before:-inset-x-4 before:-top-2 before:bottom-0 before:-z-10 before:content-['']"
                 onMouseEnter={cancelMenuClose}
                 onMouseLeave={scheduleMenuClose}
               >
