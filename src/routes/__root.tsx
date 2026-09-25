@@ -33,6 +33,7 @@ import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
 import { ensureDemoDefault, isDemoOff, toggleDemoMode, DEMO_BANNER_V2_KEY, isDemoActive, DEMO_LOADED_EVENT } from "@/lib/demo-mode";
 import { AppFooter } from "@/components/AppFooter";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
+import animatedKeyweightLogo from "@/assets/logo-kw-animated.svg?raw";
 import { FaqDialog } from "@/components/FaqDialog";
 import { LegalDialog } from "@/data/legal";
 import type { FaqPage } from "@/components/FaqContent";
@@ -327,11 +328,11 @@ function RootComponent() {
             {/* Logo officiel KeyWeight : calé à gauche, retour à l'accueil. */}
             <div className="relative z-10 flex shrink-0 flex-col items-center translate-y-[26px]">
               <Link to="/" aria-label={lang === "en" ? "Home" : "Accueil"} className="block">
-                <img
-                  src={keyweightLogo.url}
-                  alt="KeyWeight"
-                  style={{ height: "85px", width: "auto" }}
-                  className="object-contain"
+                <span
+                  role="img"
+                  aria-label="KeyWeight"
+                  className="block h-[85px] w-auto [&>svg]:block [&>svg]:h-[85px] [&>svg]:w-auto"
+                  dangerouslySetInnerHTML={{ __html: animatedKeyweightLogo }}
                 />
               </Link>
             </div>
