@@ -55,8 +55,8 @@ function Accueil() {
           </h2>
           <p>
             {en
-              ? "Heavy touch, muscle fatigue, lack of repetition speed...? KeyWeight automatically generates a detailed dashboard of your instrument's “static” touch parameters, enabling the craftsman to quickly identify a potential regulation problem."
-              : "Toucher lourd, fatigue musculaire, manque de vitesse de répétition... ? KeyWeight génère automatiquement un tableau de bord détaillé des paramètres \u00ab statiques \u00bb de toucher de votre instrument, permettant à l'artisan d'identifier rapidement un éventuel problème de régulation."}
+              ? "Heavy touch, muscle fatigue, lack of repetition speed...? KeyWeight automatically generates a detailed dashboard of your instrument's weighing weights and friction, enabling the craftsman to quickly identify a potential regulation problem."
+              : "Toucher lourd, fatigue musculaire, manque de vitesse de répétition... ? KeyWeight génère automatiquement un tableau de bord détaillé des poids de pesée et de la friction de votre instrument, permettant à l'artisan d'identifier rapidement un éventuel problème de régulation."}
           </p>
         </section>
 
