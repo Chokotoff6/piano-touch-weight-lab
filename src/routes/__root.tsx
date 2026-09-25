@@ -396,9 +396,9 @@ function RootComponent() {
 
             {!isHome && <div className="mx-10 h-6 w-[2px] bg-gray-400" aria-hidden="true" />}
 
-            {!isHome && (
             {/* Conteneur parent 100 % CSS : le survol du groupe ouvre/ferme le menu.
                 Aucun état JS, aucun timer, aucun gestionnaire onMouseEnter/onMouseLeave. */}
+            {!isHome && (
             <div className="group relative flex translate-y-[15px] items-center">
               <button
                 type="button"
