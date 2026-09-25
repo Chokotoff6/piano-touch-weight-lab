@@ -497,8 +497,8 @@ function RootComponent() {
                           type="button"
                           className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
                         >
-                          {lang === "en" ? "Export PDF" : "Exporter PDF"}
-                          <ChevronDown className="h-3 w-3 -rotate-90" />
+                          <span className="pointer-events-none">{lang === "en" ? "Export PDF" : "Exporter PDF"}</span>
+                          <ChevronDown className="pointer-events-none h-3 w-3 -rotate-90" />
                         </button>
                         {pdfSubOpen && (
                           <div className="absolute right-full top-0 -mr-[2px] z-[100000] min-w-[280px] max-w-[440px] rounded-md border border-gray-200 bg-white py-1 shadow-lg before:absolute before:-inset-y-3 before:-inset-x-4 before:-z-10 before:content-['']">
