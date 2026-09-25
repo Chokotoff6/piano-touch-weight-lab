@@ -321,7 +321,7 @@ function RootComponent() {
           opacity: 0.07,
         }}
       />
-      <nav className="!sticky !top-0 !z-[50] !bg-white !shadow-md border-b border-border">
+      <nav className="!sticky !top-0 !z-[100] !bg-white !shadow-md border-b border-border">
         <div className="mx-auto w-full max-w-7xl pb-1 pt-[2px] px-[100px]">
           <div className="flex flex-wrap items-center gap-2">
             {/* Logo officiel KeyWeight : calé à gauche, retour à l'accueil. */}
@@ -402,10 +402,9 @@ function RootComponent() {
             <div className="group relative flex translate-y-[15px] items-center">
               <button
                 type="button"
-                disabled={!filesEnabled}
                 onClick={(e) => e.preventDefault()}
                 className={`inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-lg font-bold transition-colors ${
-                  filesEnabled ? "!text-black hover:bg-gray-50" : "!text-gray-400 cursor-not-allowed"
+                  filesEnabled ? "!text-black hover:bg-gray-50" : "!text-gray-400 cursor-default"
                 }`}
               >
                 <span className="pointer-events-none">{lang === "en" ? "Export" : "Exporter"}</span>
@@ -438,8 +437,7 @@ function RootComponent() {
                    piloté par opacité + pointer-events. right-0 = déploiement vers la gauche ;
                    -mt-[2px] = chevauchement physique, zéro trou d'air. transition-opacity duration-70
                    garde la hitbox active pendant la traversée des bordures. */}
-              {filesEnabled && (
-                <div className="absolute right-0 top-full -mt-[2px] z-[99999] min-w-[300px] max-w-[520px] rounded-md border border-gray-200 bg-white py-1 shadow-lg opacity-0 pointer-events-none transition-opacity duration-70 group-hover:opacity-100 group-hover:pointer-events-auto before:absolute before:-inset-x-4 before:-top-3 before:bottom-0 before:-z-10 before:content-['']">
+                <div className={`absolute right-0 top-full -mt-[2px] z-[99999] min-w-[300px] max-w-[520px] rounded-md border border-gray-200 bg-white py-1 shadow-lg opacity-0 transition-opacity duration-100 ${filesEnabled ? "group-hover:opacity-100" : ""}`}>
                   {isComparer ? (
                     <button
                       type="button"
@@ -471,7 +469,7 @@ function RootComponent() {
                           <ChevronDown className="pointer-events-none h-3 w-3 -rotate-90" />
                         </button>
                         {/* right-full top-0 -mr-[2px] : s'ouvre à gauche, chevauchement 2 px. */}
-                        <div className="absolute right-full top-0 -mr-[2px] z-[100000] min-w-[280px] max-w-[440px] rounded-md border border-gray-200 bg-white py-1 shadow-lg opacity-0 pointer-events-none transition-opacity duration-70 group-hover/sub:opacity-100 group-hover/sub:pointer-events-auto before:absolute before:-inset-y-3 before:-inset-x-4 before:-z-10 before:content-['']">
+                        <div className="absolute right-full top-0 -mr-[2px] z-[100000] min-w-[280px] max-w-[440px] rounded-md border border-gray-200 bg-white py-1 shadow-lg opacity-0 transition-opacity duration-100 group-hover/sub:opacity-100">
                           <button
                             type="button"
                             disabled={!filesEnabled}
@@ -536,7 +534,6 @@ function RootComponent() {
                     </>
                   )}
                 </div>
-              )}
             </div>
             )}
 
