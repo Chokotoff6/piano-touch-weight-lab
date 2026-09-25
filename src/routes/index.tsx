@@ -55,8 +55,13 @@ function Accueil() {
           </h2>
           <p>
             {en
-              ? "Heavy touch, muscle fatigue, poor repetition when playing...? KeyWeight lets you quickly objectify whether the downweight, upweight, friction and balance of your keyboard reveal a possible regulation problem."
-              : "Toucher lourd, fatigue musculaire, manque de répétition au jeu... ? KeyWeight permet d'objectiver rapidement si les poids de descente, de remontée, la friction et la balance de votre clavier révèlent un éventuel problème de régulation."}
+              ? "Heavy touch, muscle fatigue, lack of repetition when playing...? KeyWeight lets you quickly objectify whether the friction, balance or weights of your keyboard reveal a regulation problem."
+              : "Toucher lourd, fatigue musculaire, manque de répétition au jeu... ? KeyWeight permet d'objectiver rapidement si la friction, la balance ou les poids de votre clavier révèlent un problème de régulation."}
+          </p>
+          <p className="mt-4">
+            {en
+              ? "Get a detailed dashboard of your instrument's current regulation, as well as a precision tool for the technician."
+              : "Obtenez un tableau de bord détaillé de la régulation actuelle de votre instrument, ainsi qu'un outil de précision pour le technicien."}
           </p>
         </section>
 
