@@ -538,9 +538,11 @@ function RootComponent() {
                                 requireConsent(() => dispatchAction("piano-export-blank-keyboard-pdf"));
                               }}
                             >
-                              {lang === "en"
-                                ? "Blank form keyboard design format (re-importable)"
-                                : "Formulaire vierge format dessin clavier (re-importable)"}
+                              <span className="pointer-events-none">
+                                {lang === "en"
+                                  ? "Blank form keyboard design format (re-importable)"
+                                  : "Formulaire vierge format dessin clavier (re-importable)"}
+                              </span>
                             </button>
                           </div>
                         )}
