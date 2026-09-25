@@ -409,9 +409,8 @@ export const Route = createFileRoute("/saisie")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  validateSearch: (search: Record<string, unknown>): { demo?: string } => ({
-    demo: typeof search.demo === "string" ? search.demo : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { demo?: string } =>
+    typeof search["demo"] === "string" ? { demo: search["demo"] } : {},
   component: Index,
 });
 
