@@ -845,7 +845,6 @@ function Index() {
             setDemoPersistedInk(true);
           }
         }
-      }
       } else if (saved) {
         setInfo({
           marque: saved.brand ?? "",
