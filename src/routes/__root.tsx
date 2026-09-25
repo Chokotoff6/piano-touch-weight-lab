@@ -518,7 +518,7 @@ function RootComponent() {
                               onClick={() => {
                                 setPdfSubOpen(false);
                                 closeMenuNow();
-                                dispatchAction("piano-export-blank-pdf");
+                                requireConsent(() => dispatchAction("piano-export-blank-pdf"));
                               }}
                             >
                               {lang === "en"
