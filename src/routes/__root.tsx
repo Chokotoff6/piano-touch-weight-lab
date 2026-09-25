@@ -435,7 +435,6 @@ function RootComponent() {
                     requireConsent(() => setSaveMenuOpen(true));
                   }
                 }}
-                onClick={() => setSaveMenuOpen((v) => !v)}
                 className={`inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-lg font-bold transition-colors ${
                   filesEnabled ? "!text-black hover:bg-gray-50" : "!text-gray-400 cursor-not-allowed"
                 }`}
@@ -468,7 +467,7 @@ function RootComponent() {
 
               {saveMenuOpen && filesEnabled && (
                 <div
-                  className="absolute left-0 top-full -mt-[2px] z-[99999] min-w-[300px] max-w-[520px] rounded-md border border-gray-200 bg-white py-1 shadow-lg"
+                  className="absolute right-0 top-full -mt-[2px] z-[99999] min-w-[300px] max-w-[520px] rounded-md border border-gray-200 bg-white py-1 shadow-lg"
                   onMouseEnter={cancelMenuClose}
                   onMouseLeave={scheduleMenuClose}
                 >
@@ -505,7 +504,7 @@ function RootComponent() {
                           <ChevronDown className="h-3 w-3 -rotate-90" />
                         </button>
                         {pdfSubOpen && (
-                          <div className="absolute left-full top-0 -ml-[2px] z-[100000] min-w-[280px] max-w-[440px] rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+                          <div className="absolute right-full top-0 -mr-[2px] z-[100000] min-w-[280px] max-w-[440px] rounded-md border border-gray-200 bg-white py-1 shadow-lg">
                             <button
                               type="button"
                               disabled={!filesEnabled}
