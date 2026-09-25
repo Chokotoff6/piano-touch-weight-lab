@@ -531,7 +531,7 @@ function RootComponent() {
                               onClick={() => {
                                 setPdfSubOpen(false);
                                 closeMenuNow();
-                                dispatchAction("piano-export-blank-keyboard-pdf");
+                                requireConsent(() => dispatchAction("piano-export-blank-keyboard-pdf"));
                               }}
                             >
                               {lang === "en"
