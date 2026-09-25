@@ -30,87 +30,68 @@ function Accueil() {
 
   return (
     <main className="relative mx-auto flex max-w-[1400px] flex-col px-6 pb-6 pt-2">
-      <div className="mx-auto mt-[66px] w-full max-w-4xl space-y-8 text-left text-sm leading-relaxed text-foreground">
-        <h1 className="text-xl font-semibold leading-snug">
-          {en ? (
-            <>
-              Welcome to KeyWeight! A collaborative and independent application
-              <br />
-              for pianists and piano technicians.
-            </>
-          ) : (
-            <>
-              Bienvenue sur KeyWeight ! Une application collaborative et indépendante
-              <br />
-              pour pianistes et techniciens de piano.
-            </>
-          )}
-        </h1>
+      <div className="mx-auto mt-[66px] w-full max-w-4xl space-y-8 text-left text-sm leading-relaxed !text-black">
+        <header className="space-y-1">
+          <h1 className="text-2xl font-semibold leading-snug !text-[#4c1d95]">
+            {en ? "Precision diagnosis for keyboard touch" : "Diagnostic de précision pour le toucher de clavier"}
+          </h1>
+          <p className="text-base !text-black">
+            {en
+              ? "Collaborative and independent application for pianists and technicians"
+              : "Application collaborative et indépendante pour pianistes et techniciens"}
+          </p>
+        </header>
 
         <section className="space-y-2">
           <h2 className="text-base font-semibold">
-            {en ? "Is my piano action too heavy?" : "Mon piano est-il trop dur ?"}
+            {en ? "Is your keyboard too heavy or tiring?" : "Votre clavier est-il trop dur ou fatiguant ?"}
           </h2>
           <p>
             {en
-              ? "Heavy touch, finger fatigue...? KeyWeight allows you to quickly objectify these physical sensations by measuring whether downweight, upweight, friction, and balance reveal a regulation defect."
-              : "Toucher trop lourd, fatigue ou douleurs... ? KeyWeight vous permet d'objectiver rapidement si les poids de descente, de remontée, la friction et la balance de votre clavier révèlent un éventuel problème de régulation."}
+              ? "Heavy touch, muscle fatigue, poor repetition when playing...? KeyWeight lets you quickly objectify whether the downweight, upweight, friction and balance of your keyboard reveal a possible regulation problem."
+              : "Toucher lourd, fatigue musculaire, manque de répétition au jeu... ? KeyWeight permet d'objectiver rapidement si les poids de descente, de remontée, la friction et la balance de votre clavier révèlent un éventuel problème de régulation."}
           </p>
         </section>
 
-        <section className="space-y-2">
-          <h2 className="text-base font-semibold uppercase tracking-wide">
-            {en ? "2 diagnostic modules" : "2 modules de diagnostic"}
+        <section className="space-y-4">
+          <h2 className="text-2xl font-bold uppercase tracking-wide !text-[#4c1d95]">
+            {en ? "3 modules" : "3 modules"}
           </h2>
-          <ul className="list-disc space-y-1 pl-5">
-            <li>
-              <strong>{en ? "Optimized data entry & workshop reports:\u00a0" : "Saisie optimisée & rapports d'atelier :"}</strong>{" "}
-              {en
-                ? "fast measurement encoding, interactive dashboard and PDF report creation"
-                : "encodage rapide des mesures, tableau de bord interactif et création de rapports PDF"}
-            </li>
-            <li>
-              <strong>{en ? "Comparative Analysis:" : "Graphiques d'analyse comparative :"}</strong>{" "}
-              {en
-                  ? "\u00a0before/after regulation graphs, comparison curves with \"standard\" regulation or community data (Cloud)"
-                 : "\u00a0graphiques avant/après régulation, courbes de comparaison avec régulation \"standard\" ou données de la communauté (Cloud)"}
-            </li>
-          </ul>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {(en
+              ? [
+                  ["DATA ENTRY", "INTERACTIVE INTERFACE", "Fast measurement encoding via the online graphic keyboard, or from a PDF form."],
+                  ["RESULTS", "INTERACTIVE DASHBOARD", "Immediate visualization of the action: dynamic figures & graphs. Instant generation of a complete workshop report (PDF)."],
+                  ["COMPARE", "COMPARATIVE ANALYSIS", "“Before/after” regulation graphs, comparison with standard factory targets and with community data (Cloud)."],
+                ]
+              : [
+                  ["SAISIE", "INTERFACE INTERACTIVE", "Encodage rapide des mesures via clavier graphique en ligne, ou depuis formulaire PDF."],
+                  ["RESULTATS", "TABLEAU DE BORD INTERACTIF", "Visualisation immédiate de la mécanique : chiffres & graphiques dynamiques. Génération instantanée d’un Rapport d'atelier complet (PDF)."],
+                  ["COMPARER", "ANALYSE COMPARATIVE", "Graphiques « avant/après » régulation, confrontation aux cibles d’usine standards et comparaison avec les données de la communauté (Cloud)."],
+                ]
+            ).map(([title, sub, text]) => (
+              <div key={title} className="space-y-1 rounded-lg border border-gray-300 p-4">
+                <h3 className="text-base font-bold !text-[#4c1d95]">{title}</h3>
+                <p className="text-xs font-semibold uppercase tracking-wide !text-black">{sub}</p>
+                <p className="!text-black">{text}</p>
+              </div>
+            ))}
+          </div>
         </section>
 
-        <section className="space-y-2">
-          <h2 className="text-base font-semibold uppercase tracking-wide">
-            {en ? "Workshop flexibility" : "Flexibilité"}
-          </h2>
-          <ul className="list-disc space-y-1 pl-5">
-            <li className={en ? undefined : "whitespace-nowrap"}>
-              <strong>{en ? "Online or Off-line:" : "En ligne ou Off-line :"}</strong>{" "}
-              {en
-                ? "weigh directly on the Web app, or using a simple PDF form"
-                : "pesez directement sur l'appli Web, ou à l'aide d'un simple formulaire PDF"}
-            </li>
-            <li>
-              <strong>{en ? "CSV and PDF Reports:" : "Rapports CSV et PDF :"}</strong>{" "}
-              {en
-                ? "save an instrument's history and export comparative graphical analysis reports"
-                : "sauvegardez l'historique d'un instrument et exportez les rapports graphiques d'analyse comparative"}
-            </li>
-          </ul>
+        <section className="space-y-1">
+          <h2 className="text-base font-semibold">{en ? "Any questions?" : "Une question ?"}</h2>
+          <p>
+            {en
+              ? "Dedicated FAQs for each module answer all your questions."
+              : "Des FAQ dédiées à chaque module répondent à toutes vos interrogations."}
+          </p>
+          <p>
+            {en
+              ? "A demo video shows how to precisely measure the weight of your keyboard."
+              : "Une vidéo de démo montre comment mesurer précisément le poids de votre clavier."}
+          </p>
         </section>
-
-        <p>
-          {en ? (
-            <>
-              Any questions? Dedicated <strong>FAQ</strong>s for each module provide answers to all
-              practical and technical inquiries.
-            </>
-          ) : (
-            <>
-              Une question ? Des <strong>FAQ</strong> dédiées à chaque module répondent à toutes les
-              questions pratiques et techniques.
-            </>
-          )}
-        </p>
       </div>
 
       <div className="mt-[24px] flex justify-center">
