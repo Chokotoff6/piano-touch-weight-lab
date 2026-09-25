@@ -198,24 +198,8 @@ function RootComponent() {
     importHintTimer.current = null;
     setImportHint(false);
   };
-  /** Fermeture du menu « Exporter » dès que la souris quitte le bouton ou le menu. */
-  const menuCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const cancelMenuClose = () => {
-    if (menuCloseTimer.current) clearTimeout(menuCloseTimer.current);
-    menuCloseTimer.current = null;
-  };
-  const scheduleMenuClose = () => {
-    cancelMenuClose();
-    menuCloseTimer.current = setTimeout(() => setSaveMenuOpen(false), 180);
-  };
-  const closeMenuNow = () => {
-    cancelMenuClose();
-    setSaveMenuOpen(false);
-  };
-
-  // La jauge verte est imbriquée sous le bouton « Sauver » (10 px, à droite) :
+  // La jauge verte est imbriquée sous le bouton « Exporter » (10 px, à droite) :
   // aucun calcul de position n'est nécessaire.
-  const saveBtnRef = useRef<HTMLButtonElement | null>(null);
   const pendingActionRef = useRef<(() => void) | null>(null);
   const [demoVisible, setDemoVisible] = useState(false);
   const [demoTipOpen, setDemoTipOpen] = useState(false);
