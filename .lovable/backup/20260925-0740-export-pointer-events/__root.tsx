@@ -434,8 +434,8 @@ function RootComponent() {
                   filesEnabled ? "!text-black hover:bg-gray-50" : "!text-gray-400 cursor-not-allowed"
                 }`}
               >
-                <span className="pointer-events-none">{lang === "en" ? "Export" : "Exporter"}</span>
-                <ChevronDown className="pointer-events-none ml-1 h-4 w-4" />
+                {lang === "en" ? "Export" : "Exporter"}
+                <ChevronDown className="ml-1 h-4 w-4" />
               </button>
 
               {topbar.alert?.anchor === "export" && (
@@ -475,15 +475,13 @@ function RootComponent() {
                         requireConsent(() => dispatchAction("piano-export-pdf"));
                       }}
                     >
-                      <span className="pointer-events-none">
-                        {topbar.comparisonActive
-                          ? lang === "en"
-                            ? "Export Workshop report + Comparative analysis as PDF"
-                            : "Exporter Rapport d'atelier + Analyse comparative au format PDF"
-                          : lang === "en"
-                            ? "Export Workshop report as PDF"
-                            : "Exporter Rapport d'atelier au format PDF"}
-                      </span>
+                      {topbar.comparisonActive
+                        ? lang === "en"
+                          ? "Export Workshop report + Comparative analysis as PDF"
+                          : "Exporter Rapport d'atelier + Analyse comparative au format PDF"
+                        : lang === "en"
+                          ? "Export Workshop report as PDF"
+                          : "Exporter Rapport d'atelier au format PDF"}
                     </button>
                   ) : (
                     <>
@@ -497,8 +495,8 @@ function RootComponent() {
                           type="button"
                           className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
                         >
-                          <span className="pointer-events-none">{lang === "en" ? "Export PDF" : "Exporter PDF"}</span>
-                          <ChevronDown className="pointer-events-none h-3 w-3 -rotate-90" />
+                          {lang === "en" ? "Export PDF" : "Exporter PDF"}
+                          <ChevronDown className="h-3 w-3 -rotate-90" />
                         </button>
                         {pdfSubOpen && (
                           <div className="absolute right-full top-0 -mr-[2px] z-[100000] min-w-[280px] max-w-[440px] rounded-md border border-gray-200 bg-white py-1 shadow-lg before:absolute before:-inset-y-3 before:-inset-x-4 before:-z-10 before:content-['']">
@@ -512,7 +510,7 @@ function RootComponent() {
                                 requireConsent(() => dispatchAction("piano-export-pdf"));
                               }}
                             >
-                              <span className="pointer-events-none">{lang === "en" ? "Workshop report (3 pages)" : "Rapport d'atelier (3 pages)"}</span>
+                              {lang === "en" ? "Workshop report (3 pages)" : "Rapport d'atelier (3 pages)"}
                             </button>
                             <button
                               type="button"
@@ -523,11 +521,9 @@ function RootComponent() {
                                 requireConsent(() => dispatchAction("piano-export-blank-pdf"));
                               }}
                             >
-                              <span className="pointer-events-none">
-                                {lang === "en"
-                                  ? "Blank form table format (re-importable)"
-                                  : "Formulaire vierge format tableau (re-importable)"}
-                              </span>
+                              {lang === "en"
+                                ? "Blank form table format (re-importable)"
+                                : "Formulaire vierge format tableau (re-importable)"}
                             </button>
                             <button
                               type="button"
@@ -538,11 +534,9 @@ function RootComponent() {
                                 requireConsent(() => dispatchAction("piano-export-blank-keyboard-pdf"));
                               }}
                             >
-                              <span className="pointer-events-none">
-                                {lang === "en"
-                                  ? "Blank form keyboard design format (re-importable)"
-                                  : "Formulaire vierge format dessin clavier (re-importable)"}
-                              </span>
+                              {lang === "en"
+                                ? "Blank form keyboard design format (re-importable)"
+                                : "Formulaire vierge format dessin clavier (re-importable)"}
                             </button>
                           </div>
                         )}
@@ -558,13 +552,13 @@ function RootComponent() {
                         }}
                       >
                         {lang === "en" ? (
-                          <span className="pointer-events-none block leading-snug">
+                          <span className="block leading-snug">
                             Save entered data
                             <br />
                             as CSV (re-importable)
                           </span>
                         ) : (
-                          <span className="pointer-events-none block leading-snug">
+                          <span className="block leading-snug">
                             Sauver données saisies au format
                             <br />
                             CSV (re-importable)
