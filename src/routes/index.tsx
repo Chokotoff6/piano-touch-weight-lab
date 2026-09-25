@@ -87,11 +87,6 @@ function Accueil() {
         </section>
 
         <section className="space-y-1">
-          <p className="pb-3 !text-[#4c1d95]">
-            {en
-              ? 'Test the application in "Demo Mode" with a fictional piano profile.'
-              : 'Tester l\'application en "Mode Demo" avec un profil de piano fictif.'}
-          </p>
           <h2 className="text-base font-semibold">{en ? "Any questions?" : "Une question ?"}</h2>
           <p>
             {en
@@ -112,6 +107,13 @@ function Accueil() {
           className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
           {en ? "Start your diagnosis" : "Commencer votre diagnostic"}
+        </Link>
+      </div>
+      <div className="mt-4 w-full text-center">
+        <Link to="/saisie" search={{ demo: "true" }} className="block font-bold !text-[#4c1d95] hover:underline">
+          {en
+            ? 'Test the application in "Demo Mode" with a fictional piano profile.'
+            : 'Tester l\'application en "Mode Demo" avec un profil de piano fictif.'}
         </Link>
       </div>
     </main>
