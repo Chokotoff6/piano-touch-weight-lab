@@ -44,8 +44,8 @@ function Accueil() {
           </h1>
           <p className="text-base !text-black">
             {en
-              ? "Collaborative and independent application for pianists and technicians"
-              : "Application collaborative et indépendante pour pianistes et techniciens"}
+              ? "Collaborative and independent application for pianists and instrument makers"
+              : "Application collaborative et indépendante pour pianistes et artisans facteurs d'instrument"}
           </p>
         </header>
 
@@ -55,8 +55,8 @@ function Accueil() {
           </h2>
           <p>
             {en
-              ? "Heavy touch, muscle fatigue, lack of repetition when playing...? KeyWeight lets you quickly objectify a potential regulation problem. Get a detailed dashboard of your instrument's static balance and friction, as well as a precision tool for the craftsman."
-              : "Toucher lourd, fatigue musculaire, manque de répétition au jeu... ? KeyWeight permet d'objectiver rapidement un éventuel problème de régulation. Obtenez un tableau de bord détaillé de l'équilibre statique et de la friction de votre instrument, ainsi qu'un outil de précision pour l'artisan."}
+              ? "Heavy touch, muscle fatigue, lack of repetition speed...? KeyWeight automatically generates a detailed dashboard of your instrument's “static” touch parameters, enabling the craftsman to quickly identify a potential regulation problem."
+              : "Toucher lourd, fatigue musculaire, manque de vitesse de répétition... ? KeyWeight génère automatiquement un tableau de bord détaillé des paramètres \u00ab statiques \u00bb de toucher de votre instrument, permettant à l'artisan d'identifier rapidement un éventuel problème de régulation."}
           </p>
         </section>
 
