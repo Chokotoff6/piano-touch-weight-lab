@@ -462,7 +462,7 @@ function RootComponent() {
 
               {saveMenuOpen && filesEnabled && (
                 <div
-                  className="absolute right-0 top-full -mt-[2px] z-[99999] min-w-[300px] max-w-[520px] rounded-md border border-gray-200 bg-white py-1 shadow-lg"
+                  className="absolute right-0 top-full -mt-[2px] z-[99999] min-w-[300px] max-w-[520px] rounded-md border border-gray-200 bg-white py-1 shadow-lg before:absolute before:-inset-x-4 before:-top-3 before:bottom-0 before:-z-10 before:content-['']"
                   onMouseEnter={cancelMenuClose}
                   onMouseLeave={scheduleMenuClose}
                 >
