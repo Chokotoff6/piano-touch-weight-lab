@@ -434,8 +434,8 @@ function RootComponent() {
                   filesEnabled ? "!text-black hover:bg-gray-50" : "!text-gray-400 cursor-not-allowed"
                 }`}
               >
-                {lang === "en" ? "Export" : "Exporter"}
-                <ChevronDown className="ml-1 h-4 w-4" />
+                <span className="pointer-events-none">{lang === "en" ? "Export" : "Exporter"}</span>
+                <ChevronDown className="pointer-events-none ml-1 h-4 w-4" />
               </button>
 
               {topbar.alert?.anchor === "export" && (
