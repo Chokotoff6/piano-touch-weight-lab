@@ -794,8 +794,23 @@ function RootComponent() {
       {consentOpen &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.15)" }}>
-            <div className="w-full max-w-lg rounded-lg border border-black bg-white p-6 text-center shadow-xl">
+          <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
+            style={{ background: "rgba(0,0,0,0.15)" }}
+            onClick={cancelConsent}
+          >
+            <div
+              className="relative w-full max-w-lg rounded-lg border border-black bg-white p-6 text-center shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                aria-label={lang === "en" ? "Close" : "Fermer"}
+                onClick={cancelConsent}
+                className="absolute right-2 top-2 rounded px-1.5 text-lg leading-none !text-gray-500 transition-colors hover:bg-gray-100 hover:!text-gray-900"
+              >
+                ×
+              </button>
               <p className="text-base font-medium leading-relaxed !text-gray-900">
                 {lang === "en"
                   ? "Your piano profile will complete the KeyWeight CLOUD database. Thank you for your collaboration!"
