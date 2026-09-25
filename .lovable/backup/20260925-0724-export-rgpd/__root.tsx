@@ -309,12 +309,6 @@ function RootComponent() {
     pendingActionRef.current = null;
     pending?.();
   };
-  /** Annulation du consentement RGPD : ferme la fenêtre sans exécuter
-      l'action différée (croix X ou clic sur le fond). */
-  const cancelConsent = () => {
-    setConsentOpen(false);
-    pendingActionRef.current = null;
-  };
 
   const linkClass = "rounded-md px-3 py-2 text-base font-semibold !text-black transition-colors hover:bg-background sm:px-4 sm:text-lg";
   const activeLinkClass = "rounded-md bg-background px-3 py-2 text-base font-semibold !text-black shadow-sm sm:px-4 sm:text-lg";
@@ -430,6 +424,17 @@ function RootComponent() {
                 ref={saveBtnRef}
                 type="button"
                 disabled={!filesEnabled}
+                onClickCapture={(e) => {
+                  let ok = false;
+                  try {
+                    ok = window.sessionStorage.getItem(RGPD_CONSENT_KEY) === "1";
+                  } catch { /* stockage indisponible */ }
+                  if (!ok) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    requireConsent(() => setSaveMenuOpen(true));
+                  }
+                }}
                 className={`inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-lg font-bold transition-colors ${
                   filesEnabled ? "!text-black hover:bg-gray-50" : "!text-gray-400 cursor-not-allowed"
                 }`}
@@ -462,7 +467,7 @@ function RootComponent() {
 
               {saveMenuOpen && filesEnabled && (
                 <div
-                  className="absolute right-0 top-full -mt-[2px] z-[99999] min-w-[300px] max-w-[520px] rounded-md border border-gray-200 bg-white py-1 shadow-lg before:absolute before:-inset-x-4 before:-top-3 before:bottom-0 before:-z-10 before:content-['']"
+                  className="absolute right-0 top-full -mt-[2px] z-[99999] min-w-[300px] max-w-[520px] rounded-md border border-gray-200 bg-white py-1 shadow-lg"
                   onMouseEnter={cancelMenuClose}
                   onMouseLeave={scheduleMenuClose}
                 >
@@ -499,7 +504,7 @@ function RootComponent() {
                           <ChevronDown className="h-3 w-3 -rotate-90" />
                         </button>
                         {pdfSubOpen && (
-                          <div className="absolute right-full top-0 -mr-[2px] z-[100000] min-w-[280px] max-w-[440px] rounded-md border border-gray-200 bg-white py-1 shadow-lg before:absolute before:-inset-y-3 before:-inset-x-4 before:-z-10 before:content-['']">
+                          <div className="absolute right-full top-0 -mr-[2px] z-[100000] min-w-[280px] max-w-[440px] rounded-md border border-gray-200 bg-white py-1 shadow-lg">
                             <button
                               type="button"
                               disabled={!filesEnabled}
@@ -518,7 +523,7 @@ function RootComponent() {
                               onClick={() => {
                                 setPdfSubOpen(false);
                                 closeMenuNow();
-                                requireConsent(() => dispatchAction("piano-export-blank-pdf"));
+                                dispatchAction("piano-export-blank-pdf");
                               }}
                             >
                               {lang === "en"
@@ -531,7 +536,7 @@ function RootComponent() {
                               onClick={() => {
                                 setPdfSubOpen(false);
                                 closeMenuNow();
-                                requireConsent(() => dispatchAction("piano-export-blank-keyboard-pdf"));
+                                dispatchAction("piano-export-blank-keyboard-pdf");
                               }}
                             >
                               {lang === "en"
@@ -794,23 +799,8 @@ function RootComponent() {
       {consentOpen &&
         typeof document !== "undefined" &&
         createPortal(
-          <div
-            className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
-            style={{ background: "rgba(0,0,0,0.15)" }}
-            onClick={cancelConsent}
-          >
-            <div
-              className="relative w-full max-w-lg rounded-lg border border-black bg-white p-6 text-center shadow-xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                type="button"
-                aria-label={lang === "en" ? "Close" : "Fermer"}
-                onClick={cancelConsent}
-                className="absolute right-2 top-2 rounded px-1.5 text-lg leading-none !text-gray-500 transition-colors hover:bg-gray-100 hover:!text-gray-900"
-              >
-                ×
-              </button>
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.15)" }}>
+            <div className="w-full max-w-lg rounded-lg border border-black bg-white p-6 text-center shadow-xl">
               <p className="text-base font-medium leading-relaxed !text-gray-900">
                 {lang === "en"
                   ? "Your piano profile will complete the KeyWeight CLOUD database. Thank you for your collaboration!"
