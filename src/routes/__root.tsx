@@ -321,7 +321,7 @@ function RootComponent() {
           opacity: 0.07,
         }}
       />
-      <nav className="!sticky !top-0 !z-[50] !bg-white !shadow-md border-b border-border">
+      <nav className="!sticky !top-0 !z-[100] !bg-white !shadow-md border-b border-border">
         <div className="mx-auto w-full max-w-7xl pb-1 pt-[2px] px-[100px]">
           <div className="flex flex-wrap items-center gap-2">
             {/* Logo officiel KeyWeight : calé à gauche, retour à l'accueil. */}
