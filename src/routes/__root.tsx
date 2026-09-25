@@ -512,7 +512,7 @@ function RootComponent() {
                                 requireConsent(() => dispatchAction("piano-export-pdf"));
                               }}
                             >
-                              {lang === "en" ? "Workshop report (3 pages)" : "Rapport d'atelier (3 pages)"}
+                              <span className="pointer-events-none">{lang === "en" ? "Workshop report (3 pages)" : "Rapport d'atelier (3 pages)"}</span>
                             </button>
                             <button
                               type="button"
