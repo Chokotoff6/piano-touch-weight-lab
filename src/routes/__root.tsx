@@ -430,17 +430,6 @@ function RootComponent() {
                 ref={saveBtnRef}
                 type="button"
                 disabled={!filesEnabled}
-                onClickCapture={(e) => {
-                  let ok = false;
-                  try {
-                    ok = window.sessionStorage.getItem(RGPD_CONSENT_KEY) === "1";
-                  } catch { /* stockage indisponible */ }
-                  if (!ok) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    requireConsent(() => setSaveMenuOpen(true));
-                  }
-                }}
                 className={`inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-lg font-bold transition-colors ${
                   filesEnabled ? "!text-black hover:bg-gray-50" : "!text-gray-400 cursor-not-allowed"
                 }`}
