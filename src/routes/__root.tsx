@@ -481,9 +481,9 @@ function RootComponent() {
                 align="start"
                 alignOffset={0}
                 side="bottom"
-                sideOffset={0}
+                sideOffset={-4}
                 avoidCollisions={false}
-                className="relative max-w-[520px] origin-top-left before:absolute before:-inset-x-4 before:-top-2 before:bottom-0 before:-z-10 before:content-['']"
+                className="max-w-[520px] origin-top-left"
                 onMouseEnter={cancelMenuClose}
                 onMouseLeave={scheduleMenuClose}
               >
