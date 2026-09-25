@@ -558,13 +558,13 @@ function RootComponent() {
                         }}
                       >
                         {lang === "en" ? (
-                          <span className="block leading-snug">
+                          <span className="pointer-events-none block leading-snug">
                             Save entered data
                             <br />
                             as CSV (re-importable)
                           </span>
                         ) : (
-                          <span className="block leading-snug">
+                          <span className="pointer-events-none block leading-snug">
                             Sauver données saisies au format
                             <br />
                             CSV (re-importable)
