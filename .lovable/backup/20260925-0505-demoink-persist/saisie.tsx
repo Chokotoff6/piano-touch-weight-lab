@@ -627,8 +627,6 @@ function Index() {
   const [demoInk, setDemoInk] = useState(false);
   /** Vrai uniquement tant que le formulaire affiche les valeurs écrites par l'animation. */
   const [demoTyped, setDemoTyped] = useState(false);
-  /** Encre mauve restaurée au retour sur la page alors que le Mode Démo est resté ON. */
-  const [demoPersistedInk, setDemoPersistedInk] = useState(false);
   const demoTargetRef = useRef<Record<string, string> | null>(null);
   const typewriterTimer = useRef<number | null>(null);
   const typewriterDelayTimer = useRef<number | null>(null);
@@ -655,7 +653,6 @@ function Index() {
         stopCascadeTimer();
         demoTargetRef.current = null;
         setDemoTyped(false);
-        setDemoPersistedInk(false);
         setInfo({});
         setRows(EMPTY.map((r) => ({ ...r })));
         setWeighingMode(false);
@@ -718,7 +715,6 @@ function Index() {
     stopTypewriter();
     demoTargetRef.current = null;
     setDemoTyped(false);
-    setDemoPersistedInk(false);
     setInfo({});
     typewriterDelayTimer.current = window.setTimeout(() => {
       typewriterDelayTimer.current = null;
@@ -747,27 +743,8 @@ function Index() {
     const target = demoTargetRef.current;
     if (!target || JSON.stringify(info) !== JSON.stringify(target)) {
       setDemoTyped(false);
-      setDemoPersistedInk(false);
       demoTargetRef.current = null;
     }
-  }, [info, demoTyped]);
-
-  // Retour sur la page (ex. clic logo KW) alors que le Mode Démo est resté ON :
-  // le texte pré-rempli doit rester mauve foncé sans rejouer l'animation.
-  const demoInkRestored = useRef(false);
-  useEffect(() => {
-    if (demoInkRestored.current || demoTyped) return;
-    if (!isDemoActive()) return;
-    if (typewriterTimer.current !== null || typewriterDelayTimer.current !== null) return;
-    try {
-      if (window.sessionStorage.getItem(TYPEWRITER_PENDING_KEY) === "1") return;
-    } catch {
-      /* stockage indisponible : on restaure quand même l'encre mauve. */
-    }
-    if (Object.keys(info).length === 0) return;
-    demoInkRestored.current = true;
-    setDemoInk(true);
-    setDemoPersistedInk(true);
   }, [info, demoTyped]);
 
   // Passage au clavier : 1 seconde de clavier vierge, puis cascade des 88 touches.
@@ -1249,7 +1226,6 @@ function Index() {
     stopTypewriter();
     demoTargetRef.current = null;
     setDemoTyped(false);
-    setDemoPersistedInk(false);
     setDemoInk(false);
     cascadeStarted.current = false;
     resetDemoCascadeSeen();
@@ -1509,8 +1485,6 @@ function Index() {
 
   const updateInfo = (key: string, value: string) => {
     setInfo((p) => ({ ...p, [key]: value }));
-    // Toute saisie manuelle repasse la fiche en encre noire.
-    setDemoPersistedInk(false);
     markDirty();
   };
 
@@ -2805,7 +2779,7 @@ function Index() {
       />
       {!weighingMode && (
       <div
-        className={demoInk && (demoTyped || demoPersistedInk) && isDemoActive() ? "demo-typed" : undefined}
+        className={demoInk && demoTyped && isDemoActive() ? "demo-typed" : undefined}
         data-dirty={isDirty}
         data-saved-at={savedAt ?? ""}
         data-climate-zone={climateZone ?? ""}
