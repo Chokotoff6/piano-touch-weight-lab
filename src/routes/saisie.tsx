@@ -655,6 +655,7 @@ function Index() {
         stopCascadeTimer();
         demoTargetRef.current = null;
         setDemoTyped(false);
+        setDemoPersistedInk(false);
         setInfo({});
         setRows(EMPTY.map((r) => ({ ...r })));
         setWeighingMode(false);
@@ -717,6 +718,7 @@ function Index() {
     stopTypewriter();
     demoTargetRef.current = null;
     setDemoTyped(false);
+    setDemoPersistedInk(false);
     setInfo({});
     typewriterDelayTimer.current = window.setTimeout(() => {
       typewriterDelayTimer.current = null;
@@ -745,6 +747,7 @@ function Index() {
     const target = demoTargetRef.current;
     if (!target || JSON.stringify(info) !== JSON.stringify(target)) {
       setDemoTyped(false);
+      setDemoPersistedInk(false);
       demoTargetRef.current = null;
     }
   }, [info, demoTyped]);
@@ -1246,6 +1249,7 @@ function Index() {
     stopTypewriter();
     demoTargetRef.current = null;
     setDemoTyped(false);
+    setDemoPersistedInk(false);
     setDemoInk(false);
     cascadeStarted.current = false;
     resetDemoCascadeSeen();
