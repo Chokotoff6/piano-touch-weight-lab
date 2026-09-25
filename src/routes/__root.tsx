@@ -499,7 +499,7 @@ function RootComponent() {
                           <ChevronDown className="h-3 w-3 -rotate-90" />
                         </button>
                         {pdfSubOpen && (
-                          <div className="absolute right-full top-0 -mr-[2px] z-[100000] min-w-[280px] max-w-[440px] rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+                          <div className="absolute right-full top-0 -mr-[2px] z-[100000] min-w-[280px] max-w-[440px] rounded-md border border-gray-200 bg-white py-1 shadow-lg before:absolute before:-inset-y-3 before:-inset-x-4 before:-z-10 before:content-['']">
                             <button
                               type="button"
                               disabled={!filesEnabled}
