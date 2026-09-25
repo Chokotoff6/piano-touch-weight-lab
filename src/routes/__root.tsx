@@ -309,6 +309,12 @@ function RootComponent() {
     pendingActionRef.current = null;
     pending?.();
   };
+  /** Annulation du consentement RGPD : ferme la fenêtre sans exécuter
+      l'action différée (croix X ou clic sur le fond). */
+  const cancelConsent = () => {
+    setConsentOpen(false);
+    pendingActionRef.current = null;
+  };
 
   const linkClass = "rounded-md px-3 py-2 text-base font-semibold !text-black transition-colors hover:bg-background sm:px-4 sm:text-lg";
   const activeLinkClass = "rounded-md bg-background px-3 py-2 text-base font-semibold !text-black shadow-sm sm:px-4 sm:text-lg";
