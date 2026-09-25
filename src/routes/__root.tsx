@@ -534,7 +534,6 @@ function RootComponent() {
                     </>
                   )}
                 </div>
-              )}
             </div>
             )}
 
