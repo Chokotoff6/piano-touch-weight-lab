@@ -834,7 +834,18 @@ function Index() {
       const rawInfo = window.localStorage.getItem(DRAFT_INFO_KEY);
       const parsedInfo = rawInfo ? (JSON.parse(rawInfo) as Record<string, string>) : null;
       if (parsedInfo && typeof parsedInfo === "object" && Object.keys(parsedInfo).length > 0) {
-        if (!consumeTypewriter(parsedInfo)) setInfo(parsedInfo);
+        if (!consumeTypewriter(parsedInfo)) {
+          setInfo(parsedInfo);
+          // Retour sur la page alors que le Mode Démo est resté ON : encre mauve immédiate.
+          if (isDemoActive()) {
+            demoTargetRef.current = { ...parsedInfo };
+            demoInkRestored.current = true;
+            setDemoInk(true);
+            setDemoTyped(true);
+            setDemoPersistedInk(true);
+          }
+        }
+      }
       } else if (saved) {
         setInfo({
           marque: saved.brand ?? "",
