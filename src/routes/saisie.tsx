@@ -624,7 +624,7 @@ function Index() {
   useEffect(() => stopCascadeTimer, []);
 
   // --- Couleur mauve et animation machine à écrire (Mode Démo) ------------
-  const [demoInk, setDemoInk] = useState(false);
+  const [demoInk, setDemoInk] = useState(() => isDemoActive());
   /** Vrai uniquement tant que le formulaire affiche les valeurs écrites par l'animation. */
   const [demoTyped, setDemoTyped] = useState(false);
   /** Encre mauve restaurée au retour sur la page alors que le Mode Démo est resté ON. */
@@ -833,22 +833,44 @@ function Index() {
     try {
       const rawInfo = window.localStorage.getItem(DRAFT_INFO_KEY);
       const parsedInfo = rawInfo ? (JSON.parse(rawInfo) as Record<string, string>) : null;
-      if (parsedInfo && typeof parsedInfo === "object" && Object.keys(parsedInfo).length > 0) {
-        if (!consumeTypewriter(parsedInfo)) setInfo(parsedInfo);
-      } else if (saved) {
-        setInfo({
-          marque: saved.brand ?? "",
-          modele: saved.model ?? "",
-          type_piano: saved.type_piano ?? "",
-          sn_num: saved.serial_number ?? "",
-          fabrication: saved.manufacture_year ? String(saved.manufacture_year) : "",
-          pays: saved.country ?? "",
-          ville: saved.city ?? "",
-          entretien: normalizeMaintenanceCode(saved.maintenance_type),
-          usage_level: normalizeUsageCode(saved.usage_level),
-          profil_saisie: normalizeWhoCode(saved.who),
-          remarques: saved.remarks ?? "",
-        });
+      const savedInfo = saved
+        ? {
+            marque: saved.brand ?? "",
+            modele: saved.model ?? "",
+            type_piano: saved.type_piano ?? "",
+            sn_num: saved.serial_number ?? "",
+            fabrication: saved.manufacture_year ? String(saved.manufacture_year) : "",
+            pays: saved.country ?? "",
+            ville: saved.city ?? "",
+            entretien: normalizeMaintenanceCode(saved.maintenance_type),
+            usage_level: normalizeUsageCode(saved.usage_level),
+            profil_saisie: normalizeWhoCode(saved.who),
+            remarques: saved.remarks ?? "",
+          }
+        : null;
+      const pendingTypewriter =
+        parsedInfo && typeof parsedInfo === "object" && Object.keys(parsedInfo).length > 0
+          ? consumeTypewriter(parsedInfo)
+          : false;
+      if (!pendingTypewriter) {
+        // Retour sur la page alors que le Mode Démo est resté ON : la fiche complète
+        // vient de la sauvegarde courante et s'affiche immédiatement en encre mauve.
+        const restored =
+          isDemoActive() && savedInfo
+            ? savedInfo
+            : parsedInfo && typeof parsedInfo === "object" && Object.keys(parsedInfo).length > 0
+              ? parsedInfo
+              : savedInfo;
+        if (restored) {
+          setInfo(restored);
+          if (isDemoActive()) {
+            demoTargetRef.current = { ...restored };
+            demoInkRestored.current = true;
+            setDemoInk(true);
+            setDemoTyped(true);
+            setDemoPersistedInk(true);
+          }
+        }
       }
     } catch {
       /* stockage indisponible */
