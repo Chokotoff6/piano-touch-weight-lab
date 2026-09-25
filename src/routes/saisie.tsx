@@ -761,9 +761,8 @@ function Index() {
     }
     if (Object.keys(info).length === 0) return;
     demoInkRestored.current = true;
-    demoTargetRef.current = { ...info };
     setDemoInk(true);
-    setDemoTyped(true);
+    setDemoPersistedInk(true);
   }, [info, demoTyped]);
 
   // Passage au clavier : 1 seconde de clavier vierge, puis cascade des 88 touches.
