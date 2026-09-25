@@ -2799,7 +2799,7 @@ function Index() {
       />
       {!weighingMode && (
       <div
-        className={demoInk && demoTyped && isDemoActive() ? "demo-typed" : undefined}
+        className={demoInk && (demoTyped || demoPersistedInk) && isDemoActive() ? "demo-typed" : undefined}
         data-dirty={isDirty}
         data-saved-at={savedAt ?? ""}
         data-climate-zone={climateZone ?? ""}
