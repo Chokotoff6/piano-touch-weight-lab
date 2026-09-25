@@ -420,10 +420,7 @@ function RootComponent() {
             <DropdownMenu open={saveMenuOpen} onOpenChange={setSaveMenuOpen} modal={false}>
               <div
                 className="relative flex translate-y-[15px] items-center"
-                onMouseEnter={() => {
-                  if (filesEnabled) setSaveMenuOpen(true);
-                  cancelMenuClose();
-                }}
+                onMouseEnter={cancelMenuClose}
                 onMouseLeave={scheduleMenuClose}
               >
                 <DropdownMenuTrigger asChild>
@@ -479,8 +476,7 @@ function RootComponent() {
               </div>
               <DropdownMenuContent
                 align="start"
-                sideOffset={0}
-                className="relative max-w-[520px] before:absolute before:-inset-x-4 before:-top-2 before:bottom-0 before:-z-10 before:content-['']"
+                className="max-w-[520px]"
                 onMouseEnter={cancelMenuClose}
                 onMouseLeave={scheduleMenuClose}
               >
