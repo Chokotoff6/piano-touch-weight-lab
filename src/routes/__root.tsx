@@ -471,7 +471,7 @@ function RootComponent() {
                           <ChevronDown className="pointer-events-none h-3 w-3 -rotate-90" />
                         </button>
                         {/* right-full top-0 -mr-[2px] : s'ouvre à gauche, chevauchement 2 px. */}
-                        <div className="absolute right-full top-0 -mr-[2px] z-[100000] hidden min-w-[280px] max-w-[440px] rounded-md border border-gray-200 bg-white py-1 shadow-lg group-hover/sub:block before:absolute before:-inset-y-3 before:-inset-x-4 before:-z-10 before:content-['']">
+                        <div className="absolute right-full top-0 -mr-[2px] z-[100000] min-w-[280px] max-w-[440px] rounded-md border border-gray-200 bg-white py-1 shadow-lg opacity-0 pointer-events-none transition-opacity duration-70 group-hover/sub:opacity-100 group-hover/sub:pointer-events-auto before:absolute before:-inset-y-3 before:-inset-x-4 before:-z-10 before:content-['']">
                           <button
                             type="button"
                             disabled={!filesEnabled}
