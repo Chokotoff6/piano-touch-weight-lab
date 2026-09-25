@@ -1505,6 +1505,8 @@ function Index() {
 
   const updateInfo = (key: string, value: string) => {
     setInfo((p) => ({ ...p, [key]: value }));
+    // Toute saisie manuelle repasse la fiche en encre noire.
+    setDemoPersistedInk(false);
     markDirty();
   };
 
