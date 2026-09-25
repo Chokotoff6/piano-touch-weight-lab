@@ -523,9 +523,11 @@ function RootComponent() {
                                 requireConsent(() => dispatchAction("piano-export-blank-pdf"));
                               }}
                             >
-                              {lang === "en"
-                                ? "Blank form table format (re-importable)"
-                                : "Formulaire vierge format tableau (re-importable)"}
+                              <span className="pointer-events-none">
+                                {lang === "en"
+                                  ? "Blank form table format (re-importable)"
+                                  : "Formulaire vierge format tableau (re-importable)"}
+                              </span>
                             </button>
                             <button
                               type="button"
