@@ -146,6 +146,15 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 const RGPD_CONSENT_KEY = "rgpd-cgu-consent";
+const staticKeyweightLogo = animatedKeyweightLogo.replace(
+  "</svg>",
+  `<style>
+    .draw { animation: none !important; stroke-dashoffset: 0 !important; }
+    .reveal { animation: none !important; transform: translateY(0) !important; }
+    #poids { animation: none !important; opacity: 1 !important; transform: none !important; }
+    #wordmark { animation: none !important; opacity: 1 !important; }
+  </style></svg>`,
+);
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -258,11 +267,17 @@ function RootComponent() {
     };
   }, [shouldShowBanner, closeDemoBanner]);
 
-  // Réinitialisation totale émise par la page Saisie : le bouton repasse en OFF.
+  // Toute activation ou désactivation est reflétée immédiatement dans le header,
+  // y compris lorsque le Mode Démo vient du lien /saisie?demo=true.
   useEffect(() => {
+    const syncDemoButton = () => setDemoVisible(isDemoActive());
     const onDemoOff = () => setDemoVisible(false);
+    window.addEventListener(DEMO_LOADED_EVENT, syncDemoButton);
     window.addEventListener("ptw-demo-off", onDemoOff);
-    return () => window.removeEventListener("ptw-demo-off", onDemoOff);
+    return () => {
+      window.removeEventListener(DEMO_LOADED_EVENT, syncDemoButton);
+      window.removeEventListener("ptw-demo-off", onDemoOff);
+    };
   }, []);
 
 
@@ -332,7 +347,9 @@ function RootComponent() {
                   role="img"
                   aria-label="KeyWeight"
                   className="block h-[85px] w-auto [&>svg]:block [&>svg]:h-[85px] [&>svg]:w-auto"
-                  dangerouslySetInnerHTML={{ __html: animatedKeyweightLogo }}
+                  dangerouslySetInnerHTML={{
+                    __html: isHome ? animatedKeyweightLogo : staticKeyweightLogo,
+                  }}
                 />
               </Link>
             </div>
