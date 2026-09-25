@@ -624,9 +624,9 @@ function Index() {
   useEffect(() => stopCascadeTimer, []);
 
   // --- Couleur mauve et animation machine à écrire (Mode Démo) ------------
-  const [demoInk, setDemoInk] = useState(false);
+  const [demoInk, setDemoInk] = useState(() => isDemoActive());
   /** Vrai uniquement tant que le formulaire affiche les valeurs écrites par l'animation. */
-  const [demoTyped, setDemoTyped] = useState(false);
+  const [demoTyped, setDemoTyped] = useState(() => isDemoActive());
   /** Encre mauve restaurée au retour sur la page alors que le Mode Démo est resté ON. */
   const [demoPersistedInk, setDemoPersistedInk] = useState(false);
   const demoTargetRef = useRef<Record<string, string> | null>(null);
