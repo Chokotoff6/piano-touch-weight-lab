@@ -420,7 +420,10 @@ function RootComponent() {
             <DropdownMenu open={saveMenuOpen} onOpenChange={setSaveMenuOpen} modal={false}>
               <div
                 className="relative flex translate-y-[15px] items-center"
-                onMouseEnter={cancelMenuClose}
+                onMouseEnter={() => {
+                  if (filesEnabled) setSaveMenuOpen(true);
+                  cancelMenuClose();
+                }}
                 onMouseLeave={scheduleMenuClose}
               >
                 <DropdownMenuTrigger asChild>
