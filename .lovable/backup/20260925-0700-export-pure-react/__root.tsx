@@ -4,6 +4,15 @@ import { initJourneyFlags, useTopbarState } from "@/lib/topbar-store";
 import {
   ChevronDown,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -186,8 +195,6 @@ function RootComponent() {
     };
   }, [likedActivePages]);
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
-  /** Sous-menu « Exporter PDF » (pure React, sans Portal). */
-  const [pdfSubOpen, setPdfSubOpen] = useState(false);
   /** Infobulle « Importer » : visible au survol, masquée après 3 secondes. */
   const [importHint, setImportHint] = useState(false);
   const importHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -410,172 +417,144 @@ function RootComponent() {
             {!isHome && <div className="mx-10 h-6 w-[2px] bg-gray-400" aria-hidden="true" />}
 
             {!isHome && (
-            <div
-              className="relative flex translate-y-[15px] items-center"
-              onMouseEnter={() => {
-                if (filesEnabled) {
-                  setSaveMenuOpen(true);
+            <DropdownMenu open={saveMenuOpen} onOpenChange={setSaveMenuOpen} modal={false}>
+              <div
+                className="relative flex translate-y-[15px] items-center"
+                onMouseEnter={() => {
+                  if (filesEnabled) setSaveMenuOpen(true);
                   cancelMenuClose();
-                }
-              }}
-              onMouseLeave={scheduleMenuClose}
-            >
-              <button
-                ref={saveBtnRef}
-                type="button"
-                disabled={!filesEnabled}
-                onClickCapture={(e) => {
-                  let ok = false;
-                  try {
-                    ok = window.sessionStorage.getItem(RGPD_CONSENT_KEY) === "1";
-                  } catch { /* stockage indisponible */ }
-                  if (!ok) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    requireConsent(() => setSaveMenuOpen(true));
-                  }
                 }}
-                onClick={() => setSaveMenuOpen((v) => !v)}
-                className={`inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-lg font-bold transition-colors ${
-                  filesEnabled ? "!text-black hover:bg-gray-50" : "!text-gray-400 cursor-not-allowed"
-                }`}
+                onMouseLeave={scheduleMenuClose}
               >
-                {lang === "en" ? "Export" : "Exporter"}
-                <ChevronDown className="ml-1 h-4 w-4" />
-              </button>
+                <DropdownMenuTrigger asChild>
+                  <Button
 
-              {topbar.alert?.anchor === "export" && (
-                <div
-                  className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
-                  style={{ position: "absolute", zIndex: 99999, backgroundColor: "#ffffff" }}
-                >
-                  {topbar.alert.message}
-                </div>
-              )}
-              {topbar.isExporting && (
-                <div
-                  className="absolute inset-x-0 top-full !z-[99999] mt-[10px] h-[3px] w-full overflow-hidden rounded-full bg-gray-200"
-                >
-                  <div
-                    className="h-full rounded-full transition-[width] duration-200 ease-linear"
-                    style={{
-                      width: `${Math.round(Math.max(0.04, topbar.exportProgress) * 100)}%`,
-                      backgroundColor: "#16a34a",
+                    ref={saveBtnRef}
+                    variant="outline"
+                    size="sm"
+                    disabled={!filesEnabled}
+                    onClickCapture={(e) => {
+                      let ok = false;
+                      try {
+                        ok = window.sessionStorage.getItem(RGPD_CONSENT_KEY) === "1";
+                      } catch { /* stockage indisponible */ }
+                      if (!ok) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        requireConsent(() => setSaveMenuOpen(true));
+                      }
                     }}
-                  />
-                </div>
-              )}
-
-              {saveMenuOpen && filesEnabled && (
-                <div
-                  className="absolute left-0 top-full -mt-[2px] z-[99999] min-w-[300px] max-w-[520px] rounded-md border border-gray-200 bg-white py-1 shadow-lg"
-                  onMouseEnter={cancelMenuClose}
-                  onMouseLeave={scheduleMenuClose}
-                >
-                  {isComparer ? (
-                    <button
-                      type="button"
-                      className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
-                      onClick={() => {
-                        closeMenuNow();
-                        requireConsent(() => dispatchAction("piano-export-pdf"));
+                    className={`border border-gray-300 bg-white text-lg font-bold ${
+                      filesEnabled ? "!text-black" : "!text-gray-400"
+                    }`}
+                  >
+                    {lang === "en" ? "Export" : "Exporter"}
+                    <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                {topbar.alert?.anchor === "export" && (
+                  <div
+                    className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
+                    style={{ position: "absolute", zIndex: 99999, backgroundColor: "#ffffff" }}
+                  >
+                    {topbar.alert.message}
+                  </div>
+                )}
+                {topbar.isExporting && (
+                  // Progression purement visuelle : fine ligne verte intense,
+                  // imbriquée sous le bouton « Sauver », à 10 px exactement,
+                  // alignée à droite. Aucun texte descriptif.
+                  <div
+                    className="absolute inset-x-0 top-full !z-[99999] mt-[10px] h-[3px] w-full overflow-hidden rounded-full bg-gray-200"
+                  >
+                    <div
+                      className="h-full rounded-full transition-[width] duration-200 ease-linear"
+                      style={{
+                        width: `${Math.round(Math.max(0.04, topbar.exportProgress) * 100)}%`,
+                        backgroundColor: "#16a34a",
                       }}
-                    >
-                      {topbar.comparisonActive
-                        ? lang === "en"
-                          ? "Export Workshop report + Comparative analysis as PDF"
-                          : "Exporter Rapport d'atelier + Analyse comparative au format PDF"
-                        : lang === "en"
-                          ? "Export Workshop report as PDF"
-                          : "Exporter Rapport d'atelier au format PDF"}
-                    </button>
-                  ) : (
-                    <>
-                      {/* Sous-menu « Exporter PDF » : enfant direct, zéro zone morte. */}
-                      <div
-                        className="relative"
-                        onMouseEnter={() => setPdfSubOpen(true)}
-                        onMouseLeave={() => setPdfSubOpen(false)}
+                    />
+                  </div>
+                )}
+              </div>
+              <DropdownMenuContent
+                align="start"
+                alignOffset={0}
+                side="bottom"
+                sideOffset={-4}
+                avoidCollisions={false}
+                className="max-w-[520px] origin-top-left"
+                onMouseEnter={cancelMenuClose}
+                onMouseLeave={scheduleMenuClose}
+              >
+
+                {isComparer ? (
+                  /* Page Comparer : une seule ligne directe (algorithme adaptatif 3/4/6 pages). */
+                  <DropdownMenuItem
+                    onClick={() => requireConsent(() => dispatchAction("piano-export-pdf"))}
+                  >
+                    {topbar.comparisonActive
+                      ? lang === "en"
+                        ? "Export Workshop report + Comparative analysis as PDF"
+                        : "Exporter Rapport d'atelier + Analyse comparative au format PDF"
+                      : lang === "en"
+                        ? "Export Workshop report as PDF"
+                        : "Exporter Rapport d'atelier au format PDF"}
+                  </DropdownMenuItem>
+                ) : (
+                  <>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        {lang === "en" ? "Export PDF" : "Exporter PDF"}
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent
+                        sideOffset={4}
+                        alignOffset={-4}
+                        avoidCollisions={false}
+                        className="max-w-[520px]"
                       >
-                        <button
-                          type="button"
-                          className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
+                        <DropdownMenuItem
+                          disabled={!filesEnabled}
+                          onClick={() => requireConsent(() => dispatchAction("piano-export-pdf"))}
                         >
-                          {lang === "en" ? "Export PDF" : "Exporter PDF"}
-                          <ChevronDown className="h-3 w-3 -rotate-90" />
-                        </button>
-                        {pdfSubOpen && (
-                          <div className="absolute left-full top-0 -ml-[2px] z-[100000] min-w-[280px] max-w-[440px] rounded-md border border-gray-200 bg-white py-1 shadow-lg">
-                            <button
-                              type="button"
-                              disabled={!filesEnabled}
-                              className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-300"
-                              onClick={() => {
-                                setPdfSubOpen(false);
-                                closeMenuNow();
-                                requireConsent(() => dispatchAction("piano-export-pdf"));
-                              }}
-                            >
-                              {lang === "en" ? "Workshop report (3 pages)" : "Rapport d'atelier (3 pages)"}
-                            </button>
-                            <button
-                              type="button"
-                              className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
-                              onClick={() => {
-                                setPdfSubOpen(false);
-                                closeMenuNow();
-                                dispatchAction("piano-export-blank-pdf");
-                              }}
-                            >
-                              {lang === "en"
-                                ? "Blank form table format (re-importable)"
-                                : "Formulaire vierge format tableau (re-importable)"}
-                            </button>
-                            <button
-                              type="button"
-                              className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
-                              onClick={() => {
-                                setPdfSubOpen(false);
-                                closeMenuNow();
-                                dispatchAction("piano-export-blank-keyboard-pdf");
-                              }}
-                            >
-                              {lang === "en"
-                                ? "Blank form keyboard design format (re-importable)"
-                                : "Formulaire vierge format dessin clavier (re-importable)"}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      {/* Sauvegarde CSV : placée sous l'option globale « Exporter PDF ». */}
-                      <button
-                        type="button"
-                        disabled={!filesEnabled}
-                        className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-300"
-                        onClick={() => {
-                          closeMenuNow();
-                          requireConsent(() => dispatchAction("piano-export-csv"));
-                        }}
-                      >
-                        {lang === "en" ? (
-                          <span className="block leading-snug">
-                            Save entered data
-                            <br />
-                            as CSV (re-importable)
-                          </span>
-                        ) : (
-                          <span className="block leading-snug">
-                            Sauver données saisies au format
-                            <br />
-                            CSV (re-importable)
-                          </span>
-                        )}
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
+                          {lang === "en" ? "Workshop report (3 pages)" : "Rapport d'atelier (3 pages)"}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-pdf")}>
+                          {lang === "en"
+                            ? "Blank form table format (re-importable)"
+                            : "Formulaire vierge format tableau (re-importable)"}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => dispatchAction("piano-export-blank-keyboard-pdf")}>
+                          {lang === "en"
+                            ? "Blank form keyboard design format (re-importable)"
+                            : "Formulaire vierge format dessin clavier (re-importable)"}
+                        </DropdownMenuItem>
+
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                    {/* Sauvegarde CSV : placée sous l'option globale « Exporter PDF ». */}
+                    <DropdownMenuItem
+                      disabled={!filesEnabled}
+                      onClick={() => requireConsent(() => dispatchAction("piano-export-csv"))}
+                    >
+                      {lang === "en" ? (
+                        <span className="block leading-snug">
+                          Save entered data
+                          <br />
+                          as CSV (re-importable)
+                        </span>
+                      ) : (
+                        <span className="block leading-snug">
+                          Sauver données saisies au format
+                          <br />
+                          CSV (re-importable)
+                        </span>
+                      )}
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
             )}
 
             {!isHome && !isComparer && pathname !== "/resultats" && (
