@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useLang } from "@/data/translations";
+import logoKwText from "@/assets/logo-kw-text.svg.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,6 +33,12 @@ function Accueil() {
     <main className="relative mx-auto flex max-w-[1400px] flex-col px-6 pb-6 pt-2">
       <div className="mx-auto mt-[66px] w-full max-w-4xl space-y-8 text-left text-sm leading-relaxed !text-black">
         <header className="space-y-1">
+          <img
+            src={logoKwText.url}
+            alt="KeyWeight"
+            className="mx-auto h-14 w-auto"
+            decoding="async"
+          />
           <h1 className="text-2xl font-semibold leading-snug !text-[#4c1d95]">
             {en ? "Precision diagnosis for keyboard touch" : "Diagnostic de précision pour le toucher de clavier"}
           </h1>
@@ -70,7 +77,7 @@ function Accueil() {
                   ["COMPARER", "ANALYSE COMPARATIVE", "Graphiques « avant/après » régulation, confrontation aux cibles d’usine standards et comparaison avec les données de la communauté (Cloud)."],
                 ]
             ).map(([title, sub, text]) => (
-              <div key={title} className="space-y-1 rounded-lg border border-gray-300 p-4">
+              <div key={title} className="space-y-1 rounded-lg border border-gray-300 bg-white/80 p-4">
                 <h3 className="text-base font-bold !text-[#4c1d95]">{title}</h3>
                 <p className="text-xs font-semibold uppercase tracking-wide !text-black">{sub}</p>
                 <p className="!text-black">{text}</p>
