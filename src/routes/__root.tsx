@@ -22,7 +22,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 import { Toaster } from "@/components/ui/sonner";
@@ -156,17 +156,6 @@ const staticKeyweightLogo = animatedKeyweightLogo.replace(
   </style></svg>`,
 );
 
-function subscribeDemoMode(onChange: () => void) {
-  window.addEventListener(DEMO_MODE_CHANGED_EVENT, onChange);
-  window.addEventListener(DEMO_LOADED_EVENT, onChange);
-  window.addEventListener("ptw-demo-off", onChange);
-  return () => {
-    window.removeEventListener(DEMO_MODE_CHANGED_EVENT, onChange);
-    window.removeEventListener(DEMO_LOADED_EVENT, onChange);
-    window.removeEventListener("ptw-demo-off", onChange);
-  };
-}
-
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -222,7 +211,7 @@ function RootComponent() {
   // La jauge verte est imbriquée sous le bouton « Exporter » (10 px, à droite) :
   // aucun calcul de position n'est nécessaire.
   const pendingActionRef = useRef<(() => void) | null>(null);
-  const demoVisible = useSyncExternalStore(subscribeDemoMode, isDemoActive, () => false);
+  const [demoVisible, setDemoVisible] = useState(false);
   const [demoTipOpen, setDemoTipOpen] = useState(false);
   /** Verrou à vie du bandeau mauve : true tant que l'état réel n'est pas lu
       (évite tout clignotement au rendu serveur). */
@@ -239,6 +228,19 @@ function RootComponent() {
       /* stockage indisponible */
     }
     setBannerDismissed(locked);
+  }, []);
+
+  useEffect(() => {
+    const syncDemoButton = () => setDemoVisible(isDemoActive());
+    window.addEventListener(DEMO_MODE_CHANGED_EVENT, syncDemoButton);
+    window.addEventListener(DEMO_LOADED_EVENT, syncDemoButton);
+    window.addEventListener("ptw-demo-off", syncDemoButton);
+    syncDemoButton();
+    return () => {
+      window.removeEventListener(DEMO_MODE_CHANGED_EVENT, syncDemoButton);
+      window.removeEventListener(DEMO_LOADED_EVENT, syncDemoButton);
+      window.removeEventListener("ptw-demo-off", syncDemoButton);
+    };
   }, []);
 
   const closeDemoBanner = useCallback(() => {
