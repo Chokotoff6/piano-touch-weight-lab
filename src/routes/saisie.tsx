@@ -747,6 +747,25 @@ function Index() {
     }
   }, [info, demoTyped]);
 
+  // Retour sur la page (ex. clic logo KW) alors que le Mode Démo est resté ON :
+  // le texte pré-rempli doit rester mauve foncé sans rejouer l'animation.
+  const demoInkRestored = useRef(false);
+  useEffect(() => {
+    if (demoInkRestored.current || demoTyped) return;
+    if (!isDemoActive()) return;
+    if (typewriterTimer.current !== null || typewriterDelayTimer.current !== null) return;
+    try {
+      if (window.sessionStorage.getItem(TYPEWRITER_PENDING_KEY) === "1") return;
+    } catch {
+      /* stockage indisponible : on restaure quand même l'encre mauve. */
+    }
+    if (Object.keys(info).length === 0) return;
+    demoInkRestored.current = true;
+    demoTargetRef.current = { ...info };
+    setDemoInk(true);
+    setDemoTyped(true);
+  }, [info, demoTyped]);
+
   // Passage au clavier : 1 seconde de clavier vierge, puis cascade des 88 touches.
   useEffect(() => {
     if (!weighingMode) return;
