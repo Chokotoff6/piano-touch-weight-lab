@@ -630,7 +630,6 @@ function Index() {
 
   // --- Couleur mauve et animation machine à écrire (Mode Démo) ------------
   const [demoInk, setDemoInk] = useState(() => isDemoActive());
-  const [showResumeModal, setShowResumeModal] = useState(false);
   /** Vrai uniquement tant que le formulaire affiche les valeurs écrites par l'animation. */
   const [demoTyped, setDemoTyped] = useState(false);
   /** Encre mauve restaurée au retour sur la page alors que le Mode Démo est resté ON. */
@@ -698,7 +697,7 @@ function Index() {
   }, []);
 
   const DEMO_TYPE_DURATION_MS = 3000;
-  const DEMO_BLANK_PAUSE_MS = 250;
+  const DEMO_BLANK_PAUSE_MS = 500;
 
   /**
    * Déverse la fiche démo (lue en base) dans le formulaire en exactement 3 s :
@@ -808,7 +807,7 @@ function Index() {
     setRows(EMPTY.map((r) => ({ ...r })));
     const t = window.setTimeout(() => {
       if (!maybeStartCascade(target)) setRows(target);
-    }, 500);
+    }, 1000);
     return () => {
       window.clearTimeout(t);
       if (!cascadeStarted.current) setRows(target);
@@ -916,21 +915,6 @@ function Index() {
         savedDateRef.current = cloudState.date ?? "";
         savedRowsRef.current = Array.isArray(cloudState.rows) ? cloudState.rows : [];
       }
-    } catch {
-      /* stockage indisponible */
-    }
-    try {
-      const rowsRaw = window.localStorage.getItem(DRAFT_ROWS_KEY);
-      const infoRaw = window.localStorage.getItem(DRAFT_INFO_KEY);
-      const rowsP = rowsRaw ? (JSON.parse(rowsRaw) as Row[]) : null;
-      const infoP = infoRaw ? (JSON.parse(infoRaw) as Record<string, string>) : null;
-      const hasExistingPiano =
-        (Array.isArray(rowsP) && rowsP.some((r) => r.wa || r.wd)) ||
-        (!!infoP && Object.values(infoP).some((v) => typeof v === "string" && v.trim() !== "")) ||
-        !!(saved && (saved.brand || saved.model || saved.serial_number || saved.wa_values?.some((v) => Number.isFinite(v))));
-      const isExplicitDemoParam =
-        demoParam === "true" || new URLSearchParams(window.location.search).get("demo") === "true";
-      if (hasExistingPiano && !isExplicitDemoParam) setShowResumeModal(true);
     } catch {
       /* stockage indisponible */
     }
@@ -1309,14 +1293,6 @@ function Index() {
   /** RESET TOTAL — règle absolue : désactivation du Mode Démo, purge complète
       des stockages et des états, retour immédiat sur la fiche Info piano,
       entièrement vierge et en noir standard. */
-  const handleClearAllData = () => {
-    setDemoOff(true);
-    disableDemoMode();
-    handleFullReset();
-    setShowResumeModal(false);
-  };
-  const handleResumeProject = () => setShowResumeModal(false);
-
   const handleFullReset = () => {
     // 1. Mode Démo impérativement OFF.
     stopTypewriter();
@@ -2865,17 +2841,6 @@ function Index() {
 
   return (
     <>
-    {showResumeModal && (
-      <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.15)" }}>
-        <div role="dialog" aria-modal="true" className="w-full max-w-sm rounded-lg border border-gray-300 bg-[#FFFFFF] p-5 text-sm text-gray-900 shadow-xl">
-          <p className="mb-4">{lang === "en" ? "A project or measurements already exist. What would you like to do?" : "Un projet ou des mesures sont déjà en cours. Que souhaitez-vous faire ?"}</p>
-          <div className="flex justify-center gap-3">
-            <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={handleClearAllData}>{lang === "en" ? "Clear all data" : "Effacer toutes les données"}</button>
-            <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={handleResumeProject}>{lang === "en" ? "Continue current project" : "Continuer le projet actuel"}</button>
-          </div>
-        </div>
-      </div>
-    )}
     <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
       <input
         ref={importInputRef}
