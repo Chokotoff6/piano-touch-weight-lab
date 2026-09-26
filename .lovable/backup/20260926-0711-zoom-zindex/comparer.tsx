@@ -1261,7 +1261,7 @@ export function ComparisonChart({ chartData: rawChartData, keyFilter, comparison
   if (zoomFamily) {
     // Mode zoom : le cadre isolé occupe 100 % de la largeur de l'écran.
     return (
-      <div ref={zoomRef} className="fixed inset-0 z-[110] overflow-hidden bg-white p-6">
+      <div ref={zoomRef} className="fixed inset-0 z-[70] overflow-hidden bg-white p-6">
         <SubChart family={zoomFamily} zoomed ctx={subCtx} />
       </div>
     );
