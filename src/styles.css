@@ -168,19 +168,19 @@
   }
 
   .label-key { top: 0.315rem; }
-  .label-wa {
+  .label-wd {
     top: 5.81rem;
     transform: translateY(-50%);
   }
-  .label-wd {
+  .label-wa {
     top: 6.96rem;
     transform: translateY(-50%);
   }
-  .label-wa-white {
+  .label-wd-white {
     top: 9.99rem;
     transform: translateY(-50%);
   }
-  .label-wd-white {
+  .label-wa-white {
     top: 11.04rem;
     transform: translateY(-50%);
   }
@@ -278,11 +278,11 @@
     transform: translateX(var(--shift, 0px));
   }
 
-  .is-white .weight-fields-wa {
+  .is-white .weight-fields-wd {
     top: 8.4rem;
   }
 
-  .is-white .weight-fields-wd {
+  .is-white .weight-fields-wa {
     top: 9.45rem;
   }
 
@@ -302,12 +302,12 @@
     z-index: 3;
   }
 
-  .is-black .weight-fields-wa {
+  .is-black .weight-fields-wd {
     top: 4.22rem;
     height: 0.95625rem;
   }
 
-  .is-black .weight-fields-wd {
+  .is-black .weight-fields-wa {
     top: 5.37rem;
     height: 0.95625rem;
   }

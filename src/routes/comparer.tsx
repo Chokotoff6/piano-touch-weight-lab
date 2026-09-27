@@ -54,8 +54,8 @@ type WhoFilter = "all" | "private" | "pro";
 type ChangesFilter = "included" | "excluded" | "only";
 
 export type RefProfile = {
-  wa: number[];
   wd: number[];
+  wa: number[];
   friction: number[];
   balance: number[];
 };
@@ -87,13 +87,6 @@ type FactorySpecRow = {
 export type ChartPoint = {
   key: number;
   isBlack: boolean;
-  waCur: number | undefined;
-  waCurW: number | undefined;
-  waCurB: number | undefined;
-  sameWa: number | undefined;
-  sameWaW: number | undefined;
-  sameWaB: number | undefined;
-  stdWa: number | undefined;
   wdCur: number | undefined;
   wdCurW: number | undefined;
   wdCurB: number | undefined;
@@ -101,6 +94,13 @@ export type ChartPoint = {
   sameWdW: number | undefined;
   sameWdB: number | undefined;
   stdWd: number | undefined;
+  waCur: number | undefined;
+  waCurW: number | undefined;
+  waCurB: number | undefined;
+  sameWa: number | undefined;
+  sameWaW: number | undefined;
+  sameWaB: number | undefined;
+  stdWa: number | undefined;
   balCur: number | undefined;
   balCurW: number | undefined;
   balCurB: number | undefined;
@@ -115,8 +115,8 @@ export type ChartPoint = {
   sameFricW: number | undefined;
   sameFricB: number | undefined;
   factoryFric: number | undefined;
-  waMid: number | undefined;
   wdMid: number | undefined;
+  waMid: number | undefined;
   balMid: number | undefined;
   fricMid: number | undefined;
 };
@@ -140,24 +140,17 @@ export function buildChartData(
 ): ChartPoint[] {
   const points: ChartPoint[] = SAMPLE_NOTES.map((noteIndex, sampleIndex) => {
     const black = isBlackKey(noteIndex);
-    const waCur = valueAt(mine?.wa, noteIndex, sampleIndex);
     const wdCur = valueAt(mine?.wd, noteIndex, sampleIndex);
+    const waCur = valueAt(mine?.wa, noteIndex, sampleIndex);
     const balCur = valueAt(mine?.balance, noteIndex, sampleIndex);
     const fricCur = valueAt(mine?.friction, noteIndex, sampleIndex);
-    const sameWa = valueAt(cloud?.wa, noteIndex, sampleIndex);
     const sameWd = valueAt(cloud?.wd, noteIndex, sampleIndex);
+    const sameWa = valueAt(cloud?.wa, noteIndex, sampleIndex);
     const sameBal = valueAt(cloud?.balance, noteIndex, sampleIndex);
     const sameFric = valueAt(cloud?.friction, noteIndex, sampleIndex);
     return {
       key: noteIndex,
       isBlack: black,
-      waCur,
-      waCurW: black ? undefined : waCur,
-      waCurB: black ? waCur : undefined,
-      sameWa,
-      sameWaW: black ? undefined : sameWa,
-      sameWaB: black ? sameWa : undefined,
-      stdWa: valueAt(standard?.wa, noteIndex, sampleIndex),
       wdCur,
       wdCurW: black ? undefined : wdCur,
       wdCurB: black ? wdCur : undefined,
@@ -165,6 +158,13 @@ export function buildChartData(
       sameWdW: black ? undefined : sameWd,
       sameWdB: black ? sameWd : undefined,
       stdWd: valueAt(standard?.wd, noteIndex, sampleIndex),
+      waCur,
+      waCurW: black ? undefined : waCur,
+      waCurB: black ? waCur : undefined,
+      sameWa,
+      sameWaW: black ? undefined : sameWa,
+      sameWaB: black ? sameWa : undefined,
+      stdWa: valueAt(standard?.wa, noteIndex, sampleIndex),
       balCur,
       balCurW: black ? undefined : balCur,
       balCurB: black ? balCur : undefined,
@@ -179,8 +179,8 @@ export function buildChartData(
       sameFricW: black ? undefined : sameFric,
       sameFricB: black ? sameFric : undefined,
       factoryFric: valueAt(standard?.friction, noteIndex, sampleIndex),
-      waMid: undefined,
       wdMid: undefined,
+      waMid: undefined,
       balMid: undefined,
       fricMid: undefined,
     };
@@ -195,11 +195,11 @@ export function buildChartData(
     if (typeof white !== "number" || typeof black !== "number") return undefined;
     return n1((white + black) / 2);
   };
-  const waMid = midOf("waCurW", "waCurB");
   const wdMid = midOf("wdCurW", "wdCurB");
+  const waMid = midOf("waCurW", "waCurB");
   const balMid = midOf("balCurW", "balCurB");
   const fricMid = midOf("fricCurW", "fricCurB");
-  return points.map((point) => ({ ...point, waMid, wdMid, balMid, fricMid }));
+  return points.map((point) => ({ ...point, wdMid, waMid, balMid, fricMid }));
 }
 
 /**
@@ -208,7 +208,7 @@ export function buildChartData(
  * définie) conservent leur valeur brute pour éviter tout effondrement.
  * Calcul 100 % client : aucune requête réseau.
  */
-const SMOOTH_SKIP: ReadonlySet<string> = new Set(["key", "isBlack", "waMid", "wdMid", "balMid", "fricMid"]);
+const SMOOTH_SKIP: ReadonlySet<string> = new Set(["key", "isBlack", "wdMid", "waMid", "balMid", "fricMid"]);
 
 export function smoothChartData(points: ChartPoint[], windowSize: 3 | 5 = 3): ChartPoint[] {
   if (points.length === 0) return points;
@@ -257,7 +257,7 @@ function averageProfiles(profiles: ProfileRecord[]): RefProfile | null {
         : Number.NaN;
     });
   };
-  return { wa: average("wa"), wd: average("wd"), balance: average("balance"), friction: average("friction") };
+  return { wd: average("wd"), wa: average("wa"), balance: average("balance"), friction: average("friction") };
 }
 
 function profileValues(value: number[] | string): number[] {
@@ -265,19 +265,54 @@ function profileValues(value: number[] | string): number[] {
   return fromPgArray(value);
 }
 
+/** Priorité au brouillon local (même source que Résultats) : touches actives de la session. */
+function withDraftMeasures(profile: ProfileRecord): ProfileRecord {
+  if (typeof window === "undefined") return profile;
+  let rows: { wd: string; wa: string }[] | null = null;
+  try {
+    const raw = window.localStorage.getItem("ptw_draft_rows");
+    const parsed = raw ? (JSON.parse(raw) as { wd: string; wa: string }[]) : null;
+    if (Array.isArray(parsed) && parsed.length === 88) rows = parsed;
+  } catch {
+    rows = null;
+  }
+  if (!rows) return profile;
+  const num = (v: string) => {
+    const n = Number(String(v ?? "").trim().replace(",", "."));
+    return Number.isFinite(n) && n > 0 ? n : null;
+  };
+  const wd: number[] = [];
+  const wa: number[] = [];
+  rows.forEach((r) => {
+    const d = num(r.wd);
+    const a = num(r.wa);
+    const ok = d !== null && a !== null && d > a;
+    wd.push(ok ? d : Number.NaN);
+    wa.push(ok ? a : Number.NaN);
+  });
+  if (!wd.some((v) => Number.isFinite(v))) return profile;
+  return {
+    ...profile,
+    wd,
+    wa,
+    friction: wd.map((d, i) => (Number.isFinite(d) ? (d - (wa[i] ?? 0)) / 2 : Number.NaN)),
+    balance: wd.map((d, i) => (Number.isFinite(d) ? (d + (wa[i] ?? 0)) / 2 : Number.NaN)),
+  };
+}
+
 function profileFromCurrentPiano(piano: CurrentPiano): ProfileRecord {
   // Même règle que Résultats : seule une paire complète et cohérente est pesée.
   // Les tableaux du tampon peuvent contenir des zéros pour les cases vides.
-  const wa = piano.wa_values.map((value, index) => {
-    const wd = piano.wd_values[index];
-    return Number.isFinite(value) && value > 0 && typeof wd === "number" && Number.isFinite(wd) && wd > 0 && value > wd ? value : Number.NaN;
+  const wd = piano.wa_values.map((value, index) => {
+    const wa = piano.wd_values[index];
+    return Number.isFinite(value) && value > 0 && typeof wa === "number" && Number.isFinite(wa) && wa > 0 && value > wa ? value : Number.NaN;
   });
-  const wd = piano.wd_values.map((value, index) => Number.isFinite(wa[index]) ? value : Number.NaN);
+  const wa = piano.wd_values.map((value, index) => Number.isFinite(wd[index]) ? value : Number.NaN);
   return {
-    wa,
     wd,
-    friction: wa.map((value, index) => (Number.isFinite(value) && Number.isFinite(wd[index]) ? (value - (wd[index] ?? 0)) / 2 : Number.NaN)),
-    balance: wa.map((value, index) => (Number.isFinite(value) && Number.isFinite(wd[index]) ? (value + (wd[index] ?? 0)) / 2 : Number.NaN)),
+    wa,
+    friction: wd.map((value, index) => (Number.isFinite(value) && Number.isFinite(wa[index]) ? (value - (wa[index] ?? 0)) / 2 : Number.NaN)),
+    balance: wd.map((value, index) => (Number.isFinite(value) && Number.isFinite(wa[index]) ? (value + (wa[index] ?? 0)) / 2 : Number.NaN)),
     serialNumber: piano.serial_number,
     brand: piano.brand,
     model: piano.model,
@@ -304,8 +339,8 @@ function localMeasureTime(createdAt: string | null | undefined): string | null {
 
 function profileFromRow(row: ExternalPianoProfileRow): ProfileRecord {
   return {
-    wa: profileValues(row.wa_values),
-    wd: profileValues(row.wd_values),
+    wd: profileValues(row.wa_values),
+    wa: profileValues(row.wd_values),
     friction: profileValues(row.friction_values),
     balance: profileValues(row.balance_values),
     serialNumber: row.serial_number,
@@ -355,17 +390,17 @@ function databaseUsage(value: Exclude<UsageLevel, "all">) {
 function makeFactoryStandard(): RefProfile {
   const ramp = (start: number, end: number) =>
     Array.from({ length: 88 }, (_, index) => n1(start + ((end - start) * index) / 87));
-  const wa = ramp(68, 58);
-  const wd = ramp(56, 48);
+  const wd = ramp(68, 58);
+  const wa = ramp(56, 48);
   return {
-    wa,
     wd,
-    balance: wa.map((value, index) => {
-      const returnWeight = wd[index];
+    wa,
+    balance: wd.map((value, index) => {
+      const returnWeight = wa[index];
       return returnWeight === undefined ? Number.NaN : n1((value + returnWeight) / 2);
     }),
-    friction: wa.map((value, index) => {
-      const returnWeight = wd[index];
+    friction: wd.map((value, index) => {
+      const returnWeight = wa[index];
       return returnWeight === undefined ? Number.NaN : n1((value - returnWeight) / 2);
     }),
   };
@@ -374,15 +409,15 @@ const FACTORY_STANDARD: RefProfile = makeFactoryStandard();
 
 // Convertit une ligne de spécifications usine en 88 valeurs théoriques :
 // pente linéaire continue de wa_bass (touche 1) à wa_treble (touche 88),
-// friction cible constante, Wd = Wa - 2*friction, Balance = Wa - friction.
+// friction cible constante, Wa = Wd - 2*friction, Balance = Wd - friction.
 function profileFromSpec(spec: FactorySpecRow): RefProfile {
-  const wa = Array.from({ length: 88 }, (_, index) =>
+  const wd = Array.from({ length: 88 }, (_, index) =>
     n1(spec.wa_bass + ((spec.wa_treble - spec.wa_bass) * index) / 87),
   );
-  const friction = wa.map(() => n1(spec.friction_cible));
-  const wd = wa.map((value) => n1(value - 2 * spec.friction_cible));
-  const balance = wa.map((value) => n1(value - spec.friction_cible));
-  return { wa, wd, friction, balance };
+  const friction = wd.map(() => n1(spec.friction_cible));
+  const wa = wd.map((value) => n1(value - 2 * spec.friction_cible));
+  const balance = wd.map((value) => n1(value - spec.friction_cible));
+  return { wd, wa, friction, balance };
 }
 
 
@@ -523,7 +558,7 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
       {valid.map((entry) => {
         const color = entry.color ?? tooltipColorFor(entry.name ?? "");
         // Sur /resultats les courbes n'ont pas de nom : Recharts retombe sur la clé
-        // technique ("waCur"). On affiche alors "Blanche" / "Noire" selon la note.
+        // technique ("wdCur"). On affiche alors "Blanche" / "Noire" selon la note.
         const rawName = entry.name?.trim() ?? "";
         const isRawKey = rawName === "" || rawName === String(entry.dataKey ?? "");
         const name = isRawKey ? (isBlackKey(Number(label)) ? "Noire" : "Blanche") : rawName;
@@ -544,16 +579,16 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
 
 type LineDef = { dataKey: SeriesKey; name: string; shortName: string; color: string; real?: boolean; hidden?: boolean; dashed?: boolean };
 const FAMILIES: Array<{ id: string; title: string; domain: [number, number]; lines: LineDef[] }> = [
-  { id: "wa", title: "Poids descendant", domain: [55, 85], lines: [{ dataKey: "sameWa", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWa", name: "Cible", shortName: "Cible", color: "#10b981" }] },
-  { id: "wd", title: "Poids remontant", domain: [50, 70], lines: [{ dataKey: "sameWd", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWd", name: "Cible", shortName: "Cible", color: "#10b981" }] },
+  { id: "wd", title: "Poids descendant", domain: [55, 85], lines: [{ dataKey: "sameWd", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWd", name: "Cible", shortName: "Cible", color: "#10b981" }] },
+  { id: "wa", title: "Poids remontant", domain: [50, 70], lines: [{ dataKey: "sameWa", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWa", name: "Cible", shortName: "Cible", color: "#10b981" }] },
   { id: "bal", title: "Poids d'équilibre", domain: [55, 75], lines: [{ dataKey: "sameBal", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryBal", name: "Cible", shortName: "Cible", color: "#10b981" }] },
   { id: "fric", title: "Friction", domain: ["dataMin - 1.5", "dataMax + 1.5"] as unknown as [number, number], lines: [{ dataKey: "sameFric", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryFric", name: "Cible", shortName: "Cible", color: "#10b981" }] },
 ];
 
 // Terminologie bilingue stricte des quatre cadres graphiques.
 const FAMILY_TITLES: Record<string, { fr: string; en: string }> = {
-  wa: { fr: "Poids descendant", en: "Downweight" },
-  wd: { fr: "Poids remontant", en: "Upweight" },
+  wd: { fr: "Poids descendant", en: "Downweight" },
+  wa: { fr: "Poids remontant", en: "Upweight" },
   bal: { fr: "Poids d'équilibre", en: "Balance Weight" },
   fric: { fr: "Friction", en: "Friction" },
 };
@@ -564,7 +599,7 @@ export function familyTitle(id: string, lang: string, fallback: string) {
 }
 
 function currentLinesFor(familyId: string, keyFilter: KeyFilter, baseName = "Piano actuel"): LineDef[] {
-  const metrics: Record<string, [SeriesKey, SeriesKey, SeriesKey, SeriesKey]> = { wa: ["waCur", "waCurW", "waCurB", "waMid"], wd: ["wdCur", "wdCurW", "wdCurB", "wdMid"], bal: ["balCur", "balCurW", "balCurB", "balMid"], fric: ["fricCur", "fricCurW", "fricCurB", "fricMid"] };
+  const metrics: Record<string, [SeriesKey, SeriesKey, SeriesKey, SeriesKey]> = { wd: ["wdCur", "wdCurW", "wdCurB", "wdMid"], wa: ["waCur", "waCurW", "waCurB", "waMid"], bal: ["balCur", "balCurW", "balCurB", "balMid"], fric: ["fricCur", "fricCurW", "fricCurB", "fricMid"] };
   const metric = metrics[familyId];
   if (!metric) return [];
   const whiteWord = getLang() === "en" ? "whites" : "blanches";
@@ -584,7 +619,7 @@ function currentLinesFor(familyId: string, keyFilter: KeyFilter, baseName = "Pia
 // La vue clavier pilote aussi la courbe de référence (Cloud ou CSV) : en vue éclatée
 // elle est scindée en blanches / noires exactement comme la courbe Live noire.
 function comparisonLinesFor(familyId: string, keyFilter: KeyFilter, name: string, short: string, isCsv = false): LineDef[] {
-  const metrics: Record<string, [SeriesKey, SeriesKey, SeriesKey]> = { wa: ["sameWa", "sameWaW", "sameWaB"], wd: ["sameWd", "sameWdW", "sameWdB"], bal: ["sameBal", "sameBalW", "sameBalB"], fric: ["sameFric", "sameFricW", "sameFricB"] };
+  const metrics: Record<string, [SeriesKey, SeriesKey, SeriesKey]> = { wd: ["sameWd", "sameWdW", "sameWdB"], wa: ["sameWa", "sameWaW", "sameWaB"], bal: ["sameBal", "sameBalW", "sameBalB"], fric: ["sameFric", "sameFricW", "sameFricB"] };
   const metric = metrics[familyId];
   if (!metric) return [];
   // Bleu intense pour l'import CSV, orange pour la moyenne Cloud.
@@ -1084,7 +1119,7 @@ export function ComparisonChart({ chartData: rawChartData, keyFilter, comparison
   // Export PDF : les 4 cadres passent d'office en « N/B séparées » avant capture.
   useEffect(() => {
     const force = () =>
-      setFilters({ wa: "split", wd: "split", bal: "split", fric: "split" });
+      setFilters({ wd: "split", wa: "split", bal: "split", fric: "split" });
     window.addEventListener("piano-pdf-force-split", force);
     return () => window.removeEventListener("piano-pdf-force-split", force);
   }, []);
@@ -1293,8 +1328,8 @@ export function Frame({ title, className = "", titleClassName, dataFrame, onClic
 }
 
 const COLUMNS = [
-  { key: "wa", label: "Poids descendant", labelEn: "Downweight" },
-  { key: "wd", label: "Poids remontant", labelEn: "Upweight" },
+  { key: "wd", label: "Poids descendant", labelEn: "Downweight" },
+  { key: "wa", label: "Poids remontant", labelEn: "Upweight" },
   { key: "friction", label: "Friction", labelEn: "Friction" },
   { key: "balance", label: "Poids d'équilibre", labelEn: "Balance Weight" },
 ] as const;
@@ -1336,8 +1371,8 @@ function AverageBlock({ label, global, white, black, tone }: { label: string; gl
 
 // Clés de séries par métrique : globale + blanches/noires pour chaque source.
 const AVG_KEYS: Record<MetricKey, { cur: [SeriesKey, SeriesKey, SeriesKey]; ref: [SeriesKey, SeriesKey, SeriesKey] }> = {
-  wa: { cur: ["waCur", "waCurW", "waCurB"], ref: ["sameWa", "sameWaW", "sameWaB"] },
   wd: { cur: ["wdCur", "wdCurW", "wdCurB"], ref: ["sameWd", "sameWdW", "sameWdB"] },
+  wa: { cur: ["waCur", "waCurW", "waCurB"], ref: ["sameWa", "sameWaW", "sameWaB"] },
   friction: { cur: ["fricCur", "fricCurW", "fricCurB"], ref: ["sameFric", "sameFricW", "sameFricB"] },
   balance: { cur: ["balCur", "balCurW", "balCurB"], ref: ["sameBal", "sameBalW", "sameBalB"] },
 };
@@ -1365,8 +1400,8 @@ export function AverageRow({ chartData, source, hasData, csv = false }: { chartD
 
 // Rangée Standard : valeur globale théorique centrée, sans détail Blanches/Noires.
 const STD_KEYS: { key: MetricKey; globalKey: SeriesKey }[] = [
-  { key: "wa", globalKey: "stdWa" },
   { key: "wd", globalKey: "stdWd" },
+  { key: "wa", globalKey: "stdWa" },
   { key: "friction", globalKey: "factoryFric" },
   { key: "balance", globalKey: "factoryBal" },
 ];
@@ -1603,16 +1638,16 @@ function countKeys(values: number[] | undefined) {
   return getLang() === "en" ? ` - ${white} Whites / ${black} Blacks` : ` - ${white} Blanches / ${black} Noires`;
 }
 
-/** Décompte du brouillon actif : une touche compte dès que Wa ou Wd est saisi. */
+/** Décompte du brouillon actif : une touche compte dès que Wd ou Wa est saisi. */
 function countDraftKeys() {
   if (typeof window === "undefined") return null;
   try {
-    const parsed = JSON.parse(window.localStorage.getItem("ptw_draft_rows") ?? "null") as Array<{ wa?: string; wd?: string }> | null;
+    const parsed = JSON.parse(window.localStorage.getItem("ptw_draft_rows") ?? "null") as Array<{ wd?: string; wa?: string }> | null;
     if (!Array.isArray(parsed) || parsed.length !== 88) return null;
     let white = 0;
     let black = 0;
     parsed.forEach((row, index) => {
-      if (!String(row?.wa ?? "").trim() && !String(row?.wd ?? "").trim()) return;
+      if (!String(row?.wd ?? "").trim() && !String(row?.wa ?? "").trim()) return;
       if (isBlackKey(index + 1)) black += 1;
       else white += 1;
     });
@@ -1698,7 +1733,7 @@ function Comparer() {
                 title: en ? "WORKSHOP REPORT" : "RAPPORT D'ATELIER",
                 underline: false,
               },
-              { blocks: keep([mirror("wa"), mirror("wd")]), layout: "column" as const },
+              { blocks: keep([mirror("wd"), mirror("wa")]), layout: "column" as const },
               { blocks: keep([mirror("bal"), mirror("fric")]), layout: "column" as const },
             ];
             const comparePages: LandscapePage[] = [
@@ -1790,9 +1825,9 @@ function Comparer() {
         cloudPiano = null;
       }
       if (cancelled) return;
-      // Convention unique : wa = descente, wd = remontée, lue telle quelle.
+      // Convention unique : wd = descente, wa = remontée, lue telle quelle.
       const piano = cloudPiano ?? loadCurrentPiano();
-      setMine(piano ? profileFromCurrentPiano(piano) : null);
+      setMine(piano ? withDraftMeasures(profileFromCurrentPiano(piano)) : null);
       setStatus("ok");
     };
     void sync();
@@ -1924,7 +1959,7 @@ function Comparer() {
         // Bannissement des clones du piano actuel (doublons enregistrés avec un
         // numéro de série tronqué ou voisin) : mesures identiques => même piano.
         if (isSameSerial(row.serial_number, mine.serialNumber) || isSameSerial(row.serial_number, localSerial)) return false;
-        if (sameSeries(profileValues(row.wa_values), mine.wa) && sameSeries(profileValues(row.wd_values), mine.wd)) return false;
+        if (sameSeries(profileValues(row.wa_values), mine.wd) && sameSeries(profileValues(row.wd_values), mine.wa)) return false;
         const raw = String(row.who ?? "").toLowerCase();
         if (whoFilter === "all") return true;
         if (!raw) return true;
@@ -1955,7 +1990,7 @@ function Comparer() {
         .join(" - ")
     : "";
   const csvStats = comparedPiano
-    ? ` - ${en ? "Measurement" : "Mesure"} ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime}${countKeys(comparedPiano.wa)}`
+    ? ` - ${en ? "Measurement" : "Mesure"} ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime}${countKeys(comparedPiano.wd)}`
     : "";
 
   const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
@@ -1976,8 +2011,8 @@ function Comparer() {
         city: parsed.fields["city"] ?? "",
         country: parsed.fields["country"] ?? "",
         remarks: parsed.fields["remarks"] ?? "",
-        wa: parsed.rows.map((row) => row.wa),
         wd: parsed.rows.map((row) => row.wd),
+        wa: parsed.rows.map((row) => row.wa),
         mesureDateRaw: parsed.fields["measurement_date"] || undefined,
       });
       // Aucun accès à current_piano ni au buffer PIANO_ACTUEL :
@@ -2012,7 +2047,7 @@ function Comparer() {
     ? en
       ? ` - ${draftKeyCounts.white} Whites / ${draftKeyCounts.black} Blacks`
       : ` - ${draftKeyCounts.white} Blanches / ${draftKeyCounts.black} Noires`
-    : countKeys(mine?.wa);
+    : countKeys(mine?.wd);
   const summary = `${summaryValue(mine?.brand)}\u00A0\u00A0${summaryValue(mine?.model)} - ${summaryValue(mine?.year)} - SN ${summaryValue(mine?.serialNumber)} - ${en ? "Measurement" : "Mesure"} ${formatMeasureDate(mine?.measureDate)}${mineTime}${keyCounts}`;
   const cloudActive = !comparedPiano && sourceMode === "cloud";
   // Intitulé dynamique de l'option « Exporter » du header.
@@ -2053,8 +2088,8 @@ function Comparer() {
       {/* Miroir hors écran (jamais visible) : cadre Mesures + graphiques
           d'atelier, source des pages 1 à 3 du rapport PDF unique. */}
       <PianoSheetMirror
-        wa={mine?.wa ?? []}
         wd={mine?.wd ?? []}
+        wa={mine?.wa ?? []}
         summary={summary}
         averagesRef={(node) => {
           mirrorAveragesRef.current = node;

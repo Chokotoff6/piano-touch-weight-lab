@@ -1,6 +1,6 @@
 // Génération du fichier CSV local (métadonnées + 88 lignes de pesées).
 export type ExportMeta = Record<string, string>;
-export type ExportRow = { wa: string; wd: string };
+export type ExportRow = { wd: string; wa: string };
 
 const cell = (value: string) => {
   const v = value ?? "";
@@ -10,14 +10,14 @@ const cell = (value: string) => {
 const line = (values: string[]) => values.map(cell).join(";");
 
 export function computeRow(r: ExportRow) {
-  const wa = Number(r.wa);
   const wd = Number(r.wd);
-  if (!r.wa || !r.wd || !Number.isFinite(wa) || !Number.isFinite(wd)) {
+  const wa = Number(r.wa);
+  if (!r.wd || !r.wa || !Number.isFinite(wd) || !Number.isFinite(wa)) {
     return { friction: "", balance: "" };
   }
   return {
-    friction: Math.abs((wa - wd) / 2).toFixed(1),
-    balance: ((wd + wa) / 2).toFixed(1),
+    friction: Math.abs((wd - wa) / 2).toFixed(1),
+    balance: ((wa + wd) / 2).toFixed(1),
   };
 }
 
@@ -30,11 +30,11 @@ export function buildCsv(meta: ExportMeta, rows: ExportRow[]): string {
     lines.push(line([label, value ?? ""]));
   }
   lines.push("");
-  lines.push(line(["Touche", "Wa (g)", "Wd (g)", "Friction (g)", "Balance (g)"]));
+  lines.push(line(["Touche", "Wd (g)", "Wa (g)", "Friction (g)", "Balance (g)"]));
   for (let i = 0; i < 88; i++) {
-    const r = rows[i] ?? { wa: "", wd: "" };
+    const r = rows[i] ?? { wd: "", wa: "" };
     const { friction, balance } = computeRow(r);
-    lines.push(line([String(i + 1), r.wa ?? "", r.wd ?? "", friction, balance]));
+    lines.push(line([String(i + 1), r.wd ?? "", r.wa ?? "", friction, balance]));
   }
   return lines.join("\r\n");
 }

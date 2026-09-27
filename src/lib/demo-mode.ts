@@ -76,7 +76,7 @@ export function isDemoRemarks(value: string | null | undefined): boolean {
   return v === DEMO_REMARKS_FR || v === DEMO_REMARKS_EN;
 }
 
-type DemoRows = Array<{ wa: string; wd: string }>;
+type DemoRows = Array<{ wd: string; wa: string }>;
 
 /** Écrit le jeu de démonstration (fiche + pesées) dans le stockage local. */
 function applyDemoData(info: Record<string, string>, rows: DemoRows) {
@@ -103,8 +103,8 @@ function applyDemoData(info: Record<string, string>, rows: DemoRows) {
         remarks: info["remarques"] ?? "",
         who: normalizeWhoCode(info["profil_saisie"]),
         mesureDateRaw: info["measurement_date"] ?? "",
-        wa: rows.map((r) => r.wa),
         wd: rows.map((r) => r.wd),
+        wa: rows.map((r) => r.wa),
       }),
     );
   } catch {
@@ -198,13 +198,13 @@ export async function enableDemoModeAsync() {
     profil_saisie: normalizeWho(profile.who),
     remarques: demoRemarksText(),
   };
-  const waValues = Array.isArray(profile.wa_values) ? profile.wa_values : [];
-  // Convention unique : wa = Poids descendant (lourd), wd = Poids remontant
+  const wdValues = Array.isArray(profile.wa_values) ? profile.wa_values : [];
+  // Convention unique : wd = Poids descendant (lourd), wa = Poids remontant
   // (léger). La base est normalisée, aucune réorientation au chargement.
-  const pairs = waValues.map((wa, i) => ({ wa, wd: profile.wd_values?.[i] }));
-  const rows: DemoRows = pairs.map(({ wa, wd }) => ({
-    wa: Number.isFinite(wa) ? String(wa) : "",
+  const pairs = wdValues.map((wd, i) => ({ wd, wa: profile.wd_values?.[i] }));
+  const rows: DemoRows = pairs.map(({ wd, wa }) => ({
     wd: Number.isFinite(wd) ? String(wd) : "",
+    wa: Number.isFinite(wa) ? String(wa) : "",
   }));
   applyDemoData(info, rows);
 }

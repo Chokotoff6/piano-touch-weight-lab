@@ -131,7 +131,7 @@ function header(pdf: jsPDF, title: string, pageWidth = PAGE_W) {
 /**
  * Signaletique de conformite (haut a droite) :
  * - mention verte et grasse, invisible par defaut, qui apparait quand les
- *   88 touches ont Wa et Wd numeriques (script Acrobat embarque) ;
+ *   88 touches ont Wd et Wa numeriques (script Acrobat embarque) ;
  * - icone « i » toujours visible, rappelant les 2 conditions au clic.
  */
 function drawCompliance(pdf: jsPDF, lang: "fr" | "en", pageWidth: number): void {
@@ -311,24 +311,24 @@ export function generateBlankKeyboardPdf(
       geo.set(k, { x, w: bKey, black: true });
     }
 
-    // Casiers de saisie Wa / Wd dans le corps de chaque touche
+    // Casiers de saisie Wd / Wa dans le corps de chaque touche
     const fh = 5;
     for (const k of keys) {
       const g = geo.get(k)!;
       const fw = Math.max(g.w - 1, 3.4);
       const fx = g.x + (g.w - fw) / 2;
-      const yWa = g.black ? top + blackH - fh * 2 - 2.4 : top + kbH - fh * 2 - 6;
-      const yWd = yWa + fh + 1.2;
+      const yWd = g.black ? top + blackH - fh * 2 - 2.4 : top + kbH - fh * 2 - 6;
+      const yWa = yWd + fh + 1.2;
       // Repere textuel gris tres clair, visible sous le champ vide
       pdf.setFontSize(5);
       pdf.setTextColor(g.black ? 120 : 205);
       pdf.setFillColor(255, 255, 255);
-      if (g.black) pdf.rect(fx, yWa, fw, fh * 2 + 1.2, "F");
-      pdf.text(lang === "en" ? "DW" : "PD", fx + fw / 2, yWa + fh - 1.4, { align: "center" });
-      pdf.text(lang === "en" ? "UW" : "PR", fx + fw / 2, yWd + fh - 1.4, { align: "center" });
+      if (g.black) pdf.rect(fx, yWd, fw, fh * 2 + 1.2, "F");
+      pdf.text(lang === "en" ? "DW" : "PD", fx + fw / 2, yWd + fh - 1.4, { align: "center" });
+      pdf.text(lang === "en" ? "UW" : "PR", fx + fw / 2, yWa + fh - 1.4, { align: "center" });
       pdf.setTextColor(0);
-      textField(pdf, `wa_${k}`, fx, yWa, fw, fh, "", 5);
-      textField(pdf, `wd_${k}`, fx, yWd, fw, fh, "", 5);
+      textField(pdf, `wa_${k}`, fx, yWd, fw, fh, "", 5);
+      textField(pdf, `wd_${k}`, fx, yWa, fw, fh, "", 5);
       // Numero de touche sous le clavier
       pdf.setFontSize(5);
       pdf.text(String(k), g.x + g.w / 2, top + kbH + 3, { align: "center" });

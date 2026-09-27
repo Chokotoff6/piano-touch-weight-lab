@@ -123,9 +123,9 @@ const PEDAL_HIDE_KEY = "ptw_hide_pedal_alert";
 const UNDO_LIMIT = 20;
 
 
-type Row = { wa: string; wd: string };
+type Row = { wd: string; wa: string };
 
-const EMPTY: Row[] = Array.from({ length: 88 }, () => ({ wa: "", wd: "" }));
+const EMPTY: Row[] = Array.from({ length: 88 }, () => ({ wd: "", wa: "" }));
 
 const DRAFT_ROWS_KEY = "ptw_draft_rows";
 const DRAFT_INFO_KEY = "ptw_draft_info";
@@ -404,12 +404,12 @@ export const Route = createFileRoute("/saisie")({
       {
         name: "description",
         content:
-          "Saisie des poids ascendant (Wa) et descendant (Wd) des 88 touches, avec calcul automatique de la friction et de la balance.",
+          "Saisie des poids ascendant (Wd) et descendant (Wa) des 88 touches, avec calcul automatique de la friction et de la balance.",
       },
       { property: "og:title", content: "Saisie des mesures — Touchweight piano" },
       {
         property: "og:description",
-        content: "Consignez Wa et Wd sur 88 touches et obtenez friction et balance instantanément.",
+        content: "Consignez Wd et Wa sur 88 touches et obtenez friction et balance instantanément.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -559,12 +559,12 @@ function Index() {
   /** Ancrages de calage des boutons Undo/Redo dans le bloc de touches 45-88. */
   const sheet2Ref = useRef<HTMLDivElement | null>(null);
   const key45Ref = useRef<HTMLDivElement | null>(null);
-  const waLabel2Ref = useRef<HTMLDivElement | null>(null);
+  const wdLabel2Ref = useRef<HTMLDivElement | null>(null);
   const undoGroupRef = useRef<HTMLDivElement | null>(null);
   const [undoPos, setUndoPos] = useState<{ left: number; top: number } | null>(null);
 
   const pedalCount = useRef(0);
-  const pedalOrigin = useRef<{ index: number; field: "wa" | "wd" } | null>(null);
+  const pedalOrigin = useRef<{ index: number; field: "wd" | "wa" } | null>(null);
 
   const [hidePedalAlert, setHidePedalAlert] = useState(false);
   /** Valeur mémorisée avant effacement automatique au clic dans une case. */
@@ -598,7 +598,7 @@ function Index() {
     if (!weighingModeRef.current) return false;
     if (!isDemoActive() || hasSeenDemoCascade()) return false;
     if (!Array.isArray(fullRows) || fullRows.length !== 88) return false;
-    if (!fullRows.some((r) => r.wa || r.wd)) return false;
+    if (!fullRows.some((r) => r.wd || r.wa)) return false;
     cascadeStarted.current = true;
     cascadeTarget.current = fullRows;
     cascadeIndex.current = 0;
@@ -640,7 +640,7 @@ function Index() {
     const target = cascadeTarget.current;
     if (!target) return;
     stopCascadeTimer();
-    setRows((prev) => prev.map((r, i) => (r.wa || r.wd ? r : { ...target[i]! })));
+    setRows((prev) => prev.map((r, i) => (r.wd || r.wa ? r : { ...target[i]! })));
     cascadeTarget.current = null;
     markDemoCascadeSeen();
   };
@@ -672,7 +672,7 @@ function Index() {
       }
     }
     if (!source) source = rowsRef.current;
-    const target = source.map((r) => ({ wa: r?.wa ?? "", wd: r?.wd ?? "" }));
+    const target = source.map((r) => ({ wd: r?.wd ?? "", wa: r?.wa ?? "" }));
     cascadeTarget.current = null;
     cascadeStarted.current = true;
     markDemoCascadeSeen();
@@ -707,12 +707,15 @@ function Index() {
       }
     }
     if (!source) source = rowsRef.current;
-    const target = source.map((r) => ({ wa: r?.wa ?? "", wd: r?.wd ?? "" }));
+    const target = source.map((r) => ({ wd: r?.wd ?? "", wa: r?.wa ?? "" }));
     cascadeTarget.current = null;
     cascadeStarted.current = false;
     resetDemoCascadeSeen();
     setRows(EMPTY.map((r) => ({ ...r })));
-    if (!maybeStartCascade(target)) setRows(target);
+    // Laisse React retirer la classe « invisible » des 76 touches avant la cascade.
+    window.setTimeout(() => {
+      if (!maybeStartCascade(target)) setRows(target);
+    }, 50);
   };
 
   // Nettoyage des minuteurs à la sortie de la page.
@@ -890,7 +893,7 @@ function Index() {
     if (!weighingMode) return;
     if (!isDemoActive() || hasSeenDemoCascade() || cascadeStarted.current) return;
     const target = rowsRef.current.map((r) => ({ ...r }));
-    if (target.length !== 88 || !target.some((r) => r.wa || r.wd)) return;
+    if (target.length !== 88 || !target.some((r) => r.wd || r.wa)) return;
     weighingModeRef.current = true;
     setRows(EMPTY.map((r) => ({ ...r })));
     const t = window.setTimeout(() => {
@@ -932,13 +935,13 @@ function Index() {
     try {
       const raw = window.localStorage.getItem(DRAFT_ROWS_KEY);
       const parsed = raw ? (JSON.parse(raw) as Row[]) : null;
-      if (Array.isArray(parsed) && parsed.length === 88 && parsed.some((r) => r.wa || r.wd)) {
+      if (Array.isArray(parsed) && parsed.length === 88 && parsed.some((r) => r.wd || r.wa)) {
         if (!maybeStartCascade(parsed)) setRows(parsed);
       } else if (saved && Array.isArray(saved.wa_values) && saved.wa_values.length === 88) {
         setRows(
-          saved.wa_values.map((wa, i) => ({
-            wa: Number.isFinite(wa) ? String(wa) : "",
-            wd: Number.isFinite(saved.wd_values?.[i]) ? String(saved.wd_values[i]) : "",
+          saved.wa_values.map((wd, i) => ({
+            wd: Number.isFinite(wd) ? String(wd) : "",
+            wa: Number.isFinite(saved.wd_values?.[i]) ? String(saved.wd_values[i]) : "",
           })),
         );
       }
@@ -1012,7 +1015,7 @@ function Index() {
       const rowsP = rowsRaw ? (JSON.parse(rowsRaw) as Row[]) : null;
       const infoP = infoRaw ? (JSON.parse(infoRaw) as Record<string, string>) : null;
       const hasExistingPiano =
-        (Array.isArray(rowsP) && rowsP.some((r) => r.wa || r.wd)) ||
+        (Array.isArray(rowsP) && rowsP.some((r) => r.wd || r.wa)) ||
         (!!infoP && Object.values(infoP).some((v) => typeof v === "string" && v.trim() !== "")) ||
         !!(saved && (saved.brand || saved.model || saved.serial_number || saved.wa_values?.some((v) => Number.isFinite(v))));
       const isExplicitDemoParam =
@@ -1174,15 +1177,15 @@ function Index() {
   );
 
   const octaveGaps = useMemo(() => OCTAVE_RANGES.filter(([start, end]) =>
-    rows.slice(start - 1, end).filter((row) => row.wa.trim() !== "" && row.wd.trim() !== "").length < 2,
+    rows.slice(start - 1, end).filter((row) => row.wd.trim() !== "" && row.wa.trim() !== "").length < 2,
   ), [rows]);
 
-  /** Touches "orphelines" : Wa rempli sans Wd, ou l'inverse. */
+  /** Touches "orphelines" : Wd rempli sans Wa, ou l'inverse. */
   const orphanKeys = useMemo(
     () =>
       rows
         .map((r, i) => ({ r, i }))
-        .filter(({ r }) => (r.wa.trim() !== "") !== (r.wd.trim() !== ""))
+        .filter(({ r }) => (r.wd.trim() !== "") !== (r.wa.trim() !== ""))
         .map(({ i }) => i),
     [rows],
   );
@@ -1191,17 +1194,17 @@ function Index() {
   /** Une touche est en anomalie : erreur mécanique, hors fourchette ou binôme
    *  déclaré incomplet À LA SORTIE de la touche (jamais pendant la frappe). */
   const pairHasError = (index: number) =>
-    !!errorsRef.current[`${index}-wa`] ||
     !!errorsRef.current[`${index}-wd`] ||
+    !!errorsRef.current[`${index}-wa`] ||
     incompleteRef.current.includes(index);
 
   /** Case fautive du binôme sur laquelle le curseur doit rester capturé. */
-  const pairErrorField = (index: number): "wa" | "wd" => {
-    if (errorsRef.current[`${index}-wa`]) return "wa";
+  const pairErrorField = (index: number): "wd" | "wa" => {
     if (errorsRef.current[`${index}-wd`]) return "wd";
+    if (errorsRef.current[`${index}-wa`]) return "wa";
     const row = rowsRef.current?.[index];
-    if (row && row.wa.trim() === "") return "wa";
-    return "wd";
+    if (row && row.wd.trim() === "") return "wd";
+    return "wa";
   };
 
 
@@ -1210,7 +1213,7 @@ function Index() {
   /**
    * Validité instantanée du clavier (calcul brut, recalculé à chaque frappe) :
    * porte logique AND stricte.
-   * TEST 1 (prioritaire) : touche orpheline (cadre rouge) ou erreur Wa<=Wd => faux.
+   * TEST 1 (prioritaire) : touche orpheline (cadre rouge) ou erreur Wd<=Wa => faux.
    * TEST 2 (successif) : échantillonnage des octaves, uniquement si zéro cadre rouge.
    * Les carrés rouges s'affichent instantanément ; le badge vert, lui, est retardé
    * (voir badgeVisible) : il ne s'allume qu'après 0,5 s sans aucun cadre rouge.
@@ -1225,10 +1228,10 @@ function Index() {
     };
 
     const parsedRows = rows.map((row) => ({
-      pd: num(row.wa),
-      pr: num(row.wd),
-      hasPd: Boolean(clean(row.wa)),
-      hasPr: Boolean(clean(row.wd)),
+      pd: num(row.wd),
+      pr: num(row.wa),
+      hasPd: Boolean(clean(row.wd)),
+      hasPr: Boolean(clean(row.wa)),
     }));
 
     // CONDITION 1 : chaque mesure présente forme un binôme PD/PR.
@@ -1308,9 +1311,9 @@ function Index() {
       const current = rowsRef.current;
       if (hasAnyMeasurement(current)) return; // profil chargé ou en cours : on ne touche à rien
        const first = rapidMode ? RAPID_INDEXES[0] : 0;
-       if ((current[first]?.wa ?? "").trim() !== "") return;
-       inputs.current[`${first}-wa`]?.focus({ preventScroll: true });
-       inputs.current[`${first}-wa`]?.select();
+       if ((current[first]?.wd ?? "").trim() !== "") return;
+       inputs.current[`${first}-wd`]?.focus({ preventScroll: true });
+       inputs.current[`${first}-wd`]?.select();
     }, 100);
     // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [rapidMode]);
@@ -1501,7 +1504,7 @@ function Index() {
     // tant que l'artisan n'a pas retapé un chiffre sur cette touche.
     if (coherenceDismissed.current.has(index)) return;
     if (coherenceTimeout.current) clearTimeout(coherenceTimeout.current);
-    const el = inputs.current[`${index}-wd`];
+    const el = inputs.current[`${index}-wa`];
     if (el) {
       const r = el.getBoundingClientRect();
       setCoherenceAnchor({ x: r.right + 8, y: r.top });
@@ -1531,10 +1534,10 @@ function Index() {
   }, []);
 
 
-  /** Alerte ancrée sur la touche orpheline (Wa sans Wd ou inversement). */
+  /** Alerte ancrée sur la touche orpheline (Wd sans Wa ou inversement). */
   const showOrphanPopover = (index: number) => {
     if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
-    const el = inputs.current[`${index}-wa`] ?? inputs.current[`${index}-wd`];
+    const el = inputs.current[`${index}-wd`] ?? inputs.current[`${index}-wa`];
     const r = el?.getBoundingClientRect();
     setBlockAnchor({
       x: r ? r.right + 8 : window.innerWidth / 2 - 144,
@@ -1548,7 +1551,7 @@ function Index() {
   };
 
   /** Alerte ancrée sur la touche cliquée, près du curseur, quand la fiche est incomplète. */
-  const showBlockMessage = (index: number, field: "wa" | "wd") => {
+  const showBlockMessage = (index: number, field: "wd" | "wa") => {
     if (blockAnchorTimeout.current) clearTimeout(blockAnchorTimeout.current);
     const el = inputs.current[`${index}-${field}`];
     const r = el?.getBoundingClientRect();
@@ -1563,7 +1566,7 @@ function Index() {
    *  effacé automatiquement après 5 secondes maximum. Une fois estompé ou
    *  fermé, il ne peut PLUS réapparaître tant que l'artisan n'a pas tapé une
    *  nouvelle valeur dans la case (aucune réapparition cyclique). */
-  const showRangeMessage = (index: number, field: "wa" | "wd") => {
+  const showRangeMessage = (index: number, field: "wd" | "wa") => {
     const key = `${index}-${field}`;
     if (rangeDismissed.current.has(key)) return;
     if (rangeTimeout.current) clearTimeout(rangeTimeout.current);
@@ -1618,19 +1621,19 @@ function Index() {
       const locked = lockedPairRef.current;
       if (locked === null) return;
       const hasCellError =
-        !!errorsRef.current[`${locked}-wa`] || !!errorsRef.current[`${locked}-wd`];
+        !!errorsRef.current[`${locked}-wd`] || !!errorsRef.current[`${locked}-wa`];
       if (!hasCellError) return;
       // Erreur mécanique (PR >= PD) : on ferme seulement le message FF et on
       // pré-sélectionne les 2 chiffres du Poids Remontant (case du bas) pour
       // une re-saisie directe. Les valeurs ne sont JAMAIS effacées.
-      const mechanical = errorsRef.current[`${locked}-wd`] === COHERENCE_MESSAGE;
+      const mechanical = errorsRef.current[`${locked}-wa`] === COHERENCE_MESSAGE;
       if (mechanical) {
         e.preventDefault();
         setCoherenceIndex(null);
         setCoherenceAnchor(null);
         hideRangeMessage(true);
         setTimeout(() => {
-          const input = inputs.current[`${locked}-wd`];
+          const input = inputs.current[`${locked}-wa`];
           if (!input) return;
           input.focus();
           input.select();
@@ -1643,12 +1646,12 @@ function Index() {
       setCoherenceAnchor(null);
       setErrors((prev) => {
         const next = { ...prev };
-        delete next[`${locked}-wa`];
         delete next[`${locked}-wd`];
+        delete next[`${locked}-wa`];
         return next;
       });
-      setRows((prev) => prev.map((r, i) => (i === locked ? { wa: "", wd: "" } : r)));
-      setTimeout(() => focusCell(locked, "wa"), 0);
+      setRows((prev) => prev.map((r, i) => (i === locked ? { wd: "", wa: "" } : r)));
+      setTimeout(() => focusCell(locked, "wd"), 0);
     };
     document.addEventListener("pointerdown", onOutsidePointerDown);
     return () => document.removeEventListener("pointerdown", onOutsidePointerDown);
@@ -1719,21 +1722,21 @@ function Index() {
   const sectionAverages = useMemo(() => {
     const calc = (slice: Row[]) => {
       const valid = slice
-        .map((r) => ({ wa: parseWeight(r.wa), wd: parseWeight(r.wd) }))
+        .map((r) => ({ wd: parseWeight(r.wd), wa: parseWeight(r.wa) }))
         .filter(
-          (entry): entry is { wa: number; wd: number } =>
-            entry.wa !== null && entry.wd !== null && entry.wa > entry.wd,
+          (entry): entry is { wd: number; wa: number } =>
+            entry.wd !== null && entry.wa !== null && entry.wd > entry.wa,
         );
       if (valid.length === 0) {
-        return { wa: "—", wd: "—", friction: "—", balance: "—", count: 0 };
+        return { wd: "—", wa: "—", friction: "—", balance: "—", count: 0 };
       }
-      const avgWa = valid.reduce((s, entry) => s + entry.wa, 0) / valid.length;
       const avgWd = valid.reduce((s, entry) => s + entry.wd, 0) / valid.length;
+      const avgWa = valid.reduce((s, entry) => s + entry.wa, 0) / valid.length;
       return {
-        wa: avgWa.toFixed(1),
         wd: avgWd.toFixed(1),
-        friction: ((avgWa - avgWd) / 2).toFixed(1),
-        balance: ((avgWa + avgWd) / 2).toFixed(1),
+        wa: avgWa.toFixed(1),
+        friction: ((avgWd - avgWa) / 2).toFixed(1),
+        balance: ((avgWd + avgWa) / 2).toFixed(1),
         count: valid.length,
       };
     };
@@ -1747,7 +1750,7 @@ function Index() {
     };
   }, [rows]);
 
-  const focusCell = (index: number, field: "wa" | "wd") => {
+  const focusCell = (index: number, field: "wd" | "wa") => {
     const target = rapidMode && !RAPID_INDEX_SET.has(index)
       ? nextVisibleKey(index, 1) ?? nextVisibleKey(index, -1)
       : index;
@@ -1787,26 +1790,26 @@ function Index() {
     return null;
   };
 
-  /** Déplacement fluide : Wa → Wd → touche visible suivante (et inverse). */
-  const moveFocus = (index: number, field: "wa" | "wd", direction: 1 | -1) => {
+  /** Déplacement fluide : Wd → Wa → touche visible suivante (et inverse). */
+  const moveFocus = (index: number, field: "wd" | "wa", direction: 1 | -1) => {
     if (direction === 1) {
-      if (field === "wa") {
-        focusCell(index, "wd");
+      if (field === "wd") {
+        focusCell(index, "wa");
         return;
       }
       const next = nextVisibleKey(index, 1);
-      if (next !== null) focusCell(next, "wa");
+      if (next !== null) focusCell(next, "wd");
       return;
     }
-    if (field === "wd") {
-      focusCell(index, "wa");
+    if (field === "wa") {
+      focusCell(index, "wd");
       return;
     }
     const prev = nextVisibleKey(index, -1);
-    if (prev !== null) focusCell(prev, "wd");
+    if (prev !== null) focusCell(prev, "wa");
   };
 
-  const onKeyDown = (e: React.KeyboardEvent, index: number, field: "wa" | "wd") => {
+  const onKeyDown = (e: React.KeyboardEvent, index: number, field: "wd" | "wa") => {
     // --- Anti-rebond clavier -------------------------------------------
     // Appui prolongé (auto-répétition) ou déplacement de focus encore en
     // cours : on ignore l'événement pour empêcher la file d'attente de
@@ -1855,7 +1858,7 @@ function Index() {
       (e.key === "Tab" || e.key === "Enter" || e.key === "ArrowUp" || e.key === "ArrowDown")
     ) {
       e.preventDefault();
-      focusCell(index, field === "wa" ? "wd" : "wa");
+      focusCell(index, field === "wd" ? "wa" : "wd");
       return;
     }
 
@@ -1868,7 +1871,7 @@ function Index() {
         .find((key) => key > index + 1);
       if (nextKey !== undefined) {
         e.preventDefault();
-        focusCell(nextKey - 1, "wa");
+        focusCell(nextKey - 1, "wd");
       }
       return;
     }
@@ -1895,8 +1898,8 @@ function Index() {
 
 
 
-  /** Met à jour une cellule (Wa/Wd) et renvoie la ligne résultante. */
-  const setRowField = (index: number, field: "wa" | "wd", value: string): Row => {
+  /** Met à jour une cellule (Wd/Wa) et renvoie la ligne résultante. */
+  const setRowField = (index: number, field: "wd" | "wa", value: string): Row => {
     const updated: Row = { ...rows[index]!, [field]: value };
     setRows((prev) => prev.map((r, i) => (i === index ? updated : r)));
     return updated;
@@ -1910,7 +1913,7 @@ function Index() {
       return next;
     });
 
-  const setValue = (index: number, field: "wa" | "wd", value: string) => {
+  const setValue = (index: number, field: "wd" | "wa", value: string) => {
     // Frappe pendant la cascade démo : on la termine sans écraser la saisie.
     finishCascadeEarly();
     markDirty();
@@ -1927,23 +1930,23 @@ function Index() {
     // AUCUNE erreur mécanique tant que la case ne contient pas 2 chiffres :
     // l'artisan doit pouvoir taper librement son binôme.
     if (cleaned.length < 2) {
-      clearError(`${index}-wa`);
       clearError(`${index}-wd`);
+      clearError(`${index}-wa`);
       if (coherenceIndex === index) setCoherenceIndex(null);
       hideRangeMessage();
       return;
     }
     // Binôme complété pendant la frappe : le cadre rouge « incomplet » tombe.
-    if (cleanWeight(nextRow.wa).length === 2 && cleanWeight(nextRow.wd).length === 2) {
+    if (cleanWeight(nextRow.wd).length === 2 && cleanWeight(nextRow.wa).length === 2) {
       setIncompletePairs((prev) => prev.filter((i) => i !== index));
     }
     // Feedback Flash : PD > PR obligatoire (valeur complète uniquement).
     checkCoherence(index, nextRow);
     const num = parseWeight(cleaned);
     // Priorité absolue à l'erreur mécanique (PR >= PD) : elle masque le FF de fourchette.
-    const rowWa = parseWeight(nextRow.wa);
     const rowWd = parseWeight(nextRow.wd);
-    const mechanicalError = rowWa !== null && rowWd !== null && rowWa <= rowWd;
+    const rowWa = parseWeight(nextRow.wa);
+    const mechanicalError = rowWd !== null && rowWa !== null && rowWd <= rowWa;
     // Hors fourchette (<10 ou >90) : cadre rouge IMMÉDIAT + message FF en
     // dessous de la case, sans aucun message sustain. Le verrouillage du focus
     // n'agit qu'à la tentative de sortie (blur/Tab/Enter).
@@ -2007,16 +2010,16 @@ function Index() {
     pedalOrigin.current = null;
     if (!origin) return;
     setTimeout(() => {
-      if (origin.field === "wa") focusCell(origin.index, "wd");
+      if (origin.field === "wd") focusCell(origin.index, "wa");
       else {
         const next = nextVisibleKey(origin.index, 1);
-        if (next !== null) focusCell(next, "wa");
+        if (next !== null) focusCell(next, "wd");
       }
     }, 0);
   };
 
 
-  const handleBlur = (index: number, field: "wa" | "wd", value: string) => {
+  const handleBlur = (index: number, field: "wd" | "wa", value: string) => {
     const key = `${index}-${field}`;
     // Verrou de focus : tant que l'alerte « valeur élevée » est affichée pour
     // cette case, le curseur y est ramené.
@@ -2045,9 +2048,9 @@ function Index() {
     if (num < 10 || num > 90) {
       setErrors((prev) => ({ ...prev, [key]: PD_RANGE_MESSAGE }));
       const updated = setRowField(index, field, num.toString());
-      const rowWa = parseWeight(updated.wa);
       const rowWd = parseWeight(updated.wd);
-      if (rowWa !== null && rowWd !== null && rowWa <= rowWd) hideRangeMessage();
+      const rowWa = parseWeight(updated.wa);
+      if (rowWd !== null && rowWa !== null && rowWd <= rowWa) hideRangeMessage();
       else showRangeMessage(index, field);
       setTimeout(() => focusCell(index, field), 0);
       return;
@@ -2073,12 +2076,12 @@ function Index() {
     setTimeout(() => {
       const active = document.activeElement;
       const stillInPair =
-        active === inputs.current[`${index}-wa`] || active === inputs.current[`${index}-wd`];
+        active === inputs.current[`${index}-wd`] || active === inputs.current[`${index}-wa`];
       if (stillInPair) return;
-      const waFull = cleanWeight(row.wa).length === 2;
       const wdFull = cleanWeight(row.wd).length === 2;
-      const bothEmpty = row.wa.trim() === "" && row.wd.trim() === "";
-      if ((waFull && wdFull) || bothEmpty) {
+      const waFull = cleanWeight(row.wa).length === 2;
+      const bothEmpty = row.wd.trim() === "" && row.wa.trim() === "";
+      if ((wdFull && waFull) || bothEmpty) {
         setIncompletePairs((prev) => prev.filter((i) => i !== index));
         return;
       }
@@ -2090,19 +2093,19 @@ function Index() {
   /** Erreur mécanique PR >= PD : cadre rouge STRICTEMENT sur la case du bas
    *  (Poids Remontant), dont les 2 chiffres sont sélectionnés automatiquement. */
   const checkCoherence = (index: number, row: Row) => {
-    const wa = parseWeight(row.wa);
     const wd = parseWeight(row.wd);
-    const waKey = `${index}-wa`;
+    const wa = parseWeight(row.wa);
     const wdKey = `${index}-wd`;
-    if (wa !== null && wd !== null && wa <= wd) {
+    const waKey = `${index}-wa`;
+    if (wd !== null && wa !== null && wd <= wa) {
       setErrors((prev) => {
-        const next = { ...prev, [wdKey]: COHERENCE_MESSAGE };
-        if (next[waKey] === COHERENCE_MESSAGE) delete next[waKey];
+        const next = { ...prev, [waKey]: COHERENCE_MESSAGE };
+        if (next[wdKey] === COHERENCE_MESSAGE) delete next[wdKey];
         return next;
       });
       showCoherencePopover(index);
       setTimeout(() => {
-        const input = inputs.current[wdKey];
+        const input = inputs.current[waKey];
         // Sélection des 2 chiffres UNIQUEMENT si le curseur est encore sur la
         // case du bas : jamais d'aimantation lorsque l'artisan est remonté
         // librement sur le Poids Descendant de la MÊME touche.
@@ -2115,19 +2118,19 @@ function Index() {
     if (coherenceIndex === index) setCoherenceIndex(null);
     setErrors((prev) => {
       const next = { ...prev };
-      if (next[waKey] === COHERENCE_MESSAGE) delete next[waKey];
       if (next[wdKey] === COHERENCE_MESSAGE) delete next[wdKey];
+      if (next[waKey] === COHERENCE_MESSAGE) delete next[waKey];
       return next;
     });
   };
 
   const compute = (r: Row) => {
-    const wa = parseWeight(r.wa);
     const wd = parseWeight(r.wd);
-    if (wa === null || wd === null) return { friction: "", balance: "" };
+    const wa = parseWeight(r.wa);
+    if (wd === null || wa === null) return { friction: "", balance: "" };
     return {
-      friction: ((wa - wd) / 2).toFixed(1),
-      balance: ((wa + wd) / 2).toFixed(1),
+      friction: ((wd - wa) / 2).toFixed(1),
+      balance: ((wd + wa) / 2).toFixed(1),
     };
   };
 
@@ -2215,8 +2218,8 @@ function Index() {
       zone_climatique: climateZone !== null ? String(climateZone) : "",
       type_entretien: info["entretien"] ?? "",
       remarques: info["remarques"] ?? "",
-      mesures_wa: rows.map((r) => r.wa),
-      mesures_wd: rows.map((r) => r.wd),
+      mesures_wa: rows.map((r) => r.wd),
+      mesures_wd: rows.map((r) => r.wa),
     };
   };
 
@@ -2256,15 +2259,15 @@ function Index() {
   const chartData = useMemo<ChartPoint[]>(
     () =>
       rows.map((r, i) => {
-        const wa = parseWeight(r.wa);
         const wd = parseWeight(r.wd);
-        const valid = wa !== null && wd !== null && wa > wd;
+        const wa = parseWeight(r.wa);
+        const valid = wd !== null && wa !== null && wd > wa;
         return {
           key: i + 1,
-          wa,
           wd,
-          friction: valid ? Number(((wa - wd) / 2).toFixed(1)) : null,
-          balance: valid ? Number(((wa + wd) / 2).toFixed(1)) : null,
+          wa,
+          friction: valid ? Number(((wd - wa) / 2).toFixed(1)) : null,
+          balance: valid ? Number(((wd + wa) / 2).toFixed(1)) : null,
         };
       }),
     [rows],
@@ -2273,17 +2276,17 @@ function Index() {
   // Données au format de la page Résultats : les pages 2 et 3 du PDF capturent
   // les cadres web eux-mêmes (mode Noir & Blanc, courbes blanches/noires séparées).
   const webChartData = useMemo(() => {
-    const profile: RefProfile = { wa: [], wd: [], friction: [], balance: [] };
+    const profile: RefProfile = { wd: [], wa: [], friction: [], balance: [] };
     rows.forEach((row) => {
-      const a = parseWeight(row.wa);
-      const d = parseWeight(row.wd);
+      const a = parseWeight(row.wd);
+      const d = parseWeight(row.wa);
       const valid = a !== null && d !== null && a > d;
-      profile.wa.push(valid ? a : Number.NaN);
-      profile.wd.push(valid ? d : Number.NaN);
+      profile.wd.push(valid ? a : Number.NaN);
+      profile.wa.push(valid ? d : Number.NaN);
       profile.friction.push(valid ? (a - d) / 2 : Number.NaN);
       profile.balance.push(valid ? (a + d) / 2 : Number.NaN);
     });
-    const hasData = profile.wa.some((value) => Number.isFinite(value));
+    const hasData = profile.wd.some((value) => Number.isFinite(value));
     return buildChartData(hasData ? profile : null, null, null);
   }, [rows]);
 
@@ -2297,7 +2300,7 @@ function Index() {
     let white = 0;
     let black = 0;
     rows.forEach((row, index) => {
-      const filled = String(row.wa ?? "").trim() !== "" || String(row.wd ?? "").trim() !== "";
+      const filled = String(row.wd ?? "").trim() !== "" || String(row.wa ?? "").trim() !== "";
       if (!filled) return;
       if (BLACK_MOD.has((index + 1) % 12)) black += 1;
       else white += 1;
@@ -2322,7 +2325,7 @@ function Index() {
       pdfFramesRef.current?.querySelector<HTMLElement>(`[data-frame="${id}"]`) ?? null;
     return [
       keep([moyennesRef.current, rawPdfMirror() ?? pdfMesuresRef.current]),
-      keep([frame("wa"), frame("wd")]),
+      keep([frame("wd"), frame("wa")]),
       keep([frame("bal"), frame("fric")]),
     ];
   };
@@ -2381,11 +2384,11 @@ function Index() {
         city: fields["city"] ?? "",
         country: fields["country"] ?? "",
         remarks: fields["remarks"] ?? "",
-        wa: imported.map((row) => row.wa),
         wd: imported.map((row) => row.wd),
+        wa: imported.map((row) => row.wa),
       });
       saveCurrentPiano(piano);
-      setRows(imported.map((r) => ({ wa: cleanWeight(r.wa), wd: cleanWeight(r.wd) })));
+      setRows(imported.map((r) => ({ wd: cleanWeight(r.wd), wa: cleanWeight(r.wa) })));
       setInfo((prev) => ({
         ...prev,
         marque: brand || prev["marque"] || "",
@@ -2465,12 +2468,12 @@ function Index() {
   const restoreHistoryRow = (id: string) => {
     const row = historyRowsRef.current.find((entry) => entry.id === id);
     if (!row) return;
-    const wa = Array.isArray(row.mesures_wa) ? (row.mesures_wa as unknown[]) : [];
-    const wd = Array.isArray(row.mesures_wd) ? (row.mesures_wd as unknown[]) : [];
+    const wd = Array.isArray(row.mesures_wa) ? (row.mesures_wa as unknown[]) : [];
+    const wa = Array.isArray(row.mesures_wd) ? (row.mesures_wd as unknown[]) : [];
     setRows(
       Array.from({ length: 88 }, (_, i) => ({
-        wa: cleanWeight(String(wa[i] ?? "")),
         wd: cleanWeight(String(wd[i] ?? "")),
+        wa: cleanWeight(String(wa[i] ?? "")),
       })),
     );
     setInfo((prev) => ({
@@ -2526,8 +2529,8 @@ function Index() {
       city: payload.ville,
       country: payload.pays,
       remarks: payload.remarques,
-      wa: payload.mesures_wa,
-      wd: payload.mesures_wd,
+      wd: payload.mesures_wa,
+      wa: payload.mesures_wd,
     });
     // La copie locale est disponible immédiatement, même si le réseau est indisponible.
     saveCurrentPiano(currentPiano);
@@ -2651,9 +2654,9 @@ function Index() {
       return rows.reduce((count, row, index) => {
         const saved = savedRowsRef.current[index];
         if (!saved) return count + 1;
-        const waChanged = parseWeight(row.wa) !== parseWeight(saved.wa);
         const wdChanged = parseWeight(row.wd) !== parseWeight(saved.wd);
-        return count + (waChanged || wdChanged ? 1 : 0);
+        const waChanged = parseWeight(row.wa) !== parseWeight(saved.wa);
+        return count + (wdChanged || waChanged ? 1 : 0);
       }, 0);
     };
     const requiresChoice = () => {
@@ -2751,11 +2754,11 @@ function Index() {
       Object.entries(handlers).forEach(([type, fn]) => window.removeEventListener(type, fn));
   }, [rows, info, currentDbId, isDirty, honeypot, climateZone, profile]);
 
-  // --- Rendu : champ de saisie d'un poids (Wa ou Wd) ------------------------------
+  // --- Rendu : champ de saisie d'un poids (Wd ou Wa) ------------------------------
 
   const renderWeightInput = (
     index: number,
-    field: "wa" | "wd",
+    field: "wd" | "wa",
     isBlack: boolean,
     pdfMirror = false,
     hidden = false,
@@ -2838,7 +2841,7 @@ function Index() {
           }
         }}
         inputMode="numeric"
-        aria-label={`${field === "wa" ? (en ? "DW" : "PD") : en ? "UW" : "PR"} touche ${index + 1}`}
+        aria-label={`${field === "wd" ? (en ? "DW" : "PD") : en ? "UW" : "PR"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
         onFocus={(e) => {
           // Verrou du binôme : impossible de rejoindre une autre touche tant
@@ -2849,7 +2852,7 @@ function Index() {
             const target = pairErrorField(locked);
             // Alerte mécanique (PD >= PR) disparue : réaffichage instantané
             // à chaque tentative de fuite hors de la touche bloquée.
-            if (errorsRef.current[`${locked}-wd`] === COHERENCE_MESSAGE) {
+            if (errorsRef.current[`${locked}-wa`] === COHERENCE_MESSAGE) {
               coherenceDismissed.current.delete(locked);
               showCoherencePopover(locked);
             }
@@ -2928,10 +2931,10 @@ function Index() {
         )}
         <div className={`technical-labels ${SIDE_LABEL_CLASS}`} aria-hidden="true">
           <div className="label-key" />
-          <div className="label-wa" ref={anchorSection ? waLabel2Ref : undefined}>{en ? "Downweight" : "Poids descendant"}</div>
-          <div className="label-wd">{en ? "Upweight" : "Poids remontant"}</div>
-          <div className="label-wa-white">{en ? "Downweight" : "Poids descendant"}</div>
-          <div className="label-wd-white">{en ? "Upweight" : "Poids remontant"}</div>
+          <div className="label-wd" ref={anchorSection ? wdLabel2Ref : undefined}>{en ? "Downweight" : "Poids descendant"}</div>
+          <div className="label-wa">{en ? "Upweight" : "Poids remontant"}</div>
+          <div className="label-wd-white">{en ? "Downweight" : "Poids descendant"}</div>
+          <div className="label-wa-white">{en ? "Upweight" : "Poids remontant"}</div>
         </div>
         <div className="piano-grid" ref={gridRef}>
           {rows.slice(from - 1, to).map((row, offset) => {
@@ -2957,8 +2960,8 @@ function Index() {
                 {/* Le dessin de la touche reste toujours intact : seules les
                     cases de saisie se masquent selon le filtre « Touches ». */}
                 <div className="key-body">
-                  {renderWeightInput(index, "wa", black, pdfMirror, hiddenByView)}
                   {renderWeightInput(index, "wd", black, pdfMirror, hiddenByView)}
+                  {renderWeightInput(index, "wa", black, pdfMirror, hiddenByView)}
                 </div>
               </div>
             );
@@ -3002,7 +3005,7 @@ function Index() {
     const place = () => {
       const sheet = sheet2Ref.current;
       const key45 = key45Ref.current;
-      const label = waLabel2Ref.current;
+      const label = wdLabel2Ref.current;
       const group = undoGroupRef.current;
       if (!sheet || !key45 || !label || !group) return;
       const s = sheet.getBoundingClientRect();
@@ -3730,8 +3733,8 @@ Moyennes{" "}
         <div className="grid grid-cols-4 mt-0.5 !gap-2.5">
           {(
             [
-              { key: "wa", label: en ? "Downweight" : "Poids descendant" },
-              { key: "wd", label: en ? "Upweight" : "Poids remontant" },
+              { key: "wd", label: en ? "Downweight" : "Poids descendant" },
+              { key: "wa", label: en ? "Upweight" : "Poids remontant" },
               { key: "friction", label: "Friction" },
               { key: "balance", label: en ? "Balance Weight" : "Poids d'équilibre" },
             ] as const

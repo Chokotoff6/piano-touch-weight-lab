@@ -1,3 +1,4 @@
+import "@/lib/stanwood-migration";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { initLang, setLang, useLang } from "@/data/translations";
 import { initJourneyFlags, useTopbarState } from "@/lib/topbar-store";

@@ -113,17 +113,17 @@ function useSnappedGrid(from: number, to: number) {
   );
 }
 
-type Cell = { wa: string; wd: string; friction: string; balance: string };
+type Cell = { wd: string; wa: string; friction: string; balance: string };
 
-function buildCells(wa: (number | undefined)[], wd: (number | undefined)[]): Cell[] {
+function buildCells(wd: (number | undefined)[], wa: (number | undefined)[]): Cell[] {
   return Array.from({ length: 88 }, (_, i) => {
-    const a = wa[i];
-    const d = wd[i];
+    const a = wd[i];
+    const d = wa[i];
     const valid =
       typeof a === "number" && Number.isFinite(a) && typeof d === "number" && Number.isFinite(d) && a > d;
     return {
-      wa: typeof a === "number" && Number.isFinite(a) ? String(Math.round(a)) : "",
-      wd: typeof d === "number" && Number.isFinite(d) ? String(Math.round(d)) : "",
+      wd: typeof a === "number" && Number.isFinite(a) ? String(Math.round(a)) : "",
+      wa: typeof d === "number" && Number.isFinite(d) ? String(Math.round(d)) : "",
       friction: valid ? ((a - d) / 2).toFixed(1) : "",
       balance: valid ? ((a + d) / 2).toFixed(1) : "",
     };
@@ -152,20 +152,20 @@ function formatAverage(value: string): ReactNode {
   );
 }
 
-type Avg = { wa: string; wd: string; friction: string; balance: string };
+type Avg = { wd: string; wa: string; friction: string; balance: string };
 
 function average(cells: Cell[]): Avg {
   const valid = cells
-    .map((c) => ({ wa: Number(c.wa), wd: Number(c.wd) }))
-    .filter((e) => Number.isFinite(e.wa) && Number.isFinite(e.wd) && e.wa > e.wd && e.wd > 0);
-  if (valid.length === 0) return { wa: "—", wd: "—", friction: "—", balance: "—" };
-  const avgWa = valid.reduce((s, e) => s + e.wa, 0) / valid.length;
+    .map((c) => ({ wd: Number(c.wd), wa: Number(c.wa) }))
+    .filter((e) => Number.isFinite(e.wd) && Number.isFinite(e.wa) && e.wd > e.wa && e.wa > 0);
+  if (valid.length === 0) return { wd: "—", wa: "—", friction: "—", balance: "—" };
   const avgWd = valid.reduce((s, e) => s + e.wd, 0) / valid.length;
+  const avgWa = valid.reduce((s, e) => s + e.wa, 0) / valid.length;
   return {
-    wa: avgWa.toFixed(1),
     wd: avgWd.toFixed(1),
-    friction: ((avgWa - avgWd) / 2).toFixed(1),
-    balance: ((avgWa + avgWd) / 2).toFixed(1),
+    wa: avgWa.toFixed(1),
+    friction: ((avgWd - avgWa) / 2).toFixed(1),
+    balance: ((avgWd + avgWa) / 2).toFixed(1),
   };
 }
 
@@ -186,10 +186,10 @@ function Section({
       <div className="technical-sheet">
         <div className={`technical-labels ${SIDE_LABEL_CLASS}`} aria-hidden="true">
           <div className="label-key" />
-          <div className="label-wa">Poids descendant</div>
-          <div className="label-wd">Poids remontant</div>
-          <div className="label-wa-white">Poids descendant</div>
-          <div className="label-wd-white">Poids remontant</div>
+          <div className="label-wd">Poids descendant</div>
+          <div className="label-wa">Poids remontant</div>
+          <div className="label-wd-white">Poids descendant</div>
+          <div className="label-wa-white">Poids remontant</div>
         </div>
         <div className="piano-grid" ref={gridRef}>
           {cells.slice(from - 1, to).map((cell, offset) => {
@@ -207,7 +207,7 @@ function Section({
                   {index + 1}
                 </div>
                 <div className="key-body">
-                  {(["wa", "wd"] as const).map((field) => (
+                  {(["wd", "wa"] as const).map((field) => (
                     <div key={field} className={`weight-fields weight-fields-${field}`}>
                       <span
                         className="weight-input !font-sans"
@@ -270,19 +270,19 @@ function Section({
  * « Mesures poids statiques » des 88 touches, tels qu'imprimés en page 1.
  */
 export function PianoSheetMirror({
-  wa,
   wd,
+  wa,
   summary,
   averagesRef,
   sheetRef,
 }: {
-  wa: (number | undefined)[];
   wd: (number | undefined)[];
+  wa: (number | undefined)[];
   summary: string;
   averagesRef: (node: HTMLElement | null) => void;
   sheetRef: (node: HTMLElement | null) => void;
 }) {
-  const cells = buildCells(wa, wd);
+  const cells = buildCells(wd, wa);
   const isBlack = (index: number) => BLACK_KEYS.has(index + 1);
   const global = average(cells);
   const whites = average(cells.filter((_, i) => !isBlack(i)));
@@ -302,8 +302,8 @@ export function PianoSheetMirror({
           <div className="grid grid-cols-4 mt-0.5 !gap-2.5">
             {(
               [
-                { key: "wa", label: "Poids descendant" },
-                { key: "wd", label: "Poids remontant" },
+                { key: "wd", label: "Poids descendant" },
+                { key: "wa", label: "Poids remontant" },
                 { key: "friction", label: "Friction" },
                 { key: "balance", label: "Poids d'équilibre" },
               ] as const

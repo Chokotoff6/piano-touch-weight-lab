@@ -19,10 +19,10 @@ export const OCTAVE_RANGES: [number, number][] = [
   [76, 87],
 ];
 
-type Row = { wa: string; wd: string };
+type Row = { wd: string; wa: string };
 
 const filled = (row: Row | undefined) =>
-  !!row && (row.wa.trim() !== "" || row.wd.trim() !== "");
+  !!row && (row.wd.trim() !== "" || row.wa.trim() !== "");
 
 export function hasAnyMeasurement(rows: Row[]): boolean {
   return rows.some((r) => filled(r));

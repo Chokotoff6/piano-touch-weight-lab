@@ -73,8 +73,8 @@ export function PdfInfoTable({ info }: { info: PdfInfo }) {
 
 export type ChartPoint = {
   key: number;
-  wa: number | null;
   wd: number | null;
+  wa: number | null;
   friction: number | null;
   balance: number | null;
 };
@@ -109,7 +109,7 @@ export function PdfComparisonChart({
             )}
             <Line
               type="monotone"
-              dataKey="wa"
+              dataKey="wd"
               name="Poids descendant"
               stroke="#1d4ed8"
               dot={false}
@@ -119,7 +119,7 @@ export function PdfComparisonChart({
             />
             <Line
               type="monotone"
-              dataKey="wd"
+              dataKey="wa"
               name="Poids remontant"
               stroke="#b91c1c"
               dot={false}
@@ -154,7 +154,7 @@ export function PdfComparisonChart({
   );
 }
 
-export type MetricKeyPdf = "wa" | "wd" | "balance" | "friction";
+export type MetricKeyPdf = "wd" | "wa" | "balance" | "friction";
 
 /**
  * Domaine vertical en nombres ENTIERS : écart réel (max - min) majoré de 10 %,

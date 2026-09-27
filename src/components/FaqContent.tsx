@@ -108,28 +108,28 @@ function FaqHome() {
               </p>
 
               <p className="mt-2">
-                <strong>1. Le Poids Descendant (Wa) : 'L'effort de démarrage'</strong>
+                <strong>1. Le Poids Descendant (Wd) : 'L'effort de démarrage'</strong>
               </p>
               <p className="mt-1">
                 Ce que c'est : Le poids minimal nécessaire pour faire s'enfoncer
                 la touche au repos. Le ressenti sous le doigt : C'est la première
-                barrière que rencontre votre doigt. Si le Wa est trop élevé
+                barrière que rencontre votre doigt. Si le Wd est trop élevé
                 (au-dessus de 54g), le clavier donne une sensation de 'fermeture'
                 ou de 'lourdeur brute' dès que vous posez les doigts sur les
-                touches. Un Wa fort élevé est le premier signal d'alarme d'un
+                touches. Un Wd fort élevé est le premier signal d'alarme d'un
                 problème mécanique majeur.
               </p>
 
               <p className="mt-2">
-                <strong>2. Le Poids Ascendant (Wd) : 'La réactivité du retour'</strong>
+                <strong>2. Le Poids Ascendant (Wa) : 'La réactivité du retour'</strong>
               </p>
               <p className="mt-1">
                 Ce que c'est : La force avec laquelle la touche pousse votre doigt
                 vers le haut pour revenir à sa position de repos. Le ressenti sous
-                le doigt : C'est le dynamisme du clavier. Si le Wd est élevé
+                le doigt : C'est le dynamisme du clavier. Si le Wa est élevé
                 (autour de 35g-40g), le clavier est 'nerveux' et 'rapide' : la
                 touche colle à votre doigt, ce qui est parfait pour la répétition
-                rapide des notes (trilles, répétitions). Si le Wd est trop bas (en
+                rapide des notes (trilles, répétitions). Si le Wa est trop bas (en
                 dessous de 30g), le clavier semble 'mou', 'paresseux', et la touche
                 peine à remonter.
               </p>
@@ -174,12 +174,12 @@ function FaqHome() {
 
               <p className="mt-2">
                 <strong>Important :</strong> En facture de piano, les mesures de
-                Wa et Wd doivent toujours être effectuées avec la pédale de
+                Wd et Wa doivent toujours être effectuées avec la pédale de
                 sustain (forte) enfoncée. Cela s'applique de manière identique
                 pour les pianos droits et pour les pianos à queue. Si vous ne
                 bloquez pas les étouffoirs avec la pédale, votre doigt doit
                 soulever deux mécanismes en même temps. Sur un piano droit, les
-                ressorts d'étouffoirs faussent le Wa de 10g à 20g dès le milieu du
+                ressorts d'étouffoirs faussent le Wd de 10g à 20g dès le milieu du
                 clavier. Sur un piano à queue, les étouffoirs reposent directement
                 sur l'arrière de la touche et ajoutent un poids mort de 8g à 12g
                 qui s'arrête brusquement à la note 69. Enfoncer la pédale forte
@@ -240,7 +240,7 @@ function FaqSaisie({ en }: { en: boolean }) {
           </AccordionItem>
           <AccordionItem value="q2">
             <AccordionTrigger>
-              Why are Down Weight (Wa) and Up Weight (Wd) both necessary?
+              Why are Down Weight (Wd) and Up Weight (Wa) both necessary?
             </AccordionTrigger>
             <AccordionContent>
               Measuring both allows the tool to isolate friction from the actual
@@ -290,8 +290,8 @@ function FaqResultats() {
               </p>
 
               <p className="mt-2">
-                - Scénario A : Wa est très élevé ET Wd est très bas (Ex: Wa=65g,
-                Wd=15g) {'->'} Le coupable est l'excès de Friction (F). La cause
+                - Scénario A : Wd est très élevé ET Wa est très bas (Ex: Wd=65g,
+                Wa=15g) {'->'} Le coupable est l'excès de Friction (F). La cause
                 physique : la Balance du piano est bonne, mais les articulations
                 sont totalement grippées. L'humidité a fait gonfler les feutres
                 des mortaises de la touche ou les ganses de pivots (les axes en
@@ -300,8 +300,8 @@ function FaqResultats() {
                 rejeter la touche vers le haut.
               </p>
               <p className="mt-2">
-                - Scénario B : Wa est très élevé ET Wd reste élevé (Ex: Wa=65g,
-                Wd=42g) {'->'} Le coupable est l'excès de Masse ou de Plombage
+                - Scénario B : Wd est très élevé ET Wa reste élevé (Ex: Wd=65g,
+                Wa=42g) {'->'} Le coupable est l'excès de Masse ou de Plombage
                 (Masse de la Balance B). La cause physique : le mécanisme
                 fonctionne de manière fluide (la friction reste basse), mais il y
                 a un excès de poids brut des pièces mouvantes : soit des marteaux
@@ -313,8 +313,8 @@ function FaqResultats() {
                 ressort brutal.
               </p>
               <p className="mt-2">
-                - Scénario C : Wa est anormalement BAS et Wd est anormalement BAS
-                (Ex: Wa=40g, Wd=12g) {'->'} Le coupable est le manque de plombage
+                - Scénario C : Wd est anormalement BAS et Wa est anormalement BAS
+                (Ex: Wd=40g, Wa=12g) {'->'} Le coupable est le manque de plombage
                 de compensation à l'avant (défaut de Balance B) combiné à une
                 friction interne élevée. La touche est légère à descendre, mais la
                 mécanique n'a plus aucune force mécanique pour repousser le doigt
@@ -322,16 +322,16 @@ function FaqResultats() {
                 peine à remonter, bloquant la répétition.
               </p>
               <p className="mt-2">
-                - Scénario D : Wa est anormalement BAS et Wd est anormalement HAUT
-                (Ex: Wa=42g, Wd=38g) {'->'} Le coupable est l'absence totale de
+                - Scénario D : Wd est anormalement BAS et Wa est anormalement HAUT
+                (Ex: Wd=42g, Wa=38g) {'->'} Le coupable est l'absence totale de
                 Friction (F). Les feutres des mortaises sont totalement usés,
-                écrasés ou trop élargis. L'écart entre Wa et Wd est infime. Le
+                écrasés ou trop élargis. L'écart entre Wd et Wa est infime. Le
                 clavier est ressenti comme 'fuyant', 'bavard' ou 'clavier
                 plastique'. Le contrôle du pianissimo devient impossible car le
                 moindre effleurement libère la touche sans aucune retenue.
               </p>
               <p className="mt-2">
-                - Scénario E : Wa est NORMAL (Ex: 50g) ET Wd est NORMAL (Ex: 26g),
+                - Scénario E : Wd est NORMAL (Ex: 50g) ET Wa est NORMAL (Ex: 26g),
                 mais le clavier est 'mou et fuyant' en plein jeu {'->'} Le coupable
                 est le manque de masse brute compensé artificiellement par le
                 serrage excessif des pivots. Le piano a des marteaux trop légers
@@ -341,7 +341,7 @@ function FaqResultats() {
                 timbrer le son.
               </p>
               <p className="mt-2">
-                - Scénario F : Wa est NORMAL (Ex: 50g) ET Wd est NORMAL (Ex: 26g),
+                - Scénario F : Wd est NORMAL (Ex: 50g) ET Wa est NORMAL (Ex: 26g),
                 mais le clavier est 'épuisant et lourd' en jeu rapide {'->'} Le
                 coupable est l'excès de masse et de plombage (haute inertie)
                 masqué par des pivots trop lâches. Les marteaux sont trop lourds et
@@ -359,7 +359,7 @@ function FaqResultats() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Scénario</th>
-                      <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Mesures Typiques (Wa / Wd)</th>
+                      <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Mesures Typiques (Wd / Wa)</th>
                       <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Friction Calculée (F)</th>
                       <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Balance Calculée (B)</th>
                       <th className="border-b border-gray-200 p-2 text-left font-bold text-gray-700">Origine Mécanique Précise</th>
@@ -446,28 +446,28 @@ function FaqResultats() {
               </p>
 
               <p className="mt-2">
-                <strong>1. Le Poids Descendant (Wa) : 'L'effort de démarrage'</strong>
+                <strong>1. Le Poids Descendant (Wd) : 'L'effort de démarrage'</strong>
               </p>
               <p className="mt-1">
                 Ce que c'est : Le poids minimal nécessaire pour faire s'enfoncer
                 la touche au repos. Le ressenti sous le doigt : C'est la première
-                barrière que rencontre votre doigt. Si le Wa est trop élevé
+                barrière que rencontre votre doigt. Si le Wd est trop élevé
                 (au-dessus de 54g), le clavier donne une sensation de 'fermeture'
                 ou de 'lourdeur brute' dès que vous posez les doigts sur les
-                touches. Un Wa fort élevé est le premier signal d'alarme d'un
+                touches. Un Wd fort élevé est le premier signal d'alarme d'un
                 problème mécanique majeur.
               </p>
 
               <p className="mt-2">
-                <strong>2. Le Poids Ascendant (Wd) : 'La réactivité du retour'</strong>
+                <strong>2. Le Poids Ascendant (Wa) : 'La réactivité du retour'</strong>
               </p>
               <p className="mt-1">
                 Ce que c'est : La force avec laquelle la touche pousse votre doigt
                 vers le haut pour revenir à sa position de repos. Le ressenti sous
-                le doigt : C'est le dynamisme du clavier. Si le Wd est élevé
+                le doigt : C'est le dynamisme du clavier. Si le Wa est élevé
                 (autour de 35g-40g), le clavier est 'nerveux' et 'rapide' : la
                 touche colle à votre doigt, ce qui est parfait pour la répétition
-                rapide des notes (trilles, répétitions). Si le Wd est trop bas (en
+                rapide des notes (trilles, répétitions). Si le Wa est trop bas (en
                 dessous de 30g), le clavier semble 'mou', 'paresseux', et la touche
                 peine à remonter.
               </p>
@@ -512,12 +512,12 @@ function FaqResultats() {
 
               <p className="mt-2">
                 <strong>Important :</strong> En facture de piano, les mesures de
-                Wa et Wd doivent toujours être effectuées avec la pédale de
+                Wd et Wa doivent toujours être effectuées avec la pédale de
                 sustain (forte) enfoncée. Cela s'applique de manière identique
                 pour les pianos droits et pour les pianos à queue. Si vous ne
                 bloquez pas les étouffoirs avec la pédale, votre doigt doit
                 soulever deux mécanismes en même temps. Sur un piano droit, les
-                ressorts d'étouffoirs faussent le Wa de 10g à 20g dès le milieu du
+                ressorts d'étouffoirs faussent le Wd de 10g à 20g dès le milieu du
                 clavier. Sur un piano à queue, les étouffoirs reposent directement
                 sur l'arrière de la touche et ajoutent un poids mort de 8g à 12g
                 qui s'arrête brusquement à la note 69. Enfoncer la pédale forte
@@ -606,7 +606,7 @@ function FaqComparer() {
               </p>
 
               <p className="mt-2">
-                - La courbe 'Standard Web Wa' reproduit le galbe théorique idéal de
+                - La courbe 'Standard Web Wd' reproduit le galbe théorique idéal de
                 l'enfoncement en cloche douce descendante (glissant de 55g à 51g).
               </p>
 
