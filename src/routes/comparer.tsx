@@ -1081,11 +1081,16 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   );
 }
 
-export function ComparisonChart({ chartData: rawChartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible", onCycleKeyFilter }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void }) {
+export function ComparisonChart({ chartData: rawChartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible", onCycleKeyFilter, smoothDefault = true }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void; smoothDefault?: boolean }) {
   const lang = useLang();
   // Lissage global (moyenne mobile sur 3 notes), actif par défaut. Purement local.
-  const [smooth, setSmooth] = useState(true);
+  // `smoothDefault` permet au Mode Rapide d'imposer le rendu « Réel ».
+  const [smooth, setSmooth] = useState(smoothDefault);
   const toggleSmooth = useCallback(() => setSmooth((value) => !value), []);
+  // Bascule automatique quand la valeur par défaut change (Mode Rapide activé/coupé).
+  useEffect(() => {
+    setSmooth(smoothDefault);
+  }, [smoothDefault]);
   const chartData = useMemo(
     () => (smooth ? smoothChartData(rawChartData) : rawChartData),
     [smooth, rawChartData],

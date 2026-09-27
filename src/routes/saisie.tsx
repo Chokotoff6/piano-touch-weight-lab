@@ -443,6 +443,17 @@ function Index() {
   /** Filtrage visuel cyclique des touches affichées à l'écran. */
   const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
   const [rapidMode, setRapidMode] = useState(false);
+
+  // Persistance du Mode Rapide : tant qu'il reste actif, les graphiques des
+  // pages de diagnostic s'ouvrent par défaut en rendu « Réel » (échelle 88
+  // notes, interpolation linéaire entre les points mesurés).
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("ptw_rapid_mode", rapidMode ? "1" : "0");
+    } catch {
+      /* stockage indisponible */
+    }
+  }, [rapidMode]);
   /** Synchronise la vue (formulaire / clavier) avec la barre du haut. */
   useEffect(() => {
     setTopbarState({ weighingMode });
@@ -1728,11 +1739,17 @@ function Index() {
 
   /** Une touche est-elle visible avec le filtre courant ? */
   const isVisibleKey = (index: number) => {
-    if (rapidMode) return RAPID_INDEX_SET.has(index);
+    // Mode Rapide : seuls les Do / Do# sont navigables, et le filtre
+    // « Touches » (Blanches / Noires) reste combinable par-dessus.
+    if (rapidMode) {
+      if (!RAPID_INDEX_SET.has(index)) return false;
+      if (viewFilter === "white") return !BLACK_KEYS.has(index + 1);
+      if (viewFilter === "black") return BLACK_KEYS.has(index + 1);
+      return true;
+    }
     if (viewFilter === "white") return !BLACK_KEYS.has(index + 1);
     if (viewFilter === "black") return BLACK_KEYS.has(index + 1);
     return true;
-
   };
 
   /** Prochaine touche visible dans la direction demandée (ou null). */
@@ -2897,7 +2914,7 @@ function Index() {
             const rightBlack = !black && BLACK_KEYS.has(index + 2);
             const shift = leftBlack === rightBlack ? "" : leftBlack ? "shift-left" : "shift-right";
             const hiddenByView =
-              !pdfMirror && !rapidMode &&
+              !pdfMirror &&
               ((viewFilter === "white" && black) || (viewFilter === "black" && !black));
             return (
               <div
@@ -3517,7 +3534,6 @@ function Index() {
               type="button"
               variant="outline"
               data-pdf-hide
-              disabled={rapidMode}
               onClick={() =>
                 setViewFilter((current) =>
                   current === "all" ? "white" : current === "white" ? "black" : "all",
@@ -3733,6 +3749,7 @@ Moyennes{" "}
             currentBaseName=""
             autoDomain
             sideMargin={60}
+            smoothDefault={!rapidMode}
           />
         </div>
 
