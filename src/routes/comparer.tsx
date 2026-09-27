@@ -929,7 +929,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           </button>
         </div>
       )}
-      {zoomed && (
+      {zoomed && showCurveToggles && (
         <div
           data-pdf-hide
           className="absolute bottom-2 left-[58px] z-20 flex flex-col items-start"
