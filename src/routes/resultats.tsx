@@ -50,11 +50,11 @@ export const Route = createFileRoute("/resultats")({
 const DRAFT_ROWS_KEY = "ptw_draft_rows";
 const DRAFT_INFO_KEY = "ptw_draft_info";
 
-type Row = { wa: string; wd: string };
+type Row = { wd: string; wa: string };
 type Info = Record<string, string>;
 
 function readDraft(): { rows: Row[]; info: Info } {
-  const empty: Row[] = Array.from({ length: 88 }, () => ({ wa: "", wd: "" }));
+  const empty: Row[] = Array.from({ length: 88 }, () => ({ wd: "", wa: "" }));
   if (typeof window === "undefined") return { rows: empty, info: {} };
   let rows = empty;
   let info: Info = {};
@@ -82,30 +82,30 @@ const parseWeight = (value: string): number | null => {
 
 /** Construit le profil 88 touches du piano actuel à partir du brouillon de saisie. */
 function profileFromRows(rows: Row[]): RefProfile {
-  const wa: number[] = [];
   const wd: number[] = [];
+  const wa: number[] = [];
   const friction: number[] = [];
   const balance: number[] = [];
   rows.forEach((row) => {
-    const a = parseWeight(row.wa);
-    const d = parseWeight(row.wd);
+    const a = parseWeight(row.wd);
+    const d = parseWeight(row.wa);
     const valid = a !== null && d !== null && a > d;
-    wa.push(valid ? a : Number.NaN);
-    wd.push(valid ? d : Number.NaN);
+    wd.push(valid ? a : Number.NaN);
+    wa.push(valid ? d : Number.NaN);
     friction.push(valid ? (a - d) / 2 : Number.NaN);
     balance.push(valid ? (a + d) / 2 : Number.NaN);
   });
-  return { wa, wd, friction, balance };
+  return { wd, wa, friction, balance };
 }
 
-const hasAnyValue = (profile: RefProfile) => profile.wa.some((value) => Number.isFinite(value));
+const hasAnyValue = (profile: RefProfile) => profile.wd.some((value) => Number.isFinite(value));
 
 function Resultats() {
   const lang = useLang();
   const en = lang === "en";
   const topbar = useTopbarState();
   const [draft, setDraft] = useState<{ rows: Row[]; info: Info }>(() => ({
-    rows: Array.from({ length: 88 }, () => ({ wa: "", wd: "" })),
+    rows: Array.from({ length: 88 }, () => ({ wd: "", wa: "" })),
     info: {},
   }));
   const [consent, setConsent] = useState(false);
@@ -149,7 +149,7 @@ function Resultats() {
   const importCsvContent = (content: string) => {
     try {
       const { fields, rows: imported } = parseDiagnosticCsv(content);
-      const nextRows: Row[] = imported.map((r) => ({ wa: r.wa, wd: r.wd }));
+      const nextRows: Row[] = imported.map((r) => ({ wd: r.wd, wa: r.wa }));
       const nextInfo: Info = {
         marque: fields["brand"] ?? "",
         modele: fields["model"] ?? "",
@@ -181,8 +181,8 @@ function Resultats() {
           city: nextInfo["ville"] ?? "",
           country: nextInfo["pays"] ?? "",
           remarks: nextInfo["remarques"] ?? "",
-          wa: nextRows.map((r) => r.wa),
           wd: nextRows.map((r) => r.wd),
+          wa: nextRows.map((r) => r.wa),
         }),
       );
       setDraft({ rows: nextRows, info: nextInfo });
@@ -242,7 +242,7 @@ function Resultats() {
     let white = 0;
     let black = 0;
     rows.forEach((row, index) => {
-      const filled = String(row.wa ?? "").trim() !== "" || String(row.wd ?? "").trim() !== "";
+      const filled = String(row.wd ?? "").trim() !== "" || String(row.wa ?? "").trim() !== "";
       if (!filled) return;
       if (BLACK.has((index + 1) % 12)) black += 1;
       else white += 1;
@@ -269,8 +269,8 @@ function Resultats() {
       city: info["ville"] ?? "",
       country: pays,
       remarks: info["remarques"] ?? "",
-      wa: rows.map((r) => r.wa),
       wd: rows.map((r) => r.wd),
+      wa: rows.map((r) => r.wa),
     });
   };
 

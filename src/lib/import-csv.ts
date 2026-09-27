@@ -10,7 +10,7 @@ export type ImportedDiagnostic = {
   /** Métadonnées normalisées sur les colonnes de la base (brand, model, ...). */
   fields: Record<string, string>;
   /** Toujours 88 emplacements, indexés directement par touche 1 à 88. */
-  rows: { wa: string; wd: string }[];
+  rows: { wd: string; wa: string }[];
   /** Friction lue dans le fichier (valeur absolue), NaN si absente. */
   friction: number[];
 };
@@ -57,7 +57,7 @@ const normalize = (value: string) =>
     .trim()
     .toLowerCase();
 
-/** Retire les suffixes entre parenthèses : "Wa (g)" -> "wa". */
+/** Retire les suffixes entre parenthèses : "Wd (g)" -> "wd". */
 const headerKey = (value: string) => normalize(value.replace(/\(.*?\)/g, ""));
 
 const startsWithAny = (value: string, prefixes: string[]) =>
@@ -67,19 +67,19 @@ const findColumn = (headers: string[], prefixes: string[]) =>
   headers.findIndex((header) => startsWithAny(header, prefixes));
 
 const INDEX_PREFIXES = ["touche", "note"];
-const WA_PREFIXES = ["wa", "poids descendant"];
-const WD_PREFIXES = ["wd", "poids ascendant"];
+const WD_PREFIXES = ["wd", "poids descendant"];
+const WA_PREFIXES = ["wa", "poids ascendant"];
 const FRICTION_PREFIXES = ["friction"];
 
-type Columns = { index: number; wa: number; wd: number; friction: number };
+type Columns = { index: number; wd: number; wa: number; friction: number };
 
 function detectColumns(values: string[]): Columns | null {
   const headers = values.map(headerKey);
   const index = findColumn(headers, INDEX_PREFIXES);
-  const wa = findColumn(headers, WA_PREFIXES);
   const wd = findColumn(headers, WD_PREFIXES);
-  if (index === -1 || wa === -1 || wd === -1) return null;
-  return { index, wa, wd, friction: findColumn(headers, FRICTION_PREFIXES) };
+  const wa = findColumn(headers, WA_PREFIXES);
+  if (index === -1 || wd === -1 || wa === -1) return null;
+  return { index, wd, wa, friction: findColumn(headers, FRICTION_PREFIXES) };
 }
 
 /**
@@ -218,15 +218,15 @@ export function parseDiagnosticCsv(content: string): ImportedDiagnostic {
   if (headerIndex === -1 || !columns) throw new Error("INVALID_CSV");
 
   // Pas de filtrage par couleur de touche : les 88 lignes sont toutes importées.
-  const rows = Array.from({ length: 88 }, () => ({ wa: "", wd: "" }));
+  const rows = Array.from({ length: 88 }, () => ({ wd: "", wa: "" }));
   const friction = Array.from({ length: 88 }, () => Number.NaN);
   let count = 0;
   for (const rawLine of lines.slice(headerIndex + 1)) {
     const values = parseLine(rawLine);
-    if (values.length <= Math.max(columns.index, columns.wa, columns.wd)) continue;
+    if (values.length <= Math.max(columns.index, columns.wd, columns.wa)) continue;
     const key = Number((values[columns.index] ?? "").trim());
     if (!Number.isInteger(key) || key < 1 || key > 88) continue;
-    rows[key - 1] = { wa: (values[columns.wa] ?? "").trim(), wd: (values[columns.wd] ?? "").trim() };
+    rows[key - 1] = { wd: (values[columns.wd] ?? "").trim(), wa: (values[columns.wa] ?? "").trim() };
     if (columns.friction !== -1) {
       const value = toNumber(values[columns.friction]);
       friction[key - 1] = Number.isFinite(value) ? Math.abs(value) : Number.NaN;

@@ -23,8 +23,8 @@ export type CurrentPiano = {
   remarks: string;
   /** Auteur de la mesure (colonne `who` en base) : pro ou particulier. */
   who?: string | undefined;
-  wa_values: number[];
   wd_values: number[];
+  wa_values: number[];
   friction_values: number[];
   balance_values: number[];
 };
@@ -75,7 +75,7 @@ export function parseMeasureDateTime(raw: string | null | undefined): { date: st
   return { date: s, time: null };
 }
 
-/** Construit l'objet current_piano à partir des mesures brutes (88 lignes Wa/Wd). */
+/** Construit l'objet current_piano à partir des mesures brutes (88 lignes Wd/Wa). */
 export function buildCurrentPiano(input: {
   brand: string;
   model: string;
@@ -89,22 +89,22 @@ export function buildCurrentPiano(input: {
   country: string;
   remarks: string;
   who?: string | undefined;
-  wa: Array<string | number>;
   wd: Array<string | number>;
+  wa: Array<string | number>;
   mesureDate?: Date;
   /** Littéral date/heure du fichier source (CSV) : sert à dater et horodater. */
   mesureDateRaw?: string | undefined;
 }): CurrentPiano {
-  const wa = input.wa.map(num);
   const wd = input.wd.map(num);
-  const friction = wa.map((value, index) => {
-    const down = wd[index];
+  const wa = input.wa.map(num);
+  const friction = wd.map((value, index) => {
+    const down = wa[index];
     return typeof down === "number" && Number.isFinite(value) && Number.isFinite(down)
       ? round1(Math.abs((value - down) / 2))
       : Number.NaN;
   });
-  const balance = wa.map((value, index) => {
-    const down = wd[index];
+  const balance = wd.map((value, index) => {
+    const down = wa[index];
     return typeof down === "number" && Number.isFinite(value) && Number.isFinite(down)
       ? round1((value + down) / 2)
       : Number.NaN;
@@ -134,8 +134,8 @@ export function buildCurrentPiano(input: {
     country: String(input.country ?? "").normalize("NFC").trim(),
     remarks: input.remarks,
     who: input.who,
-    wa_values: wa,
     wd_values: wd,
+    wa_values: wa,
     friction_values: friction,
     balance_values: balance,
   };
@@ -156,7 +156,7 @@ export function loadCurrentPiano(): CurrentPiano | null {
     const raw = window.localStorage.getItem(CURRENT_PIANO_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as CurrentPiano;
-    return Array.isArray(parsed?.wa_values) ? parsed : null;
+    return Array.isArray(parsed?.wd_values) ? parsed : null;
   } catch {
     return null;
   }
@@ -205,8 +205,8 @@ export async function saveCurrentPianoToCloud(
     city: piano.city,
     country: piano.country,
     remarks: piano.remarks,
-    wa_values: toPgArray(piano.wa_values),
     wd_values: toPgArray(piano.wd_values),
+    wa_values: toPgArray(piano.wa_values),
     friction_values: toPgArray(piano.friction_values),
     balance_values: toPgArray(piano.balance_values),
   };
@@ -275,8 +275,8 @@ function bufferPayload(piano: CurrentPiano) {
     city: piano.city,
     country: piano.country,
     remarks: piano.remarks,
-    wa_values: toPgArray(piano.wa_values),
     wd_values: toPgArray(piano.wd_values),
+    wa_values: toPgArray(piano.wa_values),
     friction_values: toPgArray(piano.friction_values),
     balance_values: toPgArray(piano.balance_values),
   };
@@ -336,8 +336,8 @@ export async function loadPianoProfileById(
       .maybeSingle();
     if (error || !data) return null;
     const row = data as Record<string, unknown>;
-    const wa = fromPgArray(row["wa_values"]);
-    if (requireMeasures && wa.length === 0) return null;
+    const wd = fromPgArray(row["wd_values"]);
+    if (requireMeasures && wd.length === 0) return null;
     return {
       brand: String(row["brand"] ?? ""),
       model: String(row["model"] ?? ""),
@@ -356,8 +356,8 @@ export async function loadPianoProfileById(
       country: String(row["country"] ?? ""),
       remarks: String(row["remarks"] ?? ""),
       who: normalizeWho(row["who"] as string | null | undefined),
-      wa_values: wa,
-      wd_values: fromPgArray(row["wd_values"]),
+      wd_values: wd,
+      wa_values: fromPgArray(row["wa_values"]),
       friction_values: fromPgArray(row["friction_values"]),
       balance_values: fromPgArray(row["balance_values"]),
     };

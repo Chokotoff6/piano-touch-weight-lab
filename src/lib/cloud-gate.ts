@@ -14,7 +14,7 @@ const SHEET_START_KEY = "ptw_sheet_started_at";
 const LAST_SYNC_AT_KEY = "ptw_last_cloud_sync_at";
 const SYNCED_ROWS_KEY = "ptw_last_synced_rows";
 
-export type GateRow = { wa: string; wd: string };
+export type GateRow = { wd: string; wa: string };
 
 function read(key: string): string | null {
   try {
@@ -60,7 +60,7 @@ export function markCloudSync(rows: GateRow[]) {
   if (typeof window === "undefined") return;
   write(LAST_SYNC_AT_KEY, String(Date.now()));
   try {
-    write(SYNCED_ROWS_KEY, JSON.stringify(rows.map((r) => ({ wa: r.wa, wd: r.wd }))));
+    write(SYNCED_ROWS_KEY, JSON.stringify(rows.map((r) => ({ wd: r.wd, wa: r.wa }))));
   } catch {
     /* stockage indisponible */
   }
@@ -83,8 +83,8 @@ export function countModifiedKeys(rows: GateRow[]): number {
     const before = previous?.[index];
     if (!before) return count + 1;
     const changed =
-      String(row.wa ?? "").trim() !== String(before.wa ?? "").trim() ||
-      String(row.wd ?? "").trim() !== String(before.wd ?? "").trim();
+      String(row.wd ?? "").trim() !== String(before.wd ?? "").trim() ||
+      String(row.wa ?? "").trim() !== String(before.wa ?? "").trim();
     return count + (changed ? 1 : 0);
   }, 0);
 }
