@@ -199,25 +199,13 @@ export async function enableDemoModeAsync() {
     remarques: demoRemarksText(),
   };
   const waValues = Array.isArray(profile.wa_values) ? profile.wa_values : [];
-  // Filet de sécurité propre à la fiche démo : si la série est entièrement
-  // inversée (remontée > descente sur chaque touche renseignée), on permute
-  // wa/wd au chargement pour que Résultats puisse valider et tracer.
+  // Convention unique : wa = Poids descendant (lourd), wd = Poids remontant
+  // (léger). La base est normalisée, aucune réorientation au chargement.
   const pairs = waValues.map((wa, i) => ({ wa, wd: profile.wd_values?.[i] }));
-  const filled = pairs.filter(
-    (p) => Number.isFinite(p.wa) && Number.isFinite(p.wd),
-  );
-  const inverted =
-    filled.length > 0 && filled.every((p) => (p.wd as number) > (p.wa as number));
-  const rows: DemoRows = pairs.map(({ wa, wd }) => {
-    const a = Number.isFinite(wa) ? (wa as number) : null;
-    const d = Number.isFinite(wd) ? (wd as number) : null;
-    const down = inverted ? d : a;
-    const up = inverted ? a : d;
-    return {
-      wa: down === null ? "" : String(down),
-      wd: up === null ? "" : String(up),
-    };
-  });
+  const rows: DemoRows = pairs.map(({ wa, wd }) => ({
+    wa: Number.isFinite(wa) ? String(wa) : "",
+    wd: Number.isFinite(wd) ? String(wd) : "",
+  }));
   applyDemoData(info, rows);
 }
 

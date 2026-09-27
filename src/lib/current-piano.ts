@@ -366,20 +366,3 @@ export async function loadPianoProfileById(
   }
 }
 
-/**
- * Filet de sécurité commun au Mode démo : si la fiche lue en base est
- * entièrement inversée (remontée > descente sur chaque paire renseignée),
- * on permute wa/wd pour que la validation stricte « wa > wd » reste valable.
- * Aucune autre donnée n'est modifiée.
- */
-export function orientCurrentPiano(piano: CurrentPiano): CurrentPiano {
-  const pairs = piano.wa_values.map((wa, i) => ({ wa, wd: piano.wd_values[i] }));
-  const filled = pairs.filter(
-    (p) => Number.isFinite(p.wa) && Number.isFinite(p.wd),
-  );
-  const inverted =
-    filled.length > 0 && filled.every((p) => (p.wd as number) > (p.wa as number));
-  if (!inverted) return piano;
-  return { ...piano, wa_values: piano.wd_values, wd_values: piano.wa_values };
-}
-
