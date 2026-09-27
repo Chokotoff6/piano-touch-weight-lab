@@ -1711,6 +1711,17 @@ function Index() {
   };
 
   const onKeyDown = (e: React.KeyboardEvent, index: number, field: "wa" | "wd") => {
+    // --- Anti-rebond clavier -------------------------------------------
+    // Appui prolongé (auto-répétition) ou déplacement de focus encore en
+    // cours : on ignore l'événement pour empêcher la file d'attente de
+    // s'accumuler et le curseur de « sauter » plusieurs cases.
+    const isNavKey =
+      e.key === "Tab" || e.key === "Enter" || e.key.startsWith("Arrow");
+    if (isNavKey && (e.repeat || navLock.current)) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     // Alerte « valeur élevée » active : le curseur reste verrouillé dans la case
     // tant que la valeur n'est pas corrigée ou validée.
     if (
