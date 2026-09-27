@@ -437,7 +437,7 @@ const ZoomDot = makeSampleDot(3);
 
 
 
-type EndLabelNode = SimulationNodeDatum & { id: string; x: number; y: number; anchorY: number; labelX: number; text: string; color: string };
+type EndLabelNode = SimulationNodeDatum & { id: string; x: number; y: number; anchorY: number; labelX: number; endX: number; text: string; color: string };
 
 // Confinement « containLabel » : mesure fiable de la largeur rendue des
 // étiquettes de fin pour qu'aucun texte ne franchisse les bordures du cadre.
@@ -457,11 +457,13 @@ function estimateEndLabelWidth(text: string) {
   return text.length * 6.6;
 }
 
-// Recharts 2 ne fournit ni `containLabel` ni `labelLayout`. Équivalent natif :
-// d3-force place les étiquettes SVG sur les vraies échelles Recharts ; la
-// collision ne modifie jamais les courbes, le repli vertical (`shiftY`) et le
-// confinement horizontal (distance 8 verrouillée, alignement gauche) garantissent
-// qu'aucune moyenne ni aucun nom ne déborde ou ne soit coupé par les bordures.
+// Recharts 2 ne fournit ni `containLabel`, ni `labelLayout`, ni `labelLine`.
+// Équivalent natif : d3-force place les étiquettes SVG sur les vraies échelles
+// Recharts ; la collision ne modifie jamais les courbes, le repli vertical
+// (`shiftY`) et le confinement horizontal (distance 25 verrouillée, alignement
+// gauche, ligne de rappel pointillée vers l'extrémité de la courbe) garantissent
+// qu'aucune moyenne ni aucun nom ne déborde, ne soit coupé par les bordures ou
+// ne se confonde avec le croisement des tracés.
 function EndLabels({ lines, data, domainX, colors, offset, xAxisMap, yAxisMap, leftClip = 0, rightMargin = 0 }: GuideChartProps & {
   lines: LineDef[]; data: ChartPoint[]; domainX: [number, number]; colors: Map<SeriesKey, string>; leftClip?: number; rightMargin?: number;
 }) {
@@ -485,15 +487,17 @@ function EndLabels({ lines, data, domainX, colors, offset, xAxisMap, yAxisMap, l
       const avg = seriesAverage(data, line.dataKey);
       if (side === "right" && avg === "—") return [];
       const anchorY = yScale(value);
-      // distance: 8 verrouillée des deux côtés, texte aligné à gauche du point.
-      const labelX = xScale(point.key) + (side === "left" ? -8 : 8);
+      const endX = xScale(point.key);
+      // distance: 25 verrouillée des deux côtés : les textes sont déportés
+      // hors de la zone de croisement des courbes, texte aligné vers le point.
+      const labelX = endX + (side === "left" ? -25 : 25);
       if (!Number.isFinite(anchorY) || !Number.isFinite(labelX)) return [];
       const text = side === "left" ? line.shortName : `${getLang() === "en" ? "Avg" : "Moy"}: ${avg}g`;
       // Confinement horizontal strict : le texte entier reste dans le cadre.
       const clampedX = side === "left"
         ? Math.max(labelX, svgLeft + estimateEndLabelWidth(text))
         : Math.min(labelX, svgRight - estimateEndLabelWidth(text));
-      return [{ id: line.dataKey, x: 0, y: anchorY, anchorY, labelX: clampedX, text,
+      return [{ id: line.dataKey, x: 0, y: anchorY, anchorY, labelX: clampedX, endX, text,
         color: colors.get(line.dataKey) ?? line.color }];
     });
     const top = plotTop + 9;
@@ -512,9 +516,21 @@ function EndLabels({ lines, data, domainX, colors, offset, xAxisMap, yAxisMap, l
         node.vy = 0;
       }
     }
-    return nodes.map((node) => <text key={`${side}-${node.id}`} x={node.labelX} y={node.y}
-      textAnchor={side === "left" ? "end" : "start"} dominantBaseline="middle"
-      fontSize={11} fontWeight={600} fill={node.color}>{node.text}</text>);
+    return nodes.map((node) => (
+      <g key={`${side}-${node.id}`}>
+        {/* Ligne de rappel (`labelLine.showAbove`, pointillée, couleur de la
+            série) : relie l'extrémité de la courbe à l'étiquette déportée.
+            showAbove est assuré par l'ordre de rendu SVG du Customized. */}
+        <line
+          x1={node.endX} y1={node.anchorY}
+          x2={side === "left" ? node.labelX + 4 : node.labelX - 4} y2={node.y}
+          stroke={node.color} strokeWidth={1} strokeDasharray="4 3"
+        />
+        <text x={node.labelX} y={node.y}
+          textAnchor={side === "left" ? "end" : "start"} dominantBaseline="middle"
+          fontSize={11} fontWeight={600} fill={node.color}>{node.text}</text>
+      </g>
+    ));
   };
   return <g pointerEvents="none">{renderSide("left")}{renderSide("right")}</g>;
 }
