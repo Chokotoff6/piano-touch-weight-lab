@@ -29,7 +29,7 @@ import { DEMO_LOADED_EVENT, isDemoActive } from "@/lib/demo-mode";
 export const Route = createFileRoute("/resultats")({
   head: () => ({
     meta: [
-      { title: "KeyWeight" },
+      { title: "Résultats — KeyWeight" },
       {
         name: "description",
         content:

@@ -1275,7 +1275,7 @@ export function ComparisonChart({ chartData: rawChartData, keyFilter, comparison
 export const Route = createFileRoute("/comparer")({
   head: () => ({
     meta: [
-      { title: "KeyWeight" },
+      { title: "Comparer — KeyWeight" },
       { name: "description", content: "Confrontation des moyennes de touchweight statique entre le piano actuel et les profils externes correspondant aux critères choisis." },
       { property: "og:title", content: "Comparer — Touchweight piano" },
       { property: "og:description", content: "Comparez les mesures de touchweight statique avec les profils externes correspondants." },
