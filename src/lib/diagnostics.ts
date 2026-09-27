@@ -19,8 +19,8 @@ export type DiagnosticHistoryRow = {
   zone_climatique: string | null;
   type_entretien: string | null;
   remarques: string | null;
-  mesures_wd: unknown;
   mesures_wa: unknown;
+  mesures_wd: unknown;
   date_heure_saisie: string;
 };
 
@@ -38,8 +38,8 @@ export type DiagnosticPayload = {
   zone_climatique: string;
   type_entretien: string;
   remarques: string;
-  mesures_wd: string[];
   mesures_wa: string[];
+  mesures_wd: string[];
 };
 
 export async function insertDiagnostic(p: DiagnosticPayload): Promise<string> {

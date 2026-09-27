@@ -198,10 +198,10 @@ export async function enableDemoModeAsync() {
     profil_saisie: normalizeWho(profile.who),
     remarques: demoRemarksText(),
   };
-  const wdValues = Array.isArray(profile.wd_values) ? profile.wd_values : [];
+  const wdValues = Array.isArray(profile.wa_values) ? profile.wa_values : [];
   // Convention unique : wd = Poids descendant (lourd), wa = Poids remontant
   // (léger). La base est normalisée, aucune réorientation au chargement.
-  const pairs = wdValues.map((wd, i) => ({ wd, wa: profile.wa_values?.[i] }));
+  const pairs = wdValues.map((wd, i) => ({ wd, wa: profile.wd_values?.[i] }));
   const rows: DemoRows = pairs.map(({ wd, wa }) => ({
     wd: Number.isFinite(wd) ? String(wd) : "",
     wa: Number.isFinite(wa) ? String(wa) : "",

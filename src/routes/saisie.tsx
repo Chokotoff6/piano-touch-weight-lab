@@ -934,11 +934,11 @@ function Index() {
       const parsed = raw ? (JSON.parse(raw) as Row[]) : null;
       if (Array.isArray(parsed) && parsed.length === 88 && parsed.some((r) => r.wd || r.wa)) {
         if (!maybeStartCascade(parsed)) setRows(parsed);
-      } else if (saved && Array.isArray(saved.wd_values) && saved.wd_values.length === 88) {
+      } else if (saved && Array.isArray(saved.wa_values) && saved.wa_values.length === 88) {
         setRows(
-          saved.wd_values.map((wd, i) => ({
+          saved.wa_values.map((wd, i) => ({
             wd: Number.isFinite(wd) ? String(wd) : "",
-            wa: Number.isFinite(saved.wa_values?.[i]) ? String(saved.wa_values[i]) : "",
+            wa: Number.isFinite(saved.wd_values?.[i]) ? String(saved.wd_values[i]) : "",
           })),
         );
       }
@@ -1014,7 +1014,7 @@ function Index() {
       const hasExistingPiano =
         (Array.isArray(rowsP) && rowsP.some((r) => r.wd || r.wa)) ||
         (!!infoP && Object.values(infoP).some((v) => typeof v === "string" && v.trim() !== "")) ||
-        !!(saved && (saved.brand || saved.model || saved.serial_number || saved.wd_values?.some((v) => Number.isFinite(v))));
+        !!(saved && (saved.brand || saved.model || saved.serial_number || saved.wa_values?.some((v) => Number.isFinite(v))));
       const isExplicitDemoParam =
         demoParam === "true" || new URLSearchParams(window.location.search).get("demo") === "true";
       if (hasExistingPiano && !isExplicitDemoParam) setShowResumeModal(true);
@@ -2215,8 +2215,8 @@ function Index() {
       zone_climatique: climateZone !== null ? String(climateZone) : "",
       type_entretien: info["entretien"] ?? "",
       remarques: info["remarques"] ?? "",
-      mesures_wd: rows.map((r) => r.wd),
-      mesures_wa: rows.map((r) => r.wa),
+      mesures_wa: rows.map((r) => r.wd),
+      mesures_wd: rows.map((r) => r.wa),
     };
   };
 
@@ -2465,8 +2465,8 @@ function Index() {
   const restoreHistoryRow = (id: string) => {
     const row = historyRowsRef.current.find((entry) => entry.id === id);
     if (!row) return;
-    const wd = Array.isArray(row.mesures_wd) ? (row.mesures_wd as unknown[]) : [];
-    const wa = Array.isArray(row.mesures_wa) ? (row.mesures_wa as unknown[]) : [];
+    const wd = Array.isArray(row.mesures_wa) ? (row.mesures_wa as unknown[]) : [];
+    const wa = Array.isArray(row.mesures_wd) ? (row.mesures_wd as unknown[]) : [];
     setRows(
       Array.from({ length: 88 }, (_, i) => ({
         wd: cleanWeight(String(wd[i] ?? "")),
@@ -2526,8 +2526,8 @@ function Index() {
       city: payload.ville,
       country: payload.pays,
       remarks: payload.remarques,
-      wd: payload.mesures_wd,
-      wa: payload.mesures_wa,
+      wd: payload.mesures_wa,
+      wa: payload.mesures_wd,
     });
     // La copie locale est disponible immédiatement, même si le réseau est indisponible.
     saveCurrentPiano(currentPiano);

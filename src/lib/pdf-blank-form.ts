@@ -181,7 +181,7 @@ function drawCompliance(pdf: jsPDF, lang: "fr" | "en", pageWidth: number): void 
     "function fncCompliance(){",
     "  var ok=true;",
     "  for(var i=1;i<=88;i++){",
-    "    var a=this.getField('wd_'+i);var d=this.getField('wa_'+i);",
+    "    var a=this.getField('wa_'+i);var d=this.getField('wd_'+i);",
     "    if(!a||!d){continue;}",
     "    var va=(''+a.value).replace(/^\\s+|\\s+$/g,'');",
     "    var vd=(''+d.value).replace(/^\\s+|\\s+$/g,'');",
@@ -191,8 +191,8 @@ function drawCompliance(pdf: jsPDF, lang: "fr" | "en", pageWidth: number): void 
     "  if(b){b.display=ok?display.visible:display.hidden;}",
     "}",
     "for(var j=1;j<=88;j++){",
-    "  var fa=this.getField('wd_'+j);if(fa){fa.setAction('Calculate','fncCompliance();');}",
-    "  var fd=this.getField('wa_'+j);if(fd){fd.setAction('Calculate','fncCompliance();');}",
+    "  var fa=this.getField('wa_'+j);if(fa){fa.setAction('Calculate','fncCompliance();');}",
+    "  var fd=this.getField('wd_'+j);if(fd){fd.setAction('Calculate','fncCompliance();');}",
     "}",
     "var fi=this.getField('compliance_info');",
     `if(fi){fi.setAction('MouseUp','app.alert("${tip}");');}`,
@@ -237,8 +237,8 @@ export function generateBlankFormPdf(
       pdf.setFontSize(8);
       pdf.text(String(i), x, yy + 4);
       pdf.text(noteName(i, lang), x + 13, yy + 4);
-      textField(pdf, `wd_${i}`, x + 31, yy, 24, 5.2);
-      textField(pdf, `wa_${i}`, x + 59, yy, 24, 5.2);
+      textField(pdf, `wa_${i}`, x + 31, yy, 24, 5.2);
+      textField(pdf, `wd_${i}`, x + 59, yy, 24, 5.2);
     }
   };
 
@@ -327,8 +327,8 @@ export function generateBlankKeyboardPdf(
       pdf.text(lang === "en" ? "DW" : "PD", fx + fw / 2, yWd + fh - 1.4, { align: "center" });
       pdf.text(lang === "en" ? "UW" : "PR", fx + fw / 2, yWa + fh - 1.4, { align: "center" });
       pdf.setTextColor(0);
-      textField(pdf, `wd_${k}`, fx, yWd, fw, fh, "", 5);
-      textField(pdf, `wa_${k}`, fx, yWa, fw, fh, "", 5);
+      textField(pdf, `wa_${k}`, fx, yWd, fw, fh, "", 5);
+      textField(pdf, `wd_${k}`, fx, yWa, fw, fh, "", 5);
       // Numero de touche sous le clavier
       pdf.setFontSize(5);
       pdf.text(String(k), g.x + g.w / 2, top + kbH + 3, { align: "center" });

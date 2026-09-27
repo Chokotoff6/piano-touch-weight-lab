@@ -43,7 +43,7 @@ const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];
 const SAMPLE_NOTES = Array.from({ length: 88 }, (_, index) => index + 1);
 const BLACK_MODULOS = new Set([2, 5, 7, 10, 0]);
 const isBlackKey = (noteIndex: number) => BLACK_MODULOS.has(noteIndex % 12);
-const PROFILE_FIELDS = "id,serial_number,brand,model,type_piano,measurement_date,manufacture_year,climate_zone,maintenance_type,city,country,remarks,wd_values,wa_values,friction_values,balance_values,usage_level,who,created_at";
+const PROFILE_FIELDS = "id,serial_number,brand,model,type_piano,measurement_date,manufacture_year,climate_zone,maintenance_type,city,country,remarks,wa_values,wd_values,friction_values,balance_values,usage_level,who,created_at";
 
 export type KeyFilter = "all" | "split" | "white" | "black";
 type SourceMode = "none" | "cloud";
@@ -78,8 +78,8 @@ type FactorySpecRow = {
   brand: string;
   model: string;
   type_piano: string;
-  wd_bass: number;
-  wd_treble: number;
+  wa_bass: number;
+  wa_treble: number;
   friction_cible: number;
 };
 
@@ -268,11 +268,11 @@ function profileValues(value: number[] | string): number[] {
 function profileFromCurrentPiano(piano: CurrentPiano): ProfileRecord {
   // Même règle que Résultats : seule une paire complète et cohérente est pesée.
   // Les tableaux du tampon peuvent contenir des zéros pour les cases vides.
-  const wd = piano.wd_values.map((value, index) => {
-    const wa = piano.wa_values[index];
+  const wd = piano.wa_values.map((value, index) => {
+    const wa = piano.wd_values[index];
     return Number.isFinite(value) && value > 0 && typeof wa === "number" && Number.isFinite(wa) && wa > 0 && value > wa ? value : Number.NaN;
   });
-  const wa = piano.wa_values.map((value, index) => Number.isFinite(wd[index]) ? value : Number.NaN);
+  const wa = piano.wd_values.map((value, index) => Number.isFinite(wd[index]) ? value : Number.NaN);
   return {
     wd,
     wa,
@@ -304,8 +304,8 @@ function localMeasureTime(createdAt: string | null | undefined): string | null {
 
 function profileFromRow(row: ExternalPianoProfileRow): ProfileRecord {
   return {
-    wd: profileValues(row.wd_values),
-    wa: profileValues(row.wa_values),
+    wd: profileValues(row.wa_values),
+    wa: profileValues(row.wd_values),
     friction: profileValues(row.friction_values),
     balance: profileValues(row.balance_values),
     serialNumber: row.serial_number,
@@ -373,11 +373,11 @@ function makeFactoryStandard(): RefProfile {
 const FACTORY_STANDARD: RefProfile = makeFactoryStandard();
 
 // Convertit une ligne de spécifications usine en 88 valeurs théoriques :
-// pente linéaire continue de wd_bass (touche 1) à wd_treble (touche 88),
+// pente linéaire continue de wa_bass (touche 1) à wa_treble (touche 88),
 // friction cible constante, Wa = Wd - 2*friction, Balance = Wd - friction.
 function profileFromSpec(spec: FactorySpecRow): RefProfile {
   const wd = Array.from({ length: 88 }, (_, index) =>
-    n1(spec.wd_bass + ((spec.wd_treble - spec.wd_bass) * index) / 87),
+    n1(spec.wa_bass + ((spec.wa_treble - spec.wa_bass) * index) / 87),
   );
   const friction = wd.map(() => n1(spec.friction_cible));
   const wa = wd.map((value) => n1(value - 2 * spec.friction_cible));
@@ -1826,7 +1826,7 @@ function Comparer() {
       const brand = (mine?.brand ?? "").trim();
       const result = await externalSupabase
         .from("piano_specs_usine")
-        .select("brand,model,type_piano,wd_bass,wd_treble,friction_cible");
+        .select("brand,model,type_piano,wa_bass,wa_treble,friction_cible");
       if (cancelled) return;
       const allRows = (result.data ?? []) as FactorySpecRow[];
       const typed = canonicalType
@@ -1887,7 +1887,7 @@ function Comparer() {
       }
       setCloudLoading(true);
       // Exclut aussi le serial du piano local (catche les doublons démo/réels
-      // dont le numéro diffère d'un chiffre du tampon DB mais les wd_values sont identiques).
+      // dont le numéro diffère d'un chiffre du tampon DB mais les wa_values sont identiques).
       const localPiano = loadCurrentPiano();
       const localSerial = localPiano?.serial_number ?? "";
       let query = scopeDemo(
@@ -1924,7 +1924,7 @@ function Comparer() {
         // Bannissement des clones du piano actuel (doublons enregistrés avec un
         // numéro de série tronqué ou voisin) : mesures identiques => même piano.
         if (isSameSerial(row.serial_number, mine.serialNumber) || isSameSerial(row.serial_number, localSerial)) return false;
-        if (sameSeries(profileValues(row.wd_values), mine.wd) && sameSeries(profileValues(row.wa_values), mine.wa)) return false;
+        if (sameSeries(profileValues(row.wa_values), mine.wd) && sameSeries(profileValues(row.wd_values), mine.wa)) return false;
         const raw = String(row.who ?? "").toLowerCase();
         if (whoFilter === "all") return true;
         if (!raw) return true;

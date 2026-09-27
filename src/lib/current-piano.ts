@@ -23,8 +23,8 @@ export type CurrentPiano = {
   remarks: string;
   /** Auteur de la mesure (colonne `who` en base) : pro ou particulier. */
   who?: string | undefined;
-  wd_values: number[];
   wa_values: number[];
+  wd_values: number[];
   friction_values: number[];
   balance_values: number[];
 };
@@ -134,8 +134,8 @@ export function buildCurrentPiano(input: {
     country: String(input.country ?? "").normalize("NFC").trim(),
     remarks: input.remarks,
     who: input.who,
-    wd_values: wd,
-    wa_values: wa,
+    wa_values: wd,
+    wd_values: wa,
     friction_values: friction,
     balance_values: balance,
   };
@@ -156,7 +156,7 @@ export function loadCurrentPiano(): CurrentPiano | null {
     const raw = window.localStorage.getItem(CURRENT_PIANO_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as CurrentPiano;
-    return Array.isArray(parsed?.wd_values) ? parsed : null;
+    return Array.isArray(parsed?.wa_values) ? parsed : null;
   } catch {
     return null;
   }
@@ -205,8 +205,8 @@ export async function saveCurrentPianoToCloud(
     city: piano.city,
     country: piano.country,
     remarks: piano.remarks,
-    wd_values: toPgArray(piano.wd_values),
     wa_values: toPgArray(piano.wa_values),
+    wd_values: toPgArray(piano.wd_values),
     friction_values: toPgArray(piano.friction_values),
     balance_values: toPgArray(piano.balance_values),
   };
@@ -275,8 +275,8 @@ function bufferPayload(piano: CurrentPiano) {
     city: piano.city,
     country: piano.country,
     remarks: piano.remarks,
-    wd_values: toPgArray(piano.wd_values),
     wa_values: toPgArray(piano.wa_values),
+    wd_values: toPgArray(piano.wd_values),
     friction_values: toPgArray(piano.friction_values),
     balance_values: toPgArray(piano.balance_values),
   };
@@ -336,7 +336,7 @@ export async function loadPianoProfileById(
       .maybeSingle();
     if (error || !data) return null;
     const row = data as Record<string, unknown>;
-    const wd = fromPgArray(row["wd_values"]);
+    const wd = fromPgArray(row["wa_values"]);
     if (requireMeasures && wd.length === 0) return null;
     return {
       brand: String(row["brand"] ?? ""),
@@ -356,8 +356,8 @@ export async function loadPianoProfileById(
       country: String(row["country"] ?? ""),
       remarks: String(row["remarks"] ?? ""),
       who: normalizeWho(row["who"] as string | null | undefined),
-      wd_values: wd,
-      wa_values: fromPgArray(row["wa_values"]),
+      wa_values: wd,
+      wd_values: fromPgArray(row["wd_values"]),
       friction_values: fromPgArray(row["friction_values"]),
       balance_values: fromPgArray(row["balance_values"]),
     };

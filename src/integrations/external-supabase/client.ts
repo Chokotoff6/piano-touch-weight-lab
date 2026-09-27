@@ -43,8 +43,8 @@ export type ExternalPianoProfileRow = {
   who: string | null;
   /** Colonne demo (booléen) : fiches de démonstration, visibles uniquement en Mode démo. */
   demo: boolean | null;
-  wd_values: number[] | string;
   wa_values: number[] | string;
+  wd_values: number[] | string;
   friction_values: number[] | string;
   balance_values: number[] | string;
   usage_level: string | null;

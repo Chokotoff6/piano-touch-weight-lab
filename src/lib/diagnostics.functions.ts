@@ -20,8 +20,8 @@ const payloadSchema = z.object({
   zone_climatique: text(120),
   type_entretien: text(120),
   remarques: text(4000),
-  mesures_wd: z.array(z.string().max(20)).max(200).default([]),
   mesures_wa: z.array(z.string().max(20)).max(200).default([]),
+  mesures_wd: z.array(z.string().max(20)).max(200).default([]),
 });
 
 type Payload = z.infer<typeof payloadSchema>;
@@ -41,8 +41,8 @@ function row(p: Payload) {
     zone_climatique: p.zone_climatique,
     type_entretien: p.type_entretien,
     remarques: p.remarques,
-    mesures_wd: p.mesures_wd as unknown as never,
     mesures_wa: p.mesures_wa as unknown as never,
+    mesures_wd: p.mesures_wd as unknown as never,
   };
 }
 
