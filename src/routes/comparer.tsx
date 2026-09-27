@@ -1051,8 +1051,9 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             }}
             onMouseLeave={() => { setHoveredFamily(null); }}
             // Anti-chevauchement : la marge droite garantit toujours la place
-            // du libellé « Moy: xx.xg », la marge gauche celle des noms courts.
-            margin={{ top: 22, right: Math.max(sideMargin, 80) + groupedShift, bottom: 15, left: chartLeftMargin }}
+            // du libellé « Moy: xx.xg » déporté de 25 px + sa ligne de rappel,
+            // la marge gauche celle des noms courts.
+            margin={{ top: 22, right: Math.max(sideMargin, 110) + groupedShift, bottom: 15, left: chartLeftMargin }}
           >
             <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
             <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
@@ -1134,7 +1135,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
                   ? line.color === "#1a1a1a" ? "#4b5563" : line.color === "#B45309" ? "#B45309" : "#111827"
                   : line.color]))}
                 leftClip={zoomed ? 0 : keyFilter === "all" ? 30 : 10}
-                rightMargin={Math.max(sideMargin, 80) + groupedShift} />
+                rightMargin={Math.max(sideMargin, 110) + groupedShift} />
             )} />
 
           </LineChart>
