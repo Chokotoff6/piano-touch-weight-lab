@@ -9,3 +9,8 @@
 - [x] Libérer le bouton Touches en Mode Rapide (filtres combinables).
 - [x] Graphique en rendu « Réel » par défaut quand le Mode Rapide est actif.
 - [x] Vérifier le typage strict et le build.
+
+- [x] Étendre le lissage à Réel / Lissé / Lissé+ sur les quatre familles de courbes.
+- [x] Conserver la topologie linéaire des 88 touches en mode Réel/Rapide.
+- [x] Afficher les contrôles de courbes uniquement avec piano, Cloud et Cible simultanés.
+- [x] Vérifier typage et compilation automatique.
