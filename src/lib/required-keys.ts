@@ -55,3 +55,21 @@ export const saisieGate: {
 } = {
   hasData: null,
 };
+
+/** Message d'infobulle quand l'accès à Résultats est bloqué (selon le mode de saisie). */
+export function lockedResultsMessage(en: boolean): string {
+  let rapid = false;
+  try {
+    rapid = typeof window !== "undefined" && window.localStorage.getItem("ptw_rapid_mode") === "1";
+  } catch {
+    /* stockage indisponible */
+  }
+  if (rapid) {
+    return en
+      ? "Access blocked. Please fill in every C and C# to unlock the results."
+      : "Accès bloqué. Veuillez renseigner tous les Do et Do# pour débloquer les résultats.";
+  }
+  return en
+    ? "Access blocked. A minimum of 2 notes per octave is required to unlock the results."
+    : "Accès bloqué. Un minimum de 2 notes par octave est requis pour débloquer les résultats.";
+}
