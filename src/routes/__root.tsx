@@ -38,6 +38,7 @@ import { FaqDialog } from "@/components/FaqDialog";
 import { LegalDialog } from "@/data/legal";
 import type { FaqPage } from "@/components/FaqContent";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { lockedResultsMessage } from "@/lib/required-keys";
 
 function NotFoundComponent() {
   return (
