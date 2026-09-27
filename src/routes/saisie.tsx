@@ -688,6 +688,32 @@ function Index() {
     }, 60);
   };
 
+  /**
+   * Retour au Mode Normal pendant le Mode Démo : clavier vidé, puis cascade
+   * mauve complète rejouée sur l'intégralité des 88 touches.
+   */
+  const restartDemoForNormal = () => {
+    stopCascadeTimer();
+    stopRapidDemoTimer();
+    let source: Row[] | null = cascadeTarget.current;
+    if (!source) {
+      try {
+        const raw = window.localStorage.getItem(DRAFT_ROWS_KEY);
+        const parsed = raw ? (JSON.parse(raw) as Row[]) : null;
+        if (Array.isArray(parsed) && parsed.length === 88) source = parsed;
+      } catch {
+        /* stockage indisponible */
+      }
+    }
+    if (!source) source = rowsRef.current;
+    const target = source.map((r) => ({ wa: r?.wa ?? "", wd: r?.wd ?? "" }));
+    cascadeTarget.current = null;
+    cascadeStarted.current = false;
+    resetDemoCascadeSeen();
+    setRows(EMPTY.map((r) => ({ ...r })));
+    if (!maybeStartCascade(target)) setRows(target);
+  };
+
   // Nettoyage des minuteurs à la sortie de la page.
   useEffect(
     () => () => {
@@ -3515,7 +3541,10 @@ function Index() {
                       setViewFilter("all");
                       // Mode Démo : on coupe l'animation des 88 touches et on
                       // rejoue une démo courte sur les seuls Do / Do#.
-                      if (next && isDemoActive()) restartDemoForRapid();
+                      if (isDemoActive()) {
+                        if (next) restartDemoForRapid();
+                        else restartDemoForNormal();
+                      }
                     }}
                     className="h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground"
                   >
