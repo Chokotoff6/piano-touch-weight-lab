@@ -490,8 +490,6 @@ function Index() {
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
   /** Miroir toujours à jour des 88 touches (évite les closures périmées). */
   const rowsRef = useRef<Row[]>(EMPTY);
-  /** Anti-rebond : vrai tant qu'un déplacement de focus n'est pas stabilisé. */
-  const navLock = useRef(false);
   /** Miroir du mode pesée, lisible depuis les setTimeout. */
   const weighingModeRef = useRef(false);
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
@@ -633,58 +631,8 @@ function Index() {
     markDemoCascadeSeen();
   };
 
-  // --- Régénération démo accélérée pour le Mode Rapide -------------------
-  const rapidDemoTimer = useRef<number | null>(null);
-  const stopRapidDemoTimer = () => {
-    if (rapidDemoTimer.current !== null) {
-      window.clearInterval(rapidDemoTimer.current);
-      rapidDemoTimer.current = null;
-    }
-  };
-
-  /**
-   * Bascule en Mode Rapide pendant le Mode Démo : coupe l'animation des 88
-   * touches, vide le clavier et réinjecte uniquement les Do/Do#.
-   */
-  const restartDemoForRapid = () => {
-    stopCascadeTimer();
-    stopRapidDemoTimer();
-    let source: Row[] | null = cascadeTarget.current;
-    if (!source) {
-      try {
-        const raw = window.localStorage.getItem(DRAFT_ROWS_KEY);
-        const parsed = raw ? (JSON.parse(raw) as Row[]) : null;
-        if (Array.isArray(parsed) && parsed.length === 88) source = parsed;
-      } catch {
-        /* stockage indisponible */
-      }
-    }
-    if (!source) source = rowsRef.current;
-    const target = source.map((r) => ({ wa: r?.wa ?? "", wd: r?.wd ?? "" }));
-    cascadeTarget.current = null;
-    cascadeStarted.current = true;
-    markDemoCascadeSeen();
-    setRows(EMPTY.map((r) => ({ ...r })));
-    let step = 0;
-    rapidDemoTimer.current = window.setInterval(() => {
-      const idx = RAPID_INDEXES[step];
-      if (idx === undefined) {
-        stopRapidDemoTimer();
-        return;
-      }
-      step += 1;
-      setRows((prev) => prev.map((r, i) => (i === idx ? { ...target[i]! } : r)));
-    }, 60);
-  };
-
-  // Nettoyage des minuteurs à la sortie de la page.
-  useEffect(
-    () => () => {
-      stopCascadeTimer();
-      stopRapidDemoTimer();
-    },
-    [],
-  );
+  // Nettoyage du minuteur à la sortie de la page.
+  useEffect(() => stopCascadeTimer, []);
 
   // --- Couleur mauve et animation machine à écrire (Mode Démo) ------------
   const [demoInk, setDemoInk] = useState(() => isDemoActive());
@@ -1714,16 +1662,8 @@ function Index() {
       ? nextVisibleKey(index, 1) ?? nextVisibleKey(index, -1)
       : index;
     if (target === null) return;
-    // Anti-rebond : tant que le focus n'est pas stabilisé sur la cellule
-    // visée, toute nouvelle pression clavier répétée est ignorée.
-    navLock.current = true;
     inputs.current[`${target}-${field}`]?.focus();
     inputs.current[`${target}-${field}`]?.select();
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        navLock.current = false;
-      });
-    });
   };
 
   /** Une touche est-elle visible avec le filtre courant ? */
@@ -1763,17 +1703,6 @@ function Index() {
   };
 
   const onKeyDown = (e: React.KeyboardEvent, index: number, field: "wa" | "wd") => {
-    // --- Anti-rebond clavier -------------------------------------------
-    // Appui prolongé (auto-répétition) ou déplacement de focus encore en
-    // cours : on ignore l'événement pour empêcher la file d'attente de
-    // s'accumuler et le curseur de « sauter » plusieurs cases.
-    const isNavKey =
-      e.key === "Tab" || e.key === "Enter" || e.key.startsWith("Arrow");
-    if (isNavKey && (e.repeat || navLock.current)) {
-      e.preventDefault();
-      e.stopPropagation();
-      return;
-    }
     // Alerte « valeur élevée » active : le curseur reste verrouillé dans la case
     // tant que la valeur n'est pas corrigée ou validée.
     if (
@@ -3493,12 +3422,8 @@ function Index() {
                     data-pdf-hide
                     aria-pressed={rapidMode}
                     onClick={() => {
-                      const next = !rapidMode;
-                      setRapidMode(next);
+                      setRapidMode((current) => !current);
                       setViewFilter("all");
-                      // Mode Démo : on coupe l'animation des 88 touches et on
-                      // rejoue une démo courte sur les seuls Do / Do#.
-                      if (next && isDemoActive()) restartDemoForRapid();
                     }}
                     className="h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground"
                   >
