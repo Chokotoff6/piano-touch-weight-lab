@@ -647,11 +647,42 @@ function Index() {
 
   // --- Régénération démo accélérée pour le Mode Rapide -------------------
   const rapidDemoTimer = useRef<number | null>(null);
+  const normalDemoDelay = useRef<number | null>(null);
+  // Le brouillon est vidé puis ne contient que les Do/Do# en mode rapide :
+  // conserver à part les 88 pesées pour le retour en mode normal.
+  const fullDemoRows = useRef<Row[] | null>(null);
   const stopRapidDemoTimer = () => {
     if (rapidDemoTimer.current !== null) {
       window.clearInterval(rapidDemoTimer.current);
       rapidDemoTimer.current = null;
     }
+  };
+  const stopNormalDemoDelay = () => {
+    if (normalDemoDelay.current !== null) {
+      window.clearTimeout(normalDemoDelay.current);
+      normalDemoDelay.current = null;
+    }
+  };
+  const getFullDemoRows = (): Row[] => {
+    if (cascadeTarget.current?.length === 88) return cascadeTarget.current;
+    if (fullDemoRows.current?.length === 88) return fullDemoRows.current;
+    // current_piano conserve la fiche démo complète même si le brouillon
+    // visible a déjà été réduit aux 15 touches du Mode Rapide.
+    const saved = loadCurrentPiano();
+    if (saved?.wa_values?.length === 88 && saved.wd_values?.length === 88) {
+      return saved.wa_values.map((wd, i) => ({
+        wd: Number.isFinite(wd) ? String(wd) : "",
+        wa: Number.isFinite(saved.wd_values[i]) ? String(saved.wd_values[i]) : "",
+      }));
+    }
+    try {
+      const raw = window.localStorage.getItem(DRAFT_ROWS_KEY);
+      const parsed = raw ? (JSON.parse(raw) as Row[]) : null;
+      if (Array.isArray(parsed) && parsed.length === 88) return parsed;
+    } catch {
+      /* stockage indisponible */
+    }
+    return rowsRef.current;
   };
 
   /**
@@ -661,18 +692,10 @@ function Index() {
   const restartDemoForRapid = () => {
     stopCascadeTimer();
     stopRapidDemoTimer();
-    let source: Row[] | null = cascadeTarget.current;
-    if (!source) {
-      try {
-        const raw = window.localStorage.getItem(DRAFT_ROWS_KEY);
-        const parsed = raw ? (JSON.parse(raw) as Row[]) : null;
-        if (Array.isArray(parsed) && parsed.length === 88) source = parsed;
-      } catch {
-        /* stockage indisponible */
-      }
-    }
-    if (!source) source = rowsRef.current;
+    stopNormalDemoDelay();
+    const source = getFullDemoRows();
     const target = source.map((r) => ({ wd: r?.wd ?? "", wa: r?.wa ?? "" }));
+    fullDemoRows.current = target;
     cascadeTarget.current = null;
     cascadeStarted.current = true;
     markDemoCascadeSeen();
@@ -696,24 +719,17 @@ function Index() {
   const restartDemoForNormal = () => {
     stopCascadeTimer();
     stopRapidDemoTimer();
-    let source: Row[] | null = cascadeTarget.current;
-    if (!source) {
-      try {
-        const raw = window.localStorage.getItem(DRAFT_ROWS_KEY);
-        const parsed = raw ? (JSON.parse(raw) as Row[]) : null;
-        if (Array.isArray(parsed) && parsed.length === 88) source = parsed;
-      } catch {
-        /* stockage indisponible */
-      }
-    }
-    if (!source) source = rowsRef.current;
+    stopNormalDemoDelay();
+    const source = getFullDemoRows();
     const target = source.map((r) => ({ wd: r?.wd ?? "", wa: r?.wa ?? "" }));
     cascadeTarget.current = null;
     cascadeStarted.current = false;
     resetDemoCascadeSeen();
     setRows(EMPTY.map((r) => ({ ...r })));
     // Laisse React retirer la classe « invisible » des 76 touches avant la cascade.
-    window.setTimeout(() => {
+    normalDemoDelay.current = window.setTimeout(() => {
+      normalDemoDelay.current = null;
+      if (!isDemoActive()) return;
       if (!maybeStartCascade(target)) setRows(target);
     }, 50);
   };
@@ -723,6 +739,7 @@ function Index() {
     () => () => {
       stopCascadeTimer();
       stopRapidDemoTimer();
+      stopNormalDemoDelay();
     },
     [],
   );
@@ -780,6 +797,9 @@ function Index() {
         // Reset OFF : formulaire et clavier vierges, encre noire standard.
         stopTypewriter();
         stopCascadeTimer();
+        stopRapidDemoTimer();
+        stopNormalDemoDelay();
+        fullDemoRows.current = null;
         demoTargetRef.current = null;
         setDemoTyped(false);
         setDemoPersistedInk(false);
