@@ -227,7 +227,8 @@ export function smoothChartData(points: ChartPoint[], windowSize: 3 | 5 = 3): Ch
       const neighbors = defined.slice(Math.max(0, position - radius), position + radius + 1);
       const values = neighbors.map((index) => points[index]?.[key]).filter((value): value is number => typeof value === "number" && Number.isFinite(value));
       const index = defined[position];
-      if (index !== undefined && values.length > 0) output[index][key] = n1(values.reduce((sum, value) => sum + value, 0) / values.length);
+      const resultPoint = index === undefined ? undefined : output[index];
+      if (resultPoint && values.length > 0) resultPoint[key] = n1(values.reduce((sum, value) => sum + value, 0) / values.length);
     }
   });
   return output;
