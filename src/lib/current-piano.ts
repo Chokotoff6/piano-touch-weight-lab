@@ -23,6 +23,7 @@ export type CurrentPiano = {
   remarks: string;
   /** Auteur de la mesure (colonne `who` en base) : pro ou particulier. */
   who?: string | undefined;
+  /** Colonnes base : wa_values = Poids DESCENDANT (lourd), wd_values = remontant. Pont vers wd/wa (Stanwood) à la lecture/écriture. */
   wa_values: number[];
   wd_values: number[];
   friction_values: number[];
