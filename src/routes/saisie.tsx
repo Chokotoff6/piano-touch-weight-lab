@@ -2880,7 +2880,9 @@ function Index() {
       />
       {!weighingMode && (
       <div
-        className={demoInk && (demoTyped || demoPersistedInk) && isDemoActive() ? "demo-typed" : undefined}
+        className={demoInk && isDemoActive() ? "demo-typed" : undefined}
+        onFocusCapture={stopTypewriter}
+        onPointerDownCapture={stopTypewriter}
         data-dirty={isDirty}
         data-saved-at={savedAt ?? ""}
         data-climate-zone={climateZone ?? ""}
