@@ -3,8 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { Redo2, RefreshCw, Undo2 } from "lucide-react";
 import {
   hasAnyMeasurement,
-  incompleteOctaves,
-  OCTAVE_RULE_MESSAGE,
+  OCTAVE_RANGES,
   saisieGate,
 } from "@/lib/required-keys";
 import { SmartCombobox, type SmartComboboxHandle } from "@/components/SmartCombobox";
@@ -1084,7 +1083,9 @@ function Index() {
     [info, climateZone],
   );
 
-  const octaveGaps = useMemo(() => incompleteOctaves(rows), [rows]);
+  const octaveGaps = useMemo(() => OCTAVE_RANGES.filter(([start, end]) =>
+    rows.slice(start - 1, end).filter((row) => row.wa.trim() !== "" && row.wd.trim() !== "").length < 2,
+  ), [rows]);
 
   /** Touches "orphelines" : Wa rempli sans Wd, ou l'inverse. */
   const orphanKeys = useMemo(
@@ -1144,7 +1145,7 @@ function Index() {
     const cond1 = parsedRows.every((row) => row.hasPd === row.hasPr);
 
     // Mode rapide : tous les Do/Do# (Do8 inclus) ; mode normal : deux notes
-    // distinctes, une blanche et une noire, dans chacune des octaves 1 à 7.
+    // distinctes au choix dans chacune des octaves 1 à 7.
     const cond2 = rapidMode
       ? RAPID_INDEXES.every((index) => Boolean(parsedRows[index]?.hasPd && parsedRows[index]?.hasPr))
       : octaveGaps.length === 0;
@@ -2072,7 +2073,9 @@ function Index() {
       return false;
     }
     if (!rapidMode && octaveGaps.length > 0) {
-      showTopbarAlert(anchor, OCTAVE_RULE_MESSAGE);
+      showTopbarAlert(anchor, en
+        ? "⚠️ Enter at least two measured notes per octave (octaves 1 to 7)."
+        : "⚠️ Saisissez au moins deux notes mesurées par octave (octaves 1 à 7).");
       return false;
     }
     if (rapidMode && !keyboardValid) return false;
