@@ -1207,7 +1207,7 @@ function Index() {
   const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
 
   /**
-   * Téléporte le curseur dans la première case PD (Touche 1 / La0).
+   * Téléporte le curseur dans la première case PD accessible (La0 ou Do1).
    * SÉCURITÉ ABSOLUE : la lecture se fait sur rowsRef (données réellement
    * chargées) et le focus est INTERDIT si la moindre touche est déjà saisie —
    * le curseur ne se place que sur un piano intégralement vierge.
@@ -1655,9 +1655,12 @@ function Index() {
   }, [rows]);
 
   const focusCell = (index: number, field: "wa" | "wd") => {
-    if (rapidMode && !RAPID_INDEX_SET.has(index)) return;
-    inputs.current[`${index}-${field}`]?.focus();
-    inputs.current[`${index}-${field}`]?.select();
+    const target = rapidMode && !RAPID_INDEX_SET.has(index)
+      ? nextVisibleKey(index, 1) ?? nextVisibleKey(index, -1)
+      : index;
+    if (target === null) return;
+    inputs.current[`${target}-${field}`]?.focus();
+    inputs.current[`${target}-${field}`]?.select();
   };
 
   /** Une touche est-elle visible avec le filtre courant ? */
@@ -1749,6 +1752,11 @@ function Index() {
         e.preventDefault();
         focusCell(nextKey - 1, "wa");
       }
+      return;
+    }
+    if (rapidMode && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+      e.preventDefault();
+      moveFocus(index, field, e.key === "ArrowDown" ? 1 : -1);
       return;
     }
     // TAB : avance d'une zone ; Shift + TAB : recule d'une zone.
@@ -2633,7 +2641,7 @@ function Index() {
     hidden = false,
   ) => (
     <div
-      className={`weight-fields weight-fields-${field}`}
+      className={`weight-fields weight-fields-${field} ${!pdfMirror && rapidMode && !RAPID_INDEX_SET.has(index) ? "invisible pointer-events-none select-none" : ""}`}
       style={hidden ? { visibility: "hidden" } : undefined}
       onClick={() => {
         if (!canEnterWeights) showBlockMessage(index, field);
@@ -2667,7 +2675,7 @@ function Index() {
         }}
         value={rows[index]![field]}
         readOnly={pdfMirror}
-        tabIndex={!pdfMirror && rapidMode && !RAPID_INDEX_SET.has(index) ? -1 : undefined}
+        tabIndex={!pdfMirror && (rapidMode && !RAPID_INDEX_SET.has(index) || hidden) ? -1 : undefined}
         maxLength={2}
         placeholder=""
         onChange={pdfMirror ? undefined : (e) => canEnterWeights && setValue(index, field, e.target.value)}
