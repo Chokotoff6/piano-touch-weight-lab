@@ -1,0 +1,3 @@
+src/routes/comparer.tsx
+src/routes/resultats.tsx
+src/lib/current-piano.ts
