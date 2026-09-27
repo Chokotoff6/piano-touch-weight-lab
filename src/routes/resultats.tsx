@@ -120,6 +120,13 @@ function Resultats() {
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
+    // Lecture après montage (compatibilité rendu serveur) : si le Mode Rapide
+    // est actif côté Saisie, le graphique s'ouvre en rendu « Réel ».
+    try {
+      setSmoothDefault(window.localStorage.getItem("ptw_rapid_mode") !== "1");
+    } catch {
+      /* stockage indisponible */
+    }
     setDraft(readDraft());
     // Jalon de parcours : la visite de cette page débloque « Comparer ».
     setResultsVisited(true);
@@ -384,6 +391,7 @@ function Resultats() {
                 currentBaseName=""
                 autoDomain
                 sideMargin={60}
+                smoothDefault={smoothDefault}
                 onCycleKeyFilter={() => setKeyFilter((value) => (value === "all" ? "split" : "all"))}
               />
             </div>
