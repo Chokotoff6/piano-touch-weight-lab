@@ -3493,8 +3493,12 @@ function Index() {
                     data-pdf-hide
                     aria-pressed={rapidMode}
                     onClick={() => {
-                      setRapidMode((current) => !current);
+                      const next = !rapidMode;
+                      setRapidMode(next);
                       setViewFilter("all");
+                      // Mode Démo : on coupe l'animation des 88 touches et on
+                      // rejoue une démo courte sur les seuls Do / Do#.
+                      if (next && isDemoActive()) restartDemoForRapid();
                     }}
                     className="h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground"
                   >
