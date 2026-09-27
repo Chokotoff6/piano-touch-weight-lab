@@ -439,16 +439,41 @@ const ZoomDot = makeSampleDot(3);
 
 type EndLabelNode = SimulationNodeDatum & { id: string; x: number; y: number; anchorY: number; labelX: number; text: string; color: string };
 
-// Recharts 2 ne fournit pas labelLayout. d3-force place les étiquettes SVG
-// sur les vraies échelles Recharts ; la collision ne modifie jamais les courbes.
-function EndLabels({ lines, data, domainX, colors, offset, xAxisMap, yAxisMap }: GuideChartProps & {
-  lines: LineDef[]; data: ChartPoint[]; domainX: [number, number]; colors: Map<SeriesKey, string>;
+// Confinement « containLabel » : mesure fiable de la largeur rendue des
+// étiquettes de fin pour qu'aucun texte ne franchisse les bordures du cadre.
+let endLabelMeasureCtx: CanvasRenderingContext2D | null | undefined;
+function estimateEndLabelWidth(text: string) {
+  if (endLabelMeasureCtx === undefined) {
+    try {
+      endLabelMeasureCtx = typeof document === "undefined" ? null : document.createElement("canvas").getContext("2d");
+    } catch {
+      endLabelMeasureCtx = null;
+    }
+  }
+  if (endLabelMeasureCtx) {
+    endLabelMeasureCtx.font = "600 11px system-ui, sans-serif";
+    return endLabelMeasureCtx.measureText(text).width;
+  }
+  return text.length * 6.6;
+}
+
+// Recharts 2 ne fournit ni `containLabel` ni `labelLayout`. Équivalent natif :
+// d3-force place les étiquettes SVG sur les vraies échelles Recharts ; la
+// collision ne modifie jamais les courbes, le repli vertical (`shiftY`) et le
+// confinement horizontal (distance 8 verrouillée, alignement gauche) garantissent
+// qu'aucune moyenne ni aucun nom ne déborde ou ne soit coupé par les bordures.
+function EndLabels({ lines, data, domainX, colors, offset, xAxisMap, yAxisMap, leftClip = 0, rightMargin = 0 }: GuideChartProps & {
+  lines: LineDef[]; data: ChartPoint[]; domainX: [number, number]; colors: Map<SeriesKey, string>; leftClip?: number; rightMargin?: number;
 }) {
   const xScale = xAxisMap?.["main"]?.scale;
   const yScale = Object.values(yAxisMap ?? {}).find((axis) => typeof axis?.scale === "function")?.scale;
-  if (!xScale || !yScale || typeof offset?.top !== "number" || typeof offset.height !== "number") return null;
+  if (!xScale || !yScale || typeof offset?.top !== "number" || typeof offset.height !== "number" || typeof offset.left !== "number" || typeof offset.width !== "number") return null;
   const plotTop = offset.top;
   const plotHeight = offset.height;
+  // Bornes horizontales visibles : aire de tracé + marge droite réservée, moins
+  // la translation du bloc hors zoom (le bord gauche du SVG sort du cadre).
+  const svgRight = offset.left + offset.width + rightMargin - 2;
+  const svgLeft = leftClip + 2;
   const renderSide = (side: "left" | "right") => {
     const nodes: EndLabelNode[] = lines.filter((line) => !line.hidden).flatMap((line) => {
       const index = side === "left"
@@ -460,10 +485,15 @@ function EndLabels({ lines, data, domainX, colors, offset, xAxisMap, yAxisMap }:
       const avg = seriesAverage(data, line.dataKey);
       if (side === "right" && avg === "—") return [];
       const anchorY = yScale(value);
-      const labelX = xScale(point.key) + (side === "left" ? -8 : 10);
+      // distance: 8 verrouillée des deux côtés, texte aligné à gauche du point.
+      const labelX = xScale(point.key) + (side === "left" ? -8 : 8);
       if (!Number.isFinite(anchorY) || !Number.isFinite(labelX)) return [];
-      return [{ id: line.dataKey, x: 0, y: anchorY, anchorY, labelX,
-        text: side === "left" ? line.shortName : `${getLang() === "en" ? "Avg" : "Moy"}: ${avg}g`,
+      const text = side === "left" ? line.shortName : `${getLang() === "en" ? "Avg" : "Moy"}: ${avg}g`;
+      // Confinement horizontal strict : le texte entier reste dans le cadre.
+      const clampedX = side === "left"
+        ? Math.max(labelX, svgLeft + estimateEndLabelWidth(text))
+        : Math.min(labelX, svgRight - estimateEndLabelWidth(text));
+      return [{ id: line.dataKey, x: 0, y: anchorY, anchorY, labelX: clampedX, text,
         color: colors.get(line.dataKey) ?? line.color }];
     });
     const top = plotTop + 9;
@@ -1086,7 +1116,9 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               <EndLabels {...(props as GuideChartProps)} lines={lines} data={chartData} domainX={domainX}
                 colors={new Map(lines.map((line) => [line.dataKey, autoDomain
                   ? line.color === "#1a1a1a" ? "#4b5563" : line.color === "#B45309" ? "#B45309" : "#111827"
-                  : line.color]))} />
+                  : line.color]))}
+                leftClip={zoomed ? 0 : keyFilter === "all" ? 30 : 10}
+                rightMargin={Math.max(sideMargin, 80) + groupedShift} />
             )} />
 
           </LineChart>
@@ -1096,16 +1128,20 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   );
 }
 
-export function ComparisonChart({ chartData: rawChartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible", onCycleKeyFilter, smoothDefault = true, showSourceControls = false }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void; smoothDefault?: boolean; showSourceControls?: boolean }) {
+export function ComparisonChart({ chartData: rawChartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible", onCycleKeyFilter, smoothDefault = true, showSourceControls = false, allowRealMode = true }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void; smoothDefault?: boolean; showSourceControls?: boolean; allowRealMode?: boolean }) {
   const lang = useLang();
   // Lissage global : brut, trois notes, ou cinq notes. Purement local.
   // `smoothDefault` permet au Mode Rapide d'imposer le rendu « Réel ».
-  const [smoothMode, setSmoothMode] = useState<"real" | "smooth" | "smoothPlus">(smoothDefault ? "smooth" : "real");
-  const cycleSmoothMode = useCallback(() => setSmoothMode((mode) => mode === "real" ? "smooth" : mode === "smooth" ? "smoothPlus" : "real"), []);
+  // `allowRealMode={false}` (page Comparer) supprime définitivement le mode
+  // « Réel » : seuls les rendus lissés (3 ou 5 points) restent disponibles.
+  const [smoothMode, setSmoothMode] = useState<"real" | "smooth" | "smoothPlus">(allowRealMode && !smoothDefault ? "real" : "smooth");
+  const cycleSmoothMode = useCallback(() => setSmoothMode((mode) => !allowRealMode
+    ? (mode === "smooth" ? "smoothPlus" : "smooth")
+    : mode === "real" ? "smooth" : mode === "smooth" ? "smoothPlus" : "real"), [allowRealMode]);
   // Bascule automatique quand la valeur par défaut change (Mode Rapide activé/coupé).
   useEffect(() => {
-    setSmoothMode(smoothDefault ? "smooth" : "real");
-  }, [smoothDefault]);
+    setSmoothMode(allowRealMode ? (smoothDefault ? "smooth" : "real") : "smooth");
+  }, [smoothDefault, allowRealMode]);
   const chartData = useMemo(
     () => smoothMode === "real" ? rawChartData : smoothChartData(rawChartData, smoothMode === "smoothPlus" ? 5 : 3),
     [smoothMode, rawChartData],
@@ -1664,14 +1700,8 @@ function Comparer() {
   const en = lang === "en";
   const [sourceMode, setSourceMode] = useState<SourceMode>("none");
   const [standardEnabled, setStandardEnabled] = useState(false);
-  const [smoothDefault, setSmoothDefault] = useState(true);
-  useEffect(() => {
-    try {
-      setSmoothDefault(window.localStorage.getItem("ptw_rapid_mode") !== "1");
-    } catch {
-      /* stockage indisponible */
-    }
-  }, []);
+  // Le mode « Réel » est supprimé sur Comparer : le graphique démarre et reste
+  // en rendu lissé (Lissé 3 points / Lissé+ 5 points), quel que soit le Mode Rapide.
   // Arrivée sur Comparer : les 4 graphiques démarrent en « N/B : séparées ».
   const [keyFilter, setKeyFilter] = useState<KeyFilter>("split");
 
@@ -2138,7 +2168,7 @@ function Comparer() {
               </div>
 
               <div ref={liveChartsRef}>
-                <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible"} onCycleKeyFilter={cycleKeyFilter} currentBaseName={en ? "Current piano" : "Piano actuel"} showSourceControls={mine !== null && sourceMode === "cloud" && comparedPiano === null && standardEnabled && cloudProfile !== null} smoothDefault={smoothDefault} />
+                <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible"} onCycleKeyFilter={cycleKeyFilter} currentBaseName={en ? "Current piano" : "Piano actuel"} showSourceControls={mine !== null && sourceMode === "cloud" && comparedPiano === null && standardEnabled && cloudProfile !== null} allowRealMode={false} />
               </div>
             </div>
             <aside className="min-w-0"><div ref={settingsRef} data-pdf-expand className="sticky top-[127px] z-50 flex flex-col overflow-visible" ><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} whoFilter={whoFilter} cycleWho={cycleWho} /></div></aside>
