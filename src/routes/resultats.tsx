@@ -111,6 +111,8 @@ function Resultats() {
   const [consent, setConsent] = useState(false);
   // État initial imposé : touches blanches et noires affichées séparément.
   const [keyFilter, setKeyFilter] = useState<KeyFilter>("split");
+  // Mode Rapide actif : le graphique s'ouvre en rendu « Réel » (échelle 88 notes).
+  const [smoothDefault, setSmoothDefault] = useState(true);
   const [busy, setBusy] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const averagesRef = useRef<HTMLDivElement>(null);
