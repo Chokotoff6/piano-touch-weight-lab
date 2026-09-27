@@ -265,8 +265,8 @@ function FaqSaisie({ en }: { en: boolean }) {
               How does the app calculate Friction and Balance?
             </AccordionTrigger>
             <AccordionContent>
-              The app uses standard piano technology formulas: Friction = (Wa -
-              Wd) / 2 and Balance = (Wa + Wd) / 2. High friction usually means
+              The app uses standard piano technology formulas: Friction = (Wd -
+              Wa) / 2 and Balance = (Wd + Wa) / 2. High friction usually means
               swollen felts or tight center pins.
             </AccordionContent>
           </AccordionItem>

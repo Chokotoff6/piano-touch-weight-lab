@@ -265,6 +265,41 @@ function profileValues(value: number[] | string): number[] {
   return fromPgArray(value);
 }
 
+/** Priorité au brouillon local (même source que Résultats) : touches actives de la session. */
+function withDraftMeasures(profile: ProfileRecord): ProfileRecord {
+  if (typeof window === "undefined") return profile;
+  let rows: { wd: string; wa: string }[] | null = null;
+  try {
+    const raw = window.localStorage.getItem("ptw_draft_rows");
+    const parsed = raw ? (JSON.parse(raw) as { wd: string; wa: string }[]) : null;
+    if (Array.isArray(parsed) && parsed.length === 88) rows = parsed;
+  } catch {
+    rows = null;
+  }
+  if (!rows) return profile;
+  const num = (v: string) => {
+    const n = Number(String(v ?? "").trim().replace(",", "."));
+    return Number.isFinite(n) && n > 0 ? n : null;
+  };
+  const wd: number[] = [];
+  const wa: number[] = [];
+  rows.forEach((r) => {
+    const d = num(r.wd);
+    const a = num(r.wa);
+    const ok = d !== null && a !== null && d > a;
+    wd.push(ok ? d : Number.NaN);
+    wa.push(ok ? a : Number.NaN);
+  });
+  if (!wd.some((v) => Number.isFinite(v))) return profile;
+  return {
+    ...profile,
+    wd,
+    wa,
+    friction: wd.map((d, i) => (Number.isFinite(d) ? (d - (wa[i] ?? 0)) / 2 : Number.NaN)),
+    balance: wd.map((d, i) => (Number.isFinite(d) ? (d + (wa[i] ?? 0)) / 2 : Number.NaN)),
+  };
+}
+
 function profileFromCurrentPiano(piano: CurrentPiano): ProfileRecord {
   // Même règle que Résultats : seule une paire complète et cohérente est pesée.
   // Les tableaux du tampon peuvent contenir des zéros pour les cases vides.
@@ -1792,7 +1827,7 @@ function Comparer() {
       if (cancelled) return;
       // Convention unique : wd = descente, wa = remontée, lue telle quelle.
       const piano = cloudPiano ?? loadCurrentPiano();
-      setMine(piano ? profileFromCurrentPiano(piano) : null);
+      setMine(piano ? withDraftMeasures(profileFromCurrentPiano(piano)) : null);
       setStatus("ok");
     };
     void sync();

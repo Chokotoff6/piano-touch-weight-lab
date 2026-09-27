@@ -712,7 +712,10 @@ function Index() {
     cascadeStarted.current = false;
     resetDemoCascadeSeen();
     setRows(EMPTY.map((r) => ({ ...r })));
-    if (!maybeStartCascade(target)) setRows(target);
+    // Laisse React retirer la classe « invisible » des 76 touches avant la cascade.
+    window.setTimeout(() => {
+      if (!maybeStartCascade(target)) setRows(target);
+    }, 50);
   };
 
   // Nettoyage des minuteurs à la sortie de la page.
