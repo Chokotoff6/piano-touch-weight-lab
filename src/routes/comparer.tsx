@@ -1790,7 +1790,11 @@ function Comparer() {
         cloudPiano = null;
       }
       if (cancelled) return;
-      const piano = cloudPiano ?? loadCurrentPiano();
+      // La fiche démo …0001 est stockée inversée en base : même réorientation
+      // que le chargement du Mode démo, sinon la validation « wa > wd » de
+      // profileFromCurrentPiano vide toutes les moyennes.
+      const raw = cloudPiano ?? loadCurrentPiano();
+      const piano = demo && raw ? orientCurrentPiano(raw) : raw;
       setMine(piano ? profileFromCurrentPiano(piano) : null);
       setStatus("ok");
     };
