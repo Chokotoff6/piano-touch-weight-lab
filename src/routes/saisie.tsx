@@ -768,17 +768,8 @@ function Index() {
     return true;
   };
 
-  // Toute saisie manuelle après l'animation repasse le formulaire en encre noire.
-  useEffect(() => {
-    if (!demoTyped) return;
-    if (typewriterTimer.current !== null || typewriterDelayTimer.current !== null) return;
-    const target = demoTargetRef.current;
-    if (!target || JSON.stringify(info) !== JSON.stringify(target)) {
-      setDemoTyped(false);
-      setDemoPersistedInk(false);
-      demoTargetRef.current = null;
-    }
-  }, [info, demoTyped]);
+  // En Mode Démo, l'encre mauve est conservée y compris pour le texte saisi
+  // ou modifié manuellement par l'utilisateur (aucune bascule en noir).
 
   // Retour sur la page (ex. clic logo KW) alors que le Mode Démo est resté ON :
   // le texte pré-rempli doit rester mauve foncé sans rejouer l'animation.
