@@ -3,10 +3,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/politique-confidentialite")({
   head: () => ({
     meta: [
-      { title: "KeyWeight" },
+      { title: "Confidentialité — KeyWeight" },
       { name: "description", content: "Politique de confidentialité et traitement des données personnelles conforme au RGPD." },
       { property: "og:title", content: "Politique de confidentialité (RGPD) — Piano Touch Weight Lab" },
       { property: "og:description", content: "Politique de confidentialité et traitement des données personnelles conforme au RGPD." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
     links: [{ rel: "canonical", href: "https://piano-touch-weight-lab.lovable.app/politique-confidentialite" }],
   }),

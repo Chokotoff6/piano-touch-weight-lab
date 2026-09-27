@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { forceCollide, forceSimulation, forceX, forceY, type SimulationNodeDatum } from "d3-force";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, type SetStateAction, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { useLang, getLang } from "@/data/translations";
@@ -238,7 +237,7 @@ export function smoothChartData(points: ChartPoint[], windowSize: 3 | 5 = 3): Ch
 function seriesAverage(data: ChartPoint[], key: SeriesKey): string {
   const values = data
     .map((point) => point[key])
-    .filter((value): value is number => typeof value === "number" && Number.isFinite(value) && value > 0);
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
   if (values.length === 0) return "—";
   return (values.reduce<number>((sum, value) => sum + value, 0) / values.length).toFixed(1);
 }
@@ -266,18 +265,11 @@ function profileValues(value: number[] | string): number[] {
 }
 
 function profileFromCurrentPiano(piano: CurrentPiano): ProfileRecord {
-  // Même règle que Résultats : seule une paire complète et cohérente est pesée.
-  // Les tableaux du tampon peuvent contenir des zéros pour les cases vides.
-  const wa = piano.wa_values.map((value, index) => {
-    const wd = piano.wd_values[index];
-    return Number.isFinite(value) && value > 0 && typeof wd === "number" && Number.isFinite(wd) && wd > 0 && value > wd ? value : Number.NaN;
-  });
-  const wd = piano.wd_values.map((value, index) => Number.isFinite(wa[index]) ? value : Number.NaN);
   return {
-    wa,
-    wd,
-    friction: wa.map((value, index) => (Number.isFinite(value) && Number.isFinite(wd[index]) ? (value - (wd[index] ?? 0)) / 2 : Number.NaN)),
-    balance: wa.map((value, index) => (Number.isFinite(value) && Number.isFinite(wd[index]) ? (value + (wd[index] ?? 0)) / 2 : Number.NaN)),
+    wa: piano.wa_values,
+    wd: piano.wd_values,
+    friction: piano.friction_values,
+    balance: piano.balance_values,
     serialNumber: piano.serial_number,
     brand: piano.brand,
     model: piano.model,
@@ -402,56 +394,41 @@ const ZoomDot = makeSampleDot(3);
 
 
 
-type EndLabelNode = SimulationNodeDatum & { id: string; x: number; y: number; anchorY: number; labelX: number; text: string; color: string };
+type EndLabelOptions = {
+  shortName: string;
+  avg: string;
+  color: string;
+  labelColor?: string;
+  firstIndex: number;
+  lastIndex: number;
+  dyLeft: number;
+  dyRight: number;
+  showAverage?: boolean;
+  maxY?: number;
+};
 
-// Recharts 2 ne fournit pas labelLayout. d3-force place les étiquettes SVG
-// sur les vraies échelles Recharts ; la collision ne modifie jamais les courbes.
-function EndLabels({ lines, data, domainX, colors, offset, xAxisMap, yAxisMap }: GuideChartProps & {
-  lines: LineDef[]; data: ChartPoint[]; domainX: [number, number]; colors: Map<SeriesKey, string>;
-}) {
-  const xScale = xAxisMap?.["main"]?.scale;
-  const yScale = Object.values(yAxisMap ?? {}).find((axis) => typeof axis?.scale === "function")?.scale;
-  if (!xScale || !yScale || typeof offset?.top !== "number" || typeof offset.height !== "number") return null;
-  const plotTop = offset.top;
-  const plotHeight = offset.height;
-  const renderSide = (side: "left" | "right") => {
-    const nodes: EndLabelNode[] = lines.filter((line) => !line.hidden).flatMap((line) => {
-      const index = side === "left"
-        ? firstDefinedIndexIn(data, line.dataKey, ...domainX)
-        : lastDefinedIndexIn(data, line.dataKey, ...domainX);
-      const point = data[index];
-      const value = point?.[line.dataKey];
-      if (!point || typeof value !== "number" || !Number.isFinite(value)) return [];
-      const avg = seriesAverage(data, line.dataKey);
-      if (side === "right" && avg === "—") return [];
-      const anchorY = yScale(value);
-      const labelX = xScale(point.key) + (side === "left" ? -8 : 10);
-      if (!Number.isFinite(anchorY) || !Number.isFinite(labelX)) return [];
-      return [{ id: line.dataKey, x: 0, y: anchorY, anchorY, labelX,
-        text: side === "left" ? line.shortName : `${getLang() === "en" ? "Avg" : "Moy"}: ${avg}g`,
-        color: colors.get(line.dataKey) ?? line.color }];
-    });
-    const top = plotTop + 9;
-    const bottom = plotTop + plotHeight - 9;
-    // Deux couloirs distincts (noms à gauche, moyennes à droite). Les nœuds
-    // restent attachés à leur extrémité X et se repoussent uniquement en Y.
-    const simulation = forceSimulation(nodes)
-      .force("centerX", forceX<EndLabelNode>(0).strength(1))
-      .force("anchorY", forceY<EndLabelNode>((node) => Math.max(top, Math.min(bottom, node.anchorY))).strength(0.18))
-      .force("avoidOverlap", forceCollide<EndLabelNode>(9).strength(1).iterations(3))
-      .stop();
-    for (let tick = 0; tick < 160; tick += 1) {
-      simulation.tick();
-      for (const node of nodes) {
-        node.y = Math.max(top, Math.min(bottom, node.y));
-        node.vy = 0;
-      }
+// Marge haute de sécurité : les étiquettes de courbes ne doivent jamais
+// chevaucher les repères DO (4, 16, 28...) affichés en haut du graphique.
+const LABEL_MIN_Y = 38;
+const LABEL_MAX_Y = 248;
+const clampLabelY = (y: number, dy: number, maxY: number = LABEL_MAX_Y) => Math.min(Math.max(y + dy, LABEL_MIN_Y), maxY) - y;
+
+function makeEndLabel(opts: EndLabelOptions) {
+  const EndLabel = (props: { x?: number; y?: number; index?: number; value?: number }) => {
+    const { x, y, index = -1, value } = props;
+    const hasPoint = typeof x === "number" && Number.isFinite(x) && typeof y === "number" && Number.isFinite(y);
+    const hasValue = typeof value === "number" && Number.isFinite(value);
+    const color = opts.labelColor ?? opts.color;
+    if (!hasPoint || !hasValue) return <g />;
+    if (index === opts.firstIndex) {
+      return <text x={x - 8} y={y} dy={clampLabelY(y, opts.dyLeft, opts.maxY)} textAnchor="end" fontSize={11} fontWeight={600} fill={color}>{opts.shortName}</text>;
     }
-    return nodes.map((node) => <text key={`${side}-${node.id}`} x={node.labelX} y={node.y}
-      textAnchor={side === "left" ? "end" : "start"} dominantBaseline="middle"
-      fontSize={11} fontWeight={600} fill={node.color}>{node.text}</text>);
+    if (index === opts.lastIndex && opts.showAverage !== false && opts.avg !== "—") {
+      return <text x={x + 10} y={y} dy={clampLabelY(y, opts.dyRight, opts.maxY)} textAnchor="start" fontSize={11} fontWeight={600} fill={color}>{`${getLang() === "en" ? "Avg" : "Moy"}: ${opts.avg}g`}</text>;
+    }
+    return <g />;
   };
-  return <g pointerEvents="none">{renderSide("left")}{renderSide("right")}</g>;
+  return EndLabel;
 }
 
 
@@ -561,6 +538,16 @@ export function familyTitle(id: string, lang: string, fallback: string) {
   const entry = FAMILY_TITLES[id];
   if (!entry) return fallback;
   return lang === "en" ? entry.en : entry.fr;
+}
+const DY_STEPS = [-15, 0, 15, 30, 45];
+function offsetsFor(lines: LineDef[], point: ChartPoint | undefined) {
+  const map = new Map<SeriesKey, number>();
+  [...lines].sort((a, b) => {
+    const aValue = point?.[a.dataKey];
+    const bValue = point?.[b.dataKey];
+    return (typeof bValue === "number" ? bValue : -Infinity) - (typeof aValue === "number" ? aValue : -Infinity);
+  }).forEach((line, index) => map.set(line.dataKey, DY_STEPS[index] ?? 20));
+  return map;
 }
 
 function currentLinesFor(familyId: string, keyFilter: KeyFilter, baseName = "Piano actuel"): LineDef[] {
@@ -800,6 +787,16 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   // Même géométrie sur Résultats et Comparer : hors zoom, le domaine démarre
   // avant la touche 1 afin de préserver l'espace entre l'axe et les courbes.
   const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [-3, 88];
+  const firstIn = (key: SeriesKey) => firstDefinedIndexIn(chartData, key, domainX[0], domainX[1]);
+  const lastIn = (key: SeriesKey) => lastDefinedIndexIn(chartData, key, domainX[0], domainX[1]);
+  const endpointOffsets = (side: "left" | "right") => new Map(
+    lines.map((line) => {
+      const index = side === "left" ? firstIn(line.dataKey) : lastIn(line.dataKey);
+      return [line.dataKey, offsetsFor(lines, chartData[index]).get(line.dataKey) ?? 0] as const;
+    }),
+  );
+  const dyLeft = endpointOffsets("left");
+  const dyRight = endpointOffsets("right");
   const DotComp = zoomed ? ZoomDot : SampleDot;
   const title = familyTitle(family.id, lang, family.title);
   // Domaine vertical FIGÉ sur le mode groupé : l'échelle et ses graduations ne
@@ -841,6 +838,39 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   // Position visuelle commune à Résultats et Comparer : l'axe reste à 55 px du
   // bord gauche du cadre, quelle que soit la grande marge réservée aux libellés.
   const axisShift = chartLeftMargin + 44 + chartShift - 55;
+  // Anti-chevauchement réel des libellés de droite : on convertit les valeurs en
+  // pixels puis on écarte verticalement toute paire trop proche (14 px minimum).
+  const spacedDyRight = (() => {
+    const domain = yDomain;
+    if (!domain || domain[1] <= domain[0]) return dyRight;
+    const plotH = (zoomed ? 560 : 250) - 37;
+    const scale = plotH / (domain[1] - domain[0]);
+    const entries = lines
+      .filter((line) => !line.hidden)
+      .map((line) => {
+        const value = chartData[lastIn(line.dataKey)]?.[line.dataKey];
+        if (typeof value !== "number" || !Number.isFinite(value)) return null;
+        return { key: line.dataKey, y: (domain[1] - value) * scale };
+      })
+      .filter((entry): entry is { key: SeriesKey; y: number } => entry !== null)
+      .sort((a, b) => a.y - b.y);
+    const map = new Map(dyRight);
+    // Séparation stricte : dès qu'une paire d'étiquettes se superpose,
+    // l'étiquette haute remonte de 12 px et l'étiquette basse descend de 12 px.
+    const adjusted = entries.map((entry) => ({ ...entry, off: 0 }));
+    for (let i = 0; i < adjusted.length - 1; i += 1) {
+      const upper = adjusted[i];
+      const lower = adjusted[i + 1];
+      if (!upper || !lower) continue;
+      const gap = lower.y + lower.off - (upper.y + upper.off);
+      if (gap < 24) {
+        upper.off -= 12;
+        lower.off += 12;
+      }
+    }
+    adjusted.forEach((entry) => map.set(entry.key, Math.round(entry.off)));
+    return map;
+  })();
 
 
 
@@ -1044,15 +1074,10 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
                 dot={line.real ? <DotComp /> : false}
                 connectNulls={true}
                 isAnimationActive={false}
+                label={makeEndLabel({ shortName: line.shortName, avg: seriesAverage(chartData, line.dataKey), color, firstIndex: firstIn(line.dataKey), lastIndex: lastIn(line.dataKey), dyLeft: line.hidden ? 0 : dyLeft.get(line.dataKey) ?? 0, dyRight: line.hidden ? 0 : spacedDyRight.get(line.dataKey) ?? 0, showAverage: !line.hidden, maxY: zoomed ? 100000 : LABEL_MAX_Y })}
               />
               );
             })}
-            <Customized component={(props: unknown) => (
-              <EndLabels {...(props as GuideChartProps)} lines={lines} data={chartData} domainX={domainX}
-                colors={new Map(lines.map((line) => [line.dataKey, autoDomain
-                  ? line.color === "#1a1a1a" ? "#4b5563" : line.color === "#B45309" ? "#B45309" : "#111827"
-                  : line.color]))} />
-            )} />
 
           </LineChart>
         </ResponsiveContainer>
@@ -1275,7 +1300,7 @@ export function ComparisonChart({ chartData: rawChartData, keyFilter, comparison
 export const Route = createFileRoute("/comparer")({
   head: () => ({
     meta: [
-      { title: "Comparer — KeyWeight" },
+      { title: "KeyWeight" },
       { name: "description", content: "Confrontation des moyennes de touchweight statique entre le piano actuel et les profils externes correspondant aux critères choisis." },
       { property: "og:title", content: "Comparer — Touchweight piano" },
       { property: "og:description", content: "Comparez les mesures de touchweight statique avec les profils externes correspondants." },
