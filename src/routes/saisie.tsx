@@ -5,6 +5,7 @@ import {
   hasAnyMeasurement,
   OCTAVE_RANGES,
   saisieGate,
+  lockedResultsMessage,
 } from "@/lib/required-keys";
 import { SmartCombobox, type SmartComboboxHandle } from "@/components/SmartCombobox";
 import { InfoDot } from "@/components/InfoDot";
@@ -3617,12 +3618,18 @@ function Index() {
           </div>
 
 
+          <span className="group/res relative inline-block">
+          {!badgeVisible && (
+            <span className="pointer-events-none absolute bottom-full right-0 z-[120] mb-2 hidden w-72 rounded-md border border-gray-300 bg-white px-3 py-2 text-left text-sm font-medium text-gray-950 shadow-lg group-hover/res:block group-focus-within/res:block">
+              {lockedResultsMessage(en)}
+            </span>
+          )}
           <button
             type="button"
             data-pdf-hide
-            // Accès hermétiquement bloqué tant que « Saisie conforme » n'est
-            // pas au vert intense.
-            disabled={!badgeVisible}
+            // Toujours cliquable : la redirection est bloquée (infobulle) tant
+            // que « Saisie conforme » n'est pas au vert intense.
+            aria-disabled={!badgeVisible}
             onClick={() => {
               if (!badgeVisible) return;
               // Le jeu de démonstration est déjà isolé du Cloud réel et chargé
@@ -3644,7 +3651,7 @@ function Index() {
               }
               navigate({ to: "/resultats" });
             }}
-            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100 !text-black" : "cursor-not-allowed border-input bg-background !text-gray-400 opacity-60"}`}
+            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100 !text-black" : "cursor-help border-input bg-background !text-gray-400 opacity-60"}`}
             style={
               badgeVisible
                 ? {
@@ -3658,6 +3665,7 @@ function Index() {
           >
             {en ? "Results & Charts >" : "Résultats & Graphiques >"}
           </button>
+          </span>
         </div>
       )}
 
