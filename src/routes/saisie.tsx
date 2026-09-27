@@ -1355,6 +1355,8 @@ function Index() {
     coherenceDismissed.current.clear();
     setIncompletePairs([]);
     lockedPairRef.current = null;
+    setRapidMode(false);
+    setViewFilter("all");
     setConfirmReset(null);
     // 4. Retour sur la fiche Info piano et verrous de parcours réarmés.
     setWeighingMode(false);
@@ -2821,7 +2823,7 @@ function Index() {
             const rightBlack = !black && BLACK_KEYS.has(index + 2);
             const shift = leftBlack === rightBlack ? "" : leftBlack ? "shift-left" : "shift-right";
             const hiddenByView =
-              !pdfMirror &&
+              !pdfMirror && !rapidMode &&
               ((viewFilter === "white" && black) || (viewFilter === "black" && !black));
             return (
               <div
@@ -3334,31 +3336,7 @@ function Index() {
       )}
 
       <Frame
-        title={
-          <>
-            {en ? "Static touch weight measurements" : "Mesures poids statiques"}{" "}
-            <span data-pdf-hide className="inline-flex items-center align-middle">
-              <InfoDot label={en ? "Static touch weight measurements" : "Mesures poids statiques"}>
-                <span className="block">
-                  {en
-                    ? "Enter at least the values for every C and C# to access the results."
-                    : "Saisir au minimum les valeurs pour tous les Do et Do# pour accéder aux résultats."}
-                </span>
-                <span className="mt-2 block">
-                  {en ? "• TAB: move forward one key" : "• TAB : avance d'une touche"}
-                </span>
-                <span className="block">
-                  {en ? "• Shift + TAB: move backward one key" : "• Shift + TAB : recule d'une touche"}
-                </span>
-                <span className="block">
-                  {en
-                    ? "• ALT + TAB (Option ⌥ on Mac): jump to the next C"
-                    : "• ALT + TAB (Option ⌥ sur Mac) : saute au DO suivant"}
-                </span>
-              </InfoDot>
-            </span>
-          </>
-        }
+        title={en ? "Static touch weight measurements" : "Mesures poids statiques"}
         // Hors mode pesée (page Infopiano), le cadre n'est PAS retiré du DOM :
         // il est déporté hors écran (jamais `hidden`), de sorte que l'export PDF
         // puisse toujours le rendre et le capturer, quelle que soit la page.
@@ -3432,33 +3410,58 @@ function Index() {
           {/* Barre d'outils d'atelier centrée : touches, reset.
               Undo / Redo sont désormais calés dans le cadre des mesures. */}
           <div className="flex items-center gap-2">
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    data-pdf-hide
+                    aria-pressed={rapidMode}
+                    onClick={() => {
+                      setRapidMode((current) => !current);
+                      setViewFilter("all");
+                    }}
+                    className="h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground"
+                  >
+                    <RefreshCw size={14} strokeWidth={2.5} aria-hidden="true" />
+                    {en ? `Mode: ${rapidMode ? "Rapid" : "Normal"}` : `Mode : ${rapidMode ? "Rapide" : "Normal"}`}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" align="center" className="z-[120] w-[min(29rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] border border-border bg-card p-3 text-left text-foreground shadow-lg">
+                  <p>{en ? "Rapid mode: entering every C and C# unlocks the Results page" : "Mode rapide : encoder tous les DO et DO# valide un accès à la page Résultat"}</p>
+                  <p className="mt-2">{en ? "Normal mode: choose any keys to enter. A minimum of 2 notes per octave is required to generate the charts." : "Mode Normal : choix libre des touches encodées. Un minimum de 2 notes par octave est requis pour générer les graphiques."}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
-
-            <button
+            <Button
               type="button"
+              variant="outline"
               data-pdf-hide
+              disabled={rapidMode}
               onClick={() =>
                 setViewFilter((current) =>
                   current === "all" ? "white" : current === "white" ? "black" : "all",
                 )
               }
-              className="flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+              className="h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground"
             >
               <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
               <span>
                 {en
                   ? viewFilter === "all"
-                    ? "Piano Keys: All"
+                    ? "Keys: All"
                     : viewFilter === "white"
                       ? "Keys: Whites"
                       : "Keys: Blacks"
                   : viewFilter === "all"
-                    ? "Touches piano : Toutes"
+                    ? "Touches : Toutes"
                     : viewFilter === "white"
                       ? "Touches : Blanches"
                       : "Touches : Noires"}
               </span>
-            </button>
+            </Button>
 
             <div className="relative flex items-center">
               {confirmReset === "rows" && (
