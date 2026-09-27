@@ -9,6 +9,8 @@ import {
 } from "@/lib/required-keys";
 import { SmartCombobox, type SmartComboboxHandle } from "@/components/SmartCombobox";
 import { InfoDot } from "@/components/InfoDot";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { modelsFor, modelGroupsFor, inferTypeFromModel } from "@/data/pianoModels";
 import {
@@ -105,6 +107,10 @@ const C_KEYS = new Set([4, 16, 28, 40, 52, 64, 76, 88]);
 
 /** Do# de chaque octave : échantillonnage minimal exigé avec les Do. */
 const C_SHARP_KEYS = new Set([5, 17, 29, 41, 53, 65, 77]);
+
+/** Index zéro-based des Do et Do# de La0 à Do8 (Do8 n'a pas de Do#). */
+const RAPID_INDEXES = [3, 4, 15, 16, 27, 28, 39, 40, 51, 52, 63, 64, 75, 76, 87] as const;
+const RAPID_INDEX_SET = new Set<number>(RAPID_INDEXES);
 
 const PD_RANGE_MESSAGE =
   "⚠️ Valeur hors fourchette : Les pesées doivent être comprises entre 10 grammes et 90 grammes pour être conformes.";
@@ -437,6 +443,7 @@ function Index() {
   const [weighingMode, setWeighingMode] = useState(false);
   /** Filtrage visuel cyclique des touches affichées à l'écran. */
   const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
+  const [rapidMode, setRapidMode] = useState(false);
   /** Synchronise la vue (formulaire / clavier) avec la barre du haut. */
   useEffect(() => {
     setTopbarState({ weighingMode });
@@ -1136,12 +1143,11 @@ function Index() {
     // CONDITION 1 : chaque mesure présente forme un binôme PD/PR.
     const cond1 = parsedRows.every((row) => row.hasPd === row.hasPr);
 
-    // CONDITION 2 : tous les Do et Do# requis sont renseignés.
-    const sampled = [...C_KEYS, ...C_SHARP_KEYS].filter((k) => k !== 88).sort((a, b) => a - b);
-    const cond2 = sampled.every((key) => {
-      const row = parsedRows[key - 1];
-      return Boolean(row?.hasPd && row.hasPr);
-    });
+    // Mode rapide : tous les Do/Do# (Do8 inclus) ; mode normal : deux notes
+    // distinctes, une blanche et une noire, dans chacune des octaves 1 à 7.
+    const cond2 = rapidMode
+      ? RAPID_INDEXES.every((index) => Boolean(parsedRows[index]?.hasPd && parsedRows[index]?.hasPr))
+      : octaveGaps.length === 0;
 
     const measuredRows = parsedRows.filter((row) => row.hasPd || row.hasPr);
 
@@ -1168,7 +1174,7 @@ function Index() {
     }
 
     return cond1 && cond2 && cond3 && cond4 && cond5;
-  }, [rows]);
+  }, [rows, rapidMode, octaveGaps]);
 
   /**
    * Badge vert retardé : extinction instantanée dès qu'un cadre rouge apparaît,
@@ -1210,12 +1216,13 @@ function Index() {
     setTimeout(() => {
       const current = rowsRef.current;
       if (hasAnyMeasurement(current)) return; // profil chargé ou en cours : on ne touche à rien
-      if ((current[0]?.wa ?? "").trim() !== "") return;
-      inputs.current["0-wa"]?.focus({ preventScroll: true });
-      inputs.current["0-wa"]?.select();
+       const first = rapidMode ? RAPID_INDEXES[0] : 0;
+       if ((current[first]?.wa ?? "").trim() !== "") return;
+       inputs.current[`${first}-wa`]?.focus({ preventScroll: true });
+       inputs.current[`${first}-wa`]?.select();
     }, 100);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+   }, [rapidMode]);
 
   /**
    * Au chargement de la page en mode pesée, le curseur se place sur le PD du La 0,
@@ -1648,12 +1655,14 @@ function Index() {
   }, [rows]);
 
   const focusCell = (index: number, field: "wa" | "wd") => {
+    if (rapidMode && !RAPID_INDEX_SET.has(index)) return;
     inputs.current[`${index}-${field}`]?.focus();
     inputs.current[`${index}-${field}`]?.select();
   };
 
   /** Une touche est-elle visible avec le filtre courant ? */
   const isVisibleKey = (index: number) => {
+    if (rapidMode) return RAPID_INDEX_SET.has(index);
     if (viewFilter === "white") return !BLACK_KEYS.has(index + 1);
     if (viewFilter === "black") return BLACK_KEYS.has(index + 1);
     return true;
@@ -1732,7 +1741,7 @@ function Index() {
     // ALT + TAB (Option + TAB sur Mac) : saute directement au DO suivant
     // (ou au DO# suivant lorsque seules les touches noires sont affichées).
     if (e.altKey && e.key === "Tab") {
-      const octaveKeys = viewFilter === "black" ? C_SHARP_KEYS : C_KEYS;
+      const octaveKeys = rapidMode ? C_KEYS : viewFilter === "black" ? C_SHARP_KEYS : C_KEYS;
       const nextKey = Array.from(octaveKeys)
         .sort((a, b) => a - b)
         .find((key) => key > index + 1);
@@ -1873,7 +1882,10 @@ function Index() {
     if (!origin) return;
     setTimeout(() => {
       if (origin.field === "wa") focusCell(origin.index, "wd");
-      else if (origin.index < 87) focusCell(origin.index + 1, "wa");
+      else {
+        const next = nextVisibleKey(origin.index, 1);
+        if (next !== null) focusCell(next, "wa");
+      }
     }, 0);
   };
 
@@ -2049,10 +2061,11 @@ function Index() {
       showOrphanPopover(orphanKeys[0]!);
       return false;
     }
-    if (octaveGaps.length > 0) {
+    if (!rapidMode && octaveGaps.length > 0) {
       showTopbarAlert(anchor, OCTAVE_RULE_MESSAGE);
       return false;
     }
+    if (rapidMode && !keyboardValid) return false;
     // Le consentement RGPD n'est plus contrôlé ici : il est demandé exclusivement
     // sur la page Résultats, au moment de lever le voile des graphiques.
     return true;
@@ -2654,6 +2667,7 @@ function Index() {
         }}
         value={rows[index]![field]}
         readOnly={pdfMirror}
+        tabIndex={!pdfMirror && rapidMode && !RAPID_INDEX_SET.has(index) ? -1 : undefined}
         maxLength={2}
         placeholder=""
         onChange={pdfMirror ? undefined : (e) => canEnterWeights && setValue(index, field, e.target.value)}
