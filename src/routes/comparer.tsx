@@ -209,21 +209,25 @@ export function buildChartData(
  */
 const SMOOTH_SKIP: ReadonlySet<string> = new Set(["key", "isBlack", "waMid", "wdMid", "balMid", "fricMid"]);
 
-export function smoothChartData(points: ChartPoint[]): ChartPoint[] {
-  if (points.length < 3) return points;
+export function smoothChartData(points: ChartPoint[], windowSize: 3 | 5 = 3): ChartPoint[] {
+  if (points.length === 0) return points;
   const output = points.map((point) => ({ ...point }));
   const keys = Object.keys(points[0] ?? {}).filter((key) => !SMOOTH_SKIP.has(key)) as SeriesKey[];
   keys.forEach((key) => {
     const defined: number[] = [];
     points.forEach((point, index) => {
-      if (typeof point[key] === "number") defined.push(index);
+      if (typeof point[key] === "number" && Number.isFinite(point[key])) defined.push(index);
     });
-    if (defined.length < 3) return;
-    for (let position = 1; position < defined.length - 1; position += 1) {
-      const previous = points[defined[position - 1]!]![key] as number;
-      const current = points[defined[position]!]![key] as number;
-      const next = points[defined[position + 1]!]![key] as number;
-      output[defined[position]!]![key] = n1((previous + current + next) / 3);
+    if (windowSize === 3 && defined.length < 3) return;
+    for (let position = 0; position < defined.length; position += 1) {
+      // Le lissage historique garde ses deux extrémités brutes. Lissé+ utilise
+      // les voisins disponibles aux bords, sans ajouter de zéros ni de NaN.
+      if (windowSize === 3 && (position === 0 || position === defined.length - 1)) continue;
+      const radius = (windowSize - 1) / 2;
+      const neighbors = defined.slice(Math.max(0, position - radius), position + radius + 1);
+      const values = neighbors.map((index) => points[index]?.[key]).filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+      const index = defined[position];
+      if (index !== undefined && values.length > 0) output[index][key] = n1(values.reduce((sum, value) => sum + value, 0) / values.length);
     }
   });
   return output;
@@ -722,8 +726,9 @@ type SubChartCtx = {
   csvActive: boolean;
   targetLabel: string;
   onCycleKeyFilter: (() => void) | undefined;
-  smooth: boolean;
-  toggleSmooth: () => void;
+  smoothMode: "real" | "smooth" | "smoothPlus";
+  cycleSmoothMode: () => void;
+  showSourceControls: boolean;
   filters: Record<string, KeyFilter>;
   cycleFor: (familyId: string) => void;
   lang: string;
@@ -746,7 +751,7 @@ type SubChartCtx = {
 // remontage détruit le SVG Recharts au moment exact du dispatch synthétique, ce qui
 // empêchait les flèches ◄ ► d'allumer la pastille.
 function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[number]; zoomed?: boolean; ctx: SubChartCtx }) {
-  const { chartData, keyFilter: baseKeyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, smooth, toggleSmooth, filters, cycleFor, lang, zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode, plotRef, lastMouseY, keyboardModeRef, lastMouseNote, onMouseTakeover } = ctx;
+  const { chartData, keyFilter: baseKeyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, smoothMode, cycleSmoothMode, showSourceControls, filters, cycleFor, lang, zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode, plotRef, lastMouseY, keyboardModeRef, lastMouseNote, onMouseTakeover } = ctx;
   const [showZoomHelp, setShowZoomHelp] = useState(false);
   // Interrupteurs ON/OFF des trois courbes, propres à la session de zoom.
   const [zoomCurveOff, setZoomCurveOff] = useState<{ current: boolean; reference: boolean; target: boolean }>({ current: false, reference: false, target: false });
@@ -769,7 +774,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   const referenceAvailable = groupHasData(referenceLines);
   const targetAvailable = groupHasData(otherLines);
   // Le mini-panneau n'existe que si les trois sources sont actives.
-  const showCurveToggles = currentAvailable && referenceAvailable && targetAvailable;
+  const showCurveToggles = showSourceControls && currentAvailable && referenceAvailable && targetAvailable;
   const lines = [
     ...currentLines.map((line) => (zoomed && zoomCurveOff.current ? { ...line, hidden: true } : line)),
     ...referenceLines.map((line) => (zoomed && zoomCurveOff.reference ? { ...line, hidden: true } : line)),
@@ -914,17 +919,16 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           <button
             type="button"
             data-pdf-hide
-            aria-pressed={smooth}
-            aria-label={smooth ? (lang === "en" ? "Smoothed mode" : "Mode lissé") : lang === "en" ? "Raw mode" : "Mode réel"}
+            aria-label={`${lang === "en" ? "Mode" : "Mode"} : ${smoothMode === "real" ? (lang === "en" ? "Raw" : "Réel") : smoothMode === "smooth" ? (lang === "en" ? "Smoothed" : "Lissé") : (lang === "en" ? "Smoothed+" : "Lissé+")}`}
             onClick={(event) => {
               event.stopPropagation();
-              toggleSmooth();
+              cycleSmoothMode();
             }}
-            className={`flex items-center rounded-full [border-width:1.3px] !border-green-600 bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-[0.45rem] px-[0.9rem] py-[0.225rem] text-[1.224rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"} ${smooth ? "opacity-100" : "opacity-60"}`}
+            className={`flex items-center rounded-full [border-width:1.3px] !border-green-600 bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-[0.45rem] px-[0.9rem] py-[0.225rem] text-[1.224rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"} ${smoothMode === "real" ? "opacity-60" : "opacity-100"}`}
           >
             <Waves size={zoomed ? 25.2 : 14} strokeWidth={2.5} className="shrink-0" />
             <span className="!text-black">
-              {smooth ? (lang === "en" ? "Smoothed" : "Lissé") : lang === "en" ? "Raw" : "Réel"}
+              {lang === "en" ? "Mode: " : "Mode : "}{smoothMode === "real" ? (lang === "en" ? "Raw" : "Réel") : smoothMode === "smooth" ? (lang === "en" ? "Smoothed" : "Lissé") : (lang === "en" ? "Smoothed+" : "Lissé+")}
             </span>
           </button>
         </div>
@@ -1059,7 +1063,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               <Line
                 key={line.dataKey}
                 xAxisId="main"
-                type="monotone"
+                type={smoothMode === "real" ? "linear" : "monotone"}
                 dataKey={line.dataKey}
                 name={line.name}
                 stroke={line.hidden ? "transparent" : color}
@@ -1081,19 +1085,19 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   );
 }
 
-export function ComparisonChart({ chartData: rawChartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible", onCycleKeyFilter, smoothDefault = true }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void; smoothDefault?: boolean }) {
+export function ComparisonChart({ chartData: rawChartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible", onCycleKeyFilter, smoothDefault = true, showSourceControls = false }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void; smoothDefault?: boolean; showSourceControls?: boolean }) {
   const lang = useLang();
-  // Lissage global (moyenne mobile sur 3 notes), actif par défaut. Purement local.
+  // Lissage global : brut, trois notes, ou cinq notes. Purement local.
   // `smoothDefault` permet au Mode Rapide d'imposer le rendu « Réel ».
-  const [smooth, setSmooth] = useState(smoothDefault);
-  const toggleSmooth = useCallback(() => setSmooth((value) => !value), []);
+  const [smoothMode, setSmoothMode] = useState<"real" | "smooth" | "smoothPlus">(smoothDefault ? "smooth" : "real");
+  const cycleSmoothMode = useCallback(() => setSmoothMode((mode) => mode === "real" ? "smooth" : mode === "smooth" ? "smoothPlus" : "real"), []);
   // Bascule automatique quand la valeur par défaut change (Mode Rapide activé/coupé).
   useEffect(() => {
-    setSmooth(smoothDefault);
+    setSmoothMode(smoothDefault ? "smooth" : "real");
   }, [smoothDefault]);
   const chartData = useMemo(
-    () => (smooth ? smoothChartData(rawChartData) : rawChartData),
-    [smooth, rawChartData],
+    () => smoothMode === "real" ? rawChartData : smoothChartData(rawChartData, smoothMode === "smoothPlus" ? 5 : 3),
+    [smoothMode, rawChartData],
   );
   // Chaque cadre graphique garde son propre réglage N/B (4 états cycliques).
   const [filters, setFilters] = useState<Record<string, KeyFilter>>({});
@@ -1149,7 +1153,7 @@ export function ComparisonChart({ chartData: rawChartData, keyFilter, comparison
   // Contexte stable passé au SubChart (déclaré au niveau module) : évite le
   // démontage/remontage du graphique Recharts à chaque changement d'état clavier.
   const subCtx: SubChartCtx = {
-    chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, smooth, toggleSmooth, filters, cycleFor, lang,
+    chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, smoothMode, cycleSmoothMode, showSourceControls, filters, cycleFor, lang,
     zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode,
     plotRef, lastMouseY, keyboardModeRef, lastMouseNote, onMouseTakeover,
   };
@@ -2114,7 +2118,7 @@ function Comparer() {
               </div>
 
               <div ref={liveChartsRef}>
-                <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible"} onCycleKeyFilter={cycleKeyFilter} currentBaseName={en ? "Current piano" : "Piano actuel"} />
+                <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible"} onCycleKeyFilter={cycleKeyFilter} currentBaseName={en ? "Current piano" : "Piano actuel"} showSourceControls={mine !== null && sourceMode === "cloud" && comparedPiano === null && standardEnabled && cloudProfile !== null && standard !== null} smoothDefault={typeof window === "undefined" || window.localStorage.getItem("ptw_rapid_mode") !== "1"} />
               </div>
             </div>
             <aside className="min-w-0"><div ref={settingsRef} data-pdf-expand className="sticky top-[127px] z-50 flex flex-col overflow-visible" ><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} whoFilter={whoFilter} cycleWho={cycleWho} /></div></aside>
