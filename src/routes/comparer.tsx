@@ -461,7 +461,8 @@ function estimateEndLabelWidth(text: string) {
 // Équivalent natif : d3-force place les étiquettes SVG sur les vraies échelles
 // Recharts ; la collision ne modifie jamais les courbes, le repli vertical
 // (`shiftY`) et le confinement horizontal (distance 25 verrouillée, alignement
-// gauche, ligne de rappel pointillée vers l'extrémité de la courbe) garantissent
+// gauche, ligne de rappel blanche `labelLine.lineStyle.color = '#ffffff'`,
+// solide, largeur 2, donc invisible sur fond blanc) garantissent
 // qu'aucune moyenne ni aucun nom ne déborde, ne soit coupé par les bordures ou
 // ne se confonde avec le croisement des tracés.
 function EndLabels({ lines, data, domainX, colors, offset, xAxisMap, yAxisMap, leftClip = 0, rightMargin = 0 }: GuideChartProps & {
@@ -518,13 +519,14 @@ function EndLabels({ lines, data, domainX, colors, offset, xAxisMap, yAxisMap, l
     }
     return nodes.map((node) => (
       <g key={`${side}-${node.id}`}>
-        {/* Ligne de rappel (`labelLine.showAbove`, pointillée, couleur de la
-            série) : relie l'extrémité de la courbe à l'étiquette déportée.
+        {/* Ligne de rappel (`labelLine.show = true`, `showAbove: true`, trait
+            solide largeur 2 blanc #ffffff : masquée sur le fond blanc de l'app,
+            comme ECharts labelLine masqué en blanc.
             showAbove est assuré par l'ordre de rendu SVG du Customized. */}
         <line
           x1={node.endX} y1={node.anchorY}
           x2={side === "left" ? node.labelX + 4 : node.labelX - 4} y2={node.y}
-          stroke={node.color} strokeWidth={1} strokeDasharray="4 3"
+          stroke="#ffffff" strokeWidth={2} strokeDasharray={undefined}
         />
         <text x={node.labelX} y={node.y}
           textAnchor={side === "left" ? "end" : "start"} dominantBaseline="middle"
