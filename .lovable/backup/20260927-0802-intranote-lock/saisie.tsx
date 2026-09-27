@@ -1700,17 +1700,13 @@ function Index() {
       focusCell(index, field);
       return;
     }
-    // Exception de navigation intra-touche : tant que le binôme est en
-    // anomalie (mécanique, fourchette ou incomplet), Tab, Entrée et les
-    // flèches verticales circulent LIBREMENT entre les deux champs de la
-    // MÊME touche (index identique) pour corriger la faute de frappe.
-    // Aucun enfermement sur la case fautive elle-même.
-    if (
-      pairHasError(index) &&
-      (e.key === "Tab" || e.key === "Enter" || e.key === "ArrowUp" || e.key === "ArrowDown")
-    ) {
+    // Verrou absolu du binôme : erreur mécanique, hors fourchette ou binôme
+    // incomplet. Seuls les déplacements INTERNES au binôme restent permis.
+    if (pairHasError(index) && (e.key === "Tab" || e.key === "Enter")) {
       e.preventDefault();
-      focusCell(index, field === "wa" ? "wd" : "wa");
+      const other = field === "wa" ? "wd" : "wa";
+      if (errorsRef.current[`${index}-${field}`]) focusCell(index, field);
+      else focusCell(index, other);
       return;
     }
 
@@ -2689,12 +2685,6 @@ function Index() {
           const locked = lockedPairRef.current;
           if (locked !== null && locked !== index && pairHasError(locked)) {
             const target = pairErrorField(locked);
-            // Alerte mécanique (PD >= PR) disparue : réaffichage instantané
-            // à chaque tentative de fuite hors de la touche bloquée.
-            if (errorsRef.current[`${locked}-wd`] === COHERENCE_MESSAGE) {
-              coherenceDismissed.current.delete(locked);
-              showCoherencePopover(locked);
-            }
             setTimeout(() => focusCell(locked, target), 0);
             return;
           }
