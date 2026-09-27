@@ -1700,21 +1700,6 @@ function Index() {
       focusCell(index, field);
       return;
     }
-    // Entrée ou Échap : fermeture instantanée de l'alerte mécanique,
-    // exactement comme le clic n'importe où sur l'écran (pointerdown).
-    if ((e.key === "Enter" || e.key === "Escape") && coherenceIndex === index) {
-      coherenceDismissed.current.add(index);
-      setCoherenceIndex(null);
-      setCoherenceAnchor(null);
-      if (coherenceTimeout.current) {
-        clearTimeout(coherenceTimeout.current);
-        coherenceTimeout.current = null;
-      }
-      if (e.key === "Escape") {
-        e.preventDefault();
-        return;
-      }
-    }
     // Exception de navigation intra-touche : tant que le binôme est en
     // anomalie (mécanique, fourchette ou incomplet), Tab, Entrée et les
     // flèches verticales circulent LIBREMENT entre les deux champs de la
@@ -1965,10 +1950,9 @@ function Index() {
       showCoherencePopover(index);
       setTimeout(() => {
         const input = inputs.current[wdKey];
-        // Sélection des 2 chiffres UNIQUEMENT si le curseur est encore sur la
-        // case du bas : jamais d'aimantation lorsque l'artisan est remonté
-        // librement sur le Poids Descendant de la MÊME touche.
-        if (!input || document.activeElement !== input) return;
+        const active = document.activeElement;
+        const inPair = active === inputs.current[waKey] || active === input;
+        if (!input || !inPair) return;
         input.focus();
         input.select();
       }, 0);
