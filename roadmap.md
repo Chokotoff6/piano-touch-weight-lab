@@ -14,3 +14,5 @@
 - [x] Conserver la topologie linéaire des 88 touches en mode Réel/Rapide.
 - [x] Afficher les contrôles de courbes uniquement avec piano, Cloud et Cible simultanés.
 - [x] Vérifier typage et compilation automatique.
+- [x] Aligner les moyennes du piano actuel entre Résultats et Comparer en ignorant les pesées incomplètes ou nulles.
+- [x] Remplacer les décalages manuels des libellés de courbes par un placement anticollision sur les extrémités réelles.
