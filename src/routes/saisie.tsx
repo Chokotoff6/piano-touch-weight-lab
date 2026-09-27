@@ -1662,8 +1662,16 @@ function Index() {
       ? nextVisibleKey(index, 1) ?? nextVisibleKey(index, -1)
       : index;
     if (target === null) return;
+    // Anti-rebond : tant que le focus n'est pas stabilisé sur la cellule
+    // visée, toute nouvelle pression clavier répétée est ignorée.
+    navLock.current = true;
     inputs.current[`${target}-${field}`]?.focus();
     inputs.current[`${target}-${field}`]?.select();
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        navLock.current = false;
+      });
+    });
   };
 
   /** Une touche est-elle visible avec le filtre courant ? */
