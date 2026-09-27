@@ -15,7 +15,6 @@ import { isDemoActive, DEMO_LOADED_EVENT } from "@/lib/demo-mode";
 import {
   buildCurrentPiano,
   loadCurrentPiano,
-  orientCurrentPiano,
   loadPianoProfileById,
   CURRENT_PIANO_BUFFER_UUID,
   DEMO_PIANO_BUFFER_UUID,
@@ -1791,11 +1790,7 @@ function Comparer() {
         cloudPiano = null;
       }
       if (cancelled) return;
-      // La fiche démo …0001 est stockée inversée en base : même réorientation
-      // que le chargement du Mode démo, sinon la validation « wa > wd » de
-      // profileFromCurrentPiano vide toutes les moyennes.
-      const raw = cloudPiano ?? loadCurrentPiano();
-      const piano = demo && raw ? orientCurrentPiano(raw) : raw;
+      const piano = cloudPiano ?? loadCurrentPiano();
       setMine(piano ? profileFromCurrentPiano(piano) : null);
       setStatus("ok");
     };
