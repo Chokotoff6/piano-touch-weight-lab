@@ -631,8 +631,58 @@ function Index() {
     markDemoCascadeSeen();
   };
 
-  // Nettoyage du minuteur à la sortie de la page.
-  useEffect(() => stopCascadeTimer, []);
+  // --- Régénération démo accélérée pour le Mode Rapide -------------------
+  const rapidDemoTimer = useRef<number | null>(null);
+  const stopRapidDemoTimer = () => {
+    if (rapidDemoTimer.current !== null) {
+      window.clearInterval(rapidDemoTimer.current);
+      rapidDemoTimer.current = null;
+    }
+  };
+
+  /**
+   * Bascule en Mode Rapide pendant le Mode Démo : coupe l'animation des 88
+   * touches, vide le clavier et réinjecte uniquement les Do/Do#.
+   */
+  const restartDemoForRapid = () => {
+    stopCascadeTimer();
+    stopRapidDemoTimer();
+    let source: Row[] | null = cascadeTarget.current;
+    if (!source) {
+      try {
+        const raw = window.localStorage.getItem(DRAFT_ROWS_KEY);
+        const parsed = raw ? (JSON.parse(raw) as Row[]) : null;
+        if (Array.isArray(parsed) && parsed.length === 88) source = parsed;
+      } catch {
+        /* stockage indisponible */
+      }
+    }
+    if (!source) source = rowsRef.current;
+    const target = source.map((r) => ({ wa: r?.wa ?? "", wd: r?.wd ?? "" }));
+    cascadeTarget.current = null;
+    cascadeStarted.current = true;
+    markDemoCascadeSeen();
+    setRows(EMPTY.map((r) => ({ ...r })));
+    let step = 0;
+    rapidDemoTimer.current = window.setInterval(() => {
+      const idx = RAPID_INDEXES[step];
+      if (idx === undefined) {
+        stopRapidDemoTimer();
+        return;
+      }
+      step += 1;
+      setRows((prev) => prev.map((r, i) => (i === idx ? { ...target[i]! } : r)));
+    }, 60);
+  };
+
+  // Nettoyage des minuteurs à la sortie de la page.
+  useEffect(
+    () => () => {
+      stopCascadeTimer();
+      stopRapidDemoTimer();
+    },
+    [],
+  );
 
   // --- Couleur mauve et animation machine à écrire (Mode Démo) ------------
   const [demoInk, setDemoInk] = useState(() => isDemoActive());
