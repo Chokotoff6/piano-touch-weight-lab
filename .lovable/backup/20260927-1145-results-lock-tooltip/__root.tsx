@@ -38,7 +38,6 @@ import { FaqDialog } from "@/components/FaqDialog";
 import { LegalDialog } from "@/data/legal";
 import type { FaqPage } from "@/components/FaqContent";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { lockedResultsMessage } from "@/lib/required-keys";
 
 function NotFoundComponent() {
   return (
@@ -362,18 +361,16 @@ function RootComponent() {
                   {lang === "en" ? "Results" : "Résultats"}
                 </Link>
               ) : (
-                <span className="group/res relative inline-block">
-                  <button
-                    type="button"
-                    aria-disabled="true"
-                    onClick={(e) => e.preventDefault()}
-                    className={lockedLinkClass.replace("cursor-not-allowed", "cursor-help")}
-                  >
-                    {lang === "en" ? "Results" : "Résultats"}
-                  </button>
-                  <span className="pointer-events-none absolute left-0 top-full z-[99999] mt-2 hidden w-72 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-950 shadow-lg group-hover/res:block group-focus-within/res:block">
-                    {lockedResultsMessage(lang === "en")}
-                  </span>
+                <span
+                  className={lockedLinkClass}
+                  aria-disabled="true"
+                  title={
+                    lang === "en"
+                      ? "Complete the minimum weighing threshold on the Inputs page."
+                      : "Complétez le seuil minimal de pesée sur la page Saisie."
+                  }
+                >
+                  {lang === "en" ? "Results" : "Résultats"}
                 </span>
               )}
               <div className="relative">
