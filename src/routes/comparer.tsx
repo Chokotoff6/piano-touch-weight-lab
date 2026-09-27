@@ -15,6 +15,7 @@ import { isDemoActive, DEMO_LOADED_EVENT } from "@/lib/demo-mode";
 import {
   buildCurrentPiano,
   loadCurrentPiano,
+  orientCurrentPiano,
   loadPianoProfileById,
   CURRENT_PIANO_BUFFER_UUID,
   DEMO_PIANO_BUFFER_UUID,
