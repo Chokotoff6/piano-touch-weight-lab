@@ -409,9 +409,11 @@ type EndLabelNode = SimulationNodeDatum & { id: string; x: number; y: number; an
 function EndLabels({ lines, data, domainX, colors, offset, xAxisMap, yAxisMap }: GuideChartProps & {
   lines: LineDef[]; data: ChartPoint[]; domainX: [number, number]; colors: Map<SeriesKey, string>;
 }) {
-  const xScale = xAxisMap?.main?.scale;
+  const xScale = xAxisMap?.["main"]?.scale;
   const yScale = Object.values(yAxisMap ?? {}).find((axis) => typeof axis?.scale === "function")?.scale;
-  if (!xScale || !yScale || !offset) return null;
+  if (!xScale || !yScale || typeof offset?.top !== "number" || typeof offset.height !== "number") return null;
+  const plotTop = offset.top;
+  const plotHeight = offset.height;
   const renderSide = (side: "left" | "right") => {
     const nodes: EndLabelNode[] = lines.filter((line) => !line.hidden).flatMap((line) => {
       const index = side === "left"
@@ -429,8 +431,8 @@ function EndLabels({ lines, data, domainX, colors, offset, xAxisMap, yAxisMap }:
         text: side === "left" ? line.shortName : `${getLang() === "en" ? "Avg" : "Moy"}: ${avg}g`,
         color: colors.get(line.dataKey) ?? line.color }];
     });
-    const top = offset.top + 9;
-    const bottom = offset.top + offset.height - 9;
+    const top = plotTop + 9;
+    const bottom = plotTop + plotHeight - 9;
     // Deux couloirs distincts (noms à gauche, moyennes à droite). Les nœuds
     // restent attachés à leur extrémité X et se repoussent uniquement en Y.
     const simulation = forceSimulation(nodes)
