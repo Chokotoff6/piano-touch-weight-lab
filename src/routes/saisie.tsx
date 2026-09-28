@@ -443,6 +443,8 @@ function Index() {
   const [weighingMode, setWeighingMode] = useState(false);
   /** Filtrage visuel cyclique des touches affichées à l'écran. */
   const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
+  // Filtre « Poids » : Descendants (wd seul), Remontants (wa seul) ou Tous.
+  const [weightFilter, setWeightFilter] = useState<"all" | "wd" | "wa">("all");
   const [rapidMode, setRapidMode] = useState(false);
 
   // Persistance du Mode Rapide : tant qu'il reste actif, les graphiques des
@@ -1471,6 +1473,7 @@ function Index() {
     lockedPairRef.current = null;
     setRapidMode(false);
     setViewFilter("all");
+    setWeightFilter("all");
     setConfirmReset(null);
     // 4. Retour sur la fiche Info piano et verrous de parcours réarmés.
     setWeighingMode(false);
@@ -1770,7 +1773,22 @@ function Index() {
     };
   }, [rows]);
 
-  const focusCell = (index: number, field: "wd" | "wa") => {
+  const focusCell = (index: number, requested: "wd" | "wa") => {
+    let field = requested;
+    // Filtre « Poids » : la case masquée est sautée, le curseur enchaîne
+    // exclusivement sur la ligne affichée (avant ou arrière).
+    if (weightFilter !== "all" && requested !== weightFilter) {
+      field = weightFilter;
+      const activeKey = Object.keys(inputs.current).find((k) => inputs.current[k] === document.activeElement);
+      const activeIndex = activeKey ? Number(activeKey.split("-")[0]) : index;
+      // wd seul : demande « wa » = avancer ; wa seul : demande « wd » à la même touche = reculer.
+      const forward = weightFilter === "wd" ? true : index > activeIndex;
+      if (index === activeIndex || weightFilter === "wd") {
+        const step = nextVisibleKey(index, forward ? 1 : -1);
+        if (step === null) return;
+        index = step;
+      }
+    }
     const target = rapidMode && !RAPID_INDEX_SET.has(index)
       ? nextVisibleKey(index, 1) ?? nextVisibleKey(index, -1)
       : index;
@@ -2784,7 +2802,7 @@ function Index() {
     hidden = false,
   ) => (
     <div
-      className={`weight-fields weight-fields-${field} ${!pdfMirror && rapidMode && !RAPID_INDEX_SET.has(index) ? "invisible pointer-events-none select-none" : ""}`}
+      className={`weight-fields weight-fields-${field} ${!pdfMirror && ((rapidMode && !RAPID_INDEX_SET.has(index)) || (weightFilter !== "all" && weightFilter !== field)) ? "invisible pointer-events-none select-none" : ""}`}
       style={hidden ? { visibility: "hidden" } : undefined}
       onClick={() => {
         if (!canEnterWeights) showBlockMessage(index, field);
@@ -3607,6 +3625,23 @@ function Index() {
                     : viewFilter === "white"
                       ? "Touches : Blanches"
                       : "Touches : Noires"}
+              </span>
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              data-pdf-hide
+              onClick={() =>
+                setWeightFilter((current) => (current === "all" ? "wd" : current === "wd" ? "wa" : "all"))
+              }
+              className="h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground"
+            >
+              <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
+              <span>
+                {en
+                  ? weightFilter === "all" ? "Weights: All" : weightFilter === "wd" ? "Weights: Down" : "Weights: Up"
+                  : weightFilter === "all" ? "Poids : Tous" : weightFilter === "wd" ? "Poids : Descendants" : "Poids : Remontants"}
               </span>
             </Button>
 
