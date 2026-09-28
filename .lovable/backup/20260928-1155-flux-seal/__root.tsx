@@ -343,18 +343,7 @@ function RootComponent() {
           <div className="flex flex-wrap items-center gap-2">
             {/* Logo officiel KeyWeight : calé à gauche, retour à l'accueil. */}
             <div className="relative z-10 flex shrink-0 flex-col items-center translate-y-[26px]">
-              <Link
-                to="/"
-                aria-label={lang === "en" ? "Home" : "Accueil"}
-                className="block"
-                onClick={() => {
-                  try {
-                    window.sessionStorage.setItem("ptw_weighing_mode", "0");
-                  } catch {
-                    /* stockage indisponible */
-                  }
-                }}
-              >
+              <Link to="/" aria-label={lang === "en" ? "Home" : "Accueil"} className="block">
                 <span
                   role="img"
                   aria-label="KeyWeight"
