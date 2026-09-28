@@ -301,9 +301,12 @@ function useSnappedGrid(from: number, to: number) {
       const snap = () => {
         const parent = node.parentElement;
         if (!parent) return;
-        const avail =
-          parent.getBoundingClientRect().width -
-          (parent.firstElementChild?.getBoundingClientRect().width ?? 0);
+        // Encombrement de la colonne d'étiquettes gauche, mesuré précisément
+        // pour chaque section (le premier enfant du conteneur peut être le bloc
+        // Annuler/Rétablir, dont la largeur ne représente pas les étiquettes).
+        const labelsEl = parent.querySelector<HTMLElement>(".technical-labels");
+        const labelsWidth = labelsEl ? labelsEl.getBoundingClientRect().width : 0;
+        const avail = parent.getBoundingClientRect().width - labelsWidth;
         const dpr = window.devicePixelRatio || 1;
         const px = (n: number) => Math.round(n * dpr) / dpr;
         const whites = keys.filter((k) => !BLACK_KEYS.has(k)).length;
