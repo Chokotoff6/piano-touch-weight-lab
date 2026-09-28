@@ -800,6 +800,8 @@ function Index() {
       if (!active) {
         // Reset OFF : formulaire et clavier vierges, encre noire standard.
         stopTypewriter();
+        setShowDemoAuto(false);
+        demoAutoTarget.current = null;
         stopCascadeTimer();
         stopRapidDemoTimer();
         stopNormalDemoDelay();
@@ -1445,7 +1447,7 @@ function Index() {
       stopTypewriter();
       try {
         const raw = window.localStorage.getItem(DRAFT_INFO_KEY);
-        demoAutoTarget.current = raw ? (JSON.parse(raw) as Record<string, string>) : demoTargetRef.current;
+        demoAutoTarget.current = demoTargetRef.current ?? (raw ? (JSON.parse(raw) as Record<string, string>) : null);
       } catch {
         demoAutoTarget.current = demoTargetRef.current;
       }
@@ -3766,7 +3768,7 @@ function Index() {
               }
               navigate({ to: "/resultats" });
             }}
-            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100 !text-black" : "cursor-help border-input bg-background !text-gray-400 opacity-60"}`}
+            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100 !text-black" : "border-input bg-background !text-gray-400 opacity-60"}`}
             style={
               badgeVisible
                 ? {
