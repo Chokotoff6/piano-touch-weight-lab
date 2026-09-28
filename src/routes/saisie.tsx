@@ -466,9 +466,17 @@ function Index() {
   }, [weighingMode]);
   useEffect(() => () => setTopbarState({ weighingMode: false }), []);
 
-  /** Retour depuis Résultats / Comparer : on rouvre directement l'écran clavier. */
+  /** Retour depuis Résultats / Comparer : on rouvre directement l'écran clavier.
+      Exception : arrivée depuis l'accueil avec ?demo=true → atterrissage
+      impératif sur le formulaire (jamais sur le clavier). */
   useEffect(() => {
     try {
+      const fromHomeDemo = new URLSearchParams(window.location.search).get("demo") === "true";
+      if (fromHomeDemo) {
+        window.sessionStorage.setItem("ptw_weighing_mode", "0");
+        setWeighingMode(false);
+        return;
+      }
       if (window.sessionStorage.getItem("ptw_weighing_mode") === "1") setWeighingMode(true);
     } catch {
       /* stockage indisponible */
@@ -756,7 +764,7 @@ function Index() {
   const [demoTyped, setDemoTyped] = useState(false);
   /** Encre mauve restaurée au retour sur la page alors que le Mode Démo est resté ON. */
   const [demoPersistedInk, setDemoPersistedInk] = useState(false);
-  const [showDemoAuto, setShowDemoAuto] = useState(false);
+  const [, setShowDemoAuto] = useState(false);
   const demoAutoTarget = useRef<Record<string, string> | null>(null);
   const demoTargetRef = useRef<Record<string, string> | null>(null);
   const typewriterTimer = useRef<number | null>(null);
@@ -771,9 +779,25 @@ function Index() {
       typewriterTimer.current = null;
     }
   };
+
+  /**
+   * Réarmement central des verrous de la machine à écrire démo :
+   * autorise un nouveau démarrage et purge le temporisateur en attente.
+   * Point d'entrée unique — toute bascule de flux (accueil ?demo=true,
+   * interrupteur Mode Démo, retour mesures → formulaire) repasse ici.
+   */
+  const resetTypewriterSecurity = () => {
+    initialTypewriterStartedRef.current = false;
+    if (typewriterDelayTimer.current !== null) {
+      window.clearTimeout(typewriterDelayTimer.current);
+      typewriterDelayTimer.current = null;
+    }
+  };
+
   // Lancement automatique du Mode Démo via /saisie?demo=true (lien de l'accueil).
   const { demo: demoParam } = Route.useSearch();
   useEffect(() => {
+    resetTypewriterSecurity();
     const fromUrl =
       demoParam === "true" ||
       new URLSearchParams(window.location.search).get("demo") === "true";
@@ -796,6 +820,7 @@ function Index() {
   useEffect(() => {
     setDemoInk(isDemoActive());
     const sync = () => {
+      resetTypewriterSecurity();
       const active = isDemoActive();
       setDemoInk(active);
       // Réarmement : chaque bascule ON/OFF permet de rejouer la cascade.
@@ -3145,7 +3170,7 @@ function Index() {
         data-climate-zone={climateZone ?? ""}
       >
         <Frame title={en ? "Piano information" : "Informations piano"} className="mt-10 mx-auto w-4/5 max-w-[80%] [&_input]:border-foreground/60">
-          {showDemoAuto && isDemoActive() && (
+          {isDemoActive() && !info["marque"]?.trim() && !info["modele"]?.trim() && (
             <Button
               type="button"
               variant="outline"
@@ -3630,7 +3655,10 @@ function Index() {
           <button
             type="button"
             data-pdf-hide
-            onClick={() => setWeighingMode(false)}
+            onClick={() => {
+              resetTypewriterSecurity();
+              setWeighingMode(false);
+            }}
             className="rounded-md border border-input bg-background px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors hover:bg-accent"
 
           >
