@@ -443,8 +443,6 @@ function Index() {
   const [weighingMode, setWeighingMode] = useState(false);
   /** Filtrage visuel cyclique des touches affichées à l'écran. */
   const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
-  // Filtre « Poids » : Descendants (wd seul), Remontants (wa seul) ou Tous.
-  const [weightFilter, setWeightFilter] = useState<"all" | "wd" | "wa">("all");
   const [rapidMode, setRapidMode] = useState(false);
 
   // Persistance du Mode Rapide : tant qu'il reste actif, les graphiques des
@@ -1431,13 +1429,6 @@ function Index() {
   };
   const handleResumeProject = () => setShowResumeModal(false);
 
-  /** Reset utilisateur : si la démo tournait, le bouton Démo devient « Relancer l'animation ». */
-  const handleUserReset = () => {
-    const wasDemo = isDemoActive();
-    handleFullReset();
-    if (wasDemo) setTopbarState({ demoReplayArmed: true });
-  };
-
   const handleFullReset = () => {
     // 1. Mode Démo impérativement OFF.
     stopTypewriter();
@@ -1480,7 +1471,6 @@ function Index() {
     lockedPairRef.current = null;
     setRapidMode(false);
     setViewFilter("all");
-    setWeightFilter("all");
     setConfirmReset(null);
     // 4. Retour sur la fiche Info piano et verrous de parcours réarmés.
     setWeighingMode(false);
@@ -1780,22 +1770,7 @@ function Index() {
     };
   }, [rows]);
 
-  const focusCell = (index: number, requested: "wd" | "wa") => {
-    let field = requested;
-    // Filtre « Poids » : la case masquée est sautée, le curseur enchaîne
-    // exclusivement sur la ligne affichée (avant ou arrière).
-    if (weightFilter !== "all" && requested !== weightFilter) {
-      field = weightFilter;
-      const activeKey = Object.keys(inputs.current).find((k) => inputs.current[k] === document.activeElement);
-      const activeIndex = activeKey ? Number(activeKey.split("-")[0]) : index;
-      // wd seul : demande « wa » = avancer ; wa seul : demande « wd » à la même touche = reculer.
-      const forward = weightFilter === "wd" ? true : index > activeIndex;
-      if (index === activeIndex || weightFilter === "wd") {
-        const step = nextVisibleKey(index, forward ? 1 : -1);
-        if (step === null) return;
-        index = step;
-      }
-    }
+  const focusCell = (index: number, field: "wd" | "wa") => {
     const target = rapidMode && !RAPID_INDEX_SET.has(index)
       ? nextVisibleKey(index, 1) ?? nextVisibleKey(index, -1)
       : index;
@@ -2809,7 +2784,7 @@ function Index() {
     hidden = false,
   ) => (
     <div
-      className={`weight-fields weight-fields-${field} ${!pdfMirror && ((rapidMode && !RAPID_INDEX_SET.has(index)) || (weightFilter !== "all" && weightFilter !== field)) ? "invisible pointer-events-none select-none" : ""}`}
+      className={`weight-fields weight-fields-${field} ${!pdfMirror && rapidMode && !RAPID_INDEX_SET.has(index) ? "invisible pointer-events-none select-none" : ""}`}
       style={hidden ? { visibility: "hidden" } : undefined}
       onClick={() => {
         if (!canEnterWeights) showBlockMessage(index, field);
@@ -3128,7 +3103,7 @@ function Index() {
                     <input
                       type="radio"
                       name="type_piano"
-                      style={{ accentColor: demoInk && isDemoActive() ? "#7c3aed" : "#111111" }}
+                      style={{ accentColor: "#111111" }}
                       value={t}
                       disabled={identityLocked}
                       checked={info["type_piano"] === t}
@@ -3412,7 +3387,7 @@ function Index() {
                 style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
               >
                 <span>{en ? "Do you want to erase all entered piano information?" : "Voulez-vous effacer toutes les infos piano saisies ?"}</span>
-                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleUserReset(); }}>Oui</button>
+                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleFullReset(); }}>Oui</button>
                 <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
               </div>
             )}
@@ -3460,13 +3435,6 @@ function Index() {
                 </div>
               </div>
             )}
-            <span className="group/wbtn relative inline-block">
-            {!missingFlash && !requiredSheetFieldsComplete && (
-              <span className="pointer-events-none absolute bottom-full right-0 z-50 mb-2 hidden w-72 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium !text-gray-900 shadow-lg group-hover/wbtn:block">
-                {en ? "Complete: " : "Complétez : "}
-                {missingSheetFields.length > 0 ? missingSheetFields.join(", ") : en ? "Measurements" : "Pesées"}
-              </span>
-            )}
             <button
               ref={weighingBtnRef}
               type="button"
@@ -3476,7 +3444,6 @@ function Index() {
             >
               {en ? "Key measurements >" : "Mesures clavier >"}
             </button>
-            </span>
           </div>
         </div>
 
@@ -3643,23 +3610,6 @@ function Index() {
               </span>
             </Button>
 
-            <Button
-              type="button"
-              variant="outline"
-              data-pdf-hide
-              onClick={() =>
-                setWeightFilter((current) => (current === "all" ? "wd" : current === "wd" ? "wa" : "all"))
-              }
-              className="h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground"
-            >
-              <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
-              <span>
-                {en
-                  ? weightFilter === "all" ? "Weights: All" : weightFilter === "wd" ? "Weights: Down" : "Weights: Up"
-                  : weightFilter === "all" ? "Poids : Tous" : weightFilter === "wd" ? "Poids : Descendants" : "Poids : Remontants"}
-              </span>
-            </Button>
-
             <div className="relative flex items-center">
               {confirmReset === "rows" && (
                 <div
@@ -3675,7 +3625,7 @@ function Index() {
                   style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
                 >
                   <span>{en ? "Do you want to erase all entered weight data?" : "Voulez-vous effacer toutes les données de poids saisies ?"}</span>
-                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleUserReset(); }}>Oui</button>
+                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleFullReset(); }}>Oui</button>
                   <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
                 </div>
               )}

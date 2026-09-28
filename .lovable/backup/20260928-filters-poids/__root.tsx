@@ -1,7 +1,7 @@
 import "@/lib/stanwood-migration";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { initLang, setLang, useLang } from "@/data/translations";
-import { initJourneyFlags, setTopbarState, showTopbarAlert, useTopbarState } from "@/lib/topbar-store";
+import { initJourneyFlags, useTopbarState } from "@/lib/topbar-store";
 import {
   ChevronDown,
 } from "lucide-react";
@@ -215,7 +215,6 @@ function RootComponent() {
   const pendingActionRef = useRef<(() => void) | null>(null);
   const [demoVisible, setDemoVisible] = useState(false);
   const [demoTipOpen, setDemoTipOpen] = useState(false);
-  const [resTipOpen, setResTipOpen] = useState(false);
   /** Verrou à vie du bandeau mauve : true tant que l'état réel n'est pas lu
       (évite tout clignotement au rendu serveur). */
   const [bannerDismissed, setBannerDismissed] = useState(true);
@@ -285,10 +284,6 @@ function RootComponent() {
   const isComparer = pathname === "/comparer";
   /** Accueil épuré : seuls le logo, la FAQ et EN | FR restent visibles. */
   const isHome = pathname === "/";
-  // Quitter la page Saisie annule la relance d'animation armée par Reset.
-  useEffect(() => {
-    if (pathname !== "/saisie" && topbar.demoReplayArmed) setTopbarState({ demoReplayArmed: false });
-  }, [pathname, topbar.demoReplayArmed]);
 
   /** Affiche le consentement RGPD/CGU au premier clic Sauver/Importer de la
       session, puis exécute l'action différée après acceptation. */
@@ -368,21 +363,18 @@ function RootComponent() {
                   {lang === "en" ? "Results" : "Résultats"}
                 </Link>
               ) : (
-                <span className="relative inline-block">
+                <span className="group/res relative inline-block">
                   <button
                     type="button"
                     aria-disabled="true"
-                    onClick={(e) => { e.preventDefault(); setResTipOpen((v) => !v); }}
-                    onBlur={() => setResTipOpen(false)}
-                    className={lockedLinkClass}
+                    onClick={(e) => e.preventDefault()}
+                    className={lockedLinkClass.replace("cursor-not-allowed", "cursor-help")}
                   >
                     {lang === "en" ? "Results" : "Résultats"}
                   </button>
-                  {resTipOpen && (
-                    <span className="pointer-events-none absolute left-0 top-full z-[99999] mt-2 block w-72 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-950 shadow-lg">
-                      {lockedResultsMessage(lang === "en")}
-                    </span>
-                  )}
+                  <span className="pointer-events-none absolute left-0 top-full z-[99999] mt-2 hidden w-72 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-950 shadow-lg group-hover/res:block group-focus-within/res:block">
+                    {lockedResultsMessage(lang === "en")}
+                  </span>
                 </span>
               )}
               <div className="relative">
@@ -398,9 +390,11 @@ function RootComponent() {
                   <span
                     className={lockedLinkClass}
                     aria-disabled="true"
-                    onClick={() => showTopbarAlert("compare", lang === "en"
-                      ? "Visit the Results page first to unlock the Compare page."
-                      : "Consultez d'abord la page Résultats pour débloquer la Comparaison.")}
+                    title={
+                      lang === "en"
+                        ? "Visit the Results page first to unlock the Compare page."
+                        : "Consultez d'abord la page Résultats pour débloquer la Comparaison."
+                    }
                   >
                     {lang === "en" ? "Compare" : "Comparer"}
                   </span>
@@ -691,27 +685,18 @@ function RootComponent() {
                 }}
                 onMouseLeave={() => setDemoTipOpen(false)}
                 onClick={() => {
-                  if (topbar.demoReplayArmed) {
-                    // Relance unique : la démo repart depuis le début, puis le bouton redevient ON/OFF.
-                    setTopbarState({ demoReplayArmed: false });
-                    if (isDemoActive()) toggleDemoMode();
-                    toggleDemoMode();
-                  } else {
-                    toggleDemoMode();
-                  }
+                  toggleDemoMode();
                   setDemoTipOpen(false);
                   void rootNavigate({ to: "/saisie" });
                 }}
                 aria-pressed={demoVisible}
                 className={
-                  demoVisible || topbar.demoReplayArmed
+                  demoVisible
                     ? "demo-border-pulse whitespace-nowrap rounded-md border-2 border-[#c4b5fd] bg-[#ede9fe] px-4 py-2 text-xs font-bold uppercase tracking-wide !text-[#4c1d95] transition-colors hover:bg-[#ddd6fe]"
                     : "whitespace-nowrap rounded-md border-2 border-gray-300 bg-gray-100 px-4 py-2 text-xs font-bold uppercase tracking-wide !text-black transition-colors hover:bg-gray-200"
                 }
               >
-                {topbar.demoReplayArmed
-                  ? lang === "en" ? "Replay animation" : "Relancer l'animation"
-                  : lang === "en" ? "Demo mode" : "Mode démo"}
+                {lang === "en" ? "Demo mode" : "Mode démo"}
               </button>
               {demoTipOpen && (
                 <div

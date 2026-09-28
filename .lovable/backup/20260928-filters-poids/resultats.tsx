@@ -123,8 +123,7 @@ function Resultats() {
     // Lecture après montage (compatibilité rendu serveur) : si le Mode Rapide
     // est actif côté Saisie, le graphique s'ouvre en rendu « Réel ».
     try {
-      // Ouverture imposée en « Lissé », même en Mode Rapide.
-      setSmoothDefault(true);
+      setSmoothDefault(window.localStorage.getItem("ptw_rapid_mode") !== "1");
     } catch {
       /* stockage indisponible */
     }

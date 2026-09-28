@@ -556,7 +556,7 @@ function tooltipColorFor(name: string) {
   const isBlack = lower.includes("noires") || lower.includes("blacks");
   if (lower.startsWith("import csv")) return isWhite ? "#93c5fd" : "#2563EB";
   const isReference = lower.startsWith("cloud") || lower.startsWith("référence");
-  if (isReference) return "#f97316";
+  if (isReference) return isWhite ? "#fdba74" : "#f97316";
   if (isBlack) return "#000000";
   if (isWhite) return "#6b7280";
   if (lower.includes("piano actuel") || lower.includes("current piano") || lower.trim() === "") return "#000000";
@@ -627,10 +627,10 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
 
 type LineDef = { dataKey: SeriesKey; name: string; shortName: string; color: string; real?: boolean; hidden?: boolean; dashed?: boolean };
 const FAMILIES: Array<{ id: string; title: string; domain: [number, number]; lines: LineDef[] }> = [
-  { id: "wd", title: "Poids descendant", domain: [55, 85], lines: [{ dataKey: "sameWd", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWd", name: "Cible standard", shortName: "Cible standard", color: "#10b981" }] },
-  { id: "wa", title: "Poids remontant", domain: [50, 70], lines: [{ dataKey: "sameWa", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWa", name: "Cible standard", shortName: "Cible standard", color: "#10b981" }] },
-  { id: "bal", title: "Poids d'équilibre", domain: [55, 75], lines: [{ dataKey: "sameBal", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryBal", name: "Cible standard", shortName: "Cible standard", color: "#10b981" }] },
-  { id: "fric", title: "Friction", domain: ["dataMin - 1.5", "dataMax + 1.5"] as unknown as [number, number], lines: [{ dataKey: "sameFric", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryFric", name: "Cible standard", shortName: "Cible standard", color: "#10b981" }] },
+  { id: "wd", title: "Poids descendant", domain: [55, 85], lines: [{ dataKey: "sameWd", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWd", name: "Cible", shortName: "Cible", color: "#10b981" }] },
+  { id: "wa", title: "Poids remontant", domain: [50, 70], lines: [{ dataKey: "sameWa", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "stdWa", name: "Cible", shortName: "Cible", color: "#10b981" }] },
+  { id: "bal", title: "Poids d'équilibre", domain: [55, 75], lines: [{ dataKey: "sameBal", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryBal", name: "Cible", shortName: "Cible", color: "#10b981" }] },
+  { id: "fric", title: "Friction", domain: ["dataMin - 1.5", "dataMax + 1.5"] as unknown as [number, number], lines: [{ dataKey: "sameFric", name: "Cloud", shortName: "Cloud", color: "#f97316" }, { dataKey: "factoryFric", name: "Cible", shortName: "Cible", color: "#10b981" }] },
 ];
 
 // Terminologie bilingue stricte des quatre cadres graphiques.
@@ -672,7 +672,7 @@ function comparisonLinesFor(familyId: string, keyFilter: KeyFilter, name: string
   if (!metric) return [];
   // Bleu intense pour l'import CSV, orange pour la moyenne Cloud.
   const strong = isCsv ? "#2563EB" : "#f97316";
-  const light = isCsv ? "#93c5fd" : strong;
+  const light = isCsv ? "#93c5fd" : "#B45309";
   const whiteWord = getLang() === "en" ? "whites" : "blanches";
   const blackWord = getLang() === "en" ? "blacks" : "noires";
   const whiteLine: LineDef = { dataKey: metric[1], name: `${name} ${whiteWord}`, shortName: `${short} ${whiteWord}`, color: light, dashed: true };
@@ -861,7 +861,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   // Le libellé de la courbe verte reprend l'identité complète de la cible sélectionnée.
   const otherLines = family.lines
     .filter((line) => line.name !== "Cloud")
-    .map((line) => (line.name === "Cible standard" && !zoomed ? { ...line, name: targetLabel } : line));
+    .map((line) => (line.name === "Cible" && !zoomed ? { ...line, name: targetLabel } : line));
   const currentLines = currentLinesFor(family.id, keyFilter, currentBaseName);
   // Disponibilité réelle de chaque source : une courbe désactivée dans le
   // panneau latéral n'a aucune donnée dans chartData (héritage de l'état).
@@ -998,7 +998,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             {([
               { group: "current" as const, label: keyFilter === "all" ? currentLines[0]?.name ?? currentBaseName : currentBaseName, color: "#000000", off: zoomCurveOff.current },
               { group: "reference" as const, label: keyFilter === "all" ? referenceLines[0]?.name ?? comparisonLabel : comparisonLabel, color: csvActive ? "#2563EB" : "#f97316", off: zoomCurveOff.reference },
-              { group: "target" as const, label: "Cible standard", color: "#10b981", off: zoomCurveOff.target },
+              { group: "target" as const, label: "Cible", color: "#10b981", off: zoomCurveOff.target },
             ]).map((entry) => (
               <button
                 key={entry.group}
@@ -1147,7 +1147,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   );
 }
 
-export function ComparisonChart({ chartData: rawChartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible standard", onCycleKeyFilter, smoothDefault = true, showSourceControls = false, allowRealMode = true }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void; smoothDefault?: boolean; showSourceControls?: boolean; allowRealMode?: boolean }) {
+export function ComparisonChart({ chartData: rawChartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible", onCycleKeyFilter, smoothDefault = true, showSourceControls = false, allowRealMode = true }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void; smoothDefault?: boolean; showSourceControls?: boolean; allowRealMode?: boolean }) {
   const lang = useLang();
   // Lissage global : brut, trois notes, ou cinq notes. Purement local.
   // `smoothDefault` permet au Mode Rapide d'imposer le rendu « Réel ».
@@ -1557,7 +1557,6 @@ type SidebarPanelProps = {
   csvActive: boolean;
   cloudSampleCount: number;
   cloudTotalCount: number;
-  brandModel: string;
   cloudLoading: boolean;
   onToggleCloud: () => void;
   onToggleStandard: () => void;
@@ -1628,7 +1627,7 @@ function SidebarPanel(props: SidebarPanelProps) {
     <Frame title={en ? "Settings" : "Réglages"} className="flex flex-1 flex-col">
       <div className="flex h-auto flex-col items-stretch justify-start gap-2 pt-2">
           <div className="text-sm font-bold !text-black">{en ? "Compare current piano with:" : "Comparer piano actuel avec :"}</div>
-          <FastTip text={tipTarget}><Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><span className="w-full text-center font-bold uppercase">{en ? "Standard target" : "Cible standard"}</span></Button></FastTip>
+          <FastTip text={tipTarget}><Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><span className="w-full text-center font-bold uppercase">{en ? "Target" : "Cible"}</span></Button></FastTip>
           <FastTip text={tipCloud}><Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={sourceButtonClass(props.cloudEnabled, "!text-orange-600")}><span className="w-full text-center font-bold uppercase">Cloud</span></Button></FastTip>
            <FastTip text={tipCsv}><Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} ${props.csvActive ? "!border-black !text-blue-700 [&_svg]:!text-blue-700" : "!border-black !text-black"}`}><span className="w-full text-center font-bold uppercase">{en ? "IMPORT CSV" : "IMPORT CVS"}</span></Button></FastTip>
           <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
@@ -1648,13 +1647,15 @@ function SidebarPanel(props: SidebarPanelProps) {
               <>
                 <div>
                   {en
-                    ? `No ${props.brandModel} profile shared in the CLOUD yet. Activate the STANDARD TARGET button to compare with a "standard" regulation curve.`
-                    : `Pas encore de profil de ${props.brandModel} partagé dans le CLOUD. Activez le bouton CIBLE STANDARD pour comparer avec une courbe de régulation "standard".`}
+                    ? "There is no piano of your model in the CLOUD database yet. Activate TARGET button to display a standard regulation curve."
+                    : "Il n\u2019y a pas encore de piano de votre mod\u00e8le dans la base de donn\u00e9es CLOUD. Activez le bouton CIBLE pour afficher une courbe de r\u00e9gulation standard."}
                 </div>
               </>
             ) : (
               <>
-                <div>{en ? `${props.cloudSampleCount}/${props.cloudTotalCount} profile(s) of ${props.brandModel} shared on the Cloud` : `${props.cloudSampleCount}/${props.cloudTotalCount} profil(s) de ${props.brandModel} partagé(s) sur le Cloud`}</div>
+                <div className="uppercase">{props.cloudSampleCount}/{props.cloudTotalCount} pianos</div>
+                <div className="uppercase">{en ? "with identical model" : "DE MODÈLE IDENTIQUE"}</div>
+                <div className="uppercase">{en ? "on the Cloud" : "sur le Cloud"}</div>
               </>
             )}
           </div>
@@ -2104,14 +2105,15 @@ function Comparer() {
     return () => setTopbarState({ comparisonActive: false });
   }, [standardEnabled, sourceMode, comparedPiano]);
   const cloudIsEmpty = cloudActive && cloudSampleCount === 0;
-  const brandModel = `${(mine?.brand ?? "").trim()} ${(mine?.model ?? "").trim()}`.trim();
   const cloudCounterText = cloudLoading
     ? en ? "Computing cloud average…" : "Calcul de la moyenne cloud…"
     : cloudSampleCount === 0
-      ? (en ? "Sample too small to generate an average" : "Échantillon trop faible pour générer une moyenne")
+      ? ""
       : en
-        ? `${cloudSampleCount} profile(s) of ${brandModel} shared by users`
-        : `${cloudSampleCount} profil(s) de ${brandModel} partagé(s) par les utilisateurs`;
+        ? `> ${cloudSampleCount} identical model piano shared by users`
+        : cloudSampleCount === 1
+          ? "> 1 piano de modèle identique partagé par les utilisateurs"
+          : `> ${cloudSampleCount} pianos de modèle identique partagés par les utilisateurs`;
 
   // Étiquette de la cible constructeur, traduite à l'affichage (marque conservée).
   const displayStandardLabel = !en
@@ -2169,9 +2171,9 @@ function Comparer() {
                   <div className={(comparedPiano !== null || sourceMode === "cloud" || standardEnabled) ? "mb-3 border-b border-gray-400 pb-3" : ""}><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">{en ? "Current piano" : "Piano actuel"} : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
                   {(comparedPiano !== null || sourceMode === "cloud") && (
                     <div className={standardEnabled ? "mb-3 border-b border-gray-400 pb-3" : ""}>
-                      <div className={`mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide ${comparedPiano ? "!text-blue-600" : "!text-orange-600"}`}>{comparedPiano ? <>IMPORT CSV : <span className="normal-case">{csvIdentity}{csvStats}</span></> : <>Cloud</>}{cloudActive && <span className="ml-2 normal-case !text-orange-600">{cloudCounterText}</span>}</div>
+                      <div className={`mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide ${comparedPiano ? "!text-blue-600" : "!text-orange-600"}`}>{comparedPiano ? <>IMPORT CSV : <span className="normal-case">{csvIdentity}{csvStats}</span></> : <>Cloud</>}{cloudActive && <span className="ml-2 normal-case text-orange-600">{cloudCounterText}</span>}</div>
                       <AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} csv={comparedPiano !== null} />
-                      {cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold !text-orange-600">{en ? "Sample too small to generate an average" : "Échantillon trop faible pour générer une moyenne"}</p>}
+                      {cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold text-slate-600">{en ? "Sample too small to generate an average" : "Échantillon trop faible pour générer une moyenne"}</p>}
                     </div>
                   )}
                   {standardEnabled && (
@@ -2185,10 +2187,10 @@ function Comparer() {
               </div>
 
               <div ref={liveChartsRef}>
-                <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible standard"} onCycleKeyFilter={cycleKeyFilter} currentBaseName={en ? "Current piano" : "Piano actuel"} showSourceControls={mine !== null && sourceMode === "cloud" && comparedPiano === null && standardEnabled && cloudProfile !== null} />
+                <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible"} onCycleKeyFilter={cycleKeyFilter} currentBaseName={en ? "Current piano" : "Piano actuel"} showSourceControls={mine !== null && sourceMode === "cloud" && comparedPiano === null && standardEnabled && cloudProfile !== null} allowRealMode={false} />
               </div>
             </div>
-            <aside className="min-w-0"><div ref={settingsRef} data-pdf-expand className="sticky top-[127px] z-50 flex flex-col overflow-visible" ><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} whoFilter={whoFilter} cycleWho={cycleWho} /></div></aside>
+            <aside className="min-w-0"><div ref={settingsRef} data-pdf-expand className="sticky top-[127px] z-50 flex flex-col overflow-visible" ><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} whoFilter={whoFilter} cycleWho={cycleWho} /></div></aside>
           </div>
         </>
       )}
