@@ -153,14 +153,6 @@
     background: var(--background);
   }
 
-  @media (min-width: 1024px) {
-    .technical-sheet {
-      overflow-x: visible;
-      overflow-y: visible;
-      padding-right: 2px;
-    }
-  }
-
   .technical-labels {
     position: relative;
     height: 12.6rem;
@@ -197,7 +189,7 @@
     position: relative;
     display: grid;
     grid-template-columns: repeat(44, minmax(0, 1fr));
-    min-width: fit-content;
+    min-width: 0;
     height: 12.6rem;
   }
 

@@ -1023,7 +1023,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
       )}
       <div
         ref={zoomed ? plotRef : undefined}
-        className="h-[300px] w-full lg:h-[calc(100%_-_2.5rem)]"
+        className="h-[calc(100%_-_2.5rem)] w-full"
         // Mode non-zoom : tout le bloc graphique (axes, repères, courbes,
         // étiquettes) est translaté vers la gauche. En mode « N/B groupées »,
         // le décalage total est de 30 px. Les boutons ne bougent pas (frères).

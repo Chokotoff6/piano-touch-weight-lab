@@ -883,9 +883,7 @@ function Index() {
   };
 
   const TYPEWRITER_PENDING_KEY = "ptw_demo_typewriter_pending";
-  const initialTypewriterStartedRef = useRef(false);
   const consumeTypewriter = (target: Record<string, string>): boolean => {
-    if (initialTypewriterStartedRef.current) return false;
     try {
       if (window.sessionStorage.getItem(TYPEWRITER_PENDING_KEY) !== "1") return false;
       if (!isDemoActive() || weighingModeRef.current) return false;
@@ -893,8 +891,6 @@ function Index() {
     } catch {
       return false;
     }
-    initialTypewriterStartedRef.current = true;
-    if (typewriterDelayTimer.current !== null) window.clearTimeout(typewriterDelayTimer.current);
     // La première arrivée depuis l'accueil laisse le temps de voir le formulaire
     // avant l'écriture (temporisation étanche : ne concerne que ce lancement initial).
     // 2000 ms : garantie que la transition du routeur est totalement achevée et la
@@ -902,7 +898,7 @@ function Index() {
     typewriterDelayTimer.current = window.setTimeout(() => {
       typewriterDelayTimer.current = null;
       if (isDemoActive() && !weighingModeRef.current) runDemoSequence(target);
-    }, 1200);
+    }, 2000);
     return true;
   };
 
@@ -2967,12 +2963,11 @@ function Index() {
     const anchorSection = from === 45 && !pdfMirror;
     return (
     <section
-      className="mt-2 flex w-full flex-col items-center overflow-x-auto overflow-y-hidden lg:overflow-x-visible lg:overflow-y-visible"
-      style={{ WebkitOverflowScrolling: "touch" }}
+      className="mt-2 flex w-full flex-col items-center"
       aria-label={`Touches ${from} à ${to}`}
     >
       <div
-        className="technical-sheet w-full min-w-fit lg:min-w-0"
+        className="technical-sheet"
         style={anchorSection ? { position: "relative" } : undefined}
         ref={anchorSection ? sheet2Ref : undefined}
       >
