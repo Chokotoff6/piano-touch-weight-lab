@@ -869,8 +869,9 @@ function Index() {
     }, interval);
   };
 
-  /** Formulaire vierge, puis écriture mauve. */
-  const runDemoSequence = (target: Record<string, string>) => {
+  /** Formulaire vierge, puis écriture mauve. `blankPauseMs` neutralise la
+   * pause à vide au premier chargement (sas de stabilisation déjà payé). */
+  const runDemoSequence = (target: Record<string, string>, blankPauseMs: number = DEMO_BLANK_PAUSE_MS) => {
     stopTypewriter();
     setShowDemoAuto(false);
     demoAutoTarget.current = null;
@@ -882,7 +883,7 @@ function Index() {
       typewriterDelayTimer.current = null;
       if (!isDemoActive() || weighingModeRef.current) return;
       animateDemoForm(target);
-    }, DEMO_BLANK_PAUSE_MS);
+    }, blankPauseMs);
   };
 
   const TYPEWRITER_PENDING_KEY = "ptw_demo_typewriter_pending";
@@ -898,14 +899,13 @@ function Index() {
     }
     initialTypewriterStartedRef.current = true;
     if (typewriterDelayTimer.current !== null) window.clearTimeout(typewriterDelayTimer.current);
-    // La première arrivée depuis l'accueil laisse le temps de voir le formulaire
-    // avant l'écriture (temporisation étanche : ne concerne que ce lancement initial).
-    // 2000 ms strictes : la transition du routeur est totalement achevée et la
-    // page 100 % visible avant la première lettre de la machine à écrire.
+    // Premier chargement : sas de stabilisation de 800 ms strictes, puis
+    // démarrage immédiat de l'écriture (pause à blanc neutralisée pour
+    // supprimer la double attente cumulée).
     typewriterDelayTimer.current = window.setTimeout(() => {
       typewriterDelayTimer.current = null;
-      if (isDemoActive() && !weighingModeRef.current) runDemoSequence(target);
-    }, 2000);
+      if (isDemoActive() && !weighingModeRef.current) runDemoSequence(target, 0);
+    }, 800);
     return true;
   };
 
@@ -2980,6 +2980,13 @@ function Index() {
         style={anchorSection ? { position: "relative" } : undefined}
         ref={anchorSection ? sheet2Ref : undefined}
       >
+        <div className={`technical-labels ${SIDE_LABEL_CLASS}`} aria-hidden="true">
+          <div className="label-key" />
+          <div className="label-wd" ref={anchorSection ? wdLabel2Ref : undefined}>{en ? "Downweight" : "Poids descendant"}</div>
+          <div className="label-wa">{en ? "Upweight" : "Poids remontant"}</div>
+          <div className="label-wd-white">{en ? "Downweight" : "Poids descendant"}</div>
+          <div className="label-wa-white">{en ? "Upweight" : "Poids remontant"}</div>
+        </div>
         {anchorSection && (
           <div
             ref={undoGroupRef}
@@ -3015,13 +3022,6 @@ function Index() {
             </button>
           </div>
         )}
-        <div className={`technical-labels ${SIDE_LABEL_CLASS}`} aria-hidden="true">
-          <div className="label-key" />
-          <div className="label-wd" ref={anchorSection ? wdLabel2Ref : undefined}>{en ? "Downweight" : "Poids descendant"}</div>
-          <div className="label-wa">{en ? "Upweight" : "Poids remontant"}</div>
-          <div className="label-wd-white">{en ? "Downweight" : "Poids descendant"}</div>
-          <div className="label-wa-white">{en ? "Upweight" : "Poids remontant"}</div>
-        </div>
         <div className="piano-grid" ref={gridRef}>
           {rows.slice(from - 1, to).map((row, offset) => {
             const index = from - 1 + offset;
