@@ -797,6 +797,7 @@ function Index() {
   // Lancement automatique du Mode Démo via /saisie?demo=true (lien de l'accueil).
   const { demo: demoParam } = Route.useSearch();
   useEffect(() => {
+    resetTypewriterSecurity();
     const fromUrl =
       demoParam === "true" ||
       new URLSearchParams(window.location.search).get("demo") === "true";
@@ -819,6 +820,7 @@ function Index() {
   useEffect(() => {
     setDemoInk(isDemoActive());
     const sync = () => {
+      resetTypewriterSecurity();
       const active = isDemoActive();
       setDemoInk(active);
       // Réarmement : chaque bascule ON/OFF permet de rejouer la cascade.
@@ -3168,7 +3170,7 @@ function Index() {
         data-climate-zone={climateZone ?? ""}
       >
         <Frame title={en ? "Piano information" : "Informations piano"} className="mt-10 mx-auto w-4/5 max-w-[80%] [&_input]:border-foreground/60">
-          {showDemoAuto && isDemoActive() && (
+          {isDemoActive() && !info["marque"]?.trim() && !info["modele"]?.trim() && (
             <Button
               type="button"
               variant="outline"
@@ -3653,7 +3655,10 @@ function Index() {
           <button
             type="button"
             data-pdf-hide
-            onClick={() => setWeighingMode(false)}
+            onClick={() => {
+              resetTypewriterSecurity();
+              setWeighingMode(false);
+            }}
             className="rounded-md border border-input bg-background px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors hover:bg-accent"
 
           >
