@@ -753,8 +753,6 @@ function Index() {
   const [demoTyped, setDemoTyped] = useState(false);
   /** Encre mauve restaurée au retour sur la page alors que le Mode Démo est resté ON. */
   const [demoPersistedInk, setDemoPersistedInk] = useState(false);
-  const [showDemoAuto, setShowDemoAuto] = useState(false);
-  const demoAutoTarget = useRef<Record<string, string> | null>(null);
   const demoTargetRef = useRef<Record<string, string> | null>(null);
   const typewriterTimer = useRef<number | null>(null);
   const typewriterDelayTimer = useRef<number | null>(null);
@@ -800,8 +798,6 @@ function Index() {
       if (!active) {
         // Reset OFF : formulaire et clavier vierges, encre noire standard.
         stopTypewriter();
-        setShowDemoAuto(false);
-        demoAutoTarget.current = null;
         stopCascadeTimer();
         stopRapidDemoTimer();
         stopNormalDemoDelay();
@@ -866,11 +862,9 @@ function Index() {
     }, interval);
   };
 
-  /** Formulaire vierge, puis écriture mauve. */
+  /** A (0 ms) reset noir → B (500 ms) pause vierge → C (3000 ms) écriture mauve. */
   const runDemoSequence = (target: Record<string, string>) => {
     stopTypewriter();
-    setShowDemoAuto(false);
-    demoAutoTarget.current = null;
     demoTargetRef.current = null;
     setDemoTyped(false);
     setDemoPersistedInk(false);
@@ -891,11 +885,7 @@ function Index() {
     } catch {
       return false;
     }
-    // La première arrivée laisse le temps de voir le formulaire avant l'écriture.
-    typewriterDelayTimer.current = window.setTimeout(() => {
-      typewriterDelayTimer.current = null;
-      if (isDemoActive() && !weighingModeRef.current) runDemoSequence(target);
-    }, 900);
+    runDemoSequence(target);
     return true;
   };
 
@@ -1441,33 +1431,14 @@ function Index() {
   };
   const handleResumeProject = () => setShowResumeModal(false);
 
-  /** En démo, Reset Info vide la fiche sans toucher à l'interrupteur ni aux pesées. */
-  const handleUserReset = (section: "info" | "rows") => {
-    if (section === "info" && isDemoActive()) {
-      stopTypewriter();
-      try {
-        const raw = window.localStorage.getItem(DRAFT_INFO_KEY);
-        demoAutoTarget.current = demoTargetRef.current ?? (raw ? (JSON.parse(raw) as Record<string, string>) : null);
-      } catch {
-        demoAutoTarget.current = demoTargetRef.current;
-      }
-      if (!demoAutoTarget.current || Object.keys(demoAutoTarget.current).length === 0) {
-        demoAutoTarget.current = null;
-      }
-      demoTargetRef.current = null;
-      setDemoTyped(false);
-      setDemoPersistedInk(false);
-      resetInfo();
-      setConfirmReset(null);
-      setShowDemoAuto(true);
-      return;
-    }
+  /** Reset utilisateur : si la démo tournait, le bouton Démo devient « Relancer l'animation ». */
+  const handleUserReset = () => {
+    const wasDemo = isDemoActive();
     handleFullReset();
+    if (wasDemo) setTopbarState({ demoReplayArmed: true });
   };
 
   const handleFullReset = () => {
-    setShowDemoAuto(false);
-    demoAutoTarget.current = null;
     // 1. Mode Démo impérativement OFF.
     stopTypewriter();
     demoTargetRef.current = null;
@@ -3133,21 +3104,6 @@ function Index() {
         data-climate-zone={climateZone ?? ""}
       >
         <Frame title={en ? "Piano information" : "Informations piano"} className="mt-10 mx-auto w-4/5 max-w-[80%] [&_input]:border-foreground/60">
-          {showDemoAuto && isDemoActive() && (
-            <Button
-              type="button"
-              variant="outline"
-              className="absolute right-4 top-3 h-8 gap-1.5 px-2 text-xs font-bold"
-              onClick={() => {
-                const target = demoAutoTarget.current;
-                if (target) runDemoSequence(target);
-                else setShowDemoAuto(false);
-              }}
-            >
-              <RefreshCw size={14} strokeWidth={2.5} aria-hidden="true" />
-              Auto
-            </Button>
-          )}
           <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-[1fr_210px_1fr_1fr]">
             <label className={FIELD_LABEL_CLASS}>
               {en ? "Brand" : "Marque"}
@@ -3456,7 +3412,7 @@ function Index() {
                 style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
               >
                 <span>{en ? "Do you want to erase all entered piano information?" : "Voulez-vous effacer toutes les infos piano saisies ?"}</span>
-                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleUserReset("info"); }}>Oui</button>
+                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleUserReset(); }}>Oui</button>
                 <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
               </div>
             )}
@@ -3719,7 +3675,7 @@ function Index() {
                   style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
                 >
                   <span>{en ? "Do you want to erase all entered weight data?" : "Voulez-vous effacer toutes les données de poids saisies ?"}</span>
-                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleUserReset("rows"); }}>Oui</button>
+                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleUserReset(); }}>Oui</button>
                   <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
                 </div>
               )}
@@ -3768,7 +3724,7 @@ function Index() {
               }
               navigate({ to: "/resultats" });
             }}
-            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100 !text-black" : "border-input bg-background !text-gray-400 opacity-60"}`}
+            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100 !text-black" : "cursor-help border-input bg-background !text-gray-400 opacity-60"}`}
             style={
               badgeVisible
                 ? {
