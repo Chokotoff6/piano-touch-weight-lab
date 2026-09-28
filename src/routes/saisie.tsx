@@ -764,7 +764,7 @@ function Index() {
   const [demoTyped, setDemoTyped] = useState(false);
   /** Encre mauve restaurée au retour sur la page alors que le Mode Démo est resté ON. */
   const [demoPersistedInk, setDemoPersistedInk] = useState(false);
-  const [showDemoAuto, setShowDemoAuto] = useState(false);
+  const [, setShowDemoAuto] = useState(false);
   const demoAutoTarget = useRef<Record<string, string> | null>(null);
   const demoTargetRef = useRef<Record<string, string> | null>(null);
   const typewriterTimer = useRef<number | null>(null);
