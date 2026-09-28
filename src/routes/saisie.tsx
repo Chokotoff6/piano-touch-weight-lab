@@ -466,9 +466,17 @@ function Index() {
   }, [weighingMode]);
   useEffect(() => () => setTopbarState({ weighingMode: false }), []);
 
-  /** Retour depuis Résultats / Comparer : on rouvre directement l'écran clavier. */
+  /** Retour depuis Résultats / Comparer : on rouvre directement l'écran clavier.
+      Exception : arrivée depuis l'accueil avec ?demo=true → atterrissage
+      impératif sur le formulaire (jamais sur le clavier). */
   useEffect(() => {
     try {
+      const fromHomeDemo = new URLSearchParams(window.location.search).get("demo") === "true";
+      if (fromHomeDemo) {
+        window.sessionStorage.setItem("ptw_weighing_mode", "0");
+        setWeighingMode(false);
+        return;
+      }
       if (window.sessionStorage.getItem("ptw_weighing_mode") === "1") setWeighingMode(true);
     } catch {
       /* stockage indisponible */
@@ -771,6 +779,21 @@ function Index() {
       typewriterTimer.current = null;
     }
   };
+
+  /**
+   * Réarmement central des verrous de la machine à écrire démo :
+   * autorise un nouveau démarrage et purge le temporisateur en attente.
+   * Point d'entrée unique — toute bascule de flux (accueil ?demo=true,
+   * interrupteur Mode Démo, retour mesures → formulaire) repasse ici.
+   */
+  const resetTypewriterSecurity = () => {
+    initialTypewriterStartedRef.current = false;
+    if (typewriterDelayTimer.current !== null) {
+      window.clearTimeout(typewriterDelayTimer.current);
+      typewriterDelayTimer.current = null;
+    }
+  };
+
   // Lancement automatique du Mode Démo via /saisie?demo=true (lien de l'accueil).
   const { demo: demoParam } = Route.useSearch();
   useEffect(() => {
