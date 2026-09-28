@@ -215,6 +215,7 @@ function RootComponent() {
   const pendingActionRef = useRef<(() => void) | null>(null);
   const [demoVisible, setDemoVisible] = useState(false);
   const [demoTipOpen, setDemoTipOpen] = useState(false);
+  const [resTipOpen, setResTipOpen] = useState(false);
   /** Verrou à vie du bandeau mauve : true tant que l'état réel n'est pas lu
       (évite tout clignotement au rendu serveur). */
   const [bannerDismissed, setBannerDismissed] = useState(true);
@@ -363,18 +364,21 @@ function RootComponent() {
                   {lang === "en" ? "Results" : "Résultats"}
                 </Link>
               ) : (
-                <span className="group/res relative inline-block">
+                <span className="relative inline-block">
                   <button
                     type="button"
                     aria-disabled="true"
-                    onClick={(e) => e.preventDefault()}
-                    className={lockedLinkClass.replace("cursor-not-allowed", "cursor-help")}
+                    onClick={(e) => { e.preventDefault(); setResTipOpen((v) => !v); }}
+                    onBlur={() => setResTipOpen(false)}
+                    className={lockedLinkClass}
                   >
                     {lang === "en" ? "Results" : "Résultats"}
                   </button>
-                  <span className="pointer-events-none absolute left-0 top-full z-[99999] mt-2 hidden w-72 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-950 shadow-lg group-hover/res:block group-focus-within/res:block">
-                    {lockedResultsMessage(lang === "en")}
-                  </span>
+                  {resTipOpen && (
+                    <span className="pointer-events-none absolute left-0 top-full z-[99999] mt-2 block w-72 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-950 shadow-lg">
+                      {lockedResultsMessage(lang === "en")}
+                    </span>
+                  )}
                 </span>
               )}
               <div className="relative">
@@ -390,11 +394,9 @@ function RootComponent() {
                   <span
                     className={lockedLinkClass}
                     aria-disabled="true"
-                    title={
-                      lang === "en"
-                        ? "Visit the Results page first to unlock the Compare page."
-                        : "Consultez d'abord la page Résultats pour débloquer la Comparaison."
-                    }
+                    onClick={() => showTopbarAlert("compare", lang === "en"
+                      ? "Visit the Results page first to unlock the Compare page."
+                      : "Consultez d'abord la page Résultats pour débloquer la Comparaison.")}
                   >
                     {lang === "en" ? "Compare" : "Comparer"}
                   </span>
