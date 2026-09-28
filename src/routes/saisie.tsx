@@ -893,10 +893,12 @@ function Index() {
     }
     // La première arrivée depuis l'accueil laisse le temps de voir le formulaire
     // avant l'écriture (temporisation étanche : ne concerne que ce lancement initial).
+    // 2000 ms : garantie que la transition du routeur est totalement achevée et la
+    // page 100 % visible avant la première lettre de la machine à écrire.
     typewriterDelayTimer.current = window.setTimeout(() => {
       typewriterDelayTimer.current = null;
       if (isDemoActive() && !weighingModeRef.current) runDemoSequence(target);
-    }, 1200);
+    }, 2000);
     return true;
   };
 
