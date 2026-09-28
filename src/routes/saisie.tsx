@@ -1431,6 +1431,13 @@ function Index() {
   };
   const handleResumeProject = () => setShowResumeModal(false);
 
+  /** Reset utilisateur : si la démo tournait, le bouton Démo devient « Relancer l'animation ». */
+  const handleUserReset = () => {
+    const wasDemo = isDemoActive();
+    handleFullReset();
+    if (wasDemo) setTopbarState({ demoReplayArmed: true });
+  };
+
   const handleFullReset = () => {
     // 1. Mode Démo impérativement OFF.
     stopTypewriter();
@@ -3121,7 +3128,7 @@ function Index() {
                     <input
                       type="radio"
                       name="type_piano"
-                      style={{ accentColor: "#111111" }}
+                      style={{ accentColor: demoInk && isDemoActive() ? "#7c3aed" : "#111111" }}
                       value={t}
                       disabled={identityLocked}
                       checked={info["type_piano"] === t}
@@ -3405,7 +3412,7 @@ function Index() {
                 style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
               >
                 <span>{en ? "Do you want to erase all entered piano information?" : "Voulez-vous effacer toutes les infos piano saisies ?"}</span>
-                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleFullReset(); }}>Oui</button>
+                <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleUserReset(); }}>Oui</button>
                 <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
               </div>
             )}
@@ -3453,6 +3460,13 @@ function Index() {
                 </div>
               </div>
             )}
+            <span className="group/wbtn relative inline-block">
+            {!missingFlash && !requiredSheetFieldsComplete && (
+              <span className="pointer-events-none absolute bottom-full right-0 z-50 mb-2 hidden w-72 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium !text-gray-900 shadow-lg group-hover/wbtn:block">
+                {en ? "Complete: " : "Complétez : "}
+                {missingSheetFields.length > 0 ? missingSheetFields.join(", ") : en ? "Measurements" : "Pesées"}
+              </span>
+            )}
             <button
               ref={weighingBtnRef}
               type="button"
@@ -3462,6 +3476,7 @@ function Index() {
             >
               {en ? "Key measurements >" : "Mesures clavier >"}
             </button>
+            </span>
           </div>
         </div>
 
@@ -3660,7 +3675,7 @@ function Index() {
                   style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
                 >
                   <span>{en ? "Do you want to erase all entered weight data?" : "Voulez-vous effacer toutes les données de poids saisies ?"}</span>
-                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleFullReset(); }}>Oui</button>
+                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleUserReset(); }}>Oui</button>
                   <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
                 </div>
               )}
