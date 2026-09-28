@@ -443,6 +443,16 @@ function Index() {
   const rangeKeyRef = useRef<string | null>(null);
   const coherenceDismissed = useRef<Set<number>>(new Set());
   /** Mode pesée : formulaire masqué, bandeau résumé affiché. */
+  // Atterrissage prioritaire : ?demo=true force le formulaire avant tout rendu.
+  if (typeof window !== "undefined") {
+    try {
+      if (new URLSearchParams(window.location.search).get("demo") === "true") {
+        window.sessionStorage.setItem("ptw_weighing_mode", "0");
+      }
+    } catch {
+      /* stockage indisponible */
+    }
+  }
   const [weighingMode, setWeighingMode] = useState(false);
   /** Filtrage visuel cyclique des touches affichées à l'écran. */
   const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
@@ -471,16 +481,19 @@ function Index() {
       impératif sur le formulaire (jamais sur le clavier). */
   useEffect(() => {
     try {
-      const fromHomeDemo = new URLSearchParams(window.location.search).get("demo") === "true";
+      const fromHomeDemo =
+        demoParam === "true" || new URLSearchParams(window.location.search).get("demo") === "true";
       if (fromHomeDemo) {
         window.sessionStorage.setItem("ptw_weighing_mode", "0");
         setWeighingMode(false);
+        weighingModeRef.current = false;
         return;
       }
       if (window.sessionStorage.getItem("ptw_weighing_mode") === "1") setWeighingMode(true);
     } catch {
       /* stockage indisponible */
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     try {
@@ -820,7 +833,6 @@ function Index() {
   useEffect(() => {
     setDemoInk(isDemoActive());
     const sync = () => {
-      resetTypewriterSecurity();
       const active = isDemoActive();
       setDemoInk(active);
       // Réarmement : chaque bascule ON/OFF permet de rejouer la cascade.
@@ -828,6 +840,7 @@ function Index() {
       if (!active) {
         // Reset OFF : formulaire et clavier vierges, encre noire standard.
         stopTypewriter();
+        initialTypewriterStartedRef.current = false;
         setShowDemoAuto(false);
         demoAutoTarget.current = null;
         stopCascadeTimer();
@@ -918,17 +931,19 @@ function Index() {
     try {
       if (window.sessionStorage.getItem(TYPEWRITER_PENDING_KEY) !== "1") return false;
       if (!isDemoActive() || weighingModeRef.current) return false;
-      window.sessionStorage.removeItem(TYPEWRITER_PENDING_KEY);
     } catch {
       return false;
     }
     initialTypewriterStartedRef.current = true;
     if (typewriterDelayTimer.current !== null) window.clearTimeout(typewriterDelayTimer.current);
-    // Premier chargement : sas de stabilisation de 800 ms strictes, puis
-    // démarrage immédiat de l'écriture (pause à blanc neutralisée pour
-    // supprimer la double attente cumulée).
+    // Sas de 800 ms ; le jeton n'est consommé qu'au démarrage réel de l'écriture.
     typewriterDelayTimer.current = window.setTimeout(() => {
       typewriterDelayTimer.current = null;
+      try {
+        window.sessionStorage.removeItem(TYPEWRITER_PENDING_KEY);
+      } catch {
+        /* stockage indisponible */
+      }
       if (isDemoActive() && !weighingModeRef.current) runDemoSequence(target, 0);
     }, 800);
     return true;
@@ -1097,10 +1112,21 @@ function Index() {
   // Le Mode démo lit sa fiche en base : dès qu'elle arrive, l'écran se recale.
   useEffect(() => {
     const onDemoLoaded = () => {
-      // Garde anti-cut : si le minuteur initial de la machine à écrire est
-      // déjà armé, on ne touche à rien (ni stop, ni réécriture du formulaire)
-      // pour laisser le premier temporisateur s'écouler jusqu'au bout.
-      if (initialTypewriterStartedRef.current) return;
+      // Garde anti-cut : si le minuteur initial est déjà armé, on met
+      // seulement à jour les cibles, sans stopper ni réécrire le formulaire.
+      if (initialTypewriterStartedRef.current) {
+        try {
+          const raw = window.localStorage.getItem(DRAFT_INFO_KEY);
+          const parsed = raw ? (JSON.parse(raw) as Record<string, string>) : null;
+          if (parsed && typeof parsed === "object" && Object.keys(parsed).length > 0) {
+            demoAutoTarget.current = parsed;
+            demoTargetRef.current = parsed;
+          }
+        } catch {
+          /* stockage indisponible */
+        }
+        return;
+      }
       try {
         const rawInfo = window.localStorage.getItem(DRAFT_INFO_KEY);
         const parsedInfo = rawInfo ? (JSON.parse(rawInfo) as Record<string, string>) : null;
@@ -3170,14 +3196,19 @@ function Index() {
         data-climate-zone={climateZone ?? ""}
       >
         <Frame title={en ? "Piano information" : "Informations piano"} className="mt-10 mx-auto w-4/5 max-w-[80%] [&_input]:border-foreground/60">
-          {isDemoActive() && !info["marque"]?.trim() && !info["modele"]?.trim() && (
+          {isDemoActive() &&
+            !info["marque"]?.trim() &&
+            !info["modele"]?.trim() &&
+            !initialTypewriterStartedRef.current &&
+            typewriterDelayTimer.current === null &&
+            typewriterTimer.current === null && (
             <Button
               type="button"
               variant="outline"
               className="absolute right-4 top-3 h-8 gap-1.5 px-2 text-xs font-bold"
               onClick={() => {
-                const target = demoAutoTarget.current;
-                if (target) runDemoSequence(target);
+                const target = demoAutoTarget.current ?? demoTargetRef.current;
+                if (target) runDemoSequence(target, 0);
                 else setShowDemoAuto(false);
               }}
             >
