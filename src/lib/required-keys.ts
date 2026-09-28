@@ -66,10 +66,10 @@ export function lockedResultsMessage(en: boolean): string {
   }
   if (rapid) {
     return en
-      ? "Access blocked. Please fill in every C and C# to unlock the results."
-      : "Accès bloqué. Veuillez renseigner tous les Do et Do# pour débloquer les résultats.";
+      ? "Access blocked. Please fill in every C and C# to generate the results."
+      : "Accès bloqué. Veuillez renseigner tous les Do et Do# pour générer les résultats.";
   }
   return en
-    ? "Access blocked. A minimum of 2 notes per octave is required to unlock the results."
-    : "Accès bloqué. Un minimum de 2 notes par octave est requis pour débloquer les résultats.";
+    ? "Access blocked. A minimum of 2 notes per octave is required to generate the results."
+    : "Accès bloqué. Un minimum de 2 notes par octave est requis pour générer les résultats.";
 }

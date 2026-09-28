@@ -5,8 +5,6 @@ export type TopbarAlert = { anchor: "save" | "compare" | "export" | "import"; me
 export type HistoryRowRef = { id: string; label: string };
 
 type TopbarState = {
-  /** Après un Reset en démo : le bouton Démo devient « Relancer l'animation » (un tour). */
-  demoReplayArmed: boolean;
   exportReady: boolean;
   measuresReady: boolean;
   serialFilled: boolean;
@@ -37,7 +35,6 @@ const PROFILE_SAVED_KEY = "ptw_cloud_profile_saved";
 const VISITED_KEY = "ptw_results_visited";
 
 let state: TopbarState = {
-  demoReplayArmed: false,
   exportReady: false,
   measuresReady: false,
   serialFilled: false,

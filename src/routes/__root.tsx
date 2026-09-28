@@ -285,10 +285,6 @@ function RootComponent() {
   const isComparer = pathname === "/comparer";
   /** Accueil épuré : seuls le logo, la FAQ et EN | FR restent visibles. */
   const isHome = pathname === "/";
-  // Quitter la page Saisie annule la relance d'animation armée par Reset.
-  useEffect(() => {
-    if (pathname !== "/saisie" && topbar.demoReplayArmed) setTopbarState({ demoReplayArmed: false });
-  }, [pathname, topbar.demoReplayArmed]);
 
   /** Affiche le consentement RGPD/CGU au premier clic Sauver/Importer de la
       session, puis exécute l'action différée après acceptation. */
@@ -691,27 +687,18 @@ function RootComponent() {
                 }}
                 onMouseLeave={() => setDemoTipOpen(false)}
                 onClick={() => {
-                  if (topbar.demoReplayArmed) {
-                    // Relance unique : la démo repart depuis le début, puis le bouton redevient ON/OFF.
-                    setTopbarState({ demoReplayArmed: false });
-                    if (isDemoActive()) toggleDemoMode();
-                    toggleDemoMode();
-                  } else {
-                    toggleDemoMode();
-                  }
+                  toggleDemoMode();
                   setDemoTipOpen(false);
                   void rootNavigate({ to: "/saisie" });
                 }}
                 aria-pressed={demoVisible}
                 className={
-                  demoVisible || topbar.demoReplayArmed
+                  demoVisible
                     ? "demo-border-pulse whitespace-nowrap rounded-md border-2 border-[#c4b5fd] bg-[#ede9fe] px-4 py-2 text-xs font-bold uppercase tracking-wide !text-[#4c1d95] transition-colors hover:bg-[#ddd6fe]"
                     : "whitespace-nowrap rounded-md border-2 border-gray-300 bg-gray-100 px-4 py-2 text-xs font-bold uppercase tracking-wide !text-black transition-colors hover:bg-gray-200"
                 }
               >
-                {topbar.demoReplayArmed
-                  ? lang === "en" ? "Replay animation" : "Relancer l'animation"
-                  : lang === "en" ? "Demo mode" : "Mode démo"}
+                {lang === "en" ? "Demo mode" : "Mode démo"}
               </button>
               {demoTipOpen && (
                 <div
