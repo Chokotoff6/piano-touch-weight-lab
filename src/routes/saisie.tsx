@@ -897,12 +897,12 @@ function Index() {
     if (typewriterDelayTimer.current !== null) window.clearTimeout(typewriterDelayTimer.current);
     // La première arrivée depuis l'accueil laisse le temps de voir le formulaire
     // avant l'écriture (temporisation étanche : ne concerne que ce lancement initial).
-    // 2000 ms : garantie que la transition du routeur est totalement achevée et la
+    // 2000 ms strictes : la transition du routeur est totalement achevée et la
     // page 100 % visible avant la première lettre de la machine à écrire.
     typewriterDelayTimer.current = window.setTimeout(() => {
       typewriterDelayTimer.current = null;
       if (isDemoActive() && !weighingModeRef.current) runDemoSequence(target);
-    }, 1200);
+    }, 2000);
     return true;
   };
 
@@ -1069,6 +1069,10 @@ function Index() {
   // Le Mode démo lit sa fiche en base : dès qu'elle arrive, l'écran se recale.
   useEffect(() => {
     const onDemoLoaded = () => {
+      // Garde anti-cut : si le minuteur initial de la machine à écrire est
+      // déjà armé, on ne touche à rien (ni stop, ni réécriture du formulaire)
+      // pour laisser le premier temporisateur s'écouler jusqu'au bout.
+      if (initialTypewriterStartedRef.current) return;
       try {
         const rawInfo = window.localStorage.getItem(DRAFT_INFO_KEY);
         const parsedInfo = rawInfo ? (JSON.parse(rawInfo) as Record<string, string>) : null;
@@ -1081,10 +1085,7 @@ function Index() {
             usage_level: normalizeUsageCode(parsedInfo["usage_level"]),
             profil_saisie: normalizeWhoCode(parsedInfo["profil_saisie"]),
           };
-          if (!consumeTypewriter(nextInfo)) {
-            stopTypewriter();
-            setInfo(nextInfo);
-          }
+          consumeTypewriter(nextInfo);
         }
         const rawRows = window.localStorage.getItem(DRAFT_ROWS_KEY);
         const parsedRows = rawRows ? (JSON.parse(rawRows) as Row[]) : null;
@@ -2972,7 +2973,7 @@ function Index() {
       aria-label={`Touches ${from} à ${to}`}
     >
       <div
-        className="technical-sheet w-full min-w-fit lg:min-w-0"
+        className="technical-sheet w-full"
         style={anchorSection ? { position: "relative" } : undefined}
         ref={anchorSection ? sheet2Ref : undefined}
       >
