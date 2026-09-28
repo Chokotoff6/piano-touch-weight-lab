@@ -316,7 +316,7 @@ function RootComponent() {
 
   const linkClass = "rounded-md px-3 py-2 text-base font-semibold !text-black transition-colors hover:bg-background sm:px-4 sm:text-lg";
   const activeLinkClass = "rounded-md bg-background px-3 py-2 text-base font-semibold !text-black shadow-sm sm:px-4 sm:text-lg";
-  const lockedLinkClass = "cursor-not-allowed rounded-md px-3 py-2 text-base font-semibold !text-gray-300 sm:px-4 sm:text-lg";
+  const lockedLinkClass = "cursor-default rounded-md px-3 py-2 text-base font-semibold !text-gray-300 sm:px-4 sm:text-lg";
 
   // Le bouton « Fichiers » reste actif hors Comparer dès qu'une saisie
   // exploitable existe (retour depuis Comparer inclus).
@@ -425,7 +425,7 @@ function RootComponent() {
               <button
                 type="button"
                 onClick={(e) => e.preventDefault()}
-                className={`inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-lg font-bold transition-colors ${
+                className={`inline-flex h-8 items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-0 text-lg font-bold transition-colors ${
                   filesEnabled ? "!text-black hover:bg-gray-50" : "!text-gray-400 cursor-default"
                 }`}
               >
@@ -495,7 +495,7 @@ function RootComponent() {
                           <button
                             type="button"
                             disabled={!filesEnabled}
-                            className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-300"
+                            className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
                             onClick={() => {
                               requireConsent(() => dispatchAction("piano-export-pdf"));
                             }}
@@ -534,7 +534,7 @@ function RootComponent() {
                       <button
                         type="button"
                         disabled={!filesEnabled}
-                        className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-300"
+                        className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
                         onClick={() => {
                           requireConsent(() => dispatchAction("piano-export-csv"));
                         }}

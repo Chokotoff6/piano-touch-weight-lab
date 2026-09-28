@@ -891,11 +891,12 @@ function Index() {
     } catch {
       return false;
     }
-    // La première arrivée laisse le temps de voir le formulaire avant l'écriture.
+    // La première arrivée depuis l'accueil laisse le temps de voir le formulaire
+    // avant l'écriture (temporisation étanche : ne concerne que ce lancement initial).
     typewriterDelayTimer.current = window.setTimeout(() => {
       typewriterDelayTimer.current = null;
       if (isDemoActive() && !weighingModeRef.current) runDemoSequence(target);
-    }, 900);
+    }, 1200);
     return true;
   };
 
