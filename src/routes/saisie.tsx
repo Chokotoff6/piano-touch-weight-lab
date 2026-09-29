@@ -807,6 +807,34 @@ function Index() {
     }
   };
 
+  // Géolocalisation silencieuse (hors démo) : ville/pays en anglais + zone climatique.
+  useEffect(() => {
+    if (isDemoActive()) return;
+    try {
+      if (window.sessionStorage.getItem("ptw_demo_typewriter_pending") === "1") return;
+    } catch {
+      /* stockage indisponible */
+    }
+    const ctrl = new AbortController();
+    fetch("https://ipapi.co/json/", { signal: ctrl.signal })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { city?: string; country_name?: string } | null) => {
+        const city = data?.city?.trim() ?? "";
+        const country = data?.country_name?.trim() ?? "";
+        if (!city && !country) return;
+        setInfo((prev) => ({ ...prev, ville: city, pays: country }));
+        if (country) {
+          const p = city ? resolveClimateZone(city, country) : Promise.resolve(fallbackZone(country));
+          p.then((zone) => setClimateZone(zone)).catch(() => setClimateZone(fallbackZone(country)));
+        }
+      })
+      .catch(() => {
+        /* silencieux */
+      });
+    return () => ctrl.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Lancement automatique du Mode Démo via /saisie?demo=true (lien de l'accueil).
   const { demo: demoParam } = Route.useSearch();
   useEffect(() => {
