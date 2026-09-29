@@ -36,7 +36,7 @@ import { generateBlankFormPdf, generateBlankKeyboardPdf } from "@/lib/pdf-blank-
 import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
 import { ComparisonChart, buildChartData, type RefProfile } from "@/routes/comparer";
 
-import { buildCurrentPiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, findHistoryProfileId, CURRENT_PIANO_KEY } from "@/lib/current-piano";
+import { buildCurrentPiano, cleanStringOrNull, toCloudTypePiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, findHistoryProfileId, CURRENT_PIANO_KEY } from "@/lib/current-piano";
 
 const INVALID_CSV_MESSAGE =
   "⚠️ Fichier non valide. Veuillez importer un fichier CSV généré par l'application Piano Touch Analyzer.";
@@ -77,6 +77,7 @@ import {
   normalizeMaintenanceCode,
   normalizeUsageCode,
   normalizeWhoCode,
+  WHO_PRO,
 } from "@/lib/field-codes";
 import { toast } from "sonner";
 import {
@@ -807,7 +808,7 @@ function Index() {
     }
   };
 
-  // Géolocalisation silencieuse (hors démo) : ville/pays en anglais + zone climatique.
+  // Géolocalisation silencieuse (hors démo) : city/country en anglais + zone climatique.
   useEffect(() => {
     if (isDemoActive()) return;
     try {
@@ -1067,7 +1068,18 @@ function Index() {
     }
     try {
       const rawInfo = window.localStorage.getItem(DRAFT_INFO_KEY);
-      const parsedInfo = rawInfo ? (JSON.parse(rawInfo) as Record<string, string>) : null;
+      const legacyInfo = rawInfo ? (JSON.parse(rawInfo) as Record<string, string>) : null;
+      // Rétrocompatibilité douce : anciens brouillons en ville/pays -> city/country.
+      const parsedInfo = legacyInfo
+        ? (() => {
+            const { ville, pays, ...rest } = legacyInfo;
+            return {
+              ...rest,
+              city: cleanStringOrNull(legacyInfo["city"] ?? ville) ?? "",
+              country: cleanStringOrNull(legacyInfo["country"] ?? pays) ?? "",
+            };
+          })()
+        : null;
       const savedInfo = saved
         ? {
             marque: saved.brand ?? "",
