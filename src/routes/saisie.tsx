@@ -815,6 +815,13 @@ function Index() {
       demoParam === "true" ||
       new URLSearchParams(window.location.search).get("demo") === "true";
     if (!fromUrl) return;
+    try {
+      window.localStorage.removeItem(DRAFT_INFO_KEY);
+    } catch {
+      /* stockage indisponible */
+    }
+    setInfo({});
+    setWeighingMode(false);
     setDemoOff(false);
     resetDemoCascadeSeen();
     setDemoInk(true);
@@ -1197,8 +1204,6 @@ function Index() {
           info["sn_num"]?.trim() &&
           info["type_piano"] &&
           info["fabrication"]?.trim() &&
-          info["pays"]?.trim() &&
-          info["ville"]?.trim() &&
           info["entretien"] &&
           info["usage_level"] &&
           info["profil_saisie"],
@@ -1214,8 +1219,6 @@ function Index() {
           info["sn_num"]?.trim() &&
           info["type_piano"] &&
           info["fabrication"]?.trim() &&
-          info["pays"]?.trim() &&
-          info["ville"]?.trim() &&
           info["entretien"] &&
           info["usage_level"] &&
           info["profil_saisie"],
@@ -1506,6 +1509,12 @@ function Index() {
   /** En démo, Reset Info vide la fiche sans toucher à l'interrupteur ni aux pesées. */
   const handleUserReset = (section: "info" | "rows") => {
     if (section === "info" && isDemoActive()) {
+      resetTypewriterSecurity();
+      try {
+        window.sessionStorage.removeItem("ptw_demo_typewriter_pending");
+      } catch {
+        /* stockage indisponible */
+      }
       stopTypewriter();
       try {
         const raw = window.localStorage.getItem(DRAFT_INFO_KEY);
@@ -3199,9 +3208,8 @@ function Index() {
           {isDemoActive() &&
             !info["marque"]?.trim() &&
             !info["modele"]?.trim() &&
-            !initialTypewriterStartedRef.current &&
-            typewriterDelayTimer.current === null &&
-            typewriterTimer.current === null && (
+            typeof window !== "undefined" &&
+            window.sessionStorage.getItem("ptw_demo_typewriter_pending") !== "1" && (
             <Button
               type="button"
               variant="outline"
@@ -3359,45 +3367,6 @@ function Index() {
               )}
             </div>
 
-            <label className={`mt-4 ${FIELD_LABEL_CLASS}`}>
-              {en ? "Country" : "Pays"}
-              <SmartCombobox
-                value={info["pays"] ?? ""}
-                options={ALL_COUNTRIES}
-                groups={[
-                  { label: en ? "Frequent suggestions" : "Suggestions fréquentes", options: FREQUENT_COUNTRIES },
-                  { label: en ? "All countries" : "Tous les pays", options: SUGGESTED_COUNTRIES },
-                ]}
-                onTyping={markDirty}
-                onCommit={(v) => updateInfo("pays", v)}
-              />
-            </label>
-
-            <label className={`mt-4 ${FIELD_LABEL_CLASS}`}>
-              <span className="flex items-center gap-2">
-                {en ? "City" : "Ville"}
-                {isGeocoding && <span className="text-[0.65rem] italic">{en ? "Checking…" : "Vérification…"}</span>}
-              </span>
-              <input
-                value={info["ville"] ?? ""}
-                disabled={!info["pays"]?.trim()}
-                onChange={(e) => updateInfo("ville", normalizeCity(e.target.value))}
-                onBlur={(e) => {
-                  const city = normalizeCity(e.target.value);
-                  updateInfo("ville", city);
-                  resolveCity(city);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const city = normalizeCity((e.target as HTMLInputElement).value);
-                    updateInfo("ville", city);
-                    resolveCity(city);
-                  }
-                }}
-                className={`${INPUT_CLASS} !bg-white disabled:!bg-white`}
-              />
-            </label>
 
             <div className="mt-4 flex flex-wrap items-start justify-start gap-6 sm:col-span-2 md:col-span-4">
               <label className={FIELD_LABEL_CLASS}>
