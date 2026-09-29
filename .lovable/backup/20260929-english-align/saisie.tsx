@@ -36,7 +36,7 @@ import { generateBlankFormPdf, generateBlankKeyboardPdf } from "@/lib/pdf-blank-
 import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
 import { ComparisonChart, buildChartData, type RefProfile } from "@/routes/comparer";
 
-import { buildCurrentPiano, cleanStringOrNull, toCloudTypePiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, findHistoryProfileId, CURRENT_PIANO_KEY } from "@/lib/current-piano";
+import { buildCurrentPiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, findHistoryProfileId, CURRENT_PIANO_KEY } from "@/lib/current-piano";
 
 const INVALID_CSV_MESSAGE =
   "⚠️ Fichier non valide. Veuillez importer un fichier CSV généré par l'application Piano Touch Analyzer.";
@@ -77,7 +77,6 @@ import {
   normalizeMaintenanceCode,
   normalizeUsageCode,
   normalizeWhoCode,
-  WHO_PRO,
 } from "@/lib/field-codes";
 import { toast } from "sonner";
 import {
@@ -808,7 +807,7 @@ function Index() {
     }
   };
 
-  // Géolocalisation silencieuse (hors démo) : city/country en anglais + zone climatique.
+  // Géolocalisation silencieuse (hors démo) : ville/pays en anglais + zone climatique.
   useEffect(() => {
     if (isDemoActive()) return;
     try {
@@ -823,7 +822,7 @@ function Index() {
         const city = data?.city?.trim() ?? "";
         const country = data?.country_name?.trim() ?? "";
         if (!city && !country) return;
-        setInfo((prev) => ({ ...prev, city, country }));
+        setInfo((prev) => ({ ...prev, ville: city, pays: country }));
         if (country) {
           const p = city ? resolveClimateZone(city, country) : Promise.resolve(fallbackZone(country));
           p.then((zone) => setClimateZone(zone)).catch(() => setClimateZone(fallbackZone(country)));
@@ -908,10 +907,10 @@ function Index() {
    */
   const animateDemoForm = (target: Record<string, string>) => {
     stopTypewriter();
-    const TEXT_KEYS = new Set(["marque", "modele", "sn_num", "fabrication", "country", "city", "remarques"]);
+    const TEXT_KEYS = new Set(["marque", "modele", "sn_num", "fabrication", "pays", "ville", "remarques"]);
     const order = [
       "marque", "modele", "type_piano", "sn_num", "fabrication", "measurement_date",
-      "country", "city", "climate_zone", "entretien", "usage_level", "profil_saisie", "remarques",
+      "pays", "ville", "climate_zone", "entretien", "usage_level", "profil_saisie", "remarques",
     ];
     const keys = [...order.filter((k) => k in target), ...Object.keys(target).filter((k) => !order.includes(k))];
     const steps: Array<[string, string]> = [];
@@ -1068,18 +1067,7 @@ function Index() {
     }
     try {
       const rawInfo = window.localStorage.getItem(DRAFT_INFO_KEY);
-      const legacyInfo = rawInfo ? (JSON.parse(rawInfo) as Record<string, string>) : null;
-      // Rétrocompatibilité douce : anciens brouillons en ville/pays -> city/country.
-      const parsedInfo = legacyInfo
-        ? (() => {
-            const { ville, pays, ...rest } = legacyInfo;
-            return {
-              ...rest,
-              city: cleanStringOrNull(legacyInfo["city"] ?? ville) ?? "",
-              country: cleanStringOrNull(legacyInfo["country"] ?? pays) ?? "",
-            };
-          })()
-        : null;
+      const parsedInfo = rawInfo ? (JSON.parse(rawInfo) as Record<string, string>) : null;
       const savedInfo = saved
         ? {
             marque: saved.brand ?? "",
@@ -1087,8 +1075,8 @@ function Index() {
             type_piano: saved.type_piano ?? "",
             sn_num: saved.serial_number ?? "",
             fabrication: saved.manufacture_year ? String(saved.manufacture_year) : "",
-            country: saved.country ?? "",
-            city: saved.city ?? "",
+            pays: saved.country ?? "",
+            ville: saved.city ?? "",
             entretien: normalizeMaintenanceCode(saved.maintenance_type),
             usage_level: normalizeUsageCode(saved.usage_level),
             profil_saisie: normalizeWhoCode(saved.who),
@@ -1274,8 +1262,8 @@ function Index() {
       ["sn_num", en ? "Serial number" : "N° de série"],
       ["type_piano", en ? "Type" : "Type"],
       ["fabrication", en ? "Manufacturing date" : "Date fabrication"],
-      ["country", en ? "Country" : "Pays"],
-      ["city", en ? "City" : "Ville"],
+      ["pays", en ? "Country" : "Pays"],
+      ["ville", en ? "City" : "Ville"],
       ["entretien", en ? "Piano history" : "Historique piano"],
       ["usage_level", en ? "Usage intensity" : "Intensité d'usage"],
       ["profil_saisie", en ? "You are" : "Vous êtes"],
@@ -1853,7 +1841,7 @@ function Index() {
 
   const resolveCity = (raw: string) => {
     const city = normalizeCity(raw);
-    const country = (info["country"] ?? "").trim();
+    const country = (info["pays"] ?? "").trim();
     if (!city || !country) return;
     setIsGeocoding(true);
     resolveClimateZone(city, country)
@@ -2392,14 +2380,14 @@ function Index() {
     return {
       user_fingerprint: getFingerprint(),
       marque: info["marque"] ?? "",
-      type_piano: toCloudTypePiano(info["type_piano"]),
+      type_piano: info["type_piano"] ?? "",
       modele: info["modele"] ?? "",
       prefixe_lettre: info["sn_prefix"] ?? "",
       numero_central: info["sn_num"] ?? "",
       suffixe_lettre: info["sn_suffix"] ?? "",
       annee_fabrication: Number.isFinite(year) ? year : null,
-      country: cleanStringOrNull(info["country"]),
-      city: cleanStringOrNull(info["city"]),
+      pays: info["pays"] ?? "",
+      ville: info["ville"] ?? "",
       zone_climatique: climateZone !== null ? String(climateZone) : "",
       type_entretien: info["entretien"] ?? "",
       remarques: info["remarques"] ?? "",
@@ -2419,8 +2407,8 @@ function Index() {
       [en ? "Serial number" : "Numéro de série"]:
         `${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`.trim(),
       "Date de fabrication": info["fabrication"] ?? "",
-      Pays: info["country"] ?? "",
-      Ville: info["city"] ?? "",
+      Pays: info["pays"] ?? "",
+      Ville: info["ville"] ?? "",
       "Zone climatique": climateZone !== null ? String(climateZone) : "",
       
       "Type d'entretien": info["entretien"] ?? "",
@@ -2583,8 +2571,8 @@ function Index() {
         sn_num: serial || prev["sn_num"] || "",
         sn_suffix: prev["sn_suffix"] ?? "",
         fabrication: fields["manufacture_year"] ?? prev["fabrication"] ?? "",
-        country: fields["country"] ?? prev["country"] ?? "",
-        city: fields["city"] ?? prev["city"] ?? "",
+        pays: fields["country"] ?? prev["pays"] ?? "",
+        ville: fields["city"] ?? prev["ville"] ?? "",
         entretien: normalizeMaintenanceCode(fields["maintenance_type"]) || prev["entretien"] || "",
         usage_level: normalizeUsageCode(fields["usage_level"]) || prev["usage_level"] || "",
         profil_saisie: normalizeWhoCode(fields["who"]) || prev["profil_saisie"] || "",
@@ -2670,8 +2658,8 @@ function Index() {
       sn_num: row.numero_central ?? prev["sn_num"] ?? "",
       sn_suffix: row.suffixe_lettre ?? "",
       fabrication: row.annee_fabrication ? String(row.annee_fabrication) : "",
-      country: row.pays ?? "",
-      city: row.ville ?? "",
+      pays: row.pays ?? "",
+      ville: row.ville ?? "",
       entretien: normalizeMaintenanceCode(row.type_entretien),
       remarques: row.remarques ?? "",
     }));
@@ -2711,10 +2699,8 @@ function Index() {
       climate_zone: payload.zone_climatique,
       maintenance_type: payload.type_entretien,
       usage_level: info["usage_level"] ?? "",
-      city: payload.city,
-      country: payload.country,
-      who: normalizeWhoCode(info["profil_saisie"]) || WHO_PRO,
-      demo: Boolean(isDemoActive()),
+      city: payload.ville,
+      country: payload.pays,
       remarks: payload.remarques,
       wd: payload.mesures_wa,
       wa: payload.mesures_wd,
@@ -2892,8 +2878,8 @@ function Index() {
       modele: info["modele"] ?? "",
       serial: (info["sn_prefix"] ?? "") + (info["sn_num"] ?? "") + (info["sn_suffix"] ?? ""),
       typePiano: info["type_piano"] ?? "",
-      pays: info["country"] ?? "",
-      ville: info["city"] ?? "",
+      pays: info["pays"] ?? "",
+      ville: info["ville"] ?? "",
       entretien: info["entretien"] ?? "",
       usage: info["usage_level"] ?? "",
       modifications: info["remarques"] ?? "",
@@ -3894,8 +3880,8 @@ function Index() {
                 profile.frictionTarget !== null
                   ? `${profile.label} — friction cible ${profile.frictionTarget} g`
                   : profile.label,
-              pays: info["country"] ?? "",
-              ville: info["city"] ?? "",
+              pays: info["pays"] ?? "",
+              ville: info["ville"] ?? "",
               entretien: info["entretien"] ?? "",
               remarques: info["remarques"] ?? "",
               usage: info["usage_level"] ?? "",

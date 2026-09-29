@@ -33,8 +33,8 @@ export type DiagnosticPayload = {
   numero_central: string;
   suffixe_lettre: string;
   annee_fabrication: number | null;
-  country: string | null;
-  city: string | null;
+  pays: string;
+  ville: string;
   zone_climatique: string;
   type_entretien: string;
   remarques: string;

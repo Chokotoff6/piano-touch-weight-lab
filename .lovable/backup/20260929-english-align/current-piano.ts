@@ -18,13 +18,11 @@ export type CurrentPiano = {
   climate_zone: string;
   maintenance_type: string;
   usage_level: string;
-  city: string | null;
-  country: string | null;
+  city: string;
+  country: string;
   remarks: string;
   /** Auteur de la mesure (colonne `who` en base) : pro ou particulier. */
-  who?: string | null | undefined;
-  /** Colonne `demo` : true en Mode Démo, false en mode réel (jamais NULL). */
-  demo?: boolean | undefined;
+  who?: string | undefined;
   /** Colonnes base : wa_values = Poids DESCENDANT (lourd), wd_values = remontant. Pont vers wd/wa (Stanwood) à la lecture/écriture. */
   wa_values: number[];
   wd_values: number[];
@@ -42,21 +40,6 @@ export function normalizeTypePiano(raw: string | null | undefined): string {
   if (s.includes("upright") || s.includes("droit")) return "Droit";
   if (s.includes("grand") || s.includes("queue")) return "Queue";
   return "";
-}
-
-/** Normalisation internationale du type de piano pour la base Cloud. */
-export function toCloudTypePiano(raw: string | null | undefined): "Upright" | "Grand" | "" {
-  const s = String(raw ?? "").trim().toLowerCase();
-  if (s.includes("droit") || s.includes("upright")) return "Upright";
-  if (s.includes("queue") || s.includes("grand")) return "Grand";
-  return "";
-}
-
-/** Assainissement strict : "", espaces ou "EMPTY" deviennent null (UTF-8 NFC). */
-export function cleanStringOrNull(val: string | null | undefined): string | null {
-  const s = String(val ?? "").normalize("NFC").trim();
-  if (!s || s.toUpperCase() === "EMPTY") return null;
-  return s;
 }
 
 /** Codes anglais stockés pour le champ « Vous êtes ». */
@@ -103,11 +86,10 @@ export function buildCurrentPiano(input: {
   climate_zone: string;
   maintenance_type: string;
   usage_level: string;
-  city?: string | null;
-  country?: string | null;
+  city: string;
+  country: string;
   remarks: string;
-  who?: string | null | undefined;
-  demo?: boolean | undefined;
+  who?: string | undefined;
   wd: Array<string | number>;
   wa: Array<string | number>;
   mesureDate?: Date;
@@ -140,7 +122,7 @@ export function buildCurrentPiano(input: {
     brand: input.brand,
     model: input.model,
     serial_number: input.serial_number,
-    type_piano: toCloudTypePiano(input.type_piano),
+    type_piano: input.type_piano,
     measurement_date,
     created_at,
     manufacture_year: input.manufacture_year,
@@ -149,11 +131,10 @@ export function buildCurrentPiano(input: {
     usage_level: input.usage_level,
     // Encodage strict UTF-8 (NFC) et nettoyage : « Bruxelles » / « Belgique »
     // ne doivent jamais partir vides ou mal encodés vers la base.
-    city: cleanStringOrNull(input.city),
-    country: cleanStringOrNull(input.country),
+    city: String(input.city ?? "").normalize("NFC").trim(),
+    country: String(input.country ?? "").normalize("NFC").trim(),
     remarks: input.remarks,
-    who: input.who ? normalizeWhoCode(input.who) || null : null,
-    demo: Boolean(input.demo),
+    who: input.who,
     wa_values: wd,
     wd_values: wa,
     friction_values: friction,
@@ -216,16 +197,14 @@ export async function saveCurrentPianoToCloud(
     model: piano.model,
     serial_number: piano.serial_number,
     is_buffer: false,
-    type_piano: toCloudTypePiano(piano.type_piano),
+    type_piano: piano.type_piano,
     measurement_date: piano.measurement_date,
     manufacture_year: piano.manufacture_year,
     climate_zone: piano.climate_zone,
     maintenance_type: piano.maintenance_type,
     usage_level: piano.usage_level,
-    city: cleanStringOrNull(piano.city),
-    country: cleanStringOrNull(piano.country),
-    who: piano.who ?? null,
-    demo: Boolean(piano.demo),
+    city: piano.city,
+    country: piano.country,
     remarks: piano.remarks,
     wa_values: toPgArray(piano.wa_values),
     wd_values: toPgArray(piano.wd_values),
@@ -288,16 +267,14 @@ function bufferPayload(piano: CurrentPiano) {
     // Le VRAI numéro de série est stocké ; le marqueur de tampon est is_buffer.
     serial_number: piano.serial_number,
     is_buffer: true,
-    type_piano: toCloudTypePiano(piano.type_piano),
+    type_piano: piano.type_piano,
     measurement_date: piano.measurement_date,
     manufacture_year: piano.manufacture_year,
     climate_zone: piano.climate_zone,
     maintenance_type: piano.maintenance_type,
     usage_level: piano.usage_level,
-    city: cleanStringOrNull(piano.city),
-    country: cleanStringOrNull(piano.country),
-    who: piano.who ?? null,
-    demo: Boolean(piano.demo),
+    city: piano.city,
+    country: piano.country,
     remarks: piano.remarks,
     wa_values: toPgArray(piano.wa_values),
     wd_values: toPgArray(piano.wd_values),
