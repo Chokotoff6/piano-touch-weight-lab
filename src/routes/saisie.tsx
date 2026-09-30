@@ -38,6 +38,18 @@ import { ComparisonChart, buildChartData, type RefProfile } from "@/routes/compa
 
 import { buildCurrentPiano, cleanStringOrNull, toCloudTypePiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, findHistoryProfileId, CURRENT_PIANO_KEY } from "@/lib/current-piano";
 
+/**
+ * Nettoie une chaîne textuelle pour l'injection SQL PostgREST.
+ * Retourne strictement `null` si la valeur est absente, vide, composée d'espaces
+ * ou égale au mot sentinelle "EMPTY" (insensible à la casse).
+ */
+export function clean(val: unknown): string | null {
+  if (val === null || val === undefined) return null;
+  const s = String(val).normalize("NFC").trim();
+  if (!s || s.toUpperCase() === "EMPTY") return null;
+  return s;
+}
+
 const INVALID_CSV_MESSAGE =
   "⚠️ Fichier non valide. Veuillez importer un fichier CSV généré par l'application Piano Touch Analyzer.";
 import { getFingerprint } from "@/lib/fingerprint";
@@ -808,7 +820,8 @@ function Index() {
     }
   };
 
-  // Géolocalisation silencieuse (hors démo) : city/country en anglais + zone climatique.
+  // Géolocalisation silencieuse en tâche de fond (HTTPS ipwho.is) :
+  // city/country natifs en anglais + zone climatique (hors Mode Démo).
   useEffect(() => {
     if (isDemoActive()) return;
     try {
@@ -816,22 +829,38 @@ function Index() {
     } catch {
       /* stockage indisponible */
     }
+
     const ctrl = new AbortController();
-    fetch("https://ipapi.co/json/", { signal: ctrl.signal })
+
+    fetch("https://ipwho.is/", { signal: ctrl.signal })
       .then((r) => (r.ok ? r.json() : null))
-      .then((data: { city?: string; country_name?: string } | null) => {
-        const city = data?.city?.trim() ?? "";
-        const country = data?.country_name?.trim() ?? "";
-        if (!city && !country) return;
-        setInfo((prev) => ({ ...prev, city, country }));
-        if (country) {
-          const p = city ? resolveClimateZone(city, country) : Promise.resolve(fallbackZone(country));
-          p.then((zone) => setClimateZone(zone)).catch(() => setClimateZone(fallbackZone(country)));
+      .then((data: { success?: boolean; city?: string; country?: string } | null) => {
+        // ipwho.is renvoie success: true, city et country en anglais.
+        if (!data || data.success === false) return;
+
+        const cleanCity = clean(data.city);
+        const cleanCountry = clean(data.country);
+        if (!cleanCity && !cleanCountry) return;
+
+        // Injection dans le state local (forme fonctionnelle : pas de dépendance sur info).
+        setInfo((prev) => ({
+          ...prev,
+          city: cleanCity ?? "",
+          country: cleanCountry ?? "",
+        }));
+
+        // Zone climatique calculée silencieusement en arrière-plan.
+        if (cleanCountry) {
+          const p = cleanCity
+            ? resolveClimateZone(cleanCity, cleanCountry)
+            : Promise.resolve(fallbackZone(cleanCountry));
+          p.then((zone) => setClimateZone(zone)).catch(() => setClimateZone(fallbackZone(cleanCountry)));
         }
       })
       .catch(() => {
-        /* silencieux */
+        /* silencieux : blocage réseau ou adblocker */
       });
+
     return () => ctrl.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -2398,8 +2427,8 @@ function Index() {
       numero_central: info["sn_num"] ?? "",
       suffixe_lettre: info["sn_suffix"] ?? "",
       annee_fabrication: Number.isFinite(year) ? year : null,
-      country: cleanStringOrNull(info["country"]),
-      city: cleanStringOrNull(info["city"]),
+      country: clean(info["country"]),
+      city: clean(info["city"]),
       zone_climatique: climateZone !== null ? String(climateZone) : "",
       type_entretien: info["entretien"] ?? "",
       remarques: info["remarques"] ?? "",
