@@ -33,7 +33,12 @@ import { getLang, useLang } from "@/data/translations";
 import { buildReportPdf, captureReportPages, rawPdfMirror } from "@/lib/pdf-report";
 import { generateBlankFormPdf, generateBlankKeyboardPdf } from "@/lib/pdf-blank-form";
 
-import { PdfComparisonChart, PdfInfoTable, type ChartPoint } from "@/components/PdfReportBlocks";
+import {
+  PdfComparisonChart,
+  PdfInfoTable,
+  type ChartPoint,
+  type PdfInfo,
+} from "@/components/PdfReportBlocks";
 import { ComparisonChart, buildChartData, type RefProfile } from "@/routes/comparer";
 
 import { buildCurrentPiano, cleanStringOrNull, toCloudTypePiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, findHistoryProfileId, CURRENT_PIANO_KEY } from "@/lib/current-piano";
