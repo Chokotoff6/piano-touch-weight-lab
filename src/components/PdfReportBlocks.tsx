@@ -1,4 +1,5 @@
 // Blocs dédiés au rapport PDF : fiche compactée (4 colonnes) et graphique d'analyse.
+import { memo } from "react";
 import {
   CartesianGrid,
   Legend,
@@ -39,7 +40,7 @@ function Line2({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function PdfInfoTable({ info }: { info: PdfInfo }) {
+function PdfInfoTableBase({ info }: { info: PdfInfo }) {
   return (
     <div className="w-full bg-white">
       <div className="mb-1 text-[13px] font-bold text-black">Informations piano</div>
@@ -71,6 +72,9 @@ export function PdfInfoTable({ info }: { info: PdfInfo }) {
   );
 }
 
+// Mémorisation : ne se re-rend que si l'objet `info` change de référence.
+export const PdfInfoTable = memo(PdfInfoTableBase);
+
 export type ChartPoint = {
   key: number;
   wd: number | null;
@@ -79,7 +83,7 @@ export type ChartPoint = {
   balance: number | null;
 };
 
-export function PdfComparisonChart({
+function PdfComparisonChartBase({
   data,
   frictionTarget,
 }: {
@@ -153,6 +157,9 @@ export function PdfComparisonChart({
     </div>
   );
 }
+
+// Mémorisation : ne se re-rend que si `data` ou `frictionTarget` changent.
+export const PdfComparisonChart = memo(PdfComparisonChartBase);
 
 export type MetricKeyPdf = "wd" | "wa" | "balance" | "friction";
 
