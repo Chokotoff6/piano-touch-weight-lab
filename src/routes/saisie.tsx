@@ -859,7 +859,7 @@ function Index() {
         setInfo((prev) => {
           const nextCity = cleanCity ?? "";
           const nextCountry = cleanCountry ?? "";
-          if (prev.city === nextCity && prev.country === nextCountry) return prev;
+          if (prev["city"] === nextCity && prev["country"] === nextCountry) return prev;
           return { ...prev, city: nextCity, country: nextCountry };
         });
 
