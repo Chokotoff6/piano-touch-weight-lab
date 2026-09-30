@@ -1303,8 +1303,6 @@ function Index() {
       ["sn_num", en ? "Serial number" : "N° de série"],
       ["type_piano", en ? "Type" : "Type"],
       ["fabrication", en ? "Manufacturing date" : "Date fabrication"],
-      ["country", en ? "Country" : "Pays"],
-      ["city", en ? "City" : "Ville"],
       ["entretien", en ? "Piano history" : "Historique piano"],
       ["usage_level", en ? "Usage intensity" : "Intensité d'usage"],
       ["profil_saisie", en ? "You are" : "Vous êtes"],
