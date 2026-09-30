@@ -549,6 +549,9 @@ function Index() {
   const fabricationTouched = useRef(false);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [climateZone, setClimateZone] = useState<ClimateZone | null>(null);
+  // Verrou d'exécution unique du fetch de géolocalisation : interdit formellement
+  // à l'effet réseau de redémarrer (StrictMode, re-renders, ré-hydratation).
+  const geoFetchedRef = useRef(false);
   const [honeypot, setHoneypot] = useState("");
   const topbarState = useTopbarState();
   // Protection d'ADN : identité figée uniquement après enregistrement définitif au cloud via « J'accepte ».
@@ -823,6 +826,10 @@ function Index() {
   // Géolocalisation silencieuse en tâche de fond (HTTPS ipwho.is) :
   // city/country natifs en anglais + zone climatique (hors Mode Démo).
   useEffect(() => {
+    // Un seul et unique lancement pour toute la durée de vie du composant.
+    if (geoFetchedRef.current) return;
+    geoFetchedRef.current = true;
+
     if (isDemoActive()) return;
     try {
       if (window.sessionStorage.getItem("ptw_demo_typewriter_pending") === "1") return;
@@ -842,12 +849,14 @@ function Index() {
         const cleanCountry = clean(data.country);
         if (!cleanCity && !cleanCountry) return;
 
-        // Injection dans le state local (forme fonctionnelle : pas de dépendance sur info).
-        setInfo((prev) => ({
-          ...prev,
-          city: cleanCity ?? "",
-          country: cleanCountry ?? "",
-        }));
+        // Injection idempotente : si rien ne change, on rend `prev` tel quel
+        // pour que React constate une référence identique et stoppe le cycle.
+        setInfo((prev) => {
+          const nextCity = cleanCity ?? "";
+          const nextCountry = cleanCountry ?? "";
+          if (prev.city === nextCity && prev.country === nextCountry) return prev;
+          return { ...prev, city: nextCity, country: nextCountry };
+        });
 
         // Zone climatique calculée silencieusement en arrière-plan.
         if (cleanCountry) {
@@ -2468,6 +2477,32 @@ function Index() {
 
   const serialFull = `${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`;
 
+  // Fiche PDF mémoïsée (13 clés) : référence stable tant que info / profil /
+  // zone climatique ne changent pas — stabilise le cycle de rendu du cadre
+  // masqué et supprime toute réévaluation récursive de PdfReportBlocks.
+  const pdfInfoData = useMemo<PdfInfo>(
+    () => ({
+      marque: info["marque"] ?? "",
+      modele: info["modele"] ?? "",
+      typePiano: info["type_piano"] ?? "",
+      serial: serialFull,
+      fabrication: info["fabrication"] ?? "",
+      profil:
+        profile.frictionTarget !== null
+          ? `${profile.label} — friction cible ${profile.frictionTarget} g`
+          : profile.label,
+      pays: info["country"] ?? "",
+      ville: info["city"] ?? "",
+      entretien: info["entretien"] ?? "",
+      remarques: info["remarques"] ?? "",
+      usage: info["usage_level"] ?? "",
+      zone: climateZone !== null ? String(climateZone) : "",
+      dateMesure: formatLocalDateTime(new Date()),
+    }),
+    [info, serialFull, profile, climateZone],
+  );
+
+
   const chartData = useMemo<ChartPoint[]>(
     () =>
       rows.map((r, i) => {
@@ -3910,26 +3945,8 @@ function Index() {
       >
         <div className="p-4">
         <div ref={pdfInfoRef} className="bg-white">
-          <PdfInfoTable
-            info={{
-              marque: info["marque"] ?? "",
-              modele: info["modele"] ?? "",
-              typePiano: info["type_piano"] ?? "",
-              serial: serialFull,
-              fabrication: info["fabrication"] ?? "",
-              profil:
-                profile.frictionTarget !== null
-                  ? `${profile.label} — friction cible ${profile.frictionTarget} g`
-                  : profile.label,
-              pays: info["country"] ?? "",
-              ville: info["city"] ?? "",
-              entretien: info["entretien"] ?? "",
-              remarques: info["remarques"] ?? "",
-              usage: info["usage_level"] ?? "",
-              zone: climateZone !== null ? String(climateZone) : "",
-              dateMesure: formatLocalDateTime(new Date()),
-            }}
-          />
+          <PdfInfoTable info={pdfInfoData} />
+
         </div>
       <Frame
         title={
