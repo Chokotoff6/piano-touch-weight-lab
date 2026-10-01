@@ -1644,18 +1644,8 @@ function SidebarPanel(props: SidebarPanelProps) {
           {cycleRow(en ? "Same manufacturing year" : "Même année de fabrication", props.sameYear, props.setSameYear)}
           {cycleRow(en ? "Pianos under 5 years old" : "Pianos de moins de 5 ans", props.youngOnly, props.setYoungOnly)}
           <div className="text-center font-bold leading-tight" style={{ color: "#f97316", marginTop: "15px", fontSize: "0.85rem" }}>
-            {(!Number(props.cloudSampleCount) || !Number(props.cloudTotalCount)) ? (
-              <>
-                <div>
-                  {en
-                    ? `No ${props.brandModel} profile shared in the CLOUD yet. Activate the STANDARD TARGET button to compare with a "standard" regulation curve.`
-                    : `Pas encore de profil de ${props.brandModel} partagé dans le CLOUD. Activez le bouton CIBLE STANDARD pour comparer avec une courbe de régulation "standard".`}
-                </div>
-              </>
-            ) : (
-              <>
-                <div>{en ? `${props.cloudSampleCount}/${props.cloudTotalCount} profile(s) of ${props.brandModel} shared on the Cloud` : `${props.cloudSampleCount}/${props.cloudTotalCount} profil(s) de ${props.brandModel} partagé(s) sur le Cloud`}</div>
-              </>
+            {!!Number(props.cloudSampleCount) && !!Number(props.cloudTotalCount) && (
+              <div>{en ? `${props.cloudSampleCount}/${props.cloudTotalCount} profile(s) of ${props.brandModel} shared on the Cloud` : `${props.cloudSampleCount}/${props.cloudTotalCount} profil(s) de ${props.brandModel} partagé(s) sur le Cloud`}</div>
             )}
           </div>
             </>

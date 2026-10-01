@@ -131,7 +131,7 @@ const RAPID_INDEXES = [3, 4, 15, 16, 27, 28, 39, 40, 51, 52, 63, 64, 75, 76, 87]
 const RAPID_INDEX_SET = new Set<number>(RAPID_INDEXES);
 
 const PD_RANGE_MESSAGE =
-  "⚠️ Valeur hors fourchette : Les pesées doivent être comprises entre 10 grammes et 90 grammes pour être conformes.";
+  "⚠️ Valeur hors plage d'atelier : Les pesées doivent être comprises entre 30g et 90g pour être conformes.";
 const PEDAL_MESSAGE_FR =
   "⚠️ Attention : Valeur élevée détectée. Assurez-vous que la pédale de sustain (forte) est bien enfoncée à fond durant la mesure pour libérer les étouffoirs.";
 const PEDAL_MESSAGE_EN =
@@ -827,16 +827,8 @@ function Index() {
 
   // Géolocalisation silencieuse en tâche de fond (HTTPS ipwho.is) :
   // city/country natifs en anglais + zone climatique (hors Mode Démo).
-  // Garde-fou textuel : dès que Ville et Pays sont remplis, l'effet s'arrête.
-  const infoCity = info["city"] ?? "";
-  const infoCountry = info["country"] ?? "";
+  // Dépendances vides : exécution unique au montage, aucune boucle possible.
   useEffect(() => {
-    console.log("Garde-fous IP :", {
-      isDemo: isDemoActive(),
-      city: infoCity,
-      country: infoCountry,
-    });
-
     // Ne pas exécuter si le Mode Démo est actif
     if (isDemoActive()) return;
     try {
@@ -844,9 +836,6 @@ function Index() {
     } catch {
       /* stockage indisponible */
     }
-
-    // Garde-fou textuel : rien à faire si les champs sont déjà renseignés
-    if (infoCity.trim() && infoCountry.trim()) return;
 
     let isMounted = true;
 
@@ -862,24 +851,28 @@ function Index() {
         const cleanCountry = clean(data.country);
         if (!cleanCity && !cleanCountry) return;
 
-        // Mise à jour idempotente : stopper le cycle si les valeurs sont identiques
+        // Mise à jour atomique et idempotente basée sur 'prev' :
+        // ne jamais écraser une valeur déjà présente (ex : brouillon restauré).
         setInfo((prev) => {
-          const nextCity = cleanCity ?? "";
-          const nextCountry = cleanCountry ?? "";
+          if (prev["city"]?.trim() && prev["country"]?.trim()) return prev;
+          const nextCity = cleanCity ?? prev["city"] ?? "";
+          const nextCountry = cleanCountry ?? prev["country"] ?? "";
           if (prev["city"] === nextCity && prev["country"] === nextCountry) return prev;
           return { ...prev, city: nextCity, country: nextCountry };
         });
 
-        // Résolution de la zone climatique
+        // Résolution de la zone climatique avec des variables locales pures
         if (cleanCountry) {
-          const p = cleanCity
+          const zonePromise = cleanCity
             ? resolveClimateZone(cleanCity, cleanCountry)
             : Promise.resolve(fallbackZone(cleanCountry));
-          p.then((zone) => {
-            if (isMounted) setClimateZone(zone);
-          }).catch(() => {
-            if (isMounted) setClimateZone(fallbackZone(cleanCountry));
-          });
+          zonePromise
+            .then((zone) => {
+              if (isMounted) setClimateZone(zone);
+            })
+            .catch(() => {
+              if (isMounted) setClimateZone(fallbackZone(cleanCountry));
+            });
         }
       })
       .catch((err) => {
@@ -889,10 +882,9 @@ function Index() {
     return () => {
       isMounted = false;
     };
-    // Dépendances primitives : l'effet se ré-évalue seulement si Ville/Pays changent,
-    // puis s'auto-verrouille via le garde-fou textuel ci-dessus.
+    // Tableau strictement vide : exécution unique au montage, aucune boucle possible
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [infoCity, infoCountry]);
+  }, []);
 
   // Lancement automatique du Mode Démo via /saisie?demo=true (lien de l'accueil).
   const { demo: demoParam } = Route.useSearch();
