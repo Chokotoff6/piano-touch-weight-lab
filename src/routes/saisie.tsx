@@ -554,9 +554,6 @@ function Index() {
   const fabricationTouched = useRef(false);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [climateZone, setClimateZone] = useState<ClimateZone | null>(null);
-  // Verrou d'exécution unique du fetch de géolocalisation : interdit formellement
-  // à l'effet réseau de redémarrer (StrictMode, re-renders, ré-hydratation).
-  const geoFetchedRef = useRef(false);
   const [honeypot, setHoneypot] = useState("");
   const topbarState = useTopbarState();
   // Protection d'ADN : identité figée uniquement après enregistrement définitif au cloud via « J'accepte ».
@@ -830,7 +827,16 @@ function Index() {
 
   // Géolocalisation silencieuse en tâche de fond (HTTPS ipwho.is) :
   // city/country natifs en anglais + zone climatique (hors Mode Démo).
+  // Garde-fou textuel : dès que Ville et Pays sont remplis, l'effet s'arrête.
+  const infoCity = info["city"] ?? "";
+  const infoCountry = info["country"] ?? "";
   useEffect(() => {
+    console.log("Garde-fous IP :", {
+      isDemo: isDemoActive(),
+      city: infoCity,
+      country: infoCountry,
+    });
+
     // Ne pas exécuter si le Mode Démo est actif
     if (isDemoActive()) return;
     try {
@@ -839,9 +845,8 @@ function Index() {
       /* stockage indisponible */
     }
 
-    // Protection contre l'exécution multiple
-    if (geoFetchedRef.current) return;
-    geoFetchedRef.current = true;
+    // Garde-fou textuel : rien à faire si les champs sont déjà renseignés
+    if (infoCity.trim() && infoCountry.trim()) return;
 
     let isMounted = true;
 
@@ -884,8 +889,10 @@ function Index() {
     return () => {
       isMounted = false;
     };
+    // Dépendances primitives : l'effet se ré-évalue seulement si Ville/Pays changent,
+    // puis s'auto-verrouille via le garde-fou textuel ci-dessus.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [infoCity, infoCountry]);
 
   // Lancement automatique du Mode Démo via /saisie?demo=true (lien de l'accueil).
   const { demo: demoParam } = Route.useSearch();
