@@ -131,7 +131,7 @@ const RAPID_INDEXES = [3, 4, 15, 16, 27, 28, 39, 40, 51, 52, 63, 64, 75, 76, 87]
 const RAPID_INDEX_SET = new Set<number>(RAPID_INDEXES);
 
 const PD_RANGE_MESSAGE =
-  "⚠️ Valeur hors fourchette : Les pesées doivent être comprises entre 10 grammes et 90 grammes pour être conformes.";
+  "⚠️ Valeur hors plage d'atelier : Les pesées doivent être comprises entre 30g et 90g pour être conformes.";
 const PEDAL_MESSAGE_FR =
   "⚠️ Attention : Valeur élevée détectée. Assurez-vous que la pédale de sustain (forte) est bien enfoncée à fond durant la mesure pour libérer les étouffoirs.";
 const PEDAL_MESSAGE_EN =
