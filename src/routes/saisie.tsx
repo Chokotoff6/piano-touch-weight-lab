@@ -831,10 +831,7 @@ function Index() {
   // Géolocalisation silencieuse en tâche de fond (HTTPS ipwho.is) :
   // city/country natifs en anglais + zone climatique (hors Mode Démo).
   useEffect(() => {
-    // Un seul et unique lancement pour toute la durée de vie du composant.
-    if (geoFetchedRef.current) return;
-    geoFetchedRef.current = true;
-
+    // Ne pas exécuter si le Mode Démo est actif
     if (isDemoActive()) return;
     try {
       if (window.sessionStorage.getItem("ptw_demo_typewriter_pending") === "1") return;
@@ -842,20 +839,25 @@ function Index() {
       /* stockage indisponible */
     }
 
-    const ctrl = new AbortController();
+    // Protection contre l'exécution multiple
+    if (geoFetchedRef.current) return;
+    geoFetchedRef.current = true;
 
-    fetch("https://ipwho.is/", { signal: ctrl.signal })
+    let isMounted = true;
+
+    fetch("https://ipwho.is/")
       .then((r) => (r.ok ? r.json() : null))
       .then((data: { success?: boolean; city?: string; country?: string } | null) => {
-        // ipwho.is renvoie success: true, city et country en anglais.
+        if (!isMounted) return;
+        console.log("Données reçues ipwho.is:", data);
+
         if (!data || data.success === false) return;
 
         const cleanCity = clean(data.city);
         const cleanCountry = clean(data.country);
         if (!cleanCity && !cleanCountry) return;
 
-        // Injection idempotente : si rien ne change, on rend `prev` tel quel
-        // pour que React constate une référence identique et stoppe le cycle.
+        // Mise à jour idempotente : stopper le cycle si les valeurs sont identiques
         setInfo((prev) => {
           const nextCity = cleanCity ?? "";
           const nextCountry = cleanCountry ?? "";
@@ -863,19 +865,25 @@ function Index() {
           return { ...prev, city: nextCity, country: nextCountry };
         });
 
-        // Zone climatique calculée silencieusement en arrière-plan.
+        // Résolution de la zone climatique
         if (cleanCountry) {
           const p = cleanCity
             ? resolveClimateZone(cleanCity, cleanCountry)
             : Promise.resolve(fallbackZone(cleanCountry));
-          p.then((zone) => setClimateZone(zone)).catch(() => setClimateZone(fallbackZone(cleanCountry)));
+          p.then((zone) => {
+            if (isMounted) setClimateZone(zone);
+          }).catch(() => {
+            if (isMounted) setClimateZone(fallbackZone(cleanCountry));
+          });
         }
       })
-      .catch(() => {
-        /* silencieux : blocage réseau ou adblocker */
+      .catch((err) => {
+        console.error("Erreur réseau ipwho.is:", err);
       });
 
-    return () => ctrl.abort();
+    return () => {
+      isMounted = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
