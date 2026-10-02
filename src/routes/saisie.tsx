@@ -2380,6 +2380,59 @@ function Index() {
     return true;
   };
 
+  /**
+   * Capture « Just-In-Time » de la géolocalisation IP et de la zone climatique,
+   * exécutée exclusivement au clic d'enregistrement (syncAndFinish).
+   * Blindée par deux timeouts stricts de 1500 ms :
+   *  - AbortController sur le fetch ipwho.is (racine anglaise uniquement, jamais data.native) ;
+   *  - Promise.race sur resolveClimateZone avec repli sur fallbackZone.
+   * En cas de panne ou de timeout, renvoie { city: null, country: null, zone: "" }
+   * pour que la sauvegarde Supabase parte immédiatement sans bloquer l'artisan.
+   */
+  const fetchGeoAndClimate = async (): Promise<{
+    city: string | null;
+    country: string | null;
+    zone: string;
+  }> => {
+    if (isDemoActive()) return { city: null, country: null, zone: "" };
+    try {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 1500);
+      const res = await fetch("https://ipwho.is/", { signal: controller.signal });
+      window.clearTimeout(timeoutId);
+      if (!res.ok) return { city: null, country: null, zone: "" };
+      const data = (await res.json()) as { success?: boolean; city?: string; country?: string };
+      console.log("Données reçues ipwho.is (au clic) :", data);
+      if (!data || data.success === false) return { city: null, country: null, zone: "" };
+
+      const cleanCity = clean(data.city);
+      const cleanCountry = clean(data.country);
+
+      let zone = "";
+      if (cleanCountry) {
+        const fallback = fallbackZone(cleanCountry);
+        if (cleanCity) {
+          // Timeout strict de 1500 ms sur Nominatim : repli garanti sur fallbackZone.
+          const timeoutPromise = new Promise<ClimateZone>((resolve) =>
+            window.setTimeout(() => resolve(fallback), 1500),
+          );
+          zone = String(
+            await Promise.race([resolveClimateZone(cleanCity, cleanCountry), timeoutPromise]).catch(
+              () => fallback,
+            ),
+          );
+        } else {
+          zone = String(fallback);
+        }
+      }
+      return { city: cleanCity, country: cleanCountry, zone };
+    } catch (err) {
+      // AbortError (timeout), panne réseau ou adblocker : sauvegarde directe en NULL.
+      console.error("Erreur réseau ipwho.is (au clic) :", err);
+      return { city: null, country: null, zone: "" };
+    }
+  };
+
   const buildPayload = (): DiagnosticPayload => {
     const year = Number((info["fabrication"] ?? "").match(/\d{4}/)?.[0]);
     return {
