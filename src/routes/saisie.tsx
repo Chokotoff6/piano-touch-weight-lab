@@ -825,72 +825,9 @@ function Index() {
     }
   };
 
-  // Géolocalisation silencieuse en tâche de fond (HTTPS ipwho.is) :
-  // city/country natifs en anglais + zone climatique (hors Mode Démo).
-  // Dépendances vides : exécution unique au montage, aucune boucle possible.
-  useEffect(() => {
-    // Ne pas exécuter si le Mode Démo est actif
-    if (isDemoActive()) return;
-    try {
-      if (window.sessionStorage.getItem("ptw_demo_typewriter_pending") === "1") return;
-    } catch {
-      /* stockage indisponible */
-    }
-
-    let isMounted = true;
-
-    // Verrou temporel : l'enregistrement cloud reste bloqué tant que la
-    // géolocalisation n'a pas répondu (garde isGeocoding dans guardExport).
-    setIsGeocoding(true);
-    fetch("https://ipwho.is/")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data: { success?: boolean; city?: string; country?: string } | null) => {
-        if (!isMounted) return;
-        console.log("Données reçues ipwho.is:", data);
-
-        if (!data || data.success === false) return;
-
-        const cleanCity = clean(data.city);
-        const cleanCountry = clean(data.country);
-        if (!cleanCity && !cleanCountry) return;
-
-        // Mise à jour atomique et idempotente basée sur 'prev' :
-        // ne jamais écraser une valeur déjà présente (ex : brouillon restauré).
-        setInfo((prev) => {
-          if (prev["city"]?.trim() && prev["country"]?.trim()) return prev;
-          const nextCity = cleanCity ?? prev["city"] ?? "";
-          const nextCountry = cleanCountry ?? prev["country"] ?? "";
-          if (prev["city"] === nextCity && prev["country"] === nextCountry) return prev;
-          return { ...prev, city: nextCity, country: nextCountry };
-        });
-
-        // Résolution de la zone climatique avec des variables locales pures
-        if (cleanCountry) {
-          const zonePromise = cleanCity
-            ? resolveClimateZone(cleanCity, cleanCountry)
-            : Promise.resolve(fallbackZone(cleanCountry));
-          zonePromise
-            .then((zone) => {
-              if (isMounted) setClimateZone(zone);
-            })
-            .catch(() => {
-              if (isMounted) setClimateZone(fallbackZone(cleanCountry));
-            });
-        }
-      })
-      .catch((err) => {
-        console.error("Erreur réseau ipwho.is:", err);
-      })
-      .finally(() => {
-        if (isMounted) setIsGeocoding(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-    // Tableau strictement vide : exécution unique au montage, aucune boucle possible
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Géolocalisation « Just-In-Time » : plus aucun fetch au montage.
+  // La capture IP + zone climatique s'exécute exclusivement au clic
+  // d'enregistrement, dans syncAndFinish(), via fetchGeoAndClimate().
 
   // Lancement automatique du Mode Démo via /saisie?demo=true (lien de l'accueil).
   const { demo: demoParam } = Route.useSearch();
@@ -2417,14 +2354,8 @@ function Index() {
   const guardExport = (anchor: "save" | "export" = "save") => {
     // Contrôle anti-robot : échec silencieux, aucun message affiché.
     if (!passesBotChecks(honeypot)) return false;
-    // Race condition : ne jamais enregistrer tant que la géolocalisation IP
-    // n'a pas peuplé city/country (sinon NULL part vers la base).
-    if (isGeocoding) {
-      toast.info(en
-        ? "Calculating the workshop climate zone, please wait..."
-        : "Calcul de la zone d'atelier en cours...", { id: "geo-pending" });
-      return false;
-    }
+    // La géolocalisation est capturée « Just-In-Time » dans syncAndFinish :
+    // plus aucune garde isGeocoding n'est nécessaire ici.
     const formIncomplete =
       !canEnterWeights ||
       (parseMaintenance(info["entretien"]).includes("Major modifications") &&
@@ -2447,6 +2378,59 @@ function Index() {
     // Le consentement RGPD n'est plus contrôlé ici : il est demandé exclusivement
     // sur la page Résultats, au moment de lever le voile des graphiques.
     return true;
+  };
+
+  /**
+   * Capture « Just-In-Time » de la géolocalisation IP et de la zone climatique,
+   * exécutée exclusivement au clic d'enregistrement (syncAndFinish).
+   * Blindée par deux timeouts stricts de 1500 ms :
+   *  - AbortController sur le fetch ipwho.is (racine anglaise uniquement, jamais data.native) ;
+   *  - Promise.race sur resolveClimateZone avec repli sur fallbackZone.
+   * En cas de panne ou de timeout, renvoie { city: null, country: null, zone: "" }
+   * pour que la sauvegarde Supabase parte immédiatement sans bloquer l'artisan.
+   */
+  const fetchGeoAndClimate = async (): Promise<{
+    city: string | null;
+    country: string | null;
+    zone: string;
+  }> => {
+    if (isDemoActive()) return { city: null, country: null, zone: "" };
+    try {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 1500);
+      const res = await fetch("https://ipwho.is/", { signal: controller.signal });
+      window.clearTimeout(timeoutId);
+      if (!res.ok) return { city: null, country: null, zone: "" };
+      const data = (await res.json()) as { success?: boolean; city?: string; country?: string };
+      console.log("Données reçues ipwho.is (au clic) :", data);
+      if (!data || data.success === false) return { city: null, country: null, zone: "" };
+
+      const cleanCity = clean(data.city);
+      const cleanCountry = clean(data.country);
+
+      let zone = "";
+      if (cleanCountry) {
+        const fallback = fallbackZone(cleanCountry);
+        if (cleanCity) {
+          // Timeout strict de 1500 ms sur Nominatim : repli garanti sur fallbackZone.
+          const timeoutPromise = new Promise<ClimateZone>((resolve) =>
+            window.setTimeout(() => resolve(fallback), 1500),
+          );
+          zone = String(
+            await Promise.race([resolveClimateZone(cleanCity, cleanCountry), timeoutPromise]).catch(
+              () => fallback,
+            ),
+          );
+        } else {
+          zone = String(fallback);
+        }
+      }
+      return { city: cleanCity, country: cleanCountry, zone };
+    } catch (err) {
+      // AbortError (timeout), panne réseau ou adblocker : sauvegarde directe en NULL.
+      console.error("Erreur réseau ipwho.is (au clic) :", err);
+      return { city: null, country: null, zone: "" };
+    }
   };
 
   const buildPayload = (): DiagnosticPayload => {
@@ -2788,7 +2772,17 @@ function Index() {
 
   const syncAndFinish = async (mode: "insert" | "update"): Promise<boolean> => {
     setIsExporting(true);
-    const payload = buildPayload();
+    // Capture IP « Just-In-Time » : 100 % indépendante du brouillon local et
+    // des boutons de reset. Les valeurs en clair sont injectées directement
+    // dans le payload, sans jamais transiter par l'état React 'info'.
+    const geo = await fetchGeoAndClimate();
+    const basePayload = buildPayload();
+    const payload: DiagnosticPayload = {
+      ...basePayload,
+      city: geo.city,
+      country: geo.country,
+      zone_climatique: geo.zone || basePayload.zone_climatique,
+    };
     const year = payload.annee_fabrication;
     const currentPiano = buildCurrentPiano({
       brand: payload.marque,
