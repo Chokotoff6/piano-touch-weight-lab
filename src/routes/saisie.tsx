@@ -839,6 +839,9 @@ function Index() {
 
     let isMounted = true;
 
+    // Verrou temporel : l'enregistrement cloud reste bloqué tant que la
+    // géolocalisation n'a pas répondu (garde isGeocoding dans guardExport).
+    setIsGeocoding(true);
     fetch("https://ipwho.is/")
       .then((r) => (r.ok ? r.json() : null))
       .then((data: { success?: boolean; city?: string; country?: string } | null) => {
@@ -877,6 +880,9 @@ function Index() {
       })
       .catch((err) => {
         console.error("Erreur réseau ipwho.is:", err);
+      })
+      .finally(() => {
+        if (isMounted) setIsGeocoding(false);
       });
 
     return () => {
@@ -2411,6 +2417,14 @@ function Index() {
   const guardExport = (anchor: "save" | "export" = "save") => {
     // Contrôle anti-robot : échec silencieux, aucun message affiché.
     if (!passesBotChecks(honeypot)) return false;
+    // Race condition : ne jamais enregistrer tant que la géolocalisation IP
+    // n'a pas peuplé city/country (sinon NULL part vers la base).
+    if (isGeocoding) {
+      toast.info(en
+        ? "Calculating the workshop climate zone, please wait..."
+        : "Calcul de la zone d'atelier en cours...", { id: "geo-pending" });
+      return false;
+    }
     const formIncomplete =
       !canEnterWeights ||
       (parseMaintenance(info["entretien"]).includes("Major modifications") &&
