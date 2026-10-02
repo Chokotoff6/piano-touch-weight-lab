@@ -825,72 +825,9 @@ function Index() {
     }
   };
 
-  // Géolocalisation silencieuse en tâche de fond (HTTPS ipwho.is) :
-  // city/country natifs en anglais + zone climatique (hors Mode Démo).
-  // Dépendances vides : exécution unique au montage, aucune boucle possible.
-  useEffect(() => {
-    // Ne pas exécuter si le Mode Démo est actif
-    if (isDemoActive()) return;
-    try {
-      if (window.sessionStorage.getItem("ptw_demo_typewriter_pending") === "1") return;
-    } catch {
-      /* stockage indisponible */
-    }
-
-    let isMounted = true;
-
-    // Verrou temporel : l'enregistrement cloud reste bloqué tant que la
-    // géolocalisation n'a pas répondu (garde isGeocoding dans guardExport).
-    setIsGeocoding(true);
-    fetch("https://ipwho.is/")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data: { success?: boolean; city?: string; country?: string } | null) => {
-        if (!isMounted) return;
-        console.log("Données reçues ipwho.is:", data);
-
-        if (!data || data.success === false) return;
-
-        const cleanCity = clean(data.city);
-        const cleanCountry = clean(data.country);
-        if (!cleanCity && !cleanCountry) return;
-
-        // Mise à jour atomique et idempotente basée sur 'prev' :
-        // ne jamais écraser une valeur déjà présente (ex : brouillon restauré).
-        setInfo((prev) => {
-          if (prev["city"]?.trim() && prev["country"]?.trim()) return prev;
-          const nextCity = cleanCity ?? prev["city"] ?? "";
-          const nextCountry = cleanCountry ?? prev["country"] ?? "";
-          if (prev["city"] === nextCity && prev["country"] === nextCountry) return prev;
-          return { ...prev, city: nextCity, country: nextCountry };
-        });
-
-        // Résolution de la zone climatique avec des variables locales pures
-        if (cleanCountry) {
-          const zonePromise = cleanCity
-            ? resolveClimateZone(cleanCity, cleanCountry)
-            : Promise.resolve(fallbackZone(cleanCountry));
-          zonePromise
-            .then((zone) => {
-              if (isMounted) setClimateZone(zone);
-            })
-            .catch(() => {
-              if (isMounted) setClimateZone(fallbackZone(cleanCountry));
-            });
-        }
-      })
-      .catch((err) => {
-        console.error("Erreur réseau ipwho.is:", err);
-      })
-      .finally(() => {
-        if (isMounted) setIsGeocoding(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-    // Tableau strictement vide : exécution unique au montage, aucune boucle possible
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Géolocalisation « Just-In-Time » : plus aucun fetch au montage.
+  // La capture IP + zone climatique s'exécute exclusivement au clic
+  // d'enregistrement, dans syncAndFinish(), via fetchGeoAndClimate().
 
   // Lancement automatique du Mode Démo via /saisie?demo=true (lien de l'accueil).
   const { demo: demoParam } = Route.useSearch();
@@ -2417,14 +2354,8 @@ function Index() {
   const guardExport = (anchor: "save" | "export" = "save") => {
     // Contrôle anti-robot : échec silencieux, aucun message affiché.
     if (!passesBotChecks(honeypot)) return false;
-    // Race condition : ne jamais enregistrer tant que la géolocalisation IP
-    // n'a pas peuplé city/country (sinon NULL part vers la base).
-    if (isGeocoding) {
-      toast.info(en
-        ? "Calculating the workshop climate zone, please wait..."
-        : "Calcul de la zone d'atelier en cours...", { id: "geo-pending" });
-      return false;
-    }
+    // La géolocalisation est capturée « Just-In-Time » dans syncAndFinish :
+    // plus aucune garde isGeocoding n'est nécessaire ici.
     const formIncomplete =
       !canEnterWeights ||
       (parseMaintenance(info["entretien"]).includes("Major modifications") &&
