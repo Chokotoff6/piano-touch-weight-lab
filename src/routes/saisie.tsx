@@ -2772,7 +2772,17 @@ function Index() {
 
   const syncAndFinish = async (mode: "insert" | "update"): Promise<boolean> => {
     setIsExporting(true);
-    const payload = buildPayload();
+    // Capture IP « Just-In-Time » : 100 % indépendante du brouillon local et
+    // des boutons de reset. Les valeurs en clair sont injectées directement
+    // dans le payload, sans jamais transiter par l'état React 'info'.
+    const geo = await fetchGeoAndClimate();
+    const basePayload = buildPayload();
+    const payload: DiagnosticPayload = {
+      ...basePayload,
+      city: geo.city,
+      country: geo.country,
+      zone_climatique: geo.zone || basePayload.zone_climatique,
+    };
     const year = payload.annee_fabrication;
     const currentPiano = buildCurrentPiano({
       brand: payload.marque,
