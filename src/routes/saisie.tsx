@@ -3944,6 +3944,31 @@ function Index() {
                 resetConsent();
                 return;
               }
+              // Sauvegarde locale préliminaire des mesures matérielles avant la
+              // navigation : la fiche est disponible immédiatement sur /resultats,
+              // même si le consentement RGPD ou le réseau retardent le cloud.
+              // La ville, le pays et la zone climatique seront scellés par
+              // syncAndFinish() après validation du consentement.
+              const prePayload = buildPayload();
+              saveCurrentPiano(
+                buildCurrentPiano({
+                  brand: prePayload.marque,
+                  model: prePayload.modele,
+                  serial_number: prePayload.numero_central,
+                  type_piano: prePayload.type_piano,
+                  manufacture_year: prePayload.annee_fabrication,
+                  climate_zone: prePayload.zone_climatique,
+                  maintenance_type: prePayload.type_entretien,
+                  usage_level: info["usage_level"] ?? "",
+                  city: prePayload.city,
+                  country: prePayload.country,
+                  who: normalizeWhoCode(info["profil_saisie"]) || WHO_PRO,
+                  demo: Boolean(isDemoActive()),
+                  remarks: prePayload.remarques,
+                  wd: prePayload.mesures_wa,
+                  wa: prePayload.mesures_wd,
+                }),
+              );
               navigate({ to: "/resultats" });
             }}
             className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100 !text-black" : "border-input bg-background !text-gray-400 opacity-60"}`}
