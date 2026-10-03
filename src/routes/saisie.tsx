@@ -2772,15 +2772,29 @@ function Index() {
 
   const syncAndFinish = async (mode: "insert" | "update"): Promise<boolean> => {
     setIsExporting(true);
-    // Capture IP « Just-In-Time » : 100 % indépendante du brouillon local et
-    // des boutons de reset. Les valeurs en clair sont injectées directement
-    // dans le payload, sans jamais transiter par l'état React 'info'.
-    const geo = await fetchGeoAndClimate();
+    // Aiguillage JIT : la capture IP ne s'exécute QUE pour un nouveau profil
+    // (insert). En actualisation (update), la ville, le pays et la zone
+    // climatique déjà enregistrés sont réutilisés depuis la fiche locale
+    // (loadCurrentPiano), sans aucun appel réseau vers ipwho.is.
+    let geo: { city: string | null; country: string | null; zone: string };
+    if (mode === "insert") {
+      // Capture IP « Just-In-Time » : 100 % indépendante du brouillon local et
+      // des boutons de reset. Les valeurs en clair sont injectées directement
+      // dans le payload, sans jamais transiter par l'état React 'info'.
+      geo = await fetchGeoAndClimate();
+    } else {
+      const existing = loadCurrentPiano();
+      geo = {
+        city: existing?.city?.trim() ? existing.city : null,
+        country: existing?.country?.trim() ? existing.country : null,
+        zone: existing?.climate_zone ?? "",
+      };
+    }
     const basePayload = buildPayload();
     const payload: DiagnosticPayload = {
       ...basePayload,
-      city: geo.city,
-      country: geo.country,
+      city: geo.city ?? basePayload.city,
+      country: geo.country ?? basePayload.country,
       zone_climatique: geo.zone || basePayload.zone_climatique,
     };
     const year = payload.annee_fabrication;
