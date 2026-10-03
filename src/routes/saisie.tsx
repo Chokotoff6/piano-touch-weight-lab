@@ -2772,15 +2772,29 @@ function Index() {
 
   const syncAndFinish = async (mode: "insert" | "update"): Promise<boolean> => {
     setIsExporting(true);
-    // Capture IP « Just-In-Time » : 100 % indépendante du brouillon local et
-    // des boutons de reset. Les valeurs en clair sont injectées directement
-    // dans le payload, sans jamais transiter par l'état React 'info'.
-    const geo = await fetchGeoAndClimate();
+    // Aiguillage JIT : la capture IP ne s'exécute QUE pour un nouveau profil
+    // (insert). En actualisation (update), la ville, le pays et la zone
+    // climatique déjà enregistrés sont réutilisés depuis la fiche locale
+    // (loadCurrentPiano), sans aucun appel réseau vers ipwho.is.
+    let geo: { city: string | null; country: string | null; zone: string };
+    if (mode === "insert") {
+      // Capture IP « Just-In-Time » : 100 % indépendante du brouillon local et
+      // des boutons de reset. Les valeurs en clair sont injectées directement
+      // dans le payload, sans jamais transiter par l'état React 'info'.
+      geo = await fetchGeoAndClimate();
+    } else {
+      const existing = loadCurrentPiano();
+      geo = {
+        city: existing?.city?.trim() ? existing.city : null,
+        country: existing?.country?.trim() ? existing.country : null,
+        zone: existing?.climate_zone ?? "",
+      };
+    }
     const basePayload = buildPayload();
     const payload: DiagnosticPayload = {
       ...basePayload,
-      city: geo.city,
-      country: geo.country,
+      city: geo.city ?? basePayload.city,
+      country: geo.country ?? basePayload.country,
       zone_climatique: geo.zone || basePayload.zone_climatique,
     };
     const year = payload.annee_fabrication;
@@ -3930,6 +3944,31 @@ function Index() {
                 resetConsent();
                 return;
               }
+              // Sauvegarde locale préliminaire des mesures matérielles avant la
+              // navigation : la fiche est disponible immédiatement sur /resultats,
+              // même si le consentement RGPD ou le réseau retardent le cloud.
+              // La ville, le pays et la zone climatique seront scellés par
+              // syncAndFinish() après validation du consentement.
+              const prePayload = buildPayload();
+              saveCurrentPiano(
+                buildCurrentPiano({
+                  brand: prePayload.marque,
+                  model: prePayload.modele,
+                  serial_number: prePayload.numero_central,
+                  type_piano: prePayload.type_piano,
+                  manufacture_year: prePayload.annee_fabrication,
+                  climate_zone: prePayload.zone_climatique,
+                  maintenance_type: prePayload.type_entretien,
+                  usage_level: info["usage_level"] ?? "",
+                  city: prePayload.city,
+                  country: prePayload.country,
+                  who: normalizeWhoCode(info["profil_saisie"]) || WHO_PRO,
+                  demo: Boolean(isDemoActive()),
+                  remarks: prePayload.remarques,
+                  wd: prePayload.mesures_wa,
+                  wa: prePayload.mesures_wd,
+                }),
+              );
               navigate({ to: "/resultats" });
             }}
             className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100 !text-black" : "border-input bg-background !text-gray-400 opacity-60"}`}
