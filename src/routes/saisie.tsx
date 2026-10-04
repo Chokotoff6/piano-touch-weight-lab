@@ -1061,8 +1061,9 @@ function Index() {
     try {
       const rawInfo = window.localStorage.getItem(DRAFT_INFO_KEY);
       const legacyInfo = rawInfo ? (JSON.parse(rawInfo) as Record<string, string>) : null;
-      // Rétrocompatibilité douce : anciens brouillons en ville/pays -> city/country.
-      const parsedInfo = legacyInfo
+
+      // Nettoyage rétrocompatible : anciens brouillons en ville/pays -> city/country.
+      const draftInfo = legacyInfo
         ? (() => {
             const { ville, pays, ...rest } = legacyInfo;
             return {
@@ -1072,6 +1073,8 @@ function Index() {
             };
           })()
         : null;
+
+      // Reconstruction des champs depuis la fiche canonique (CurrentPiano, clés anglaises).
       const savedInfo = saved
         ? {
             marque: saved.brand ?? "",
@@ -1079,36 +1082,60 @@ function Index() {
             type_piano: saved.type_piano ?? "",
             sn_num: saved.serial_number ?? "",
             fabrication: saved.manufacture_year ? String(saved.manufacture_year) : "",
+            date_pesee: saved.measure_date ?? "",
             country: saved.country ?? "",
             city: saved.city ?? "",
+            climate_zone: saved.climate_zone ?? "",
             entretien: normalizeMaintenanceCode(saved.maintenance_type),
             usage_level: normalizeUsageCode(saved.usage_level),
             profil_saisie: normalizeWhoCode(saved.who),
             remarques: saved.remarks ?? "",
           }
         : null;
+
+      // FUSION ÉTANCHE :
+      // 1. Le brouillon artisan (draftInfo) garde la priorité absolue sur les 8 critères
+      //    matériels (marque, modele, sn_num, type_piano, fabrication, entretien,
+      //    usage_level, profil_saisie).
+      // 2. Un champ vide dans draftInfo est complété par savedInfo (repli).
+      // 3. La géoloc scellée (city/country/climate_zone) et la date viennent de saved
+      //    AVANT que identityLocked ne fige le formulaire.
+      let mergedInfo: Record<string, string> | null = null;
+      if (isDemoActive() && savedInfo) {
+        mergedInfo = savedInfo;
+      } else if (draftInfo && savedInfo) {
+        mergedInfo = {
+          ...savedInfo,
+          ...draftInfo,
+          city: draftInfo.city?.trim() ? draftInfo.city : (savedInfo.city ?? ""),
+          country: draftInfo.country?.trim() ? draftInfo.country : (savedInfo.country ?? ""),
+          climate_zone: draftInfo.climate_zone?.trim()
+            ? draftInfo.climate_zone
+            : (savedInfo.climate_zone ?? ""),
+          fabrication: draftInfo.fabrication?.trim()
+            ? draftInfo.fabrication
+            : (savedInfo.fabrication ?? ""),
+          date_pesee: draftInfo.date_pesee?.trim()
+            ? draftInfo.date_pesee
+            : (savedInfo.date_pesee ?? ""),
+        };
+      } else {
+        mergedInfo = draftInfo ?? savedInfo;
+      }
+
       const pendingTypewriter =
-        parsedInfo && typeof parsedInfo === "object" && Object.keys(parsedInfo).length > 0
-          ? consumeTypewriter(parsedInfo)
+        mergedInfo && typeof mergedInfo === "object" && Object.keys(mergedInfo).length > 0
+          ? consumeTypewriter(mergedInfo)
           : false;
-      if (!pendingTypewriter) {
-        // Retour sur la page alors que le Mode Démo est resté ON : la fiche complète
-        // vient de la sauvegarde courante et s'affiche immédiatement en encre mauve.
-        const restored =
-          isDemoActive() && savedInfo
-            ? savedInfo
-            : parsedInfo && typeof parsedInfo === "object" && Object.keys(parsedInfo).length > 0
-              ? parsedInfo
-              : savedInfo;
-        if (restored) {
-          setInfo(restored);
-          if (isDemoActive()) {
-            demoTargetRef.current = { ...restored };
-            demoInkRestored.current = true;
-            setDemoInk(true);
-            setDemoTyped(true);
-            setDemoPersistedInk(true);
-          }
+
+      if (!pendingTypewriter && mergedInfo) {
+        setInfo(mergedInfo);
+        if (isDemoActive()) {
+          demoTargetRef.current = { ...mergedInfo };
+          demoInkRestored.current = true;
+          setDemoInk(true);
+          setDemoTyped(true);
+          setDemoPersistedInk(true);
         }
       }
     } catch {
