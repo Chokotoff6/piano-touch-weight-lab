@@ -1064,7 +1064,7 @@ function Index() {
 
       // Nettoyage rétrocompatible : anciens brouillons en ville/pays -> city/country.
       const draftInfo = legacyInfo
-        ? (() => {
+        ? (() : Record<string, string> => {
             const { ville, pays, ...rest } = legacyInfo;
             return {
               ...rest,
@@ -1082,7 +1082,7 @@ function Index() {
             type_piano: saved.type_piano ?? "",
             sn_num: saved.serial_number ?? "",
             fabrication: saved.manufacture_year ? String(saved.manufacture_year) : "",
-            date_pesee: saved.measure_date ?? "",
+            date_pesee: saved.measurement_date ?? "",
             country: saved.country ?? "",
             city: saved.city ?? "",
             climate_zone: saved.climate_zone ?? "",
