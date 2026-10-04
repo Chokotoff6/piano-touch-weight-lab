@@ -3452,7 +3452,7 @@ function Index() {
                       onChange={(e) => onPrefixChange(e.target.value)}
                       disabled={identityLocked || !rule.prefix}
                       placeholder="ex: J, F"
-                      className={`${INPUT_CLASS} max-w-[80px]`}
+                    className={`${INPUT_CLASS} max-w-[80px] disabled:bg-muted/50 disabled:text-muted-foreground disabled:border-muted-foreground/30 disabled:cursor-not-allowed`}
                     />
                   </label>
                   <label className={`min-w-[150px] ${SUB_LABEL_CLASS}`}>
@@ -3467,7 +3467,7 @@ function Index() {
                       required
                       inputMode="numeric"
                       placeholder={en ? "Digits" : "Chiffres"}
-                      className={`${INPUT_CLASS} max-w-[150px]`}
+                      className={`${INPUT_CLASS} max-w-[150px] disabled:bg-muted/50 disabled:text-muted-foreground disabled:border-muted-foreground/30 disabled:cursor-not-allowed`}
                     />
                   </label>
                   <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
@@ -3479,7 +3479,7 @@ function Index() {
                       }
                       disabled={identityLocked || !rule.suffix}
                       placeholder="ex: A, B"
-                      className={`${INPUT_CLASS} max-w-[80px]`}
+                      className={`${INPUT_CLASS} max-w-[80px] disabled:bg-muted/50 disabled:text-muted-foreground disabled:border-muted-foreground/30 disabled:cursor-not-allowed`}
                     />
                   </label>
                 </div>
@@ -3492,7 +3492,7 @@ function Index() {
                       updateInfo("fabrication", e.target.value);
                     }}
                     disabled={identityLocked}
-                    className={`${INPUT_CLASS} max-w-[120px]`}
+                    className={`${INPUT_CLASS} max-w-[120px] disabled:bg-muted/50 disabled:text-muted-foreground disabled:border-muted-foreground/30 disabled:cursor-not-allowed`}
                   />
                 </label>
                 <div className="flex h-8 items-end gap-1 text-xs text-black" />
