@@ -1825,15 +1825,6 @@ function Index() {
     setSavedAt(new Date().toISOString());
   };
 
-  const normalizeCity = (raw: string) =>
-    raw
-      .toUpperCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^A-Z0-9\s'-]/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-
   const updateInfo = (key: string, value: string) => {
     setInfo((p) => ({ ...p, [key]: value }));
     // Toute saisie manuelle repasse la fiche en encre noire.
