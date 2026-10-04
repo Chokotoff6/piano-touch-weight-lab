@@ -1107,16 +1107,18 @@ function Index() {
         mergedInfo = {
           ...savedInfo,
           ...draftInfo,
-          city: draftInfo.city?.trim() ? draftInfo.city : (savedInfo.city ?? ""),
-          country: draftInfo.country?.trim() ? draftInfo.country : (savedInfo.country ?? ""),
-          climate_zone: draftInfo.climate_zone?.trim()
-            ? draftInfo.climate_zone
+          city: draftInfo["city"]?.trim() ? draftInfo["city"] : (savedInfo.city ?? ""),
+          country: draftInfo["country"]?.trim()
+            ? draftInfo["country"]
+            : (savedInfo.country ?? ""),
+          climate_zone: draftInfo["climate_zone"]?.trim()
+            ? draftInfo["climate_zone"]
             : (savedInfo.climate_zone ?? ""),
-          fabrication: draftInfo.fabrication?.trim()
-            ? draftInfo.fabrication
+          fabrication: draftInfo["fabrication"]?.trim()
+            ? draftInfo["fabrication"]
             : (savedInfo.fabrication ?? ""),
-          date_pesee: draftInfo.date_pesee?.trim()
-            ? draftInfo.date_pesee
+          date_pesee: draftInfo["date_pesee"]?.trim()
+            ? draftInfo["date_pesee"]
             : (savedInfo.date_pesee ?? ""),
         };
       } else {
