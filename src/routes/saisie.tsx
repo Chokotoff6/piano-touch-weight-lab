@@ -3914,8 +3914,8 @@ function Index() {
             // Toujours cliquable : la redirection est bloquée (infobulle) tant
             // que « Saisie conforme » n'est pas au vert intense.
             aria-disabled={!badgeVisible}
-            onClick={() => {
-              if (!badgeVisible) return;
+            onClick={async () => {
+              if (!badgeVisible || isExporting) return;
               // Le jeu de démonstration est déjà isolé du Cloud réel et chargé
               // depuis sa fiche tampon dédiée : aucun filtre temporel humain ni
               // aucune décision d'écriture ne doivent bloquer sa consultation.
@@ -3933,31 +3933,50 @@ function Index() {
                 resetConsent();
                 return;
               }
-              // Sauvegarde locale préliminaire des mesures matérielles avant la
-              // navigation : la fiche est disponible immédiatement sur /resultats,
-              // même si le consentement RGPD ou le réseau retardent le cloud.
-              // La ville, le pays et la zone climatique seront scellés par
-              // syncAndFinish() après validation du consentement.
-              const prePayload = buildPayload();
-              saveCurrentPiano(
-                buildCurrentPiano({
-                  brand: prePayload.marque,
-                  model: prePayload.modele,
-                  serial_number: prePayload.numero_central,
-                  type_piano: prePayload.type_piano,
-                  manufacture_year: prePayload.annee_fabrication,
-                  climate_zone: prePayload.zone_climatique,
-                  maintenance_type: prePayload.type_entretien,
-                  usage_level: info["usage_level"] ?? "",
-                  city: prePayload.city,
-                  country: prePayload.country,
-                  who: normalizeWhoCode(info["profil_saisie"]) || WHO_PRO,
-                  demo: Boolean(isDemoActive()),
-                  remarks: prePayload.remarques,
-                  wd: prePayload.mesures_wa,
-                  wa: prePayload.mesures_wd,
-                }),
-              );
+              // Capture IP « Just-In-Time » AVANT la navigation : l'await bloquant
+              // garantit que la fiche locale est déjà enrichie (ville, pays, zone)
+              // quand /resultats la relit. Nouveau profil → fetch ipwho.is ;
+              // profil existant (même N° de série, ville/pays déjà scellés) →
+              // réutilisation sans aucun appel réseau.
+              setIsExporting(true);
+              try {
+                const prePayload = buildPayload();
+                const saved = loadCurrentPiano();
+                const isUpdate = Boolean(
+                  saved?.serial_number &&
+                    saved.serial_number === prePayload.numero_central &&
+                    saved.city?.trim() &&
+                    saved.country?.trim(),
+                );
+                const geo = isUpdate
+                  ? {
+                      city: saved?.city ?? null,
+                      country: saved?.country ?? null,
+                      zone: saved?.climate_zone ?? "",
+                    }
+                  : await fetchGeoAndClimate();
+                saveCurrentPiano(
+                  buildCurrentPiano({
+                    brand: prePayload.marque,
+                    model: prePayload.modele,
+                    serial_number: prePayload.numero_central,
+                    type_piano: prePayload.type_piano,
+                    manufacture_year: prePayload.annee_fabrication,
+                    climate_zone: geo.zone || prePayload.zone_climatique,
+                    maintenance_type: prePayload.type_entretien,
+                    usage_level: info["usage_level"] ?? "",
+                    city: geo.city ?? prePayload.city,
+                    country: geo.country ?? prePayload.country,
+                    who: normalizeWhoCode(info["profil_saisie"]) || WHO_PRO,
+                    demo: Boolean(isDemoActive()),
+                    remarks: prePayload.remarques,
+                    wd: prePayload.mesures_wa,
+                    wa: prePayload.mesures_wd,
+                  }),
+                );
+              } finally {
+                setIsExporting(false);
+              }
               navigate({ to: "/resultats" });
             }}
             className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100 !text-black" : "border-input bg-background !text-gray-400 opacity-60"}`}

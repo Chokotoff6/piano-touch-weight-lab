@@ -255,8 +255,13 @@ function Resultats() {
     };
   }, [info, rows, en]);
 
+  /**
+   * Construit la fiche cloud. La ville, le pays et la zone climatique proviennent
+   * STRICTEMENT de la fiche locale enrichie (loadCurrentPiano), scellée par le
+   * bouton « Résultats & Graphiques > » via fetchGeoAndClimate() : aucune lecture
+   * hybride sur info["ville"]/info["pays"], qui restent vides par conception.
+   */
   const buildPiano = (): CurrentPiano => {
-    const pays = info["pays"] ?? "";
     const saved = loadCurrentPiano();
     return buildCurrentPiano({
       brand: info["marque"] ?? "",
@@ -264,11 +269,11 @@ function Resultats() {
       serial_number: `${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`,
       type_piano: info["type_piano"] ?? "",
       manufacture_year: Number(info["fabrication"]) || null,
-      climate_zone: String(saved?.climate_zone || fallbackZone(pays)),
+      climate_zone: saved?.climate_zone ?? "",
       maintenance_type: info["entretien"] ?? "",
       usage_level: info["usage_level"] ?? "",
-      city: info["ville"] ?? "",
-      country: pays,
+      city: saved?.city ?? "",
+      country: saved?.country ?? "",
       remarks: info["remarques"] ?? "",
       wd: rows.map((r) => r.wd),
       wa: rows.map((r) => r.wa),
