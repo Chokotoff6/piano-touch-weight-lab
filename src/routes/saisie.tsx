@@ -552,7 +552,6 @@ function Index() {
   const weighingModeRef = useRef(false);
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
   const fabricationTouched = useRef(false);
-  const [isGeocoding, setIsGeocoding] = useState(false);
   const [climateZone, setClimateZone] = useState<ClimateZone | null>(null);
   const [honeypot, setHoneypot] = useState("");
   const topbarState = useTopbarState();
@@ -1842,16 +1841,6 @@ function Index() {
     markDirty();
   };
 
-  const resolveCity = (raw: string) => {
-    const city = normalizeCity(raw);
-    const country = (info["country"] ?? "").trim();
-    if (!city || !country) return;
-    setIsGeocoding(true);
-    resolveClimateZone(city, country)
-      .then((zone) => setClimateZone(zone))
-      .catch(() => setClimateZone(fallbackZone(country)))
-      .finally(() => setIsGeocoding(false));
-  };
 
   // Pré-remplissage de la date de fabrication (reste modifiable manuellement).
   useEffect(() => {
