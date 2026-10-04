@@ -1061,9 +1061,10 @@ function Index() {
     try {
       const rawInfo = window.localStorage.getItem(DRAFT_INFO_KEY);
       const legacyInfo = rawInfo ? (JSON.parse(rawInfo) as Record<string, string>) : null;
-      // Rétrocompatibilité douce : anciens brouillons en ville/pays -> city/country.
-      const parsedInfo = legacyInfo
-        ? (() => {
+
+      // Nettoyage rétrocompatible : anciens brouillons en ville/pays -> city/country.
+      const draftInfo = legacyInfo
+        ? (() : Record<string, string> => {
             const { ville, pays, ...rest } = legacyInfo;
             return {
               ...rest,
@@ -1072,6 +1073,8 @@ function Index() {
             };
           })()
         : null;
+
+      // Reconstruction des champs depuis la fiche canonique (CurrentPiano, clés anglaises).
       const savedInfo = saved
         ? {
             marque: saved.brand ?? "",
@@ -1079,36 +1082,60 @@ function Index() {
             type_piano: saved.type_piano ?? "",
             sn_num: saved.serial_number ?? "",
             fabrication: saved.manufacture_year ? String(saved.manufacture_year) : "",
+            date_pesee: saved.measurement_date ?? "",
             country: saved.country ?? "",
             city: saved.city ?? "",
+            climate_zone: saved.climate_zone ?? "",
             entretien: normalizeMaintenanceCode(saved.maintenance_type),
             usage_level: normalizeUsageCode(saved.usage_level),
             profil_saisie: normalizeWhoCode(saved.who),
             remarques: saved.remarks ?? "",
           }
         : null;
+
+      // FUSION ÉTANCHE :
+      // 1. Le brouillon artisan (draftInfo) garde la priorité absolue sur les 8 critères
+      //    matériels (marque, modele, sn_num, type_piano, fabrication, entretien,
+      //    usage_level, profil_saisie).
+      // 2. Un champ vide dans draftInfo est complété par savedInfo (repli).
+      // 3. La géoloc scellée (city/country/climate_zone) et la date viennent de saved
+      //    AVANT que identityLocked ne fige le formulaire.
+      let mergedInfo: Record<string, string> | null = null;
+      if (isDemoActive() && savedInfo) {
+        mergedInfo = savedInfo;
+      } else if (draftInfo && savedInfo) {
+        mergedInfo = {
+          ...savedInfo,
+          ...draftInfo,
+          city: draftInfo.city?.trim() ? draftInfo.city : (savedInfo.city ?? ""),
+          country: draftInfo.country?.trim() ? draftInfo.country : (savedInfo.country ?? ""),
+          climate_zone: draftInfo.climate_zone?.trim()
+            ? draftInfo.climate_zone
+            : (savedInfo.climate_zone ?? ""),
+          fabrication: draftInfo.fabrication?.trim()
+            ? draftInfo.fabrication
+            : (savedInfo.fabrication ?? ""),
+          date_pesee: draftInfo.date_pesee?.trim()
+            ? draftInfo.date_pesee
+            : (savedInfo.date_pesee ?? ""),
+        };
+      } else {
+        mergedInfo = draftInfo ?? savedInfo;
+      }
+
       const pendingTypewriter =
-        parsedInfo && typeof parsedInfo === "object" && Object.keys(parsedInfo).length > 0
-          ? consumeTypewriter(parsedInfo)
+        mergedInfo && typeof mergedInfo === "object" && Object.keys(mergedInfo).length > 0
+          ? consumeTypewriter(mergedInfo)
           : false;
-      if (!pendingTypewriter) {
-        // Retour sur la page alors que le Mode Démo est resté ON : la fiche complète
-        // vient de la sauvegarde courante et s'affiche immédiatement en encre mauve.
-        const restored =
-          isDemoActive() && savedInfo
-            ? savedInfo
-            : parsedInfo && typeof parsedInfo === "object" && Object.keys(parsedInfo).length > 0
-              ? parsedInfo
-              : savedInfo;
-        if (restored) {
-          setInfo(restored);
-          if (isDemoActive()) {
-            demoTargetRef.current = { ...restored };
-            demoInkRestored.current = true;
-            setDemoInk(true);
-            setDemoTyped(true);
-            setDemoPersistedInk(true);
-          }
+
+      if (!pendingTypewriter && mergedInfo) {
+        setInfo(mergedInfo);
+        if (isDemoActive()) {
+          demoTargetRef.current = { ...mergedInfo };
+          demoInkRestored.current = true;
+          setDemoInk(true);
+          setDemoTyped(true);
+          setDemoPersistedInk(true);
         }
       }
     } catch {
@@ -3360,7 +3387,7 @@ function Index() {
 
             <fieldset className={FIELD_LABEL_CLASS} data-keep-model-open>
               <legend>{en ? "Piano type" : "Type de piano"}</legend>
-              <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 bg-white px-2">
+              <div className={`mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 px-2 transition-opacity ${identityLocked ? "bg-muted/50 opacity-60 cursor-not-allowed" : "bg-white"}`}>
                 {["Droit", "Queue"].map((t) => (
                   <label key={t} className="flex items-center gap-1 text-sm text-foreground">
                     <input
@@ -3395,7 +3422,7 @@ function Index() {
                 disabled={identityLocked || !info["marque"]?.trim()}
                 openOnFocus
                 keepOpenSelector="[data-keep-model-open]"
-                className="!bg-white"
+                className={identityLocked ? "!bg-muted/50 cursor-not-allowed opacity-75" : "!bg-white"}
                 placeholder={en ? "Type or search a model..." : "Saisissez ou cherchez un modèle..."}
                 onTyping={markDirty}
                 onCommit={(v) => {
@@ -3425,7 +3452,7 @@ function Index() {
                       onChange={(e) => onPrefixChange(e.target.value)}
                       disabled={identityLocked || !rule.prefix}
                       placeholder="ex: J, F"
-                      className={`${INPUT_CLASS} max-w-[80px]`}
+                    className={`${INPUT_CLASS} max-w-[80px] disabled:bg-muted/50 disabled:text-muted-foreground disabled:border-muted-foreground/30 disabled:cursor-not-allowed`}
                     />
                   </label>
                   <label className={`min-w-[150px] ${SUB_LABEL_CLASS}`}>
@@ -3440,7 +3467,7 @@ function Index() {
                       required
                       inputMode="numeric"
                       placeholder={en ? "Digits" : "Chiffres"}
-                      className={`${INPUT_CLASS} max-w-[150px]`}
+                      className={`${INPUT_CLASS} max-w-[150px] disabled:bg-muted/50 disabled:text-muted-foreground disabled:border-muted-foreground/30 disabled:cursor-not-allowed`}
                     />
                   </label>
                   <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
@@ -3452,7 +3479,7 @@ function Index() {
                       }
                       disabled={identityLocked || !rule.suffix}
                       placeholder="ex: A, B"
-                      className={`${INPUT_CLASS} max-w-[80px]`}
+                      className={`${INPUT_CLASS} max-w-[80px] disabled:bg-muted/50 disabled:text-muted-foreground disabled:border-muted-foreground/30 disabled:cursor-not-allowed`}
                     />
                   </label>
                 </div>
@@ -3465,7 +3492,7 @@ function Index() {
                       updateInfo("fabrication", e.target.value);
                     }}
                     disabled={identityLocked}
-                    className={`${INPUT_CLASS} max-w-[120px]`}
+                    className={`${INPUT_CLASS} max-w-[120px] disabled:bg-muted/50 disabled:text-muted-foreground disabled:border-muted-foreground/30 disabled:cursor-not-allowed`}
                   />
                 </label>
                 <div className="flex h-8 items-end gap-1 text-xs text-black" />
