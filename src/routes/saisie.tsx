@@ -3387,7 +3387,7 @@ function Index() {
 
             <fieldset className={FIELD_LABEL_CLASS} data-keep-model-open>
               <legend>{en ? "Piano type" : "Type de piano"}</legend>
-              <div className="mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 bg-white px-2">
+              <div className={`mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 px-2 transition-opacity ${identityLocked ? "bg-muted/50 opacity-60 cursor-not-allowed" : "bg-white"}`}>
                 {["Droit", "Queue"].map((t) => (
                   <label key={t} className="flex items-center gap-1 text-sm text-foreground">
                     <input
@@ -3422,7 +3422,7 @@ function Index() {
                 disabled={identityLocked || !info["marque"]?.trim()}
                 openOnFocus
                 keepOpenSelector="[data-keep-model-open]"
-                className="!bg-white"
+                className={identityLocked ? "!bg-muted/50 cursor-not-allowed opacity-75" : "!bg-white"}
                 placeholder={en ? "Type or search a model..." : "Saisissez ou cherchez un modèle..."}
                 onTyping={markDirty}
                 onCommit={(v) => {
