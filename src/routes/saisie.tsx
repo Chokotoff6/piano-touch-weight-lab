@@ -84,16 +84,12 @@ import {
 import {
   MAINTENANCE_CODES,
   USAGE_CODES,
-  WHO_CODES,
   MAINTENANCE_LABELS_EN,
   MAINTENANCE_LABELS_FR,
   USAGE_LABELS_EN,
   USAGE_LABELS_FR,
-  WHO_LABELS_EN,
-  WHO_LABELS_FR,
   normalizeMaintenanceCode,
   normalizeUsageCode,
-  normalizeWhoCode,
   WHO_PRO,
 } from "@/lib/field-codes";
 import { toast } from "sonner";
@@ -275,7 +271,7 @@ const FRAME_CLASS = "relative rounded-md border-2 border-foreground bg-card p-4 
 const FRAME_TITLE_CLASS = "absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black";
 /** Champ texte standard du formulaire. */
 const INPUT_CLASS =
-  "mt-1 h-8 w-full rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground";
+  "mt-1 h-8 w-full rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring placeholder:text-muted-foreground placeholder:italic disabled:bg-muted/50 disabled:text-muted-foreground";
 /** Label principal du cadre « Informations piano ». */
 const FIELD_LABEL_CLASS = "text-lg font-semibold text-black";
 /** Sous-label secondaire (numéro de série éclaté). */
