@@ -1112,15 +1112,14 @@ function Index() {
             climate_zone: saved.climate_zone ?? "",
             entretien: normalizeMaintenanceCode(saved.maintenance_type),
             usage_level: normalizeUsageCode(saved.usage_level),
-            profil_saisie: normalizeWhoCode(saved.who),
             remarques: saved.remarks ?? "",
           }
         : null;
 
       // FUSION ÉTANCHE :
-      // 1. Le brouillon artisan (draftInfo) garde la priorité absolue sur les 8 critères
+      // 1. Le brouillon artisan (draftInfo) garde la priorité sur les critères
       //    matériels (marque, modele, sn_num, type_piano, fabrication, entretien,
-      //    usage_level, profil_saisie).
+      //    usage_level).
       // 2. Un champ vide dans draftInfo est complété par savedInfo (repli).
       // 3. La géoloc scellée (city/country/climate_zone) et la date viennent de saved
       //    AVANT que identityLocked ne fige le formulaire.
@@ -1141,13 +1140,16 @@ function Index() {
           fabrication: draftInfo["fabrication"]?.trim()
             ? draftInfo["fabrication"]
             : (savedInfo.fabrication ?? ""),
-          date_pesee: draftInfo["date_pesee"]?.trim()
-            ? draftInfo["date_pesee"]
-            : (savedInfo.date_pesee ?? ""),
+          date_pesee: savedInfo.date_pesee || draftInfo["date_pesee"] || "",
         };
       } else {
         mergedInfo = draftInfo ?? savedInfo;
       }
+
+      // Date de mesure : le buffer global fait autorité, même si le brouillon
+      // antérieur contient une date vide ou obsolète.
+      if (mergedInfo) mergedInfo.date_pesee = saved?.measurement_date || mergedInfo.date_pesee || "";
+      if (mergedInfo?.fabrication) fabricationTouched.current = true;
 
       const pendingTypewriter =
         mergedInfo && typeof mergedInfo === "object" && Object.keys(mergedInfo).length > 0
@@ -1229,7 +1231,6 @@ function Index() {
             ...parsedInfo,
             entretien: normalizeMaintenanceCode(parsedInfo["entretien"]),
             usage_level: normalizeUsageCode(parsedInfo["usage_level"]),
-            profil_saisie: normalizeWhoCode(parsedInfo["profil_saisie"]),
           };
           consumeTypewriter(nextInfo);
         }
@@ -1291,7 +1292,6 @@ function Index() {
           info["fabrication"]?.trim() &&
           info["entretien"] &&
           info["usage_level"] &&
-          info["profil_saisie"],
       ),
     [info],
   );
@@ -1306,7 +1306,6 @@ function Index() {
           info["fabrication"]?.trim() &&
           info["entretien"] &&
           info["usage_level"] &&
-          info["profil_saisie"],
       ),
     [info],
   );
@@ -1321,7 +1320,6 @@ function Index() {
       ["fabrication", en ? "Manufacturing date" : "Date fabrication"],
       ["entretien", en ? "Piano history" : "Historique piano"],
       ["usage_level", en ? "Usage intensity" : "Intensité d'usage"],
-      ["profil_saisie", en ? "You are" : "Vous êtes"],
     ];
     return checks.filter(([key]) => !String(info[key] ?? "").trim()).map(([, label]) => label);
   }, [info, en]);
@@ -1476,8 +1474,8 @@ function Index() {
     };
   }, [keyboardValid]);
 
-  /** Remarques obligatoires dès que des modifications importantes sont déclarées. */
-  const remarquesRequired = (info["entretien"] ?? "").trim() === "Major modifications";
+  /** Les réglages personnalisés et les modifications importantes exigent des remarques. */
+  const remarquesRequired = ["Custom regulations", "Major modifications"].includes(normalizeMaintenanceCode(info["entretien"]));
   const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
 
   /**
@@ -2391,8 +2389,7 @@ function Index() {
     // plus aucune garde isGeocoding n'est nécessaire ici.
     const formIncomplete =
       !canEnterWeights ||
-      (parseMaintenance(info["entretien"]).includes("Major modifications") &&
-        !(info["remarques"] ?? "").trim());
+       remarquesInvalid;
     if (formIncomplete) {
       showTopbarAlert(anchor, FORM_INCOMPLETE_MESSAGE);
       return false;
@@ -2692,7 +2689,6 @@ function Index() {
         city: fields["city"] ?? prev["city"] ?? "",
         entretien: normalizeMaintenanceCode(fields["maintenance_type"]) || prev["entretien"] || "",
         usage_level: normalizeUsageCode(fields["usage_level"]) || prev["usage_level"] || "",
-        profil_saisie: normalizeWhoCode(fields["who"]) || prev["profil_saisie"] || "",
         remarques: fields["remarks"] ?? prev["remarques"] ?? "",
       }));
       fabricationTouched.current = true;
@@ -2842,7 +2838,7 @@ function Index() {
       usage_level: info["usage_level"] ?? "",
       city: payload.city,
       country: payload.country,
-      who: normalizeWhoCode(info["profil_saisie"]) || WHO_PRO,
+      who: WHO_PRO,
       demo: Boolean(isDemoActive()),
       remarks: payload.remarques,
       wd: payload.mesures_wa,
@@ -4011,7 +4007,7 @@ function Index() {
                     usage_level: info["usage_level"] ?? "",
                     city: geo.city ?? prePayload.city,
                     country: geo.country ?? prePayload.country,
-                    who: normalizeWhoCode(info["profil_saisie"]) || WHO_PRO,
+                    who: WHO_PRO,
                     demo: Boolean(isDemoActive()),
                     remarks: prePayload.remarques,
                     wd: prePayload.mesures_wa,
