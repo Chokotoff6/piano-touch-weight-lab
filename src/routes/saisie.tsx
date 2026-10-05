@@ -303,6 +303,18 @@ function Frame({
   );
 }
 
+/** Survol accessible même si le contrôle intérieur est désactivé. */
+function LockedIdentityTooltip({ id, locked, active, seen, onOpenChange, children }: {
+  id: string; locked: boolean; active: string | null; seen: boolean;
+  onOpenChange: (id: string, open: boolean) => void; children: ReactNode;
+}) {
+  if (!locked) return <>{children}</>;
+  return <Tooltip open={active === id} onOpenChange={(open) => onOpenChange(id, open)}>
+    <TooltipTrigger asChild><span className="block">{children}</span></TooltipTrigger>
+    {!seen && <TooltipContent side="top" className="border border-border bg-card text-foreground">Verrouillé pour ce piano. Utilisez "Reset" si vous souhaitez changer d'instrument.</TooltipContent>}
+  </Tooltip>;
+}
+
 // ---------------------------------------------------------------------------
 // Grille clavier : calcul des colonnes alignées sur le pixel physique
 // ---------------------------------------------------------------------------
@@ -521,6 +533,8 @@ function Index() {
   const [coherenceAnchor, setCoherenceAnchor] = useState<{ x: number; y: number } | null>(null);
   const remarquesRef = useRef<HTMLTextAreaElement | null>(null);
   const modelComboRef = useRef<SmartComboboxHandle | null>(null);
+  const [lockedHintSeen, setLockedHintSeen] = useState(false);
+  const [lockedHintActive, setLockedHintActive] = useState<string | null>(null);
   const blockTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const coherenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -553,6 +567,20 @@ function Index() {
   const topbarState = useTopbarState();
   // Protection d'ADN : identité figée uniquement après enregistrement définitif au cloud via « J'accepte ».
   const identityLocked = topbarState.cloudProfileSaved;
+  useEffect(() => {
+    if (!identityLocked) {
+      setLockedHintSeen(false);
+      setLockedHintActive(null);
+    }
+  }, [identityLocked]);
+  const onLockedHintChange = (id: string, open: boolean) => {
+    if (open) {
+      if (!lockedHintSeen) setLockedHintActive(id);
+    } else if (lockedHintActive === id) {
+      setLockedHintActive(null);
+      setLockedHintSeen(true);
+    }
+  };
   // Chronomètre d'ouverture de fiche (base du contrôle anti-robot temporel).
   useEffect(() => {
     startSheetTimer();
@@ -899,7 +927,7 @@ function Index() {
     const TEXT_KEYS = new Set(["marque", "modele", "sn_num", "fabrication", "country", "city", "remarques"]);
     const order = [
       "marque", "modele", "type_piano", "sn_num", "fabrication", "measurement_date",
-      "country", "city", "climate_zone", "entretien", "usage_level", "profil_saisie", "remarques",
+      "country", "city", "climate_zone", "entretien", "usage_level", "remarques",
     ];
     const keys = [...order.filter((k) => k in target), ...Object.keys(target).filter((k) => !order.includes(k))];
     const steps: Array<[string, string]> = [];
