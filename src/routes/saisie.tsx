@@ -3473,6 +3473,7 @@ function Index() {
                 <div className="flex items-end gap-2">
                   <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
                      <span className="block whitespace-nowrap">{en ? "Letter" : "Lettre"}</span>
+                    <LockedIdentityTooltip id="prefix" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
                     <input
                       ref={(el) => {
                         snRef.current["sn_prefix"] = el;
@@ -3483,9 +3484,11 @@ function Index() {
                       placeholder="ex: J, F"
                     className={`${INPUT_CLASS} max-w-[80px] disabled:border-muted-foreground/30`}
                     />
+                    </LockedIdentityTooltip>
                   </label>
                   <label className={`min-w-[150px] ${SUB_LABEL_CLASS}`}>
                     <span className="block whitespace-nowrap">{en ? "Serial N°" : "N° de série"}</span>
+                    <LockedIdentityTooltip id="serial" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
                     <input
                       ref={(el) => {
                         snRef.current["sn_num"] = el;
@@ -3498,9 +3501,11 @@ function Index() {
                       placeholder={en ? "Digits" : "Chiffres"}
                       className={`${INPUT_CLASS} max-w-[150px] disabled:border-muted-foreground/30`}
                     />
+                    </LockedIdentityTooltip>
                   </label>
                   <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
                     <span className="block whitespace-nowrap">{en ? "End letter" : "Lettre fin"}</span>
+                    <LockedIdentityTooltip id="suffix" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
                     <input
                       value={info["sn_suffix"] ?? ""}
                       onChange={(e) =>
@@ -3510,10 +3515,12 @@ function Index() {
                       placeholder="ex: A, B"
                       className={`${INPUT_CLASS} max-w-[80px] disabled:border-muted-foreground/30`}
                     />
+                    </LockedIdentityTooltip>
                   </label>
                 </div>
                 <label className={`min-w-[120px] ${SUB_LABEL_CLASS}`}>
                   <span className="block whitespace-nowrap">{en ? "Manufacturing date" : "Date fabrication"}</span>
+                  <LockedIdentityTooltip id="year" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
                   <input
                     value={info["fabrication"] ?? ""}
                     onChange={(e) => {
@@ -3523,6 +3530,7 @@ function Index() {
                     disabled={identityLocked}
                     className={`${INPUT_CLASS} max-w-[120px] disabled:border-muted-foreground/30`}
                   />
+                  </LockedIdentityTooltip>
                 </label>
                 <div className="flex h-8 items-end gap-1 text-xs text-black" />
 
