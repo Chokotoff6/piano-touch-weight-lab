@@ -1141,15 +1141,15 @@ function Index() {
       // Date de mesure : le buffer global fait autorité, même si le brouillon
       // antérieur contient une date vide ou obsolète.
       if (mergedInfo) {
-        delete mergedInfo.profil_saisie;
+        delete mergedInfo["profil_saisie"];
         let bufferDate = "";
         try {
           const state = window.sessionStorage.getItem(CLOUD_SESSION_STATE_KEY);
           bufferDate = state ? (JSON.parse(state) as { date?: string }).date ?? "" : "";
         } catch { /* stockage indisponible */ }
-        mergedInfo.date_pesee = saved?.measurement_date || bufferDate || mergedInfo.date_pesee || "";
+        mergedInfo["date_pesee"] = saved?.measurement_date || bufferDate || mergedInfo["date_pesee"] || "";
       }
-      if (mergedInfo?.fabrication) fabricationTouched.current = true;
+      if (mergedInfo?.["fabrication"]) fabricationTouched.current = true;
 
       const pendingTypewriter =
         mergedInfo && typeof mergedInfo === "object" && Object.keys(mergedInfo).length > 0
