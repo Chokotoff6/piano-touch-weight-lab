@@ -1081,7 +1081,7 @@ function Index() {
       // Nettoyage rétrocompatible : anciens brouillons en ville/pays -> city/country.
       const draftInfo = legacyInfo
         ? (() : Record<string, string> => {
-            const { ville, pays, ...rest } = legacyInfo;
+            const { ville, pays, profil_saisie, ...rest } = legacyInfo;
             return {
               ...rest,
               city: cleanStringOrNull(legacyInfo["city"] ?? ville) ?? "",
@@ -1140,7 +1140,15 @@ function Index() {
 
       // Date de mesure : le buffer global fait autorité, même si le brouillon
       // antérieur contient une date vide ou obsolète.
-      if (mergedInfo) mergedInfo.date_pesee = saved?.measurement_date || mergedInfo.date_pesee || "";
+      if (mergedInfo) {
+        delete mergedInfo.profil_saisie;
+        let bufferDate = "";
+        try {
+          const state = window.sessionStorage.getItem(CLOUD_SESSION_STATE_KEY);
+          bufferDate = state ? (JSON.parse(state) as { date?: string }).date ?? "" : "";
+        } catch { /* stockage indisponible */ }
+        mergedInfo.date_pesee = saved?.measurement_date || bufferDate || mergedInfo.date_pesee || "";
+      }
       if (mergedInfo?.fabrication) fabricationTouched.current = true;
 
       const pendingTypewriter =
@@ -3388,7 +3396,7 @@ function Index() {
               <SmartCombobox
                 value={info["marque"] ?? ""}
                 disabled={identityLocked}
-                className="placeholder:text-muted-foreground placeholder:italic disabled:!bg-muted/50 disabled:cursor-default"
+                className="placeholder:text-muted-foreground placeholder:italic disabled:!bg-muted/50 disabled:!cursor-default"
                 options={BRAND_SUGGESTIONS}
                 placeholder={en ? "Type a brand (e.g. YAMAHA, PLEYEL...)" : "Saisissez une marque (ex: YAMAHA, PLEYEL...)"}
                 onTyping={markDirty}
@@ -3440,7 +3448,7 @@ function Index() {
                 disabled={identityLocked || !info["marque"]?.trim()}
                 openOnFocus
                 keepOpenSelector="[data-keep-model-open]"
-                className={`placeholder:text-muted-foreground placeholder:italic disabled:cursor-default ${identityLocked ? "!bg-muted/50 opacity-75" : "!bg-white"}`}
+                className={`placeholder:text-muted-foreground placeholder:italic disabled:!cursor-default ${identityLocked ? "!bg-muted/50 opacity-75" : "!bg-white"}`}
                 placeholder={en ? "Type or search a model..." : "Saisissez ou cherchez un modèle..."}
                 onTyping={markDirty}
                 onCommit={(v) => {
