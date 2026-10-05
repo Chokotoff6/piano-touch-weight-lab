@@ -240,14 +240,6 @@ const DEFAULT_RULE: SerialRule = { prefix: true, suffix: true };
 const MAINTENANCE_OPTIONS = MAINTENANCE_CODES;
 const USAGE_OPTIONS = USAGE_CODES;
 
-/** Valeur stockée (texte) -> tableau de choix multiples. */
-function parseMaintenance(value: string | undefined): string[] {
-  return (value ?? "")
-    .split(",")
-    .map((v) => v.trim())
-    .filter(Boolean);
-}
-
 const BLACK_RATIO = 0.605;
 
 // décalages réels des touches noires (en largeur de touche blanche),
@@ -1291,7 +1283,7 @@ function Index() {
           info["type_piano"] &&
           info["fabrication"]?.trim() &&
           info["entretien"] &&
-          info["usage_level"] &&
+           info["usage_level"]
       ),
     [info],
   );
@@ -1305,7 +1297,7 @@ function Index() {
           info["type_piano"] &&
           info["fabrication"]?.trim() &&
           info["entretien"] &&
-          info["usage_level"] &&
+           info["usage_level"]
       ),
     [info],
   );
@@ -2387,9 +2379,7 @@ function Index() {
     if (!passesBotChecks(honeypot)) return false;
     // La géolocalisation est capturée « Just-In-Time » dans syncAndFinish :
     // plus aucune garde isGeocoding n'est nécessaire ici.
-    const formIncomplete =
-      !canEnterWeights ||
-       remarquesInvalid;
+    const formIncomplete = !canEnterWeights || remarquesInvalid;
     if (formIncomplete) {
       showTopbarAlert(anchor, FORM_INCOMPLETE_MESSAGE);
       return false;
