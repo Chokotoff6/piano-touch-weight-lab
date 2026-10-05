@@ -84,12 +84,16 @@ import {
 import {
   MAINTENANCE_CODES,
   USAGE_CODES,
+  WHO_CODES,
   MAINTENANCE_LABELS_EN,
   MAINTENANCE_LABELS_FR,
   USAGE_LABELS_EN,
   USAGE_LABELS_FR,
+  WHO_LABELS_EN,
+  WHO_LABELS_FR,
   normalizeMaintenanceCode,
   normalizeUsageCode,
+  normalizeWhoCode,
   WHO_PRO,
 } from "@/lib/field-codes";
 import { toast } from "sonner";
@@ -240,6 +244,14 @@ const DEFAULT_RULE: SerialRule = { prefix: true, suffix: true };
 const MAINTENANCE_OPTIONS = MAINTENANCE_CODES;
 const USAGE_OPTIONS = USAGE_CODES;
 
+/** Valeur stockée (texte) -> tableau de choix multiples. */
+function parseMaintenance(value: string | undefined): string[] {
+  return (value ?? "")
+    .split(",")
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
+
 const BLACK_RATIO = 0.605;
 
 // décalages réels des touches noires (en largeur de touche blanche),
@@ -263,7 +275,7 @@ const FRAME_CLASS = "relative rounded-md border-2 border-foreground bg-card p-4 
 const FRAME_TITLE_CLASS = "absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black";
 /** Champ texte standard du formulaire. */
 const INPUT_CLASS =
-  "mt-1 h-8 w-full rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring placeholder:text-muted-foreground placeholder:italic disabled:bg-muted/50 disabled:text-muted-foreground";
+  "mt-1 h-8 w-full rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground";
 /** Label principal du cadre « Informations piano ». */
 const FIELD_LABEL_CLASS = "text-lg font-semibold text-black";
 /** Sous-label secondaire (numéro de série éclaté). */
@@ -293,18 +305,6 @@ function Frame({
       {children}
     </section>
   );
-}
-
-/** Survol accessible même si le contrôle intérieur est désactivé. */
-function LockedIdentityTooltip({ id, locked, active, seen, onOpenChange, children }: {
-  id: string; locked: boolean; active: string | null; seen: boolean;
-  onOpenChange: (id: string, open: boolean) => void; children: ReactNode;
-}) {
-  if (!locked) return <>{children}</>;
-  return <Tooltip open={active === id} onOpenChange={(open) => onOpenChange(id, open)}>
-    <TooltipTrigger asChild><span className="block">{children}</span></TooltipTrigger>
-    {!seen && <TooltipContent side="top" className="border border-border bg-card text-foreground">Verrouillé pour ce piano. Utilisez "Reset" si vous souhaitez changer d'instrument.</TooltipContent>}
-  </Tooltip>;
 }
 
 // ---------------------------------------------------------------------------
@@ -525,8 +525,6 @@ function Index() {
   const [coherenceAnchor, setCoherenceAnchor] = useState<{ x: number; y: number } | null>(null);
   const remarquesRef = useRef<HTMLTextAreaElement | null>(null);
   const modelComboRef = useRef<SmartComboboxHandle | null>(null);
-  const [lockedHintSeen, setLockedHintSeen] = useState(false);
-  const [lockedHintActive, setLockedHintActive] = useState<string | null>(null);
   const blockTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const coherenceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -559,20 +557,6 @@ function Index() {
   const topbarState = useTopbarState();
   // Protection d'ADN : identité figée uniquement après enregistrement définitif au cloud via « J'accepte ».
   const identityLocked = topbarState.cloudProfileSaved;
-  useEffect(() => {
-    if (!identityLocked) {
-      setLockedHintSeen(false);
-      setLockedHintActive(null);
-    }
-  }, [identityLocked]);
-  const onLockedHintChange = (id: string, open: boolean) => {
-    if (open) {
-      if (!lockedHintSeen) setLockedHintActive(id);
-    } else if (lockedHintActive === id) {
-      setLockedHintActive(null);
-      setLockedHintSeen(true);
-    }
-  };
   // Chronomètre d'ouverture de fiche (base du contrôle anti-robot temporel).
   useEffect(() => {
     startSheetTimer();
@@ -919,7 +903,7 @@ function Index() {
     const TEXT_KEYS = new Set(["marque", "modele", "sn_num", "fabrication", "country", "city", "remarques"]);
     const order = [
       "marque", "modele", "type_piano", "sn_num", "fabrication", "measurement_date",
-      "country", "city", "climate_zone", "entretien", "usage_level", "remarques",
+      "country", "city", "climate_zone", "entretien", "usage_level", "profil_saisie", "remarques",
     ];
     const keys = [...order.filter((k) => k in target), ...Object.keys(target).filter((k) => !order.includes(k))];
     const steps: Array<[string, string]> = [];
@@ -1081,7 +1065,7 @@ function Index() {
       // Nettoyage rétrocompatible : anciens brouillons en ville/pays -> city/country.
       const draftInfo = legacyInfo
         ? (() : Record<string, string> => {
-            const { ville, pays, profil_saisie, ...rest } = legacyInfo;
+            const { ville, pays, ...rest } = legacyInfo;
             return {
               ...rest,
               city: cleanStringOrNull(legacyInfo["city"] ?? ville) ?? "",
@@ -1104,14 +1088,15 @@ function Index() {
             climate_zone: saved.climate_zone ?? "",
             entretien: normalizeMaintenanceCode(saved.maintenance_type),
             usage_level: normalizeUsageCode(saved.usage_level),
+            profil_saisie: normalizeWhoCode(saved.who),
             remarques: saved.remarks ?? "",
           }
         : null;
 
       // FUSION ÉTANCHE :
-      // 1. Le brouillon artisan (draftInfo) garde la priorité sur les critères
+      // 1. Le brouillon artisan (draftInfo) garde la priorité absolue sur les 8 critères
       //    matériels (marque, modele, sn_num, type_piano, fabrication, entretien,
-      //    usage_level).
+      //    usage_level, profil_saisie).
       // 2. Un champ vide dans draftInfo est complété par savedInfo (repli).
       // 3. La géoloc scellée (city/country/climate_zone) et la date viennent de saved
       //    AVANT que identityLocked ne fige le formulaire.
@@ -1132,24 +1117,13 @@ function Index() {
           fabrication: draftInfo["fabrication"]?.trim()
             ? draftInfo["fabrication"]
             : (savedInfo.fabrication ?? ""),
-          date_pesee: savedInfo.date_pesee || draftInfo["date_pesee"] || "",
+          date_pesee: draftInfo["date_pesee"]?.trim()
+            ? draftInfo["date_pesee"]
+            : (savedInfo.date_pesee ?? ""),
         };
       } else {
         mergedInfo = draftInfo ?? savedInfo;
       }
-
-      // Date de mesure : le buffer global fait autorité, même si le brouillon
-      // antérieur contient une date vide ou obsolète.
-      if (mergedInfo) {
-        delete mergedInfo.profil_saisie;
-        let bufferDate = "";
-        try {
-          const state = window.sessionStorage.getItem(CLOUD_SESSION_STATE_KEY);
-          bufferDate = state ? (JSON.parse(state) as { date?: string }).date ?? "" : "";
-        } catch { /* stockage indisponible */ }
-        mergedInfo.date_pesee = saved?.measurement_date || bufferDate || mergedInfo.date_pesee || "";
-      }
-      if (mergedInfo?.fabrication) fabricationTouched.current = true;
 
       const pendingTypewriter =
         mergedInfo && typeof mergedInfo === "object" && Object.keys(mergedInfo).length > 0
@@ -1231,6 +1205,7 @@ function Index() {
             ...parsedInfo,
             entretien: normalizeMaintenanceCode(parsedInfo["entretien"]),
             usage_level: normalizeUsageCode(parsedInfo["usage_level"]),
+            profil_saisie: normalizeWhoCode(parsedInfo["profil_saisie"]),
           };
           consumeTypewriter(nextInfo);
         }
@@ -1291,7 +1266,8 @@ function Index() {
           info["type_piano"] &&
           info["fabrication"]?.trim() &&
           info["entretien"] &&
-           info["usage_level"]
+          info["usage_level"] &&
+          info["profil_saisie"],
       ),
     [info],
   );
@@ -1305,7 +1281,8 @@ function Index() {
           info["type_piano"] &&
           info["fabrication"]?.trim() &&
           info["entretien"] &&
-           info["usage_level"]
+          info["usage_level"] &&
+          info["profil_saisie"],
       ),
     [info],
   );
@@ -1320,6 +1297,7 @@ function Index() {
       ["fabrication", en ? "Manufacturing date" : "Date fabrication"],
       ["entretien", en ? "Piano history" : "Historique piano"],
       ["usage_level", en ? "Usage intensity" : "Intensité d'usage"],
+      ["profil_saisie", en ? "You are" : "Vous êtes"],
     ];
     return checks.filter(([key]) => !String(info[key] ?? "").trim()).map(([, label]) => label);
   }, [info, en]);
@@ -1474,8 +1452,8 @@ function Index() {
     };
   }, [keyboardValid]);
 
-  /** Les réglages personnalisés et les modifications importantes exigent des remarques. */
-  const remarquesRequired = ["Custom regulations", "Major modifications"].includes(normalizeMaintenanceCode(info["entretien"]));
+  /** Remarques obligatoires dès que des modifications importantes sont déclarées. */
+  const remarquesRequired = (info["entretien"] ?? "").trim() === "Major modifications";
   const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
 
   /**
@@ -2387,7 +2365,10 @@ function Index() {
     if (!passesBotChecks(honeypot)) return false;
     // La géolocalisation est capturée « Just-In-Time » dans syncAndFinish :
     // plus aucune garde isGeocoding n'est nécessaire ici.
-    const formIncomplete = !canEnterWeights || remarquesInvalid;
+    const formIncomplete =
+      !canEnterWeights ||
+      (parseMaintenance(info["entretien"]).includes("Major modifications") &&
+        !(info["remarques"] ?? "").trim());
     if (formIncomplete) {
       showTopbarAlert(anchor, FORM_INCOMPLETE_MESSAGE);
       return false;
@@ -2687,6 +2668,7 @@ function Index() {
         city: fields["city"] ?? prev["city"] ?? "",
         entretien: normalizeMaintenanceCode(fields["maintenance_type"]) || prev["entretien"] || "",
         usage_level: normalizeUsageCode(fields["usage_level"]) || prev["usage_level"] || "",
+        profil_saisie: normalizeWhoCode(fields["who"]) || prev["profil_saisie"] || "",
         remarques: fields["remarks"] ?? prev["remarques"] ?? "",
       }));
       fabricationTouched.current = true;
@@ -2836,7 +2818,7 @@ function Index() {
       usage_level: info["usage_level"] ?? "",
       city: payload.city,
       country: payload.country,
-      who: WHO_PRO,
+      who: normalizeWhoCode(info["profil_saisie"]) || WHO_PRO,
       demo: Boolean(isDemoActive()),
       remarks: payload.remarques,
       wd: payload.mesures_wa,
@@ -3369,7 +3351,7 @@ function Index() {
         data-saved-at={savedAt ?? ""}
         data-climate-zone={climateZone ?? ""}
       >
-        <TooltipProvider delayDuration={200}><Frame title={en ? "Piano information" : "Informations piano"} className="mt-10 mx-auto w-4/5 max-w-[80%] [&_input]:border-foreground/60">
+        <Frame title={en ? "Piano information" : "Informations piano"} className="mt-10 mx-auto w-4/5 max-w-[80%] [&_input]:border-foreground/60">
           {isDemoActive() &&
             !info["marque"]?.trim() &&
             !info["modele"]?.trim() &&
@@ -3392,11 +3374,9 @@ function Index() {
           <div className="mt-3 grid gap-1.5 sm:grid-cols-2 md:grid-cols-[1fr_210px_1fr_1fr]">
             <label className={FIELD_LABEL_CLASS}>
               {en ? "Brand" : "Marque"}
-              <LockedIdentityTooltip id="brand" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
               <SmartCombobox
                 value={info["marque"] ?? ""}
                 disabled={identityLocked}
-                className="placeholder:text-muted-foreground placeholder:italic disabled:!bg-muted/50 disabled:!cursor-default"
                 options={BRAND_SUGGESTIONS}
                 placeholder={en ? "Type a brand (e.g. YAMAHA, PLEYEL...)" : "Saisissez une marque (ex: YAMAHA, PLEYEL...)"}
                 onTyping={markDirty}
@@ -3405,13 +3385,11 @@ function Index() {
                   if ((info["modele"] ?? "") !== "") updateInfo("modele", "");
                 }}
               />
-              </LockedIdentityTooltip>
             </label>
 
             <fieldset className={FIELD_LABEL_CLASS} data-keep-model-open>
               <legend>{en ? "Piano type" : "Type de piano"}</legend>
-              <LockedIdentityTooltip id="type" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
-              <div className={`mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 px-2 transition-opacity ${identityLocked ? "bg-muted/50 opacity-60" : "bg-white"}`}>
+              <div className={`mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 px-2 transition-opacity ${identityLocked ? "bg-muted/50 opacity-60 cursor-not-allowed" : "bg-white"}`}>
                 {["Droit", "Queue"].map((t) => (
                   <label key={t} className="flex items-center gap-1 text-sm text-foreground">
                     <input
@@ -3434,12 +3412,10 @@ function Index() {
                   </label>
                 ))}
               </div>
-              </LockedIdentityTooltip>
             </fieldset>
 
             <label className={FIELD_LABEL_CLASS}>
               {en ? "Model" : "Modèle"}
-              <LockedIdentityTooltip id="model" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
               <SmartCombobox
                 ref={modelComboRef}
                 value={info["modele"] ?? ""}
@@ -3448,7 +3424,7 @@ function Index() {
                 disabled={identityLocked || !info["marque"]?.trim()}
                 openOnFocus
                 keepOpenSelector="[data-keep-model-open]"
-                className={`placeholder:text-muted-foreground placeholder:italic disabled:!cursor-default ${identityLocked ? "!bg-muted/50 opacity-75" : "!bg-white"}`}
+                className={identityLocked ? "!bg-muted/50 cursor-not-allowed opacity-75" : "!bg-white"}
                 placeholder={en ? "Type or search a model..." : "Saisissez ou cherchez un modèle..."}
                 onTyping={markDirty}
                 onCommit={(v) => {
@@ -3457,7 +3433,6 @@ function Index() {
                   if (inferred) updateInfo("type_piano", inferred);
                 }}
               />
-              </LockedIdentityTooltip>
             </label>
 
             <div className="text-xs text-muted-foreground sm:col-span-2 md:col-span-4" style={{ marginTop: "12px", paddingTop: "0px", display: "block" }}>
@@ -3471,7 +3446,6 @@ function Index() {
                 <div className="flex items-end gap-2">
                   <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
                      <span className="block whitespace-nowrap">{en ? "Letter" : "Lettre"}</span>
-                    <LockedIdentityTooltip id="prefix" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
                     <input
                       ref={(el) => {
                         snRef.current["sn_prefix"] = el;
@@ -3480,13 +3454,11 @@ function Index() {
                       onChange={(e) => onPrefixChange(e.target.value)}
                       disabled={identityLocked || !rule.prefix}
                       placeholder="ex: J, F"
-                    className={`${INPUT_CLASS} max-w-[80px] disabled:border-muted-foreground/30`}
+                    className={`${INPUT_CLASS} max-w-[80px] disabled:bg-muted/50 disabled:text-muted-foreground disabled:border-muted-foreground/30 disabled:cursor-not-allowed`}
                     />
-                    </LockedIdentityTooltip>
                   </label>
                   <label className={`min-w-[150px] ${SUB_LABEL_CLASS}`}>
                     <span className="block whitespace-nowrap">{en ? "Serial N°" : "N° de série"}</span>
-                    <LockedIdentityTooltip id="serial" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
                     <input
                       ref={(el) => {
                         snRef.current["sn_num"] = el;
@@ -3497,13 +3469,11 @@ function Index() {
                       required
                       inputMode="numeric"
                       placeholder={en ? "Digits" : "Chiffres"}
-                      className={`${INPUT_CLASS} max-w-[150px] disabled:border-muted-foreground/30`}
+                      className={`${INPUT_CLASS} max-w-[150px] disabled:bg-muted/50 disabled:text-muted-foreground disabled:border-muted-foreground/30 disabled:cursor-not-allowed`}
                     />
-                    </LockedIdentityTooltip>
                   </label>
                   <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
                     <span className="block whitespace-nowrap">{en ? "End letter" : "Lettre fin"}</span>
-                    <LockedIdentityTooltip id="suffix" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
                     <input
                       value={info["sn_suffix"] ?? ""}
                       onChange={(e) =>
@@ -3511,14 +3481,12 @@ function Index() {
                       }
                       disabled={identityLocked || !rule.suffix}
                       placeholder="ex: A, B"
-                      className={`${INPUT_CLASS} max-w-[80px] disabled:border-muted-foreground/30`}
+                      className={`${INPUT_CLASS} max-w-[80px] disabled:bg-muted/50 disabled:text-muted-foreground disabled:border-muted-foreground/30 disabled:cursor-not-allowed`}
                     />
-                    </LockedIdentityTooltip>
                   </label>
                 </div>
                 <label className={`min-w-[120px] ${SUB_LABEL_CLASS}`}>
                   <span className="block whitespace-nowrap">{en ? "Manufacturing date" : "Date fabrication"}</span>
-                  <LockedIdentityTooltip id="year" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
                   <input
                     value={info["fabrication"] ?? ""}
                     onChange={(e) => {
@@ -3526,13 +3494,19 @@ function Index() {
                       updateInfo("fabrication", e.target.value);
                     }}
                     disabled={identityLocked}
-                    className={`${INPUT_CLASS} max-w-[120px] disabled:border-muted-foreground/30`}
+                    className={`${INPUT_CLASS} max-w-[120px] disabled:bg-muted/50 disabled:text-muted-foreground disabled:border-muted-foreground/30 disabled:cursor-not-allowed`}
                   />
-                  </LockedIdentityTooltip>
                 </label>
                 <div className="flex h-8 items-end gap-1 text-xs text-black" />
 
               </div>
+              {identityLocked && (
+                <p className="mt-2 text-center text-[0.78rem] font-medium leading-snug text-muted-foreground">
+                  {en
+                    ? "Fields locked to preserve profile integrity. To create a new piano, click the 'Reset' button."
+                    : "Champs verrouillés pour préserver l'intégrité du profil. Pour créer un nouveau piano, cliquez sur le bouton « Reset »."}
+                </p>
+              )}
               {!serialFormatValid && !isDemoActive() && !demoInk && (
                 <p className="mt-1 text-[0.7rem] leading-snug text-destructive">
                   {SERIAL_FORMAT_ERROR}
@@ -3548,7 +3522,7 @@ function Index() {
                   value={info["entretien"] ?? ""}
                   onChange={(e) => {
                     updateInfo("entretien", e.target.value);
-                    if (e.target.value === "Custom regulations" || e.target.value === "Major modifications") {
+                    if (e.target.value === "Major modifications") {
                       setTimeout(() => remarquesRef.current?.focus(), 0);
                     }
                   }}
@@ -3580,6 +3554,22 @@ function Index() {
                 </select>
               </label>
 
+              {/* Vous êtes : variable de filtrage du Cloud collaboratif. */}
+              <label className={FIELD_LABEL_CLASS}>
+                <span className="block">{en ? "You are" : "Vous êtes"}</span>
+                <select
+                  value={info["profil_saisie"] ?? ""}
+                  onChange={(e) => updateInfo("profil_saisie", e.target.value)}
+                  className={`${INPUT_CLASS} !bg-white !block !w-fit !min-w-0 !max-w-full mt-2`}
+                >
+                  <option value="">{en ? "— Select —" : "— Sélectionner —"}</option>
+                  {WHO_CODES.map((option) => (
+                    <option key={option} value={option}>
+                      {en ? WHO_LABELS_EN[option] : WHO_LABELS_FR[option]}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
 
 
@@ -3594,7 +3584,7 @@ function Index() {
                 required={remarquesRequired}
                 aria-invalid={remarquesInvalid}
                 placeholder={
-                  remarquesRequired ? (en ? "⚠️ Please describe the settings or modifications" : "⚠️ Précisez les réglages ou modifications") : undefined
+                  remarquesRequired ? (en ? "⚠️ Please describe the modifications" : "⚠️ Veuillez indiquer les modifications") : undefined
                 }
                 value={
                   isDemoRemarks(info["remarques"])
@@ -3607,9 +3597,9 @@ function Index() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") e.preventDefault();
                 }}
-                className={`${INPUT_CLASS} !mt-0 !h-8 !w-1/2 resize-none overflow-hidden py-1 leading-6 ${
+                className={`${INPUT_CLASS} !mt-0 !h-8 !w-1/2 resize-none overflow-hidden py-1 leading-6 placeholder:text-foreground placeholder:font-medium ${
                   remarquesInvalid
-                    ? "border-destructive focus:border-destructive focus:ring-destructive"
+                    ? "border-destructive placeholder:text-foreground focus:border-destructive focus:ring-destructive"
                     : ""
                 }`}
               />
@@ -3630,7 +3620,7 @@ function Index() {
             />
 
           </div>
-        </Frame></TooltipProvider>
+        </Frame>
         {/* Sous le cadre : Reset centré, bouton de navigation à droite. */}
         <div className="mt-3 grid w-full grid-cols-[1fr_auto_1fr] items-center gap-4 pl-2 pr-2">
           <div />
@@ -3997,7 +3987,7 @@ function Index() {
                     usage_level: info["usage_level"] ?? "",
                     city: geo.city ?? prePayload.city,
                     country: geo.country ?? prePayload.country,
-                    who: WHO_PRO,
+                    who: normalizeWhoCode(info["profil_saisie"]) || WHO_PRO,
                     demo: Boolean(isDemoActive()),
                     remarks: prePayload.remarques,
                     wd: prePayload.mesures_wa,
