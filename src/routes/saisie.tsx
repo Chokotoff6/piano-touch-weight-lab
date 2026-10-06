@@ -1477,6 +1477,15 @@ function Index() {
   /** Les réglages personnalisés et les modifications importantes exigent des remarques. */
   const remarquesRequired = ["Custom regulations", "Major modifications"].includes(normalizeMaintenanceCode(info["entretien"]));
   const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
+  /** Année de fabrication : verrou de focus tant qu'elle n'est pas entre 1700 et 2026. */
+  const [yearError, setYearError] = useState(false);
+  const validateYear = (raw: string) => {
+    const n = Number(String(raw).trim());
+    const ok = /^\d{4}$/.test(String(raw).trim()) && n >= 1700 && n <= 2026;
+    setYearError(!ok);
+    return ok;
+  };
+  const resultsReady = badgeVisible && !remarquesInvalid;
 
   /**
    * Téléporte le curseur dans la première case PD accessible (La0 ou Do1).
@@ -3516,7 +3525,7 @@ function Index() {
                     </LockedIdentityTooltip>
                   </label>
                 </div>
-                <label className={`min-w-[120px] ${SUB_LABEL_CLASS}`}>
+                <label className={`relative min-w-[120px] ${SUB_LABEL_CLASS}`}>
                   <span className="block whitespace-nowrap">{en ? "Manufacturing date" : "Date fabrication"}</span>
                   <LockedIdentityTooltip id="year" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
                   <input
@@ -3525,10 +3534,27 @@ function Index() {
                       fabricationTouched.current = true;
                       updateInfo("fabrication", e.target.value);
                     }}
+                    onBlur={(e) => {
+                      if (!validateYear(e.currentTarget.value)) {
+                        const el = e.currentTarget;
+                        setTimeout(() => el.focus(), 0);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if ((e.key === "Enter" || e.key === "Tab") && !validateYear(e.currentTarget.value)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    aria-invalid={yearError}
                     disabled={identityLocked}
-                    className={`${INPUT_CLASS} max-w-[120px] disabled:border-muted-foreground/30`}
+                    className={`${INPUT_CLASS} max-w-[120px] disabled:border-muted-foreground/30 ${yearError ? "border-destructive" : ""}`}
                   />
                   </LockedIdentityTooltip>
+                  {yearError && (
+                    <span role="alert" className="pointer-events-none absolute bottom-full left-0 z-[120] mb-2 w-max rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-lg">
+                      {en ? "Complete: Valid date (1700-2026)" : "Complétez : Date valide (1700-2026)"}
+                    </span>
+                  )}
                 </label>
                 <div className="flex h-8 items-end gap-1 text-xs text-black" />
 
@@ -3552,12 +3578,12 @@ function Index() {
                       setTimeout(() => remarquesRef.current?.focus(), 0);
                     }
                   }}
-                  className={`${INPUT_CLASS} !bg-white !block !w-fit !min-w-0 !max-w-full mt-2`}
+                  className={`${INPUT_CLASS} !bg-white !block !w-fit !min-w-0 !max-w-full mt-2 ${info["entretien"] ? "" : "!text-muted-foreground italic"}`}
 
                 >
-                  <option value="">{en ? "— Select —" : "— Sélectionner —"}</option>
+                  <option value="" className="italic text-muted-foreground">{en ? "— Select —" : "— Sélectionner —"}</option>
                   {MAINTENANCE_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
+                    <option key={option} value={option} className="not-italic text-foreground">
                       {en ? MAINTENANCE_LABELS_EN[option] : MAINTENANCE_LABELS_FR[option]}
                     </option>
                   ))}
@@ -3569,11 +3595,11 @@ function Index() {
                 <select
                   value={info["usage_level"] ?? ""}
                   onChange={(e) => updateInfo("usage_level", e.target.value)}
-                  className={`${INPUT_CLASS} !bg-white !block !w-fit !min-w-0 !max-w-full mt-2`}
+                  className={`${INPUT_CLASS} !bg-white !block !w-fit !min-w-0 !max-w-full mt-2 ${info["usage_level"] ? "" : "!text-muted-foreground italic"}`}
                 >
-                  <option value="">{en ? "— Select —" : "— Sélectionner —"}</option>
+                  <option value="" className="italic text-muted-foreground">{en ? "— Select —" : "— Sélectionner —"}</option>
                   {USAGE_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
+                    <option key={option} value={option} className="not-italic text-foreground">
                       {en ? USAGE_LABELS_EN[option] : USAGE_LABELS_FR[option]}
                     </option>
                   ))}
@@ -3603,11 +3629,19 @@ function Index() {
                 }
                 onChange={(e) => {
                   updateInfo("remarques", e.target.value);
+                  const el = e.currentTarget;
+                  el.style.height = "auto";
+                  el.style.height = `${el.scrollHeight}px`;
                 }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") e.preventDefault();
+                onFocus={(e) => {
+                  const el = e.currentTarget;
+                  el.style.height = "auto";
+                  el.style.height = `${el.scrollHeight}px`;
                 }}
-                className={`${INPUT_CLASS} !mt-0 !h-8 !w-1/2 resize-none overflow-hidden py-1 leading-6 ${
+                onBlur={(e) => {
+                  e.currentTarget.style.height = "";
+                }}
+                className={`${INPUT_CLASS} !mt-0 h-8 min-h-8 !w-1/2 resize-none overflow-hidden py-1 leading-6 ${
                   remarquesInvalid
                     ? "border-destructive focus:border-destructive focus:ring-destructive"
                     : ""
@@ -3933,9 +3967,9 @@ function Index() {
 
 
           <span className="group/res relative inline-block">
-          {!badgeVisible && (
+          {!resultsReady && (
             <span className="pointer-events-none absolute bottom-full right-0 z-[120] mb-2 hidden w-72 rounded-md border border-gray-300 bg-white px-3 py-2 text-left text-sm font-medium text-gray-950 shadow-lg group-hover/res:block group-focus-within/res:block">
-              {lockedResultsMessage(en)}
+              {badgeVisible && remarquesInvalid ? (en ? "Complete: Remarks" : "Complétez : Remarques") : lockedResultsMessage(en)}
             </span>
           )}
           <button
@@ -3943,9 +3977,9 @@ function Index() {
             data-pdf-hide
             // Toujours cliquable : la redirection est bloquée (infobulle) tant
             // que « Saisie conforme » n'est pas au vert intense.
-            aria-disabled={!badgeVisible}
+            aria-disabled={!resultsReady}
             onClick={async () => {
-              if (!badgeVisible || isExporting) return;
+              if (!resultsReady || isExporting) return;
               // Le jeu de démonstration est déjà isolé du Cloud réel et chargé
               // depuis sa fiche tampon dédiée : aucun filtre temporel humain ni
               // aucune décision d'écriture ne doivent bloquer sa consultation.
@@ -4009,9 +4043,9 @@ function Index() {
               }
               navigate({ to: "/resultats" });
             }}
-            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${badgeVisible ? "!border-green-600 !bg-green-100 !text-black" : "border-input bg-background !text-gray-400 opacity-60"}`}
+            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${resultsReady ? "!border-green-600 !bg-green-100 !text-black" : "border-input bg-background !text-gray-400 opacity-60"}`}
             style={
-              badgeVisible
+              resultsReady
                 ? {
                     backgroundColor: "#dcfce7",
                     borderColor: "#16a34a",

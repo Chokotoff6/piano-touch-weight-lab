@@ -21,7 +21,7 @@ export const MAINTENANCE_LABELS_EN: Record<string, string> = {
 };
 
 export const MAINTENANCE_LABELS_FR: Record<string, string> = {
-  Standard: "Entretien usuel",
+  Standard: "Entretien usuel / Accord",
   "Custom regulations": "Réglages personnalisés",
   "Major modifications": "Modifications importantes",
 };

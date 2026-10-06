@@ -43,7 +43,7 @@ const DO_POSITIONS = [4, 16, 28, 40, 52, 64, 76, 88];
 const SAMPLE_NOTES = Array.from({ length: 88 }, (_, index) => index + 1);
 const BLACK_MODULOS = new Set([2, 5, 7, 10, 0]);
 const isBlackKey = (noteIndex: number) => BLACK_MODULOS.has(noteIndex % 12);
-const PROFILE_FIELDS = "id,serial_number,brand,model,type_piano,measurement_date,manufacture_year,climate_zone,maintenance_type,city,country,remarks,wa_values,wd_values,friction_values,balance_values,usage_level,who,created_at";
+const PROFILE_FIELDS = "id,serial_number,brand,model,type_piano,measurement_date,manufacture_year,climate_zone,maintenance_type,city,country,remarks,wa_values,wd_values,friction_values,balance_values,usage_level,created_at";
 
 export type KeyFilter = "all" | "split" | "white" | "black";
 type SourceMode = "none" | "cloud";
@@ -1998,11 +1998,7 @@ function Comparer() {
         // numéro de série tronqué ou voisin) : mesures identiques => même piano.
         if (isSameSerial(row.serial_number, mine.serialNumber) || isSameSerial(row.serial_number, localSerial)) return false;
         if (sameSeries(profileValues(row.wa_values), mine.wd) && sameSeries(profileValues(row.wd_values), mine.wa)) return false;
-        const raw = String(row.who ?? "").toLowerCase();
-        if (whoFilter === "all") return true;
-        if (!raw) return true;
-        const isPro = raw.includes("techni") || raw.includes("facteur") || raw.includes("pro");
-        return whoFilter === "pro" ? isPro : !isPro;
+        return true;
       });
       const matching = rows.map(profileFromRow);
       setCloudSampleCount(matching.length);
