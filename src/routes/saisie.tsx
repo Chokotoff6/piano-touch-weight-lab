@@ -263,7 +263,7 @@ const FRAME_CLASS = "relative rounded-md border-2 border-foreground bg-card p-4 
 const FRAME_TITLE_CLASS = "absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black";
 /** Champ texte standard du formulaire. */
 const INPUT_CLASS =
-  "mt-1 h-8 w-full rounded border border-foreground/60 bg-white px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring placeholder:text-muted-foreground placeholder:italic disabled:bg-muted/50 disabled:text-muted-foreground";
+  "mt-1 h-8 w-full rounded border border-foreground/60 bg-white px-2 text-sm font-normal not-italic text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring placeholder:text-sm placeholder:font-normal placeholder:text-muted-foreground placeholder:italic disabled:bg-muted/50 disabled:text-muted-foreground";
 /** Label principal du cadre « Informations piano ». */
 const FIELD_LABEL_CLASS = "text-lg font-semibold text-black";
 /** Sous-label secondaire (numéro de série éclaté). */
@@ -301,9 +301,10 @@ function LockedIdentityTooltip({ id, locked, active, seen, onOpenChange, childre
   onOpenChange: (id: string, open: boolean) => void; children: ReactNode;
 }) {
   if (!locked) return <>{children}</>;
-  return <Tooltip open={active === id} onOpenChange={(open) => onOpenChange(id, open)}>
+  void active; void seen; void onOpenChange; void id;
+  return <Tooltip>
     <TooltipTrigger asChild><span className="block">{children}</span></TooltipTrigger>
-    {!seen && <TooltipContent side="top" className="border border-border bg-card text-foreground">Verrouillé pour ce piano. Utilisez "Reset" si vous souhaitez changer d'instrument.</TooltipContent>}
+    {<TooltipContent side="top" className="border border-border bg-card text-foreground">Verrouillé pour ce piano. Utilisez "Reset" si vous souhaitez changer d'instrument.</TooltipContent>}
   </Tooltip>;
 }
 
@@ -3405,7 +3406,7 @@ function Index() {
               <SmartCombobox
                 value={info["marque"] ?? ""}
                 disabled={identityLocked}
-                className="placeholder:text-muted-foreground placeholder:italic disabled:!bg-muted/50 disabled:!cursor-default"
+                className="font-normal not-italic placeholder:text-sm placeholder:font-normal placeholder:text-muted-foreground placeholder:italic disabled:!bg-muted/50 disabled:!cursor-default"
                 options={BRAND_SUGGESTIONS}
                 placeholder={en ? "Type a brand (e.g. YAMAHA, PLEYEL...)" : "Saisissez une marque (ex: YAMAHA, PLEYEL...)"}
                 onTyping={markDirty}
@@ -3420,7 +3421,7 @@ function Index() {
             <fieldset className={FIELD_LABEL_CLASS} data-keep-model-open>
               <legend>{en ? "Piano type" : "Type de piano"}</legend>
               <LockedIdentityTooltip id="type" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
-              <div className={`mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 px-2 transition-opacity ${identityLocked ? "bg-muted/50 opacity-60" : "bg-white"}`}>
+              <div className={`mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 px-2 transition-opacity ${identityLocked ? "bg-muted/50" : "bg-white"}`}>
                 {["Droit", "Queue"].map((t) => (
                   <label key={t} className="flex items-center gap-1 text-sm text-foreground">
                     <input
@@ -3428,9 +3429,12 @@ function Index() {
                       name="type_piano"
                       style={{ accentColor: demoInk && isDemoActive() ? "#7c3aed" : "#111111" }}
                       value={t}
-                      disabled={identityLocked}
+                      aria-disabled={identityLocked}
+                      tabIndex={identityLocked ? -1 : undefined}
+                      className={identityLocked ? "pointer-events-none" : undefined}
                       checked={info["type_piano"] === t}
                       onChange={() => {
+                        if (identityLocked) return;
                         updateInfo("type_piano", t);
                         const m = info["modele"] ?? "";
                         if (m && !modelsFor(info["marque"] ?? "", t).includes(m)) {
@@ -3457,7 +3461,7 @@ function Index() {
                 disabled={identityLocked || !info["marque"]?.trim()}
                 openOnFocus
                 keepOpenSelector="[data-keep-model-open]"
-                className={`placeholder:text-muted-foreground placeholder:italic disabled:!cursor-default ${identityLocked ? "!bg-muted/50 opacity-75" : "!bg-white"}`}
+                className={`font-normal not-italic placeholder:text-sm placeholder:font-normal placeholder:text-muted-foreground placeholder:italic disabled:!cursor-default ${identityLocked ? "!bg-muted/50 opacity-75" : "!bg-white"}`}
                 placeholder={en ? "Type or search a model..." : "Saisissez ou cherchez un modèle..."}
                 onTyping={markDirty}
                 onCommit={(v) => {
