@@ -1,5 +1,9 @@
 # Roadmap
 
+- [x] Forcer les invitations Historique/Intensité en italique et l’infobulle de verrouillage noire, multiligne et grasse.
+- [x] Remplacer la borne 2026 par l’année système dans le contrôle et son avertissement.
+- [ ] Vérifier la compilation automatique des corrections.
+
 - [x] Aligner l’axe Y de Comparer sur Résultats.
 - [x] Synchroniser le compteur de touches du piano actuel.
 - [x] Libérer la course de défilement sous le quatrième graphique.
