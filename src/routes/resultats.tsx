@@ -104,10 +104,9 @@ function Resultats() {
   const lang = useLang();
   const en = lang === "en";
   const topbar = useTopbarState();
-  const [draft, setDraft] = useState<{ rows: Row[]; info: Info }>(() => ({
-    rows: Array.from({ length: 88 }, () => ({ wd: "", wa: "" })),
-    info: {},
-  }));
+  // Lecture synchrone dès le premier rendu : aucun état vide transitoire.
+  const [draft, setDraft] = useState<{ rows: Row[]; info: Info }>(() => readDraft());
+  const [savingCurtain, setSavingCurtain] = useState(false);
   const [consent, setConsent] = useState(false);
   // État initial imposé : touches blanches et noires affichées séparément.
   const [keyFilter, setKeyFilter] = useState<KeyFilter>("split");
