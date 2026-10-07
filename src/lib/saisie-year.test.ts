@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { readFileSync } from "node:fs";
 
 // Exercise the actual form validator with a controlled device clock.
-const source = readFileSync(new URL("./saisie.tsx", import.meta.url), "utf8");
+const source = readFileSync(new URL("../routes/saisie.tsx", import.meta.url), "utf8");
 const body = source.match(/const validateYear = \(raw: string\) => \{([\s\S]*?)\n  \};/)?.[1];
 if (!body) throw new Error("Manufacturing year validator not found");
 const validate = new Function("raw", "Date", "setYearError", body);
