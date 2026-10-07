@@ -126,8 +126,18 @@ const C_SHARP_KEYS = new Set([5, 17, 29, 41, 53, 65, 77]);
 const RAPID_INDEXES = [3, 4, 15, 16, 27, 28, 39, 40, 51, 52, 63, 64, 75, 76, 87] as const;
 const RAPID_INDEX_SET = new Set<number>(RAPID_INDEXES);
 
-const PD_RANGE_MESSAGE =
-  "⚠️ Valeur hors plage d'atelier : Les pesées doivent être comprises entre 30g et 90g pour être conformes.";
+/** Plages atelier : PD (wd) 30-90 g, PR (wa) 10-40 g. */
+const WEIGHT_RANGES = { wd: [30, 90], wa: [10, 40] } as const;
+const isOutOfRange = (field: "wd" | "wa", n: number) =>
+  n < WEIGHT_RANGES[field][0] || n > WEIGHT_RANGES[field][1];
+const rangeMessage = (field: "wd" | "wa", en: boolean) =>
+  field === "wd"
+    ? en
+      ? "⚠️ Out of shop range: Down weight (DW) must be between 30g and 90g."
+      : "⚠️ Valeur hors plage d'atelier : Le Poids Descendant (PD) doit être compris entre 30g et 90g."
+    : en
+      ? "⚠️ Out of shop range: Up weight (UW) must be between 10g and 40g."
+      : "⚠️ Valeur hors plage d'atelier : Le Poids Remontant (PR) doit être compris entre 10g et 40g.";
 const PEDAL_MESSAGE_FR =
   "⚠️ Attention : Valeur élevée détectée. Assurez-vous que la pédale de sustain (forte) est bien enfoncée à fond durant la mesure pour libérer les étouffoirs.";
 const PEDAL_MESSAGE_EN =
@@ -295,16 +305,36 @@ function Frame({
   );
 }
 
+/** Style unifié calqué sur l'infobulle « Erreur mécanique ». */
+const UNIFIED_TOOLTIP_CLASS =
+  "z-[99999] max-w-[min(18rem,calc(100vw-2rem))] whitespace-normal break-words rounded border border-gray-300 !bg-white px-2.5 py-2 text-left text-xs font-semibold leading-4 !text-black shadow-md";
+
 /** Survol accessible même si le contrôle intérieur est désactivé. */
 function LockedIdentityTooltip({ id, locked, active, seen, onOpenChange, children }: {
   id: string; locked: boolean; active: string | null; seen: boolean;
   onOpenChange: (id: string, open: boolean) => void; children: ReactNode;
 }) {
+  const en = useLang() === "en";
   if (!locked) return <>{children}</>;
   void active; void seen; void onOpenChange; void id;
   return <Tooltip>
     <TooltipTrigger asChild><span className="block">{children}</span></TooltipTrigger>
-    <TooltipContent side="top" className="z-[99999] max-w-[min(18rem,calc(100vw-2rem))] whitespace-normal break-words rounded px-2.5 py-2 text-left font-bold leading-4 bg-technical-border text-primary-foreground">Verrouillé pour ce piano. Utilisez "Reset" si vous souhaitez changer d'instrument.</TooltipContent>
+    <TooltipContent side="top" className={UNIFIED_TOOLTIP_CLASS}>
+      {en
+        ? "Fields locked for this piano. Identity confirmed via registration database. Use 'Reset' to change instrument."
+        : "Champs verrouillés pour ce piano. Identité confirmée via la base cloud. Utilisez « Reset » pour changer d'instrument."}
+    </TooltipContent>
+  </Tooltip>;
+}
+
+/** Modèle bloqué tant que le type de piano n'est pas choisi. */
+function TypeFirstTooltip({ active, en, children }: { active: boolean; en: boolean; children: ReactNode }) {
+  if (!active) return <>{children}</>;
+  return <Tooltip>
+    <TooltipTrigger asChild><span className="block">{children}</span></TooltipTrigger>
+    <TooltipContent side="top" className={UNIFIED_TOOLTIP_CLASS}>
+      {en ? "Select piano type first" : "Sélectionner d'abord le type de piano"}
+    </TooltipContent>
   </Tooltip>;
 }
 
@@ -455,7 +485,7 @@ function Index() {
   const [blockAnchor, setBlockAnchor] = useState<{ x: number; y: number; text?: string } | null>(null);
   const blockAnchorTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Ancre le message FF de fourchette sous la case fautive (persistant). */
-  const [rangeAnchor, setRangeAnchor] = useState<{ x: number; y: number } | null>(null);
+  const [rangeAnchor, setRangeAnchor] = useState<{ x: number; y: number; field: "wd" | "wa" } | null>(null);
   const rangeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Clés dont le message FF est déjà consommé : interdiction de réapparition. */
   const rangeDismissed = useRef<Set<string>>(new Set());
@@ -1260,9 +1290,14 @@ function Index() {
     weighingModeRef.current = weighingMode;
   }, [weighingMode]);
 
+  // Garde anti-écrasement : jamais de brouillon vide par-dessus un brouillon valide.
   useEffect(() => {
     if (!draftLoaded.current) return;
     try {
+      if (!rows.some((r) => r.wd || r.wa)) {
+        const prev = JSON.parse(window.localStorage.getItem(DRAFT_ROWS_KEY) ?? "null") as Row[] | null;
+        if (Array.isArray(prev) && prev.some((r) => r?.wd || r?.wa)) return;
+      }
       window.localStorage.setItem(DRAFT_ROWS_KEY, JSON.stringify(rows));
     } catch {
       /* stockage indisponible */
@@ -1273,6 +1308,10 @@ function Index() {
   useEffect(() => {
     if (!draftLoaded.current) return;
     try {
+      if (!Object.values(info).some((v) => String(v ?? "").trim())) {
+        const prev = JSON.parse(window.localStorage.getItem(DRAFT_INFO_KEY) ?? "null") as Record<string, string> | null;
+        if (prev && Object.values(prev).some((v) => String(v ?? "").trim())) return;
+      }
       window.localStorage.setItem(DRAFT_INFO_KEY, JSON.stringify(info));
     } catch {
       /* stockage indisponible */
@@ -1795,9 +1834,9 @@ function Index() {
     const el = inputs.current[key];
     const r = el?.getBoundingClientRect();
     if (r) {
-      setRangeAnchor({ x: Math.min(r.left, window.innerWidth - 290), y: r.bottom + 6 });
+      setRangeAnchor({ x: Math.min(r.left, window.innerWidth - 290), y: r.bottom + 6, field });
     } else {
-      setRangeAnchor({ x: window.innerWidth / 2 - 200, y: 160 });
+      setRangeAnchor({ x: window.innerWidth / 2 - 200, y: 160, field });
     }
     // Sélection automatique des 2 chiffres : l'artisan retape directement.
     setTimeout(() => {
@@ -2167,8 +2206,8 @@ function Index() {
     // Hors fourchette (<10 ou >90) : cadre rouge IMMÉDIAT + message FF en
     // dessous de la case, sans aucun message sustain. Le verrouillage du focus
     // n'agit qu'à la tentative de sortie (blur/Tab/Enter).
-    if (num !== null && (num < 10 || num > 90)) {
-      setErrors((prev) => ({ ...prev, [`${index}-${field}`]: PD_RANGE_MESSAGE }));
+    if (num !== null && isOutOfRange(field, num)) {
+      setErrors((prev) => ({ ...prev, [`${index}-${field}`]: rangeMessage(field, en) }));
       if (mechanicalError) hideRangeMessage();
       else showRangeMessage(index, field);
       return;
@@ -2260,10 +2299,10 @@ function Index() {
       focusCell(index, field);
       return;
     }
-    // Fourchette mécanique 10-90 g : hors plage, aucun message sustain,
-    // cadre rouge, message FF en dessous et focus verrouillé dans la case.
-    if (num < 10 || num > 90) {
-      setErrors((prev) => ({ ...prev, [key]: PD_RANGE_MESSAGE }));
+    // Fourchettes atelier PD 30-90 g / PR 10-40 g : hors plage, aucun message
+    // sustain, cadre rouge, message FF en dessous et focus verrouillé.
+    if (isOutOfRange(field, num)) {
+      setErrors((prev) => ({ ...prev, [key]: rangeMessage(field, en) }));
       const updated = setRowField(index, field, num.toString());
       const rowWd = parseWeight(updated.wd);
       const rowWa = parseWeight(updated.wa);
@@ -3453,12 +3492,13 @@ function Index() {
             <label className={FIELD_LABEL_CLASS}>
               {en ? "Model" : "Modèle"}
               <LockedIdentityTooltip id="model" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
+              <TypeFirstTooltip active={!identityLocked && !info["type_piano"]} en={en}>
               <SmartCombobox
                 ref={modelComboRef}
                 value={info["modele"] ?? ""}
                 options={modelsFor(info["marque"] ?? "", info["type_piano"])}
                 groups={modelGroupsFor(info["marque"] ?? "", info["type_piano"])}
-                disabled={identityLocked || !info["marque"]?.trim()}
+                disabled={identityLocked || !info["marque"]?.trim() || !info["type_piano"]}
                 openOnFocus
                 keepOpenSelector="[data-keep-model-open]"
                 className={`font-normal not-italic placeholder:text-sm placeholder:font-normal placeholder:text-muted-foreground placeholder:italic disabled:!cursor-default ${identityLocked ? "!bg-muted/50 opacity-75" : "!bg-white"}`}
@@ -3470,6 +3510,7 @@ function Index() {
                   if (inferred) updateInfo("type_piano", inferred);
                 }}
               />
+              </TypeFirstTooltip>
               </LockedIdentityTooltip>
             </label>
 
@@ -3782,7 +3823,7 @@ function Index() {
       )}
 
       {rangeAnchor && (
-        <SvgTooltip x={rangeAnchor.x} y={rangeAnchor.y} text={PD_RANGE_MESSAGE} />
+        <SvgTooltip x={rangeAnchor.x} y={rangeAnchor.y} text={rangeMessage(rangeAnchor.field, en)} />
       )}
 
       <Frame
