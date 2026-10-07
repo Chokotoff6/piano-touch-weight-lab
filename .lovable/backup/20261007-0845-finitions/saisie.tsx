@@ -3423,7 +3423,7 @@ function Index() {
               <LockedIdentityTooltip id="type" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
               <div className={`mt-1 flex h-8 items-center gap-4 rounded border border-foreground/60 px-2 transition-opacity ${identityLocked ? "bg-muted/50" : "bg-white"}`}>
                 {["Droit", "Queue"].map((t) => (
-                  <label key={t} className="flex items-center gap-1 text-sm font-normal text-foreground">
+                  <label key={t} className="flex items-center gap-1 text-sm text-foreground">
                     <input
                       type="radio"
                       name="type_piano"
@@ -3493,7 +3493,7 @@ function Index() {
                       onChange={(e) => onPrefixChange(e.target.value)}
                       disabled={identityLocked || !rule.prefix}
                       placeholder="ex: J, F"
-                    className={`${INPUT_CLASS} text-black max-w-[80px] disabled:border-muted-foreground/30`}
+                    className={`${INPUT_CLASS} max-w-[80px] disabled:border-muted-foreground/30`}
                     />
                     </LockedIdentityTooltip>
                   </label>
@@ -3510,7 +3510,7 @@ function Index() {
                       required
                       inputMode="numeric"
                       placeholder={en ? "Digits" : "Chiffres"}
-                      className={`${INPUT_CLASS} text-black max-w-[150px] disabled:border-muted-foreground/30`}
+                      className={`${INPUT_CLASS} max-w-[150px] disabled:border-muted-foreground/30`}
                     />
                     </LockedIdentityTooltip>
                   </label>
@@ -3524,7 +3524,7 @@ function Index() {
                       }
                       disabled={identityLocked || !rule.suffix}
                       placeholder="ex: A, B"
-                      className={`${INPUT_CLASS} text-black max-w-[80px] disabled:border-muted-foreground/30`}
+                      className={`${INPUT_CLASS} max-w-[80px] disabled:border-muted-foreground/30`}
                     />
                     </LockedIdentityTooltip>
                   </label>
@@ -3551,7 +3551,7 @@ function Index() {
                     }}
                     aria-invalid={yearError}
                     disabled={identityLocked}
-                    className={`${INPUT_CLASS} text-black max-w-[120px] disabled:border-muted-foreground/30 ${yearError ? "border-destructive" : ""}`}
+                    className={`${INPUT_CLASS} max-w-[120px] disabled:border-muted-foreground/30 ${yearError ? "border-destructive" : ""}`}
                   />
                   </LockedIdentityTooltip>
                   {yearError && (
