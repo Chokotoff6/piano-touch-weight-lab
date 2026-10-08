@@ -368,9 +368,22 @@ function RootComponent() {
             </div>
             {!isHome && (
             <div className="flex translate-x-[50px] translate-y-[9px] flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
-              <Link to="/saisie" className={linkClass} activeProps={{ className: activeLinkClass }}>
-                {lang === "en" ? "Inputs" : "Saisie"}
-              </Link>
+              {topbar.cloudSaving ? (
+                <span className="group/save relative inline-block">
+                  <span aria-disabled="true" className={lockedLinkClass}>
+                    {lang === "en" ? "Inputs" : "Saisie"}
+                  </span>
+                  <span className="pointer-events-none absolute left-0 top-full z-[99999] mt-2 hidden w-72 whitespace-normal break-words rounded border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-black shadow-md group-hover/save:block">
+                    {lang === "en"
+                      ? "Securing and saving the profile… Please wait."
+                      : "Sécurisation et enregistrement du profil… Veuillez patienter."}
+                  </span>
+                </span>
+              ) : (
+                <Link to="/saisie" className={linkClass} activeProps={{ className: activeLinkClass }}>
+                  {lang === "en" ? "Inputs" : "Saisie"}
+                </Link>
+              )}
               {topbar.gateReady ? (
                 <Link to="/resultats" className={linkClass} activeProps={{ className: activeLinkClass }}>
                   {lang === "en" ? "Results" : "Résultats"}

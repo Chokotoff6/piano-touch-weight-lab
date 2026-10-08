@@ -27,6 +27,8 @@ type TopbarState = {
   weighingMode: boolean;
   /** Au moins une source de comparaison active sur la page Comparer. */
   comparisonActive: boolean;
+  /** Écriture cloud en cours (désactive temporairement l'onglet Saisie). */
+  cloudSaving?: boolean;
 };
 
 const GATE_KEY = "ptw_gate_ready";
