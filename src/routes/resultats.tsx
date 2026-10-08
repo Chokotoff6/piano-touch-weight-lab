@@ -290,6 +290,9 @@ function Resultats() {
     if (busy) return;
     setConsent(true);
     setBusy(true);
+    // Rideau plein écran : bloque toute navigation (retour Saisie inclus)
+    // tant que la double écriture cloud n'est pas confirmée.
+    setSavingCurtain(true);
     const toastId: string | number = silent
       ? `cloud-silent-${Date.now()}`
       : toast.loading(en ? "Collaborative sharing in progress…" : "Partage collaboratif en cours…");
@@ -321,6 +324,7 @@ function Resultats() {
       setCompareUnlocked(true);
     } finally {
       setBusy(false);
+      setSavingCurtain(false);
     }
   };
 
