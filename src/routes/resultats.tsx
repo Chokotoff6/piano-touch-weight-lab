@@ -290,6 +290,9 @@ function Resultats() {
     if (busy) return;
     setConsent(true);
     setBusy(true);
+    // Rideau plein écran : bloque toute navigation (retour Saisie inclus)
+    // tant que la double écriture cloud n'est pas confirmée.
+    setSavingCurtain(true);
     const toastId: string | number = silent
       ? `cloud-silent-${Date.now()}`
       : toast.loading(en ? "Collaborative sharing in progress…" : "Partage collaboratif en cours…");
@@ -321,6 +324,7 @@ function Resultats() {
       setCompareUnlocked(true);
     } finally {
       setBusy(false);
+      setSavingCurtain(false);
     }
   };
 
@@ -443,6 +447,22 @@ function Resultats() {
           </div>
         </div>
       </div>
+      {savingCurtain && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-white/90 p-4"
+          role="alert"
+          aria-busy="true"
+        >
+          <div className="flex flex-col items-center gap-3 rounded-md border border-gray-300 bg-white p-6 shadow-lg">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-black" />
+            <p className="text-sm font-semibold !text-gray-900">
+              {en
+                ? "Securing and saving the profile… Please wait."
+                : "Sécurisation et enregistrement du profil… Veuillez patienter."}
+            </p>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
