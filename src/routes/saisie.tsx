@@ -321,8 +321,8 @@ function LockedIdentityTooltip({ id, locked, active, seen, onOpenChange, childre
     <TooltipTrigger asChild><span className="block">{children}</span></TooltipTrigger>
     <TooltipContent side="top" className={UNIFIED_TOOLTIP_CLASS}>
       {en
-        ? "Fields locked for this piano. Identity confirmed via registration database. Use 'Reset' to change instrument."
-        : "Champs verrouillés pour ce piano. Identité confirmée via la base cloud. Utilisez « Reset » pour changer d'instrument."}
+        ? "Fields locked for this piano. Use the 'Reset' button to change instrument."
+        : "Champs verrouillés pour ce piano. Utilisez le bouton « Reset » pour changer d'instrument."}
     </TooltipContent>
   </Tooltip>;
 }
@@ -643,7 +643,18 @@ function Index() {
   const pdfGridRef1 = useSnappedGrid(1, 44);
   const pdfGridRef2 = useSnappedGrid(45, 88);
   /** Alerte pédale de sustain (PD > 60) et son option « ne plus afficher ». */
-  const [pedalAlert, setPedalAlert] = useState(false);
+  const [pedalAlert, setPedalAlertState] = useState(false);
+  const [pedalAnchor, setPedalAnchor] = useState<{ x: number; y: number } | null>(null);
+  const pedalTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Ferme l'alerte sustain (sans saut de case) et annule son minuteur. */
+  const setPedalAlert = (v: boolean) => {
+    if (!v) {
+      if (pedalTimeout.current) clearTimeout(pedalTimeout.current);
+      pedalTimeout.current = null;
+      setPedalAnchor(null);
+    }
+    setPedalAlertState(v);
+  };
   const [undoStack, setUndoStack] = useState<Row[][]>([]);
   const [redoStack, setRedoStack] = useState<Row[][]>([]);
   /** Ancrages de calage des boutons Undo/Redo dans le bloc de touches 45-88. */
@@ -1579,7 +1590,7 @@ function Index() {
       missingFlashTimeout.current = setTimeout(() => {
         setMissingFlash(false);
         missingFlashTimeout.current = null;
-      }, 3000);
+      }, 5000);
       return;
 
     }
@@ -1592,7 +1603,7 @@ function Index() {
       blockAnchorTimeout.current = setTimeout(() => {
         setBlockAnchor(null);
         blockAnchorTimeout.current = null;
-      }, 3000);
+      }, 5000);
       return;
     }
     setWeighingMode(true);
@@ -1756,7 +1767,7 @@ function Index() {
     blockTimeout.current = setTimeout(() => {
       setBlockMessage(null);
       blockTimeout.current = null;
-    }, 3000);
+    }, 5000);
   };
 
   const showCoherencePopover = (index: number) => {
@@ -1764,6 +1775,11 @@ function Index() {
     // tant que l'artisan n'a pas retapé un chiffre sur cette touche.
     if (coherenceDismissed.current.has(index)) return;
     if (coherenceTimeout.current) clearTimeout(coherenceTimeout.current);
+    setPedalAlert(false);
+    pedalOrigin.current = null;
+    if (rangeTimeout.current) clearTimeout(rangeTimeout.current);
+    setRangeAnchor(null);
+    setBlockAnchor(null);
     const el = inputs.current[`${index}-wa`];
     if (el) {
       const r = el.getBoundingClientRect();
@@ -1807,7 +1823,7 @@ function Index() {
     blockAnchorTimeout.current = setTimeout(() => {
       setBlockAnchor(null);
       blockAnchorTimeout.current = null;
-    }, 3000);
+    }, 5000);
   };
 
   /** Alerte ancrée sur la touche cliquée, près du curseur, quand la fiche est incomplète. */
@@ -1819,7 +1835,7 @@ function Index() {
     blockAnchorTimeout.current = setTimeout(() => {
       setBlockAnchor(null);
       blockAnchorTimeout.current = null;
-    }, 3000);
+    }, 5000);
   };
 
   /** Message FF de fourchette : ancré juste en dessous de la case fautive,
@@ -1830,6 +1846,12 @@ function Index() {
     const key = `${index}-${field}`;
     if (rangeDismissed.current.has(key)) return;
     if (rangeTimeout.current) clearTimeout(rangeTimeout.current);
+    // Exclusivité : le message hors fenêtre est prioritaire sur tous les autres.
+    setPedalAlert(false);
+    pedalOrigin.current = null;
+    setCoherenceIndex(null);
+    setCoherenceAnchor(null);
+    setBlockAnchor(null);
     rangeKeyRef.current = key;
     const el = inputs.current[key];
     const r = el?.getBoundingClientRect();
@@ -1956,7 +1978,7 @@ function Index() {
     const cleaned = cleanWeight(value);
     if (cleaned === "" || cleaned === ".") return null;
     const num = Number(cleaned);
-    if (!Number.isFinite(num) || num < 5 || num > 99) return null;
+    if (!Number.isFinite(num) || num < 0 || num > 99) return null;
     return num;
   };
 
@@ -2089,6 +2111,20 @@ function Index() {
       focusCell(index, field);
       return;
     }
+    // Valeur hors fenêtre atelier (y compris 1 seul chiffre, ex. PR = 5) :
+    // la navigation est bloquée, le message s'affiche et la valeur est sélectionnée.
+    if (e.key === "Tab" || e.key === "Enter" || e.key.startsWith("Arrow")) {
+      const curNum = parseWeight(rows[index]?.[field] ?? "");
+      if (curNum !== null && isOutOfRange(field, curNum)) {
+        e.preventDefault();
+        setErrors((prev) => ({ ...prev, [`${index}-${field}`]: rangeMessage(field, en) }));
+        rangeDismissed.current.delete(`${index}-${field}`);
+        showRangeMessage(index, field);
+        focusCell(index, field);
+        setTimeout(() => inputs.current[`${index}-${field}`]?.select(), 0);
+        return;
+      }
+    }
     // Entrée ou Échap : fermeture instantanée de l'alerte mécanique,
     // exactement comme le clic n'importe où sur l'écran (pointerdown).
     if ((e.key === "Enter" || e.key === "Escape") && coherenceIndex === index) {
@@ -2180,6 +2216,10 @@ function Index() {
     // Pile d'annulation : 20 retours en arrière maximum.
     setUndoStack((prev) => [...prev, rows].slice(-UNDO_LIMIT));
     setRedoStack([]);
+    if (pedalOrigin.current?.index === index && pedalOrigin.current?.field === field) {
+      pedalOrigin.current = null;
+      setPedalAlert(false);
+    }
     const cleaned = cleanWeight(value);
     const nextRow: Row = { ...rows[index]!, [field]: cleaned };
     setRows((prev) => prev.map((r, i) => (i === index ? nextRow : r)));
@@ -2215,22 +2255,8 @@ function Index() {
     // Valeur redevenue conforme : nettoyage instantané du cadre rouge et du FF.
     if (!mechanicalError) clearError(`${index}-${field}`);
     hideRangeMessage();
-    // Valeur redescendue sous le seuil : l'alerte et son verrou de focus tombent.
-    if (
-      num !== null &&
-      num <= 75 &&
-      pedalOrigin.current?.index === index &&
-      pedalOrigin.current?.field === field
-    ) {
-      pedalOrigin.current = null;
-      setPedalAlert(false);
-    }
-    // Alerte sustain : toute valeur conforme strictement supérieure à 75 g.
-    if (num !== null && num > 75 && !hidePedalAlert) {
-      pedalCount.current += 1;
-      pedalOrigin.current = { index, field };
-      setPedalAlert(true);
-    }
+    // Alerte sustain : PD conforme strictement dans la tranche 70-90 g.
+    if (isPedalValue(field, num)) showPedalAlert(index, field);
   };
 
   /** Restaure l'état de mesures précédent (jusqu'à 20 fois de suite). */
@@ -2258,6 +2284,56 @@ function Index() {
       return prev.slice(0, -1);
     });
   };
+
+  /** Alerte sustain : PD uniquement, strictement 70-90 g, ancrée sous la case, 5 s. */
+  const isPedalValue = (field: "wd" | "wa", num: number | null) =>
+    field === "wd" && num !== null && num >= 70 && num <= 90;
+  const showPedalAlert = (index: number, field: "wd" | "wa") => {
+    if (hidePedalAlert) return;
+    hideRangeMessage();
+    setCoherenceIndex(null);
+    setCoherenceAnchor(null);
+    setBlockAnchor(null);
+    pedalCount.current += 1;
+    pedalOrigin.current = { index, field };
+    const key = `${index}-${field}`;
+    const r = inputs.current[key]?.getBoundingClientRect();
+    setPedalAnchor(
+      r
+        ? { x: Math.max(8, Math.min(r.left, window.innerWidth - 360)), y: r.bottom + 6 }
+        : { x: window.innerWidth / 2 - 170, y: 120 },
+    );
+    if (pedalTimeout.current) clearTimeout(pedalTimeout.current);
+    setPedalAlertState(true);
+    pedalTimeout.current = setTimeout(() => {
+      pedalOrigin.current = null;
+      setPedalAlert(false);
+    }, 5000);
+    setTimeout(() => {
+      const input = inputs.current[key];
+      if (input && document.activeElement === input) input.select();
+    }, 0);
+  };
+
+  // Clic sur la case concernée : fermeture immédiate de l'alerte sustain.
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => {
+      const o = pedalOrigin.current;
+      if (!o) return;
+      const el = inputs.current[`${o.index}-${o.field}`];
+      if (el && e.target instanceof Node && el.contains(e.target)) {
+        pedalOrigin.current = null;
+        setPedalAlert(false);
+        setTimeout(() => el.select(), 0);
+      }
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      if (pedalTimeout.current) clearTimeout(pedalTimeout.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /** Ferme l'alerte sustain et saute automatiquement à la case suivante. */
   const closePedalAlert = () => {
@@ -2310,11 +2386,6 @@ function Index() {
       else showRangeMessage(index, field);
       setTimeout(() => focusCell(index, field), 0);
       return;
-    }
-    if (num > 75 && !hidePedalAlert) {
-      pedalCount.current += 1;
-      pedalOrigin.current = { index, field };
-      setPedalAlert(true);
     }
 
     clearError(key);
@@ -4271,8 +4342,9 @@ Moyennes{" "}
 
       {pedalAlert && (
         <div
-          className="fixed left-1/2 top-24 w-[min(90vw,34rem)] -translate-x-1/2 rounded-md border border-gray-300 px-4 py-3 text-sm font-medium text-gray-950 shadow-lg"
-          style={{ zIndex: 99999, backgroundColor: "#ffffff" }}
+          data-pedal-alert
+          className="fixed w-[min(90vw,22rem)] whitespace-normal break-words rounded border border-gray-300 px-3 py-2 text-xs font-semibold leading-4 text-black shadow-md"
+          style={{ zIndex: 99999, backgroundColor: "#ffffff", left: pedalAnchor?.x ?? 16, top: pedalAnchor?.y ?? 120 }}
         >
           <div>{en ? PEDAL_MESSAGE_EN : PEDAL_MESSAGE_FR}</div>
           {/* Case toujours visible, mémorisée pour la session. */}
