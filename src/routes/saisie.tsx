@@ -2315,6 +2315,26 @@ function Index() {
     }, 0);
   };
 
+  // Clic sur la case concernée : fermeture immédiate de l'alerte sustain.
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => {
+      const o = pedalOrigin.current;
+      if (!o) return;
+      const el = inputs.current[`${o.index}-${o.field}`];
+      if (el && e.target instanceof Node && el.contains(e.target)) {
+        pedalOrigin.current = null;
+        setPedalAlert(false);
+        setTimeout(() => el.select(), 0);
+      }
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      if (pedalTimeout.current) clearTimeout(pedalTimeout.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   /** Ferme l'alerte sustain et saute automatiquement à la case suivante. */
   const closePedalAlert = () => {
     setPedalAlert(false);

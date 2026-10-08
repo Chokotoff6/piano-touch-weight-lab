@@ -56,6 +56,7 @@ export const SmartCombobox = forwardRef<SmartComboboxHandle, Props>(
         pendingOpen.current = false;
         setOpen(true);
         setTyped(false);
+        window.setTimeout(() => input.current?.focus(), 0);
       }
     }, [disabled]);
 
