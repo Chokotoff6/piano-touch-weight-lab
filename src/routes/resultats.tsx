@@ -345,7 +345,8 @@ function Resultats() {
       resetConsent();
       return;
     }
-    if (decision.kind === "silentUpsert") void writeCloud(true);
+    // Plus d'écrasement silencieux : le choix Mise à jour / Nouvel historique
+    // est tranché sur la page Saisie avant la navigation.
   }, [demoActive, hasData, unlocked, rows]);
 
   return (
