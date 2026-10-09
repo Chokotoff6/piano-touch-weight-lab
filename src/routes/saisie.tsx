@@ -41,7 +41,7 @@ import {
 } from "@/components/PdfReportBlocks";
 import { ComparisonChart, buildChartData, type RefProfile } from "@/routes/comparer";
 
-import { buildCurrentPiano, cleanStringOrNull, toCloudTypePiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, findHistoryProfileId, CURRENT_PIANO_KEY } from "@/lib/current-piano";
+import { buildCurrentPiano, cleanStringOrNull, toCloudTypePiano, normalizeTypePiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, findHistoryProfileId, CURRENT_PIANO_KEY } from "@/lib/current-piano";
 
 /**
  * Nettoie une chaîne textuelle pour l'injection SQL PostgREST.
