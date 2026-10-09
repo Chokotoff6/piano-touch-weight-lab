@@ -66,7 +66,7 @@ import {
   type DiagnosticHistoryRow,
 } from "@/lib/diagnostics";
 import { getTopbarState, setCompareUnlocked, setGateReady, setResultsVisited, setTopbarState, showTopbarAlert, useTopbarState } from "@/lib/topbar-store";
-import { decideCloudAction, resetConsent, startSheetTimer } from "@/lib/cloud-gate";
+import { decideCloudAction, markCloudSync, resetConsent, startSheetTimer } from "@/lib/cloud-gate";
 import {
   DEMO_LOADED_EVENT,
   DEMO_CASCADE_INTERVAL_MS,
@@ -3192,6 +3192,132 @@ function Index() {
     return () =>
       Object.entries(handlers).forEach(([type, fn]) => window.removeEventListener(type, fn));
   }, [rows, info, currentDbId, isDirty, honeypot, climateZone, profile]);
+
+  // --- Dialogue unifié Résultats / Comparer : mise à jour ou nouvel historique ---
+  const pendingResults = useRef(false);
+  /**
+   * Piano déjà enregistré + modifications réelles validées par l'anti-spam
+   * (ratio par touche) → le choix Mise à jour / Nouvel historique est requis.
+   * Retourne "blocked" si l'anti-spam refuse, "choice" ou "direct".
+   */
+  const historyDecision = (): "blocked" | "choice" | "direct" => {
+    if (isDemoActive()) return "direct";
+    const serial = (info["sn_num"] ?? "").trim();
+    const sent = Boolean(currentDbId) && serial.length > 0 && serial === savedSerialRef.current;
+    if (!sent || !topbarState.compareUnlocked) return "direct";
+    const decision = decideCloudAction({ honeypot, accepted: true, rows });
+    if (decision.kind === "blocked") return "blocked";
+    return decision.kind === "silentUpsert" ? "choice" : "direct";
+  };
+
+  const prepareAndGoResults = async () => {
+    setIsExporting(true);
+    try {
+      const prePayload = buildPayload();
+      const saved = loadCurrentPiano();
+      const isUpdate = Boolean(
+        saved?.serial_number &&
+          saved.serial_number === prePayload.numero_central &&
+          saved.city?.trim() &&
+          saved.country?.trim(),
+      );
+      const geo = isUpdate
+        ? { city: saved?.city ?? null, country: saved?.country ?? null, zone: saved?.climate_zone ?? "" }
+        : await fetchGeoAndClimate();
+      saveCurrentPiano(
+        buildCurrentPiano({
+          brand: prePayload.marque,
+          model: prePayload.modele,
+          serial_number: prePayload.numero_central,
+          type_piano: prePayload.type_piano,
+          manufacture_year: prePayload.annee_fabrication,
+          climate_zone: geo.zone || prePayload.zone_climatique,
+          maintenance_type: prePayload.type_entretien,
+          usage_level: info["usage_level"] ?? "",
+          city: geo.city ?? prePayload.city,
+          country: geo.country ?? prePayload.country,
+          who: WHO_PRO,
+          demo: Boolean(isDemoActive()),
+          remarks: prePayload.remarques,
+          wd: prePayload.mesures_wa,
+          wa: prePayload.mesures_wd,
+        }),
+      );
+    } finally {
+      setIsExporting(false);
+    }
+    navigate({ to: "/resultats" });
+  };
+
+  const handleResultsClick = async () => {
+    if (!resultsReady || isExporting) return;
+    if (isDemoActive()) {
+      navigate({ to: "/resultats" });
+      return;
+    }
+    if (!passesBotChecks(honeypot)) {
+      resetConsent();
+      return;
+    }
+    const decision = decideCloudAction({ honeypot, accepted: topbarState.compareUnlocked, rows });
+    if (decision.kind === "blocked") {
+      resetConsent();
+      return;
+    }
+    if (historyDecision() === "choice") {
+      pendingExport.current = null;
+      pendingCompare.current = false;
+      pendingResults.current = true;
+      setAskUpdate(true);
+      return;
+    }
+    await prepareAndGoResults();
+  };
+
+  const handleCompareClick = () => {
+    const d = historyDecision();
+    if (d === "blocked") {
+      resetConsent();
+      return;
+    }
+    if (d === "choice") {
+      pendingExport.current = null;
+      pendingResults.current = false;
+      pendingCompare.current = true;
+      setAskUpdate(true);
+      return;
+    }
+    navigate({ to: "/comparer" });
+  };
+
+  const runHistoryChoice = (mode: "update" | "insert") => {
+    const kind = pendingExport.current;
+    const compare = pendingCompare.current;
+    const results = pendingResults.current;
+    pendingCompare.current = false;
+    pendingResults.current = false;
+    if (mode === "insert") setCurrentDbId(null);
+    const snapshot = rows;
+    void syncAndFinish(mode).then((ok) => {
+      if (kind) runLocalExport(kind);
+      if (!ok) return;
+      markCloudSync(snapshot);
+      if (compare) void navigate({ to: "/comparer" });
+      else if (results) void navigate({ to: "/resultats" });
+    });
+  };
+
+  // Onglets du haut (Résultats / Comparer) interceptés depuis la barre.
+  const navGuardRef = useRef<(t: string) => void>(() => {});
+  navGuardRef.current = (t) => {
+    if (t === "/comparer") handleCompareClick();
+    else void handleResultsClick();
+  };
+  useEffect(() => {
+    const fn = (e: Event) => navGuardRef.current((e as CustomEvent<string>).detail);
+    window.addEventListener("piano-nav-guard", fn);
+    return () => window.removeEventListener("piano-nav-guard", fn);
+  }, []);
 
   // --- Rendu : champ de saisie d'un poids (Wd ou Wa) ------------------------------
 
