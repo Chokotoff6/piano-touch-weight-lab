@@ -1137,7 +1137,7 @@ function Index() {
         ? {
             marque: saved.brand ?? "",
             modele: saved.model ?? "",
-            type_piano: saved.type_piano ?? "",
+            type_piano: normalizeTypePiano(saved.type_piano),
             sn_num: saved.serial_number ?? "",
             fabrication: saved.manufacture_year ? String(saved.manufacture_year) : "",
             date_pesee: saved.measurement_date ?? "",
@@ -1240,7 +1240,7 @@ function Index() {
         demoParam === "true" || new URLSearchParams(window.location.search).get("demo") === "true";
       const alreadyResumed = window.sessionStorage.getItem("ptw_session_resumed") === "1";
       if (hasExistingPiano && !isExplicitDemoParam && !alreadyResumed) setShowResumeModal(true);
-      else if (hasExistingPiano) window.sessionStorage.setItem("ptw_session_resumed", "1");
+      else window.sessionStorage.setItem("ptw_session_resumed", "1");
     } catch {
       /* stockage indisponible */
     }
@@ -3551,7 +3551,7 @@ function Index() {
                       aria-disabled={identityLocked}
                       tabIndex={identityLocked ? -1 : undefined}
                       className={identityLocked ? "pointer-events-none" : undefined}
-                      checked={info["type_piano"] === t}
+                      checked={normalizeTypePiano(info["type_piano"]) === t}
                       onChange={() => {
                         if (identityLocked) return;
                         updateInfo("type_piano", t);
@@ -4055,8 +4055,8 @@ function Index() {
               <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
               <span>
                 {en
-                  ? weightFilter === "all" ? "Weights: All" : weightFilter === "wd" ? "Weights: Down" : "Weights: Up"
-                  : weightFilter === "all" ? "Poids : Tous" : weightFilter === "wd" ? "Poids : Descendants" : "Poids : Remontants"}
+                  ? weightFilter === "all" ? "DW/UW: All" : weightFilter === "wd" ? "DW/UW: Down" : "DW/UW: Up"
+                  : weightFilter === "all" ? "PD/PR : Tous" : weightFilter === "wd" ? "PD/PR : Descendants" : "PD/PR : Remontants"}
               </span>
             </Button>
 
