@@ -41,7 +41,7 @@ import {
 } from "@/components/PdfReportBlocks";
 import { ComparisonChart, buildChartData, type RefProfile } from "@/routes/comparer";
 
-import { buildCurrentPiano, cleanStringOrNull, toCloudTypePiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, findHistoryProfileId, CURRENT_PIANO_KEY } from "@/lib/current-piano";
+import { buildCurrentPiano, cleanStringOrNull, toCloudTypePiano, normalizeTypePiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, findHistoryProfileId, CURRENT_PIANO_KEY } from "@/lib/current-piano";
 
 /**
  * Nettoie une chaîne textuelle pour l'injection SQL PostgREST.
@@ -329,8 +329,8 @@ function LockedIdentityTooltip({ id, locked, active, seen, onOpenChange, childre
 
 /** Modèle bloqué tant que le type de piano n'est pas choisi. */
 function TypeFirstTooltip({ active, en, children }: { active: boolean; en: boolean; children: ReactNode }) {
-  if (!active) return <>{children}</>;
-  return <Tooltip>
+  // Structure stable (jamais démontée) : le combobox Modèle survit au choix du type.
+  return <Tooltip {...(active ? {} : { open: false })}>
     <TooltipTrigger asChild><span className="block">{children}</span></TooltipTrigger>
     <TooltipContent side="top" className={UNIFIED_TOOLTIP_CLASS}>
       {en ? "Select piano type first" : "Sélectionner d'abord le type de piano"}
@@ -1137,7 +1137,7 @@ function Index() {
         ? {
             marque: saved.brand ?? "",
             modele: saved.model ?? "",
-            type_piano: saved.type_piano ?? "",
+            type_piano: normalizeTypePiano(saved.type_piano),
             sn_num: saved.serial_number ?? "",
             fabrication: saved.manufacture_year ? String(saved.manufacture_year) : "",
             date_pesee: saved.measurement_date ?? "",
@@ -1238,7 +1238,9 @@ function Index() {
         !!(saved && (saved.brand || saved.model || saved.serial_number || saved.wa_values?.some((v) => Number.isFinite(v))));
       const isExplicitDemoParam =
         demoParam === "true" || new URLSearchParams(window.location.search).get("demo") === "true";
-      if (hasExistingPiano && !isExplicitDemoParam) setShowResumeModal(true);
+      const alreadyResumed = window.sessionStorage.getItem("ptw_session_resumed") === "1";
+      if (hasExistingPiano && !isExplicitDemoParam && !alreadyResumed) setShowResumeModal(true);
+      else window.sessionStorage.setItem("ptw_session_resumed", "1");
     } catch {
       /* stockage indisponible */
     }
@@ -1645,7 +1647,14 @@ function Index() {
     handleFullReset();
     setShowResumeModal(false);
   };
-  const handleResumeProject = () => setShowResumeModal(false);
+  const handleResumeProject = () => {
+    try {
+      window.sessionStorage.setItem("ptw_session_resumed", "1");
+    } catch {
+      /* stockage indisponible */
+    }
+    setShowResumeModal(false);
+  };
 
   /** En démo, Reset Info vide la fiche sans toucher à l'interrupteur ni aux pesées. */
   const handleUserReset = (section: "info" | "rows") => {
@@ -3461,10 +3470,10 @@ function Index() {
     {showResumeModal && (
       <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.15)" }}>
         <div role="dialog" aria-modal="true" className="w-full max-w-sm rounded-lg border border-gray-300 bg-[#FFFFFF] p-5 text-sm text-gray-900 shadow-xl">
-          <p className="mb-4">{lang === "en" ? "A project or measurements already exist. What would you like to do?" : "Un projet ou des mesures sont déjà en cours. Que souhaitez-vous faire ?"}</p>
+          <p className="mb-4">{lang === "en" ? "Piano profile already in progress." : "Profil piano déjà en cours."}</p>
           <div className="flex justify-center gap-3">
-            <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={handleClearAllData}>{lang === "en" ? "Clear all data" : "Effacer toutes les données"}</button>
-            <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={handleResumeProject}>{lang === "en" ? "Continue current project" : "Continuer le projet actuel"}</button>
+            <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950 transition-[border] hover:border-2 hover:border-gray-950" onClick={handleClearAllData}>{lang === "en" ? "Clear all data." : "Effacer toutes les données."}</button>
+            <button type="button" autoFocus className="rounded border-2 border-gray-950 px-2 py-0.5 font-bold !text-gray-950 transition-[border] hover:border-[3px]" onClick={handleResumeProject}>{lang === "en" ? "Continue current profile." : "Continuer profil en cours."}</button>
           </div>
         </div>
       </div>
@@ -3542,7 +3551,7 @@ function Index() {
                       aria-disabled={identityLocked}
                       tabIndex={identityLocked ? -1 : undefined}
                       className={identityLocked ? "pointer-events-none" : undefined}
-                      checked={info["type_piano"] === t}
+                      checked={normalizeTypePiano(info["type_piano"]) === t}
                       onChange={() => {
                         if (identityLocked) return;
                         updateInfo("type_piano", t);
@@ -4046,8 +4055,8 @@ function Index() {
               <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
               <span>
                 {en
-                  ? weightFilter === "all" ? "Weights: All" : weightFilter === "wd" ? "Weights: Down" : "Weights: Up"
-                  : weightFilter === "all" ? "Poids : Tous" : weightFilter === "wd" ? "Poids : Descendants" : "Poids : Remontants"}
+                  ? weightFilter === "all" ? "DW/UW: All" : weightFilter === "wd" ? "DW/UW: Down" : "DW/UW: Up"
+                  : weightFilter === "all" ? "PD/PR : Tous" : weightFilter === "wd" ? "PD/PR : Descendants" : "PD/PR : Remontants"}
               </span>
             </Button>
 
