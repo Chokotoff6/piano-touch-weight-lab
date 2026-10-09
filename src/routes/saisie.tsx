@@ -4103,71 +4103,7 @@ function Index() {
             // Toujours cliquable : la redirection est bloquée (infobulle) tant
             // que « Saisie conforme » n'est pas au vert intense.
             aria-disabled={!resultsReady}
-            onClick={async () => {
-              if (!resultsReady || isExporting) return;
-              // Le jeu de démonstration est déjà isolé du Cloud réel et chargé
-              // depuis sa fiche tampon dédiée : aucun filtre temporel humain ni
-              // aucune décision d'écriture ne doivent bloquer sa consultation.
-              if (isDemoActive()) {
-                navigate({ to: "/resultats" });
-                return;
-              }
-              // Étape 1 de l'aiguilleur : filtre anti-robot avant toute navigation.
-              if (!passesBotChecks(honeypot)) {
-                resetConsent();
-                return;
-              }
-              const decision = decideCloudAction({ honeypot, accepted: topbarState.compareUnlocked, rows });
-              if (decision.kind === "blocked") {
-                resetConsent();
-                return;
-              }
-              // Capture IP « Just-In-Time » AVANT la navigation : l'await bloquant
-              // garantit que la fiche locale est déjà enrichie (ville, pays, zone)
-              // quand /resultats la relit. Nouveau profil → fetch ipwho.is ;
-              // profil existant (même N° de série, ville/pays déjà scellés) →
-              // réutilisation sans aucun appel réseau.
-              setIsExporting(true);
-              try {
-                const prePayload = buildPayload();
-                const saved = loadCurrentPiano();
-                const isUpdate = Boolean(
-                  saved?.serial_number &&
-                    saved.serial_number === prePayload.numero_central &&
-                    saved.city?.trim() &&
-                    saved.country?.trim(),
-                );
-                const geo = isUpdate
-                  ? {
-                      city: saved?.city ?? null,
-                      country: saved?.country ?? null,
-                      zone: saved?.climate_zone ?? "",
-                    }
-                  : await fetchGeoAndClimate();
-                saveCurrentPiano(
-                  buildCurrentPiano({
-                    brand: prePayload.marque,
-                    model: prePayload.modele,
-                    serial_number: prePayload.numero_central,
-                    type_piano: prePayload.type_piano,
-                    manufacture_year: prePayload.annee_fabrication,
-                    climate_zone: geo.zone || prePayload.zone_climatique,
-                    maintenance_type: prePayload.type_entretien,
-                    usage_level: info["usage_level"] ?? "",
-                    city: geo.city ?? prePayload.city,
-                    country: geo.country ?? prePayload.country,
-                    who: WHO_PRO,
-                    demo: Boolean(isDemoActive()),
-                    remarks: prePayload.remarques,
-                    wd: prePayload.mesures_wa,
-                    wa: prePayload.mesures_wd,
-                  }),
-                );
-              } finally {
-                setIsExporting(false);
-              }
-              navigate({ to: "/resultats" });
-            }}
+            onClick={() => void handleResultsClick()}
             className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${resultsReady ? "!border-green-600 !bg-green-100 !text-black" : "border-input bg-background !text-gray-400 opacity-60"}`}
             style={
               resultsReady
@@ -4303,46 +4239,35 @@ Moyennes{" "}
           if (!open) {
             pendingExport.current = null;
             pendingCompare.current = false;
+            pendingResults.current = false;
           }
         }}
       >
         <AlertDialogContent className="w-full max-w-xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Un envoi existe déjà pour ce numéro de série</AlertDialogTitle>
-            <AlertDialogDescription>
-              Option A : Écraser la fiche actuelle (Correction de saisie).
-              Option B : Valider comme un nouvel état mécanique (Pensez à exporter votre CSV local).
+            <AlertDialogTitle>
+              {en
+                ? "Measurements have been modified. What would you like to do?"
+                : "Des mesures ont été modifiées. Que souhaitez-vous faire ?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="sr-only">
+              {en ? "Update or create a new history record." : "Mettre à jour ou créer un nouvel historique."}
             </AlertDialogDescription>
-
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{en ? "Cancel" : "Annuler"}</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                const kind = pendingExport.current;
-                const compare = pendingCompare.current;
-                pendingCompare.current = false;
-                void syncAndFinish("update").then((ok) => {
-                  if (kind) runLocalExport(kind);
-                  if (ok && compare) void navigate({ to: "/comparer" });
-                });
-              }}
+              autoFocus
+              className="border-2 border-foreground hover:border-[3px]"
+              onClick={() => runHistoryChoice("update")}
             >
-              Option A : Écraser la fiche actuelle (Correction de saisie)
+              {en ? "Update existing profile" : "Mettre à jour le profil existant"}
             </AlertDialogAction>
             <AlertDialogAction
-              onClick={() => {
-                const kind = pendingExport.current;
-                const compare = pendingCompare.current;
-                pendingCompare.current = false;
-                setCurrentDbId(null);
-                void syncAndFinish("insert").then((ok) => {
-                  if (kind) runLocalExport(kind);
-                  if (ok && compare) void navigate({ to: "/comparer" });
-                });
-              }}
+              className="border border-input hover:border-2 hover:border-foreground"
+              onClick={() => runHistoryChoice("insert")}
             >
-              Option B : Valider comme un nouvel état mécanique (Pensez à exporter votre CSV local)
+              {en ? "Create new history record for this piano" : "Créer un nouvel historique pour ce piano"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
