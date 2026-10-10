@@ -507,7 +507,16 @@ function Index() {
   const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
   // Filtre « Poids » : Descendants (wd seul), Remontants (wa seul) ou Tous.
   const [weightFilter, setWeightFilter] = useState<"all" | "wd" | "wa">("all");
-  const [rapidMode, setRapidMode] = useState(false);
+  // Le Mode Rapide survit aux navigations : il est relu depuis le stockage
+  // local au montage (sinon un retour depuis Résultats le réinitialisait).
+  const [rapidMode, setRapidMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem("ptw_rapid_mode") === "1";
+    } catch {
+      return false;
+    }
+  });
 
   // Persistance du Mode Rapide : tant qu'il reste actif, les graphiques des
   // pages de diagnostic s'ouvrent par défaut en rendu « Réel » (échelle 88
@@ -3003,12 +3012,17 @@ function Index() {
           : "Nouveau profil inséré dans piano_profiles.",
         { id: toastId },
       );
+      let diagnosticId = currentDbId;
       if (mode === "update" && currentDbId) {
-        await updateDiagnostic(currentDbId, payload);
+        // Si l'identifiant ne correspond à aucune ligne (profil créé depuis
+        // la page Résultats), on bascule sur une insertion plutôt que de
+        // perdre silencieusement le diagnostic.
+        const updatedId = await updateDiagnostic(currentDbId, payload);
+        if (!updatedId) diagnosticId = await insertDiagnostic(payload);
       } else {
-        const id = await insertDiagnostic(payload);
-        setCurrentDbId(id);
+        diagnosticId = await insertDiagnostic(payload);
       }
+      setCurrentDbId(diagnosticId);
       savedSerialRef.current = payload.numero_central ?? "";
       savedDateRef.current = currentPiano.measurement_date;
       savedRowsRef.current = rows.map((row) => ({ ...row }));
@@ -3016,7 +3030,7 @@ function Index() {
         window.sessionStorage.setItem(
           CLOUD_SESSION_STATE_KEY,
           JSON.stringify({
-            id: mode === "update" ? currentDbId : getFingerprint(),
+            id: diagnosticId ?? getFingerprint(),
             serial: savedSerialRef.current,
             date: savedDateRef.current,
             rows: savedRowsRef.current,

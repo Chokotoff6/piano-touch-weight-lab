@@ -316,6 +316,22 @@ function Resultats() {
       }
       markCloudSync(rows);
       markCsvOrigin(false);
+      // Mémorise l'état d'envoi pour la page Saisie : sans cela, un retour
+      // sur Saisie après une création faite ici croyait le profil jamais
+      // envoyé (ni dialogue Mise à jour / Nouvel historique, ni synchro).
+      try {
+        window.sessionStorage.setItem(
+          "ptw_cloud_session_state",
+          JSON.stringify({
+            id: history.id ?? "",
+            serial: piano.serial_number,
+            date: piano.measurement_date,
+            rows,
+          }),
+        );
+      } catch {
+        /* stockage indisponible */
+      }
       if (!silent) {
         toast.success(en ? "Measurements shared: chart and comparison unlocked." : "Mesures partagées : graphique et comparaison débloqués.", { id: toastId });
         setCloudProfileSaved(true);
