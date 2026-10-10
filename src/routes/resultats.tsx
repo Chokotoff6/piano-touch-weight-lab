@@ -294,7 +294,7 @@ function Resultats() {
     setTopbarState({ cloudSaving: true });
     const toastId: string | number = silent
       ? `cloud-silent-${Date.now()}`
-      : toast.loading(en ? "Collaborative sharing in progress…" : "Partage collaboratif en cours…");
+      : toast.loading(en ? "Creating piano profile on cloud…" : "Création profil piano sur cloud…");
     try {
       const piano = buildPiano();
       saveCurrentPiano(piano);
@@ -436,7 +436,7 @@ function Resultats() {
                       </button>
                       {busy && (
                         <p className="mt-4 text-xs font-medium !text-gray-900">
-                          {en ? "Collaborative sharing in progress…" : "Partage collaboratif en cours…"}
+                          {en ? "Creating piano profile on cloud…" : "Création profil piano sur cloud…"}
                         </p>
                       )}
                     </>
