@@ -3012,12 +3012,17 @@ function Index() {
           : "Nouveau profil inséré dans piano_profiles.",
         { id: toastId },
       );
+      let diagnosticId = currentDbId;
       if (mode === "update" && currentDbId) {
-        await updateDiagnostic(currentDbId, payload);
+        // Si l'identifiant ne correspond à aucune ligne (profil créé depuis
+        // la page Résultats), on bascule sur une insertion plutôt que de
+        // perdre silencieusement le diagnostic.
+        const updatedId = await updateDiagnostic(currentDbId, payload);
+        if (!updatedId) diagnosticId = await insertDiagnostic(payload);
       } else {
-        const id = await insertDiagnostic(payload);
-        setCurrentDbId(id);
+        diagnosticId = await insertDiagnostic(payload);
       }
+      setCurrentDbId(diagnosticId);
       savedSerialRef.current = payload.numero_central ?? "";
       savedDateRef.current = currentPiano.measurement_date;
       savedRowsRef.current = rows.map((row) => ({ ...row }));
