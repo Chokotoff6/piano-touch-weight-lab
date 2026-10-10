@@ -3030,7 +3030,7 @@ function Index() {
         window.sessionStorage.setItem(
           CLOUD_SESSION_STATE_KEY,
           JSON.stringify({
-            id: mode === "update" ? currentDbId : getFingerprint(),
+            id: diagnosticId ?? getFingerprint(),
             serial: savedSerialRef.current,
             date: savedDateRef.current,
             rows: savedRowsRef.current,
