@@ -507,7 +507,16 @@ function Index() {
   const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
   // Filtre « Poids » : Descendants (wd seul), Remontants (wa seul) ou Tous.
   const [weightFilter, setWeightFilter] = useState<"all" | "wd" | "wa">("all");
-  const [rapidMode, setRapidMode] = useState(false);
+  // Le Mode Rapide survit aux navigations : il est relu depuis le stockage
+  // local au montage (sinon un retour depuis Résultats le réinitialisait).
+  const [rapidMode, setRapidMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem("ptw_rapid_mode") === "1";
+    } catch {
+      return false;
+    }
+  });
 
   // Persistance du Mode Rapide : tant qu'il reste actif, les graphiques des
   // pages de diagnostic s'ouvrent par défaut en rendu « Réel » (échelle 88
