@@ -94,6 +94,14 @@ import {
 } from "@/lib/field-codes";
 import { toast } from "sonner";
 import {
+  SECURITY_BACKUP_KEY,
+  buildKwDocument,
+  parseKwDocument,
+  shouldProposeJalon,
+  writeKwFile,
+  type KwDocument,
+} from "@/lib/kw-file";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -1340,6 +1348,24 @@ function Index() {
     }
   }, [info]);
 
+  // Boîte noire : état complet persisté à chaque frappe, marqué « non enregistré dans un fichier ».
+  useEffect(() => {
+    if (!draftLoaded.current) return;
+    if (!rows.some((r) => r.wd || r.wa) && !Object.values(info).some((v) => String(v ?? "").trim())) return;
+    try {
+      const prev = JSON.parse(window.localStorage.getItem(SECURITY_BACKUP_KEY) ?? "null") as
+        | { info: Record<string, string>; rows: Row[]; savedToFile?: boolean }
+        | null;
+      const same = prev && JSON.stringify(prev.rows) === JSON.stringify(rows) && JSON.stringify(prev.info) === JSON.stringify(info);
+      window.localStorage.setItem(
+        SECURITY_BACKUP_KEY,
+        JSON.stringify({ info, rows, savedToFile: same ? !!prev?.savedToFile : false, at: Date.now() }),
+      );
+    } catch {
+      /* stockage indisponible */
+    }
+  }, [rows, info]);
+
   // --- États dérivés ---------------------------------------------------------
 
   const rule = BRAND_RULES[(info["marque"] ?? "").trim().toUpperCase()] ?? DEFAULT_RULE;
@@ -1624,6 +1650,35 @@ function Index() {
   /** Confirmation de réinitialisation en cartouche jaune ("rows" = mesures, "info" = fiche). */
   const [confirmReset, setConfirmReset] = useState<null | "rows" | "info">(null);
 
+  // --- Fichier physique .kw : handle conservé, document chargé, dialogue de jalon ---
+  const kwHandleRef = useRef<Awaited<ReturnType<typeof writeKwFile>> | null>(null);
+  const kwDocRef = useRef<KwDocument | null>(null);
+  const [kwJalonAsk, setKwJalonAsk] = useState(false);
+
+  const performKwSave = async (addJalon: boolean) => {
+    const doc = buildKwDocument(info, rows, kwDocRef.current, addJalon);
+    const prevHandle = kwHandleRef.current === "cancelled" ? null : kwHandleRef.current;
+    const res = await writeKwFile(doc, prevHandle);
+    if (res === "cancelled") return;
+    kwHandleRef.current = res;
+    kwDocRef.current = doc;
+    try {
+      window.localStorage.setItem(SECURITY_BACKUP_KEY, JSON.stringify({ info, rows, savedToFile: true, at: Date.now() }));
+    } catch {
+      /* stockage indisponible */
+    }
+    toast.success(getLang() === "en" ? "Profile saved to a .kw file." : "Profil enregistré dans un fichier .kw.");
+  };
+
+  const onSaveKw = () => {
+    const doc = kwDocRef.current;
+    if (doc && shouldProposeJalon(doc, rows)) {
+      setKwJalonAsk(true);
+      return;
+    }
+    void performKwSave(false);
+  };
+
   /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
   const resetInfo = () => {
     try {
@@ -1712,6 +1767,7 @@ function Index() {
       window.localStorage.removeItem(DRAFT_INFO_KEY);
       window.localStorage.removeItem(DRAFT_ROWS_KEY);
       window.localStorage.removeItem(CURRENT_PIANO_KEY);
+      window.localStorage.removeItem(SECURITY_BACKUP_KEY);
       window.sessionStorage.setItem("ptw_weighing_mode", "0");
       window.sessionStorage.removeItem("ptw_demo_typewriter_pending");
       window.sessionStorage.removeItem("ptw_demo_synced");
@@ -2840,7 +2896,23 @@ function Index() {
   const onImportFile = (file: File | undefined) => {
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => importCsvContent(String(reader.result ?? ""));
+    reader.onload = () => {
+      const text = String(reader.result ?? "");
+      if (/\.kw$/i.test(file.name)) {
+        const doc = parseKwDocument(text);
+        if (!doc) {
+          showMessage(lang === "en" ? "⚠️ Invalid .kw file." : "⚠️ Fichier .kw invalide.");
+          return;
+        }
+        kwDocRef.current = doc;
+        kwHandleRef.current = null;
+        setInfo({ ...doc.info });
+        setRows(doc.rows.map((r) => ({ wd: cleanWeight(r.wd), wa: cleanWeight(r.wa) })));
+        setIsDirty(false);
+        return;
+      }
+      importCsvContent(text);
+    };
     reader.onerror = () => showMessage("⚠️ Lecture du fichier impossible.");
     reader.readAsText(file, "utf-8");
   };
@@ -3196,6 +3268,7 @@ function Index() {
       "piano-compare-guard": onCompareGuard,
       "piano-reset": onReset,
       "piano-import-csv": () => importInputRef.current?.click(),
+      "piano-save-kw": () => onSaveKw(),
       "piano-import-history": () => void importFromHistory(),
       "piano-import-history-row": (event: Event) =>
         restoreHistoryRow((event as CustomEvent<string>).detail),
@@ -3618,11 +3691,27 @@ function Index() {
         </div>
       </div>
     )}
+    <AlertDialog open={kwJalonAsk} onOpenChange={(o) => { if (!o) setKwJalonAsk(false); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{lang === "en" ? "New history point" : "Nouveau point d'historique"}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {lang === "en"
+              ? "Do you want to create a new history point for this piano? (Recommended if you made regulation changes today.)"
+              : "Souhaitez-vous créer un nouveau point d'historique pour ce piano ? (Recommandé si vous avez effectué des modifications de régulation aujourd'hui.)"}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => { setKwJalonAsk(false); void performKwSave(false); }}>{lang === "en" ? "No" : "Non"}</AlertDialogCancel>
+          <AlertDialogAction onClick={() => { setKwJalonAsk(false); void performKwSave(true); }}>{lang === "en" ? "Yes" : "Oui"}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
       <input
         ref={importInputRef}
         type="file"
-        accept=".csv,text/csv"
+        accept=".csv,text/csv,.kw,application/json"
         style={{ display: "none" }}
         onChange={(e) => {
           onImportFile(e.target.files?.[0]);

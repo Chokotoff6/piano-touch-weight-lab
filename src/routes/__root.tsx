@@ -555,6 +555,15 @@ function RootComponent() {
                           </button>
                         </div>
                       </div>
+                      {/* Enregistrer : fichier local souverain .kw (réécriture directe si déjà choisi). */}
+                      <button
+                        type="button"
+                        disabled={!filesEnabled}
+                        className="block w-full px-3 py-2 text-left text-sm font-bold text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
+                        onClick={() => dispatchAction("piano-save-kw")}
+                      >
+                        <span className="pointer-events-none">{lang === "en" ? "Save (.kw file)" : "Enregistrer (fichier .kw)"}</span>
+                      </button>
                       {/* Sauvegarde CSV : placée sous l'option globale « Exporter PDF ». */}
                       <button
                         type="button"
