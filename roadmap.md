@@ -20,3 +20,12 @@
 - [x] Vérifier typage et compilation automatique.
 - [x] Aligner les moyennes du piano actuel entre Résultats et Comparer en ignorant les pesées incomplètes ou nulles.
 - [x] Remplacer les décalages manuels des libellés de courbes par un placement anticollision sur les extrémités réelles.
+
+## Local First V3
+- [x] Fichier .kw versionné, empreinte locale, bouton Enregistrer (réécriture directe / téléchargement Safari-iPad), import .kw.
+- [x] Règle de jalon : > 24 h ou > 5 touches modifiées → question ; sinon écrasement.
+- [x] Boîte noire ptw_security_backup, purgée par « Effacer toutes les données ».
+- [ ] Confirmation « Nouveau piano » si fichier .kw non enregistré.
+- [ ] Comparer : superposition d'un jalon antérieur.
+- [ ] Roue dentée Préférences (Démo, corridor ±2–4 g, lissage).
+- [ ] Rideau Cloud + nouveau texte de remerciement.
