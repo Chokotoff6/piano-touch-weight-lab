@@ -39,8 +39,8 @@ const norm = (v: unknown) =>
 
 /** Empreinte locale déterministe (hash FNV-1a 64 bits formaté en UUID). */
 export function pianoUuid(info: Record<string, string>): string {
-  const serial = `${norm(info.sn_prefix)}${norm(info.sn_num)}${norm(info.sn_suffix)}`;
-  const key = `${norm(info.marque)}|${norm(info.modele)}|${serial}`;
+  const serial = `${norm(info["sn_prefix"])}${norm(info["sn_num"])}${norm(info["sn_suffix"])}`;
+  const key = `${norm(info["marque"])}|${norm(info["modele"])}|${serial}`;
   let h1 = 0x811c9dc5;
   let h2 = 0x01000193;
   for (let i = 0; i < key.length; i++) {
@@ -61,9 +61,9 @@ const safe = (v: unknown) =>
 
 /** Nom standardisé : Marque_Modele_SN_Date.kw, sans caractère spécial. */
 export function kwFileName(info: Record<string, string>, now = new Date()): string {
-  const sn = safe(`${info.sn_prefix ?? ""}${info.sn_num ?? ""}${info.sn_suffix ?? ""}`);
+  const sn = safe(`${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`);
   const date = now.toISOString().slice(0, 10);
-  const parts = [safe(info.marque), safe(info.modele), sn, date].filter(Boolean);
+  const parts = [safe(info["marque"]), safe(info["modele"]), sn, date].filter(Boolean);
   return `${parts.join("_") || "piano"}.kw`;
 }
 
@@ -101,7 +101,7 @@ export function buildKwDocument(
     history.push({ id: `jalon_${history.length + 1}`, date: iso, info: { ...info }, rows: rows.map((r) => ({ ...r })) });
   } else if (history.length > 0) {
     // Écrasement silencieux du jalon en cours, sans doublon.
-    history[history.length - 1] = { ...history[history.length - 1], info: { ...info }, rows: rows.map((r) => ({ ...r })) };
+    history[history.length - 1] = { ...(history[history.length - 1] as KwJalon), info: { ...info }, rows: rows.map((r) => ({ ...r })) };
   }
   return {
     format: "keyweight",
