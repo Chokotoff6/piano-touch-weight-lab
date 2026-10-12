@@ -317,6 +317,12 @@ function Frame({
 const UNIFIED_TOOLTIP_CLASS =
   "z-[99999] max-w-[min(18rem,calc(100vw-2rem))] whitespace-normal break-words rounded border border-gray-300 !bg-white px-2.5 py-2 text-left text-xs font-semibold leading-4 !text-black shadow-md";
 
+/** Style des dialogues calqué sur la confirmation du bouton Reset. */
+const RESET_STYLE_BOX =
+  "w-[min(42rem,calc(100vw-2rem))] max-w-none !rounded-md !border !border-gray-300 !bg-white p-6 !text-gray-950 !shadow-lg";
+const RESET_STYLE_BTN =
+  "mt-0 h-auto whitespace-normal rounded border border-gray-950/40 !bg-white px-3 py-1.5 text-sm font-bold !text-gray-950 shadow-none hover:!bg-gray-100";
+
 /** Survol accessible même si le contrôle intérieur est désactivé. */
 function LockedIdentityTooltip({ id, locked, active, seen, onOpenChange, children }: {
   id: string; locked: boolean; active: string | null; seen: boolean;
@@ -3085,14 +3091,16 @@ function Index() {
         { id: toastId },
       );
       let diagnosticId = currentDbId;
-      if (mode === "update" && currentDbId) {
-        // Si l'identifiant ne correspond à aucune ligne (profil créé depuis
-        // la page Résultats), on bascule sur une insertion plutôt que de
-        // perdre silencieusement le diagnostic.
-        const updatedId = await updateDiagnostic(currentDbId, payload);
-        if (!updatedId) diagnosticId = await insertDiagnostic(payload);
-      } else {
-        diagnosticId = await insertDiagnostic(payload);
+      // Journal secondaire : son échec ne doit jamais invalider l'écriture du profil.
+      try {
+        if (mode === "update" && currentDbId) {
+          const updatedId = await updateDiagnostic(currentDbId, payload);
+          if (!updatedId) diagnosticId = await insertDiagnostic(payload);
+        } else {
+          diagnosticId = await insertDiagnostic(payload);
+        }
+      } catch (e) {
+        console.warn("[diagnostics] journal secondaire ignoré", e);
       }
       setCurrentDbId(diagnosticId);
       savedSerialRef.current = payload.numero_central ?? "";
@@ -3385,10 +3393,12 @@ function Index() {
     pendingResults.current = false;
     if (mode === "insert") setCurrentDbId(null);
     const snapshot = rows;
-    void syncAndFinish(mode).then((ok) => {
+    void syncAndFinish(mode).then(async (ok) => {
       if (kind) runLocalExport(kind);
       if (!ok) return;
       markCloudSync(snapshot);
+      // Local First : le fichier .kw suit le choix (nouveau jalon ou mise à jour).
+      await performKwSave(mode === "insert");
       if (compare) void navigate({ to: "/comparer" });
       else if (results) void navigate({ to: "/resultats" });
     });
@@ -3692,18 +3702,18 @@ function Index() {
       </div>
     )}
     <AlertDialog open={kwJalonAsk} onOpenChange={(o) => { if (!o) setKwJalonAsk(false); }}>
-      <AlertDialogContent>
+      <AlertDialogContent className={RESET_STYLE_BOX}>
         <AlertDialogHeader>
           <AlertDialogTitle>{lang === "en" ? "New history point" : "Nouveau point d'historique"}</AlertDialogTitle>
-          <AlertDialogDescription>
+          <AlertDialogDescription className="text-gray-700">
             {lang === "en"
               ? "Do you want to create a new history point for this piano? (Recommended if you made regulation changes today.)"
               : "Souhaitez-vous créer un nouveau point d'historique pour ce piano ? (Recommandé si vous avez effectué des modifications de régulation aujourd'hui.)"}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => { setKwJalonAsk(false); void performKwSave(false); }}>{lang === "en" ? "No" : "Non"}</AlertDialogCancel>
-          <AlertDialogAction onClick={() => { setKwJalonAsk(false); void performKwSave(true); }}>{lang === "en" ? "Yes" : "Oui"}</AlertDialogAction>
+        <AlertDialogFooter className="flex-wrap gap-2 sm:justify-end">
+          <AlertDialogCancel className={RESET_STYLE_BTN} onClick={() => { setKwJalonAsk(false); void performKwSave(false); }}>{lang === "en" ? "No" : "Non"}</AlertDialogCancel>
+          <AlertDialogAction className={RESET_STYLE_BTN} onClick={() => { setKwJalonAsk(false); void performKwSave(true); }}>{lang === "en" ? "Yes" : "Oui"}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -4472,7 +4482,7 @@ Moyennes{" "}
           }
         }}
       >
-        <AlertDialogContent className="w-full max-w-xl">
+        <AlertDialogContent className={RESET_STYLE_BOX}>
           <AlertDialogHeader>
             <AlertDialogTitle>
               {en
@@ -4483,17 +4493,17 @@ Moyennes{" "}
               {en ? "Update or create a new history record." : "Mettre à jour ou créer un nouvel historique."}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{en ? "Cancel" : "Annuler"}</AlertDialogCancel>
+          <AlertDialogFooter className="flex-wrap gap-2 sm:justify-end">
+            <AlertDialogCancel className={RESET_STYLE_BTN}>{en ? "Cancel" : "Annuler"}</AlertDialogCancel>
             <AlertDialogAction
               autoFocus
-              className="border-2 border-foreground hover:border-[3px]"
+              className={`${RESET_STYLE_BTN} border-2 border-gray-950`}
               onClick={() => runHistoryChoice("update")}
             >
               {en ? "Update existing profile" : "Mettre à jour le profil existant"}
             </AlertDialogAction>
             <AlertDialogAction
-              className="border border-input hover:border-2 hover:border-foreground"
+              className={RESET_STYLE_BTN}
               onClick={() => runHistoryChoice("insert")}
             >
               {en ? "Create new history record for this piano" : "Créer un nouvel historique pour ce piano"}
