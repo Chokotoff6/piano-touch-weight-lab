@@ -612,7 +612,7 @@ function Index() {
   const [honeypot, setHoneypot] = useState("");
   const topbarState = useTopbarState();
   // Protection d'ADN : identité figée uniquement après enregistrement définitif au cloud via « J'accepte ».
-  const identityLocked = topbarState.cloudProfileSaved;
+  const identityLocked = topbarState.cloudProfileSaved && Boolean(String(info["marque"] ?? "").trim());
   useEffect(() => {
     if (!identityLocked) {
       setLockedHintSeen(false);
@@ -1098,34 +1098,27 @@ function Index() {
   }, [weighingMode]);
 
   useEffect(() => {
-    // Propreté au montage : hors Mode Démo, on purge les résidus de démo et
-    // toute saisie antérieure au jour même, pour une page strictement vierge.
+    // Aucune purge automatique : le profil en cours persiste jusqu'au Reset explicite.
     try {
-      const DAY_KEY = "ptw_draft_day";
-      const d = new Date();
-      const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      if (!isDemoActive()) {
-        const storedDay = window.localStorage.getItem(DAY_KEY);
-        const demoResidue =
-          window.localStorage.getItem("ptw_demo_mode") === "1" ||
-          window.sessionStorage.getItem("ptw_demo_synced") === "1";
-        if (storedDay !== today || demoResidue) {
-          window.localStorage.removeItem(DRAFT_ROWS_KEY);
-          window.localStorage.removeItem(DRAFT_INFO_KEY);
-          window.localStorage.removeItem("current_piano");
-          window.sessionStorage.removeItem("ptw_demo_synced");
-          window.sessionStorage.removeItem(TYPEWRITER_PENDING_KEY);
-        }
-      }
-      window.localStorage.setItem(DAY_KEY, today);
+      window.sessionStorage.removeItem("ptw_demo_synced");
     } catch {
       /* stockage indisponible */
+    }
+    // Secours : relit la boîte noire si le brouillon principal manque.
+    let backup: { info?: Record<string, string>; rows?: Row[] } | null = null;
+    try {
+      backup = JSON.parse(window.localStorage.getItem(SECURITY_BACKUP_KEY) ?? "null");
+    } catch {
+      backup = null;
     }
     // Hydratation au démarrage : le brouillon local prime, sinon current_piano.
     const saved = loadCurrentPiano();
     try {
       const raw = window.localStorage.getItem(DRAFT_ROWS_KEY);
-      const parsed = raw ? (JSON.parse(raw) as Row[]) : null;
+      let parsed = raw ? (JSON.parse(raw) as Row[]) : null;
+      if (!(Array.isArray(parsed) && parsed.length === 88) && Array.isArray(backup?.rows) && backup!.rows!.length === 88) {
+        parsed = backup!.rows!;
+      }
       if (Array.isArray(parsed) && parsed.length === 88 && parsed.some((r) => r.wd || r.wa)) {
         if (!maybeStartCascade(parsed)) setRows(parsed);
       } else if (saved && Array.isArray(saved.wa_values) && saved.wa_values.length === 88) {
@@ -1141,7 +1134,11 @@ function Index() {
     }
     try {
       const rawInfo = window.localStorage.getItem(DRAFT_INFO_KEY);
-      const legacyInfo = rawInfo ? (JSON.parse(rawInfo) as Record<string, string>) : null;
+      const legacyInfo = rawInfo
+        ? (JSON.parse(rawInfo) as Record<string, string>)
+        : backup?.info && String(backup.info["marque"] ?? "").trim()
+          ? backup.info
+          : null;
 
       // Nettoyage rétrocompatible : anciens brouillons en ville/pays -> city/country.
       const draftInfo = legacyInfo
@@ -1689,6 +1686,7 @@ function Index() {
   const resetInfo = () => {
     try {
       window.localStorage.removeItem(DRAFT_INFO_KEY);
+      setCloudProfileSaved(false);
       window.sessionStorage.setItem("ptw_weighing_mode", "0");
     } catch {
       /* stockage indisponible */
@@ -1771,6 +1769,7 @@ function Index() {
     // 2. Purge des stockages.
     try {
       window.localStorage.removeItem(DRAFT_INFO_KEY);
+      setCloudProfileSaved(false);
       window.localStorage.removeItem(DRAFT_ROWS_KEY);
       window.localStorage.removeItem(CURRENT_PIANO_KEY);
       window.localStorage.removeItem(SECURITY_BACKUP_KEY);
