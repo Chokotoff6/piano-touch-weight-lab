@@ -62,7 +62,8 @@ const safe = (v: unknown) =>
 /** Nom standardisé : Marque_Modele_SN_Date.kw, sans caractère spécial. */
 export function kwFileName(info: Record<string, string>, now = new Date()): string {
   const sn = safe(`${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`);
-  const date = now.toISOString().slice(0, 10);
+  const p = (n: number) => String(n).padStart(2, "0");
+  const date = `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}_${p(now.getHours())}h${p(now.getMinutes())}`;
   const parts = [safe(info["marque"]), safe(info["modele"]), sn, date].filter(Boolean);
   return `${parts.join("_") || "piano"}.kw`;
 }
