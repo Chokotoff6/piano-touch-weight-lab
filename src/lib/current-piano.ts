@@ -207,11 +207,20 @@ export function fromPgArray(value: unknown): number[] {
  * Les 88 notes partent en littéraux de tableaux PostgreSQL ({...}).
  * Ne lève jamais : renvoie { ok, error } pour ne pas bloquer la navigation.
  */
+/** Horodatage ISO à l'heure locale de l'appareil, avec décalage explicite (ex. +02:00). */
+export function localIsoWithOffset(d: Date = new Date()): string {
+  const p = (n: number) => String(Math.abs(n)).padStart(2, "0");
+  const off = -d.getTimezoneOffset();
+  const sign = off >= 0 ? "+" : "-";
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}${sign}${p(Math.floor(Math.abs(off) / 60))}:${p(Math.abs(off) % 60)}`;
+}
+
 export async function saveCurrentPianoToCloud(
   piano: CurrentPiano,
   historyId?: string | null,
 ): Promise<{ ok: boolean; error?: string; id?: string | undefined }> {
   const payload = {
+    created_at: localIsoWithOffset(),
     brand: piano.brand,
     model: piano.model,
     serial_number: piano.serial_number,
@@ -320,8 +329,8 @@ export async function upsertCurrentPianoBuffer(
   const payload = {
     id: CURRENT_PIANO_BUFFER_UUID,
     ...bufferPayload(piano),
-    measurement_date: now.toISOString().slice(0, 10),
-    created_at: now.toISOString(),
+    measurement_date: localIsoWithOffset(now).slice(0, 10),
+    created_at: localIsoWithOffset(now),
   };
   try {
     const { error } = await externalSupabase

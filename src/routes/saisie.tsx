@@ -3389,7 +3389,7 @@ function Index() {
   const handleCompareClick = () => {
     const d = historyDecision();
     if (d === "blocked") {
-      resetConsent();
+      blockedToast();
       return;
     }
     if (d === "choice") {
