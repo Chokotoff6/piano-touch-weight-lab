@@ -3297,8 +3297,11 @@ function Index() {
   const historyDecision = (): "blocked" | "choice" | "direct" => {
     if (isDemoActive()) return "direct";
     const serial = (info["sn_num"] ?? "").trim();
-    const sent = Boolean(currentDbId) && serial.length > 0 && serial === savedSerialRef.current;
-    if (!sent || !topbarState.compareUnlocked) return "direct";
+    // Profil reconnu : repère de session OU drapeau persistant + même n° de série.
+    const sentSession = Boolean(currentDbId) && serial.length > 0 && serial === savedSerialRef.current;
+    const sentPersisted =
+      topbarState.cloudProfileSaved && serial.length > 0 && (loadCurrentPiano()?.serial_number ?? "").includes(serial);
+    if (!sentSession && !sentPersisted) return "direct";
     const decision = decideCloudAction({ honeypot, accepted: true, rows });
     if (decision.kind === "blocked") return "blocked";
     return decision.kind === "silentUpsert" ? "choice" : "direct";
@@ -3340,8 +3343,23 @@ function Index() {
     } finally {
       setIsExporting(false);
     }
+    // Local First : premier passage → le fichier .kw est créé sur l'appareil.
+    if (!isDemoActive() && !kwDocRef.current) {
+      try {
+        await performKwSave(false);
+      } catch {
+        /* enregistrement annulé ou indisponible : la navigation continue */
+      }
+    }
     navigate({ to: "/resultats" });
   };
+
+  const blockedToast = () =>
+    toast.error(
+      en
+        ? "Changes entered too quickly: wait a few seconds, then try again."
+        : "Modifications saisies trop rapidement : patientez quelques secondes puis réessayez.",
+    );
 
   const handleResultsClick = async () => {
     if (!resultsReady || isExporting) return;
@@ -3353,12 +3371,12 @@ function Index() {
       resetConsent();
       return;
     }
-    const decision = decideCloudAction({ honeypot, accepted: topbarState.compareUnlocked, rows });
-    if (decision.kind === "blocked") {
-      resetConsent();
+    const d = historyDecision();
+    if (d === "blocked") {
+      blockedToast();
       return;
     }
-    if (historyDecision() === "choice") {
+    if (d === "choice") {
       pendingExport.current = null;
       pendingCompare.current = false;
       pendingResults.current = true;
