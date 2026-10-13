@@ -219,8 +219,7 @@ export async function saveCurrentPianoToCloud(
   piano: CurrentPiano,
   historyId?: string | null,
 ): Promise<{ ok: boolean; error?: string; id?: string | undefined }> {
-  const payload = {
-    created_at: localIsoWithOffset(),
+  const payload: Record<string, unknown> = {
     brand: piano.brand,
     model: piano.model,
     serial_number: piano.serial_number,
@@ -252,7 +251,7 @@ export async function saveCurrentPianoToCloud(
     // ...sinon INSERT d'une nouvelle fiche historique indépendante du buffer.
     const { data, error } = await externalSupabase
       .from("piano_profiles")
-      .insert(payload as never)
+      .insert({ ...payload, created_at: localIsoWithOffset() } as never)
       .select("id")
       .single();
     if (error) return { ok: false, error: error.message };
