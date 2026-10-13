@@ -66,7 +66,7 @@ import {
   type DiagnosticHistoryRow,
 } from "@/lib/diagnostics";
 import { getTopbarState, setCloudProfileSaved, setCompareUnlocked, setGateReady, setResultsVisited, setTopbarState, showTopbarAlert, useTopbarState } from "@/lib/topbar-store";
-import { decideCloudAction, markCloudSync, resetConsent, startSheetTimer } from "@/lib/cloud-gate";
+import { decideCloudAction, markCloudSync, msSinceLastSync, resetConsent, startSheetTimer } from "@/lib/cloud-gate";
 import {
   DEMO_LOADED_EVENT,
   DEMO_CASCADE_INTERVAL_MS,
@@ -95,6 +95,8 @@ import {
 import { toast } from "sonner";
 import {
   SECURITY_BACKUP_KEY,
+  SAME_DAY_KEY_THRESHOLD,
+  DAY_MS,
   buildKwDocument,
   parseKwDocument,
   shouldProposeJalon,
