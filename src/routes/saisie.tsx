@@ -66,7 +66,7 @@ import {
   type DiagnosticHistoryRow,
 } from "@/lib/diagnostics";
 import { getTopbarState, setCloudProfileSaved, setCompareUnlocked, setGateReady, setResultsVisited, setTopbarState, showTopbarAlert, useTopbarState } from "@/lib/topbar-store";
-import { decideCloudAction, markCloudSync, resetConsent, startSheetTimer } from "@/lib/cloud-gate";
+import { decideCloudAction, markCloudSync, msSinceLastSync, resetConsent, startSheetTimer } from "@/lib/cloud-gate";
 import {
   DEMO_LOADED_EVENT,
   DEMO_CASCADE_INTERVAL_MS,
@@ -95,6 +95,8 @@ import {
 import { toast } from "sonner";
 import {
   SECURITY_BACKUP_KEY,
+  SAME_DAY_KEY_THRESHOLD,
+  DAY_MS,
   buildKwDocument,
   parseKwDocument,
   shouldProposeJalon,
@@ -3294,7 +3296,7 @@ function Index() {
    * (ratio par touche) → le choix Mise à jour / Nouvel historique est requis.
    * Retourne "blocked" si l'anti-spam refuse, "choice" ou "direct".
    */
-  const historyDecision = (): "blocked" | "choice" | "direct" => {
+  const historyDecision = (): "blocked" | "choice" | "silent" | "direct" => {
     if (isDemoActive()) return "direct";
     const serial = (info["sn_num"] ?? "").trim();
     // Profil reconnu : repère de session OU drapeau persistant + même n° de série.
@@ -3304,7 +3306,21 @@ function Index() {
     if (!sentSession && !sentPersisted) return "direct";
     const decision = decideCloudAction({ honeypot, accepted: true, rows });
     if (decision.kind === "blocked") return "blocked";
-    return decision.kind === "silentUpsert" ? "choice" : "direct";
+    if (decision.kind !== "silentUpsert") return "direct";
+    // Règle convenue : dialogue seulement si > 5 touches modifiées ou > 24 h
+    // depuis la dernière écriture ; sinon mise à jour silencieuse.
+    if (decision.modifiedKeys > SAME_DAY_KEY_THRESHOLD || msSinceLastSync() > DAY_MS) return "choice";
+    return "silent";
+  };
+
+  /** Mise à jour silencieuse (≤ 5 touches, < 24 h) : Cloud + boîte noire, sans dialogue ni nouveau fichier .kw. */
+  const silentUpdateThen = (to: "/resultats" | "/comparer") => {
+    const snapshot = rows;
+    void syncAndFinish("update").then((ok) => {
+      if (!ok) return;
+      markCloudSync(snapshot);
+      void navigate({ to });
+    });
   };
 
   const prepareAndGoResults = async () => {
@@ -3376,6 +3392,10 @@ function Index() {
       blockedToast();
       return;
     }
+    if (d === "silent") {
+      silentUpdateThen("/resultats");
+      return;
+    }
     if (d === "choice") {
       pendingExport.current = null;
       pendingCompare.current = false;
@@ -3390,6 +3410,10 @@ function Index() {
     const d = historyDecision();
     if (d === "blocked") {
       blockedToast();
+      return;
+    }
+    if (d === "silent") {
+      silentUpdateThen("/comparer");
       return;
     }
     if (d === "choice") {
@@ -3414,8 +3438,9 @@ function Index() {
       if (kind) runLocalExport(kind);
       if (!ok) return;
       markCloudSync(snapshot);
-      // Local First : le fichier .kw suit le choix (nouveau jalon ou mise à jour).
-      await performKwSave(mode === "insert");
+      // Local First : seul « Nouvel historique » enregistre un nouveau fichier .kw.
+      // « Mettre à jour » s'appuie sur la boîte noire ; « Enregistrer .kw » reste manuel.
+      if (mode === "insert") await performKwSave(true);
       if (compare) void navigate({ to: "/comparer" });
       else if (results) void navigate({ to: "/resultats" });
     });
