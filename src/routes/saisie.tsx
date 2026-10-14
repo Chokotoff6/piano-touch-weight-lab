@@ -1675,6 +1675,17 @@ function Index() {
     toast.success(getLang() === "en" ? "Profile saved to a .kw file." : "Profil enregistré dans un fichier .kw.");
   };
 
+  /** Vrai si des pesées existent sans avoir été enregistrées dans un fichier .kw. */
+  const kwUnsaved = () => {
+    const hasData = rows.some((r) => (r.wd ?? "") !== "" || (r.wa ?? "") !== "");
+    if (!hasData) return false;
+    const doc = kwDocRef.current;
+    return !doc || countChangedKeys(doc.rows, rows) > 0;
+  };
+  const kwUnsavedWarning = (en: boolean) => kwUnsaved() ? (
+    <span className="font-bold !text-red-700">{en ? "Measurements not saved to a .kw file. " : "Mesures non enregistrées dans un fichier .kw. "}</span>
+  ) : null;
+
   const onSaveKw = () => {
     const doc = kwDocRef.current;
     if (doc && shouldProposeJalon(doc, rows)) {
@@ -4089,7 +4100,7 @@ function Index() {
                 className="absolute left-1/2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
                 style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
               >
-                <span>{en ? "Do you want to erase all entered piano information?" : "Voulez-vous effacer toutes les infos piano saisies ?"}</span>
+                <span>{kwUnsavedWarning(en)}{en ? "Do you want to erase all entered piano information?" : "Voulez-vous effacer toutes les infos piano saisies ?"}</span>
                 <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleUserReset("info"); }}>Oui</button>
                 <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
               </div>
@@ -4355,7 +4366,7 @@ function Index() {
                   className="absolute left-1/2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
                   style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
                 >
-                  <span>{en ? "Do you want to erase all entered weight data?" : "Voulez-vous effacer toutes les données de poids saisies ?"}</span>
+                  <span>{kwUnsavedWarning(en)}{en ? "Do you want to erase all entered weight data?" : "Voulez-vous effacer toutes les données de poids saisies ?"}</span>
                   <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleUserReset("rows"); }}>Oui</button>
                   <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
                 </div>
