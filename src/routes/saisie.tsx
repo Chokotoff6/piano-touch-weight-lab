@@ -98,6 +98,7 @@ import {
   SAME_DAY_KEY_THRESHOLD,
   DAY_MS,
   buildKwDocument,
+  countChangedKeys,
   parseKwDocument,
   shouldProposeJalon,
   writeKwFile,
