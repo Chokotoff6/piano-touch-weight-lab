@@ -10,6 +10,7 @@ import { PianoSheetMirror } from "@/components/PianoSheetMirror";
 import { generateComparisonReport, type LandscapePage } from "@/lib/pdf-report";
 import { setTopbarState } from "@/lib/topbar-store";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
+import { parseKwDocument } from "@/lib/kw-file";
 import { scopeDemo } from "@/lib/demo-scope";
 import { isDemoActive, DEMO_LOADED_EVENT } from "@/lib/demo-mode";
 import {
@@ -553,7 +554,7 @@ function tooltipColorFor(name: string) {
   // Identité bleue exclusive de l'import CSV.
   const isWhite = lower.includes("blanches") || lower.includes("whites");
   const isBlack = lower.includes("noires") || lower.includes("blacks");
-  if (lower.startsWith("import csv")) return isWhite ? "#93c5fd" : "#2563EB";
+  if (lower.startsWith("import csv") || lower.startsWith("point d'historique") || lower.startsWith("history point")) return isWhite ? "#93c5fd" : "#2563EB";
   const isReference = lower.startsWith("cloud") || lower.startsWith("référence");
   if (isReference) return "#f97316";
   if (isBlack) return "#000000";
@@ -1590,8 +1591,8 @@ function SidebarPanel(props: SidebarPanelProps) {
     ? "Generic values generally expected for a piano keyboard."
     : "Valeurs génériques généralement attendues pour un clavier de piano.";
   const tipCsv = en
-    ? "Import your measurement files in CSV format from your local storage."
-    : "Importez vos fichiers de mesures format CSV depuis votre stockage local.";
+    ? "Compare with a history point of this piano"
+    : "Comparez avec un point d'historique de ce piano";
   // Filtres du bas : bascule ON/OFF. Aucune icône, aucune bordure noire.
   // État ON signalé par un "V" majuscule noir juste après le titre en CAPITALES.
   // Gabarit aéré des lignes de filtres : hauteur automatique, texte libre de
@@ -1625,9 +1626,9 @@ function SidebarPanel(props: SidebarPanelProps) {
       <div className="flex h-auto flex-col items-stretch justify-start gap-2 pt-2">
           <div className="text-sm font-bold !text-black">{en ? "Compare current piano with:" : "Comparer piano actuel avec :"}</div>
           <FastTip text={tipTarget}><Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><span className="w-full text-center font-bold uppercase">{en ? "Standard target" : "Cible standard"}</span></Button></FastTip>
+           <FastTip text={tipCsv}><Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} ${props.csvActive ? "!border-black !text-blue-700 [&_svg]:!text-blue-700" : "!border-black !text-black"}`}><span className="w-full text-center font-bold uppercase">{en ? "HISTORY POINT" : "POINT D'HISTORIQUE"}</span></Button></FastTip>
           <FastTip text={tipCloud}><Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={sourceButtonClass(props.cloudEnabled, "!text-orange-600")}><span className="w-full text-center font-bold uppercase">Cloud</span></Button></FastTip>
-           <FastTip text={tipCsv}><Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} ${props.csvActive ? "!border-black !text-blue-700 [&_svg]:!text-blue-700" : "!border-black !text-black"}`}><span className="w-full text-center font-bold uppercase">{en ? "IMPORT CSV" : "IMPORT CVS"}</span></Button></FastTip>
-          <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
+          <input ref={inputRef} type="file" accept=".kw,.csv,text/csv,application/json" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
           {props.cloudEnabled && (
             <>
           <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold" style={{ color: "#f97316" }}>{en ? "CLOUD filters" : "Filtres CLOUD"}</div>
@@ -2021,9 +2022,39 @@ function Comparer() {
     ? ` - ${en ? "Measurement" : "Mesure"} ${formatMeasureDate(comparedPiano.measureDate)}${comparedTime}${countKeys(comparedPiano.wd)}`
     : "";
 
+  const historyLabel = en ? "History point" : "Point d'historique";
   const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
 
   async function handleImport(file: File) {
+    if (/\.kw$/i.test(file.name)) {
+      const doc = parseKwDocument(await file.text());
+      if (!doc) { setComparedPiano(null); return; }
+      const jalon = doc.historique_jalons[doc.historique_jalons.length - 1];
+      const src = jalon ?? { info: doc.info, rows: doc.rows, date: doc.updated_at };
+      const inf = src.info;
+      const d = new Date(src.date);
+      const p2 = (n: number) => String(n).padStart(2, "0");
+      const year = Number(inf["fabrication"]);
+      const piano = buildCurrentPiano({
+        brand: inf["marque"] ?? "",
+        model: inf["modele"] ?? "",
+        serial_number: `${inf["sn_prefix"] ?? ""}${inf["sn_num"] ?? ""}${inf["sn_suffix"] ?? ""}`,
+        type_piano: inf["type_piano"] ?? "",
+        manufacture_year: Number.isFinite(year) && year > 0 ? year : null,
+        climate_zone: inf["climate_zone"] ?? "",
+        maintenance_type: inf["entretien"] ?? "",
+        usage_level: inf["usage_level"] ?? "",
+        city: inf["city"] ?? "",
+        country: inf["country"] ?? "",
+        remarks: inf["remarques"] ?? "",
+        wd: src.rows.map((r) => r.wd),
+        wa: src.rows.map((r) => r.wa),
+        mesureDateRaw: Number.isFinite(d.getTime()) ? `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}` : undefined,
+      });
+      setComparedPiano(profileFromCurrentPiano(piano));
+      setStatus("ok");
+      return;
+    }
     try {
       const parsed = parseDiagnosticCsv(await readCsvFileContent(file));
       const year = Number(parsed.fields["manufacture_year"]);
@@ -2162,7 +2193,7 @@ function Comparer() {
               </div>
 
               <div ref={liveChartsRef}>
-                <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? "Import CSV" : "Cloud"} comparisonShort={comparedPiano ? "Import CSV" : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible standard"} onCycleKeyFilter={cycleKeyFilter} currentBaseName={en ? "Current piano" : "Piano actuel"} showSourceControls={mine !== null && sourceMode === "cloud" && comparedPiano === null && standardEnabled && cloudProfile !== null} />
+                <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? historyLabel : "Cloud"} comparisonShort={comparedPiano ? historyLabel : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible standard"} onCycleKeyFilter={cycleKeyFilter} currentBaseName={en ? "Current piano" : "Piano actuel"} showSourceControls={mine !== null && sourceMode === "cloud" && comparedPiano === null && standardEnabled && cloudProfile !== null} />
               </div>
             </div>
             <aside className="min-w-0"><div ref={settingsRef} data-pdf-expand className="sticky top-[127px] z-50 flex flex-col overflow-visible" ><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
