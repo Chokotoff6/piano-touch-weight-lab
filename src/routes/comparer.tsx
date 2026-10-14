@@ -2028,24 +2028,24 @@ function Comparer() {
   async function handleImport(file: File) {
     if (/\.kw$/i.test(file.name)) {
       const doc = parseKwDocument(await file.text());
-      if (!doc) { toast.error(en ? "Invalid .kw file." : "Fichier .kw invalide."); return; }
+      if (!doc) { setComparedPiano(null); return; }
       const jalon = doc.historique_jalons[doc.historique_jalons.length - 1];
       const src = jalon ?? { info: doc.info, rows: doc.rows, date: doc.updated_at };
       const inf = src.info;
       const d = new Date(src.date);
       const p2 = (n: number) => String(n).padStart(2, "0");
-      const year = Number(inf["annee"]);
+      const year = Number(inf["fabrication"]);
       const piano = buildCurrentPiano({
         brand: inf["marque"] ?? "",
         model: inf["modele"] ?? "",
         serial_number: `${inf["sn_prefix"] ?? ""}${inf["sn_num"] ?? ""}${inf["sn_suffix"] ?? ""}`,
         type_piano: inf["type_piano"] ?? "",
         manufacture_year: Number.isFinite(year) && year > 0 ? year : null,
-        climate_zone: "",
-        maintenance_type: "",
-        usage_level: "",
-        city: "",
-        country: "",
+        climate_zone: inf["climate_zone"] ?? "",
+        maintenance_type: inf["entretien"] ?? "",
+        usage_level: inf["usage_level"] ?? "",
+        city: inf["city"] ?? "",
+        country: inf["country"] ?? "",
         remarks: inf["remarques"] ?? "",
         wd: src.rows.map((r) => r.wd),
         wa: src.rows.map((r) => r.wa),
