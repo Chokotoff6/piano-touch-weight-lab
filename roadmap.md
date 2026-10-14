@@ -25,7 +25,7 @@
 - [x] Fichier .kw versionné, empreinte locale, bouton Enregistrer (réécriture directe / téléchargement Safari-iPad), import .kw.
 - [x] Règle de jalon : > 24 h ou > 5 touches modifiées → question ; sinon écrasement.
 - [x] Boîte noire ptw_security_backup, purgée par « Effacer toutes les données ».
-- [ ] Confirmation « Nouveau piano » si fichier .kw non enregistré.
-- [ ] Comparer : superposition d'un jalon antérieur.
+- [x] Confirmation « Nouveau piano » si fichier .kw non enregistré.
+- [x] Comparer : bouton « Point d'historique » (.kw/.csv) en 2e position.
 - [ ] Roue dentée Préférences (Démo, corridor ±2–4 g, lissage).
 - [ ] Rideau Cloud + nouveau texte de remerciement.
