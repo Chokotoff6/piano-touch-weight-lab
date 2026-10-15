@@ -3098,10 +3098,10 @@ function Index() {
         return false;
       }
       toast.success(
-        historyId
-          ? "Profil mis à jour dans piano_profiles."
-          : "Nouveau profil inséré dans piano_profiles.",
-        { id: toastId },
+        getLang() === "en"
+          ? "This piano's profile will enrich the KeyWeight CLOUD community database. Thank you for your contribution!"
+          : "Le profil de ce piano va compléter la base de données de la communauté CLOUD KeyWeight. Merci de votre collaboration !",
+        { id: toastId, duration: 6000 },
       );
       let diagnosticId = currentDbId;
       // Journal secondaire : son échec ne doit jamais invalider l'écriture du profil.
