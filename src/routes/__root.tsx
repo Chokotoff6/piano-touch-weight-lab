@@ -32,6 +32,7 @@ import appCss from "../styles.css?url";
 import likedLogoFrAsset from "@/assets/image_soutien_v5.png.asset.json";
 import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
 import { ensureDemoDefault, toggleDemoMode, DEMO_BANNER_V2_KEY, isDemoActive, DEMO_LOADED_EVENT, DEMO_MODE_CHANGED_EVENT } from "@/lib/demo-mode";
+import { PreferencesGear } from "@/components/PreferencesGear";
 import { AppFooter } from "@/components/AppFooter";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import animatedKeyweightLogo from "@/assets/logo-kw-animated.svg?raw";
@@ -711,6 +712,7 @@ function RootComponent() {
       {!isHome && (
         <div className="relative !z-[60] mx-auto w-full max-w-7xl overflow-visible px-[100px] pb-2 pt-3">
           <div className="relative !z-[60] flex items-center justify-end gap-2">
+            <PreferencesGear onDemoToggled={() => void rootNavigate({ to: "/saisie" })} />
             {/* Infobulle au survol du libellé : gris graphite, sans flèche ni croix. */}
             <div className="relative">
               <button

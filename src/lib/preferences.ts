@@ -10,10 +10,16 @@ type Preferences = {
   corridorG: 2 | 3 | 4;
   /** Rendu de lissage par défaut des graphiques. */
   smoothDefault: SmoothPref;
+  /** Touches hors tolérance surlignées en rouge dans le PDF. */
+  pdfRedKeys: boolean;
+  /** Avance automatique après 2 chiffres valides. */
+  autoAdvance: boolean;
 };
 
 const CORRIDOR_KEY = "ptw_pref_corridor_g";
 const SMOOTH_KEY = "ptw_pref_smooth";
+const PDF_RED_KEY = "ptw_pref_pdf_red";
+const AUTO_ADV_KEY = "ptw_pref_auto_advance";
 
 const read = (key: string): string | null => {
   try {
@@ -32,12 +38,14 @@ const write = (key: string, value: string) => {
 };
 
 function load(): Preferences {
-  if (typeof window === "undefined") return { corridorG: 3, smoothDefault: "smooth" };
+  if (typeof window === "undefined") return { corridorG: 3, smoothDefault: "smooth", pdfRedKeys: true, autoAdvance: true };
   const corridor = Number(read(CORRIDOR_KEY));
   const smooth = read(SMOOTH_KEY);
   return {
     corridorG: corridor === 2 || corridor === 4 ? corridor : 3,
     smoothDefault: smooth === "real" || smooth === "smoothPlus" ? smooth : "smooth",
+    pdfRedKeys: read(PDF_RED_KEY) !== "0",
+    autoAdvance: read(AUTO_ADV_KEY) !== "0",
   };
 }
 
@@ -61,6 +69,18 @@ export function setCorridorG(value: 2 | 3 | 4) {
 export function setSmoothDefault(value: SmoothPref) {
   prefs = { ...prefs, smoothDefault: value };
   write(SMOOTH_KEY, value);
+  emit();
+}
+
+export function setPdfRedKeys(value: boolean) {
+  prefs = { ...prefs, pdfRedKeys: value };
+  write(PDF_RED_KEY, value ? "1" : "0");
+  emit();
+}
+
+export function setAutoAdvance(value: boolean) {
+  prefs = { ...prefs, autoAdvance: value };
+  write(AUTO_ADV_KEY, value ? "1" : "0");
   emit();
 }
 

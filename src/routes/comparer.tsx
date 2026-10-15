@@ -13,6 +13,7 @@ import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
 import { parseKwDocument } from "@/lib/kw-file";
 import { scopeDemo } from "@/lib/demo-scope";
 import { isDemoActive, DEMO_LOADED_EVENT } from "@/lib/demo-mode";
+import { getPreferences } from "@/lib/preferences";
 import {
   buildCurrentPiano,
   loadCurrentPiano,
@@ -1023,7 +1024,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
       )}
       <div
         ref={zoomed ? plotRef : undefined}
-        className="h-[300px] w-full lg:h-[calc(100%_-_2.5rem)]"
+        className="relative h-[300px] w-full lg:h-[calc(100%_-_2.5rem)]"
         // Mode non-zoom : tout le bloc graphique (axes, repères, courbes,
         // étiquettes) est translaté vers la gauche. En mode « N/B groupées »,
         // le décalage total est de 30 px. Les boutons ne bougent pas (frères).
@@ -1142,6 +1143,13 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
 
           </LineChart>
         </ResponsiveContainer>
+        {/* Témoins de défilement : touches masquées à gauche / à droite de la fenêtre de 44. */}
+        {zoomed && start > 1 && (
+          <div aria-hidden className="pointer-events-none absolute left-1 top-1/2 -translate-y-1/2 text-xl leading-none text-foreground">◀</div>
+        )}
+        {zoomed && start + ZOOM_WINDOW - 1 < 88 && (
+          <div aria-hidden className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 text-xl leading-none text-foreground">▶</div>
+        )}
       </div>
     </Frame>
   );
@@ -1153,14 +1161,21 @@ export function ComparisonChart({ chartData: rawChartData, keyFilter, comparison
   // `smoothDefault` permet au Mode Rapide d'imposer le rendu « Réel ».
   // `allowRealMode={false}` (page Comparer) supprime définitivement le mode
   // « Réel » : seuls les rendus lissés (3 ou 5 points) restent disponibles.
-  const [smoothMode, setSmoothMode] = useState<"real" | "smooth" | "smoothPlus">(allowRealMode && !smoothDefault ? "real" : "smooth");
+  const prefSmooth = getPreferences().smoothDefault;
+  const initialSmooth = (): "real" | "smooth" | "smoothPlus" => {
+    if (!smoothDefault) return allowRealMode ? "real" : "smooth";
+    if (prefSmooth === "real") return allowRealMode ? "real" : "smooth";
+    return prefSmooth;
+  };
+  const [smoothMode, setSmoothMode] = useState<"real" | "smooth" | "smoothPlus">(initialSmooth);
   const cycleSmoothMode = useCallback(() => setSmoothMode((mode) => !allowRealMode
     ? (mode === "smooth" ? "smoothPlus" : "smooth")
     : mode === "real" ? "smooth" : mode === "smooth" ? "smoothPlus" : "real"), [allowRealMode]);
   // Bascule automatique quand la valeur par défaut change (Mode Rapide activé/coupé).
   useEffect(() => {
-    setSmoothMode(allowRealMode ? (smoothDefault ? "smooth" : "real") : "smooth");
-  }, [smoothDefault, allowRealMode]);
+    setSmoothMode(initialSmooth());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [smoothDefault, allowRealMode, prefSmooth]);
   const chartData = useMemo(
     () => smoothMode === "real" ? rawChartData : smoothChartData(rawChartData, smoothMode === "smoothPlus" ? 5 : 3),
     [smoothMode, rawChartData],
