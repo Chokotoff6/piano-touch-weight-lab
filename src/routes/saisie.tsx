@@ -2349,7 +2349,19 @@ function Index() {
     if (!mechanicalError) clearError(`${index}-${field}`);
     hideRangeMessage();
     // Alerte sustain : PD conforme strictement dans la tranche 70-90 g.
-    if (isPedalValue(field, num)) showPedalAlert(index, field);
+    if (isPedalValue(field, num)) {
+      showPedalAlert(index, field);
+      return;
+    }
+    // Avance automatique : uniquement si la valeur a passé TOUS les contrôles.
+    if (mechanicalError || !getPreferences().autoAdvance) return;
+    setTimeout(() => {
+      if (field === "wd") focusCell(index, "wa");
+      else {
+        const next = nextVisibleKey(index, 1);
+        if (next !== null) focusCell(next, "wd");
+      }
+    }, 0);
   };
 
   /** Restaure l'état de mesures précédent (jusqu'à 20 fois de suite). */
