@@ -13,7 +13,7 @@ import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
 import { parseKwDocument } from "@/lib/kw-file";
 import { scopeDemo } from "@/lib/demo-scope";
 import { isDemoActive, DEMO_LOADED_EVENT } from "@/lib/demo-mode";
-import { getPreferences } from "@/lib/preferences";
+import { getPreferences, usePreferences } from "@/lib/preferences";
 import {
   buildCurrentPiano,
   loadCurrentPiano,
@@ -1416,7 +1416,7 @@ const TONE_CLASS: Record<Tone, string> = {
 };
 
 // Bloc de moyenne façon page Saisie : moyenne globale en grand + détail Blanches/Noires.
-function AverageBlock({ label, global, white, black, tone }: { label: string; global: string; white: string; black: string; tone: Tone }) {
+function AverageBlock({ label, global, white, black, tone, alert = false }: { label: string; global: string; white: string; black: string; tone: Tone; alert?: boolean }) {
   const lang = useLang();
   const toneClass = TONE_CLASS[tone];
   const val = (v: string) => v === "—" ? <span className={toneClass}>—</span> : <>{v}<span className="!text-xs !font-medium"> gr.</span></>;
@@ -1424,7 +1424,7 @@ function AverageBlock({ label, global, white, black, tone }: { label: string; gl
   return (
     <div className="flex h-full flex-col justify-end rounded bg-muted px-2 py-1.5 text-center">
       <div className="!text-[1.1rem] font-bold tracking-wide !text-black">{label}</div>
-      <div className={`mt-1 !text-2xl !font-bold tabular-nums ${toneClass}`}>{val(global)}</div>
+      <div className={`mt-1 !text-2xl !font-bold tabular-nums ${alert ? "!text-red-600" : toneClass}`}>{val(global)}</div>
       <div className={`mt-0.5 flex items-end justify-center gap-2 text-[0.65rem] tabular-nums ${toneClass}`}>
         <span>{sub(white)}</span>
         <span className={toneClass}>/</span>
@@ -1449,10 +1449,16 @@ const AVG_KEYS: Record<MetricKey, { cur: [SeriesKey, SeriesKey, SeriesKey]; ref:
 
 export function AverageRow({ chartData, source, hasData, csv = false }: { chartData: ChartPoint[]; source: "cur" | "ref"; hasData: boolean; csv?: boolean }) {
   const lang = useLang();
+  const { corridorG } = usePreferences();
   return (
     <div className="grid grid-cols-4 gap-3">
       {COLUMNS.map(({ key, label, labelEn }) => {
         const [globalKey, whiteKey, blackKey] = AVG_KEYS[key][source];
+        // Corridor : moyenne du piano actuel en rouge si elle s'écarte de la Cible standard de plus de ±N g.
+        const stdKey = STD_KEYS.find((s) => s.key === key)?.globalKey;
+        const cur = hasData ? Number(seriesAverage(chartData, globalKey)) : NaN;
+        const std = stdKey ? Number(seriesAverage(chartData, stdKey)) : NaN;
+        const alert = source === "cur" && Number.isFinite(cur) && Number.isFinite(std) && Math.abs(cur - std) > corridorG;
         return (
           <AverageBlock
             key={key}
@@ -1461,6 +1467,7 @@ export function AverageRow({ chartData, source, hasData, csv = false }: { chartD
             global={hasData ? seriesAverage(chartData, globalKey) : "—"}
             white={hasData ? seriesAverage(chartData, whiteKey) : "—"}
             black={hasData ? seriesAverage(chartData, blackKey) : "—"}
+            alert={alert}
           />
         );
       })}
