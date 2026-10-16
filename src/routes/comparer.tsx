@@ -981,24 +981,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
       className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}
     >
       {zoomed && (
-        <>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            data-pdf-hide
-            aria-label={lang === "en" ? "Zoom navigation help" : "Aide à la navigation du zoom"}
-            aria-expanded={showZoomHelp}
-            onClick={(event) => {
-              event.stopPropagation();
-              setShowZoomHelp((visible) => !visible);
-            }}
-            className="absolute left-1/2 top-2 z-20 h-7 w-7 -translate-x-1/2 rounded-full border-gray-300 bg-white p-0 !text-black hover:bg-gray-100"
-          >
-            <Info className="h-4 w-4" strokeWidth={2} />
-          </Button>
-          <button type="button" data-pdf-hide aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="absolute right-3 top-2 z-20 rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
-        </>
+        <button type="button" data-pdf-hide aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="absolute right-3 top-2 z-20 rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
       )}
       {!zoomed && (
         <button type="button" data-pdf-hide aria-label={`Zoom sur ${title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="absolute right-3 top-2 z-20 rounded-full border border-gray-300 bg-white p-[5px] !text-black hover:bg-gray-100"><MagnifyIcon /></button>
@@ -1030,6 +1013,21 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             </span>
           </button>
           <ToleranceButton zoomed={zoomed} lang={lang} />
+          {zoomed && (
+            <button
+              type="button"
+              data-pdf-hide
+              aria-label={lang === "en" ? "Zoom navigation help" : "Aide à la navigation du zoom"}
+              aria-expanded={showZoomHelp}
+              onClick={(event) => {
+                event.stopPropagation();
+                setShowZoomHelp((visible) => !visible);
+              }}
+              className="flex items-center rounded-full [border-width:1.3px] !border-green-600 bg-white p-[0.3rem] !text-black hover:bg-gray-100"
+            >
+              <Info size={25.2} strokeWidth={2.5} className="shrink-0" />
+            </button>
+          )}
         </div>
       )}
       {zoomed && showCurveToggles && (

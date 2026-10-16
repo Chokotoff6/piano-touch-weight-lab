@@ -3513,7 +3513,17 @@ function Index() {
             padding: "0px",
             margin: "0px",
             fontWeight: "bold",
-            color: "#000000",
+            // Touche hors tolérance (option Préférences) : valeur en rouge dans
+            // le PDF si elle s'écarte de la Cible standard d'usine de plus de
+            // ±N g (même rampe théorique que les graphiques : wd 68→58, wa 56→48).
+            color: (() => {
+              const prefs = getPreferences();
+              const measured = Number(rows[index]![field]);
+              const standard = field === "wd" ? 68 - (10 * index) / 87 : 56 - (8 * index) / 87;
+              return prefs.pdfRedKeys && Number.isFinite(measured) && Math.abs(measured - Math.round(standard * 10) / 10) > prefs.corridorG
+                ? "#dc2626"
+                : "#000000";
+            })(),
             backgroundColor: "#cbd5e1",
           }}
         >
