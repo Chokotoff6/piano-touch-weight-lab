@@ -1,3 +1,4 @@
+import { getPreferences } from "@/lib/preferences";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Redo2, RefreshCw, Undo2 } from "lucide-react";
