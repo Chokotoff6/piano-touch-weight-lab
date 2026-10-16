@@ -13,7 +13,8 @@ import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
 import { parseKwDocument } from "@/lib/kw-file";
 import { scopeDemo } from "@/lib/demo-scope";
 import { isDemoActive, DEMO_LOADED_EVENT } from "@/lib/demo-mode";
-import { getPreferences, usePreferences } from "@/lib/preferences";
+import { getPreferences, usePreferences, setCorridorG, setPdfRedKeys } from "@/lib/preferences";
+import { AlertTriangle } from "lucide-react";
 import {
   buildCurrentPiano,
   loadCurrentPiano,
@@ -425,16 +426,57 @@ function profileFromSpec(spec: FactorySpecRow): RefProfile {
 // Pastilles permanentes : un point sur CHAQUE touche réellement mesurée,
 // à la couleur de sa courbe. Le survol agrandit le point (activeDot).
 const makeSampleDot = (radius: number) => {
-  const Dot = (props: { cx?: number; cy?: number; stroke?: string; value?: number | null }) => {
-    const { cx, cy, stroke, value } = props;
+  const Dot = (props: { cx?: number; cy?: number; stroke?: string; value?: number | null; payload?: Record<string, unknown>; tol?: number | null; stdKey?: string | null }) => {
+    const { cx, cy, stroke, value, payload, tol, stdKey } = props;
     if (typeof cx !== "number" || typeof cy !== "number") return null;
     if (value === null || value === undefined || !Number.isFinite(value as number)) return null;
-    return <circle cx={cx} cy={cy} r={radius} fill={stroke ?? "#000000"} stroke="none" />;
+    const std = stdKey && payload ? Number(payload[stdKey]) : NaN;
+    const out = typeof tol === "number" && Number.isFinite(std) && Math.abs((value as number) - std) > tol;
+    return <circle cx={cx} cy={cy} r={out ? radius * 1.25 : radius} fill={out ? "#dc2626" : stroke ?? "#000000"} stroke="none" />;
   };
   return Dot;
 };
 const SampleDot = makeSampleDot(2.2);
 const ZoomDot = makeSampleDot(3);
+// Bouton Tolérance : clic = On/Off ; champ ±xx g éditable uniquement en On.
+function ToleranceButton({ zoomed, lang }: { zoomed: boolean; lang: string }) {
+  const { corridorG, pdfRedKeys: on } = usePreferences();
+  const [draft, setDraft] = useState(String(corridorG));
+  useEffect(() => setDraft(String(corridorG)), [corridorG]);
+  const commit = () => {
+    const v = Number(draft.replace(",", "."));
+    if (Number.isFinite(v) && v > 0) setCorridorG(v); else setDraft(String(corridorG));
+  };
+  return (
+    <button
+      type="button"
+      data-pdf-hide
+      title={lang === "en" ? "Tolerance" : "Tolérance"}
+      aria-pressed={on}
+      onClick={(event) => { event.stopPropagation(); setPdfRedKeys(!on); }}
+      className={`flex items-center rounded-full [border-width:1.3px] !border-green-600 bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-[0.45rem] px-[0.9rem] py-[0.225rem] text-[1.224rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"} ${on ? "opacity-100" : "opacity-60"}`}
+    >
+      <AlertTriangle size={zoomed ? 25.2 : 14} strokeWidth={2.5} className={`shrink-0 ${on ? "text-red-600" : ""}`} />
+      <span className="!text-black">{lang === "en" ? "Tolerance: ±" : "Tolérance : ±"}</span>
+      <input
+        type="text"
+        inputMode="decimal"
+        disabled={!on}
+        value={draft}
+        onClick={(event) => event.stopPropagation()}
+        onFocus={(event) => event.currentTarget.select()}
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={commit}
+        onKeyDown={(event) => { event.stopPropagation(); if (event.key === "Enter") { commit(); event.currentTarget.blur(); } }}
+        className={`rounded border border-gray-300 bg-white text-center !text-black disabled:bg-muted/50 ${zoomed ? "w-[3.2rem]" : "w-[1.9rem]"}`}
+      />
+      <span className="!text-black">g</span>
+    </button>
+  );
+}
+// Clé de la Cible standard associée à une courbe du piano actuel.
+const stdKeyFor = (dataKey: string): string | null =>
+  dataKey.startsWith("wdCur") ? "stdWd" : dataKey.startsWith("waCur") ? "stdWa" : dataKey.startsWith("fricCur") ? "factoryFric" : dataKey.startsWith("balCur") ? "factoryBal" : null;
 
 
 
@@ -885,6 +927,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   // avant la touche 1 afin de préserver l'espace entre l'axe et les courbes.
   const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [-3, 88];
   const DotComp = zoomed ? ZoomDot : SampleDot;
+  const { corridorG, pdfRedKeys: tolOn } = usePreferences();
   const title = familyTitle(family.id, lang, family.title);
   // Domaine vertical FIGÉ sur le mode groupé : l'échelle et ses graduations ne
   // sont jamais recalculées quand l'artisan bascule N/B (groupé, séparé,
@@ -986,6 +1029,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               {lang === "en" ? "Mode: " : "Mode : "}{smoothMode === "real" ? (lang === "en" ? "Raw" : "Réel") : smoothMode === "smooth" ? (lang === "en" ? "Smoothed" : "Lissé") : (lang === "en" ? "Smoothed+" : "Lissé+")}
             </span>
           </button>
+          <ToleranceButton zoomed={zoomed} lang={lang} />
         </div>
       )}
       {zoomed && showCurveToggles && (
@@ -994,8 +1038,8 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           className="absolute bottom-2 left-[58px] z-20 flex flex-col items-start"
           onClick={(event) => event.stopPropagation()}
         >
-          <span className="mb-0.5 text-[0.682rem] font-bold leading-tight" style={{ color: "#000000" }}>Afficher/masquer</span>
           <div className="flex flex-col gap-0.5 rounded-lg border border-gray-300 bg-white px-2 py-1 shadow-sm">
+            <span className="mb-0.5 text-[0.682rem] font-bold leading-tight" style={{ color: "#000000" }}>{lang === "en" ? "Show/hide" : "Afficher/masquer"}</span>
             {([
               { group: "current" as const, label: keyFilter === "all" ? currentLines[0]?.name ?? currentBaseName : currentBaseName, color: "#000000", off: zoomCurveOff.current },
               { group: "reference" as const, label: keyFilter === "all" ? referenceLines[0]?.name ?? comparisonLabel : comparisonLabel, color: csvActive ? "#2563EB" : "#f97316", off: zoomCurveOff.reference },
@@ -1125,8 +1169,14 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
                 stroke={line.hidden ? "transparent" : color}
                 strokeWidth={2}
                 strokeDasharray={line.dashed && !line.hidden ? "5 5" : undefined}
-                activeDot={line.hidden ? false : { r: zoomed ? 7.5 : 5, fill: color, stroke: "#ffffff", strokeWidth: 2 }}
-                dot={line.real ? <DotComp /> : false}
+                activeDot={line.hidden ? false : (dotProps: { cx?: number; cy?: number; value?: number | null; payload?: Record<string, unknown> }) => {
+                  const sk = tolOn ? stdKeyFor(String(line.dataKey)) : null;
+                  const std = sk && dotProps.payload ? Number(dotProps.payload[sk]) : NaN;
+                  const out = typeof dotProps.value === "number" && Number.isFinite(std) && Math.abs(dotProps.value - std) > corridorG;
+                  if (typeof dotProps.cx !== "number" || typeof dotProps.cy !== "number") return <g />;
+                  return <circle cx={dotProps.cx} cy={dotProps.cy} r={zoomed ? 7.5 : 5} fill={out ? "#dc2626" : color} stroke="#ffffff" strokeWidth={2} />;
+                }}
+                dot={line.real ? <DotComp tol={tolOn ? corridorG : null} stdKey={stdKeyFor(String(line.dataKey))} /> : false}
                 connectNulls={true}
                 isAnimationActive={false}
               />
@@ -1458,7 +1508,7 @@ export function AverageRow({ chartData, source, hasData, csv = false }: { chartD
         const stdKey = STD_KEYS.find((s) => s.key === key)?.globalKey;
         const cur = hasData ? Number(seriesAverage(chartData, globalKey)) : NaN;
         const std = stdKey ? Number(seriesAverage(chartData, stdKey)) : NaN;
-        const alert = source === "cur" && Number.isFinite(cur) && Number.isFinite(std) && Math.abs(cur - std) > corridorG;
+        const alert = false; void cur; void std; void corridorG;
         return (
           <AverageBlock
             key={key}

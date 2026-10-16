@@ -7,7 +7,7 @@ export type SmoothPref = "real" | "smooth" | "smoothPlus";
 
 type Preferences = {
   /** Corridor de tolérance en grammes (±2, ±3 ou ±4). */
-  corridorG: 2 | 3 | 4;
+  corridorG: number;
   /** Rendu de lissage par défaut des graphiques. */
   smoothDefault: SmoothPref;
   /** Touches hors tolérance surlignées en rouge dans le PDF. */
@@ -42,7 +42,7 @@ function load(): Preferences {
   const corridor = Number(read(CORRIDOR_KEY));
   const smooth = read(SMOOTH_KEY);
   return {
-    corridorG: corridor === 2 || corridor === 4 ? corridor : 3,
+    corridorG: Number.isFinite(corridor) && corridor > 0 ? corridor : 3,
     smoothDefault: smooth === "real" || smooth === "smoothPlus" ? smooth : "smooth",
     pdfRedKeys: read(PDF_RED_KEY) !== "0",
     autoAdvance: read(AUTO_ADV_KEY) !== "0",
@@ -60,7 +60,8 @@ export function getPreferences(): Preferences {
   return prefs;
 }
 
-export function setCorridorG(value: 2 | 3 | 4) {
+export function setCorridorG(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return;
   prefs = { ...prefs, corridorG: value };
   write(CORRIDOR_KEY, String(value));
   emit();

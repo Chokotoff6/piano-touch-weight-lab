@@ -52,18 +52,20 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
               </div>
             </div>
             <div className={row}>
-              <span className="font-semibold">{en ? "Tolerance corridor" : "Corridor de tolérance"}</span>
-              <div className="flex gap-2">
-                {([2, 3, 4] as const).map((g) => (
-                  <Choice key={g} value={g} current={prefs.corridorG} label={`±${g} g${g === 3 ? def : ""}`} onPick={setCorridorG} />
-                ))}
-              </div>
-            </div>
-            <div className={row}>
-              <span className="font-semibold">{en ? "Out-of-tolerance keys in red in PDF" : "Touches hors tolérance en rouge dans le PDF"}</span>
+              <span className="font-semibold">{en ? "Out-of-tolerance keys in red (charts & PDF)" : "Touches hors tolérance en rouge (graphiques & PDF)"}</span>
               <div className="flex gap-2">
                 <Choice value={true} current={prefs.pdfRedKeys} label={(en ? "On" : "Activé") + def} onPick={setPdfRedKeys} />
                 <Choice value={false} current={prefs.pdfRedKeys} label={en ? "Off" : "Désactivé"} onPick={setPdfRedKeys} />
+              </div>
+            </div>
+            <div className={`${row} ${prefs.pdfRedKeys ? "" : "pointer-events-none opacity-40"}`}>
+              <span className="font-semibold">{en ? "Tolerance (relative to Standard Target)" : "Tolérance (par rapport à Cible Standard)"}</span>
+              <div className="flex items-center gap-1">
+                ±<input type="text" inputMode="decimal" disabled={!prefs.pdfRedKeys} defaultValue={String(prefs.corridorG)} key={prefs.corridorG}
+                  onFocus={(e) => e.currentTarget.select()}
+                  onBlur={(e) => { const v = Number(e.currentTarget.value.replace(",", ".")); if (Number.isFinite(v) && v > 0) setCorridorG(v); else e.currentTarget.value = String(prefs.corridorG); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                  className="w-14 rounded border border-gray-300 px-1 text-center" /> g{prefs.corridorG === 3 ? def : ""}
               </div>
             </div>
             <div className={row}>
