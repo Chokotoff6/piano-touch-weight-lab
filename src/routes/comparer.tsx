@@ -186,6 +186,10 @@ export function buildChartData(
       sameFricW: black ? undefined : sameFric,
       sameFricB: black ? sameFric : undefined,
       factoryFric: valueAt(standard?.friction, noteIndex, sampleIndex),
+      tolWd: valueAt((standard ?? FACTORY_STANDARD).wd, noteIndex, sampleIndex),
+      tolWa: valueAt((standard ?? FACTORY_STANDARD).wa, noteIndex, sampleIndex),
+      tolBal: valueAt((standard ?? FACTORY_STANDARD).balance, noteIndex, sampleIndex),
+      tolFric: valueAt((standard ?? FACTORY_STANDARD).friction, noteIndex, sampleIndex),
       wdMid: undefined,
       waMid: undefined,
       balMid: undefined,
@@ -443,45 +447,42 @@ const makeSampleDot = (radius: number) => {
 };
 const SampleDot = makeSampleDot(2.2);
 const ZoomDot = makeSampleDot(3);
-// Bouton Tolérance : clic = On/Off ; champ ±xx g éditable uniquement en On.
+// Bouton Tolérance : toujours actif ; icône seule ; 0 = alerte désactivée.
 function ToleranceButton({ zoomed, lang }: { zoomed: boolean; lang: string }) {
-  const { corridorG, pdfRedKeys: on } = usePreferences();
+  const { corridorG } = usePreferences();
   const [draft, setDraft] = useState(String(corridorG));
   useEffect(() => setDraft(String(corridorG)), [corridorG]);
   const commit = () => {
     const v = Number(draft.replace(",", "."));
-    if (Number.isFinite(v) && v > 0) setCorridorG(v); else setDraft(String(corridorG));
+    if (Number.isFinite(v) && v >= 0) setCorridorG(v); else setDraft(String(corridorG));
   };
   return (
-    <button
-      type="button"
+    <label
       data-pdf-hide
       title={lang === "en" ? "Tolerance" : "Tolérance"}
-      aria-pressed={on}
-      onClick={(event) => { event.stopPropagation(); setPdfRedKeys(!on); }}
-      className={`flex items-center rounded-full [border-width:1.3px] !border-green-600 bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-[0.45rem] px-[0.9rem] py-[0.225rem] text-[1.224rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"} ${on ? "opacity-100" : "opacity-60"}`}
+      onClick={(event) => event.stopPropagation()}
+      className={`flex cursor-text items-center rounded-full [border-width:1.3px] !border-black bg-white font-medium !text-black ${zoomed ? "gap-[0.45rem] px-[0.9rem] py-[0.225rem] text-[1.224rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"}`}
     >
-      <AlertTriangle size={zoomed ? 25.2 : 14} strokeWidth={2.5} className={`shrink-0 ${on ? "text-red-600" : ""}`} />
-      <span className="!text-black">{lang === "en" ? "Tolerance: ±" : "Tolérance : ±"}</span>
+      <AlertTriangle size={zoomed ? 25.2 : 14} strokeWidth={2.5} className="shrink-0 !text-black" />
+      <span className="!text-black">±</span>
       <input
         type="text"
         inputMode="decimal"
-        disabled={!on}
+        aria-label={lang === "en" ? "Tolerance" : "Tolérance"}
         value={draft}
-        onClick={(event) => event.stopPropagation()}
         onFocus={(event) => event.currentTarget.select()}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={commit}
         onKeyDown={(event) => { event.stopPropagation(); if (event.key === "Enter") { commit(); event.currentTarget.blur(); } }}
-        className={`rounded border border-gray-300 bg-white text-center !text-black disabled:bg-muted/50 ${zoomed ? "w-[3.2rem]" : "w-[1.9rem]"}`}
+        className={`rounded border border-gray-300 bg-white text-center !text-black ${zoomed ? "w-[3.2rem]" : "w-[1.9rem]"}`}
       />
       <span className="!text-black">g</span>
-    </button>
+    </label>
   );
 }
 // Clé de la Cible standard associée à une courbe du piano actuel.
 const stdKeyFor = (dataKey: string): string | null =>
-  dataKey.startsWith("wdCur") ? "stdWd" : dataKey.startsWith("waCur") ? "stdWa" : dataKey.startsWith("fricCur") ? "factoryFric" : dataKey.startsWith("balCur") ? "factoryBal" : null;
+  dataKey.startsWith("wdCur") ? "tolWd" : dataKey.startsWith("waCur") ? "tolWa" : dataKey.startsWith("fricCur") ? "tolFric" : dataKey.startsWith("balCur") ? "tolBal" : null;
 
 
 
@@ -932,7 +933,8 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   // avant la touche 1 afin de préserver l'espace entre l'axe et les courbes.
   const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [-3, 88];
   const DotComp = zoomed ? ZoomDot : SampleDot;
-  const { corridorG, pdfRedKeys: tolOn } = usePreferences();
+  const { corridorG } = usePreferences();
+  const tolOn = corridorG > 0;
   const title = familyTitle(family.id, lang, family.title);
   // Domaine vertical FIGÉ sur le mode groupé : l'échelle et ses graduations ne
   // sont jamais recalculées quand l'artisan bascule N/B (groupé, séparé,
@@ -997,7 +999,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             type="button"
             aria-label={bwLabel}
             onClick={() => cycleFor(family.id)}
-            className={`flex items-center rounded-full [border-width:1.3px] !border-green-600 bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-[0.45rem] px-[0.9rem] py-[0.225rem] text-[1.224rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"}`}
+            className={`flex items-center rounded-full [border-width:1.3px] !border-black bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-[0.45rem] px-[0.9rem] py-[0.225rem] text-[1.224rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"}`}
           >
             <RefreshCw size={zoomed ? 25.2 : 14} strokeWidth={2.5} className="shrink-0" />
             <span className="!text-black">{bwLabel}</span>
@@ -1010,7 +1012,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               event.stopPropagation();
               cycleSmoothMode();
             }}
-            className={`flex items-center rounded-full [border-width:1.3px] !border-green-600 bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-[0.45rem] px-[0.9rem] py-[0.225rem] text-[1.224rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"} ${smoothMode === "real" ? "opacity-60" : "opacity-100"}`}
+            className={`flex items-center rounded-full [border-width:1.3px] !border-black bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-[0.45rem] px-[0.9rem] py-[0.225rem] text-[1.224rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"} ${smoothMode === "real" ? "opacity-60" : "opacity-100"}`}
           >
             <Waves size={zoomed ? 25.2 : 14} strokeWidth={2.5} className="shrink-0" />
             <span className="!text-black">
@@ -1018,21 +1020,6 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             </span>
           </button>
           <ToleranceButton zoomed={zoomed} lang={lang} />
-          {zoomed && (
-            <button
-              type="button"
-              data-pdf-hide
-              aria-label={lang === "en" ? "Zoom navigation help" : "Aide à la navigation du zoom"}
-              aria-expanded={showZoomHelp}
-              onClick={(event) => {
-                event.stopPropagation();
-                setShowZoomHelp((visible) => !visible);
-              }}
-              className="flex items-center rounded-full [border-width:1.3px] !border-green-600 bg-white p-[0.3rem] !text-black hover:bg-gray-100"
-            >
-              <Info size={25.2} strokeWidth={2.5} className="shrink-0" />
-            </button>
-          )}
         </div>
       )}
       {zoomed && showCurveToggles && (
@@ -1063,10 +1050,24 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           </div>
         </div>
       )}
-      {zoomed && showZoomHelp && (
-        <div className="pointer-events-none absolute inset-x-0 top-11 z-10 flex flex-col items-center gap-1">
-          <WheelHintIcon />
-          <ArrowHintIcon />
+      {zoomed && (
+        <div data-pdf-hide className="absolute bottom-2 right-3 z-20 flex items-end gap-2">
+          {showZoomHelp && (
+            <div className="pointer-events-none flex flex-col items-center gap-1 rounded-lg bg-white/90 p-1">
+              <WheelHintIcon />
+              <ArrowHintIcon />
+            </div>
+          )}
+          <span
+            role="button"
+            tabIndex={0}
+            aria-label={lang === "en" ? "Zoom navigation help" : "Aide à la navigation du zoom"}
+            aria-expanded={showZoomHelp}
+            onClick={(event) => { event.stopPropagation(); setShowZoomHelp((visible) => !visible); }}
+            className="cursor-pointer !text-black"
+          >
+            <Info size={25.2} strokeWidth={2.5} />
+          </span>
         </div>
       )}
       <div
@@ -1198,10 +1199,10 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
         </ResponsiveContainer>
         {/* Témoins de défilement : touches masquées à gauche / à droite de la fenêtre de 44. */}
         {zoomed && start > 1 && (
-          <div aria-hidden className="pointer-events-none absolute left-1 top-1/2 -translate-y-1/2 text-xl leading-none text-foreground">◀</div>
+          <button type="button" data-pdf-hide aria-label={lang === "en" ? "Scroll left" : "Défiler à gauche"} onClick={(event) => { event.stopPropagation(); setZoomStart((value) => Math.max(1, Math.round(value) - 11)); }} className="absolute left-1 top-1/2 z-20 -translate-y-1/2 cursor-pointer text-2xl leading-none !text-black hover:opacity-70">◀</button>
         )}
         {zoomed && start + ZOOM_WINDOW - 1 < 88 && (
-          <div aria-hidden className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 text-xl leading-none text-foreground">▶</div>
+          <button type="button" data-pdf-hide aria-label={lang === "en" ? "Scroll right" : "Défiler à droite"} onClick={(event) => { event.stopPropagation(); setZoomStart((value) => Math.min(88 - ZOOM_WINDOW + 1, Math.round(value) + 11)); }} className="absolute right-1 top-1/2 z-20 -translate-y-1/2 cursor-pointer text-2xl leading-none !text-black hover:opacity-70">▶</button>
         )}
       </div>
     </Frame>
