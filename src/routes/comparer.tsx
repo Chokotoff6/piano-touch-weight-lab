@@ -116,6 +116,11 @@ export type ChartPoint = {
   sameFric: number | undefined;
   sameFricW: number | undefined;
   sameFricB: number | undefined;
+  // Références de tolérance (Cible standard), toujours présentes même si la courbe verte est masquée.
+  tolWd?: number | undefined;
+  tolWa?: number | undefined;
+  tolBal?: number | undefined;
+  tolFric?: number | undefined;
   factoryFric: number | undefined;
   wdMid: number | undefined;
   waMid: number | undefined;
