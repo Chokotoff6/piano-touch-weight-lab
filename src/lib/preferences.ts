@@ -39,10 +39,12 @@ const write = (key: string, value: string) => {
 
 function load(): Preferences {
   if (typeof window === "undefined") return { corridorG: 3, smoothDefault: "smooth", pdfRedKeys: true, autoAdvance: true };
-  const corridor = Number(read(CORRIDOR_KEY));
+  const rawCorridor = read(CORRIDOR_KEY);
+  const corridor = rawCorridor === null || rawCorridor === "" ? NaN : Number(rawCorridor);
   const smooth = read(SMOOTH_KEY);
   return {
-    corridorG: Number.isFinite(corridor) && corridor > 0 ? corridor : 3,
+    // 0 = alerte désactivée dans les faits.
+    corridorG: Number.isFinite(corridor) && corridor >= 0 ? corridor : 3,
     smoothDefault: smooth === "real" || smooth === "smoothPlus" ? smooth : "smooth",
     pdfRedKeys: read(PDF_RED_KEY) !== "0",
     autoAdvance: read(AUTO_ADV_KEY) !== "0",
@@ -61,7 +63,7 @@ export function getPreferences(): Preferences {
 }
 
 export function setCorridorG(value: number) {
-  if (!Number.isFinite(value) || value <= 0) return;
+  if (!Number.isFinite(value) || value < 0) return;
   prefs = { ...prefs, corridorG: value };
   write(CORRIDOR_KEY, String(value));
   emit();

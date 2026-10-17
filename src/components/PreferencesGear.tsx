@@ -63,7 +63,7 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
               <div className="flex items-center gap-1">
                 ±<input type="text" inputMode="decimal" disabled={!prefs.pdfRedKeys} defaultValue={String(prefs.corridorG)} key={prefs.corridorG}
                   onFocus={(e) => e.currentTarget.select()}
-                  onBlur={(e) => { const v = Number(e.currentTarget.value.replace(",", ".")); if (Number.isFinite(v) && v > 0) setCorridorG(v); else e.currentTarget.value = String(prefs.corridorG); }}
+                  onBlur={(e) => { const v = Number(e.currentTarget.value.replace(",", ".")); if (Number.isFinite(v) && v >= 0) setCorridorG(v); else e.currentTarget.value = String(prefs.corridorG); }}
                   onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
                   className="w-14 rounded border border-gray-300 px-1 text-center" /> g{prefs.corridorG === 3 ? def : ""}
               </div>

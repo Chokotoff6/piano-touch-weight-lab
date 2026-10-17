@@ -3520,7 +3520,7 @@ function Index() {
               const prefs = getPreferences();
               const measured = Number(rows[index]![field]);
               const standard = field === "wd" ? 68 - (10 * index) / 87 : 56 - (8 * index) / 87;
-              return prefs.pdfRedKeys && Number.isFinite(measured) && Math.abs(measured - Math.round(standard * 10) / 10) > prefs.corridorG
+              return prefs.pdfRedKeys && prefs.corridorG > 0 && Number.isFinite(measured) && Math.abs(measured - Math.round(standard * 10) / 10) > prefs.corridorG
                 ? "#dc2626"
                 : "#000000";
             })(),
