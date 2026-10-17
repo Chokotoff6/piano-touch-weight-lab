@@ -15,6 +15,7 @@ import { scopeDemo } from "@/lib/demo-scope";
 import { isDemoActive, DEMO_LOADED_EVENT } from "@/lib/demo-mode";
 import { getPreferences, usePreferences, setCorridorG, setPdfRedKeys } from "@/lib/preferences";
 import { AlertTriangle } from "lucide-react";
+import { DRAFT_EDITED_EVENT, readDraftPair, validatePair, writeDraftPair } from "@/lib/zoom-edit";
 import {
   buildCurrentPiano,
   loadCurrentPiano,
@@ -896,10 +897,62 @@ type SubChartCtx = {
 // éviter que React ne le démonte/remonte à chaque changement d'état clavier : un
 // remontage détruit le SVG Recharts au moment exact du dispatch synthétique, ce qui
 // empêchait les flèches ◄ ► d'allumer la pastille.
+// Édition directe en zoom (Option A) : PD seul, PR seul, ou les deux sur Friction/Équilibre.
+function ZoomEditPanel({ note, familyId, lang, onClose }: { note: number; familyId: string; lang: string; onClose: () => void }) {
+  const en = lang === "en";
+  const initial = typeof window !== "undefined" ? readDraftPair(note) : null;
+  const [wd, setWd] = useState(initial?.wd ?? "");
+  const [wa, setWa] = useState(initial?.wa ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const showWd = familyId !== "wa";
+  const showWa = familyId !== "wd";
+  if (!initial) return null;
+  const commit = () => {
+    const d = Number(wd.replace(",", "."));
+    const a = Number(wa.replace(",", "."));
+    const msg = validatePair(d, a, en);
+    if (msg) { setError(msg); window.setTimeout(() => setError(null), 5000); return false; }
+    writeDraftPair(note, wd.trim(), wa.trim());
+    setError(null);
+    return true;
+  };
+  const field = (label: string, value: string, set: (v: string) => void, autoFocus: boolean) => (
+    <label className="flex items-center gap-1 font-medium">
+      {label}
+      <input
+        autoFocus={autoFocus}
+        inputMode="decimal"
+        value={value}
+        onFocus={(e) => e.currentTarget.select()}
+        onChange={(e) => set(e.target.value)}
+        onKeyDown={(e) => {
+          e.stopPropagation();
+          if (e.key === "Enter") { if (commit()) onClose(); else e.currentTarget.select(); }
+          if (e.key === "Escape") onClose();
+        }}
+        className="w-[4.2rem] rounded border border-black bg-white px-1 text-center !text-black"
+      />
+      g
+    </label>
+  );
+  return (
+    <div data-pdf-hide onClick={(e) => e.stopPropagation()} className="absolute left-1/2 top-2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-full border-[1.3px] border-black bg-white px-4 py-1 text-base !text-black shadow">
+      <span className="font-bold">{en ? "Key" : "Touche"} {note}</span>
+      {showWd && field(en ? "Down" : "PD", wd, setWd, true)}
+      {showWa && field(en ? "Up" : "PR", wa, setWa, !showWd)}
+      <button type="button" onClick={() => { if (commit()) onClose(); }} className="rounded-full border border-black px-2 hover:bg-gray-100">OK</button>
+      <button type="button" aria-label={en ? "Close" : "Fermer"} onClick={onClose} className="px-1 hover:opacity-70">✕</button>
+      {error && <span className="absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-sm text-white">{error}</span>}
+    </div>
+  );
+}
+
 function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[number]; zoomed?: boolean; ctx: SubChartCtx }) {
   const { chartData, keyFilter: baseKeyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, smoothMode, cycleSmoothMode, showSourceControls, filters, cycleFor, lang, zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode, plotRef, lastMouseY, keyboardModeRef, lastMouseNote, onMouseTakeover } = ctx;
   const [showZoomHelp, setShowZoomHelp] = useState(false);
   // Interrupteurs ON/OFF des trois courbes, propres à la session de zoom.
+  // Option A : touche ouverte en édition dans le zoom.
+  const [editNote, setEditNote] = useState<number | null>(null);
   const [zoomCurveOff, setZoomCurveOff] = useState<{ current: boolean; reference: boolean; target: boolean }>({ current: false, reference: false, target: false });
   // Réglage N/B strictement indépendant pour chaque cadre graphique.
   const keyFilter = filters[family.id] ?? baseKeyFilter;
@@ -1070,7 +1123,11 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           </span>
         </div>
       )}
+      {zoomed && editNote !== null && (
+        <ZoomEditPanel key={editNote} note={editNote} familyId={family.id} lang={lang} onClose={() => setEditNote(null)} />
+      )}
       <div
+        onClickCapture={zoomed ? () => { const n = lastMouseNote.current; if (n !== null && n >= 1 && n <= 88) setEditNote(Math.round(n)); } : undefined}
         ref={zoomed ? plotRef : undefined}
         className="relative h-[300px] w-full lg:h-[calc(100%_-_2.5rem)]"
         // Mode non-zoom : tout le bloc graphique (axes, repères, courbes,
@@ -1944,12 +2001,14 @@ function Comparer() {
     window.addEventListener("focus", onEvent);
     window.addEventListener("storage", onEvent);
     window.addEventListener(DEMO_LOADED_EVENT, onEvent);
+    window.addEventListener(DRAFT_EDITED_EVENT, onEvent);
     document.addEventListener("visibilitychange", onEvent);
     return () => {
       cancelled = true;
       window.removeEventListener("focus", onEvent);
       window.removeEventListener("storage", onEvent);
       window.removeEventListener(DEMO_LOADED_EVENT, onEvent);
+      window.removeEventListener(DRAFT_EDITED_EVENT, onEvent);
       document.removeEventListener("visibilitychange", onEvent);
     };
   }, []);
