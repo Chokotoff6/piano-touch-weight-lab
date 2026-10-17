@@ -25,6 +25,7 @@ import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { decideCloudAction, markCloudSync, resetConsent } from "@/lib/cloud-gate";
 import { markCsvOrigin } from "@/lib/anti-bot";
 import { DEMO_LOADED_EVENT, isDemoActive } from "@/lib/demo-mode";
+import { DRAFT_EDITED_EVENT } from "@/lib/zoom-edit";
 
 export const Route = createFileRoute("/resultats")({
   head: () => ({
@@ -133,7 +134,11 @@ function Resultats() {
     // on relit alors le brouillon pour tracer moyennes et courbes.
     const onDemoLoaded = () => setDraft(readDraft());
     window.addEventListener(DEMO_LOADED_EVENT, onDemoLoaded);
-    return () => window.removeEventListener(DEMO_LOADED_EVENT, onDemoLoaded);
+    window.addEventListener(DRAFT_EDITED_EVENT, onDemoLoaded);
+    return () => {
+      window.removeEventListener(DEMO_LOADED_EVENT, onDemoLoaded);
+      window.removeEventListener(DRAFT_EDITED_EVENT, onDemoLoaded);
+    };
   }, []);
 
   // Bouton « Importer » de la barre supérieure : ouvre le sélecteur de fichier
