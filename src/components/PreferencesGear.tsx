@@ -5,6 +5,7 @@ import { useLang } from "@/data/translations";
 import { isDemoActive, toggleDemoMode } from "@/lib/demo-mode";
 import {
   usePreferences, setCorridorG, setSmoothDefault, setPdfRedKeys, setAutoAdvance, type SmoothPref,
+  setTargetMode, setCustomTarget, DEFAULT_TARGETS, type TargetKind, type TargetRamp,
 } from "@/lib/preferences";
 
 function Choice<T extends string | number | boolean>({ value, current, label, onPick }: { value: T; current: T; label: string; onPick: (v: T) => void }) {
@@ -17,6 +18,27 @@ function Choice<T extends string | number | boolean>({ value, current, label, on
     >
       {label}
     </button>
+  );
+}
+
+function RampInput({ value, disabled, onCommit }: { value: number; disabled: boolean; onCommit: (v: number) => void }) {
+  return (
+    <input type="text" inputMode="decimal" disabled={disabled} defaultValue={String(value)} key={String(value) + disabled}
+      onFocus={(e) => e.currentTarget.select()}
+      onBlur={(e) => { const v = Number(e.currentTarget.value.replace(",", ".")); if (Number.isFinite(v) && v > 0 && v < 150) onCommit(v); else e.currentTarget.value = String(value); }}
+      onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+      className="w-14 rounded border border-gray-300 px-1 text-center disabled:bg-muted disabled:text-muted-foreground" />
+  );
+}
+
+function TargetRow({ kind, label, ramp, disabled }: { kind: TargetKind; label: string; ramp: TargetRamp; disabled: boolean }) {
+  const set = (k: keyof TargetRamp) => (v: number) => setCustomTarget(kind, { ...ramp, [k]: v });
+  return (
+    <div className="grid grid-cols-[4.5rem_auto_auto] items-center gap-x-2 gap-y-1">
+      <span className="font-medium">{label}</span>
+      <span>PD <RampInput value={ramp.wdStart} disabled={disabled} onCommit={set("wdStart")} /> → <RampInput value={ramp.wdEnd} disabled={disabled} onCommit={set("wdEnd")} /> g</span>
+      <span>PR <RampInput value={ramp.waStart} disabled={disabled} onCommit={set("waStart")} /> → <RampInput value={ramp.waEnd} disabled={disabled} onCommit={set("waEnd")} /> g</span>
+    </div>
   );
 }
 
@@ -67,6 +89,20 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
                   onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
                   className="w-14 rounded border border-gray-300 px-1 text-center" /> g{prefs.corridorG === 3 ? def : ""}
               </div>
+            </div>
+            <div className={row}>
+              <span className="font-semibold">{en ? "Standard Target (A0 → last C)" : "Cible standard (La0 → dernier Do)"}</span>
+              <div className="flex gap-2">
+                <Choice value="default" current={prefs.targetMode} label={en ? "Default" : "Défaut"} onPick={setTargetMode} />
+                <Choice value="custom" current={prefs.targetMode} label={en ? "Custom" : "Personnalisé"} onPick={setTargetMode} />
+              </div>
+              {(["upright", "grand"] as TargetKind[]).map((k) => (
+                <TargetRow key={k} kind={k} label={k === "upright" ? (en ? "Upright" : "Droit") : (en ? "Grand" : "Queue")}
+                  ramp={prefs.targetMode === "custom" ? prefs.customTargets[k] : DEFAULT_TARGETS[k]} disabled={prefs.targetMode !== "custom"} />
+              ))}
+              <span className="text-xs italic text-muted-foreground">
+                {en ? "Upright or grand is picked automatically from the current piano type." : "Droit ou Queue est choisi automatiquement selon le type du piano en cours."}
+              </span>
             </div>
             <div className={row}>
               <span className="font-semibold">{en ? "Curve smoothing" : "Lissage des courbes"}</span>
