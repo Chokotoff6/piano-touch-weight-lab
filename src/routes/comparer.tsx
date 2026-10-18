@@ -13,7 +13,7 @@ import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
 import { parseKwDocument } from "@/lib/kw-file";
 import { scopeDemo } from "@/lib/demo-scope";
 import { isDemoActive, DEMO_LOADED_EVENT } from "@/lib/demo-mode";
-import { getPreferences, usePreferences, setCorridorG, setPdfRedKeys } from "@/lib/preferences";
+import { getPreferences, usePreferences, setCorridorG, setPdfRedKeys, effectiveTarget, type TargetKind, type TargetRamp } from "@/lib/preferences";
 import { AlertTriangle } from "lucide-react";
 import { DRAFT_EDITED_EVENT, readDraftPair, validatePair, writeDraftPair } from "@/lib/zoom-edit";
 import {
@@ -1852,6 +1852,7 @@ function Comparer() {
   const [draftKeyCounts, setDraftKeyCounts] = useState<{ white: number; black: number } | null>(null);
   const [standard, setStandard] = useState<RefProfile>(FACTORY_STANDARD);
   const [standardLabel, setStandardLabel] = useState("CIBLE (Internet)");
+  const targetPrefs = usePreferences();
 
   const [cloudProfile, setCloudProfile] = useState<RefProfile | null>(null);
   const [cloudSampleCount, setCloudSampleCount] = useState(0);
