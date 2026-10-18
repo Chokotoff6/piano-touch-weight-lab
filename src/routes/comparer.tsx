@@ -13,7 +13,7 @@ import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
 import { parseKwDocument } from "@/lib/kw-file";
 import { scopeDemo } from "@/lib/demo-scope";
 import { isDemoActive, DEMO_LOADED_EVENT } from "@/lib/demo-mode";
-import { getPreferences, usePreferences, setCorridorG, setPdfRedKeys } from "@/lib/preferences";
+import { getPreferences, usePreferences, setCorridorG, setPdfRedKeys, effectiveTarget, type TargetKind, type TargetRamp } from "@/lib/preferences";
 import { AlertTriangle } from "lucide-react";
 import { DRAFT_EDITED_EVENT, readDraftPair, validatePair, writeDraftPair } from "@/lib/zoom-edit";
 import {
@@ -399,11 +399,11 @@ function databaseUsage(value: Exclude<UsageLevel, "all">) {
 }
 
 // Abaque théorique d'usine calculé en local (aucun appel réseau).
-function makeFactoryStandard(): RefProfile {
+function makeFactoryStandard(target: TargetRamp = { wdStart: 68, wdEnd: 58, waStart: 56, waEnd: 48 }): RefProfile {
   const ramp = (start: number, end: number) =>
     Array.from({ length: 88 }, (_, index) => n1(start + ((end - start) * index) / 87));
-  const wd = ramp(68, 58);
-  const wa = ramp(56, 48);
+  const wd = ramp(target.wdStart, target.wdEnd);
+  const wa = ramp(target.waStart, target.waEnd);
   return {
     wd,
     wa,
@@ -1852,6 +1852,7 @@ function Comparer() {
   const [draftKeyCounts, setDraftKeyCounts] = useState<{ white: number; black: number } | null>(null);
   const [standard, setStandard] = useState<RefProfile>(FACTORY_STANDARD);
   const [standardLabel, setStandardLabel] = useState("CIBLE (Internet)");
+  const targetPrefs = usePreferences();
 
   const [cloudProfile, setCloudProfile] = useState<RefProfile | null>(null);
   const [cloudSampleCount, setCloudSampleCount] = useState(0);
@@ -2027,6 +2028,15 @@ function Comparer() {
           ? "piano droit"
           : "";
       const brand = (mine?.brand ?? "").trim();
+      // Préférences : cible Droit/Queue selon le type du piano en cours.
+      const kind: TargetKind = canonicalType === "piano à queue" ? "grand" : "upright";
+      const kindLabel = kind === "grand" ? "QUEUE" : "DROIT";
+      if (targetPrefs.targetMode === "custom") {
+        setStandard(makeFactoryStandard(effectiveTarget(kind, targetPrefs)));
+        setStandardLabel(`CIBLE PERSONNALISÉE (${kindLabel})`);
+        return;
+      }
+      const defaultStd = makeFactoryStandard(effectiveTarget(kind, targetPrefs));
       const result = await externalSupabase
         .from("piano_specs_usine")
         .select("brand,model,type_piano,wa_bass,wa_treble,friction_cible");
@@ -2038,8 +2048,8 @@ function Comparer() {
       const rows = typed.length > 0 ? typed : allRows;
 
       if (rows.length === 0) {
-        setStandard(FACTORY_STANDARD);
-        setStandardLabel("CIBLE (Internet)");
+        setStandard(defaultStd);
+        setStandardLabel(`CIBLE STANDARD (${kindLabel})`);
         return;
       }
       const match = brand
@@ -2048,8 +2058,13 @@ function Comparer() {
       const fallback = rows.find(
         (row) => row.brand === "STANDARD" && row.model === "UNIVERSEL",
       );
-      const spec = match ?? fallback ?? rows[0];
-      if (!spec) return;
+      if (!match) {
+        setStandard(defaultStd);
+        setStandardLabel(`CIBLE STANDARD (${kindLabel})`);
+        return;
+      }
+      void fallback;
+      const spec = match;
       setStandard(profileFromSpec(spec));
       setStandardLabel(
         spec.brand === "STANDARD"
@@ -2059,7 +2074,7 @@ function Comparer() {
     }
     void loadFactorySpec();
     return () => { cancelled = true; };
-  }, [mine]);
+  }, [mine, targetPrefs.targetMode, targetPrefs.customTargets]);
 
 
   // Compteur global de fiches pianos publiées sur le Cloud (hors ligne tampon).

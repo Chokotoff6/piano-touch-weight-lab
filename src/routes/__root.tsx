@@ -372,7 +372,7 @@ function RootComponent() {
               {topbar.cloudSaving ? (
                 <span className="group/save relative inline-block">
                   <span aria-disabled="true" className={lockedLinkClass}>
-                    {lang === "en" ? "Inputs" : "Saisie"}
+                    {lang === "en" ? "Weighing" : "Pesée"}
                   </span>
                   <span className="pointer-events-none absolute left-0 top-full z-[99999] mt-2 hidden w-72 whitespace-normal break-words rounded border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-black shadow-md group-hover/save:block">
                     {lang === "en"
@@ -382,12 +382,12 @@ function RootComponent() {
                 </span>
               ) : (
                 <Link to="/saisie" className={linkClass} activeProps={{ className: activeLinkClass }}>
-                  {lang === "en" ? "Inputs" : "Saisie"}
+                  {lang === "en" ? "Weighing" : "Pesée"}
                 </Link>
               )}
               {topbar.gateReady ? (
                 <Link to="/resultats" className={linkClass} activeProps={{ className: activeLinkClass }}>
-                  {lang === "en" ? "Results" : "Résultats"}
+                  {lang === "en" ? "Dashboard" : "Bilan"}
                 </Link>
               ) : (
                 <span className="relative inline-block">
@@ -398,7 +398,7 @@ function RootComponent() {
                     onBlur={() => setResTipOpen(false)}
                     className={lockedLinkClass}
                   >
-                    {lang === "en" ? "Results" : "Résultats"}
+                    {lang === "en" ? "Dashboard" : "Bilan"}
                   </button>
                   {resTipOpen && (
                     <span className="pointer-events-none absolute left-0 top-full z-[99999] mt-2 block w-72 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-950 shadow-lg">
@@ -414,17 +414,17 @@ function RootComponent() {
                     className={linkClass}
                     activeProps={{ className: activeLinkClass }}
                   >
-                    {lang === "en" ? "Compare" : "Comparer"}
+                    {lang === "en" ? "Analysis" : "Analyse"}
                   </Link>
                 ) : (
                   <span
                     className={lockedLinkClass}
                     aria-disabled="true"
                     onClick={() => showTopbarAlert("compare", lang === "en"
-                      ? "Visit the Results page first to unlock the Compare page."
-                      : "Consultez d'abord la page Résultats pour débloquer la Comparaison.")}
+                      ? "Visit the Dashboard page first to unlock the Analysis page."
+                      : "Consultez d'abord la page Bilan pour débloquer l'Analyse.")}
                   >
-                    {lang === "en" ? "Compare" : "Comparer"}
+                    {lang === "en" ? "Analysis" : "Analyse"}
                   </span>
                 )}
 
@@ -654,6 +654,7 @@ function RootComponent() {
                      >
                        FR
                      </Button>
+                     <span className="ml-3"><PreferencesGear onDemoToggled={() => void rootNavigate({ to: "/saisie" })} /></span>
                    </div>
                    {(pathname === "/resultats" || pathname === "/comparer") && (
                     <div
@@ -712,9 +713,9 @@ function RootComponent() {
       {!isHome && (
         <div className="relative !z-[60] mx-auto w-full max-w-7xl overflow-visible px-[100px] pb-2 pt-3">
           <div className="relative !z-[60] flex items-center justify-end gap-2">
-            <PreferencesGear onDemoToggled={() => void rootNavigate({ to: "/saisie" })} />
             {/* Infobulle au survol du libellé : gris graphite, sans flèche ni croix. */}
             <div className="relative">
+              {demoVisible && (
               <button
                 type="button"
                 onMouseEnter={() => {
@@ -736,6 +737,7 @@ function RootComponent() {
               >
                 {lang === "en" ? "Demo mode" : "Mode démo"}
               </button>
+              )}
               {demoTipOpen && (
                 <div
                   role="tooltip"
