@@ -2074,7 +2074,7 @@ function Comparer() {
     }
     void loadFactorySpec();
     return () => { cancelled = true; };
-  }, [mine, targetPrefs]);
+  }, [mine, targetPrefs.targetMode, targetPrefs.customTargets]);
 
 
   // Compteur global de fiches pianos publiées sur le Cloud (hors ligne tampon).
