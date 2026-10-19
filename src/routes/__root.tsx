@@ -33,6 +33,7 @@ import likedLogoFrAsset from "@/assets/image_soutien_v5.png.asset.json";
 import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
 import { ensureDemoDefault, toggleDemoMode, DEMO_BANNER_V2_KEY, isDemoActive, DEMO_LOADED_EVENT, DEMO_MODE_CHANGED_EVENT } from "@/lib/demo-mode";
 import { PreferencesGear } from "@/components/PreferencesGear";
+import { usePreferences, setPdfRedKeys } from "@/lib/preferences";
 import { AppFooter } from "@/components/AppFooter";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import animatedKeyweightLogo from "@/assets/logo-kw-animated.svg?raw";
@@ -165,6 +166,7 @@ function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const rootNavigate = useNavigate();
   const topbar = useTopbarState();
+  const prefs = usePreferences();
   const lang = useLang();
   const [consentOpen, setConsentOpen] = useState(false);
   /** Fenêtre juridique complète, ouvrable depuis le message de consentement. */
