@@ -18,6 +18,8 @@ type Preferences = {
   corridorG: number;
   /** Rendu de lissage par défaut des graphiques. */
   smoothDefault: SmoothPref;
+  /** Rendu de lissage par défaut de la page Analyse. */
+  smoothAnalyse: SmoothPref;
   /** Touches hors tolérance surlignées en rouge dans le PDF. */
   pdfRedKeys: boolean;
   /** Avance automatique après 2 chiffres valides. */
@@ -29,6 +31,7 @@ type Preferences = {
 
 const CORRIDOR_KEY = "ptw_pref_corridor_g";
 const SMOOTH_KEY = "ptw_pref_smooth";
+const SMOOTH_ANALYSE_KEY = "ptw_pref_smooth_analyse";
 const PDF_RED_KEY = "ptw_pref_pdf_red";
 const AUTO_ADV_KEY = "ptw_pref_auto_advance";
 const TARGET_MODE_KEY = "ptw_pref_target_mode";
@@ -62,14 +65,16 @@ const write = (key: string, value: string) => {
 };
 
 function load(): Preferences {
-  if (typeof window === "undefined") return { corridorG: 3, smoothDefault: "smooth", pdfRedKeys: true, autoAdvance: true, targetMode: "default", customTargets: { ...DEFAULT_TARGETS } };
+  if (typeof window === "undefined") return { corridorG: 3, smoothDefault: "smooth", smoothAnalyse: "real", pdfRedKeys: true, autoAdvance: true, targetMode: "default", customTargets: { ...DEFAULT_TARGETS } };
   const rawCorridor = read(CORRIDOR_KEY);
   const corridor = rawCorridor === null || rawCorridor === "" ? NaN : Number(rawCorridor);
   const smooth = read(SMOOTH_KEY);
+  const smoothA = read(SMOOTH_ANALYSE_KEY);
   return {
     // 0 = alerte désactivée dans les faits.
     corridorG: Number.isFinite(corridor) && corridor >= 0 ? corridor : 3,
     smoothDefault: smooth === "real" || smooth === "smoothPlus" ? smooth : "smooth",
+    smoothAnalyse: smoothA === "smooth" || smoothA === "smoothPlus" ? smoothA : "real",
     pdfRedKeys: read(PDF_RED_KEY) !== "0",
     autoAdvance: read(AUTO_ADV_KEY) !== "0",
     targetMode: read(TARGET_MODE_KEY) === "custom" ? "custom" : "default",
@@ -98,6 +103,12 @@ export function setCorridorG(value: number) {
 export function setSmoothDefault(value: SmoothPref) {
   prefs = { ...prefs, smoothDefault: value };
   write(SMOOTH_KEY, value);
+  emit();
+}
+
+export function setSmoothAnalyse(value: SmoothPref) {
+  prefs = { ...prefs, smoothAnalyse: value };
+  write(SMOOTH_ANALYSE_KEY, value);
   emit();
 }
 
