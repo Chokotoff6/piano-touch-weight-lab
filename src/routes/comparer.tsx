@@ -626,11 +626,12 @@ const NOTE_NAMES_EN = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#
 function noteName(keyIndex: number, en: boolean) {
   if (!Number.isFinite(keyIndex)) return "";
   const names = en ? NOTE_NAMES_EN : NOTE_NAMES_FR;
-  return names[(((keyIndex + 8) % 12) + 12) % 12] ?? "";
+  const midi = Math.round(keyIndex) + 20;
+  return `${names[((midi % 12) + 12) % 12] ?? ""}${Math.floor(midi / 12) - 1}`;
 }
 
-function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; chartData?: ChartPoint[] }) {
-  const { active, payload, label, chartData } = props;
+function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; chartData?: ChartPoint[]; rich?: boolean }) {
+  const { active, payload, label, chartData, rich } = props;
   const lang = useLang();
   const en = lang === "en";
   if (!active) return null;
@@ -650,30 +651,51 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
       return rankOf(b.dataKey) - rankOf(a.dataKey);
     });
   if (valid.length === 0) return null;
+  const fmt = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace(".", en ? "." : ",");
+  const header = <div className="mb-1 font-bold !text-black">{noteName(Number(label), en)}</div>;
+  if (rich) {
+    // Analyse : Piano actuel en vedette, autres sources avec leur écart.
+    const cur = valid.find((entry) => isCurrentKey(entry.dataKey));
+    const others = valid.filter((entry) => entry !== cur);
+    return (
+      <div className="pointer-events-none !z-50 rounded-md border border-black bg-white px-3 py-2 text-xs">
+        {header}
+        {cur && (
+          <div className="mb-1 flex items-baseline justify-between gap-4 whitespace-nowrap !text-black">
+            <span>{en ? "Current piano" : "Piano actuel"}</span>
+            <span className="text-lg font-bold tabular-nums">{fmt(Number(cur.value))} g</span>
+          </div>
+        )}
+        {others.map((entry) => {
+          const color = entry.color ?? tooltipColorFor(entry.name ?? "");
+          const delta = cur ? Number(cur.value) - Number(entry.value) : NaN;
+          return (
+            <div key={entry.dataKey} className="flex items-center justify-between gap-4 whitespace-nowrap" style={{ color }}>
+              <span>{entry.name}</span>
+              <span className="tabular-nums">
+                {fmt(Number(entry.value))} g
+                {Number.isFinite(delta) && <span className="ml-2 font-semibold">({delta >= 0 ? "+" : "−"}{fmt(Math.abs(delta))})</span>}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
   return (
     <div className="pointer-events-none !z-50 rounded-md border border-black bg-white px-3 py-2 text-xs">
-      <div className="mb-1 font-bold !text-black">{en ? "Key" : "Touche"} {label} - {noteName(Number(label), en)}</div>
+      {header}
       {valid.map((entry) => {
         const color = entry.color ?? tooltipColorFor(entry.name ?? "");
-        // Sur /resultats les courbes n'ont pas de nom : Recharts retombe sur la clé
-        // technique ("wdCur"). On affiche alors "Blanche" / "Noire" selon la note.
-        const rawName = entry.name?.trim() ?? "";
-        const isRawKey = rawName === "" || rawName === String(entry.dataKey ?? "");
-        const name = isRawKey ? (isBlackKey(Number(label)) ? "Noire" : "Blanche") : rawName;
         return (
-          <div key={entry.dataKey} className="flex items-center justify-between gap-4 whitespace-nowrap" style={{ color }}>
-            <span>{name}</span>
-            <span className="font-semibold tabular-nums">{Math.round(Number(entry.value ?? 0))} gr.</span>
+          <div key={entry.dataKey} className="whitespace-nowrap text-base font-semibold tabular-nums" style={{ color }}>
+            {fmt(Number(entry.value))} g
           </div>
         );
       })}
     </div>
   );
 }
-
-
-
-
 
 type LineDef = { dataKey: SeriesKey; name: string; shortName: string; color: string; real?: boolean; hidden?: boolean; dashed?: boolean };
 const FAMILIES: Array<{ id: string; title: string; domain: [number, number]; lines: LineDef[] }> = [
@@ -876,6 +898,7 @@ type SubChartCtx = {
   smoothMode: "real" | "smooth" | "smoothPlus";
   cycleSmoothMode: () => void;
   showSourceControls: boolean;
+  simple: boolean;
   filters: Record<string, KeyFilter>;
   cycleFor: (familyId: string) => void;
   lang: string;
@@ -898,61 +921,79 @@ type SubChartCtx = {
 // remontage détruit le SVG Recharts au moment exact du dispatch synthétique, ce qui
 // empêchait les flèches ◄ ► d'allumer la pastille.
 // Édition directe en zoom (Option A) : PD seul, PR seul, ou les deux sur Friction/Équilibre.
-function ZoomEditPanel({ note, familyId, lang, onClose }: { note: number; familyId: string; lang: string; onClose: () => void }) {
+function ZoomEditPanel({ note, familyId, lang, x, y, onClose }: { note: number; familyId: string; lang: string; x: number; y: number; onClose: () => void }) {
   const en = lang === "en";
   const initial = typeof window !== "undefined" ? readDraftPair(note) : null;
-  const [wd, setWd] = useState(initial?.wd ?? "");
-  const [wa, setWa] = useState(initial?.wa ?? "");
+  const editable = familyId === "wd" || familyId === "wa";
+  const [value, setValue] = useState(initial ? (familyId === "wa" ? initial.wa : initial.wd) : "");
   const [error, setError] = useState<string | null>(null);
-  const showWd = familyId !== "wa";
-  const showWa = familyId !== "wd";
+  const boxRef = useRef<HTMLDivElement>(null);
+  // Clic en dehors : annulation sans modification.
+  useEffect(() => {
+    const onDown = (event: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(event.target as Node)) onClose();
+    };
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    document.addEventListener("mousedown", onDown, true);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDown, true); document.removeEventListener("keydown", onKey); };
+  }, [onClose]);
   if (!initial) return null;
   const commit = () => {
-    const d = Number(wd.replace(",", "."));
-    const a = Number(wa.replace(",", "."));
-    const msg = validatePair(d, a, en);
+    const wd = familyId === "wa" ? initial.wd : value.trim();
+    const wa = familyId === "wa" ? value.trim() : initial.wa;
+    const msg = validatePair(Number(wd.replace(",", ".")), Number(wa.replace(",", ".")), en);
     if (msg) { setError(msg); window.setTimeout(() => setError(null), 5000); return false; }
-    writeDraftPair(note, wd.trim(), wa.trim());
-    setError(null);
+    writeDraftPair(note, wd, wa);
     return true;
   };
-  const field = (label: string, value: string, set: (v: string) => void, autoFocus: boolean) => (
-    <label className="flex items-center gap-1 font-medium">
-      {label}
-      <input
-        autoFocus={autoFocus}
-        inputMode="decimal"
-        value={value}
-        onFocus={(e) => e.currentTarget.select()}
-        onChange={(e) => set(e.target.value)}
-        onKeyDown={(e) => {
-          e.stopPropagation();
-          if (e.key === "Enter") { if (commit()) onClose(); else e.currentTarget.select(); }
-          if (e.key === "Escape") onClose();
-        }}
-        className="w-[4.2rem] rounded border border-black bg-white px-1 text-center !text-black"
-      />
-      g
-    </label>
-  );
+  const label = familyId === "wa" ? (en ? "Upweight" : "PR") : (en ? "Downweight" : "PD");
+  // Bulle placée à droite de la pastille (à gauche si trop près du bord droit).
+  const flip = typeof window !== "undefined" && boxRef.current?.parentElement ? x > boxRef.current.parentElement.clientWidth - 260 : false;
   return (
-    <div data-pdf-hide onClick={(e) => e.stopPropagation()} className="absolute left-1/2 top-2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-full border-[1.3px] border-black bg-white px-4 py-1 text-base !text-black shadow">
-      <span className="font-bold">{en ? "Key" : "Touche"} {note}</span>
-      {showWd && field(en ? "Down" : "PD", wd, setWd, true)}
-      {showWa && field(en ? "Up" : "PR", wa, setWa, !showWd)}
-      <button type="button" onClick={() => { if (commit()) onClose(); }} className="rounded-full border border-black px-2 hover:bg-gray-100">OK</button>
-      <button type="button" aria-label={en ? "Close" : "Fermer"} onClick={onClose} className="px-1 hover:opacity-70">✕</button>
-      {error && <span className="absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-sm text-white">{error}</span>}
+    <div
+      ref={boxRef}
+      data-pdf-hide
+      onClick={(e) => e.stopPropagation()}
+      style={{ left: flip ? undefined : x + 24, right: flip && boxRef.current?.parentElement ? boxRef.current.parentElement.clientWidth - x + 24 : undefined, top: Math.max(4, y - 30) }}
+      className="absolute z-30 rounded-md border-2 border-black bg-white px-3 py-2 text-xs !text-black shadow-lg"
+    >
+      <div className="mb-1 font-bold">{noteName(note, en)}</div>
+      {editable ? (
+        <div className="flex items-center gap-2 whitespace-nowrap">
+          <span className="font-medium">{label}</span>
+          <input
+            autoFocus
+            inputMode="decimal"
+            value={value}
+            onFocus={(e) => e.currentTarget.select()}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === "Enter") { if (commit()) onClose(); else e.currentTarget.select(); }
+              if (e.key === "Escape") onClose();
+            }}
+            className="w-[4.2rem] rounded border border-black bg-white px-1 text-center text-lg font-bold !text-black"
+          />
+          <span>g</span>
+          <button type="button" onClick={() => { if (commit()) onClose(); }} className="rounded-full border border-black px-2 hover:bg-gray-100">OK</button>
+        </div>
+      ) : (
+        <div className="whitespace-nowrap tabular-nums">{en ? "DW" : "PD"} {initial.wd} g • {en ? "UW" : "PR"} {initial.wa} g</div>
+      )}
+      {error && <div className="mt-1 whitespace-nowrap rounded bg-black px-2 py-1 text-white">{error}</div>}
     </div>
   );
 }
 
 function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[number]; zoomed?: boolean; ctx: SubChartCtx }) {
-  const { chartData, keyFilter: baseKeyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, smoothMode, cycleSmoothMode, showSourceControls, filters, cycleFor, lang, zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode, plotRef, lastMouseY, keyboardModeRef, lastMouseNote, onMouseTakeover } = ctx;
+  const { chartData, keyFilter: baseKeyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, smoothMode, cycleSmoothMode, showSourceControls, simple, filters, cycleFor, lang, zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode, plotRef, lastMouseY, keyboardModeRef, lastMouseNote, onMouseTakeover } = ctx;
   const [showZoomHelp, setShowZoomHelp] = useState(false);
   // Interrupteurs ON/OFF des trois courbes, propres à la session de zoom.
   // Option A : touche ouverte en édition dans le zoom.
-  const [editNote, setEditNote] = useState<number | null>(null);
+  const [editNote, setEditNote] = useState<{ note: number; x: number; y: number } | null>(null);
+  const closeEdit = useCallback(() => { justClosed.current = true; setEditNote(null); window.setTimeout(() => { justClosed.current = false; }, 0); }, []);
+  const justClosed = useRef(false);
   const [zoomCurveOff, setZoomCurveOff] = useState<{ current: boolean; reference: boolean; target: boolean }>({ current: false, reference: false, target: false });
   // Réglage N/B strictement indépendant pour chaque cadre graphique.
   const keyFilter = filters[family.id] ?? baseKeyFilter;
@@ -987,7 +1028,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [-3, 88];
   const DotComp = zoomed ? ZoomDot : SampleDot;
   const { corridorG } = usePreferences();
-  const tolOn = corridorG > 0;
+  const tolOn = !simple && corridorG > 0;
   const title = familyTitle(family.id, lang, family.title);
   // Domaine vertical FIGÉ sur le mode groupé : l'échelle et ses graduations ne
   // sont jamais recalculées quand l'artisan bascule N/B (groupé, séparé,
@@ -1043,7 +1084,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
       {zoomed && (
         <button type="button" data-pdf-hide aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="absolute right-3 top-2 z-20 rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
       )}
-      {!zoomed && (
+      {!zoomed && !simple && (
         <button type="button" data-pdf-hide aria-label={`Zoom sur ${title}`} onClick={() => { setZoomStart(1); setZoomId(family.id); }} className="absolute right-3 top-2 z-20 rounded-full border border-gray-300 bg-white p-[5px] !text-black hover:bg-gray-100"><MagnifyIcon /></button>
       )}
       {onCycleKeyFilter && (
@@ -1072,7 +1113,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               {lang === "en" ? "Mode: " : "Mode : "}{smoothMode === "real" ? (lang === "en" ? "Raw" : "Réel") : smoothMode === "smooth" ? (lang === "en" ? "Smoothed" : "Lissé") : (lang === "en" ? "Smoothed+" : "Lissé+")}
             </span>
           </button>
-          <ToleranceButton zoomed={zoomed} lang={lang} />
+          {!simple && <ToleranceButton zoomed={zoomed} lang={lang} />}
         </div>
       )}
       {zoomed && showCurveToggles && (
@@ -1124,10 +1165,17 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
         </div>
       )}
       {zoomed && editNote !== null && (
-        <ZoomEditPanel key={editNote} note={editNote} familyId={family.id} lang={lang} onClose={() => setEditNote(null)} />
+        <ZoomEditPanel key={editNote.note} note={editNote.note} x={editNote.x} y={editNote.y} familyId={family.id} lang={lang} onClose={closeEdit} />
       )}
       <div
-        onClickCapture={zoomed ? () => { const n = lastMouseNote.current; if (n !== null && n >= 1 && n <= 88) setEditNote(Math.round(n)); } : undefined}
+        onClickCapture={zoomed ? (event) => {
+          if (justClosed.current) { justClosed.current = false; return; }
+          if (editNote !== null) return;
+          const n = lastMouseNote.current;
+          if (n === null || n < 1 || n > 88) return;
+          const rect = event.currentTarget.getBoundingClientRect();
+          setEditNote({ note: Math.round(n), x: event.clientX - rect.left, y: event.clientY - rect.top });
+        } : undefined}
         ref={zoomed ? plotRef : undefined}
         className="relative h-[300px] w-full lg:h-[calc(100%_-_2.5rem)]"
         // Mode non-zoom : tout le bloc graphique (axes, repères, courbes,
@@ -1202,7 +1250,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             {/* Fenêtre flottante native : une seule bulle par touche, toutes courbes confondues. */}
             <Tooltip
               trigger="hover"
-              content={<CustomTooltipContent chartData={chartData} />}
+              content={editNote !== null ? () => null : <CustomTooltipContent chartData={chartData} rich={!simple} />}
               cursor={{ stroke: "#000000", strokeWidth: 1.4 }}
               allowEscapeViewBox={{ x: true, y: true }}
               wrapperStyle={{ pointerEvents: "none", zIndex: 100 }}
@@ -1266,13 +1314,14 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   );
 }
 
-export function ComparisonChart({ chartData: rawChartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible standard", onCycleKeyFilter, smoothDefault = true, showSourceControls = false, allowRealMode = true }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void; smoothDefault?: boolean; showSourceControls?: boolean; allowRealMode?: boolean }) {
+export function ComparisonChart({ chartData: rawChartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible standard", onCycleKeyFilter, smoothDefault = true, showSourceControls = false, allowRealMode = true, simple = false }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void; smoothDefault?: boolean; showSourceControls?: boolean; allowRealMode?: boolean; simple?: boolean }) {
   const lang = useLang();
   // Lissage global : brut, trois notes, ou cinq notes. Purement local.
   // `smoothDefault` permet au Mode Rapide d'imposer le rendu « Réel ».
   // `allowRealMode={false}` (page Comparer) supprime définitivement le mode
   // « Réel » : seuls les rendus lissés (3 ou 5 points) restent disponibles.
-  const prefSmooth = getPreferences().smoothDefault;
+  const prefsLive = usePreferences();
+  const prefSmooth = simple ? prefsLive.smoothDefault : prefsLive.smoothAnalyse;
   const initialSmooth = (): "real" | "smooth" | "smoothPlus" => {
     if (!smoothDefault) return allowRealMode ? "real" : "smooth";
     if (prefSmooth === "real") return allowRealMode ? "real" : "smooth";
@@ -1345,7 +1394,7 @@ export function ComparisonChart({ chartData: rawChartData, keyFilter, comparison
   // Contexte stable passé au SubChart (déclaré au niveau module) : évite le
   // démontage/remontage du graphique Recharts à chaque changement d'état clavier.
   const subCtx: SubChartCtx = {
-    chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, smoothMode, cycleSmoothMode, showSourceControls, filters, cycleFor, lang,
+    chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, smoothMode, cycleSmoothMode, showSourceControls, simple, filters, cycleFor, lang,
     zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode,
     plotRef, lastMouseY, keyboardModeRef, lastMouseNote, onMouseTakeover,
   };
