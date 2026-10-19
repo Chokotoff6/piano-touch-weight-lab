@@ -33,6 +33,7 @@ import likedLogoFrAsset from "@/assets/image_soutien_v5.png.asset.json";
 import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
 import { ensureDemoDefault, toggleDemoMode, DEMO_BANNER_V2_KEY, isDemoActive, DEMO_LOADED_EVENT, DEMO_MODE_CHANGED_EVENT } from "@/lib/demo-mode";
 import { PreferencesGear } from "@/components/PreferencesGear";
+import { usePreferences, setPdfRedKeys } from "@/lib/preferences";
 import { AppFooter } from "@/components/AppFooter";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import animatedKeyweightLogo from "@/assets/logo-kw-animated.svg?raw";
@@ -165,6 +166,7 @@ function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const rootNavigate = useNavigate();
   const topbar = useTopbarState();
+  const prefs = usePreferences();
   const lang = useLang();
   const [consentOpen, setConsentOpen] = useState(false);
   /** Fenêtre juridique complète, ouvrable depuis le message de consentement. */
@@ -487,6 +489,7 @@ function RootComponent() {
                    garde la hitbox active pendant la traversée des bordures. */}
                 <div className={`absolute right-0 top-full -mt-[2px] z-[99999] min-w-[300px] max-w-[520px] rounded-md border border-gray-200 bg-white py-1 shadow-lg opacity-0 transition-opacity duration-100 ${filesEnabled ? "group-hover:opacity-100" : ""}`}>
                   {isComparer ? (
+                    <>
                     <button
                       type="button"
                       className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
@@ -504,6 +507,11 @@ function RootComponent() {
                             : "Exporter Rapport d'atelier au format PDF"}
                       </span>
                     </button>
+                    <label className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100">
+                      <input type="checkbox" checked={prefs.pdfRedKeys} onChange={(e) => setPdfRedKeys(e.target.checked)} />
+                      <span>{lang === "en" ? "Out-of-tolerance keys in red" : "Touches hors tolérance en rouge"}</span>
+                    </label>
+                    </>
                   ) : (
                     <>
                       {/* Sous-menu « Exporter PDF » : group/sub relative.
