@@ -487,6 +487,7 @@ function RootComponent() {
                    garde la hitbox active pendant la traversée des bordures. */}
                 <div className={`absolute right-0 top-full -mt-[2px] z-[99999] min-w-[300px] max-w-[520px] rounded-md border border-gray-200 bg-white py-1 shadow-lg opacity-0 transition-opacity duration-100 ${filesEnabled ? "group-hover:opacity-100" : ""}`}>
                   {isComparer ? (
+                    <>
                     <button
                       type="button"
                       className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
@@ -504,6 +505,11 @@ function RootComponent() {
                             : "Exporter Rapport d'atelier au format PDF"}
                       </span>
                     </button>
+                    <label className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100">
+                      <input type="checkbox" checked={prefs.pdfRedKeys} onChange={(e) => setPdfRedKeys(e.target.checked)} />
+                      <span>{lang === "en" ? "Out-of-tolerance keys in red" : "Touches hors tolérance en rouge"}</span>
+                    </label>
+                    </>
                   ) : (
                     <>
                       {/* Sous-menu « Exporter PDF » : group/sub relative.
