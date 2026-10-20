@@ -420,6 +420,7 @@ function Resultats() {
                 comparisonShort=""
                 currentBaseName=""
                 autoDomain
+                simple
                 sideMargin={60}
                 smoothDefault={smoothDefault}
                 onCycleKeyFilter={() => setKeyFilter((value) => (value === "all" ? "split" : "all"))}

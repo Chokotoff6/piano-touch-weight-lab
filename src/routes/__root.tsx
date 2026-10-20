@@ -509,7 +509,7 @@ function RootComponent() {
                     </button>
                     <label className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100">
                       <input type="checkbox" checked={prefs.pdfRedKeys} onChange={(e) => setPdfRedKeys(e.target.checked)} />
-                      <span>{lang === "en" ? "Out-of-tolerance keys in red" : "Touches hors tolérance en rouge"}</span>
+                      <span>{lang === "en" ? `Out-of-tolerance keys in red (± ${prefs.corridorG} g)` : `Touches hors tolérance en rouge (± ${prefs.corridorG} g)`}</span>
                     </label>
                     </>
                   ) : (
@@ -753,8 +753,8 @@ function RootComponent() {
                 >
                   {demoVisible
                     ? lang === "en"
-                      ? "⚠️ Disabling Demo Mode will erase all current data and return to the Piano Info page"
-                      : "⚠️ Désactiver le Mode Démo va effacer toutes les données actuelles et revenir page Info piano"
+                      ? isHome ? "⚠️ Disabling Demo Mode will erase all current data" : "⚠️ Disabling Demo Mode will erase all current data and return to the Piano Info page"
+                      : isHome ? "⚠️ Désactiver le Mode Démo va effacer toutes les données actuelles" : "⚠️ Désactiver le Mode Démo va effacer toutes les données actuelles et revenir page Info piano"
                     : lang === "en"
                       ? "Demo Mode pre-fills the app with a data set that lets you test the different modules. The CLOUD database used is also fictitious."
                       : "Mode Démo pré-remplit l'application avec un jeu de données permettant de tester les différents modules. La base de données CLOUD utilisée est également fictive."}
