@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { Settings } from "lucide-react";
+import { Fragment, useState } from "react";
+import { AlertTriangle, Settings } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { useLang } from "@/data/translations";
 import { isDemoActive, toggleDemoMode } from "@/lib/demo-mode";
 import {
@@ -10,16 +12,13 @@ import {
 
 function Choice<T extends string | number | boolean>({ value, current, label, onPick, tip }: { value: T; current: T; label: string; onPick: (v: T) => void; tip?: string }) {
   const active = value === current;
-  return (
-    <button
-      type="button"
-      title={tip}
-      onClick={() => onPick(value)}
-      className={`rounded-md border px-3 py-1 text-sm ${active ? "border-foreground bg-foreground text-background" : "border-border bg-background text-foreground hover:bg-muted"}`}
-    >
-      {label}
-    </button>
+  const control = (
+    <Button type="button" variant="outline" size="sm" onClick={() => onPick(value)} aria-pressed={active}
+      className={`h-auto min-h-8 rounded-md px-2 py-1 text-xs ${active ? "border-foreground bg-foreground text-background hover:bg-foreground hover:text-background" : "border-border bg-background text-foreground hover:bg-muted"}`}>
+      {label.includes(" (") ? <span>{label.split(" (")[0]}<span className="block text-[10px]">({label.split(" (")[1]}</span></span> : label}
+    </Button>
   );
+  return tip ? <Tooltip delayDuration={0}><TooltipTrigger asChild>{control}</TooltipTrigger><TooltipContent className="z-[100000] max-w-72 border-border bg-foreground text-background">{tip}</TooltipContent></Tooltip> : control;
 }
 
 function RampInput({ value, disabled, onCommit }: { value: number; disabled: boolean; onCommit: (v: number) => void }) {
@@ -28,7 +27,7 @@ function RampInput({ value, disabled, onCommit }: { value: number; disabled: boo
       onFocus={(e) => e.currentTarget.select()}
       onBlur={(e) => { const v = Number(e.currentTarget.value.replace(",", ".")); if (Number.isFinite(v) && v > 0 && v < 150) onCommit(v); else e.currentTarget.value = String(value); }}
       onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
-      className="w-14 rounded border border-gray-300 px-1 text-center disabled:bg-muted disabled:text-muted-foreground" />
+      className="w-14 rounded border border-input px-1 text-center disabled:bg-muted disabled:text-muted-foreground" />
   );
 }
 
@@ -40,21 +39,21 @@ function TargetRow({ kind, label, ramp, disabled, en }: { kind: TargetKind; labe
   return (
     <div className="flex flex-col gap-1">
       <span className="font-medium">{label}</span>
-      <div className="grid grid-cols-[2rem_auto_1rem_auto_1.5rem] items-center gap-x-1 gap-y-1 whitespace-nowrap">
-        <span>{en ? "DW" : "PD"}</span>
-        <RampInput value={ramp.wdStart} disabled={disabled} onCommit={set("wdStart")} />
-        <span className="text-center">→</span>
-        <RampInput value={ramp.wdEnd} disabled={disabled} onCommit={set("wdEnd")} />
-        <span>g</span>
-        <span>{en ? "UW" : "PR"}</span>
-        <RampInput value={ramp.waStart} disabled={disabled} onCommit={set("waStart")} />
-        <span className="text-center">→</span>
-        <RampInput value={ramp.waEnd} disabled={disabled} onCommit={set("waEnd")} />
-        <span>g</span>
+      <div className="grid grid-cols-[2rem_minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2 gap-y-1.5">
+        {([
+          [en ? "DW" : "PD", "wdStart", "wdEnd"],
+          [en ? "UW" : "PR", "waStart", "waEnd"],
+        ] as [string, keyof TargetRamp, keyof TargetRamp][]).map(([name, start, end]) => (
+          <Fragment key={name}>
+            <span className="font-bold">{name}</span>
+            <span className="flex items-center gap-0.5"><RampInput value={ramp[start]} disabled={disabled} onCommit={set(start)} /><span>g</span></span>
+            <span>→</span>
+            <span className="flex items-center gap-0.5"><RampInput value={ramp[end]} disabled={disabled} onCommit={set(end)} /><span>g</span></span>
+          </Fragment>
+        ))}
+        <span className="font-bold">F</span><span className="tabular-nums">{f(ramp.wdStart, ramp.waStart)} g</span><span>→</span><span className="tabular-nums">{f(ramp.wdEnd, ramp.waEnd)} g</span>
+        <span className="font-bold">{en ? "BW" : "PE"}</span><span className="tabular-nums">{b(ramp.wdStart, ramp.waStart)} g</span><span>→</span><span className="tabular-nums">{b(ramp.wdEnd, ramp.waEnd)} g</span>
       </div>
-      <span className="text-xs text-muted-foreground">
-        F {f(ramp.wdStart, ramp.waStart)} → {f(ramp.wdEnd, ramp.waEnd)} g · {en ? "BW" : "PE"} {b(ramp.wdStart, ramp.waStart)} → {b(ramp.wdEnd, ramp.waEnd)} g
-      </span>
     </div>
   );
 }
@@ -65,10 +64,11 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
   const [open, setOpen] = useState(false);
   const def = en ? " (default)" : " (défaut)";
   const demo = open ? isDemoActive() : false;
-  const row = "flex flex-col gap-2 border-b border-border pb-3";
+  const row = "flex flex-col gap-3 rounded-lg border border-border bg-card p-3";
   return (
     <>
-      <button
+      <Button
+        variant="outline"
         type="button"
         aria-label={en ? "Preferences" : "Préférences"}
         title={en ? "Preferences" : "Préférences"}
@@ -76,13 +76,13 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
         className="rounded-md border-2 border-border bg-muted p-1.5 text-foreground hover:bg-accent"
       >
         <Settings className="h-5 w-5" />
-      </button>
+      </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-h-[90dvh] max-w-xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{en ? "Preferences" : "Préférences"}</DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col gap-3 text-sm">
+          <TooltipProvider delayDuration={0}><div className="flex flex-col gap-3 text-sm">
             <div className={row}>
               <span className="font-semibold">{en ? "Demo mode" : "Mode Démo"}</span>
               <div className="flex gap-2">
@@ -91,7 +91,7 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
               </div>
             </div>
             <div className={row}>
-              <span className="font-semibold">{en ? "Standard Targets (A0 → last C)" : "Cibles standards (La0 → dernier Do)"}</span>
+              <span className="font-semibold">{en ? "Standard targets (1 → 88)" : "Cibles standards (1 → 88)"}</span>
               <div className="flex gap-2">
                 <Choice value="default" current={prefs.targetMode} label={en ? "Default" : "Défaut"} onPick={setTargetMode} />
                 <Choice value="custom" current={prefs.targetMode} label={en ? "Custom" : "Personnalisé"} onPick={setTargetMode} />
@@ -103,39 +103,37 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
               <span className="text-xs italic text-muted-foreground">
                 {en ? "Upright or grand is picked automatically from the current piano type." : "Droit ou Queue est choisi automatiquement selon le type du piano en cours."}
               </span>
-            </div>
-            <div className={row}>
-              <span className="font-semibold">{en ? "Tolerance (relative to Standard Targets)" : "Tolérance (par rapport aux Cibles standards)"}</span>
+              <div className="flex items-start gap-2 border-t border-border pt-3 font-semibold"><AlertTriangle size={20} strokeWidth={2.5} className="shrink-0 text-foreground" /><span>{en ? "Tolerance (relative to Standard targets)" : "Tolérance (par rapport aux Cibles standards)"}</span></div>
               <div className="flex items-center gap-1">
                 ±<input type="text" inputMode="decimal" defaultValue={String(prefs.corridorG)} key={prefs.corridorG}
                   onFocus={(e) => e.currentTarget.select()}
                   onBlur={(e) => { const v = Number(e.currentTarget.value.replace(",", ".")); if (Number.isFinite(v) && v >= 0) setCorridorG(v); else e.currentTarget.value = String(prefs.corridorG); }}
                   onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
-                  className="w-14 rounded border border-gray-300 px-1 text-center" /> g{prefs.corridorG === 3 ? def : ""}
+                  className="w-14 rounded border border-input px-1 text-center" /> g{prefs.corridorG === 3 ? def : ""}
               </div>
             </div>
             <div className={row}>
               <span className="font-semibold">{en ? "Curve smoothing" : "Lissage des courbes"}</span>
               {([["bilan", en ? "Dashboard" : "Bilan", prefs.smoothDefault, setSmoothDefault, "smooth"], ["analyse", en ? "Analysis" : "Analyse", prefs.smoothAnalyse, setSmoothAnalyse, "real"]] as [string, string, SmoothPref, (v: SmoothPref) => void, SmoothPref][]).map(([id, title, cur, pick, dflt]) => (
-                <div key={id} className="flex flex-wrap items-center gap-2">
-                  <span className="w-20 font-medium">{title}</span>
-                  {([["real", en ? "Raw" : "Réel"], ["smooth", en ? "Smoothed 3 pts" : "Lissé 3 points"], ["smoothPlus", en ? "Smoothed+ 5 pts" : "Lissé+ 5 points"]] as [SmoothPref, string][]).map(([v, l]) => (
+                <div key={id} className="flex flex-col gap-2">
+                  <span className="text-base font-bold">{title}</span><div className="grid grid-cols-3 gap-1">
+                  {([["real", en ? "Raw" : "Réel"], ["smooth", en ? "Smoothed 3 pts" : "Lissé 3 pts"], ["smoothPlus", en ? "Smoothed+ 5 pts" : "Lissé+ 5 pts"]] as [SmoothPref, string][]).map(([v, l]) => (
                     <Choice key={v} value={v} current={cur} label={l + (v === dflt ? def : "")} onPick={pick} />
                   ))}
-                </div>
+                </div></div>
               ))}
             </div>
-            <div className="flex flex-col gap-2">
-              <span className="font-semibold">{en ? "Auto-advance (2 digits)" : "Avance automatique (2 chiffres)"}</span>
+            <div className={row}>
+              <span className="font-semibold">{en ? "Input: jump to next key" : "Saisie : saut touche suivante"}</span>
               <div className="flex gap-2">
-                <Choice value={true} current={prefs.autoAdvance} label={(en ? "On" : "Activée") + def} onPick={setAutoAdvance} />
-                <Choice value={false} current={prefs.autoAdvance} label={en ? "Off" : "Désactivée"} onPick={setAutoAdvance} />
+                <Choice value={true} current={prefs.autoAdvance} label={"Auto" + def} onPick={setAutoAdvance} />
+                <Choice value={false} current={prefs.autoAdvance} label={en ? "Manual" : "Manuel"} onPick={setAutoAdvance} />
               </div>
               <span className="text-xs italic text-muted-foreground">
                 {en ? "The cursor only moves on once the value passes every check." : "Le curseur n'avance que si la valeur passe tous les contrôles."}
               </span>
             </div>
-          </div>
+          </div></TooltipProvider>
         </DialogContent>
       </Dialog>
     </>

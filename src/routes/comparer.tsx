@@ -10,7 +10,8 @@ import { PianoSheetMirror } from "@/components/PianoSheetMirror";
 import { generateComparisonReport, type LandscapePage } from "@/lib/pdf-report";
 import { setTopbarState } from "@/lib/topbar-store";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
-import { parseKwDocument } from "@/lib/kw-file";
+import { parseKwDocument, readSessionKwDocument, kwSerial, differentSerial, type KwDocument, type KwJalon } from "@/lib/kw-file";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { scopeDemo } from "@/lib/demo-scope";
 import { isDemoActive, DEMO_LOADED_EVENT } from "@/lib/demo-mode";
 import { getPreferences, usePreferences, setCorridorG, setPdfRedKeys, effectiveTarget, type TargetKind, type TargetRamp } from "@/lib/preferences";
@@ -627,11 +628,11 @@ function noteName(keyIndex: number, en: boolean) {
   if (!Number.isFinite(keyIndex)) return "";
   const names = en ? NOTE_NAMES_EN : NOTE_NAMES_FR;
   const midi = Math.round(keyIndex) + 20;
-  return `${names[((midi % 12) + 12) % 12] ?? ""}${Math.floor(midi / 12) - 1}`;
+  return `${names[((midi % 12) + 12) % 12] ?? ""} • ${en ? "Key" : "Touche"} ${Math.round(keyIndex)}`;
 }
 
-function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; chartData?: ChartPoint[]; rich?: boolean }) {
-  const { active, payload, label, chartData, rich } = props;
+function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[]; label?: number; chartData?: ChartPoint[]; rawChartData?: ChartPoint[]; familyId?: string; rich?: boolean }) {
+  const { active, payload, label, chartData, rawChartData, familyId, rich } = props;
   const lang = useLang();
   const en = lang === "en";
   if (!active) return null;
@@ -666,6 +667,10 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
             <span className="text-lg font-bold tabular-nums">{fmt(Number(cur.value))} g</span>
           </div>
         )}
+        {(familyId === "fric" || familyId === "bal") && (() => {
+          const point = rawChartData?.find((p) => p.key === Number(label));
+          return point?.wdCur !== undefined && point.waCur !== undefined ? <div className="mb-2 text-foreground tabular-nums">{en ? "DW" : "PD"} {fmt(point.wdCur)} g • {en ? "UW" : "PR"} {fmt(point.waCur)} g</div> : null;
+        })()}
         {others.map((entry) => {
           const color = entry.color ?? tooltipColorFor(entry.name ?? "");
           const delta = cur ? Number(cur.value) - Number(entry.value) : NaN;
@@ -685,7 +690,7 @@ function CustomTooltipContent(props: { active?: boolean; payload?: TooltipEntry[
   return (
     <div className="pointer-events-none !z-50 rounded-md border border-black bg-white px-3 py-2 text-xs">
       {header}
-      {valid.map((entry) => {
+      {valid.slice(0, 1).map((entry) => {
         const color = entry.color ?? tooltipColorFor(entry.name ?? "");
         return (
           <div key={entry.dataKey} className="whitespace-nowrap text-base font-semibold tabular-nums" style={{ color }}>
@@ -885,6 +890,7 @@ function HorizontalGuides({
 
 type SubChartCtx = {
   chartData: ChartPoint[];
+  rawChartData: ChartPoint[];
   keyFilter: KeyFilter;
 
   comparisonLabel: string;
@@ -920,74 +926,54 @@ type SubChartCtx = {
 // éviter que React ne le démonte/remonte à chaque changement d'état clavier : un
 // remontage détruit le SVG Recharts au moment exact du dispatch synthétique, ce qui
 // empêchait les flèches ◄ ► d'allumer la pastille.
-// Édition directe en zoom (Option A) : PD seul, PR seul, ou les deux sur Friction/Équilibre.
-function ZoomEditPanel({ note, familyId, lang, x, y, onClose }: { note: number; familyId: string; lang: string; x: number; y: number; onClose: () => void }) {
+// Only direct measurements of the current piano can be edited.
+function ZoomEditPanel({ note, familyId, lang, x, y, target, targetLabel, onClose }: { note: number; familyId: string; lang: string; x: number; y: number; target?: number; targetLabel: string; onClose: () => void }) {
   const en = lang === "en";
-  const initial = typeof window !== "undefined" ? readDraftPair(note) : null;
-  const editable = familyId === "wd" || familyId === "wa";
+  const initial = readDraftPair(note);
   const [value, setValue] = useState(initial ? (familyId === "wa" ? initial.wa : initial.wd) : "");
   const [error, setError] = useState<string | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
-  // Clic en dehors : annulation sans modification.
   useEffect(() => {
-    const onDown = (event: MouseEvent) => {
-      if (boxRef.current && !boxRef.current.contains(event.target as Node)) onClose();
-    };
-    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
-    document.addEventListener("mousedown", onDown, true);
-    document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("mousedown", onDown, true); document.removeEventListener("keydown", onKey); };
+    const outside = (event: MouseEvent) => { if (boxRef.current && !boxRef.current.contains(event.target as Node)) onClose(); };
+    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    document.addEventListener("mousedown", outside, true);
+    document.addEventListener("keydown", escape);
+    return () => { document.removeEventListener("mousedown", outside, true); document.removeEventListener("keydown", escape); };
   }, [onClose]);
   if (!initial) return null;
   const commit = () => {
     const wd = familyId === "wa" ? initial.wd : value.trim();
     const wa = familyId === "wa" ? value.trim() : initial.wa;
     const msg = validatePair(Number(wd.replace(",", ".")), Number(wa.replace(",", ".")), en);
-    if (msg) { setError(msg); window.setTimeout(() => setError(null), 5000); return false; }
-    writeDraftPair(note, wd, wa);
+    if (msg) { setError(msg); return false; }
+    if (!writeDraftPair(note, wd.replace(",", "."), wa.replace(",", "."))) {
+      setError(en ? "Unable to save this measurement." : "Impossible d'enregistrer cette pesée."); return false;
+    }
     return true;
   };
-  const label = familyId === "wa" ? (en ? "Upweight" : "PR") : (en ? "Downweight" : "PD");
-  // Bulle placée à droite de la pastille (à gauche si trop près du bord droit).
-  const flip = typeof window !== "undefined" && boxRef.current?.parentElement ? x > boxRef.current.parentElement.clientWidth - 260 : false;
   return (
-    <div
-      ref={boxRef}
-      data-pdf-hide
+    <div ref={boxRef} data-pdf-hide role="dialog" aria-label={en ? "Edit measurement" : "Modifier la pesée"}
       onClick={(e) => e.stopPropagation()}
-      style={{ left: flip ? undefined : x + 24, right: flip && boxRef.current?.parentElement ? boxRef.current.parentElement.clientWidth - x + 24 : undefined, top: Math.max(4, y - 30) }}
-      className="absolute z-30 rounded-md border-2 border-black bg-white px-3 py-2 text-xs !text-black shadow-lg"
-    >
+      style={{ left: Math.max(4, x - 130), top: Math.max(4, y - 125) }}
+      className="absolute z-30 w-[260px] max-w-[calc(100%-8px)] rounded-md border-2 border-foreground bg-background px-3 py-2 text-xs text-foreground shadow-lg">
       <div className="mb-1 font-bold">{noteName(note, en)}</div>
-      {editable ? (
-        <div className="flex items-center gap-2 whitespace-nowrap">
-          <span className="font-medium">{label}</span>
-          <input
-            autoFocus
-            inputMode="decimal"
-            value={value}
-            onFocus={(e) => e.currentTarget.select()}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={(e) => {
-              e.stopPropagation();
-              if (e.key === "Enter") { if (commit()) onClose(); else e.currentTarget.select(); }
-              if (e.key === "Escape") onClose();
-            }}
-            className="w-[4.2rem] rounded border border-black bg-white px-1 text-center text-lg font-bold !text-black"
-          />
-          <span>g</span>
-          <button type="button" onClick={() => { if (commit()) onClose(); }} className="rounded-full border border-black px-2 hover:bg-gray-100">OK</button>
-        </div>
-      ) : (
-        <div className="whitespace-nowrap tabular-nums">{en ? "DW" : "PD"} {initial.wd} g • {en ? "UW" : "PR"} {initial.wa} g</div>
-      )}
-      {error && <div className="mt-1 whitespace-nowrap rounded bg-black px-2 py-1 text-white">{error}</div>}
+      <div className="mb-1 font-semibold">{en ? "Current piano" : "Piano actuel"}</div>
+      <div className="flex items-center gap-2">
+        <span className="font-bold">{familyId === "wa" ? (en ? "UW" : "PR") : (en ? "DW" : "PD")}</span>
+        <input autoFocus aria-label={familyId === "wa" ? (en ? "Upweight" : "Poids remontant") : (en ? "Downweight" : "Poids descendant")} inputMode="decimal" value={value}
+          onFocus={(e) => e.currentTarget.select()} onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter") { if (commit()) onClose(); else e.currentTarget.select(); } if (e.key === "Escape") onClose(); }}
+          className="w-16 rounded border border-input bg-background px-1 text-center text-lg font-bold text-foreground" />
+        <span>g</span><Button variant="outline" size="sm" onClick={() => { if (commit()) onClose(); }}>OK</Button>
+      </div>
+      {typeof target === "number" && Number.isFinite(target) && <div className="mt-2 text-chart-2">{targetLabel} : {target.toFixed(1).replace(".", en ? "." : ",")} g</div>}
+      {error && <div className="mt-2 rounded bg-foreground px-2 py-1 text-background">{error}</div>}
     </div>
   );
 }
 
 function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[number]; zoomed?: boolean; ctx: SubChartCtx }) {
-  const { chartData, keyFilter: baseKeyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, smoothMode, cycleSmoothMode, showSourceControls, simple, filters, cycleFor, lang, zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode, plotRef, lastMouseY, keyboardModeRef, lastMouseNote, onMouseTakeover } = ctx;
+  const { chartData, rawChartData, keyFilter: baseKeyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, smoothMode, cycleSmoothMode, showSourceControls, simple, filters, cycleFor, lang, zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode, plotRef, lastMouseY, keyboardModeRef, lastMouseNote, onMouseTakeover } = ctx;
   const [showZoomHelp, setShowZoomHelp] = useState(false);
   // Interrupteurs ON/OFF des trois courbes, propres à la session de zoom.
   // Option A : touche ouverte en édition dans le zoom.
@@ -1164,18 +1150,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           </span>
         </div>
       )}
-      {zoomed && editNote !== null && (
-        <ZoomEditPanel key={editNote.note} note={editNote.note} x={editNote.x} y={editNote.y} familyId={family.id} lang={lang} onClose={closeEdit} />
-      )}
       <div
-        onClickCapture={zoomed ? (event) => {
-          if (justClosed.current) { justClosed.current = false; return; }
-          if (editNote !== null) return;
-          const n = lastMouseNote.current;
-          if (n === null || n < 1 || n > 88) return;
-          const rect = event.currentTarget.getBoundingClientRect();
-          setEditNote({ note: Math.round(n), x: event.clientX - rect.left, y: event.clientY - rect.top });
-        } : undefined}
         ref={zoomed ? plotRef : undefined}
         className="relative h-[300px] w-full lg:h-[calc(100%_-_2.5rem)]"
         // Mode non-zoom : tout le bloc graphique (axes, repères, courbes,
@@ -1196,6 +1171,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           onMouseTakeover(null);
         }}
       >
+        {zoomed && editNote !== null && <ZoomEditPanel key={editNote.note} note={editNote.note} x={editNote.x} y={editNote.y} familyId={family.id} lang={lang} target={rawChartData.find((p) => p.key === editNote.note)?.[family.id === "wa" ? "tolWa" : "tolWd"]} targetLabel={targetLabel} onClose={closeEdit} />}
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
@@ -1250,7 +1226,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             {/* Fenêtre flottante native : une seule bulle par touche, toutes courbes confondues. */}
             <Tooltip
               trigger="hover"
-              content={editNote !== null ? () => null : <CustomTooltipContent chartData={chartData} rich={!simple} />}
+              content={editNote !== null ? () => null : <CustomTooltipContent chartData={chartData} rawChartData={rawChartData} familyId={family.id} rich={!simple} />}
               cursor={{ stroke: "#000000", strokeWidth: 1.4 }}
               allowEscapeViewBox={{ x: true, y: true }}
               wrapperStyle={{ pointerEvents: "none", zIndex: 100 }}
@@ -1283,7 +1259,13 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
                   const std = sk && dotProps.payload ? Number(dotProps.payload[sk]) : NaN;
                   const out = typeof dotProps.value === "number" && Number.isFinite(std) && Math.abs(dotProps.value - std) > corridorG;
                   if (typeof dotProps.cx !== "number" || typeof dotProps.cy !== "number") return <g />;
-                  return <circle cx={dotProps.cx} cy={dotProps.cy} r={zoomed ? 7.5 : 5} fill={out ? "#dc2626" : color} stroke="#ffffff" strokeWidth={2} />;
+                  return <circle cx={dotProps.cx} cy={dotProps.cy} r={zoomed ? 7.5 : 5} fill={out ? "#dc2626" : color} stroke="#ffffff" strokeWidth={2}
+                    onClick={zoomed && isCurrentKey(line.dataKey) && (family.id === "wd" || family.id === "wa") ? (event) => {
+                      event.stopPropagation();
+                      const note = Number(dotProps.payload?.["key"]);
+                      if (!Number.isFinite(note) || justClosed.current) return;
+                      setEditNote({ note, x: dotProps.cx ?? 0, y: dotProps.cy ?? 0 });
+                    } : undefined} />;
                 }}
                 dot={line.real ? <DotComp tol={tolOn ? corridorG : null} stdKey={stdKeyFor(String(line.dataKey))} /> : false}
                 connectNulls={true}
@@ -1394,7 +1376,7 @@ export function ComparisonChart({ chartData: rawChartData, keyFilter, comparison
   // Contexte stable passé au SubChart (déclaré au niveau module) : évite le
   // démontage/remontage du graphique Recharts à chaque changement d'état clavier.
   const subCtx: SubChartCtx = {
-    chartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, smoothMode, cycleSmoothMode, showSourceControls, simple, filters, cycleFor, lang,
+    chartData, rawChartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, smoothMode, cycleSmoothMode, showSourceControls, simple, filters, cycleFor, lang,
     zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode,
     plotRef, lastMouseY, keyboardModeRef, lastMouseNote, onMouseTakeover,
   };
@@ -1744,6 +1726,7 @@ type SidebarPanelProps = {
   onToggleCloud: () => void;
   onToggleStandard: () => void;
   onImport: (file: File) => void;
+  onOpenHistory: () => void;
   onClearCsv: () => void;
   filtersDisabled: boolean;
   sameClimate: boolean;
@@ -1808,7 +1791,7 @@ function SidebarPanel(props: SidebarPanelProps) {
       <div className="flex h-auto flex-col items-stretch justify-start gap-2 pt-2">
           <div className="text-sm font-bold !text-black">{en ? "Compare current piano with:" : "Comparer piano actuel avec :"}</div>
           <FastTip text={tipTarget}><Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><span className="w-full text-center font-bold uppercase">{en ? "Standard target" : "Cible standard"}</span></Button></FastTip>
-           <FastTip text={tipCsv}><Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else inputRef.current?.click(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} ${props.csvActive ? "!border-black !text-blue-700 [&_svg]:!text-blue-700" : "!border-black !text-black"}`}><span className="w-full text-center font-bold uppercase">{en ? "HISTORY POINT" : "POINT D'HISTORIQUE"}</span></Button></FastTip>
+           <FastTip text={tipCsv}><Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else props.onOpenHistory(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} ${props.csvActive ? "!border-black !text-blue-700 [&_svg]:!text-blue-700" : "!border-black !text-black"}`}><span className="w-full text-center font-bold uppercase">{en ? "HISTORY POINT" : "POINT D'HISTORIQUE"}</span></Button></FastTip>
           <FastTip text={tipCloud}><Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={sourceButtonClass(props.cloudEnabled, "!text-orange-600")}><span className="w-full text-center font-bold uppercase">Cloud</span></Button></FastTip>
           <input ref={inputRef} type="file" accept=".kw,.csv,text/csv,application/json" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
           {props.cloudEnabled && (
@@ -1911,6 +1894,11 @@ function Comparer() {
   // État indépendant : le CSV importé alimente UNIQUEMENT la courbe orange.
   // current_piano (courbe Live noire) et le buffer PIANO_ACTUEL ne sont jamais touchés.
   const [comparedPiano, setComparedPiano] = useState<ProfileRecord | null>(null);
+  const [historyDocument, setHistoryDocument] = useState<KwDocument | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [pendingHistory, setPendingHistory] = useState<KwDocument | null>(null);
+  const historyInputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
   const averagesRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
@@ -2048,17 +2036,21 @@ function Comparer() {
     };
     void sync();
     const onEvent = () => void sync();
+    const onDraftEdit = () => {
+      setDraftKeyCounts(countDraftKeys());
+      setMine((current) => current ? withDraftMeasures(current) : null);
+    };
     window.addEventListener("focus", onEvent);
     window.addEventListener("storage", onEvent);
     window.addEventListener(DEMO_LOADED_EVENT, onEvent);
-    window.addEventListener(DRAFT_EDITED_EVENT, onEvent);
+    window.addEventListener(DRAFT_EDITED_EVENT, onDraftEdit);
     document.addEventListener("visibilitychange", onEvent);
     return () => {
       cancelled = true;
       window.removeEventListener("focus", onEvent);
       window.removeEventListener("storage", onEvent);
       window.removeEventListener(DEMO_LOADED_EVENT, onEvent);
-      window.removeEventListener(DRAFT_EDITED_EVENT, onEvent);
+      window.removeEventListener(DRAFT_EDITED_EVENT, onDraftEdit);
       document.removeEventListener("visibilitychange", onEvent);
     };
   }, []);
@@ -2224,34 +2216,44 @@ function Comparer() {
   const historyLabel = en ? "History point" : "Point d'historique";
   const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
 
+  function selectHistory(src: Pick<KwJalon, "info" | "rows" | "date">) {
+    const inf = src.info;
+    const d = new Date(src.date);
+    const p2 = (n: number) => String(n).padStart(2, "0");
+    const year = Number(inf["fabrication"]);
+    const piano = buildCurrentPiano({
+      brand: inf["marque"] ?? "", model: inf["modele"] ?? "", serial_number: kwSerial(inf),
+      type_piano: inf["type_piano"] ?? "", manufacture_year: Number.isFinite(year) && year > 0 ? year : null,
+      climate_zone: inf["climate_zone"] ?? "", maintenance_type: inf["entretien"] ?? "", usage_level: inf["usage_level"] ?? "",
+      city: inf["city"] ?? "", country: inf["country"] ?? "", remarks: inf["remarques"] ?? "",
+      wd: src.rows.map((r) => r.wd), wa: src.rows.map((r) => r.wa),
+      mesureDateRaw: Number.isFinite(d.getTime()) ? `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}` : undefined,
+    });
+    setComparedPiano(profileFromCurrentPiano(piano));
+    setStatus("ok"); setHistoryOpen(false);
+  }
+
+  function openHistory() {
+    const doc = readSessionKwDocument();
+    setHistoryError(null);
+    setHistoryDocument(doc);
+    if (doc) setHistoryOpen(true);
+    else historyInputRef.current?.click();
+  }
+
   async function handleImport(file: File) {
     if (/\.kw$/i.test(file.name)) {
-      const doc = parseKwDocument(await file.text());
-      if (!doc) { setComparedPiano(null); return; }
-      const jalon = doc.historique_jalons[doc.historique_jalons.length - 1];
-      const src = jalon ?? { info: doc.info, rows: doc.rows, date: doc.updated_at };
-      const inf = src.info;
-      const d = new Date(src.date);
-      const p2 = (n: number) => String(n).padStart(2, "0");
-      const year = Number(inf["fabrication"]);
-      const piano = buildCurrentPiano({
-        brand: inf["marque"] ?? "",
-        model: inf["modele"] ?? "",
-        serial_number: `${inf["sn_prefix"] ?? ""}${inf["sn_num"] ?? ""}${inf["sn_suffix"] ?? ""}`,
-        type_piano: inf["type_piano"] ?? "",
-        manufacture_year: Number.isFinite(year) && year > 0 ? year : null,
-        climate_zone: inf["climate_zone"] ?? "",
-        maintenance_type: inf["entretien"] ?? "",
-        usage_level: inf["usage_level"] ?? "",
-        city: inf["city"] ?? "",
-        country: inf["country"] ?? "",
-        remarks: inf["remarques"] ?? "",
-        wd: src.rows.map((r) => r.wd),
-        wa: src.rows.map((r) => r.wa),
-        mesureDateRaw: Number.isFinite(d.getTime()) ? `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}` : undefined,
-      });
-      setComparedPiano(profileFromCurrentPiano(piano));
-      setStatus("ok");
+      try {
+        const doc = parseKwDocument(await file.text());
+        if (!doc) { setHistoryError(en ? "Invalid .kw file." : "Fichier .kw invalide."); setHistoryOpen(true); return; }
+        let current = mine?.serialNumber ?? "";
+        try {
+          const info = JSON.parse(window.localStorage.getItem("ptw_draft_info") ?? "null");
+          if (info && typeof info === "object") current = kwSerial(info);
+        } catch { /* current profile fallback */ }
+        if (differentSerial(current, kwSerial(doc.info))) { setPendingHistory(doc); return; }
+        setHistoryDocument(doc); setHistoryError(null); setHistoryOpen(true);
+      } catch { setHistoryError(en ? "Unable to read this file." : "Impossible de lire ce fichier."); setHistoryOpen(true); }
       return;
     }
     try {
@@ -2395,10 +2397,32 @@ function Comparer() {
                 <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? historyLabel : "Cloud"} comparisonShort={comparedPiano ? historyLabel : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible standard"} onCycleKeyFilter={cycleKeyFilter} currentBaseName={en ? "Current piano" : "Piano actuel"} showSourceControls={mine !== null && sourceMode === "cloud" && comparedPiano === null && standardEnabled && cloudProfile !== null} />
               </div>
             </div>
-            <aside className="min-w-0"><div ref={settingsRef} data-pdf-expand className="sticky top-[127px] z-50 flex flex-col overflow-visible" ><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
+            <aside className="min-w-0"><div ref={settingsRef} data-pdf-expand className="sticky top-[127px] z-50 flex flex-col overflow-visible" ><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onOpenHistory={openHistory} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
           </div>
         </>
       )}
+      <input ref={historyInputRef} type="file" accept=".kw,.csv,text/csv,application/json" className="sr-only" onChange={(e) => { const file = e.target.files?.[0]; if (file) void handleImport(file); e.target.value = ""; }} />
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>{historyLabel}</DialogTitle><DialogDescription>{historyDocument ? [historyDocument.info["marque"], historyDocument.info["modele"], kwSerial(historyDocument.info)].filter(Boolean).join(" · ") : (en ? "Local .kw file" : "Fichier local .kw")}</DialogDescription></DialogHeader>
+          {historyError && <p className="text-destructive">{historyError}</p>}
+          <div className="flex max-h-80 flex-col gap-2 overflow-y-auto">
+            {historyDocument && (historyDocument.historique_jalons.length ? historyDocument.historique_jalons : [{ id: "current", date: historyDocument.updated_at, info: historyDocument.info, rows: historyDocument.rows }]).slice().reverse().map((jalon) => (
+              <Button key={jalon.id} variant="outline" className="h-auto justify-between whitespace-normal py-2 text-left" onClick={() => selectHistory(jalon)}>
+                <span>{Number.isFinite(Date.parse(jalon.date)) ? new Intl.DateTimeFormat(en ? "en-GB" : "fr-BE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(jalon.date)) : jalon.date}</span>
+                <span className="text-xs text-muted-foreground">{jalon.rows.filter((r) => r.wd.trim() || r.wa.trim()).length}/88</span>
+              </Button>
+            ))}
+          </div>
+          <Button variant="outline" onClick={() => historyInputRef.current?.click()}>{en ? "Browse another file…" : "Parcourir un autre fichier…"}</Button>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={pendingHistory !== null} onOpenChange={(open) => { if (!open) setPendingHistory(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>{en ? "Different serial number" : "Numéro de série différent"}</DialogTitle><DialogDescription>{en ? "This file belongs to a different piano. Use it for comparison anyway?" : "Ce fichier correspond à un autre piano. L'utiliser quand même pour la comparaison ?"}</DialogDescription></DialogHeader>
+          <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setPendingHistory(null)}>{en ? "Cancel" : "Annuler"}</Button><Button onClick={() => { if (!pendingHistory) return; setHistoryDocument(pendingHistory); setPendingHistory(null); setHistoryError(null); setHistoryOpen(true); }}>{en ? "Continue" : "Continuer"}</Button></div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

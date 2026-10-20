@@ -25,6 +25,30 @@ export type KwDocument = {
 };
 
 export const SECURITY_BACKUP_KEY = "ptw_security_backup";
+const SESSION_DOCUMENT_KEY = "ptw_kw_document";
+
+/** Session copy of the last opened/saved local file, never a Cloud read. */
+export function readSessionKwDocument(): KwDocument | null {
+  try {
+    const text = window.sessionStorage.getItem(SESSION_DOCUMENT_KEY);
+    return text ? parseKwDocument(text) : null;
+  } catch { return null; }
+}
+
+export function rememberKwDocument(doc: KwDocument | null): void {
+  try {
+    if (doc) window.sessionStorage.setItem(SESSION_DOCUMENT_KEY, JSON.stringify(doc));
+    else window.sessionStorage.removeItem(SESSION_DOCUMENT_KEY);
+  } catch { /* session storage unavailable */ }
+}
+
+export function kwSerial(info: Record<string, string>): string {
+  return `${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`.trim();
+}
+
+export function differentSerial(current: string, incoming: string): boolean {
+  return Boolean(norm(current) && norm(incoming) && norm(current) !== norm(incoming));
+}
 export const DAY_MS = 24 * 3600 * 1000;
 /** Au-delà de ce nombre de touches modifiées le même jour, un nouveau jalon est proposé. */
 export const SAME_DAY_KEY_THRESHOLD = 5;
@@ -162,12 +186,15 @@ export async function writeKwFile(
   };
   if (handle || typeof w.showSaveFilePicker === "function") {
     try {
+      const pick = w.showSaveFilePicker;
+      if (!handle && !pick) return "cancelled";
       const h =
         handle ??
-        (await w.showSaveFilePicker!({
+        (await pick?.({
           suggestedName: kwFileName(doc.info),
           types: [{ description: "KeyWeight", accept: { "application/json": [".kw"] } }],
         }));
+      if (!h) return "cancelled";
       const writable = await h.createWritable();
       await writable.write(blob);
       await writable.close();

@@ -101,6 +101,8 @@ import {
   buildKwDocument,
   countChangedKeys,
   parseKwDocument,
+  readSessionKwDocument,
+  rememberKwDocument,
   shouldProposeJalon,
   writeKwFile,
   type KwDocument,
@@ -1660,6 +1662,7 @@ function Index() {
   // --- Fichier physique .kw : handle conservé, document chargé, dialogue de jalon ---
   const kwHandleRef = useRef<Awaited<ReturnType<typeof writeKwFile>> | null>(null);
   const kwDocRef = useRef<KwDocument | null>(null);
+  useEffect(() => { kwDocRef.current = readSessionKwDocument(); }, []);
   const [kwJalonAsk, setKwJalonAsk] = useState(false);
 
   const performKwSave = async (addJalon: boolean) => {
@@ -1669,6 +1672,7 @@ function Index() {
     if (res === "cancelled") return;
     kwHandleRef.current = res;
     kwDocRef.current = doc;
+    rememberKwDocument(doc);
     try {
       window.localStorage.setItem(SECURITY_BACKUP_KEY, JSON.stringify({ info, rows, savedToFile: true, at: Date.now() }));
     } catch {
@@ -1699,8 +1703,12 @@ function Index() {
 
   /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
   const resetInfo = () => {
+    kwDocRef.current = null;
+    kwHandleRef.current = null;
+    rememberKwDocument(null);
     try {
       window.localStorage.removeItem(DRAFT_INFO_KEY);
+      window.localStorage.removeItem(CURRENT_PIANO_KEY);
       setCloudProfileSaved(false);
       window.sessionStorage.setItem("ptw_weighing_mode", "0");
     } catch {
@@ -1741,6 +1749,37 @@ function Index() {
 
   /** En démo, Reset Info vide la fiche sans toucher à l'interrupteur ni aux pesées. */
   const handleUserReset = (section: "info" | "rows") => {
+    if (section === "rows") {
+      stopCascadeTimer();
+      cascadeTarget.current = null;
+      cascadeStarted.current = true;
+      markDemoCascadeSeen();
+      const blank = EMPTY.map((row) => ({ ...row }));
+      rowsRef.current = blank;
+      setRows(blank);
+      setUndoStack([]);
+      setRedoStack([]);
+      setCoherenceIndex(null);
+      setCoherenceAnchor(null);
+      setRangeAnchor(null);
+      setPedalAlert(false);
+      setIncompletePairs([]);
+      lockedPairRef.current = null;
+      rangeDismissed.current.clear();
+      coherenceDismissed.current.clear();
+      try {
+        window.localStorage.setItem(DRAFT_ROWS_KEY, JSON.stringify(blank));
+        window.localStorage.setItem(SECURITY_BACKUP_KEY, JSON.stringify({ info, rows: blank, savedToFile: false, at: Date.now() }));
+        window.localStorage.removeItem(CURRENT_PIANO_KEY);
+      } catch { /* stockage indisponible */ }
+      setGateReady(false);
+      setResultsVisited(false);
+      setCompareUnlocked(false);
+      setTopbarState({ measuresReady: false, exportReady: false });
+      setConfirmReset(null);
+      markDirty();
+      return;
+    }
     if (section === "info" && isDemoActive()) {
       resetTypewriterSecurity();
       try {
@@ -1766,10 +1805,14 @@ function Index() {
       setShowDemoAuto(true);
       return;
     }
-    handleFullReset();
+    resetInfo();
+    setConfirmReset(null);
   };
 
   const handleFullReset = () => {
+    kwDocRef.current = null;
+    kwHandleRef.current = null;
+    rememberKwDocument(null);
     setShowDemoAuto(false);
     demoAutoTarget.current = null;
     // 1. Mode Démo impérativement OFF.
@@ -2937,6 +2980,7 @@ function Index() {
           return;
         }
         kwDocRef.current = doc;
+        rememberKwDocument(doc);
         kwHandleRef.current = null;
         setInfo({ ...doc.info });
         setRows(doc.rows.map((r) => ({ wd: cleanWeight(r.wd), wa: cleanWeight(r.wa) })));
@@ -3257,7 +3301,7 @@ function Index() {
 
 
 
-    const onReset = () => setConfirmReset("rows");
+    const onReset = () => { if (rows.some((r) => r.wd.trim() || r.wa.trim())) setConfirmReset("rows"); };
 
     const blankMeta = () => ({
       marque: info["marque"] ?? "",
@@ -4124,19 +4168,21 @@ function Index() {
                 className="absolute left-1/2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
                 style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
               >
-                <span>{kwUnsavedWarning(en)}{en ? "Do you want to erase all entered piano information?" : "Voulez-vous effacer toutes les infos piano saisies ?"}</span>
+                <span>{en ? "Do you want to erase all entered piano information?" : "Voulez-vous effacer toutes les infos piano saisies ?"}</span>
                 <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleUserReset("info"); }}>Oui</button>
                 <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
               </div>
             )}
-            <button
+            <Button
+              variant="outline"
+              disabled={!Object.values(info).some((v) => String(v ?? "").trim())}
               type="button"
               onClick={() => setConfirmReset("info")}
               title={en ? "Reset the information sheet only" : "Réinitialiser uniquement la fiche d'informations"}
               className="relative z-10 rounded-md border border-input bg-background px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
             >
               Reset
-            </button>
+            </Button>
           </div>
 
           <div className="flex items-center justify-end gap-4">
@@ -4390,19 +4436,21 @@ function Index() {
                   className="absolute left-1/2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
                   style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
                 >
-                  <span>{kwUnsavedWarning(en)}{en ? "Do you want to erase all entered weight data?" : "Voulez-vous effacer toutes les données de poids saisies ?"}</span>
+                  <span>{kwUnsavedWarning(en)}{en ? "Do you want to erase all weighing data?" : "Voulez-vous effacer toutes les données de pesées ?"}</span>
                   <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => { handleUserReset("rows"); }}>Oui</button>
                   <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
                 </div>
               )}
-              <button
+              <Button
+                variant="outline"
+                disabled={!rows.some((r) => r.wd.trim() || r.wa.trim())}
                 type="button"
                 data-pdf-hide
                 onClick={() => setConfirmReset("rows")}
                 className="relative z-10 rounded-md border border-input bg-background px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
               >
                 Reset
-              </button>
+              </Button>
             </div>
           </div>
 

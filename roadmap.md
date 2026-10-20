@@ -27,5 +27,10 @@
 - [x] Boîte noire ptw_security_backup, purgée par « Effacer toutes les données ».
 - [x] Confirmation « Nouveau piano » si fichier .kw non enregistré.
 - [x] Comparer : bouton « Point d'historique » (.kw/.csv) en 2e position.
-- [ ] Roue dentée Préférences (Démo, corridor ±2–4 g, lissage).
+- [ ] Préférences : quatre cadres, infobulles Démo, cibles et tolérance, lissage Bilan/Analyse sur une ligne, Auto/Manuel.
+- [ ] Reset séparés : fiche uniquement / pesées uniquement, grisés si vides.
+- [ ] Bilan sans zoom, rouge ni réglage de tolérance ; infobulle simple.
+- [ ] Analyse : note sans octave + numéro de touche, édition flottante PD/PR, F/PE lecture seule, rouge PDF uniquement.
+- [ ] Historique : jalons du document local, autre fichier et confirmation de série différente.
+- [ ] Vérifier la compilation automatique du chantier consolidé.
 - [ ] Rideau Cloud + nouveau texte de remerciement.
