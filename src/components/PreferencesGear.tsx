@@ -10,7 +10,7 @@ import {
   setTargetMode, setCustomTarget, DEFAULT_TARGETS, type TargetKind, type TargetRamp,
 } from "@/lib/preferences";
 
-function Choice<T extends string | number | boolean>({ value, current, label, onPick, tip }: { value: T; current: T; label: string; onPick: (v: T) => void; tip?: string }) {
+function Choice<T extends string | number | boolean>({ value, current, label, onPick, tip }: { value: T; current: T; label: string; onPick: (v: T) => void; tip?: string | undefined }) {
   const active = value === current;
   const control = (
     <Button type="button" variant="outline" size="sm" onClick={() => onPick(value)} aria-pressed={active}
