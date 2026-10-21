@@ -71,7 +71,7 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
   const [open, setOpen] = useState(false);
   const def = en ? " (default)" : " (défaut)";
   const demo = open ? isDemoActive() : false;
-  const row = "flex flex-col gap-3 rounded-lg border border-border bg-card p-3";
+  const row = "flex flex-col gap-3 rounded-lg border border-foreground/40 bg-card p-3";
   return (
     <>
       <Button
@@ -103,27 +103,27 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
                 <Choice value="default" current={prefs.targetMode} label={en ? "Default" : "Défaut"} onPick={setTargetMode} />
                 <Choice value="custom" current={prefs.targetMode} label={en ? "Custom" : "Personnalisé"} onPick={setTargetMode} />
               </div>
-              {(["upright", "grand"] as TargetKind[]).map((k) => (
+              <div className="grid grid-cols-2 gap-3">{(["upright", "grand"] as TargetKind[]).map((k) => (
                 <TargetRow key={k} kind={k} label={k === "upright" ? (en ? "Upright" : "Droit") : (en ? "Grand" : "Queue")}
                   en={en} ramp={prefs.targetMode === "custom" ? prefs.customTargets[k] : DEFAULT_TARGETS[k]} disabled={prefs.targetMode !== "custom"} />
-              ))}
+              ))}</div>
               <span className="text-xs italic text-muted-foreground">
                 {en ? "Upright or grand is picked automatically from the current piano type." : "Droit ou Queue est choisi automatiquement selon le type du piano en cours."}
               </span>
-              <div className="flex items-start gap-2 border-t border-border pt-3 font-semibold"><AlertTriangle size={20} strokeWidth={2.5} className="shrink-0 text-foreground" /><span>{en ? "Tolerance (relative to Standard targets)" : "Tolérance (par rapport aux Cibles standards)"}</span></div>
+              <div className="flex items-start gap-2 border-t border-foreground/40 pt-3 font-semibold"><AlertTriangle size={20} strokeWidth={2.5} className="shrink-0 text-foreground" /><span>{en ? "Tolerance (relative to Standard targets)" : "Tolérance (par rapport aux Cibles standards)"}</span></div>
               <div className="flex items-center gap-1">
                 ±<input type="text" inputMode="decimal" defaultValue={String(prefs.corridorG)} key={prefs.corridorG}
                   onFocus={(e) => e.currentTarget.select()}
                   onBlur={(e) => { const v = Number(e.currentTarget.value.replace(",", ".")); if (Number.isFinite(v) && v >= 0) setCorridorG(v); else e.currentTarget.value = String(prefs.corridorG); }}
                   onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
-                  className="w-14 rounded border border-input px-1 text-center" /> g{prefs.corridorG === 3 ? def : ""}
+                  className="w-9 rounded border border-input px-0.5 text-center" /> g{prefs.corridorG === 3 ? def : ""}
               </div>
             </div>
             <div className={row}>
               <span className="font-semibold">{en ? "Curve smoothing" : "Lissage des courbes"}</span>
               {([["bilan", en ? "Dashboard" : "Bilan", prefs.smoothDefault, setSmoothDefault, "smooth"], ["analyse", en ? "Analysis" : "Analyse", prefs.smoothAnalyse, setSmoothAnalyse, "real"]] as [string, string, SmoothPref, (v: SmoothPref) => void, SmoothPref][]).map(([id, title, cur, pick, dflt]) => (
-                <div key={id} className="flex flex-col gap-2">
-                  <span className="text-base font-bold">{title}</span><div className="grid grid-cols-3 gap-1">
+                <div key={id} className="flex items-center justify-between gap-2">
+                  <span className="text-base font-bold">{title}</span><div className="flex flex-nowrap gap-1">
                   {([["real", en ? "Raw" : "Réel"], ["smooth", en ? "Smoothed 3 pts" : "Lissé 3 pts"], ["smoothPlus", en ? "Smoothed+ 5 pts" : "Lissé+ 5 pts"]] as [SmoothPref, string][]).map(([v, l]) => (
                     <Choice key={v} value={v} current={cur} label={l + (v === dflt ? def : "")} onPick={pick} />
                   ))}
