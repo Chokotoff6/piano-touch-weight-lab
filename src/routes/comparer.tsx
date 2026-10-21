@@ -927,7 +927,7 @@ type SubChartCtx = {
 // remontage détruit le SVG Recharts au moment exact du dispatch synthétique, ce qui
 // empêchait les flèches ◄ ► d'allumer la pastille.
 // Only direct measurements of the current piano can be edited.
-function ZoomEditPanel({ note, familyId, lang, x, y, target, targetLabel, onClose }: { note: number; familyId: string; lang: string; x: number; y: number; target?: number; targetLabel: string; onClose: () => void }) {
+function ZoomEditPanel({ note, familyId, lang, x, y, target, targetLabel, onClose }: { note: number; familyId: string; lang: string; x: number; y: number; target?: number | undefined; targetLabel: string; onClose: () => void }) {
   const en = lang === "en";
   const initial = readDraftPair(note);
   const [value, setValue] = useState(initial ? (familyId === "wa" ? initial.wa : initial.wd) : "");
