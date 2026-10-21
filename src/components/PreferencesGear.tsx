@@ -32,7 +32,7 @@ function RampInput({ value, disabled, onCommit }: { value: number; disabled: boo
 }
 
 function Calc({ v }: { v: string }) {
-  return <span className="inline-block w-9 rounded border border-foreground/20 bg-muted px-0.5 text-center font-semibold tabular-nums">{v}</span>;
+  return <span className="inline-block w-9 rounded border border-input bg-muted px-0.5 text-center font-normal text-muted-foreground tabular-nums">{v}</span>;
 }
 
 function TargetRow({ kind, label, ramp, disabled, en }: { kind: TargetKind; label: string; ramp: TargetRamp; disabled: boolean; en: boolean }) {
@@ -90,6 +90,7 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
             <DialogTitle>{en ? "Preferences" : "Préférences"}</DialogTitle>
           </DialogHeader>
           <TooltipProvider delayDuration={0}><div className="flex flex-col gap-3 text-sm">
+            <div className="grid grid-cols-2 gap-3">
             <div className={row}>
               <span className="font-semibold">{en ? "Demo mode" : "Mode Démo"}</span>
               <div className="flex gap-2">
@@ -98,7 +99,15 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
               </div>
             </div>
             <div className={row}>
-              <span className="font-semibold">{en ? "Standard targets (1 → 88)" : "Cibles standards (1 → 88)"}</span>
+              <span className="font-semibold">{en ? "Input: jump to next key" : "Saisie : saut touche suivante"}</span>
+              <div className="flex gap-2">
+                <Choice value={true} current={prefs.autoAdvance} label={"Auto" + def} tip={en ? "The cursor only moves on once the value passes every check." : "Le curseur n'avance que si la valeur passe tous les contrôles."} onPick={setAutoAdvance} />
+                <Choice value={false} current={prefs.autoAdvance} label={en ? "Manual" : "Manuel"} onPick={setAutoAdvance} />
+              </div>
+            </div>
+            </div>
+            <div className={row}>
+              <span className="font-semibold">{en ? "Standard targets - curves 1 → 88" : "Cibles standards - courbes 1 → 88"}</span>
               <div className="flex gap-2">
                 <Choice value="default" current={prefs.targetMode} label={en ? "Default" : "Défaut"} onPick={setTargetMode} />
                 <Choice value="custom" current={prefs.targetMode} label={en ? "Custom" : "Personnalisé"} onPick={setTargetMode} />
@@ -122,23 +131,13 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
             <div className={row}>
               <span className="font-semibold">{en ? "Curve smoothing" : "Lissage des courbes"}</span>
               {([["bilan", en ? "Dashboard" : "Bilan", prefs.smoothDefault, setSmoothDefault, "smooth"], ["analyse", en ? "Analysis" : "Analyse", prefs.smoothAnalyse, setSmoothAnalyse, "real"]] as [string, string, SmoothPref, (v: SmoothPref) => void, SmoothPref][]).map(([id, title, cur, pick, dflt]) => (
-                <div key={id} className="flex items-center justify-between gap-2">
-                  <span className="text-base font-bold">{title}</span><div className="flex flex-nowrap gap-1">
+                <div key={id} className="flex items-center gap-3">
+                  <span className="w-20 text-sm font-bold">{title}</span><div className="flex flex-nowrap gap-1">
                   {([["real", en ? "Raw" : "Réel"], ["smooth", en ? "Smoothed 3 pts" : "Lissé 3 pts"], ["smoothPlus", en ? "Smoothed+ 5 pts" : "Lissé+ 5 pts"]] as [SmoothPref, string][]).map(([v, l]) => (
                     <Choice key={v} value={v} current={cur} label={l + (v === dflt ? def : "")} onPick={pick} />
                   ))}
                 </div></div>
               ))}
-            </div>
-            <div className={row}>
-              <span className="font-semibold">{en ? "Input: jump to next key" : "Saisie : saut touche suivante"}</span>
-              <div className="flex gap-2">
-                <Choice value={true} current={prefs.autoAdvance} label={"Auto" + def} onPick={setAutoAdvance} />
-                <Choice value={false} current={prefs.autoAdvance} label={en ? "Manual" : "Manuel"} onPick={setAutoAdvance} />
-              </div>
-              <span className="text-xs italic text-muted-foreground">
-                {en ? "The cursor only moves on once the value passes every check." : "Le curseur n'avance que si la valeur passe tous les contrôles."}
-              </span>
             </div>
           </div></TooltipProvider>
         </DialogContent>
