@@ -325,6 +325,11 @@ function RootComponent() {
   // Le bouton « Fichiers » reste actif hors Comparer dès qu'une saisie
   // exploitable existe (retour depuis Comparer inclus).
   const filesEnabled = isComparer || topbar.measuresReady || topbar.gateReady;
+  const isResultats = pathname === "/resultats";
+  const isSaisie = pathname === "/saisie";
+  // Sur Pesée, le menu reste ouvrable (Importer / formulaire vierge) même sans pesée.
+  const menuEnabled = filesEnabled || isSaisie;
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
 
   const dispatchAction = (type: string) => {
     window.dispatchEvent(new CustomEvent(type, { bubbles: true }));
@@ -454,14 +459,14 @@ function RootComponent() {
                 type="button"
                 onClick={(e) => e.preventDefault()}
                 className={`inline-flex h-8 items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-0 text-lg font-bold transition-colors ${
-                  filesEnabled ? "!text-black hover:bg-gray-50" : "!text-gray-400 cursor-default"
+                  menuEnabled ? "!text-black hover:bg-gray-50" : "!text-gray-400 cursor-default"
                 }`}
               >
-                <span className="pointer-events-none">{lang === "en" ? "Export" : "Exporter"}</span>
+                <span className="pointer-events-none">{lang === "en" ? "File" : "Fichier"}</span>
                 <ChevronDown className="pointer-events-none ml-1 h-4 w-4" />
               </button>
 
-              {topbar.alert?.anchor === "export" && (
+              {(topbar.alert?.anchor === "export" || topbar.alert?.anchor === "import") && (
                 <div
                   className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
                   style={{ position: "absolute", zIndex: 99999, backgroundColor: "#ffffff" }}
@@ -470,9 +475,7 @@ function RootComponent() {
                 </div>
               )}
               {topbar.isExporting && (
-                <div
-                  className="absolute inset-x-0 top-full !z-[99999] mt-[10px] h-[3px] w-full overflow-hidden rounded-full bg-gray-200"
-                >
+                <div className="absolute inset-x-0 top-full !z-[99999] mt-[10px] h-[3px] w-full overflow-hidden rounded-full bg-gray-200">
                   <div
                     className="h-full rounded-full transition-[width] duration-200 ease-linear"
                     style={{
@@ -483,154 +486,99 @@ function RootComponent() {
                 </div>
               )}
 
-              {/* Menu principal : toujours monté dans le DOM (aucun démontage JSX),
-                   piloté par opacité + pointer-events. right-0 = déploiement vers la gauche ;
-                   -mt-[2px] = chevauchement physique, zéro trou d'air. transition-opacity duration-70
-                   garde la hitbox active pendant la traversée des bordures. */}
-                <div className={`absolute right-0 top-full -mt-[2px] z-[99999] min-w-[300px] max-w-[520px] rounded-md border border-gray-200 bg-white py-1 shadow-lg opacity-0 transition-opacity duration-100 ${filesEnabled ? "group-hover:opacity-100" : ""}`}>
-                  {isComparer ? (
-                    <>
+              <div className={`absolute right-0 top-full -mt-[2px] z-[99999] min-w-[300px] max-w-[520px] rounded-md border border-gray-200 bg-white py-1 shadow-lg opacity-0 transition-opacity duration-100 ${menuEnabled ? "group-hover:opacity-100" : "pointer-events-none"}`}>
+                {/* 1. Enregistrer : fichier local souverain .kw, sur les 3 pages. */}
+                <button
+                  type="button"
+                  disabled={!filesEnabled}
+                  className="block w-full px-3 py-2 text-left text-sm font-bold text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
+                  onClick={() => dispatchAction("piano-save-kw")}
+                >
+                  <span className="pointer-events-none">{lang === "en" ? "Save profile (.kw)" : "Enregistrer le profil (.kw)"}</span>
+                </button>
+
+                {/* 2. Export PDF selon la page. */}
+                {isComparer ? (
+                  <button
+                    type="button"
+                    className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
+                    onClick={() => setPdfDialogOpen(true)}
+                  >
+                    <span className="pointer-events-none">{lang === "en" ? "Export analysis (PDF)" : "Exporter l'analyse (PDF)"}</span>
+                  </button>
+                ) : isResultats ? (
+                  <button
+                    type="button"
+                    disabled={!filesEnabled}
+                    className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
+                    onClick={() => requireConsent(() => dispatchAction("piano-export-pdf"))}
+                  >
+                    <span className="pointer-events-none">{lang === "en" ? "Export dashboard (PDF)" : "Exporter le bilan (PDF)"}</span>
+                  </button>
+                ) : (
+                  <div className="group/sub relative">
                     <button
                       type="button"
-                      className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
-                      onClick={() => {
-                        requireConsent(() => dispatchAction("piano-export-pdf"));
-                      }}
+                      className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
                     >
-                      <span className="pointer-events-none">
-                        {topbar.comparisonActive
-                          ? lang === "en"
-                            ? "Export Workshop report + Comparative analysis as PDF"
-                            : "Exporter Rapport d'atelier + Analyse comparative au format PDF"
-                          : lang === "en"
-                            ? "Export Workshop report as PDF"
-                            : "Exporter Rapport d'atelier au format PDF"}
-                      </span>
+                      <span className="pointer-events-none">{lang === "en" ? "Export a blank weighing form (pdf)" : "Exporter un formulaire de pesée vierge (pdf)"}</span>
+                      <ChevronDown className="pointer-events-none h-3 w-3 -rotate-90" />
                     </button>
-                    <label className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100">
-                      <input type="checkbox" checked={prefs.pdfRedKeys} onChange={(e) => setPdfRedKeys(e.target.checked)} />
-                      <span>{lang === "en" ? `Out-of-tolerance keys in red (± ${prefs.corridorG} g)` : `Touches hors tolérance en rouge (± ${prefs.corridorG} g)`}</span>
-                    </label>
-                    </>
-                  ) : (
-                    <>
-                      {/* Sous-menu « Exporter PDF » : group/sub relative.
-                          Le sous-menu s'ouvre uniquement au survol de cette ligne. */}
-                      <div className="group/sub relative">
-                        <button
-                          type="button"
-                          className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
-                        >
-                          <span className="pointer-events-none">{lang === "en" ? "Export PDF" : "Exporter PDF"}</span>
-                          <ChevronDown className="pointer-events-none h-3 w-3 -rotate-90" />
-                        </button>
-                        {/* right-full top-0 -mr-[2px] : s'ouvre à gauche, chevauchement 2 px. */}
-                        <div className="absolute right-full top-0 -mr-[2px] z-[100000] min-w-[280px] max-w-[440px] rounded-md border border-gray-200 bg-white py-1 shadow-lg opacity-0 transition-opacity duration-100 group-hover/sub:opacity-100">
-                          <button
-                            type="button"
-                            disabled={!filesEnabled}
-                            className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
-                            onClick={() => {
-                              requireConsent(() => dispatchAction("piano-export-pdf"));
-                            }}
-                          >
-                            <span className="pointer-events-none">{lang === "en" ? "Workshop report (3 pages)" : "Rapport d'atelier (3 pages)"}</span>
-                          </button>
-                          <button
-                            type="button"
-                            className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
-                            onClick={() => {
-                              requireConsent(() => dispatchAction("piano-export-blank-pdf"));
-                            }}
-                          >
-                            <span className="pointer-events-none">
-                              {lang === "en"
-                                ? "Blank form table format (re-importable)"
-                                : "Formulaire vierge format tableau (re-importable)"}
-                            </span>
-                          </button>
-                          <button
-                            type="button"
-                            className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
-                            onClick={() => {
-                              requireConsent(() => dispatchAction("piano-export-blank-keyboard-pdf"));
-                            }}
-                          >
-                            <span className="pointer-events-none">
-                              {lang === "en"
-                                ? "Blank form keyboard design format (re-importable)"
-                                : "Formulaire vierge format dessin clavier (re-importable)"}
-                            </span>
-                          </button>
-                        </div>
-                      </div>
-                      {/* Enregistrer : fichier local souverain .kw (réécriture directe si déjà choisi). */}
+                    <div className="absolute right-full top-0 -mr-[2px] z-[100000] min-w-[240px] rounded-md border border-gray-200 bg-white py-1 shadow-lg opacity-0 pointer-events-none transition-opacity duration-100 group-hover/sub:pointer-events-auto group-hover/sub:opacity-100">
                       <button
                         type="button"
-                        disabled={!filesEnabled}
-                        className="block w-full px-3 py-2 text-left text-sm font-bold text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
-                        onClick={() => dispatchAction("piano-save-kw")}
+                        className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
+                        onClick={() => requireConsent(() => dispatchAction("piano-export-blank-pdf"))}
                       >
-                        <span className="pointer-events-none">{lang === "en" ? "Save (.kw file)" : "Enregistrer (fichier .kw)"}</span>
+                        <span className="pointer-events-none">{lang === "en" ? "Table format" : "Format tableau"}</span>
                       </button>
-                      {/* Sauvegarde CSV : placée sous l'option globale « Exporter PDF ». */}
                       <button
                         type="button"
-                        disabled={!filesEnabled}
-                        className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
-                        onClick={() => {
-                          requireConsent(() => dispatchAction("piano-export-csv"));
-                        }}
+                        className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
+                        onClick={() => requireConsent(() => dispatchAction("piano-export-blank-keyboard-pdf"))}
                       >
-                        {lang === "en" ? (
-                          <span className="pointer-events-none block leading-snug">
-                            Save entered data
-                            <br />
-                            as CSV (re-importable)
-                          </span>
-                        ) : (
-                          <span className="pointer-events-none block leading-snug">
-                            Sauver données saisies au format
-                            <br />
-                            CSV (re-importable)
-                          </span>
-                        )}
+                        <span className="pointer-events-none">{lang === "en" ? "Keyboard drawing format" : "Format dessin clavier"}</span>
                       </button>
-                    </>
-                  )}
-                </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Importer : uniquement sur la page Pesée. */}
+                {isSaisie && (
+                  <button
+                    type="button"
+                    className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
+                    onClick={() => dispatchAction("piano-import-csv")}
+                  >
+                    <span className="pointer-events-none">{lang === "en" ? "Import a file (.kw, .csv)" : "Importer un fichier (.kw, .csv)"}</span>
+                  </button>
+                )}
+              </div>
             </div>
             )}
 
-            {!isHome && !isComparer && pathname !== "/resultats" && (
-            <div className="relative flex translate-y-[15px] items-center">
-              {/* Importer : chargement d'un fichier CSV local uniquement. */}
-              <Button
-                variant="outline"
-                size="sm"
-                onMouseEnter={showImportHint}
-                onMouseLeave={hideImportHint}
-                className="border border-gray-300 bg-white text-lg font-bold !text-black"
-                onClick={() => dispatchAction("piano-import-csv")}
-              >
-                {lang === "en" ? "Import" : "Importer"}
-              </Button>
-
-
-              {(importHint || topbar.alert?.anchor === "import") && (
-                <div
-                  className="absolute left-0 top-full !z-[99999] mt-2 w-80 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !text-opacity-100 !shadow-lg"
-                  style={{ position: "absolute", zIndex: 99999, backgroundColor: "#ffffff" }}
-                >
-                  {topbar.alert?.anchor === "import"
-                    ? topbar.alert.message
-                    : lang === "en"
-                      ? "Import a Keyweight CSV file from your local storage."
-                      : "Importer un fichier CSV (Keyweight) depuis votre stockage local."}
+            <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>{lang === "en" ? "Export analysis (PDF)" : "Exporter l'analyse (PDF)"}</DialogTitle>
+                  <DialogDescription>
+                    {topbar.comparisonActive
+                      ? lang === "en" ? "Workshop report + Comparative analysis" : "Rapport d'atelier + Analyse comparative"
+                      : lang === "en" ? "Workshop report" : "Rapport d'atelier"}
+                  </DialogDescription>
+                </DialogHeader>
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
+                  <input type="checkbox" checked={prefs.pdfRedKeys} onChange={(e) => setPdfRedKeys(e.target.checked)} />
+                  <span>{lang === "en" ? `Out-of-tolerance keys in red (± ${prefs.corridorG} g)` : `Touches hors tolérance en rouge (± ${prefs.corridorG} g)`}</span>
+                </label>
+                <div className="mt-2 flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setPdfDialogOpen(false)}>{lang === "en" ? "Cancel" : "Annuler"}</Button>
+                  <Button onClick={() => { setPdfDialogOpen(false); requireConsent(() => dispatchAction("piano-export-pdf")); }}>
+                    {lang === "en" ? "Export PDF" : "Exporter le PDF"}
+                  </Button>
                 </div>
-               )}
-             </div>
-             )}
+              </DialogContent>
+            </Dialog>
 
               <div className="ml-auto flex items-center">
                 {/* Bouton de soutien à droite du sélecteur EN / FR,
