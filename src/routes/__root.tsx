@@ -1,3 +1,4 @@
+import { saveDraftToKw } from "@/lib/kw-file";
 import "@/lib/stanwood-migration";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { initLang, setLang, useLang } from "@/data/translations";
@@ -328,7 +329,7 @@ function RootComponent() {
   const isResultats = pathname === "/resultats";
   const isSaisie = pathname === "/saisie";
   // Sur Pesée, le menu reste ouvrable (Importer / formulaire vierge) même sans pesée.
-  const menuEnabled = filesEnabled || isSaisie;
+  const menuEnabled = true;
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
 
   const dispatchAction = (type: string) => {
@@ -490,9 +491,12 @@ function RootComponent() {
                 {/* 1. Enregistrer : fichier local souverain .kw, sur les 3 pages. */}
                 <button
                   type="button"
-                  disabled={!filesEnabled}
                   className="block w-full px-3 py-2 text-left text-sm font-bold text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
-                  onClick={() => dispatchAction("piano-save-kw")}
+                  onClick={() => {
+                    // Pesée gère ses jalons ; ailleurs, enregistrement direct du brouillon (clic natif conservé).
+                    if (isSaisie) dispatchAction("piano-save-kw");
+                    else void saveDraftToKw();
+                  }}
                 >
                   <span className="pointer-events-none">{lang === "en" ? "Save profile (.kw)" : "Enregistrer le profil (.kw)"}</span>
                 </button>
