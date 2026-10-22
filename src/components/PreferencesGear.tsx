@@ -95,7 +95,7 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
               <span className="font-semibold">{en ? "Demo mode" : "Mode Démo"}</span>
               <div className="flex gap-2">
                 <Choice value={false} current={demo} label={"OFF" + def} tip={demo ? (en ? "Turns demo mode off: the sample piano, its 88 weighings and the sample Cloud data are erased." : "Désactive le mode démo : le piano fictif, ses 88 pesées et les données Cloud d'essai sont effacés.") : undefined} onPick={(v) => { if (v !== demo) { toggleDemoMode(); setOpen(false); onDemoToggled?.(); } }} />
-                <Choice value={true} current={demo} label="ON" tip={en ? "Loads a full sample: fictitious piano, 88 weighings and sample Cloud data, to explore the app freely." : "Charge un jeu d'essai complet : piano fictif, 88 pesées et données Cloud fictives, pour découvrir l'application."} onPick={(v) => { if (v !== demo) { toggleDemoMode(); setOpen(false); onDemoToggled?.(); } }} />
+                <Choice value={true} current={demo} label="ON" tip={en ? "Loads a full sample: fictitious piano, 88 weighings and sample Cloud data, to explore the app freely." : "Charge un profil de piano et des données Cloud fictives pour découvrir l'application. Le profil actuel sera effacé."} onPick={(v) => { if (v !== demo) { toggleDemoMode(); setOpen(false); onDemoToggled?.(); } }} />
               </div>
             </div>
             <div className={row}>

@@ -106,6 +106,7 @@ import {
   shouldProposeJalon,
   writeKwFile,
   type KwDocument,
+  pianoPdfName,
 } from "@/lib/kw-file";
 import {
   AlertDialog,
@@ -1662,6 +1663,7 @@ function Index() {
   // --- Fichier physique .kw : handle conservé, document chargé, dialogue de jalon ---
   const kwHandleRef = useRef<Awaited<ReturnType<typeof writeKwFile>> | null>(null);
   const kwDocRef = useRef<KwDocument | null>(null);
+  const [importedProfile, setImportedProfile] = useState(false);
   useEffect(() => { kwDocRef.current = readSessionKwDocument(); }, []);
   const [kwJalonAsk, setKwJalonAsk] = useState(false);
 
@@ -2985,9 +2987,11 @@ function Index() {
         setInfo({ ...doc.info });
         setRows(doc.rows.map((r) => ({ wd: cleanWeight(r.wd), wa: cleanWeight(r.wa) })));
         setIsDirty(false);
+        setImportedProfile(true);
         return;
       }
       importCsvContent(text);
+      setImportedProfile(true);
     };
     reader.onerror = () => showMessage("⚠️ Lecture du fichier impossible.");
     reader.readAsText(file, "utf-8");
@@ -3320,7 +3324,7 @@ function Index() {
     const onBlankPdf = () => {
       const lang = getLang();
       generateBlankFormPdf(
-        lang === "en" ? "BLANK_ENTRY_FORM.pdf" : "FORMULAIRE_SAISIE_VIERGE.pdf",
+        pianoPdfName(lang === "en" ? "BLANK_ENTRY_FORM" : "FORMULAIRE_SAISIE_VIERGE", info),
         lang,
         blankMeta(),
       );
@@ -3329,7 +3333,7 @@ function Index() {
     const onBlankKeyboardPdf = () => {
       const lang = getLang();
       generateBlankKeyboardPdf(
-        lang === "en" ? "BLANK_KEYBOARD_FORM.pdf" : "FORMULAIRE_CLAVIER_VIERGE.pdf",
+        pianoPdfName(lang === "en" ? "BLANK_KEYBOARD_FORM" : "FORMULAIRE_CLAVIER_VIERGE", info),
         lang,
         blankMeta(),
       );
@@ -3858,7 +3862,15 @@ function Index() {
         data-saved-at={savedAt ?? ""}
         data-climate-zone={climateZone ?? ""}
       >
-        <TooltipProvider delayDuration={200}><Frame title={en ? "Piano information" : "Informations piano"} className="mt-10 mx-auto w-4/5 max-w-[80%] [&_input]:border-foreground/60">
+        <TooltipProvider delayDuration={200}><Frame title={importedProfile ? (
+          <span className="flex items-baseline gap-2 whitespace-nowrap">
+            <span>{en ? "Piano information" : "Informations piano"}</span>
+            <span className="text-muted-foreground">-</span>
+            <span className="text-lg font-semibold text-foreground">{pdfSummary.main}</span>
+            <span className="text-xs font-medium text-foreground">{en ? pdfSummary.time.replace(/^Mesure/, "Measurement") : pdfSummary.time}</span>
+            <span className="text-xs font-medium text-foreground">{en ? pdfSummary.count.replace("Blanches", "Whites").replace("Noires", "Blacks") : pdfSummary.count}</span>
+          </span>
+        ) : (en ? "Piano information" : "Informations piano")} className="mt-10 mx-auto w-4/5 max-w-[80%] [&_input]:border-foreground/60">
           {isDemoActive() &&
             !info["marque"]?.trim() &&
             !info["modele"]?.trim() &&

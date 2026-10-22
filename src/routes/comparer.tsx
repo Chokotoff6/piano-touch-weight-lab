@@ -10,7 +10,7 @@ import { PianoSheetMirror } from "@/components/PianoSheetMirror";
 import { generateComparisonReport, type LandscapePage } from "@/lib/pdf-report";
 import { setTopbarState } from "@/lib/topbar-store";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
-import { parseKwDocument, readSessionKwDocument, kwSerial, differentSerial, type KwDocument, type KwJalon } from "@/lib/kw-file";
+import { pianoPdfName, parseKwDocument, readSessionKwDocument, kwSerial, differentSerial, type KwDocument, type KwJalon } from "@/lib/kw-file";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { scopeDemo } from "@/lib/demo-scope";
 import { isDemoActive, DEMO_LOADED_EVENT } from "@/lib/demo-mode";
@@ -1962,7 +1962,7 @@ function Comparer() {
             if (pages.length === 0) return;
             await generateComparisonReport(
               pages,
-              "COMPARATIF_TOUCHWEIGHT.pdf",
+              pianoPdfName("COMPARATIF"),
               1,
               pages.length,
             );
