@@ -214,3 +214,40 @@ export async function writeKwFile(
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   return null;
 }
+
+/** Lit le brouillon courant (fiche + 88 pesées) depuis l'autosauvegarde navigateur. */
+export function readDraftProfile(): { info: Record<string, string>; rows: KwRow[] } {
+  let info: Record<string, string> = {};
+  let rows: KwRow[] = Array.from({ length: 88 }, () => ({ wd: "", wa: "" }) as KwRow);
+  try {
+    const i = JSON.parse(window.localStorage.getItem("ptw_draft_info") ?? "null");
+    if (i && typeof i === "object") info = i;
+    const r = JSON.parse(window.localStorage.getItem("ptw_draft_rows") ?? "null");
+    if (Array.isArray(r) && r.length === 88) rows = r;
+  } catch { /* stockage indisponible */ }
+  return { info, rows };
+}
+
+/** Enregistre le brouillon courant dans un fichier .kw (appel direct depuis un clic). */
+export async function saveDraftToKw(): Promise<boolean> {
+  const { info, rows } = readDraftProfile();
+  const doc = buildKwDocument(info, rows, readSessionKwDocument(), false);
+  const res = await writeKwFile(doc, null);
+  if (res === "cancelled") return false;
+  rememberKwDocument(doc);
+  try {
+    window.localStorage.setItem(SECURITY_BACKUP_KEY, JSON.stringify({ info, rows, savedToFile: true, at: Date.now() }));
+  } catch { /* stockage indisponible */ }
+  return true;
+}
+
+/** Nom de PDF : MARQUE_MODELE_SERIE_AAAA-MM-JJ_HHMM_SUFFIXE.pdf (INCONNU si vide). */
+export function pianoPdfName(suffix: string, info?: Record<string, string>): string {
+  const src = info ?? readDraftProfile().info;
+  const seg = (v: string | undefined) =>
+    (v ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-|-$/g, "") || "INCONNU";
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, "0");
+  const stamp = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`;
+  return `${seg(src["marque"])}_${seg(src["modele"])}_${seg(kwSerial(src))}_${stamp}_${suffix}.pdf`;
+}
