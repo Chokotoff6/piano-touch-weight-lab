@@ -2894,13 +2894,7 @@ function Index() {
     const pages = collectPdfPages();
     if (pages.every((page) => page.length === 0)) return;
 
-    const filename = buildExportFilename(
-      info["marque"],
-      info["modele"],
-      info["sn_num"],
-      new Date(),
-      "pdf",
-    );
+    const filename = pianoPdfName("BILAN", info);
     const header = [pdfSummary.main, pdfSummary.time, pdfSummary.count];
     // Aucune capture en arrière-plan : html2canvas ne tourne QU'ICI, au clic.
     // L'indicateur « Export en cours... » s'affiche à côté du bouton Sauver.
@@ -3324,7 +3318,7 @@ function Index() {
     const onBlankPdf = () => {
       const lang = getLang();
       generateBlankFormPdf(
-        pianoPdfName(lang === "en" ? "BLANK_ENTRY_FORM" : "FORMULAIRE_SAISIE_VIERGE", info),
+        lang === "en" ? "BLANK_ENTRY_FORM.pdf" : "FORMULAIRE_SAISIE_VIERGE.pdf",
         lang,
         blankMeta(),
       );
@@ -3333,7 +3327,7 @@ function Index() {
     const onBlankKeyboardPdf = () => {
       const lang = getLang();
       generateBlankKeyboardPdf(
-        pianoPdfName(lang === "en" ? "BLANK_KEYBOARD_FORM" : "FORMULAIRE_CLAVIER_VIERGE", info),
+        lang === "en" ? "BLANK_KEYBOARD_FORM.pdf" : "FORMULAIRE_CLAVIER_VIERGE.pdf",
         lang,
         blankMeta(),
       );
