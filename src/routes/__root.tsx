@@ -515,7 +515,12 @@ function RootComponent() {
                     type="button"
                     disabled={!filesEnabled}
                     className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
-                    onClick={() => requireConsent(() => dispatchAction("piano-export-pdf"))}
+                    onClick={() => requireConsent(() => {
+                      // Le Rapport d'atelier (3 pages) est composé par la page Pesée :
+                      // on y passe, il s'exporte automatiquement, puis retour au Bilan.
+                      sessionStorage.setItem("ptw_pending_bilan_pdf", "1");
+                      void rootNavigate({ to: "/saisie" });
+                    })}
                   >
                     <span className="pointer-events-none">{lang === "en" ? "Export dashboard (PDF)" : "Exporter le bilan (PDF)"}</span>
                   </button>
