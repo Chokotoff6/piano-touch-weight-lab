@@ -26,6 +26,9 @@ import { decideCloudAction, markCloudSync, resetConsent } from "@/lib/cloud-gate
 import { markCsvOrigin } from "@/lib/anti-bot";
 import { DEMO_LOADED_EVENT, isDemoActive } from "@/lib/demo-mode";
 import { DRAFT_EDITED_EVENT } from "@/lib/zoom-edit";
+import { PianoSheetMirror } from "@/components/PianoSheetMirror";
+import { generateComparisonReport, type LandscapePage } from "@/lib/pdf-report";
+import { pianoPdfName } from "@/lib/kw-file";
 
 export const Route = createFileRoute("/resultats")({
   head: () => ({
@@ -232,6 +235,66 @@ function Resultats() {
   // Épuration : ni Cloud (orange) ni Usine (vert) sur cette page.
   const chartData = useMemo(() => buildChartData(hasData ? mine : null, null, null), [mine, hasData]);
 
+  // --- Export PDF Bilan : Rapport d'atelier 3 pages depuis le miroir hors écran ---
+  const mirrorAveragesRef = useRef<HTMLElement | null>(null);
+  const mirrorSheetRef = useRef<HTMLElement | null>(null);
+  const mirrorChartsRef = useRef<HTMLDivElement>(null);
+  const pdfSummaryLine = useMemo(() => {
+    const info = draft.info;
+    const now = new Date();
+    const p = (n: number) => String(n).padStart(2, "0");
+    const year = info["fabrication"]?.trim() || "—";
+    const serial = `${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`.trim();
+    const BLACK_MOD = new Set([2, 5, 7, 10, 0]);
+    let white = 0;
+    let black = 0;
+    rows.forEach((row, index) => {
+      const filled = String(row.wd ?? "").trim() !== "" || String(row.wa ?? "").trim() !== "";
+      if (!filled) return;
+      if (BLACK_MOD.has((index + 1) % 12)) black += 1;
+      else white += 1;
+    });
+    const main = `${info["marque"] ?? ""} ${info["modele"] ?? ""} (${year}) - SN ${serial}`.trim();
+    const time = `${en ? "Measurement" : "Mesure"} ${p(now.getDate())}-${p(now.getMonth() + 1)}-${now.getFullYear()} - ${p(now.getHours())}:${p(now.getMinutes())}`;
+    const count = en ? `- ${white} Whites / ${black} Blacks` : `- ${white} Blanches / ${black} Noires`;
+    return `${main} / ${time} ${count}`;
+  }, [draft.info, rows, en]);
+
+  useEffect(() => {
+    const onPdf = () => {
+      window.dispatchEvent(new CustomEvent("piano-pdf-force-split"));
+      setTopbarState({ isExporting: true, exportProgress: 0 });
+      window.setTimeout(() => {
+        void (async () => {
+          try {
+            const mirror = (id: string) =>
+              mirrorChartsRef.current?.querySelector<HTMLElement>(`[data-frame="${id}"]`) ?? null;
+            const keep = (list: Array<HTMLElement | null>) =>
+              list.filter((el): el is HTMLElement => el !== null);
+            const pages: LandscapePage[] = [
+              {
+                blocks: keep([mirrorAveragesRef.current, mirrorSheetRef.current]),
+                layout: "column" as const,
+                title: en ? "WORKSHOP REPORT" : "RAPPORT D'ATELIER",
+                underline: false,
+              },
+              { blocks: keep([mirror("wd"), mirror("wa")]), layout: "column" as const },
+              { blocks: keep([mirror("bal"), mirror("fric")]), layout: "column" as const },
+            ].filter((page) => page.blocks.length > 0);
+            if (pages.length === 0) return;
+            await generateComparisonReport(pages, pianoPdfName("BILAN", draft.info), 1, pages.length);
+          } catch (error) {
+            console.warn("[pdf] export bilan", error);
+          } finally {
+            setTopbarState({ isExporting: false, exportProgress: 0 });
+          }
+        })();
+      }, 150);
+    };
+    window.addEventListener("piano-export-pdf", onPdf);
+    return () => window.removeEventListener("piano-export-pdf", onPdf);
+  }, [draft.info, en]);
+
   const summary = useMemo(() => {
     const now = new Date();
     const dd = String(now.getDate()).padStart(2, "0");
@@ -372,6 +435,31 @@ function Resultats() {
 
   return (
     <main className="mx-auto w-full max-w-[1120px] px-6 pb-10 pt-20">
+      {/* Miroir hors écran (jamais visible) : pages 1 à 3 du Rapport d'atelier. */}
+      <PianoSheetMirror
+        wd={mine.wd}
+        wa={mine.wa}
+        summary={pdfSummaryLine}
+        averagesRef={(node) => {
+          mirrorAveragesRef.current = node;
+        }}
+        sheetRef={(node) => {
+          mirrorSheetRef.current = node;
+        }}
+      />
+      <div aria-hidden="true" className="absolute -left-[9999px] top-0 pointer-events-none">
+        <div ref={mirrorChartsRef} className="!w-[1250px] !min-w-[1250px] !max-w-[1250px] bg-white">
+          <ComparisonChart
+            chartData={chartData}
+            keyFilter="split"
+            comparisonLabel=""
+            comparisonShort=""
+            currentBaseName=""
+            autoDomain
+            sideMargin={60}
+          />
+        </div>
+      </div>
       <input
         ref={importInputRef}
         type="file"
