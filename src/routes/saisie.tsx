@@ -3080,6 +3080,23 @@ function Index() {
       .finally(() => setIsExporting(false));
   };
 
+  // Export Bilan demandé depuis la page Bilan : rapport d'atelier puis retour.
+  useEffect(() => {
+    if (sessionStorage.getItem("ptw_pending_bilan_pdf") !== "1") return;
+    sessionStorage.removeItem("ptw_pending_bilan_pdf");
+    const timer = window.setTimeout(() => {
+      setIsExporting(true);
+      void exportPdfFile()
+        .catch((error) => console.warn("[pdf] export", error))
+        .finally(() => {
+          setIsExporting(false);
+          void navigate({ to: "/resultats" });
+        });
+    }, 600);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   const syncAndFinish = async (mode: "insert" | "update"): Promise<boolean> => {
     setIsExporting(true);
