@@ -144,6 +144,16 @@
 }
 
 @layer components {
+  /* Ligne de résumé piano : un peu plus petite que les titres de cadre, casse normale. */
+  .summary-text {
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.25;
+    text-transform: none;
+    letter-spacing: normal;
+    white-space: nowrap;
+    color: var(--foreground);
+  }
   .technical-sheet {
     display: grid;
     grid-template-columns: minmax(120px, auto) minmax(0, 1fr);
