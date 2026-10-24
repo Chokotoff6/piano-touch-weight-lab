@@ -4257,7 +4257,7 @@ function Index() {
               // Toujours activable : noir par défaut, vert dès que la fiche est complète.
               className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors ${requiredSheetFieldsComplete ? "!border-green-600 !bg-green-100" : "border-black bg-white hover:bg-gray-100"}`}
             >
-              {en ? "Key measurements >" : "Mesures clavier >"}
+              {en ? "Weighing >" : "Pesée >"}
             </button>
             </span>
           </div>
@@ -4293,7 +4293,17 @@ function Index() {
       )}
 
       <Frame
-        title={en ? "Static touch weight measurements" : "Mesures poids statiques"}
+        title={
+          weighingMode ? (
+            <span className="flex items-baseline gap-2 whitespace-nowrap">
+              <span>{en ? "Static touch weight measurements" : "Mesures poids statiques"}</span>
+              <span className="text-muted-foreground">-</span>
+              <span className="summary-text">{summaryLine}</span>
+            </span>
+          ) : (
+            en ? "Static touch weight measurements" : "Mesures poids statiques"
+          )
+        }
         // Hors mode pesée (page Infopiano), le cadre n'est PAS retiré du DOM :
         // il est déporté hors écran (jamais `hidden`), de sorte que l'export PDF
         // puisse toujours le rendre et le capturer, quelle que soit la page.
