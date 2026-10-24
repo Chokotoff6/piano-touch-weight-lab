@@ -34,3 +34,11 @@
 - [ ] Historique : jalons du document local, autre fichier et confirmation de série différente.
 - [ ] Vérifier la compilation automatique du chantier consolidé.
 - [ ] Rideau Cloud + nouveau texte de remerciement.
+
+## Build consolidé (oct. 2026)
+- [x] Style unifié « résumé » (.summary-text) sur Pesée, Bilan, Analyse.
+- [x] Analyse : résumé sur la ligne du titre « Moyennes ».
+- [x] Pesée : résumé permanent + bouton renommé « Bilan ».
+- [x] Bouton de mode de rendu imprimé sur les PDF.
+- [ ] Export Analyse 4 pages / option grand angle 6 pages.
+- [ ] Sync Cloud conditionnelle (.kw/PDF) + file hors ligne ptw_pending_cloud_sync.

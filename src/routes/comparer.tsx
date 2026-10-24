@@ -1086,7 +1086,6 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           </button>
           <button
             type="button"
-            data-pdf-hide
             aria-label={`${lang === "en" ? "Mode" : "Mode"} : ${smoothMode === "real" ? (lang === "en" ? "Raw" : "Réel") : smoothMode === "smooth" ? (lang === "en" ? "Smoothed" : "Lissé") : (lang === "en" ? "Smoothed+" : "Lissé+")}`}
             onClick={(event) => {
               event.stopPropagation();
@@ -2373,9 +2372,9 @@ function Comparer() {
             <div className="min-w-0">
               
               <div ref={averagesRef} data-pdf-expand data-pdf-lock-w="980" className="sticky top-[127px] z-50 mb-[50px] w-full bg-white pb-2 relative">
-                <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span>{en ? "Averages" : "Moyennes"}</span>} className="h-fit">
+                <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span className="flex items-baseline gap-2"><span>{en ? "Averages" : "Moyennes"}</span><span className="text-slate-400">-</span><span className="summary-text">{summary}</span></span>} className="h-fit">
                   {/* Séparateurs affichés uniquement si au moins deux sources sont présentes. */}
-                  <div className={(comparedPiano !== null || sourceMode === "cloud" || standardEnabled) ? "mb-3 border-b border-gray-400 pb-3" : ""}><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">{en ? "Current piano" : "Piano actuel"} : <span className="normal-case">{summary}</span></div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
+                  <div className={(comparedPiano !== null || sourceMode === "cloud" || standardEnabled) ? "mb-3 border-b border-gray-400 pb-3" : ""}><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">{en ? "Current piano" : "Piano actuel"}</div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
                   {(comparedPiano !== null || sourceMode === "cloud") && (
                     <div className={standardEnabled ? "mb-3 border-b border-gray-400 pb-3" : ""}>
                       <div className={`mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide ${comparedPiano ? "!text-blue-600" : "!text-orange-600"}`}>{comparedPiano ? <>IMPORT CSV : <span className="normal-case">{csvIdentity}{csvStats}</span></> : <>Cloud</>}{cloudActive && <span className="ml-2 normal-case !text-orange-600">{cloudCounterText}</span>}</div>

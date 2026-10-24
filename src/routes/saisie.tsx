@@ -2868,6 +2868,25 @@ function Index() {
     };
   }, [info, rows, serialFull]);
 
+  /** Ligne de résumé unifiée (style .summary-text), affichée en permanence. */
+  const summaryLine = useMemo(() => {
+    const now = new Date();
+    const p = (n: number) => String(n).padStart(2, "0");
+    const year = info["fabrication"]?.trim() || "—";
+    const BLACK_MOD = new Set([2, 5, 7, 10, 0]);
+    let white = 0;
+    let black = 0;
+    rows.forEach((row, index) => {
+      const filled = String(row.wd ?? "").trim() !== "" || String(row.wa ?? "").trim() !== "";
+      if (!filled) return;
+      if (BLACK_MOD.has((index + 1) % 12)) black += 1;
+      else white += 1;
+    });
+    const v = (s: string | undefined) => (s ?? "").trim() || "—";
+    return `${v(info["marque"])}\u00A0\u00A0${v(info["modele"])} - ${year} - SN ${serialFull || "—"} - ${en ? "Measurement" : "Mesure"} ${p(now.getDate())}-${p(now.getMonth() + 1)}-${now.getFullYear()} - ${p(now.getHours())}:${p(now.getMinutes())} - ${white} ${en ? "Whites" : "Blanches"} / ${black} ${en ? "Blacks" : "Noires"}`;
+  }, [info, rows, serialFull, en]);
+
+
 
   /**
    * Blocs DOM composant le rapport.
@@ -3857,15 +3876,13 @@ function Index() {
         data-saved-at={savedAt ?? ""}
         data-climate-zone={climateZone ?? ""}
       >
-        <TooltipProvider delayDuration={200}><Frame title={importedProfile ? (
+        <TooltipProvider delayDuration={200}><Frame title={
           <span className="flex items-baseline gap-2 whitespace-nowrap">
             <span>{en ? "Piano information" : "Informations piano"}</span>
             <span className="text-muted-foreground">-</span>
-            <span className="text-lg font-semibold text-foreground">{pdfSummary.main}</span>
-            <span className="text-xs font-medium text-foreground">{en ? pdfSummary.time.replace(/^Mesure/, "Measurement") : pdfSummary.time}</span>
-            <span className="text-xs font-medium text-foreground">{en ? pdfSummary.count.replace("Blanches", "Whites").replace("Noires", "Blacks") : pdfSummary.count}</span>
+            <span className="summary-text">{summaryLine}</span>
           </span>
-        ) : (en ? "Piano information" : "Informations piano")} className="mt-10 mx-auto w-4/5 max-w-[80%] [&_input]:border-foreground/60">
+        } className="mt-10 mx-auto w-4/5 max-w-[80%] [&_input]:border-foreground/60">
           {isDemoActive() &&
             !info["marque"]?.trim() &&
             !info["modele"]?.trim() &&
@@ -4487,7 +4504,7 @@ function Index() {
                 : undefined
             }
           >
-            {en ? "Results & Charts >" : "Résultats & Graphiques >"}
+            {en ? "Dashboard >" : "Bilan >"}
           </button>
           </span>
         </div>

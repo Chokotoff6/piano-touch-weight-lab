@@ -314,11 +314,12 @@ function Resultats() {
       if (BLACK.has((index + 1) % 12)) black += 1;
       else white += 1;
     });
-    return {
-      main: `${brand} ${model} (${year}) - SN ${sn}`,
-      time: `${en ? "Measurement" : "Mesure"} ${dd}-${mm}-${now.getFullYear()} - ${hh}:${mi}`,
-      count: ` - ${white} ${en ? "Whites" : "Blanches"} / ${black} ${en ? "Blacks" : "Noires"}`,
-    };
+    const main = `${brand} ${model} (${year}) - SN ${sn}`;
+    const time = `${en ? "Measurement" : "Mesure"} ${dd}-${mm}-${now.getFullYear()} - ${hh}:${mi}`;
+    const count = ` - ${white} ${en ? "Whites" : "Blanches"} / ${black} ${en ? "Blacks" : "Noires"}`;
+    const v = (s: string) => s.trim() || "—";
+    const line = `${v(brand)}\u00A0\u00A0${v(model)} - ${year} - SN ${v(sn)} - ${time}${count}`;
+    return { main, time, count, line };
   }, [info, rows, en]);
 
   /**
@@ -488,9 +489,7 @@ function Resultats() {
                   <span className="flex items-baseline gap-2">
                     <span>{en ? "Averages" : "Moyennes"}</span>
                     <span className="text-slate-400">-</span>
-                    <span className="text-lg font-semibold !text-black">{summary.main}</span>
-                    <span className="text-xs font-medium !text-black">{summary.time}</span>
-                    <span className="text-xs font-medium !text-black">{summary.count}</span>
+                    <span className="summary-text">{summary.line}</span>
                   </span>
                 }
                 className="h-fit"
