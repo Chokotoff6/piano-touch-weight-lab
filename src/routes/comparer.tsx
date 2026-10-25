@@ -1297,7 +1297,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   );
 }
 
-export function ComparisonChart({ chartData: rawChartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible standard", onCycleKeyFilter, smoothDefault = true, showSourceControls = false, allowRealMode = true, simple = false }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void; smoothDefault?: boolean; showSourceControls?: boolean; allowRealMode?: boolean; simple?: boolean }) {
+export function ComparisonChart({ chartData: rawChartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible standard", onCycleKeyFilter, smoothDefault = true, showSourceControls = false, allowRealMode = true, simple = false, tall = false, forceSmooth, onSmoothModeChange }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void; smoothDefault?: boolean; showSourceControls?: boolean; allowRealMode?: boolean; simple?: boolean; tall?: boolean; forceSmooth?: "real" | "smooth" | "smoothPlus"; onSmoothModeChange?: (mode: "real" | "smooth" | "smoothPlus") => void }) {
   const lang = useLang();
   // Lissage global : brut, trois notes, ou cinq notes. Purement local.
   // `smoothDefault` permet au Mode Rapide d'imposer le rendu « Réel ».
@@ -1306,6 +1306,7 @@ export function ComparisonChart({ chartData: rawChartData, keyFilter, comparison
   const prefsLive = usePreferences();
   const prefSmooth = simple ? prefsLive.smoothDefault : prefsLive.smoothAnalyse;
   const initialSmooth = (): "real" | "smooth" | "smoothPlus" => {
+    if (forceSmooth) return forceSmooth;
     if (!smoothDefault) return allowRealMode ? "real" : "smooth";
     if (prefSmooth === "real") return allowRealMode ? "real" : "smooth";
     return prefSmooth;
@@ -1318,7 +1319,9 @@ export function ComparisonChart({ chartData: rawChartData, keyFilter, comparison
   useEffect(() => {
     setSmoothMode(initialSmooth());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [smoothDefault, allowRealMode, prefSmooth]);
+  }, [smoothDefault, allowRealMode, prefSmooth, forceSmooth]);
+  // Remonte le mode choisi (miroir PDF grand angle : même rendu que l'écran).
+  useEffect(() => { onSmoothModeChange?.(smoothMode); }, [smoothMode, onSmoothModeChange]);
   const chartData = useMemo(
     () => smoothMode === "real" ? rawChartData : smoothChartData(rawChartData, smoothMode === "smoothPlus" ? 5 : 3),
     [smoothMode, rawChartData],
