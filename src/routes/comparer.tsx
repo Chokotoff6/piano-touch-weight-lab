@@ -1994,6 +1994,7 @@ function Comparer() {
             );
 
           } finally {
+            setTallExport(false);
             setTopbarState({ isExporting: false, exportProgress: 0 });
           }
         })();
