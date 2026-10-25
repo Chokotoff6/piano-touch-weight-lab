@@ -902,6 +902,8 @@ type SubChartCtx = {
   targetLabel: string;
   onCycleKeyFilter: (() => void) | undefined;
   smoothMode: "real" | "smooth" | "smoothPlus";
+  /** Miroir PDF grand angle : cadre étiré à pleine hauteur de page. */
+  tall?: boolean;
   cycleSmoothMode: () => void;
   showSourceControls: boolean;
   simple: boolean;
@@ -1065,7 +1067,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
       title={title}
       onClick={zoomed && showZoomHelp ? () => setShowZoomHelp(false) : undefined}
       onWheelCapture={zoomed && showZoomHelp ? () => setShowZoomHelp(false) : undefined}
-      className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}
+      className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : ctx.tall ? "h-[720px] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}
     >
       {zoomed && (
         <button type="button" data-pdf-hide aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="absolute right-3 top-2 z-20 rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
@@ -1151,7 +1153,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
       )}
       <div
         ref={zoomed ? plotRef : undefined}
-        className="relative h-[300px] w-full lg:h-[calc(100%_-_2.5rem)]"
+        className={ctx.tall ? "relative h-[calc(100%_-_2.5rem)] w-full" : "relative h-[300px] w-full lg:h-[calc(100%_-_2.5rem)]"}
         // Mode non-zoom : tout le bloc graphique (axes, repères, courbes,
         // étiquettes) est translaté vers la gauche. En mode « N/B groupées »,
         // le décalage total est de 30 px. Les boutons ne bougent pas (frères).
@@ -1375,7 +1377,7 @@ export function ComparisonChart({ chartData: rawChartData, keyFilter, comparison
   // Contexte stable passé au SubChart (déclaré au niveau module) : évite le
   // démontage/remontage du graphique Recharts à chaque changement d'état clavier.
   const subCtx: SubChartCtx = {
-    chartData, rawChartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, smoothMode, cycleSmoothMode, showSourceControls, simple, filters, cycleFor, lang,
+    chartData, rawChartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName, autoDomain, sideMargin, csvActive, targetLabel, onCycleKeyFilter, smoothMode, cycleSmoothMode, showSourceControls, simple, filters, cycleFor, lang, tall,
     zoomStart, setZoomStart, setZoomId, hoveredFamily, setHoveredFamily, keyboardMode,
     plotRef, lastMouseY, keyboardModeRef, lastMouseNote, onMouseTakeover,
   };
