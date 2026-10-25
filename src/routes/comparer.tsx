@@ -1911,6 +1911,10 @@ function Comparer() {
   const mirrorSheetRef = useRef<HTMLElement | null>(null);
   const mirrorChartsRef = useRef<HTMLDivElement>(null);
   const liveChartsRef = useRef<HTMLDivElement>(null);
+  const tallLiveRef = useRef<HTMLDivElement>(null);
+  const tallMirrorRef = useRef<HTMLDivElement>(null);
+  const [tallExport, setTallExport] = useState(false);
+  const [liveSmooth, setLiveSmooth] = useState<"real" | "smooth" | "smoothPlus">("smooth");
 
   // Export PDF autonome de la page Comparer : 3 pages A4 portrait en PNG.
   useEffect(() => {
@@ -1923,10 +1927,16 @@ function Comparer() {
       window.setTimeout(() => {
         void (async () => {
           try {
+            // Grand angle : miroirs hors écran à pleine hauteur (720 px),
+            // montés uniquement le temps de la capture (invisibles à l'écran).
+            if (wide) {
+              flushSync(() => setTallExport(true));
+              await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => window.setTimeout(r, 120))));
+            }
             const inside = (root: HTMLElement | null, id: string) =>
               root?.querySelector<HTMLElement>(`[data-frame="${id}"]`) ?? null;
-            const pick = (id: string) => inside(liveChartsRef.current, id);
-            const mirror = (id: string) => inside(mirrorChartsRef.current, id);
+            const pick = (id: string) => inside(wide ? tallLiveRef.current : liveChartsRef.current, id);
+            const mirror = (id: string) => inside(wide ? tallMirrorRef.current : mirrorChartsRef.current, id);
             const keep = (list: Array<HTMLElement | null>) =>
               list.filter((el): el is HTMLElement => el !== null);
             // Cas 1 : rien de coché → 3 pages. Cas 2 : Cible seule → 4 pages
