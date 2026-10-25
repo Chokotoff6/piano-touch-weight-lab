@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { forceCollide, forceSimulation, forceX, forceY, type SimulationNodeDatum } from "d3-force";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, type SetStateAction, type RefObject } from "react";
+import { flushSync } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { useLang, getLang } from "@/data/translations";
 import { Info, RefreshCw, Square, SquareX, Waves } from "lucide-react";
