@@ -1909,7 +1909,8 @@ function Comparer() {
 
   // Export PDF autonome de la page Comparer : 3 pages A4 portrait en PNG.
   useEffect(() => {
-    const onPdf = () => {
+    const onPdf = (event: Event) => {
+      const wide = Boolean((event as CustomEvent<{ wide?: boolean } | undefined>).detail?.wide);
       window.dispatchEvent(new CustomEvent("piano-pdf-force-split"));
       setTopbarState({ isExporting: true, exportProgress: 0 });
       // 150 ms : « Export en cours... » a le temps d'être peint (10 px sous
@@ -1952,11 +1953,22 @@ function Comparer() {
               // Poids d'équilibre (haut) et Friction (bas).
               { blocks: keep([pick("pair2")]), layout: "column" as const },
             ];
+            // Format grand angle : chaque courbe d'une paire occupe sa propre page.
+            const split = (el: HTMLElement | null): LandscapePage[] =>
+              el ? Array.from(el.children)
+                .filter((c): c is HTMLElement => c instanceof HTMLElement)
+                .map((c) => ({ blocks: [c], layout: "column" as const })) : [];
+            const chartPages: LandscapePage[] = wide
+              ? [...split(pick("pair1")), ...split(pick("pair2"))]
+              : comparePages.slice(1);
+            const soloCharts: LandscapePage[] = wide
+              ? [mirror("wd"), mirror("wa"), mirror("bal"), mirror("fric")].map((el) => ({ blocks: keep([el]), layout: "column" as const }))
+              : soloPages.slice(1);
+            // Analyse : Page 1 fiche atelier, Page 2 synthèse comparative,
+            // puis graphiques comparatifs (2 pages compactes ou 4 en grand angle).
             const selected = !comparisonActive
-              ? soloPages
-              : cloudOrCsv
-                ? [...soloPages, ...comparePages]
-                : [soloPages[0]!, ...comparePages];
+              ? [soloPages[0]!, ...soloCharts]
+              : [soloPages[0]!, comparePages[0]!, ...chartPages];
             const pages = selected.filter((page) => page.blocks.length > 0);
             if (pages.length === 0) return;
             await generateComparisonReport(

@@ -146,8 +146,8 @@
 @layer components {
   /* Ligne de résumé piano : un peu plus petite que les titres de cadre, casse normale. */
   .summary-text {
-    font-size: 0.95rem;
-    font-weight: 600;
+    font-size: 0.82rem;
+    font-weight: 500;
     line-height: 1.25;
     text-transform: none;
     letter-spacing: normal;
