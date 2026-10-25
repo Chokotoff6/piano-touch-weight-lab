@@ -2393,6 +2393,16 @@ function Comparer() {
             sideMargin={60}
           />
         </div>
+        {tallExport && (
+          <>
+            <div ref={tallMirrorRef} className="!w-[1250px] !min-w-[1250px] !max-w-[1250px] bg-white">
+              <ComparisonChart chartData={mirrorChartData} keyFilter="split" comparisonLabel="" comparisonShort="" currentBaseName="" autoDomain sideMargin={60} tall />
+            </div>
+            <div ref={tallLiveRef} className="!w-[1250px] !min-w-[1250px] !max-w-[1250px] bg-white">
+              <ComparisonChart chartData={chartData} keyFilter="split" comparisonLabel={comparedPiano ? historyLabel : "Cloud"} comparisonShort={comparedPiano ? historyLabel : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible standard"} currentBaseName={en ? "Current piano" : "Piano actuel"} forceSmooth={liveSmooth} tall />
+            </div>
+          </>
+        )}
       </div>
       {status === "loading" ? <p className="py-16 text-center text-muted-foreground">Chargement des profils externes…</p> : (
         <>
