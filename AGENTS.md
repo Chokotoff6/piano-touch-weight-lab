@@ -18,3 +18,4 @@ Les étiquettes de fin des graphiques Recharts sont placées à partir des éche
 - Convention Stanwood dans le code : wd = Poids descendant (lourd), wa = Poids remontant ; les colonnes base historiques wa_values/wd_values sont inversées et ne sont pontées qu'à la lecture/écriture (current-piano, demo-mode) — pour ne pas migrer la base.
 - La cascade démo conserve les 88 pesées séparément du brouillon animé : le mode rapide efface ce brouillon et n'y réinjecte que les Do/Do#, il ne peut donc pas servir de source au retour en mode normal.
 - Local .kw file is the source of truth for piano identity/history (src/lib/kw-file.ts); Cloud is an upload-only mirror — keeps the app usable offline.
+- Cloud sync after .kw save / PDF export lives in src/lib/cloud-sync-queue.ts: local action first, silent push only for already-shared profiles (same day, <5 keys), offline payload queued in localStorage and replayed on the 'online' event — keeps the app usable offline.
