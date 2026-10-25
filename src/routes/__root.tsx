@@ -1,4 +1,5 @@
 import { saveDraftToKw } from "@/lib/kw-file";
+import { installCloudSyncListener, isCloudUpToDate, setCloudSyncLanguage, syncAfterLocalAction } from "@/lib/cloud-sync-queue";
 import "@/lib/stanwood-migration";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { initLang, setLang, useLang } from "@/data/translations";
@@ -331,9 +332,24 @@ function RootComponent() {
   // Sur Pesée, le menu reste ouvrable (Importer / formulaire vierge) même sans pesée.
   const menuEnabled = true;
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [pdfWide, setPdfWide] = useState(false);
 
-  const dispatchAction = (type: string) => {
-    window.dispatchEvent(new CustomEvent(type, { bubbles: true }));
+  const dispatchAction = (type: string, detail?: unknown) => {
+    window.dispatchEvent(new CustomEvent(type, { bubbles: true, detail }));
+  };
+
+  // File d'attente Cloud hors ligne : rejouée au démarrage et au retour du réseau.
+  useEffect(() => installCloudSyncListener(), []);
+  useEffect(() => { setCloudSyncLanguage(lang === "en"); }, [lang]);
+
+  /** Export PDF : le message Cloud n'apparaît que si le profil distant n'est pas à jour. */
+  const exportPdf = (detail?: unknown) => {
+    const run = () => {
+      dispatchAction("piano-export-pdf", detail);
+      void syncAfterLocalAction();
+    };
+    if (isCloudUpToDate()) run();
+    else requireConsent(run);
   };
 
   return (
@@ -494,8 +510,12 @@ function RootComponent() {
                   className="block w-full px-3 py-2 text-left text-sm font-bold text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
                   onClick={() => {
                     // Pesée gère ses jalons ; ailleurs, enregistrement direct du brouillon (clic natif conservé).
-                    if (isSaisie) dispatchAction("piano-save-kw");
-                    else void saveDraftToKw();
+                    if (isSaisie) {
+                      dispatchAction("piano-save-kw");
+                      void syncAfterLocalAction();
+                    } else {
+                      void saveDraftToKw().then((ok) => { if (ok) void syncAfterLocalAction(); });
+                    }
                   }}
                 >
                   <span className="pointer-events-none">{lang === "en" ? "Save profile (.kw)" : "Enregistrer le profil (.kw)"}</span>
@@ -515,7 +535,7 @@ function RootComponent() {
                     type="button"
                     disabled={!filesEnabled}
                     className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
-                    onClick={() => requireConsent(() => dispatchAction("piano-export-pdf"))}
+                    onClick={() => exportPdf()}
                   >
                     <span className="pointer-events-none">{lang === "en" ? "Export dashboard (PDF)" : "Exporter le bilan (PDF)"}</span>
                   </button>
@@ -575,9 +595,13 @@ function RootComponent() {
                   <input type="checkbox" checked={prefs.pdfRedKeys} onChange={(e) => setPdfRedKeys(e.target.checked)} />
                   <span>{lang === "en" ? `Out-of-tolerance keys in red (± ${prefs.corridorG} g)` : `Touches hors tolérance en rouge (± ${prefs.corridorG} g)`}</span>
                 </label>
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
+                  <input type="checkbox" checked={pdfWide} onChange={(e) => setPdfWide(e.target.checked)} />
+                  <span>{lang === "en" ? "Wide format (1 curve per page)" : "Format grand angle (1 courbe par page)"}</span>
+                </label>
                 <div className="mt-2 flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setPdfDialogOpen(false)}>{lang === "en" ? "Cancel" : "Annuler"}</Button>
-                  <Button onClick={() => { setPdfDialogOpen(false); requireConsent(() => dispatchAction("piano-export-pdf")); }}>
+                  <Button onClick={() => { setPdfDialogOpen(false); exportPdf({ wide: pdfWide }); }}>
                     {lang === "en" ? "Export PDF" : "Exporter le PDF"}
                   </Button>
                 </div>
