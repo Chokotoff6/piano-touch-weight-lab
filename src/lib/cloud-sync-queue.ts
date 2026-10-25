@@ -24,9 +24,10 @@ const SILENT_MAX_KEYS = 5;
 
 type Pending = { piano: CurrentPiano; rows: Array<{ wd: string; wa: string }>; at: number };
 
-function isEn() {
-  try { return window.localStorage.getItem("ptw_lang") === "en"; } catch { return false; }
-}
+let langIsEn = false;
+/** Langue des notifications (fournie par le bandeau). */
+export function setCloudSyncLanguage(en: boolean) { langIsEn = en; }
+const isEn = () => langIsEn;
 
 function today() {
   const d = new Date();
