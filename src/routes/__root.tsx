@@ -571,7 +571,7 @@ function RootComponent() {
                 {isSaisie && (
                   <button
                     type="button"
-                    className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
+                    className="block w-full border-t border-gray-200 px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
                     onClick={() => dispatchAction("piano-import-csv")}
                   >
                     <span className="pointer-events-none">{lang === "en" ? "Import a file (.kw, .csv)" : "Importer un fichier (.kw, .csv)"}</span>

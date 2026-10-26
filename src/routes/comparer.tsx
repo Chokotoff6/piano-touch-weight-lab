@@ -1813,6 +1813,9 @@ function SidebarPanel(props: SidebarPanelProps) {
             {!!Number(props.cloudSampleCount) && !!Number(props.cloudTotalCount) && (
               <div>{en ? `${props.cloudSampleCount}/${props.cloudTotalCount} profile(s) of ${props.brandModel} shared on the Cloud` : `${props.cloudSampleCount}/${props.cloudTotalCount} profil(s) de ${props.brandModel} partagé(s) sur le Cloud`}</div>
             )}
+            {!Number(props.cloudSampleCount) && (
+              <div>{en ? `No ${props.brandModel} profile shared in the CLOUD yet. Activate the STANDARD TARGET button to compare with a "standard" regulation curve.` : `Pas encore de profil de ${props.brandModel} partagé dans le CLOUD. Activez le bouton CIBLE STANDARD pour comparer avec une courbe de régulation "standard".`}</div>
+            )}
           </div>
             </>
           )}
@@ -2418,7 +2421,6 @@ function Comparer() {
                     <div className={standardEnabled ? "mb-3 border-b border-gray-400 pb-3" : ""}>
                       <div className={`mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide ${comparedPiano ? "!text-blue-600" : "!text-orange-600"}`}>{comparedPiano ? <>IMPORT CSV : <span className="normal-case">{csvIdentity}{csvStats}</span></> : <>Cloud</>}{cloudActive && <span className="ml-2 normal-case !text-orange-600">{cloudCounterText}</span>}</div>
                       <AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} csv={comparedPiano !== null} />
-                      {cloudIsEmpty && <p className="mt-3 text-center text-sm font-semibold !text-orange-600">{en ? "Sample too small to generate an average" : "Échantillon trop faible pour générer une moyenne"}</p>}
                     </div>
                   )}
                   {standardEnabled && (
