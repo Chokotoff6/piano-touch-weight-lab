@@ -8,8 +8,8 @@ import { useInterventions, interventionLabel, INITIAL_DIAGNOSTIC_ID } from "@/li
 type Props = {
   open: boolean;
   en: boolean;
-  /** "first" = premier point d'un nouveau dossier ; "propose" = nouveau point suggéré. */
-  mode: "first" | "propose";
+  /** "first" = premier point ; "propose" = nouveau point suggéré ; "name" = nommer un nouveau point déjà décidé. */
+  mode: "first" | "propose" | "name";
   boxClassName: string;
   btnClassName: string;
   onCancel: () => void;
@@ -45,13 +45,15 @@ export function HistoryPointDialog({ open, en, mode, boxClassName, btnClassName,
     <AlertDialog open={open} onOpenChange={(o) => { if (!o) onCancel(); }}>
       <AlertDialogContent className={boxClassName}>
         <AlertDialogHeader>
-          <AlertDialogTitle>{en ? "History point" : "Point d'historique"}</AlertDialogTitle>
-          <AlertDialogDescription className="text-gray-700">
+          <AlertDialogTitle>
             {mode === "propose"
-              ? (en
-                ? "Create a new history point for this piano? (Recommended if you made regulation changes.) Select the work carried out:"
-                : "Créer un nouveau point d'historique pour ce piano ? (Recommandé si vous avez effectué des modifications de régulation.) Sélectionnez les interventions :")
-              : (en ? "Select the work carried out for this first history point:" : "Sélectionnez les interventions de ce premier point d'historique :")}
+              ? (en ? "Measurements have been modified. What would you like to do?" : "Des mesures ont été modifiées. Que souhaitez-vous faire ?")
+              : (en ? "History point" : "Point d'historique")}
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-gray-700">
+            {mode === "first"
+              ? (en ? "Select the work carried out for this first history point:" : "Sélectionnez les interventions de ce premier point d'historique :")
+              : (en ? "To create a new history point, select the work carried out:" : "Pour créer un nouveau point d'historique, sélectionnez les interventions :")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="flex flex-wrap gap-2">
@@ -70,13 +72,21 @@ export function HistoryPointDialog({ open, en, mode, boxClassName, btnClassName,
             className="list-input" />
         )}
         <AlertDialogFooter className="flex-wrap gap-2 sm:justify-end">
-          {mode === "propose" ? (
-            <button type="button" className={btnClassName} onClick={onUpdateCurrent}>{en ? "No, update current point" : "Non, mettre à jour le point actuel"}</button>
-          ) : (
-            <button type="button" className={btnClassName} onClick={onCancel}>{en ? "Cancel" : "Annuler"}</button>
+          <button type="button" className={btnClassName} onClick={onCancel}>{en ? "Cancel" : "Annuler"}</button>
+          {mode === "propose" && (
+            <button
+              type="button"
+              className={btnClassName}
+              title={en
+                ? "If action regulation changes (excluding tuning) were made, create a new history point instead."
+                : "Si des modifications de régulation mécanique (hors accord) ont été faites, créez plutôt un nouveau point d'historique."}
+              onClick={onUpdateCurrent}
+            >
+              {en ? "Update current history point" : "Actualiser le point d'historique actuel"}
+            </button>
           )}
           <button type="button" className={btnClassName} onClick={() => onCreate(name)}>
-            {mode === "propose" ? (en ? "Create history point" : "Créer le point d'historique") : (en ? "Save" : "Enregistrer")}
+            {mode === "first" ? (en ? "Save" : "Enregistrer") : (en ? "Create a new history point" : "Créer un nouveau point d'historique")}
           </button>
         </AlertDialogFooter>
       </AlertDialogContent>
