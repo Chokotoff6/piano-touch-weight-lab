@@ -281,7 +281,7 @@ export function effectiveModels(brand: string, t: TypeKey): string[] {
     seen.add(n);
     out.push(m);
   }
-  return out.sort((x, y) => x.localeCompare(y, undefined, { numeric: true, sensitivity: "base" }));
+  return out;
 }
 
 /** Ajoute un modèle pour une marque et un type (apprentissage ou ajout manuel). */

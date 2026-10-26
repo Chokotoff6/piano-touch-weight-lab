@@ -211,7 +211,7 @@ type RawPoint = { id?: unknown; name?: unknown; created_at?: unknown; updated_at
 type RawDoc = {
   format?: unknown; version?: unknown; rows?: unknown; updated_at?: unknown; created_at?: unknown;
   piano_uuid?: unknown; active_point_id?: unknown; info?: unknown;
-  history_points?: unknown; historique_jalons?: unknown;
+  history_points?: unknown;
 };
 
 export function parseKwDocument(text: string): KwDocument | null {
@@ -237,30 +237,6 @@ export function parseKwDocument(text: string): KwDocument | null {
         created_at: String(d.created_at ?? history[0]?.created_at ?? updated),
         updated_at: updated,
         active_point_id: String(d.active_point_id ?? history[history.length - 1]?.id ?? ""),
-        info,
-        rows,
-        history_points: history,
-      };
-    }
-    if (d.version === 1) {
-      // Ancien format : historique_jalons avec identité dupliquée dans chaque entrée.
-      const old = (Array.isArray(d.historique_jalons) ? d.historique_jalons : []) as RawPoint[];
-      const history = old.map((j, i) => ({
-        id: `point_${i + 1}`,
-        name: "",
-        created_at: String(j.date ?? updated),
-        updated_at: String(j.date ?? updated),
-        rows: fixRows(j.rows),
-      }));
-      if (history.length) history[history.length - 1]!.updated_at = updated;
-      const info = infoToUi((d.info ?? {}) as Record<string, unknown>);
-      return {
-        format: "keyweight",
-        version: 2,
-        piano_uuid: String(d.piano_uuid ?? pianoUuid(info)),
-        created_at: history[0]?.created_at ?? updated,
-        updated_at: updated,
-        active_point_id: history[history.length - 1]?.id ?? "",
         info,
         rows,
         history_points: history,

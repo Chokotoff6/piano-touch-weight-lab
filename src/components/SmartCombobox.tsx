@@ -65,7 +65,7 @@ export const SmartCombobox = forwardRef<SmartComboboxHandle, Props>(
     const filtered = useMemo(() => {
       const list: Group[] = groups?.length ? groups : [{ label: "", options }];
       return list
-        .map((g) => ({ label: g.label, options: fuzzyFilter(g.options, draft).slice(0, 8) }))
+        .map((g) => ({ label: g.label, options: fuzzyFilter(g.options, draft) }))
         .filter((g) => g.options.length > 0);
     }, [groups, options, draft]);
 
