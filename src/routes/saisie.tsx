@@ -13,7 +13,8 @@ import { InfoDot } from "@/components/InfoDot";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { modelsFor, modelGroupsFor, inferTypeFromModel } from "@/data/pianoModels";
+import { modelsFor, modelGroupsFor, inferTypeFromModel, addModel } from "@/data/pianoModels";
+import { HistoryPointDialog } from "@/components/HistoryPointDialog";
 import {
   BRAND_SUGGESTIONS,
   FREQUENT_COUNTRIES,
@@ -103,7 +104,8 @@ import {
   parseKwDocument,
   readSessionKwDocument,
   rememberKwDocument,
-  shouldProposeJalon,
+  shouldProposeHistoryPoint,
+  activePoint,
   writeKwFile,
   type KwDocument,
   pianoPdfName,
@@ -1585,6 +1587,31 @@ function Index() {
   };
   const resultsReady = badgeVisible && !remarquesInvalid;
 
+  /** Diagnostic de blocage du Bilan, par priorité : paire incomplète, erreur mécanique,
+   *  valeur hors plage, remarques requises, puis seuil minimal de pesée. */
+  const lockReason = (): string => {
+    if (orphanKeys.length > 0) {
+      return en
+        ? "⚠️ Incomplete entry: both Down Weight and Up Weight must be filled in for each measured key."
+        : ORPHAN_MESSAGE;
+    }
+    const incoherent = rows.some((r) => {
+      const d = Number(String(r.wd).replace(",", "."));
+      const a = Number(String(r.wa).replace(",", "."));
+      return r.wd.trim() !== "" && r.wa.trim() !== "" && Number.isFinite(d) && Number.isFinite(a) && d <= a;
+    });
+    if (incoherent) {
+      return en
+        ? "⚠️ Mechanical error: the Down Weight (DW) must be strictly greater than the Up Weight (UW) to compute Friction."
+        : COHERENCE_MESSAGE;
+    }
+    if (Object.values(errorsRef.current).some(Boolean)) {
+      return en ? "⚠️ Some values are out of range. Please correct the keys marked in red." : "⚠️ Certaines valeurs sont hors plage. Corrigez les touches signalées en rouge.";
+    }
+    if (badgeVisible && remarquesInvalid) return en ? "Complete: Remarks" : "Complétez : Remarques";
+    return lockedResultsMessage(en);
+  };
+
   /**
    * Téléporte le curseur dans la première case PD accessible (La0 ou Do1).
    * SÉCURITÉ ABSOLUE : la lecture se fait sur rowsRef (données réellement
@@ -1660,21 +1687,26 @@ function Index() {
   /** Confirmation de réinitialisation en cartouche jaune ("rows" = mesures, "info" = fiche). */
   const [confirmReset, setConfirmReset] = useState<null | "rows" | "info">(null);
 
-  // --- Fichier physique .kw : handle conservé, document chargé, dialogue de jalon ---
+  // --- Fichier physique .kw : handle conservé, document chargé, dialogue de point d'historique ---
   const kwHandleRef = useRef<Awaited<ReturnType<typeof writeKwFile>> | null>(null);
   const kwDocRef = useRef<KwDocument | null>(null);
   const [importedProfile, setImportedProfile] = useState(false);
-  useEffect(() => { kwDocRef.current = readSessionKwDocument(); }, []);
-  const [kwJalonAsk, setKwJalonAsk] = useState(false);
+  const [activePointName, setActivePointName] = useState("");
+  useEffect(() => {
+    kwDocRef.current = readSessionKwDocument();
+    setActivePointName(activePoint(kwDocRef.current)?.name ?? "");
+  }, []);
+  const [kwPointAsk, setKwPointAsk] = useState<null | "first" | "propose">(null);
 
-  const performKwSave = async (addJalon: boolean) => {
-    const doc = buildKwDocument(info, rows, kwDocRef.current, addJalon);
+  const performKwSave = async (newPointName: string | null) => {
+    const doc = buildKwDocument(info, rows, kwDocRef.current, newPointName);
     const prevHandle = kwHandleRef.current === "cancelled" ? null : kwHandleRef.current;
     const res = await writeKwFile(doc, prevHandle);
     if (res === "cancelled") return;
     kwHandleRef.current = res;
     kwDocRef.current = doc;
     rememberKwDocument(doc);
+    setActivePointName(activePoint(doc)?.name ?? "");
     try {
       window.localStorage.setItem(SECURITY_BACKUP_KEY, JSON.stringify({ info, rows, savedToFile: true, at: Date.now() }));
     } catch {
@@ -1696,11 +1728,15 @@ function Index() {
 
   const onSaveKw = () => {
     const doc = kwDocRef.current;
-    if (doc && shouldProposeJalon(doc, rows)) {
-      setKwJalonAsk(true);
+    if (!doc) {
+      setKwPointAsk("first");
       return;
     }
-    void performKwSave(false);
+    if (shouldProposeHistoryPoint(doc, rows)) {
+      setKwPointAsk("propose");
+      return;
+    }
+    void performKwSave(null);
   };
 
   /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
@@ -1708,6 +1744,7 @@ function Index() {
     kwDocRef.current = null;
     kwHandleRef.current = null;
     rememberKwDocument(null);
+    setActivePointName("");
     try {
       window.localStorage.removeItem(DRAFT_INFO_KEY);
       window.localStorage.removeItem(CURRENT_PIANO_KEY);
@@ -2885,6 +2922,8 @@ function Index() {
     const v = (s: string | undefined) => (s ?? "").trim() || "—";
     return `${v(info["marque"])}\u00A0\u00A0${v(info["modele"])} - ${year} - SN ${serialFull || "—"} - ${en ? "Measurement" : "Mesure"} ${p(now.getDate())}-${p(now.getMonth() + 1)}-${now.getFullYear()} - ${p(now.getHours())}:${p(now.getMinutes())} - ${white} ${en ? "Whites" : "Blanches"} / ${black} ${en ? "Blacks" : "Noires"}`;
   }, [info, rows, serialFull, en]);
+  /** Résumé complet : libellé d'intervention en fin de ligne (tronqué en premier). */
+  const summaryFull = activePointName ? `${summaryLine} - ${activePointName}` : summaryLine;
 
 
 
@@ -2996,6 +3035,7 @@ function Index() {
         }
         kwDocRef.current = doc;
         rememberKwDocument(doc);
+        setActivePointName(activePoint(doc)?.name ?? "");
         kwHandleRef.current = null;
         setInfo({ ...doc.info });
         setRows(doc.rows.map((r) => ({ wd: cleanWeight(r.wd), wa: cleanWeight(r.wa) })));
@@ -3840,22 +3880,16 @@ function Index() {
         </div>
       </div>
     )}
-    <AlertDialog open={kwJalonAsk} onOpenChange={(o) => { if (!o) setKwJalonAsk(false); }}>
-      <AlertDialogContent className={RESET_STYLE_BOX}>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{lang === "en" ? "New history point" : "Nouveau point d'historique"}</AlertDialogTitle>
-          <AlertDialogDescription className="text-gray-700">
-            {lang === "en"
-              ? "Do you want to create a new history point for this piano? (Recommended if you made regulation changes today.)"
-              : "Souhaitez-vous créer un nouveau point d'historique pour ce piano ? (Recommandé si vous avez effectué des modifications de régulation aujourd'hui.)"}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter className="flex-wrap gap-2 sm:justify-end">
-          <AlertDialogCancel className={RESET_STYLE_BTN} onClick={() => { setKwJalonAsk(false); void performKwSave(false); }}>{lang === "en" ? "No" : "Non"}</AlertDialogCancel>
-          <AlertDialogAction className={RESET_STYLE_BTN} onClick={() => { setKwJalonAsk(false); void performKwSave(true); }}>{lang === "en" ? "Yes" : "Oui"}</AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <HistoryPointDialog
+      open={kwPointAsk !== null}
+      en={lang === "en"}
+      mode={kwPointAsk ?? "first"}
+      boxClassName={RESET_STYLE_BOX}
+      btnClassName={RESET_STYLE_BTN}
+      onCancel={() => setKwPointAsk(null)}
+      onUpdateCurrent={() => { setKwPointAsk(null); void performKwSave(null); }}
+      onCreate={(name) => { setKwPointAsk(null); void performKwSave(name); }}
+    />
     <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
       <input
         ref={importInputRef}
@@ -3880,7 +3914,7 @@ function Index() {
           <span className="flex items-baseline gap-2 whitespace-nowrap">
             <span>{en ? "Piano information" : "Informations piano"}</span>
             <span className="text-muted-foreground">-</span>
-            <span className="summary-text">{summaryLine}</span>
+            <span className="summary-text block min-w-0 max-w-[60vw] truncate" title={summaryFull}>{summaryFull}</span>
           </span>
         } className="mt-10 mx-auto w-4/5 max-w-[80%] [&_input]:border-foreground/60">
           {isDemoActive() &&
@@ -3970,6 +4004,7 @@ function Index() {
                 onTyping={markDirty}
                 onCommit={(v) => {
                   updateInfo("modele", v);
+                  if (v.trim() && info["marque"]?.trim() && info["type_piano"]) addModel(info["marque"], info["type_piano"], v);
                   const inferred = inferTypeFromModel(info["marque"] ?? "", v);
                   if (inferred) updateInfo("type_piano", inferred);
                 }}
@@ -4298,7 +4333,7 @@ function Index() {
             <span className="flex items-baseline gap-2 whitespace-nowrap">
               <span>{en ? "Static touch weight measurements" : "Mesures poids statiques"}</span>
               <span className="text-muted-foreground">-</span>
-              <span className="summary-text">{summaryLine}</span>
+              <span className="summary-text block min-w-0 max-w-[60vw] truncate" title={summaryFull}>{summaryFull}</span>
             </span>
           ) : (
             en ? "Static touch weight measurements" : "Mesures poids statiques"
@@ -4492,7 +4527,7 @@ function Index() {
           <span className="group/res relative inline-block">
           {!resultsReady && (
             <span className="pointer-events-none absolute bottom-full right-0 z-[120] mb-2 hidden w-72 rounded-md border border-gray-300 bg-white px-3 py-2 text-left text-sm font-medium text-gray-950 shadow-lg group-hover/res:block group-focus-within/res:block">
-              {badgeVisible && remarquesInvalid ? (en ? "Complete: Remarks" : "Complétez : Remarques") : lockedResultsMessage(en)}
+              {lockReason()}
             </span>
           )}
           <button
