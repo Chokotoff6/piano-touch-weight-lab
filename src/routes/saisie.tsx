@@ -1696,7 +1696,16 @@ function Index() {
     kwDocRef.current = readSessionKwDocument();
     setActivePointName(activePoint(kwDocRef.current)?.name ?? "");
   }, []);
-  const [kwPointAsk, setKwPointAsk] = useState<null | "first" | "propose">(null);
+  const [kwPointAsk, setKwPointAsk] = useState<null | "first" | "propose" | "name">(null);
+  /** Navigation à reprendre après le dialogue de point d'historique. */
+  const kwNavAfterRef = useRef<"/resultats" | "/comparer" | null>(null);
+  const kwNavOnCancelRef = useRef(false);
+  const finishKwAsk = (go: boolean) => {
+    const to = kwNavAfterRef.current;
+    kwNavAfterRef.current = null;
+    setKwPointAsk(null);
+    if (go && to) void navigate({ to });
+  };
 
   const performKwSave = async (newPointName: string | null) => {
     const doc = buildKwDocument(info, rows, kwDocRef.current, newPointName);
@@ -3436,7 +3445,7 @@ function Index() {
     if (decision.kind !== "silentUpsert") return "direct";
     // Règle convenue : dialogue seulement si > 5 touches modifiées ou > 24 h
     // depuis la dernière écriture ; sinon mise à jour silencieuse.
-    if (decision.modifiedKeys > SAME_DAY_KEY_THRESHOLD || msSinceLastSync() > DAY_MS) return "choice";
+    if (decision.modifiedKeys >= SAME_DAY_KEY_THRESHOLD || msSinceLastSync() > DAY_MS) return "choice";
     return "silent";
   };
 
@@ -3486,14 +3495,7 @@ function Index() {
     } finally {
       setIsExporting(false);
     }
-    // Local First : premier passage → le fichier .kw est créé sur l'appareil.
-    if (!isDemoActive() && !kwDocRef.current) {
-      try {
-        await performKwSave(getLang() === "en" ? "Initial diagnostic" : "Diagnostic initial");
-      } catch {
-        /* enregistrement annulé ou indisponible : la navigation continue */
-      }
-    }
+    // Navigation directe : le .kw n'est écrit que sur demande explicite (pas de Finder forcé).
     navigate({ to: "/resultats" });
   };
 
@@ -3530,7 +3532,18 @@ function Index() {
       setAskUpdate(true);
       return;
     }
+    if (localKwAsk("/resultats")) return;
     await prepareAndGoResults();
+  };
+
+  /** Profil local .kw (hors Cloud) : propose Actualiser / Nouveau point avant de quitter Pesée. */
+  const localKwAsk = (to: "/resultats" | "/comparer"): boolean => {
+    const doc = kwDocRef.current;
+    if (isDemoActive() || !doc || !shouldProposeHistoryPoint(doc, rows)) return false;
+    kwNavAfterRef.current = to;
+    kwNavOnCancelRef.current = false;
+    setKwPointAsk("propose");
+    return true;
   };
 
   const handleCompareClick = () => {
@@ -3550,6 +3563,7 @@ function Index() {
       setAskUpdate(true);
       return;
     }
+    if (localKwAsk("/comparer")) return;
     navigate({ to: "/comparer" });
   };
 
@@ -3565,11 +3579,15 @@ function Index() {
       if (kind) runLocalExport(kind);
       if (!ok) return;
       markCloudSync(snapshot);
-      // Local First : seul « Nouvel historique » enregistre un nouveau fichier .kw.
-      // « Mettre à jour » s'appuie sur la boîte noire ; « Enregistrer .kw » reste manuel.
-      if (mode === "insert") await performKwSave("");
-      if (compare) void navigate({ to: "/comparer" });
-      else if (results) void navigate({ to: "/resultats" });
+      const to = compare ? "/comparer" : results ? "/resultats" : null;
+      // Nouveau point : sélection des interventions avant écriture du .kw.
+      if (mode === "insert") {
+        kwNavAfterRef.current = to;
+        kwNavOnCancelRef.current = true;
+        setKwPointAsk("name");
+        return;
+      }
+      if (to) void navigate({ to });
     });
   };
 
@@ -3886,9 +3904,9 @@ function Index() {
       mode={kwPointAsk ?? "first"}
       boxClassName={RESET_STYLE_BOX}
       btnClassName={RESET_STYLE_BTN}
-      onCancel={() => setKwPointAsk(null)}
-      onUpdateCurrent={() => { setKwPointAsk(null); void performKwSave(null); }}
-      onCreate={(name) => { setKwPointAsk(null); void performKwSave(name); }}
+      onCancel={() => finishKwAsk(kwNavOnCancelRef.current)}
+      onUpdateCurrent={() => { void performKwSave(null).finally(() => finishKwAsk(true)); setKwPointAsk(null); }}
+      onCreate={(name) => { void performKwSave(name).finally(() => finishKwAsk(true)); setKwPointAsk(null); }}
     />
     <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
       <input
