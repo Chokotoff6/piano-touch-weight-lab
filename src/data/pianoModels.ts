@@ -267,7 +267,7 @@ export function subscribeModelCatalog(l: () => void): () => void {
   return () => { listeners.delete(l); };
 }
 
-/** Liste effective (usine + ajouts − suppressions), triée alphabétiquement. */
+/** Liste effective (usine + ajouts − suppressions), triée alphanumériquement (U1, U2… U10). */
 export function effectiveModels(brand: string, t: TypeKey): string[] {
   const b = brand.trim().toUpperCase();
   const o = readOverrides();
@@ -281,7 +281,51 @@ export function effectiveModels(brand: string, t: TypeKey): string[] {
     seen.add(n);
     out.push(m);
   }
-  return out;
+  return out.sort((x, y) => x.localeCompare(y, undefined, { numeric: true, sensitivity: "base" }));
+}
+
+/** Clé de comparaison tolérante : casse, espaces et tirets ignorés (K-500 = K500 = k 500). */
+export function modelKey(value: string): string {
+  return (value ?? "").toUpperCase().replace(/[\s\-_.]+/g, "");
+}
+
+/** Modèle d'usine le plus long servant de racine à la saisie (sans couper un nombre : U1 ≠ U10). */
+function factoryRoot(brand: string, model: string): string | null {
+  const b = brand.trim().toUpperCase();
+  const cat = BRAND_MODELS_BY_TYPE[b];
+  if (!cat) return null;
+  const k = modelKey(model);
+  let best: string | null = null;
+  for (const m of [...cat.droit, ...cat.queue]) {
+    const mk = modelKey(m);
+    if (!mk || !k.startsWith(mk)) continue;
+    const next = k.charAt(mk.length);
+    if (next && /\d/.test(next) && /\d/.test(mk.charAt(mk.length - 1))) continue;
+    if (!best || mk.length > modelKey(best).length) best = m;
+  }
+  return best;
+}
+
+/** Remplace le préfixe saisi par la graphie d'usine (k500 aures 2 → K-500 aures 2), suite inchangée. */
+export function canonicalizeModel(brand: string, model: string): string {
+  const v = model.trim().replace(/\s+/g, " ");
+  const root = factoryRoot(brand, v);
+  if (!root) return v;
+  const target = modelKey(root).length;
+  let count = 0;
+  let i = 0;
+  while (i < v.length && count < target) {
+    if (!/[\s\-_.]/.test(v[i]!)) count += 1;
+    i += 1;
+  }
+  const rest = v.slice(i).replace(/^[\s\-_.]+/, "");
+  return rest ? `${root} ${rest}` : root;
+}
+
+/** Clé de la racine (modèle d'usine) pour le regroupement « toutes versions ». */
+export function modelRootKey(brand: string, model: string): string {
+  const root = factoryRoot(brand, model);
+  return modelKey(root ?? model);
 }
 
 /** Ajoute un modèle pour une marque et un type (apprentissage ou ajout manuel). */
