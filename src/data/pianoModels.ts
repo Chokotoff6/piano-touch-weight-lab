@@ -239,35 +239,126 @@ export const BRAND_MODELS_SUGGESTIONS: Record<string, string[]> = Object.fromEnt
 /** Liste des marques connues. */
 export const BRAND_SUGGESTIONS = Object.keys(BRAND_MODELS_BY_TYPE);
 
+// ---------------------------------------------------------------------------
+// Personnalisation locale du catalogue (ajouts appris / suppressions), hors ligne.
+// ---------------------------------------------------------------------------
+type TypeKey = "droit" | "queue";
+type ModelOverrides = {
+  added: Record<string, Partial<Record<TypeKey, string[]>>>;
+  removed: Record<string, Partial<Record<TypeKey, string[]>>>;
+};
+const MODEL_OVERRIDES_KEY = "ptw_model_overrides";
+const listeners = new Set<() => void>();
+
+function readOverrides(): ModelOverrides {
+  try {
+    if (typeof window === "undefined") return { added: {}, removed: {} };
+    const o = JSON.parse(window.localStorage.getItem(MODEL_OVERRIDES_KEY) ?? "null");
+    if (o && typeof o === "object") return { added: o.added ?? {}, removed: o.removed ?? {} };
+  } catch { /* stockage indisponible */ }
+  return { added: {}, removed: {} };
+}
+function writeOverrides(o: ModelOverrides) {
+  try { window.localStorage.setItem(MODEL_OVERRIDES_KEY, JSON.stringify(o)); } catch { /* stockage indisponible */ }
+  listeners.forEach((l) => l());
+}
+export function subscribeModelCatalog(l: () => void): () => void {
+  listeners.add(l);
+  return () => { listeners.delete(l); };
+}
+
+/** Liste effective (usine + ajouts − suppressions), triée alphabétiquement. */
+export function effectiveModels(brand: string, t: TypeKey): string[] {
+  const b = brand.trim().toUpperCase();
+  const o = readOverrides();
+  const base = BRAND_MODELS_BY_TYPE[b]?.[t] ?? [];
+  const removed = new Set((o.removed[b]?.[t] ?? []).map(normalizeEntry));
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const m of [...base, ...(o.added[b]?.[t] ?? [])]) {
+    const n = normalizeEntry(m);
+    if (!n || removed.has(n) || seen.has(n)) continue;
+    seen.add(n);
+    out.push(m);
+  }
+  return out.sort((x, y) => x.localeCompare(y, undefined, { numeric: true, sensitivity: "base" }));
+}
+
+/** Ajoute un modèle pour une marque et un type (apprentissage ou ajout manuel). */
+export function addModel(brand: string, type: string | undefined, model: string): void {
+  const b = brand.trim().toUpperCase();
+  const t = typeKey(type);
+  const m = model.trim().replace(/\s+/g, " ");
+  if (!b || !t || !m) return;
+  if (effectiveModels(b, t).some((x) => normalizeEntry(x) === normalizeEntry(m))) return;
+  const o = readOverrides();
+  const rem = o.removed[b]?.[t];
+  if (rem) o.removed[b]![t] = rem.filter((x) => normalizeEntry(x) !== normalizeEntry(m));
+  const isFactory = (BRAND_MODELS_BY_TYPE[b]?.[t] ?? []).some((x) => normalizeEntry(x) === normalizeEntry(m));
+  if (!isFactory) {
+    o.added[b] = o.added[b] ?? {};
+    o.added[b]![t] = [...(o.added[b]![t] ?? []), m];
+  }
+  writeOverrides(o);
+}
+
+export function removeModel(brand: string, t: TypeKey, model: string): void {
+  const b = brand.trim().toUpperCase();
+  const o = readOverrides();
+  const added = o.added[b]?.[t];
+  if (added) o.added[b]![t] = added.filter((x) => normalizeEntry(x) !== normalizeEntry(model));
+  if ((BRAND_MODELS_BY_TYPE[b]?.[t] ?? []).some((x) => normalizeEntry(x) === normalizeEntry(model))) {
+    o.removed[b] = o.removed[b] ?? {};
+    o.removed[b]![t] = [...(o.removed[b]![t] ?? []), model];
+  }
+  writeOverrides(o);
+}
+
+/** Restaure la liste d'usine pour une marque et un type. */
+export function resetModels(brand: string, t: TypeKey): void {
+  const b = brand.trim().toUpperCase();
+  const o = readOverrides();
+  if (o.added[b]) delete o.added[b]![t];
+  if (o.removed[b]) delete o.removed[b]![t];
+  writeOverrides(o);
+}
+
+/** Marques connues + marques apprises localement. */
+export function knownBrands(): string[] {
+  const o = readOverrides();
+  return Array.from(new Set([...BRAND_SUGGESTIONS, ...Object.keys(o.added)])).sort((a, b) => a.localeCompare(b));
+}
+
+const hasBrand = (brand: string) => {
+  const b = brand.trim().toUpperCase();
+  return Boolean(BRAND_MODELS_BY_TYPE[b] || readOverrides().added[b]);
+};
+
 /** Modèles filtrés par marque et, si connu, par type de piano (exclusion stricte). */
 export function modelsFor(brand: string, type?: string): string[] {
-  const entry = BRAND_MODELS_BY_TYPE[brand.trim().toUpperCase()];
-  if (!entry) return [];
+  if (!hasBrand(brand)) return [];
   const t = typeKey(type);
-  if (t === "droit") return entry.droit;
-  if (t === "queue") return entry.queue;
-  return [...entry.droit, ...entry.queue];
+  if (t) return effectiveModels(brand, t);
+  return [...effectiveModels(brand, "droit"), ...effectiveModels(brand, "queue")];
 }
 
 /** Groupes de modèles pour l'affichage en liste déroulante. */
 export function modelGroupsFor(brand: string, type?: string) {
-  const entry = BRAND_MODELS_BY_TYPE[brand.trim().toUpperCase()];
-  if (!entry) return [];
+  if (!hasBrand(brand)) return [];
   const t = typeKey(type);
-  if (t === "droit") return [{ label: "Droits", options: entry.droit }];
-  if (t === "queue") return [{ label: "De queue", options: entry.queue }];
+  if (t === "droit") return [{ label: "Droits", options: effectiveModels(brand, "droit") }];
+  if (t === "queue") return [{ label: "De queue", options: effectiveModels(brand, "queue") }];
   return [
-    { label: "Droits", options: entry.droit },
-    { label: "De queue", options: entry.queue },
+    { label: "Droits", options: effectiveModels(brand, "droit") },
+    { label: "De queue", options: effectiveModels(brand, "queue") },
   ];
 }
 
 /** Déduit le type de piano à partir d'un modèle connu du dictionnaire. */
 export function inferTypeFromModel(brand: string, model: string): PianoType | null {
-  const entry = BRAND_MODELS_BY_TYPE[brand.trim().toUpperCase()];
-  if (!entry || !model.trim()) return null;
+  if (!hasBrand(brand) || !model.trim()) return null;
   const normalized = normalizeEntry(model);
-  if (entry.droit.some((m) => normalizeEntry(m) === normalized)) return "Droit";
-  if (entry.queue.some((m) => normalizeEntry(m) === normalized)) return "à Queue";
+  if (effectiveModels(brand, "droit").some((m) => normalizeEntry(m) === normalized)) return "Droit";
+  if (effectiveModels(brand, "queue").some((m) => normalizeEntry(m) === normalized)) return "à Queue";
   return null;
 }

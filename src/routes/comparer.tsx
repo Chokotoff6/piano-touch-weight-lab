@@ -11,7 +11,7 @@ import { PianoSheetMirror } from "@/components/PianoSheetMirror";
 import { generateComparisonReport, type LandscapePage } from "@/lib/pdf-report";
 import { setTopbarState } from "@/lib/topbar-store";
 import { parseDiagnosticCsv, readCsvFileContent } from "@/lib/import-csv";
-import { pianoPdfName, parseKwDocument, readSessionKwDocument, kwSerial, differentSerial, type KwDocument, type KwJalon } from "@/lib/kw-file";
+import { pianoPdfName, parseKwDocument, readSessionKwDocument, kwSerial, differentSerial, type KwDocument } from "@/lib/kw-file";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { scopeDemo } from "@/lib/demo-scope";
 import { isDemoActive, DEMO_LOADED_EVENT } from "@/lib/demo-mode";
@@ -2244,7 +2244,7 @@ function Comparer() {
   const historyLabel = en ? "History point" : "Point d'historique";
   const chartData = useMemo(() => buildChartData(mine, comparisonProfile, standardEnabled ? standard : null), [mine, comparisonProfile, standard, standardEnabled]);
 
-  function selectHistory(src: Pick<KwJalon, "info" | "rows" | "date">) {
+  function selectHistory(src: { info: Record<string, string>; rows: { wd: string; wa: string }[]; date: string }) {
     const inf = src.info;
     const d = new Date(src.date);
     const p2 = (n: number) => String(n).padStart(2, "0");
@@ -2445,10 +2445,13 @@ function Comparer() {
           <DialogHeader><DialogTitle>{historyLabel}</DialogTitle><DialogDescription>{historyDocument ? [historyDocument.info["marque"], historyDocument.info["modele"], kwSerial(historyDocument.info)].filter(Boolean).join(" · ") : (en ? "Local .kw file" : "Fichier local .kw")}</DialogDescription></DialogHeader>
           {historyError && <p className="text-destructive">{historyError}</p>}
           <div className="flex max-h-80 flex-col gap-2 overflow-y-auto">
-            {historyDocument && (historyDocument.historique_jalons.length ? historyDocument.historique_jalons : [{ id: "current", date: historyDocument.updated_at, info: historyDocument.info, rows: historyDocument.rows }]).slice().reverse().map((jalon) => (
-              <Button key={jalon.id} variant="outline" className="h-auto justify-between whitespace-normal py-2 text-left" onClick={() => selectHistory(jalon)}>
-                <span>{Number.isFinite(Date.parse(jalon.date)) ? new Intl.DateTimeFormat(en ? "en-GB" : "fr-BE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(jalon.date)) : jalon.date}</span>
-                <span className="text-xs text-muted-foreground">{jalon.rows.filter((r) => r.wd.trim() || r.wa.trim()).length}/88</span>
+            {historyDocument && (historyDocument.history_points.length ? historyDocument.history_points : [{ id: "current", name: "", created_at: historyDocument.updated_at, updated_at: historyDocument.updated_at, rows: historyDocument.rows }]).slice().reverse().map((point) => (
+              <Button key={point.id} variant="outline" className="h-auto justify-between gap-3 whitespace-normal py-2 text-left" onClick={() => selectHistory({ info: historyDocument.info, rows: point.rows, date: point.created_at })}>
+                <span className="flex min-w-0 flex-col">
+                  <span>{Number.isFinite(Date.parse(point.created_at)) ? new Intl.DateTimeFormat(en ? "en-GB" : "fr-BE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(point.created_at)) : point.created_at}</span>
+                  {point.name && <span className="truncate text-xs font-normal italic text-muted-foreground" title={point.name}>{point.name}</span>}
+                </span>
+                <span className="shrink-0 text-xs text-muted-foreground">{point.rows.filter((r) => r.wd.trim() || r.wa.trim()).length}/88</span>
               </Button>
             ))}
           </div>
