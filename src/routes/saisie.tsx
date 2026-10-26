@@ -287,7 +287,7 @@ const pitchClass = (key: number) => (key + 20) % 12;
 
 /** Cadre encadré avec titre à cheval sur la bordure supérieure. */
 const FRAME_CLASS = "relative rounded-md border-2 border-foreground bg-card p-4 pt-5";
-const FRAME_TITLE_CLASS = "absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black";
+const FRAME_TITLE_CLASS = "absolute -top-3.5 left-4 max-w-[calc(100%-2rem)] bg-card px-2 text-lg font-bold text-black";
 /** Champ texte standard du formulaire. */
 const INPUT_CLASS =
   "mt-1 h-8 w-full rounded border border-foreground/60 bg-white px-2 text-sm font-normal not-italic text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring placeholder:text-sm placeholder:font-normal placeholder:text-muted-foreground placeholder:italic disabled:bg-muted/50 disabled:text-muted-foreground";
@@ -3911,10 +3911,10 @@ function Index() {
         data-climate-zone={climateZone ?? ""}
       >
         <TooltipProvider delayDuration={200}><Frame title={
-          <span className="flex items-baseline gap-2 whitespace-nowrap">
-            <span>{en ? "Piano information" : "Informations piano"}</span>
-            <span className="text-muted-foreground">-</span>
-            <span className="summary-text block min-w-0 max-w-[60vw] truncate" title={summaryFull}>{summaryFull}</span>
+          <span className="flex min-w-0 items-baseline gap-2 whitespace-nowrap">
+            <span className="shrink-0">{en ? "Piano information" : "Informations piano"}</span>
+            <span className="shrink-0 text-muted-foreground">-</span>
+            <span className="summary-text block min-w-0 flex-1 truncate" title={summaryFull}>{summaryFull}</span>
           </span>
         } className="mt-10 mx-auto w-4/5 max-w-[80%] [&_input]:border-foreground/60">
           {isDemoActive() &&
@@ -4331,10 +4331,10 @@ function Index() {
       <Frame
         title={
           weighingMode ? (
-            <span className="flex items-baseline gap-2 whitespace-nowrap">
-              <span>{en ? "Static touch weight measurements" : "Mesures poids statiques"}</span>
-              <span className="text-muted-foreground">-</span>
-              <span className="summary-text block min-w-0 max-w-[60vw] truncate" title={summaryFull}>{summaryFull}</span>
+            <span className="flex min-w-0 items-baseline gap-2 whitespace-nowrap">
+              <span className="shrink-0">{en ? "Static touch weight measurements" : "Mesures poids statiques"}</span>
+              <span className="shrink-0 text-muted-foreground">-</span>
+              <span className="summary-text block min-w-0 flex-1 truncate" title={summaryFull}>{summaryFull}</span>
             </span>
           ) : (
             en ? "Static touch weight measurements" : "Mesures poids statiques"
@@ -4693,15 +4693,20 @@ Moyennes{" "}
             <AlertDialogAction
               autoFocus
               className={`${RESET_STYLE_BTN} border-2 border-gray-950`}
+              title={
+                en
+                  ? "If action regulation changes (excluding tuning) were made, create a new history point instead."
+                  : "Si des modifications de régulation mécanique (hors accord) ont été faites, créez plutôt un nouveau point d'historique."
+              }
               onClick={() => runHistoryChoice("update")}
             >
-              {en ? "Update existing profile" : "Mettre à jour le profil existant"}
+              {en ? "Update current history point" : "Actualiser le point d'historique actuel"}
             </AlertDialogAction>
             <AlertDialogAction
               className={RESET_STYLE_BTN}
               onClick={() => runHistoryChoice("insert")}
             >
-              {en ? "Create new history record for this piano" : "Créer un nouvel historique pour ce piano"}
+              {en ? "Create a new history point" : "Créer un nouveau point d'historique"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

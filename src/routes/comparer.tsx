@@ -2429,7 +2429,7 @@ function Comparer() {
             <div className="min-w-0">
               
               <div ref={averagesRef} data-pdf-expand data-pdf-lock-w="980" className="sticky top-[127px] z-50 mb-[50px] w-full bg-white pb-2 relative">
-                <Frame titleClassName="absolute -top-3.5 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span className="flex items-baseline gap-2"><span>{en ? "Averages" : "Moyennes"}</span><span className="text-slate-400">-</span><span className="summary-text">{summary}</span></span>} className="h-fit">
+                <Frame titleClassName="absolute -top-3.5 left-4 max-w-[calc(100%-2rem)] whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span className="flex min-w-0 items-baseline gap-2"><span className="shrink-0">{en ? "Averages" : "Moyennes"}</span><span className="shrink-0 text-slate-400">-</span><span className="summary-text block min-w-0 flex-1 truncate" title={typeof summary === "string" ? summary : undefined}>{summary}</span></span>} className="h-fit">
                   {/* Séparateurs affichés uniquement si au moins deux sources sont présentes. */}
                   <div className={(comparedPiano !== null || sourceMode === "cloud" || standardEnabled) ? "mb-3 border-b border-gray-400 pb-3" : ""}><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">{en ? "Current piano" : "Piano actuel"}</div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
                   {(comparedPiano !== null || sourceMode === "cloud") && (
