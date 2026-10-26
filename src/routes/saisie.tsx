@@ -1696,7 +1696,16 @@ function Index() {
     kwDocRef.current = readSessionKwDocument();
     setActivePointName(activePoint(kwDocRef.current)?.name ?? "");
   }, []);
-  const [kwPointAsk, setKwPointAsk] = useState<null | "first" | "propose">(null);
+  const [kwPointAsk, setKwPointAsk] = useState<null | "first" | "propose" | "name">(null);
+  /** Navigation à reprendre après le dialogue de point d'historique. */
+  const kwNavAfterRef = useRef<"/resultats" | "/comparer" | null>(null);
+  const kwNavOnCancelRef = useRef(false);
+  const finishKwAsk = (go: boolean) => {
+    const to = kwNavAfterRef.current;
+    kwNavAfterRef.current = null;
+    setKwPointAsk(null);
+    if (go && to) void navigate({ to });
+  };
 
   const performKwSave = async (newPointName: string | null) => {
     const doc = buildKwDocument(info, rows, kwDocRef.current, newPointName);
