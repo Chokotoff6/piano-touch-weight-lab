@@ -207,14 +207,21 @@ const fixRows = (r: unknown): KwRow[] => {
   });
 };
 
+type RawPoint = { id?: unknown; name?: unknown; created_at?: unknown; updated_at?: unknown; date?: unknown; rows?: unknown };
+type RawDoc = {
+  format?: unknown; version?: unknown; rows?: unknown; updated_at?: unknown; created_at?: unknown;
+  piano_uuid?: unknown; active_point_id?: unknown; info?: unknown;
+  history_points?: unknown; historique_jalons?: unknown;
+};
+
 export function parseKwDocument(text: string): KwDocument | null {
   try {
-    const d = JSON.parse(text) as Record<string, unknown>;
+    const d = JSON.parse(text) as RawDoc;
     if (d?.format !== "keyweight" || !Array.isArray(d.rows)) return null;
     const rows = fixRows(d.rows);
     const updated = String(d.updated_at ?? new Date().toISOString());
     if (d.version === 2) {
-      const pts = (Array.isArray(d.history_points) ? d.history_points : []) as Record<string, unknown>[];
+      const pts = (Array.isArray(d.history_points) ? d.history_points : []) as RawPoint[];
       const history = pts.map((p, i) => ({
         id: String(p.id ?? `point_${i + 1}`),
         name: String(p.name ?? ""),
@@ -237,7 +244,7 @@ export function parseKwDocument(text: string): KwDocument | null {
     }
     if (d.version === 1) {
       // Ancien format : historique_jalons avec identité dupliquée dans chaque entrée.
-      const old = (Array.isArray(d.historique_jalons) ? d.historique_jalons : []) as Record<string, unknown>[];
+      const old = (Array.isArray(d.historique_jalons) ? d.historique_jalons : []) as RawPoint[];
       const history = old.map((j, i) => ({
         id: `point_${i + 1}`,
         name: "",
