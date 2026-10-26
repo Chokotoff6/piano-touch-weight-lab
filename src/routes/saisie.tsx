@@ -3523,7 +3523,18 @@ function Index() {
       setAskUpdate(true);
       return;
     }
+    if (localKwAsk("/resultats")) return;
     await prepareAndGoResults();
+  };
+
+  /** Profil local .kw (hors Cloud) : propose Actualiser / Nouveau point avant de quitter Pesée. */
+  const localKwAsk = (to: "/resultats" | "/comparer"): boolean => {
+    const doc = kwDocRef.current;
+    if (isDemoActive() || !doc || !shouldProposeHistoryPoint(doc, rows)) return false;
+    kwNavAfterRef.current = to;
+    kwNavOnCancelRef.current = false;
+    setKwPointAsk("propose");
+    return true;
   };
 
   const handleCompareClick = () => {
@@ -3543,6 +3554,7 @@ function Index() {
       setAskUpdate(true);
       return;
     }
+    if (localKwAsk("/comparer")) return;
     navigate({ to: "/comparer" });
   };
 
@@ -3558,11 +3570,15 @@ function Index() {
       if (kind) runLocalExport(kind);
       if (!ok) return;
       markCloudSync(snapshot);
-      // Local First : seul « Nouvel historique » enregistre un nouveau fichier .kw.
-      // « Mettre à jour » s'appuie sur la boîte noire ; « Enregistrer .kw » reste manuel.
-      if (mode === "insert") await performKwSave("");
-      if (compare) void navigate({ to: "/comparer" });
-      else if (results) void navigate({ to: "/resultats" });
+      const to = compare ? "/comparer" : results ? "/resultats" : null;
+      // Nouveau point : sélection des interventions avant écriture du .kw.
+      if (mode === "insert") {
+        kwNavAfterRef.current = to;
+        kwNavOnCancelRef.current = true;
+        setKwPointAsk("name");
+        return;
+      }
+      if (to) void navigate({ to });
     });
   };
 
