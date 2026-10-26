@@ -1,27 +1,33 @@
 /**
- * Fichier physique « .kw » (KeyWeight) — format local souverain, JSON versionné.
- * L'identité du piano repose sur une empreinte locale (Marque + Modèle + N° de série),
- * jamais sur un identifiant du Cloud.
+ * Fichier physique « .kw » (KeyWeight) — carnet local souverain du piano, JSON versionné.
+ * Sur disque : clés anglaises canoniques (version 2). En mémoire : clés de la fiche UI.
+ * L'identité du piano est stockée une seule fois (racine `info`) ; chaque point
+ * d'historique ne contient que son libellé, ses dates et ses 88 pesées.
+ * Lecture rétrocompatible des anciens fichiers version 1 (clés françaises).
  */
 
 export type KwRow = { wd: string; wa: string };
 
-export type KwJalon = {
+export type KwHistoryPoint = {
   id: string;
-  /** Horodatage ISO de création du jalon. */
-  date: string;
-  info: Record<string, string>;
+  /** Libellé(s) d'intervention, joints par « + ». */
+  name: string;
+  created_at: string;
+  updated_at: string;
   rows: KwRow[];
 };
 
 export type KwDocument = {
   format: "keyweight";
-  version: 1;
+  version: 2;
   piano_uuid: string;
+  created_at: string;
   updated_at: string;
+  active_point_id: string;
+  /** Identité du piano (clés de la fiche UI en mémoire). */
   info: Record<string, string>;
   rows: KwRow[];
-  historique_jalons: KwJalon[];
+  history_points: KwHistoryPoint[];
 };
 
 export const SECURITY_BACKUP_KEY = "ptw_security_backup";
@@ -37,7 +43,7 @@ export function readSessionKwDocument(): KwDocument | null {
 
 export function rememberKwDocument(doc: KwDocument | null): void {
   try {
-    if (doc) window.sessionStorage.setItem(SESSION_DOCUMENT_KEY, JSON.stringify(doc));
+    if (doc) window.sessionStorage.setItem(SESSION_DOCUMENT_KEY, serializeKwDocument(doc));
     else window.sessionStorage.removeItem(SESSION_DOCUMENT_KEY);
   } catch { /* session storage unavailable */ }
 }
@@ -50,7 +56,7 @@ export function differentSerial(current: string, incoming: string): boolean {
   return Boolean(norm(current) && norm(incoming) && norm(current) !== norm(incoming));
 }
 export const DAY_MS = 24 * 3600 * 1000;
-/** Au-delà de ce nombre de touches modifiées le même jour, un nouveau jalon est proposé. */
+/** Au-delà de ce nombre de touches modifiées le même jour, un nouveau point d'historique est proposé. */
 export const SAME_DAY_KEY_THRESHOLD = 5;
 
 const norm = (v: unknown) =>
@@ -83,12 +89,10 @@ const safe = (v: unknown) =>
     .replace(/[^A-Za-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-/** Nom standardisé : Marque_Modele_SN_Date.kw, sans caractère spécial. */
-export function kwFileName(info: Record<string, string>, now = new Date()): string {
+/** Nom stable par piano : Marque_Modele_SN.kw (sans date), sans caractère spécial. */
+export function kwFileName(info: Record<string, string>): string {
   const sn = safe(`${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`);
-  const p = (n: number) => String(n).padStart(2, "0");
-  const date = `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}_${p(now.getHours())}h${p(now.getMinutes())}`;
-  const parts = [safe(info["marque"]), safe(info["modele"]), sn, date].filter(Boolean);
+  const parts = [safe(info["marque"]), safe(info["modele"]), sn].filter(Boolean);
   return `${parts.join("_") || "piano"}.kw`;
 }
 
@@ -100,68 +104,160 @@ export function countChangedKeys(a: KwRow[], b: KwRow[]): number {
   return n;
 }
 
+export function activePoint(doc: KwDocument | null): KwHistoryPoint | null {
+  if (!doc) return null;
+  return doc.history_points.find((p) => p.id === doc.active_point_id) ?? doc.history_points[doc.history_points.length - 1] ?? null;
+}
+
 /**
- * Règle d'historique : nouveau jalon proposé si > 24 h depuis le dernier jalon
- * OU > 5 touches modifiées le même jour. Sinon écrasement silencieux.
+ * Règle d'historique : nouveau point proposé si > 24 h depuis le dernier point
+ * OU > 5 touches modifiées le même jour. Sinon mise à jour silencieuse du point actif.
  */
-export function shouldProposeJalon(doc: KwDocument, rows: KwRow[], nowMs = Date.now()): boolean {
+export function shouldProposeHistoryPoint(doc: KwDocument, rows: KwRow[], nowMs = Date.now()): boolean {
   const changed = countChangedKeys(doc.rows, rows);
   if (changed === 0) return false;
-  const last = doc.historique_jalons[doc.historique_jalons.length - 1];
-  const ref = Date.parse(last?.date ?? doc.updated_at);
+  const last = activePoint(doc);
+  const ref = Date.parse(last?.created_at ?? doc.updated_at);
   if (Number.isFinite(ref) && nowMs - ref > DAY_MS) return true;
   return changed > SAME_DAY_KEY_THRESHOLD;
 }
 
+/**
+ * Construit le document. `newPointName` non nul => création d'un nouveau point d'historique
+ * (ou premier point d'un nouveau dossier). Sinon, mise à jour du point actif.
+ */
 export function buildKwDocument(
   info: Record<string, string>,
   rows: KwRow[],
   previous: KwDocument | null,
-  addJalon: boolean,
+  newPointName: string | null,
   now = new Date(),
 ): KwDocument {
   const iso = now.toISOString();
-  const history = previous ? [...previous.historique_jalons] : [];
-  if (!previous || addJalon) {
-    history.push({ id: `jalon_${history.length + 1}`, date: iso, info: { ...info }, rows: rows.map((r) => ({ ...r })) });
-  } else if (history.length > 0) {
-    // Écrasement silencieux du jalon en cours, sans doublon.
-    history[history.length - 1] = { ...(history[history.length - 1] as KwJalon), info: { ...info }, rows: rows.map((r) => ({ ...r })) };
+  const copy = rows.map((r) => ({ ...r }));
+  const history = previous ? previous.history_points.map((p) => ({ ...p })) : [];
+  let activeId = previous?.active_point_id ?? "";
+  if (!previous || newPointName !== null || history.length === 0) {
+    activeId = `point_${history.length + 1}`;
+    history.push({ id: activeId, name: (newPointName ?? "").trim(), created_at: iso, updated_at: iso, rows: copy });
+  } else {
+    const idx = Math.max(0, history.findIndex((p) => p.id === activeId));
+    const cur = history[idx]!;
+    activeId = cur.id;
+    history[idx] = { ...cur, updated_at: iso, rows: copy };
   }
   return {
     format: "keyweight",
-    version: 1,
+    version: 2,
     piano_uuid: pianoUuid(info),
+    created_at: previous?.created_at ?? iso,
     updated_at: iso,
+    active_point_id: activeId,
     info: { ...info },
-    rows: rows.map((r) => ({ ...r })),
-    historique_jalons: history,
+    rows: copy.map((r) => ({ ...r })),
+    history_points: history,
   };
 }
 
+// --- Correspondance clés UI (françaises historiques) <-> clés fichier anglaises ---
+const UI_TO_FILE: Record<string, string> = {
+  marque: "brand",
+  modele: "model",
+  type_piano: "piano_type",
+  fabrication: "year",
+  entretien: "maintenance",
+  remarques: "notes",
+  ville: "city",
+  pays: "country",
+};
+const FILE_TO_UI: Record<string, string> = Object.fromEntries(Object.entries(UI_TO_FILE).map(([a, b]) => [b, a]));
+
+const typeToFile = (v: string) => (/queue|grand/i.test(v) ? "Grand" : /droit|upright/i.test(v) ? "Upright" : v);
+const typeToUi = (v: string) => (/grand|queue/i.test(v) ? "Queue" : /upright|droit/i.test(v) ? "Droit" : v);
+
+function infoToFile(info: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(info)) {
+    const key = UI_TO_FILE[k] ?? k;
+    out[key] = key === "piano_type" ? typeToFile(String(v ?? "")) : String(v ?? "");
+  }
+  return out;
+}
+function infoToUi(info: Record<string, unknown>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(info ?? {})) {
+    const key = FILE_TO_UI[k] ?? k;
+    out[key] = key === "type_piano" ? typeToUi(String(v ?? "")) : String(v ?? "");
+  }
+  return out;
+}
+
+/** Sérialisation disque : JSON lisible, clés anglaises. */
+export function serializeKwDocument(doc: KwDocument): string {
+  return JSON.stringify({ ...doc, info: infoToFile(doc.info) }, null, 2);
+}
+
+const fixRows = (r: unknown): KwRow[] => {
+  const arr = Array.isArray(r) ? r : [];
+  return Array.from({ length: 88 }, (_, i) => {
+    const x = (arr[i] ?? {}) as Partial<KwRow>;
+    return { wd: String(x.wd ?? ""), wa: String(x.wa ?? "") };
+  });
+};
+
 export function parseKwDocument(text: string): KwDocument | null {
   try {
-    const d = JSON.parse(text) as Partial<KwDocument>;
-    if (d?.format !== "keyweight" || d.version !== 1 || !Array.isArray(d.rows)) return null;
-    const fix = (r: unknown[]): KwRow[] =>
-      Array.from({ length: 88 }, (_, i) => {
-        const x = (r[i] ?? {}) as Partial<KwRow>;
-        return { wd: String(x.wd ?? ""), wa: String(x.wa ?? "") };
-      });
-    return {
-      format: "keyweight",
-      version: 1,
-      piano_uuid: String(d.piano_uuid ?? ""),
-      updated_at: String(d.updated_at ?? new Date().toISOString()),
-      info: (d.info ?? {}) as Record<string, string>,
-      rows: fix(d.rows),
-      historique_jalons: (Array.isArray(d.historique_jalons) ? d.historique_jalons : []).map((j) => ({
-        id: String(j.id),
-        date: String(j.date),
-        info: (j.info ?? {}) as Record<string, string>,
-        rows: fix(Array.isArray(j.rows) ? j.rows : []),
-      })),
-    };
+    const d = JSON.parse(text) as Record<string, unknown>;
+    if (d?.format !== "keyweight" || !Array.isArray(d.rows)) return null;
+    const rows = fixRows(d.rows);
+    const updated = String(d.updated_at ?? new Date().toISOString());
+    if (d.version === 2) {
+      const pts = (Array.isArray(d.history_points) ? d.history_points : []) as Record<string, unknown>[];
+      const history = pts.map((p, i) => ({
+        id: String(p.id ?? `point_${i + 1}`),
+        name: String(p.name ?? ""),
+        created_at: String(p.created_at ?? updated),
+        updated_at: String(p.updated_at ?? p.created_at ?? updated),
+        rows: fixRows(p.rows),
+      }));
+      const info = infoToUi((d.info ?? {}) as Record<string, unknown>);
+      return {
+        format: "keyweight",
+        version: 2,
+        piano_uuid: String(d.piano_uuid ?? pianoUuid(info)),
+        created_at: String(d.created_at ?? history[0]?.created_at ?? updated),
+        updated_at: updated,
+        active_point_id: String(d.active_point_id ?? history[history.length - 1]?.id ?? ""),
+        info,
+        rows,
+        history_points: history,
+      };
+    }
+    if (d.version === 1) {
+      // Ancien format : historique_jalons avec identité dupliquée dans chaque entrée.
+      const old = (Array.isArray(d.historique_jalons) ? d.historique_jalons : []) as Record<string, unknown>[];
+      const history = old.map((j, i) => ({
+        id: `point_${i + 1}`,
+        name: "",
+        created_at: String(j.date ?? updated),
+        updated_at: String(j.date ?? updated),
+        rows: fixRows(j.rows),
+      }));
+      if (history.length) history[history.length - 1]!.updated_at = updated;
+      const info = infoToUi((d.info ?? {}) as Record<string, unknown>);
+      return {
+        format: "keyweight",
+        version: 2,
+        piano_uuid: String(d.piano_uuid ?? pianoUuid(info)),
+        created_at: history[0]?.created_at ?? updated,
+        updated_at: updated,
+        active_point_id: history[history.length - 1]?.id ?? "",
+        info,
+        rows,
+        history_points: history,
+      };
+    }
+    return null;
   } catch {
     return null;
   }
