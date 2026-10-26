@@ -484,12 +484,12 @@ function Resultats() {
         <div className="min-w-0">
           <div ref={averagesRef} className="sticky top-[127px] z-50 mb-[50px] w-full bg-white pb-2 relative">
               <Frame
-                titleClassName="absolute -top-4 left-4 whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground"
+                titleClassName="absolute -top-4 left-4 max-w-[calc(100%-2rem)] whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground"
                 title={
-                  <span className="flex items-baseline gap-2">
-                    <span>{en ? "Averages" : "Moyennes"}</span>
-                    <span className="text-slate-400">-</span>
-                    <span className="summary-text">{summary.line}</span>
+                  <span className="flex min-w-0 items-baseline gap-2">
+                    <span className="shrink-0">{en ? "Averages" : "Moyennes"}</span>
+                    <span className="shrink-0 text-slate-400">-</span>
+                    <span className="summary-text block min-w-0 flex-1 truncate" title={summary.line}>{summary.line}</span>
                   </span>
                 }
                 className="h-fit"
