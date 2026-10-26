@@ -276,7 +276,7 @@ export async function writeKwFile(
   doc: KwDocument,
   handle: FileHandleLike | null,
 ): Promise<FileHandleLike | null | "cancelled"> {
-  const blob = new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" });
+  const blob = new Blob([serializeKwDocument(doc)], { type: "application/json" });
   const w = window as unknown as {
     showSaveFilePicker?: (o: unknown) => Promise<FileHandleLike>;
   };
@@ -327,7 +327,7 @@ export function readDraftProfile(): { info: Record<string, string>; rows: KwRow[
 /** Enregistre le brouillon courant dans un fichier .kw (appel direct depuis un clic). */
 export async function saveDraftToKw(): Promise<boolean> {
   const { info, rows } = readDraftProfile();
-  const doc = buildKwDocument(info, rows, readSessionKwDocument(), false);
+  const doc = buildKwDocument(info, rows, readSessionKwDocument(), null);
   const res = await writeKwFile(doc, null);
   if (res === "cancelled") return false;
   rememberKwDocument(doc);
