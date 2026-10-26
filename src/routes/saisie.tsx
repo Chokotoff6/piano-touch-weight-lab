@@ -3904,9 +3904,9 @@ function Index() {
       mode={kwPointAsk ?? "first"}
       boxClassName={RESET_STYLE_BOX}
       btnClassName={RESET_STYLE_BTN}
-      onCancel={() => setKwPointAsk(null)}
-      onUpdateCurrent={() => { setKwPointAsk(null); void performKwSave(null); }}
-      onCreate={(name) => { setKwPointAsk(null); void performKwSave(name); }}
+      onCancel={() => finishKwAsk(kwNavOnCancelRef.current)}
+      onUpdateCurrent={() => { void performKwSave(null).finally(() => finishKwAsk(true)); setKwPointAsk(null); }}
+      onCreate={(name) => { void performKwSave(name).finally(() => finishKwAsk(true)); setKwPointAsk(null); }}
     />
     <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
       <input
