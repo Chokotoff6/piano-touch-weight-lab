@@ -3489,7 +3489,7 @@ function Index() {
     // Local First : premier passage → le fichier .kw est créé sur l'appareil.
     if (!isDemoActive() && !kwDocRef.current) {
       try {
-        await performKwSave(false);
+        await performKwSave(getLang() === "en" ? "Initial diagnostic" : "Diagnostic initial");
       } catch {
         /* enregistrement annulé ou indisponible : la navigation continue */
       }
@@ -3567,7 +3567,7 @@ function Index() {
       markCloudSync(snapshot);
       // Local First : seul « Nouvel historique » enregistre un nouveau fichier .kw.
       // « Mettre à jour » s'appuie sur la boîte noire ; « Enregistrer .kw » reste manuel.
-      if (mode === "insert") await performKwSave(true);
+      if (mode === "insert") await performKwSave("");
       if (compare) void navigate({ to: "/comparer" });
       else if (results) void navigate({ to: "/resultats" });
     });
