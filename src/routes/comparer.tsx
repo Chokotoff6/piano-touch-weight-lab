@@ -1,3 +1,4 @@
+import { modelKey, modelRootKey } from "@/data/pianoModels";
 import { createFileRoute } from "@tanstack/react-router";
 import { forceCollide, forceSimulation, forceX, forceY, type SimulationNodeDatum } from "d3-force";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, type SetStateAction, type RefObject } from "react";
@@ -57,6 +58,7 @@ type UsageLevel = "all" | "low" | "medium" | "intensive";
 /** Auteur de la pesée : particulier ou professionnel. */
 // Filtre modifications importantes : incluses, exclues, ou uniquement celles-ci.
 type ChangesFilter = "included" | "excluded" | "only";
+type ModelScope = "versions" | "exact";
 
 export type RefProfile = {
   wd: number[];
@@ -1737,6 +1739,8 @@ type SidebarPanelProps = {
   sameClimate: boolean;
   sameYear: boolean;
   importantChanges: ChangesFilter;
+  modelScope: ModelScope;
+  setModelScope: (value: ModelScope) => void;
   youngOnly: boolean;
   usageLevel: UsageLevel;
   setSameClimate: (value: boolean) => void;
@@ -1802,6 +1806,7 @@ function SidebarPanel(props: SidebarPanelProps) {
           {props.cloudEnabled && (
             <>
           <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold" style={{ color: "#f97316" }}>{en ? "CLOUD filters" : "Filtres CLOUD"}</div>
+          <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setModelScope(props.modelScope === "versions" ? "exact" : "versions")} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.modelScope !== "versions" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">{en ? "Model name: " : "Nom modèle : "}<span className="!text-black font-semibold uppercase">{props.modelScope === "versions" ? (en ? "All versions" : "Toutes versions") : (en ? "Exact" : "Exact")}</span></span></Button>
           <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.usageLevel !== "all" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">{en ? "Instrument usage: " : "Usage instrument : "}<span className="!text-black font-semibold uppercase">{usageLabel}</span></span></Button>
           <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setImportantChanges(props.importantChanges === "included" ? "excluded" : props.importantChanges === "excluded" ? "only" : "included")} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.importantChanges !== "included" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">{en ? "Major modifications: " : "Modifications importantes : "}<span className="!text-black font-semibold uppercase">{changesLabel}</span></span></Button>
 
@@ -1885,6 +1890,8 @@ function Comparer() {
   const [sameClimate, setSameClimate] = useState(true);
   const [sameYear, setSameYear] = useState(false);
   const [importantChanges, setImportantChanges] = useState<ChangesFilter>("included");
+  // Filtre « Nom modèle » : racine d'usine + versions (Silent, Aures…) ou modèle exact (tolérant casse/espaces/tirets).
+  const [modelScope, setModelScope] = useState<ModelScope>("versions");
   const [youngOnly, setYoungOnly] = useState(false);
   const [usageLevel, setUsageLevel] = useState<UsageLevel>("all");
   // Filtre « QUI » : trie les courbes de la communauté selon l'auteur de la pesée.
@@ -2184,7 +2191,7 @@ function Comparer() {
         externalSupabase
           .from("piano_profiles")
           .select(PROFILE_FIELDS)
-          .eq("model", mine.model)
+          .ilike("model", `${modelKey(mine.model).charAt(0) || "%"}%`)
           .neq("serial_number", mine.serialNumber)
           // Exclusion de la ligne tampon (état écran) de la moyenne globale.
           .neq("id", CURRENT_PIANO_BUFFER_UUID)
@@ -2213,6 +2220,14 @@ function Comparer() {
       const rows = (result.data as ExternalPianoProfileRow[]).filter((row) => {
         // Bannissement des clones du piano actuel (doublons enregistrés avec un
         // numéro de série tronqué ou voisin) : mesures identiques => même piano.
+        const rowKey = modelKey(row.model ?? "");
+        if (modelScope === "exact") { if (rowKey !== modelKey(mine.model)) return false; }
+        else {
+          const root = modelRootKey(mine.brand, mine.model);
+          if (!rowKey.startsWith(root)) return false;
+          const next = rowKey.charAt(root.length);
+          if (next && /\d/.test(next) && /\d/.test(root.charAt(root.length - 1))) return false;
+        }
         if (isSameSerial(row.serial_number, mine.serialNumber) || isSameSerial(row.serial_number, localSerial)) return false;
         if (sameSeries(profileValues(row.wa_values), mine.wd) && sameSeries(profileValues(row.wd_values), mine.wa)) return false;
         return true;
@@ -2223,7 +2238,7 @@ function Comparer() {
     }
     void loadCloudAverage();
     return () => { cancelled = true; };
-  }, [mine, sourceMode, sameClimate, sameYear, importantChanges, youngOnly, usageLevel]);
+  }, [mine, sourceMode, sameClimate, sameYear, importantChanges, youngOnly, usageLevel, modelScope]);
 
   // Arbitrage de la courbe orange : CSV importé en priorité, sinon moyenne Cloud.
   const comparisonProfile = comparedPiano ?? (sourceMode === "cloud" ? cloudProfile : null);
@@ -2437,7 +2452,7 @@ function Comparer() {
                 <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? historyLabel : "Cloud"} comparisonShort={comparedPiano ? historyLabel : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible standard"} onCycleKeyFilter={cycleKeyFilter} currentBaseName={en ? "Current piano" : "Piano actuel"} showSourceControls={mine !== null && sourceMode === "cloud" && comparedPiano === null && standardEnabled && cloudProfile !== null} />
               </div>
             </div>
-            <aside className="min-w-0"><div ref={settingsRef} data-pdf-expand className="sticky top-[127px] z-50 flex flex-col overflow-visible" ><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onOpenHistory={openHistory} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
+            <aside className="min-w-0"><div ref={settingsRef} data-pdf-expand className="sticky top-[127px] z-50 flex flex-col overflow-visible" ><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onOpenHistory={openHistory} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} modelScope={modelScope} setModelScope={setModelScope} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
           </div>
         </>
       )}

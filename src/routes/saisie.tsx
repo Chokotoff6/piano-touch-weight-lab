@@ -13,7 +13,7 @@ import { InfoDot } from "@/components/InfoDot";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { modelsFor, modelGroupsFor, inferTypeFromModel, addModel } from "@/data/pianoModels";
+import { modelsFor, modelGroupsFor, inferTypeFromModel, addModel, canonicalizeModel } from "@/data/pianoModels";
 import { HistoryPointDialog } from "@/components/HistoryPointDialog";
 import {
   BRAND_SUGGESTIONS,
@@ -4002,7 +4002,8 @@ function Index() {
                 className={`font-normal not-italic placeholder:text-sm placeholder:font-normal placeholder:text-muted-foreground placeholder:italic disabled:!cursor-default ${identityLocked ? "!bg-muted/50 opacity-75" : "!bg-white"}`}
                 placeholder={en ? "Type or search a model..." : "Saisissez ou cherchez un modèle..."}
                 onTyping={markDirty}
-                onCommit={(v) => {
+                onCommit={(raw) => {
+                  const v = raw.trim() ? canonicalizeModel(info["marque"] ?? "", raw) : raw;
                   updateInfo("modele", v);
                   if (v.trim() && info["marque"]?.trim() && info["type_piano"]) addModel(info["marque"], info["type_piano"], v);
                   const inferred = inferTypeFromModel(info["marque"] ?? "", v);
