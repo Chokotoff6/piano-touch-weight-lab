@@ -1,5 +1,6 @@
 import { Fragment, useState } from "react";
-import { AlertTriangle, Settings } from "lucide-react";
+import { AlertTriangle, ChevronRight, Settings } from "lucide-react";
+import { InterventionListDialog, ModelListDialog } from "@/components/ListManagers";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
@@ -69,6 +70,7 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
   const en = useLang() === "en";
   const prefs = usePreferences();
   const [open, setOpen] = useState(false);
+  const [sub, setSub] = useState<null | "models" | "interventions">(null);
   const def = en ? " (default)" : " (défaut)";
   const demo = open ? isDemoActive() : false;
   const row = "flex flex-col gap-3 rounded-lg border border-foreground/40 bg-card p-3";
@@ -139,9 +141,16 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
                 </div></div>
               ))}
             </div>
+            {([["models", en ? "Piano models list" : "Liste modèles piano"], ["interventions", en ? "Intervention types list" : "Liste types d'intervention"]] as const).map(([id, label]) => (
+              <button key={id} type="button" onClick={() => setSub(id)} className="flex items-center justify-between rounded-lg border border-foreground/40 bg-card p-3 text-left font-semibold hover:bg-muted">
+                {label}<ChevronRight className="h-4 w-4" />
+              </button>
+            ))}
           </div></TooltipProvider>
         </DialogContent>
       </Dialog>
+      <ModelListDialog open={sub === "models"} onOpenChange={(o) => { if (!o) setSub(null); }} en={en} />
+      <InterventionListDialog open={sub === "interventions"} onOpenChange={(o) => { if (!o) setSub(null); }} en={en} />
     </>
   );
 }

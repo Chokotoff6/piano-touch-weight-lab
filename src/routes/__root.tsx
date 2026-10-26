@@ -509,7 +509,7 @@ function RootComponent() {
                   type="button"
                   className="block w-full px-3 py-2 text-left text-sm font-bold text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
                   onClick={() => {
-                    // Pesée gère ses jalons ; ailleurs, enregistrement direct du brouillon (clic natif conservé).
+                    // Pesée gère ses points d'historique ; ailleurs, enregistrement direct du brouillon (clic natif conservé).
                     if (isSaisie) {
                       dispatchAction("piano-save-kw");
                       void syncAfterLocalAction();
