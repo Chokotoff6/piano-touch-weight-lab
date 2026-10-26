@@ -121,7 +121,7 @@ export function shouldProposeHistoryPoint(doc: KwDocument, rows: KwRow[], nowMs 
   const last = activePoint(doc);
   const ref = Date.parse(last?.created_at ?? doc.updated_at);
   if (Number.isFinite(ref) && nowMs - ref > DAY_MS) return true;
-  return changed > SAME_DAY_KEY_THRESHOLD;
+  return changed >= SAME_DAY_KEY_THRESHOLD;
 }
 
 /**

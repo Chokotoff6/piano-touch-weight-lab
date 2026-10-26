@@ -3436,7 +3436,7 @@ function Index() {
     if (decision.kind !== "silentUpsert") return "direct";
     // Règle convenue : dialogue seulement si > 5 touches modifiées ou > 24 h
     // depuis la dernière écriture ; sinon mise à jour silencieuse.
-    if (decision.modifiedKeys > SAME_DAY_KEY_THRESHOLD || msSinceLastSync() > DAY_MS) return "choice";
+    if (decision.modifiedKeys >= SAME_DAY_KEY_THRESHOLD || msSinceLastSync() > DAY_MS) return "choice";
     return "silent";
   };
 
@@ -3486,14 +3486,7 @@ function Index() {
     } finally {
       setIsExporting(false);
     }
-    // Local First : premier passage → le fichier .kw est créé sur l'appareil.
-    if (!isDemoActive() && !kwDocRef.current) {
-      try {
-        await performKwSave(getLang() === "en" ? "Initial diagnostic" : "Diagnostic initial");
-      } catch {
-        /* enregistrement annulé ou indisponible : la navigation continue */
-      }
-    }
+    // Navigation directe : le .kw n'est écrit que sur demande explicite (pas de Finder forcé).
     navigate({ to: "/resultats" });
   };
 
