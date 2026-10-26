@@ -6,6 +6,8 @@
  * Lecture rétrocompatible des anciens fichiers version 1 (clés françaises).
  */
 
+import { getLang } from "@/data/translations";
+
 export type KwRow = { wd: string; wa: string };
 
 export type KwHistoryPoint = {
@@ -327,7 +329,8 @@ export function readDraftProfile(): { info: Record<string, string>; rows: KwRow[
 /** Enregistre le brouillon courant dans un fichier .kw (appel direct depuis un clic). */
 export async function saveDraftToKw(): Promise<boolean> {
   const { info, rows } = readDraftProfile();
-  const doc = buildKwDocument(info, rows, readSessionKwDocument(), null);
+  const prev = readSessionKwDocument();
+  const doc = buildKwDocument(info, rows, prev, prev ? null : (getLang() === "en" ? "Initial diagnostic" : "Diagnostic initial"));
   const res = await writeKwFile(doc, null);
   if (res === "cancelled") return false;
   rememberKwDocument(doc);
