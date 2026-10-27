@@ -96,7 +96,8 @@ import {
 } from "@/lib/field-codes";
 import { toast } from "sonner";
 import { useInterventions, interventionLabel, parseAntecedents, maintenanceFromAntecedents, ANTECEDENTS_KEY } from "@/lib/interventions";
-import { AntecedentsDialog, ANTECEDENTS_DATES_KEY } from "@/components/AntecedentsDialog";
+import { AntecedentsDialog, ANTECEDENTS_DATES_KEY, ANTECEDENTS_CUSTOM_KEY, parseCustomAntecedents } from "@/components/AntecedentsDialog";
+const parseCustomEntries = (raw: string | undefined) => parseCustomAntecedents(raw).length;
 import {
   SECURITY_BACKUP_KEY,
   SAME_DAY_KEY_THRESHOLD,
@@ -1716,9 +1717,11 @@ function Index() {
   const kwHandleRef = useRef<Awaited<ReturnType<typeof writeKwFile>> | null>(null);
   const kwDocRef = useRef<KwDocument | null>(null);
   const [importedProfile, setImportedProfile] = useState(false);
+  const [kwActive, setKwActive] = useState(false);
   const [activePointName, setActivePointName] = useState("");
   useEffect(() => {
     kwDocRef.current = readSessionKwDocument();
+    setKwActive(Boolean(kwDocRef.current));
     setActivePointName(activePoint(kwDocRef.current)?.name ?? "");
   }, []);
   const [kwPointAsk, setKwPointAsk] = useState<null | "first" | "propose" | "name">(null);
@@ -1739,6 +1742,7 @@ function Index() {
     if (res === "cancelled") return;
     kwHandleRef.current = res;
     kwDocRef.current = doc;
+    setKwActive(Boolean(kwDocRef.current));
     rememberKwDocument(doc);
     setActivePointName(activePoint(doc)?.name ?? "");
     try {
@@ -1776,6 +1780,7 @@ function Index() {
   /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
   const resetInfo = () => {
     kwDocRef.current = null;
+    setKwActive(Boolean(kwDocRef.current));
     kwHandleRef.current = null;
     rememberKwDocument(null);
     setActivePointName("");
@@ -1902,6 +1907,7 @@ function Index() {
 
   const handleFullReset = () => {
     kwDocRef.current = null;
+    setKwActive(Boolean(kwDocRef.current));
     kwHandleRef.current = null;
     rememberKwDocument(null);
     setShowDemoAuto(false);
@@ -3086,6 +3092,7 @@ function Index() {
           return;
         }
         kwDocRef.current = doc;
+        setKwActive(Boolean(kwDocRef.current));
         rememberKwDocument(doc);
         setActivePointName(activePoint(doc)?.name ?? "");
         kwHandleRef.current = null;
@@ -4174,16 +4181,20 @@ function Index() {
 
 
             <div className="mt-4 flex flex-wrap items-start justify-start gap-6 sm:col-span-2 md:col-span-4">
+              {!kwActive && (() => {
+                const customCount = parseCustomEntries(info[ANTECEDENTS_CUSTOM_KEY]);
+                const total = antecedentIds.length + customCount;
+                return (
               <div className={FIELD_LABEL_CLASS}>
                 <span className="block">{en ? "Piano history prior to KeyWeight" : "Historique du piano avant KeyWeight"}</span>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <span className="text-sm font-normal text-muted-foreground">
-                    {antecedentIds.length === 0
+                    {total === 0
                       ? (en ? "None entered" : "Aucune intervention renseignée")
-                      : `${antecedentIds.length} intervention${antecedentIds.length > 1 ? "s" : ""}`}
+                      : `${total} intervention${total > 1 ? "s" : ""}`}
                   </span>
                   <button type="button" className="list-chip" onClick={() => setAntecedentsOpen(true)}>
-                    {antecedentIds.length === 0 ? (en ? "Enter" : "Renseigner") : (en ? "Edit" : "Modifier")}
+                    {total === 0 ? (en ? "Enter" : "Renseigner") : (en ? "Edit" : "Modifier")}
                   </button>
                 </div>
                 <AntecedentsDialog
@@ -4192,13 +4203,17 @@ function Index() {
                   en={en}
                   ids={antecedentIds}
                   datesRaw={info[ANTECEDENTS_DATES_KEY]}
-                  onSave={(next, datesRaw) => {
+                  customRaw={info[ANTECEDENTS_CUSTOM_KEY]}
+                  onSave={(next, datesRaw, customRaw) => {
                     updateInfo(ANTECEDENTS_KEY, next.join("|"));
                     updateInfo(ANTECEDENTS_DATES_KEY, datesRaw);
+                    updateInfo(ANTECEDENTS_CUSTOM_KEY, customRaw);
                     updateInfo("entretien", maintenanceFromAntecedents(next));
                   }}
                 />
               </div>
+                );
+              })()}
 
               <label className={FIELD_LABEL_CLASS}>
                 <span className="block">{en ? "Usage intensity" : "Intensité d'usage"}</span>
