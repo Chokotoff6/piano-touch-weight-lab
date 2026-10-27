@@ -118,10 +118,10 @@ export function generateHistoryPdf(doc: KwDocument, info: Record<string, string>
 
   // 3. Points d'historique KeyWeight
   section(en ? "KEYWEIGHT HISTORY POINTS" : "POINTS D'HISTORIQUE KEYWEIGHT");
-  const cols = [M, M + 24, M + 92, M + 112, M + 132, M + 152, M + 170];
+  const cols = [M, M + 24, M + 92, M + 112, M + 132, M + 152, M + 170] as const;
   const head = [en ? "Date" : "Date", en ? "Work carried out" : "Interventions", en ? "DW avg" : "PD moy", en ? "UW avg" : "PR moy", en ? "BW avg" : "PE moy", en ? "F avg" : "F moy", en ? "Keys" : "Touches"];
   pdf.setFont("helvetica", "bold");
-  head.forEach((h, i) => pdf.text(h, cols[i], y));
+  head.forEach((h, i) => pdf.text(h, cols[i] ?? M, y));
   pdf.setFont("helvetica", "normal");
   y += 2;
   pdf.setLineWidth(0.15);
@@ -133,7 +133,7 @@ export function generateHistoryPdf(doc: KwDocument, info: Record<string, string>
     if (y + label.length * 4.5 > H - 22) { pdf.addPage(); y = M + 6; }
     pdf.text(fmtDate(p.created_at, en), cols[0], y);
     pdf.text(label, cols[1], y);
-    [g(av.pd), g(av.pr), g(av.pe), g(av.f), String(av.count)].forEach((v, i) => pdf.text(v, cols[i + 2], y));
+    [g(av.pd), g(av.pr), g(av.pe), g(av.f), String(av.count)].forEach((v, i) => pdf.text(v, cols[i + 2] ?? M, y));
     y += Math.max(1, label.length) * 4.5 + 1.5;
   });
   if (!doc.history_points.length) pdf.text("—", M, y);
