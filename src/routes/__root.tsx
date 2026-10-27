@@ -431,7 +431,7 @@ function RootComponent() {
                   )}
                 </span>
               )}
-              <div className="relative">
+              <span className="relative inline-flex">                {/* Zone cliquable calée sur la pastille visible. */}
                 {topbar.resultsVisited ? (
                   <Link
                     to="/comparer"
@@ -462,7 +462,7 @@ function RootComponent() {
                     {topbar.alert.message}
                   </div>
                 )}
-              </div>
+              </span>
             </div>
             )}
 
@@ -503,7 +503,7 @@ function RootComponent() {
                 </div>
               )}
 
-              <div className={`absolute right-0 top-full -mt-[2px] z-[99999] min-w-[300px] max-w-[520px] rounded-md border border-gray-200 bg-white py-1 shadow-lg opacity-0 transition-opacity duration-100 ${menuEnabled ? "group-hover:opacity-100" : "pointer-events-none"}`}>
+              <div className={`absolute right-0 top-full -mt-[2px] z-[99999] min-w-[300px] max-w-[520px] rounded-md border border-gray-200 bg-white py-1 shadow-lg opacity-0 pointer-events-none transition-opacity duration-100 ${menuEnabled ? "group-hover:opacity-100 group-hover:pointer-events-auto" : ""}`}>
                 {/* 1. Enregistrer : fichier local souverain .kw, sur les 3 pages. */}
                 <button
                   type="button"
