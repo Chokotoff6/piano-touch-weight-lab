@@ -1578,10 +1578,12 @@ function Index() {
   /** Les réglages personnalisés et les modifications importantes exigent des remarques. */
   const antecedentItems = useInterventions();
   // Témoin passif dans l'onglet : seulement en arrière-plan et s'il reste des mesures non enregistrées.
+  const baseTitleRef = useRef("");
   useEffect(() => {
     const base = "KeyWeight";
     const apply = () => {
-      if (document.hidden && isDirty) document.title = en ? `${base} (unsaved measurements)` : `${base} (mesures non sauvées)`;
+      const away = document.hidden || !document.hasFocus();
+      if (away && isDirty) document.title = en ? `${base} (unsaved measurements)` : `${base} (mesures non sauvées)`;
       else if (document.title.startsWith(`${base} (`)) document.title = baseTitleRef.current || base;
     };
     if (!document.title.startsWith(`${base} (`)) baseTitleRef.current = document.title;
