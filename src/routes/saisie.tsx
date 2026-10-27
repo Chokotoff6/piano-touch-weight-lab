@@ -96,7 +96,7 @@ import {
 } from "@/lib/field-codes";
 import { toast } from "sonner";
 import { useInterventions, interventionLabel, parseAntecedents, maintenanceFromAntecedents, ANTECEDENTS_KEY } from "@/lib/interventions";
-import { AntecedentsDialog, ANTECEDENTS_DATES_KEY } from "@/components/AntecedentsDialog";
+import { AntecedentsDialog, ANTECEDENTS_DATES_KEY, ANTECEDENTS_CUSTOM_KEY } from "@/components/AntecedentsDialog";
 import {
   SECURITY_BACKUP_KEY,
   SAME_DAY_KEY_THRESHOLD,
@@ -1716,6 +1716,7 @@ function Index() {
   const kwHandleRef = useRef<Awaited<ReturnType<typeof writeKwFile>> | null>(null);
   const kwDocRef = useRef<KwDocument | null>(null);
   const [importedProfile, setImportedProfile] = useState(false);
+  const [kwActive, setKwActive] = useState(false);
   const [activePointName, setActivePointName] = useState("");
   useEffect(() => {
     kwDocRef.current = readSessionKwDocument();
