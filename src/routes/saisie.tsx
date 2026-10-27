@@ -95,6 +95,7 @@ import {
   WHO_PRO,
 } from "@/lib/field-codes";
 import { toast } from "sonner";
+import { useInterventions, interventionLabel, parseAntecedents, maintenanceFromAntecedents, ANTECEDENTS_KEY } from "@/lib/interventions";
 import {
   SECURITY_BACKUP_KEY,
   SAME_DAY_KEY_THRESHOLD,
@@ -1575,6 +1576,8 @@ function Index() {
   }, [keyboardValid]);
 
   /** Les réglages personnalisés et les modifications importantes exigent des remarques. */
+  const antecedentItems = useInterventions();
+  const antecedentIds = parseAntecedents(info[ANTECEDENTS_KEY]);
   // Remarques désormais libres : les antécédents détaillés sont portés par les étiquettes.
   const remarquesRequired = false;
   const remarquesInvalid = false;

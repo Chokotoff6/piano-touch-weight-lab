@@ -141,19 +141,6 @@ export const SmartCombobox = forwardRef<SmartComboboxHandle, Props>(
         />
         {open && !disabled && (
           <ul className="absolute left-0 z-50 mt-1 block h-auto max-h-60 w-full overflow-y-auto rounded border border-input bg-popover py-1 text-sm shadow-md">
-            {normalizeEntry(draft) &&
-              !options.some((o) => o === normalizeEntry(draft)) && (
-                <li>
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => pick(normalizeEntry(draft))}
-                    className="block w-full px-2 py-1 text-left font-medium text-foreground hover:bg-accent"
-                  >
-                    ✨ Utiliser « {normalizeEntry(draft)} » (Saisie libre)
-                  </button>
-                </li>
-              )}
             {filtered.map((g) => (
               <li key={g.label || "all"}>
                 {g.label && (
