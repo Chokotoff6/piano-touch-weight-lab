@@ -70,12 +70,13 @@ export function generateHistoryPdf(doc: KwDocument, info: Record<string, string>
 
   // 1. Fiche technique
   section(en ? "TECHNICAL SHEET" : "FICHE TECHNIQUE");
-  const type = info["type"] ?? info["piano_type"] ?? "";
+  const type = info["type_piano"] ?? "";
+  const serial = [info["sn_prefix"], info["sn_num"], info["sn_suffix"]].map((s) => String(s ?? "").trim()).filter(Boolean).join("");
   const fields: [string, string][] = [
     [en ? "Brand" : "Marque", info["marque"] ?? ""],
     [en ? "Model" : "Modèle", info["modele"] ?? ""],
     [en ? "Type" : "Type", type],
-    [en ? "Serial no." : "N° de série", info["serie"] ?? info["numero_serie"] ?? ""],
+    [en ? "Serial no." : "N° de série", serial],
     [en ? "Manufacturing year" : "Année de fabrication", info["fabrication"] ?? ""],
   ].filter(([, v]) => String(v).trim() !== "") as [string, string][];
   fields.forEach(([l, v], i) => {
