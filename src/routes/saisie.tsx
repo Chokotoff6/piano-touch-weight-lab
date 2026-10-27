@@ -4150,27 +4150,28 @@ function Index() {
 
 
             <div className="mt-4 flex flex-wrap items-start justify-start gap-6 sm:col-span-2 md:col-span-4">
-              <label className={FIELD_LABEL_CLASS}>
-                <span className="block">{en ? "Piano history" : "Historique piano"}</span>
-                <select
-                  value={info["entretien"] ?? ""}
-                  onChange={(e) => {
-                    updateInfo("entretien", e.target.value);
-                    if (e.target.value === "Custom regulations" || e.target.value === "Major modifications") {
-                      setTimeout(() => remarquesRef.current?.focus(), 0);
-                    }
-                  }}
-                  className={`${INPUT_CLASS} !bg-white !block !w-fit !min-w-0 !max-w-full mt-2 ${info["entretien"] ? "not-italic" : "!text-muted-foreground !italic"}`}
-
-                >
-                  <option value="" className="italic text-muted-foreground">{en ? "— Select —" : "— Sélectionner —"}</option>
-                  {MAINTENANCE_OPTIONS.map((option) => (
-                    <option key={option} value={option} className="not-italic text-foreground">
-                      {en ? MAINTENANCE_LABELS_EN[option] : MAINTENANCE_LABELS_FR[option]}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <div className={FIELD_LABEL_CLASS}>
+                <span className="block">{en ? "Maintenance history" : "Antécédents d'entretien"}</span>
+                <div className="mt-2 flex max-w-xl flex-wrap gap-2">
+                  {antecedentItems.map((item) => {
+                    const active = antecedentIds.includes(item.id);
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className={`list-chip ${active ? "list-chip-active" : ""}`}
+                        onClick={() => {
+                          const next = active ? antecedentIds.filter((x) => x !== item.id) : [...antecedentIds, item.id];
+                          updateInfo(ANTECEDENTS_KEY, next.join("|"));
+                          updateInfo("entretien", maintenanceFromAntecedents(next));
+                        }}
+                      >
+                        {interventionLabel(item, en)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
               <label className={FIELD_LABEL_CLASS}>
                 <span className="block">{en ? "Usage intensity" : "Intensité d'usage"}</span>
