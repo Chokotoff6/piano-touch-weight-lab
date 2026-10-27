@@ -34,6 +34,7 @@ import { parseDiagnosticCsv } from "@/lib/import-csv";
 import { getLang, useLang } from "@/data/translations";
 import { buildReportPdf, captureReportPages, rawPdfMirror } from "@/lib/pdf-report";
 import { generateBlankFormPdf, generateBlankKeyboardPdf } from "@/lib/pdf-blank-form";
+import { generateHistoryPdf } from "@/lib/pdf-history";
 
 import {
   PdfComparisonChart,
@@ -3458,6 +3459,12 @@ function Index() {
       "piano-export-pdf": onPdf,
       "piano-export-blank-pdf": onBlankPdf,
       "piano-export-blank-keyboard-pdf": onBlankKeyboardPdf,
+      "piano-export-history-pdf": () => {
+        const doc = kwDocRef.current;
+        if (!doc) { toast(getLang() === "en" ? "Save the profile (.kw) first." : "Enregistrez d'abord le profil (.kw)."); return; }
+        generateHistoryPdf(doc, info, getLang() === "en");
+      },
+      "piano-open-antecedents": () => setAntecedentsOpen(true),
 
 
       "piano-compare-guard": onCompareGuard,
@@ -4181,39 +4188,30 @@ function Index() {
 
 
             <div className="mt-4 flex flex-wrap items-start justify-start gap-6 sm:col-span-2 md:col-span-4">
-              {!kwActive && (() => {
-                const customCount = parseCustomEntries(info[ANTECEDENTS_CUSTOM_KEY]);
-                const total = antecedentIds.length + customCount;
-                return (
+              {!kwActive && (
               <div className={FIELD_LABEL_CLASS}>
-                <span className="block">{en ? "Piano history prior to KeyWeight" : "Historique du piano avant KeyWeight"}</span>
+                <span className="block">{en ? "History prior to KeyWeight" : "Antécédents avant KeyWeight"}</span>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-normal text-muted-foreground">
-                    {total === 0
-                      ? (en ? "None entered" : "Aucune intervention renseignée")
-                      : `${total} intervention${total > 1 ? "s" : ""}`}
-                  </span>
                   <button type="button" className="list-chip" onClick={() => setAntecedentsOpen(true)}>
-                    {total === 0 ? (en ? "Enter" : "Renseigner") : (en ? "Edit" : "Modifier")}
+                    {en ? "Enter" : "Renseigner"}
                   </button>
                 </div>
-                <AntecedentsDialog
-                  open={antecedentsOpen}
-                  onOpenChange={setAntecedentsOpen}
-                  en={en}
-                  ids={antecedentIds}
-                  datesRaw={info[ANTECEDENTS_DATES_KEY]}
-                  customRaw={info[ANTECEDENTS_CUSTOM_KEY]}
-                  onSave={(next, datesRaw, customRaw) => {
-                    updateInfo(ANTECEDENTS_KEY, next.join("|"));
-                    updateInfo(ANTECEDENTS_DATES_KEY, datesRaw);
-                    updateInfo(ANTECEDENTS_CUSTOM_KEY, customRaw);
-                    updateInfo("entretien", maintenanceFromAntecedents(next));
-                  }}
-                />
               </div>
-                );
-              })()}
+              )}
+              <AntecedentsDialog
+                open={antecedentsOpen}
+                onOpenChange={setAntecedentsOpen}
+                en={en}
+                ids={antecedentIds}
+                datesRaw={info[ANTECEDENTS_DATES_KEY]}
+                customRaw={info[ANTECEDENTS_CUSTOM_KEY]}
+                onSave={(next, datesRaw, customRaw) => {
+                  updateInfo(ANTECEDENTS_KEY, next.join("|"));
+                  updateInfo(ANTECEDENTS_DATES_KEY, datesRaw);
+                  updateInfo(ANTECEDENTS_CUSTOM_KEY, customRaw);
+                  updateInfo("entretien", maintenanceFromAntecedents(next));
+                }}
+              />
 
               <label className={FIELD_LABEL_CLASS}>
                 <span className="block">{en ? "Usage intensity" : "Intensité d'usage"}</span>
