@@ -1720,6 +1720,7 @@ function Index() {
   const [activePointName, setActivePointName] = useState("");
   useEffect(() => {
     kwDocRef.current = readSessionKwDocument();
+    setKwActive(Boolean(kwDocRef.current));
     setActivePointName(activePoint(kwDocRef.current)?.name ?? "");
   }, []);
   const [kwPointAsk, setKwPointAsk] = useState<null | "first" | "propose" | "name">(null);
@@ -1740,6 +1741,7 @@ function Index() {
     if (res === "cancelled") return;
     kwHandleRef.current = res;
     kwDocRef.current = doc;
+    setKwActive(Boolean(kwDocRef.current));
     rememberKwDocument(doc);
     setActivePointName(activePoint(doc)?.name ?? "");
     try {
@@ -1777,6 +1779,7 @@ function Index() {
   /** Réinitialise uniquement la fiche d'informations (les pesées restent intactes). */
   const resetInfo = () => {
     kwDocRef.current = null;
+    setKwActive(Boolean(kwDocRef.current));
     kwHandleRef.current = null;
     rememberKwDocument(null);
     setActivePointName("");
@@ -1903,6 +1906,7 @@ function Index() {
 
   const handleFullReset = () => {
     kwDocRef.current = null;
+    setKwActive(Boolean(kwDocRef.current));
     kwHandleRef.current = null;
     rememberKwDocument(null);
     setShowDemoAuto(false);
@@ -3087,6 +3091,7 @@ function Index() {
           return;
         }
         kwDocRef.current = doc;
+        setKwActive(Boolean(kwDocRef.current));
         rememberKwDocument(doc);
         setActivePointName(activePoint(doc)?.name ?? "");
         kwHandleRef.current = null;
