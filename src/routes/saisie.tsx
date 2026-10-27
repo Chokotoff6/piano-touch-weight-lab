@@ -1418,7 +1418,7 @@ function Index() {
       ["sn_num", en ? "Serial number" : "N° de série"],
       ["type_piano", en ? "Type" : "Type"],
       ["fabrication", en ? "Manufacturing date" : "Date fabrication"],
-      ["entretien", en ? "Piano history" : "Historique piano"],
+      ["entretien", en ? "Maintenance history" : "Antécédents d'entretien"],
       ["usage_level", en ? "Usage intensity" : "Intensité d'usage"],
     ];
     return checks.filter(([key]) => !String(info[key] ?? "").trim()).map(([, label]) => label);
@@ -1575,8 +1575,9 @@ function Index() {
   }, [keyboardValid]);
 
   /** Les réglages personnalisés et les modifications importantes exigent des remarques. */
-  const remarquesRequired = ["Custom regulations", "Major modifications"].includes(normalizeMaintenanceCode(info["entretien"]));
-  const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
+  // Remarques désormais libres : les antécédents détaillés sont portés par les étiquettes.
+  const remarquesRequired = false;
+  const remarquesInvalid = false;
   /** Année de fabrication : borne haute issue de l'horloge locale, sans réseau. */
   const [yearError, setYearError] = useState(false);
   const validateYear = (raw: string) => {
@@ -1802,6 +1803,7 @@ function Index() {
       cascadeTarget.current = null;
       cascadeStarted.current = true;
       markDemoCascadeSeen();
+      const previousRows = rowsRef.current.map((row) => ({ ...row }));
       const blank = EMPTY.map((row) => ({ ...row }));
       rowsRef.current = blank;
       setRows(blank);
@@ -1826,6 +1828,23 @@ function Index() {
       setTopbarState({ measuresReady: false, exportReady: false });
       setConfirmReset(null);
       markDirty();
+      if (previousRows.some((r) => r.wd || r.wa)) {
+        toast(en ? "Weighings erased." : "Pesées effacées.", {
+          duration: 8000,
+          action: {
+            label: en ? "Undo" : "Annuler",
+            onClick: () => {
+              rowsRef.current = previousRows;
+              setRows(previousRows);
+              try {
+                window.localStorage.setItem(DRAFT_ROWS_KEY, JSON.stringify(previousRows));
+                window.localStorage.setItem(SECURITY_BACKUP_KEY, JSON.stringify({ info, rows: previousRows, savedToFile: false, at: Date.now() }));
+              } catch { /* stockage indisponible */ }
+              markDirty();
+            },
+          },
+        });
+      }
       return;
     }
     if (section === "info" && isDemoActive()) {
