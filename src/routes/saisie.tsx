@@ -95,6 +95,7 @@ import {
   WHO_PRO,
 } from "@/lib/field-codes";
 import { toast } from "sonner";
+import { useInterventions, interventionLabel, parseAntecedents, maintenanceFromAntecedents, ANTECEDENTS_KEY } from "@/lib/interventions";
 import {
   SECURITY_BACKUP_KEY,
   SAME_DAY_KEY_THRESHOLD,
@@ -1418,7 +1419,7 @@ function Index() {
       ["sn_num", en ? "Serial number" : "N° de série"],
       ["type_piano", en ? "Type" : "Type"],
       ["fabrication", en ? "Manufacturing date" : "Date fabrication"],
-      ["entretien", en ? "Piano history" : "Historique piano"],
+      ["entretien", en ? "Maintenance history" : "Antécédents d'entretien"],
       ["usage_level", en ? "Usage intensity" : "Intensité d'usage"],
     ];
     return checks.filter(([key]) => !String(info[key] ?? "").trim()).map(([, label]) => label);
@@ -1575,8 +1576,30 @@ function Index() {
   }, [keyboardValid]);
 
   /** Les réglages personnalisés et les modifications importantes exigent des remarques. */
-  const remarquesRequired = ["Custom regulations", "Major modifications"].includes(normalizeMaintenanceCode(info["entretien"]));
-  const remarquesInvalid = remarquesRequired && !(info["remarques"] ?? "").trim();
+  const antecedentItems = useInterventions();
+  // Témoin passif dans l'onglet : seulement en arrière-plan et s'il reste des mesures non enregistrées.
+  const baseTitleRef = useRef("");
+  useEffect(() => {
+    const base = "KeyWeight";
+    const apply = () => {
+      const away = document.hidden || !document.hasFocus();
+      if (away && isDirty) document.title = en ? `${base} (unsaved measurements)` : `${base} (mesures non sauvées)`;
+      else if (document.title.startsWith(`${base} (`)) document.title = baseTitleRef.current || base;
+    };
+    if (!document.title.startsWith(`${base} (`)) baseTitleRef.current = document.title;
+    document.addEventListener("visibilitychange", apply);
+    window.addEventListener("blur", apply);
+    window.addEventListener("focus", apply);
+    return () => {
+      document.removeEventListener("visibilitychange", apply);
+      window.removeEventListener("blur", apply);
+      window.removeEventListener("focus", apply);
+    };
+  }, [isDirty, en]);
+  const antecedentIds = parseAntecedents(info[ANTECEDENTS_KEY]);
+  // Remarques désormais libres : les antécédents détaillés sont portés par les étiquettes.
+  const remarquesRequired = false;
+  const remarquesInvalid = false;
   /** Année de fabrication : borne haute issue de l'horloge locale, sans réseau. */
   const [yearError, setYearError] = useState(false);
   const validateYear = (raw: string) => {
@@ -1802,6 +1825,7 @@ function Index() {
       cascadeTarget.current = null;
       cascadeStarted.current = true;
       markDemoCascadeSeen();
+      const previousRows = rowsRef.current.map((row) => ({ ...row }));
       const blank = EMPTY.map((row) => ({ ...row }));
       rowsRef.current = blank;
       setRows(blank);
@@ -1826,6 +1850,23 @@ function Index() {
       setTopbarState({ measuresReady: false, exportReady: false });
       setConfirmReset(null);
       markDirty();
+      if (previousRows.some((r) => r.wd || r.wa)) {
+        toast(en ? "Weighings erased." : "Pesées effacées.", {
+          duration: 8000,
+          action: {
+            label: en ? "Undo" : "Annuler",
+            onClick: () => {
+              rowsRef.current = previousRows;
+              setRows(previousRows);
+              try {
+                window.localStorage.setItem(DRAFT_ROWS_KEY, JSON.stringify(previousRows));
+                window.localStorage.setItem(SECURITY_BACKUP_KEY, JSON.stringify({ info, rows: previousRows, savedToFile: false, at: Date.now() }));
+              } catch { /* stockage indisponible */ }
+              markDirty();
+            },
+          },
+        });
+      }
       return;
     }
     if (section === "info" && isDemoActive()) {
@@ -4131,27 +4172,28 @@ function Index() {
 
 
             <div className="mt-4 flex flex-wrap items-start justify-start gap-6 sm:col-span-2 md:col-span-4">
-              <label className={FIELD_LABEL_CLASS}>
-                <span className="block">{en ? "Piano history" : "Historique piano"}</span>
-                <select
-                  value={info["entretien"] ?? ""}
-                  onChange={(e) => {
-                    updateInfo("entretien", e.target.value);
-                    if (e.target.value === "Custom regulations" || e.target.value === "Major modifications") {
-                      setTimeout(() => remarquesRef.current?.focus(), 0);
-                    }
-                  }}
-                  className={`${INPUT_CLASS} !bg-white !block !w-fit !min-w-0 !max-w-full mt-2 ${info["entretien"] ? "not-italic" : "!text-muted-foreground !italic"}`}
-
-                >
-                  <option value="" className="italic text-muted-foreground">{en ? "— Select —" : "— Sélectionner —"}</option>
-                  {MAINTENANCE_OPTIONS.map((option) => (
-                    <option key={option} value={option} className="not-italic text-foreground">
-                      {en ? MAINTENANCE_LABELS_EN[option] : MAINTENANCE_LABELS_FR[option]}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <div className={FIELD_LABEL_CLASS}>
+                <span className="block">{en ? "Maintenance history" : "Antécédents d'entretien"}</span>
+                <div className="mt-2 flex max-w-xl flex-wrap gap-2">
+                  {antecedentItems.map((item) => {
+                    const active = antecedentIds.includes(item.id);
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className={`list-chip ${active ? "list-chip-active" : ""}`}
+                        onClick={() => {
+                          const next = active ? antecedentIds.filter((x) => x !== item.id) : [...antecedentIds, item.id];
+                          updateInfo(ANTECEDENTS_KEY, next.join("|"));
+                          updateInfo("entretien", maintenanceFromAntecedents(next));
+                        }}
+                      >
+                        {interventionLabel(item, en)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
               <label className={FIELD_LABEL_CLASS}>
                 <span className="block">{en ? "Usage intensity" : "Intensité d'usage"}</span>

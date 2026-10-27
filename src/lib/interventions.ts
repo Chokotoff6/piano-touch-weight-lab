@@ -39,6 +39,20 @@ function save(next: Intervention[]) {
 
 export const interventionLabel = (i: Intervention, en: boolean) => (en ? i.en : i.fr);
 
+/** Étiquettes qui classent le piano pour les filtres Cloud (codes de maintenance historiques). */
+const MAJOR_IDS = new Set(["lighten", "weighten", "hammers"]);
+const CUSTOM_IDS = new Set(["regulation"]);
+export const ANTECEDENTS_KEY = "antecedents";
+export const parseAntecedents = (raw: string | undefined): string[] =>
+  String(raw ?? "").split("|").map((s) => s.trim()).filter(Boolean);
+/** Déduit le code Cloud (Standard / Custom regulations / Major modifications) des antécédents cochés. */
+export function maintenanceFromAntecedents(ids: string[]): string {
+  if (ids.length === 0) return "";
+  if (ids.some((id) => MAJOR_IDS.has(id))) return "Major modifications";
+  if (ids.some((id) => CUSTOM_IDS.has(id))) return "Custom regulations";
+  return "Standard";
+}
+
 export function getInterventions(): Intervention[] { return list; }
 
 export function addIntervention(label: string) {

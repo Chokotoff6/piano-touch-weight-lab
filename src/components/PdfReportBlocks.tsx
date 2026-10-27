@@ -52,7 +52,7 @@ function PdfInfoTableBase({ info }: { info: PdfInfo }) {
         </div>
         <div className={CELL}>
           <Line2 label="N° de série" value={info.serial} />
-          <Line2 label="Modifications importantes" value={info.remarques} />
+          <Line2 label="Remarques" value={info.remarques} />
         </div>
         <div className={CELL}>
           <Line2 label="Année" value={info.fabrication} />
