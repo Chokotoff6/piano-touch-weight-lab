@@ -35,7 +35,7 @@ type Props = {
   en: boolean;
   ids: string[];
   datesRaw: string | undefined;
-  customRaw?: string;
+  customRaw?: string | undefined;
   minYear?: number;
   onSave: (ids: string[], datesRaw: string, customRaw: string) => void;
 };
