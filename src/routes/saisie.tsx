@@ -96,6 +96,7 @@ import {
 } from "@/lib/field-codes";
 import { toast } from "sonner";
 import { useInterventions, interventionLabel, parseAntecedents, maintenanceFromAntecedents, ANTECEDENTS_KEY } from "@/lib/interventions";
+import { AntecedentsDialog, ANTECEDENTS_DATES_KEY } from "@/components/AntecedentsDialog";
 import {
   SECURITY_BACKUP_KEY,
   SAME_DAY_KEY_THRESHOLD,
@@ -1596,7 +1597,8 @@ function Index() {
       window.removeEventListener("focus", apply);
     };
   }, [isDirty, en]);
-  const antecedentIds = parseAntecedents(info[ANTECEDENTS_KEY]);
+  const antecedentIds = parseAntecedents(info[ANTECEDENTS_KEY]).filter((id) => id !== "initial");
+  const [antecedentsOpen, setAntecedentsOpen] = useState(false);
   // Remarques désormais libres : les antécédents détaillés sont portés par les étiquettes.
   const remarquesRequired = false;
   const remarquesInvalid = false;
@@ -4173,26 +4175,29 @@ function Index() {
 
             <div className="mt-4 flex flex-wrap items-start justify-start gap-6 sm:col-span-2 md:col-span-4">
               <div className={FIELD_LABEL_CLASS}>
-                <span className="block">{en ? "Maintenance history" : "Antécédents d'entretien"}</span>
-                <div className="mt-2 flex max-w-xl flex-wrap gap-2">
-                  {antecedentItems.map((item) => {
-                    const active = antecedentIds.includes(item.id);
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        className={`list-chip ${active ? "list-chip-active" : ""}`}
-                        onClick={() => {
-                          const next = active ? antecedentIds.filter((x) => x !== item.id) : [...antecedentIds, item.id];
-                          updateInfo(ANTECEDENTS_KEY, next.join("|"));
-                          updateInfo("entretien", maintenanceFromAntecedents(next));
-                        }}
-                      >
-                        {interventionLabel(item, en)}
-                      </button>
-                    );
-                  })}
+                <span className="block">{en ? "Piano history prior to KeyWeight" : "Historique du piano avant KeyWeight"}</span>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-normal text-muted-foreground">
+                    {antecedentIds.length === 0
+                      ? (en ? "None entered" : "Aucune intervention renseignée")
+                      : `${antecedentIds.length} intervention${antecedentIds.length > 1 ? "s" : ""}`}
+                  </span>
+                  <button type="button" className="list-chip" onClick={() => setAntecedentsOpen(true)}>
+                    {antecedentIds.length === 0 ? (en ? "Enter" : "Renseigner") : (en ? "Edit" : "Modifier")}
+                  </button>
                 </div>
+                <AntecedentsDialog
+                  open={antecedentsOpen}
+                  onOpenChange={setAntecedentsOpen}
+                  en={en}
+                  ids={antecedentIds}
+                  datesRaw={info[ANTECEDENTS_DATES_KEY]}
+                  onSave={(next, datesRaw) => {
+                    updateInfo(ANTECEDENTS_KEY, next.join("|"));
+                    updateInfo(ANTECEDENTS_DATES_KEY, datesRaw);
+                    updateInfo("entretien", maintenanceFromAntecedents(next));
+                  }}
+                />
               </div>
 
               <label className={FIELD_LABEL_CLASS}>
