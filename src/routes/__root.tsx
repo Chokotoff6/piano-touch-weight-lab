@@ -568,15 +568,26 @@ function RootComponent() {
                 )}
 
                 {/* Carnet d'historique du piano (A4 portrait, document autonome). */}
-                {isSaisie && (
-                  <button
-                    type="button"
-                    className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
-                    onClick={() => dispatchAction("piano-export-history-pdf")}
-                  >
-                    <span className="pointer-events-none">{lang === "en" ? "Export piano history (pdf)" : "Exporter l'historique du piano (pdf)"}</span>
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
+                  onClick={() => {
+                    if (isSaisie) { dispatchAction("piano-export-history-pdf"); return; }
+                    // Bilan / Analyse : lecture directe du .kw actif en session.
+                    void (async () => {
+                      const [{ readSessionKwDocument, readDraftProfile }, { generateHistoryPdf }, { toast }] = await Promise.all([
+                        import("@/lib/kw-file"),
+                        import("@/lib/pdf-history"),
+                        import("sonner"),
+                      ]);
+                      const doc = readSessionKwDocument();
+                      if (!doc) { toast(lang === "en" ? "Save the profile (.kw) first." : "Enregistrez d'abord le profil (.kw)."); return; }
+                      generateHistoryPdf(doc, readDraftProfile().info, lang === "en");
+                    })();
+                  }}
+                >
+                  <span className="pointer-events-none">{lang === "en" ? "Export piano history (pdf)" : "Exporter l'historique du piano (pdf)"}</span>
+                </button>
 
                 {/* 3. Importer : uniquement sur la page Pesée. */}
                 {isSaisie && (
