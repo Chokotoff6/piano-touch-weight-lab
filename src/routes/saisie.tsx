@@ -326,6 +326,12 @@ function Frame({
   );
 }
 
+/** Invitation facultative aux antécédents avant KeyWeight (infobulle + message Pesée). */
+const antecedentsInvite = (en: boolean) =>
+  en
+    ? "Complete in a few clicks the service history of this piano prior to KeyWeight (will be included in the technical log PDF) - Optional"
+    : "Complétez en quelques clics l'historique d'interventions sur ce piano avant KeyWeight (sera inclus dans carnet technique PDF) - Optionnel";
+
 /** Style unifié calqué sur l'infobulle « Erreur mécanique ». */
 const UNIFIED_TOOLTIP_CLASS =
   "z-[99999] max-w-[min(18rem,calc(100vw-2rem))] whitespace-normal break-words rounded border border-gray-300 !bg-white px-2.5 py-2 text-left text-xs font-semibold leading-4 !text-black shadow-md";
@@ -1408,8 +1414,7 @@ function Index() {
           info["sn_num"]?.trim() &&
           info["type_piano"] &&
           info["fabrication"]?.trim() &&
-          info["entretien"] &&
-           info["usage_level"]
+          info["usage_level"]
       ),
     [info],
   );
@@ -1422,7 +1427,6 @@ function Index() {
       ["sn_num", en ? "Serial number" : "N° de série"],
       ["type_piano", en ? "Type" : "Type"],
       ["fabrication", en ? "Manufacturing date" : "Date fabrication"],
-      ["entretien", en ? "Maintenance history" : "Antécédents d'entretien"],
       ["usage_level", en ? "Usage intensity" : "Intensité d'usage"],
     ];
     return checks.filter(([key]) => !String(info[key] ?? "").trim()).map(([, label]) => label);
@@ -1600,6 +1604,10 @@ function Index() {
     };
   }, [isDirty, en]);
   const antecedentIds = parseAntecedents(info[ANTECEDENTS_KEY]).filter((id) => id !== "initial");
+  /** Au moins une étiquette d'usine ou une ligne libre renseignée. */
+  const hasAntecedents = antecedentIds.length > 0 || parseCustomEntries(info[ANTECEDENTS_CUSTOM_KEY]) > 0;
+  /** Invitation déjà vue (modale ouverte ou message affiché) : ne plus la répéter. */
+  const antecedentsInvitedRef = useRef(false);
   const [antecedentsOpen, setAntecedentsOpen] = useState(false);
   // Remarques désormais libres : les antécédents détaillés sont portés par les étiquettes.
   const remarquesRequired = false;
@@ -1707,9 +1715,14 @@ function Index() {
       }, 5000);
       return;
     }
+    // Invitation non bloquante, une seule fois, si les antécédents n'ont jamais été vus.
+    if (!hasAntecedents && !antecedentsInvitedRef.current && !kwDocRef.current) {
+      antecedentsInvitedRef.current = true;
+      toast(antecedentsInvite(en));
+    }
     setWeighingMode(true);
     focusFirstWeight();
-  }, [requiredSheetFieldsComplete, remarquesInvalid, focusFirstWeight]);
+  }, [requiredSheetFieldsComplete, remarquesInvalid, focusFirstWeight, hasAntecedents, en]);
 
   /** Confirmation de réinitialisation en cartouche jaune ("rows" = mesures, "info" = fiche). */
   const [confirmReset, setConfirmReset] = useState<null | "rows" | "info">(null);
@@ -4189,14 +4202,19 @@ function Index() {
 
             <div className="mt-4 flex flex-wrap items-start justify-start gap-6 sm:col-span-2 md:col-span-4">
               {!kwActive && (
+              <Tooltip>
+                <TooltipTrigger asChild>
               <div className={FIELD_LABEL_CLASS}>
                 <span className="block">{en ? "History prior to KeyWeight" : "Antécédents avant KeyWeight"}</span>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <button type="button" className="list-chip" onClick={() => setAntecedentsOpen(true)}>
-                    {en ? "Enter" : "Renseigner"}
+                  <button type="button" className="list-chip" onClick={() => { antecedentsInvitedRef.current = true; setAntecedentsOpen(true); }}>
+                    {hasAntecedents ? (en ? "Edit" : "Modifier") : (en ? "Enter" : "Renseigner")}
                   </button>
                 </div>
               </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className={UNIFIED_TOOLTIP_CLASS}>{antecedentsInvite(en)}</TooltipContent>
+              </Tooltip>
               )}
               <AntecedentsDialog
                 open={antecedentsOpen}
