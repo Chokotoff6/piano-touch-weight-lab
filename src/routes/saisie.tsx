@@ -96,7 +96,8 @@ import {
 } from "@/lib/field-codes";
 import { toast } from "sonner";
 import { useInterventions, interventionLabel, parseAntecedents, maintenanceFromAntecedents, ANTECEDENTS_KEY } from "@/lib/interventions";
-import { AntecedentsDialog, ANTECEDENTS_DATES_KEY, ANTECEDENTS_CUSTOM_KEY } from "@/components/AntecedentsDialog";
+import { AntecedentsDialog, ANTECEDENTS_DATES_KEY, ANTECEDENTS_CUSTOM_KEY, parseCustomAntecedents } from "@/components/AntecedentsDialog";
+const parseCustomEntries = (raw: string | undefined) => parseCustomAntecedents(raw).length;
 import {
   SECURITY_BACKUP_KEY,
   SAME_DAY_KEY_THRESHOLD,
