@@ -1577,6 +1577,23 @@ function Index() {
 
   /** Les réglages personnalisés et les modifications importantes exigent des remarques. */
   const antecedentItems = useInterventions();
+  // Témoin passif dans l'onglet : seulement en arrière-plan et s'il reste des mesures non enregistrées.
+  useEffect(() => {
+    const base = "KeyWeight";
+    const apply = () => {
+      if (document.hidden && isDirty) document.title = en ? `${base} (unsaved measurements)` : `${base} (mesures non sauvées)`;
+      else if (document.title.startsWith(`${base} (`)) document.title = baseTitleRef.current || base;
+    };
+    if (!document.title.startsWith(`${base} (`)) baseTitleRef.current = document.title;
+    document.addEventListener("visibilitychange", apply);
+    window.addEventListener("blur", apply);
+    window.addEventListener("focus", apply);
+    return () => {
+      document.removeEventListener("visibilitychange", apply);
+      window.removeEventListener("blur", apply);
+      window.removeEventListener("focus", apply);
+    };
+  }, [isDirty, en]);
   const antecedentIds = parseAntecedents(info[ANTECEDENTS_KEY]);
   // Remarques désormais libres : les antécédents détaillés sont portés par les étiquettes.
   const remarquesRequired = false;
