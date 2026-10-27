@@ -4180,16 +4180,20 @@ function Index() {
 
 
             <div className="mt-4 flex flex-wrap items-start justify-start gap-6 sm:col-span-2 md:col-span-4">
+              {!kwActive && (() => {
+                const customCount = parseCustomEntries(info[ANTECEDENTS_CUSTOM_KEY]);
+                const total = antecedentIds.length + customCount;
+                return (
               <div className={FIELD_LABEL_CLASS}>
                 <span className="block">{en ? "Piano history prior to KeyWeight" : "Historique du piano avant KeyWeight"}</span>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <span className="text-sm font-normal text-muted-foreground">
-                    {antecedentIds.length === 0
+                    {total === 0
                       ? (en ? "None entered" : "Aucune intervention renseignée")
-                      : `${antecedentIds.length} intervention${antecedentIds.length > 1 ? "s" : ""}`}
+                      : `${total} intervention${total > 1 ? "s" : ""}`}
                   </span>
                   <button type="button" className="list-chip" onClick={() => setAntecedentsOpen(true)}>
-                    {antecedentIds.length === 0 ? (en ? "Enter" : "Renseigner") : (en ? "Edit" : "Modifier")}
+                    {total === 0 ? (en ? "Enter" : "Renseigner") : (en ? "Edit" : "Modifier")}
                   </button>
                 </div>
                 <AntecedentsDialog
@@ -4198,13 +4202,17 @@ function Index() {
                   en={en}
                   ids={antecedentIds}
                   datesRaw={info[ANTECEDENTS_DATES_KEY]}
-                  onSave={(next, datesRaw) => {
+                  customRaw={info[ANTECEDENTS_CUSTOM_KEY]}
+                  onSave={(next, datesRaw, customRaw) => {
                     updateInfo(ANTECEDENTS_KEY, next.join("|"));
                     updateInfo(ANTECEDENTS_DATES_KEY, datesRaw);
+                    updateInfo(ANTECEDENTS_CUSTOM_KEY, customRaw);
                     updateInfo("entretien", maintenanceFromAntecedents(next));
                   }}
                 />
               </div>
+                );
+              })()}
 
               <label className={FIELD_LABEL_CLASS}>
                 <span className="block">{en ? "Usage intensity" : "Intensité d'usage"}</span>
