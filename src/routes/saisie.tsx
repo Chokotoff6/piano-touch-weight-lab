@@ -4213,7 +4213,9 @@ function Index() {
                 </div>
               </div>
                 </TooltipTrigger>
+                {!hasAntecedents && (
                 <TooltipContent side="top" className={UNIFIED_TOOLTIP_CLASS}>{antecedentsInvite(en)}</TooltipContent>
+                )}
               </Tooltip>
               )}
               <AntecedentsDialog
