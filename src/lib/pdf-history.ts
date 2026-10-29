@@ -4,7 +4,7 @@ import jsPDF from "jspdf";
 import type { KwDocument, KwRow } from "@/lib/kw-file";
 import { FACTORY_INTERVENTIONS, ANTECEDENT_ITEMS } from "@/lib/interventions";
 import { parseAntecedents } from "@/lib/interventions";
-import { parseAntecedentDates, parseCustomAntecedents } from "@/components/AntecedentsDialog";
+import { parseAntecedentDates, parseCustomAntecedents, parseAntecedentDetails } from "@/components/AntecedentsDialog";
 
 const W = 210;
 const H = 297;
@@ -99,11 +99,13 @@ export function generateHistoryPdf(doc: KwDocument, info: Record<string, string>
   // 2. Antécédents avant KeyWeight (si renseignés)
   const ids = parseAntecedents(info["antecedents"]).filter((id) => id !== "initial");
   const dates = parseAntecedentDates(info["antecedents_dates"]);
+  const details = parseAntecedentDetails(info["antecedents_details"]);
   const customs = parseCustomAntecedents(info["antecedents_custom"]).filter((c) => c.label.trim());
   const ante = [
     ...ids.map((id) => {
       const it = ANTECEDENT_ITEMS.find((i) => i.id === id) ?? FACTORY_INTERVENTIONS.find((i) => i.id === id);
-      return { label: it ? (en ? it.en : it.fr) : id, date: dates[id] ?? "" };
+      const det = (details[id] ?? "").trim();
+      return { label: `${it ? (en ? it.en : it.fr) : id}${det ? ` (${det})` : ""}`, date: dates[id] ?? "" };
     }),
     ...customs.map((c) => ({ label: c.label.trim(), date: c.date })),
   ];
