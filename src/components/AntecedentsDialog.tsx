@@ -241,7 +241,7 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
             sel.forEach((id) => { if (dates[id]) kept[id] = dates[id]; });
             const keptDetails: Record<string, string> = {};
             sel.forEach((id) => { const d = (details[id] ?? "").trim(); if (d) keptDetails[id] = d; });
-            const cleanCustoms = customs.map((c) => ({ label: c.label.trim(), date: c.date })).filter((c) => c.label);
+            const cleanCustoms = customs.map((c) => ({ label: c.label.trim(), date: c.date, ...(c.detail?.trim() ? { detail: c.detail.trim() } : {}) })).filter((c) => c.label);
             onSave(sel, serializeDates(kept), cleanCustoms.length ? JSON.stringify(cleanCustoms) : "",
               Object.keys(keptDetails).length ? JSON.stringify(keptDetails) : "");
             onOpenChange(false);
