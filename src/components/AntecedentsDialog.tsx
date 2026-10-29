@@ -81,7 +81,7 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
       setSel(sel.filter((x) => x !== id));
       const d = { ...dates }; delete d[id]; setDates(d);
       const t = { ...details }; delete t[id]; setDetails(t);
-    } else setSel([...sel, id]);
+    } else { setSel([...sel, id]); setQuery(""); }
   };
   const merge = (cur: string, part: "y" | "m", val: string) => {
     const [y = "", m = ""] = (cur ?? "").split("-");
@@ -167,6 +167,9 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
               </div>
             );
           })}
+          {noResult && (
+            <div className="px-2 py-1 text-xs italic text-muted-foreground">{en ? "No result" : "Aucun résultat"}</div>
+          )}
           {extraItems.filter((it) => !sel.includes(it.id) && matchItem(it)).length > 0 && (
             <div className="flex flex-wrap gap-1.5 px-2 py-1">
               {extraItems.filter((it) => !sel.includes(it.id) && matchItem(it)).map((item) => (
@@ -186,8 +189,8 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
                     onClick={() => setCustoms(customs.filter((_, k) => k !== i))}>✕</button>
                 </div>
               ))}
-              <button type="button" className="list-chip" onClick={() => { setCustoms([...customs, { label: query.trim(), date: "" }]); setQuery(""); }}>
-                {q && noResult ? (en ? `+ Add "${query.trim()}"` : `+ Ajouter « ${query.trim()} »`) : (en ? "+ Add" : "+ Ajouter")}
+              <button type="button" className="list-chip" onClick={() => setCustoms([...customs, { label: "", date: "" }])}>
+                {en ? "+ Add" : "+ Ajouter"}
               </button>
             </div>
           </div>
