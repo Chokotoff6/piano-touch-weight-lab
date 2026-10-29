@@ -29,11 +29,11 @@ const MONTHS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","A
 const MONTHS_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 export const ANTECEDENTS_CUSTOM_KEY = "antecedents_custom";
-export type CustomAntecedent = { label: string; date: string };
+export type CustomAntecedent = { label: string; date: string; detail?: string };
 export const parseCustomAntecedents = (raw: string | undefined): CustomAntecedent[] => {
   try {
     const v = JSON.parse(String(raw ?? "") || "[]");
-    return Array.isArray(v) ? v.map((x) => ({ label: String(x?.label ?? ""), date: String(x?.date ?? "") })) : [];
+    return Array.isArray(v) ? v.map((x) => ({ label: String(x?.label ?? ""), date: String(x?.date ?? ""), ...(x?.detail ? { detail: String(x.detail) } : {}) })) : [];
   } catch { return []; }
 };
 
@@ -59,10 +59,12 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
   const [dates, setDates] = useState<Record<string, string>>(parseAntecedentDates(datesRaw));
   const [details, setDetails] = useState<Record<string, string>>(parseAntecedentDetails(detailsRaw));
   const [customs, setCustoms] = useState<CustomAntecedent[]>(parseCustomAntecedents(customRaw));
+  const [removedCustoms, setRemovedCustoms] = useState<CustomAntecedent[]>([]);
+  const [draft, setDraft] = useState<CustomAntecedent | null>(null);
   const [query, setQuery] = useState("");
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [lastOpen, setLastOpen] = useState(false);
-  if (open && !lastOpen) { setLastOpen(true); setSel(ids); setDates(parseAntecedentDates(datesRaw)); setDetails(parseAntecedentDetails(detailsRaw)); setCustoms(parseCustomAntecedents(customRaw)); setQuery(""); setOpenGroup(null); }
+  if (open && !lastOpen) { setLastOpen(true); setSel(ids); setDates(parseAntecedentDates(datesRaw)); setDetails(parseAntecedentDetails(detailsRaw)); setCustoms(parseCustomAntecedents(customRaw)); setRemovedCustoms([]); setDraft(null); setQuery(""); setOpenGroup(null); }
   if (!open && lastOpen) setLastOpen(false);
   const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const q = fold(query.trim());
@@ -81,7 +83,14 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
       setSel(sel.filter((x) => x !== id));
       const d = { ...dates }; delete d[id]; setDates(d);
       const t = { ...details }; delete t[id]; setDetails(t);
-    } else { setSel([...sel, id]); setQuery(""); }
+    } else {
+      setSel([...sel, id]);
+      if (q) {
+        const g = ANTECEDENT_GROUPS.find((gr) => gr.items.some((it) => it.id === id));
+        if (g) setOpenGroup(g.id);
+      }
+      setQuery("");
+    }
   };
   const merge = (cur: string, part: "y" | "m", val: string) => {
     const [y = "", m = ""] = (cur ?? "").split("-");
