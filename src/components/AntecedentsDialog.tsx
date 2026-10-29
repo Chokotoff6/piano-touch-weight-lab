@@ -96,7 +96,7 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
     const [y = "", m = ""] = (cur ?? "").split("-");
     const ny = part === "y" ? val : y;
     const nm = part === "m" ? val : m;
-    return ny ? (nm ? `${ny}-${nm}` : ny) : "";
+    return ny || nm ? (nm ? `${ny}-${nm}` : ny) : "";
   };
   const setPart = (id: string, part: "y" | "m", val: string) => setDates({ ...dates, [id]: merge(dates[id] ?? "", part, val) });
   const setCustom = (i: number, patch: Partial<CustomAntecedent>) =>
@@ -125,6 +125,33 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
         <DialogHeader>
           <DialogTitle>{en ? "Piano history prior to KeyWeight" : "Historique du piano avant KeyWeight"}</DialogTitle>
         </DialogHeader>
+        <div className="space-y-1.5 border-b-2 border-foreground/50 pb-2">
+          {sel.length === 0 && customs.length === 0 && (
+            <div className="text-xs italic text-muted-foreground">{en ? "No prior history entered" : "Aucun antécédent renseigné"}</div>
+          )}
+          {sel.map((id) => {
+            const it = items.find((i) => i.id === id);
+            return (
+              <div key={id} className="flex flex-nowrap items-center gap-1.5">
+                <span className="list-chip list-chip-active shrink-0 whitespace-nowrap">{it ? interventionLabel(it, en) : id}</span>
+                <input value={details[id] ?? ""} onChange={(e) => setDetails({ ...details, [id]: e.target.value })} maxLength={80}
+                  placeholder={en ? "Optional detail: e.g. 10 keys" : "Détail optionnel : ex. 10 touches"} className="list-input min-w-[14rem] flex-1" />
+                {dateSelects(dates[id] ?? "", (p, v) => setPart(id, p, v))}
+                <button type="button" className="shrink-0 px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"} onClick={() => toggle(id)}>✕</button>
+              </div>
+            );
+          })}
+          {customs.map((c, i) => (
+            <div key={`c${i}`} className="flex flex-nowrap items-center gap-1.5">
+              <span className="list-chip shrink-0 whitespace-nowrap bg-muted text-foreground">{c.label}</span>
+              <input value={c.detail ?? ""} onChange={(e) => setCustom(i, { detail: e.target.value })} maxLength={80}
+                placeholder={en ? "Optional remark" : "Remarque optionnelle"} className="list-input min-w-[14rem] flex-1" />
+              {dateSelects(c.date, (p, v) => setCustom(i, { date: merge(c.date, p, v) }))}
+              <button type="button" className="shrink-0 px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"}
+                onClick={() => { setRemovedCustoms([...removedCustoms, c]); setCustoms(customs.filter((_, k) => k !== i)); }}>✕</button>
+            </div>
+          ))}
+        </div>
         <div className="relative">
           <input value={query} onChange={(e) => setQuery(e.target.value)} className="list-input w-full pr-7"
             placeholder={en ? "Search an intervention (e.g. hammers, tuning, pinblock)" : "Rechercher une intervention (ex : marteaux, accord, sommier)"} />
@@ -132,32 +159,6 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
             <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" aria-label={en ? "Clear" : "Effacer"} onClick={() => setQuery("")}>✕</button>
           )}
         </div>
-        {(sel.length > 0 || customs.length > 0) && (
-          <div className="space-y-1.5 border-b-2 border-foreground/50 pb-2">
-            {sel.map((id) => {
-              const it = items.find((i) => i.id === id);
-              return (
-                <div key={id} className="flex flex-nowrap items-center gap-1.5">
-                  <span className="list-chip list-chip-active shrink-0 whitespace-nowrap">{it ? interventionLabel(it, en) : id}</span>
-                  <input value={details[id] ?? ""} onChange={(e) => setDetails({ ...details, [id]: e.target.value })} maxLength={80}
-                    placeholder={en ? "Optional detail: e.g. 10 keys" : "Détail optionnel : ex. 10 touches"} className="list-input min-w-[14rem] flex-1" />
-                  {dateSelects(dates[id] ?? "", (p, v) => setPart(id, p, v))}
-                  <button type="button" className="shrink-0 px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"} onClick={() => toggle(id)}>✕</button>
-                </div>
-              );
-            })}
-            {customs.map((c, i) => (
-              <div key={`c${i}`} className="flex flex-nowrap items-center gap-1.5">
-                <span className="list-chip shrink-0 whitespace-nowrap bg-muted text-foreground">{c.label}</span>
-                <input value={c.detail ?? ""} onChange={(e) => setCustom(i, { detail: e.target.value })} maxLength={80}
-                  placeholder={en ? "Optional remark" : "Remarque optionnelle"} className="list-input min-w-[14rem] flex-1" />
-                {dateSelects(c.date, (p, v) => setCustom(i, { date: merge(c.date, p, v) }))}
-                <button type="button" className="shrink-0 px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"}
-                  onClick={() => { setRemovedCustoms([...removedCustoms, c]); setCustoms(customs.filter((_, k) => k !== i)); }}>✕</button>
-              </div>
-            ))}
-          </div>
-        )}
         <div className="max-h-[55vh] space-y-1 overflow-y-auto pr-1">
           {ANTECEDENT_GROUPS.map((g) => {
             const remaining = g.items.filter((it) => !sel.includes(it.id));
