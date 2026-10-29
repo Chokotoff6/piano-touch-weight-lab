@@ -151,7 +151,7 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
               title={en ? "Available on the Weighing page" : "Disponible sur la page Pesée"}
               onClick={() => { setOpen(false); window.dispatchEvent(new CustomEvent("piano-open-antecedents")); }}
               className="flex items-center justify-between rounded-lg border border-foreground/40 bg-card p-3 text-left font-semibold hover:bg-muted disabled:cursor-default disabled:opacity-40">
-              {en ? "History prior to KeyWeight (current piano)" : "Antécédents avant KeyWeight (piano actif)"}<ChevronRight className="h-4 w-4" />
+              {en ? "Prior service" : "Antécédents"}<ChevronRight className="h-4 w-4" />
             </button>
           </div></TooltipProvider>
         </DialogContent>
