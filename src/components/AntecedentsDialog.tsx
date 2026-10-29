@@ -132,8 +132,8 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
             <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" aria-label={en ? "Clear" : "Effacer"} onClick={() => setQuery("")}>✕</button>
           )}
         </div>
-        {sel.length > 0 && (
-          <div className="space-y-1.5 border-b border-border pb-2">
+        {(sel.length > 0 || customs.length > 0) && (
+          <div className="space-y-1.5 border-b-2 border-foreground/50 pb-2">
             {sel.map((id) => {
               const it = items.find((i) => i.id === id);
               return (
@@ -146,6 +146,16 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
                 </div>
               );
             })}
+            {customs.map((c, i) => (
+              <div key={`c${i}`} className="flex flex-nowrap items-center gap-1.5">
+                <span className="list-chip shrink-0 whitespace-nowrap bg-muted text-foreground">{c.label}</span>
+                <input value={c.detail ?? ""} onChange={(e) => setCustom(i, { detail: e.target.value })} maxLength={80}
+                  placeholder={en ? "Optional remark" : "Remarque optionnelle"} className="list-input min-w-[14rem] flex-1" />
+                {dateSelects(c.date, (p, v) => setCustom(i, { date: merge(c.date, p, v) }))}
+                <button type="button" className="shrink-0 px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"}
+                  onClick={() => { setRemovedCustoms([...removedCustoms, c]); setCustoms(customs.filter((_, k) => k !== i)); }}>✕</button>
+              </div>
+            ))}
           </div>
         )}
         <div className="max-h-[55vh] space-y-1 overflow-y-auto pr-1">
@@ -189,18 +199,38 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
           <div className="rounded border border-border">
             <div className="px-2 py-1.5 text-sm font-semibold">{en ? "Custom interventions" : "Interventions sur mesure"}</div>
             <div className="space-y-2 px-2 pb-2">
-              {customs.map((c, i) => (
-                <div key={`c${i}`} className="flex flex-nowrap items-center gap-2">
-                  <input value={c.label} onChange={(e) => setCustom(i, { label: e.target.value })} maxLength={120} autoFocus={!c.label}
-                    placeholder={en ? "Describe the intervention..." : "Précisez l'intervention..."} className="list-input min-w-[14rem] flex-1" />
-                  {dateSelects(c.date, (p, v) => setCustom(i, { date: merge(c.date, p, v) }))}
-                  <button type="button" className="shrink-0 px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"}
-                    onClick={() => setCustoms(customs.filter((_, k) => k !== i))}>✕</button>
+              {removedCustoms.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {removedCustoms.map((c, i) => (
+                    <button key={`r${i}`} type="button" className="list-chip bg-muted"
+                      onClick={() => { setCustoms([...customs, c]); setRemovedCustoms(removedCustoms.filter((_, k) => k !== i)); }}>
+                      {c.label}
+                    </button>
+                  ))}
                 </div>
-              ))}
-              <button type="button" className="list-chip" onClick={() => setCustoms([...customs, { label: "", date: "" }])}>
-                {en ? "+ Add" : "+ Ajouter"}
-              </button>
+              )}
+              {draft ? (
+                <div className="flex flex-nowrap items-center gap-2">
+                  <input value={draft.label} onChange={(e) => setDraft({ ...draft, label: e.target.value })} maxLength={120} autoFocus
+                    onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+                    placeholder={en ? "Describe the intervention..." : "Nom de l'intervention..."} className="list-input min-w-[12rem] flex-1" />
+                  <input value={draft.detail ?? ""} onChange={(e) => setDraft({ ...draft, detail: e.target.value })} maxLength={80}
+                    onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+                    placeholder={en ? "Optional remark" : "Remarque optionnelle"} className="list-input min-w-[10rem] flex-1" />
+                  {dateSelects(draft.date, (p, v) => setDraft({ ...draft, date: merge(draft.date, p, v) }))}
+                  <Button type="button" size="sm" className="shrink-0" disabled={!draft.label.trim()}
+                    onClick={() => { setCustoms([...customs, { label: draft.label.trim(), date: draft.date, ...(draft.detail?.trim() ? { detail: draft.detail.trim() } : {}) }]); setDraft(null); }}>
+                    {en ? "Confirm" : "Valider"}
+                  </Button>
+                  <button type="button" className="shrink-0 text-xs text-muted-foreground underline" onClick={() => setDraft(null)}>
+                    {en ? "Cancel" : "Annuler"}
+                  </button>
+                </div>
+              ) : (
+                <button type="button" className="list-chip" onClick={() => setDraft({ label: "", date: "" })}>
+                  {en ? "+ Add" : "+ Ajouter"}
+                </button>
+              )}
             </div>
           </div>
         </div>
