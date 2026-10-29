@@ -1,9 +1,17 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useInterventions, interventionLabel, INITIAL_DIAGNOSTIC_ID, ANTECEDENT_GROUPS, ANTECEDENT_ITEMS } from "@/lib/interventions";
+import { useInterventions, interventionLabel, INITIAL_DIAGNOSTIC_ID, ANTECEDENT_GROUPS, ANTECEDENT_ITEMS, ANTECEDENT_KEYWORDS } from "@/lib/interventions";
 
 export const ANTECEDENTS_DATES_KEY = "antecedents_dates";
+export const ANTECEDENTS_DETAILS_KEY = "antecedents_details";
+/** JSON {id: "précision"} */
+export const parseAntecedentDetails = (raw: string | undefined): Record<string, string> => {
+  try {
+    const v = JSON.parse(String(raw ?? "") || "{}");
+    return v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, String(x ?? "")])) : {};
+  } catch { return {}; }
+};
 
 /** "id=YYYY-MM|id=YYYY|..." <-> map */
 export const parseAntecedentDates = (raw: string | undefined): Record<string, string> => {
@@ -36,11 +44,12 @@ type Props = {
   ids: string[];
   datesRaw: string | undefined;
   customRaw?: string | undefined;
+  detailsRaw?: string | undefined;
   minYear?: number;
-  onSave: (ids: string[], datesRaw: string, customRaw: string) => void;
+  onSave: (ids: string[], datesRaw: string, customRaw: string, detailsRaw: string) => void;
 };
 
-export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, customRaw, minYear, onSave }: Props) {
+export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, customRaw, detailsRaw, minYear, onSave }: Props) {
   const workshop = useInterventions().filter((i) => i.id !== INITIAL_DIAGNOSTIC_ID);
   const known = new Set(ANTECEDENT_ITEMS.map((i) => i.id));
   // Étiquettes déjà cochées hors catalogue (ex. ajouts d'atelier anciens) : conservées et affichées.
@@ -48,20 +57,18 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
   const items = [...ANTECEDENT_ITEMS, ...extraItems];
   const [sel, setSel] = useState<string[]>(ids);
   const [dates, setDates] = useState<Record<string, string>>(parseAntecedentDates(datesRaw));
+  const [details, setDetails] = useState<Record<string, string>>(parseAntecedentDetails(detailsRaw));
   const [customs, setCustoms] = useState<CustomAntecedent[]>(parseCustomAntecedents(customRaw));
   const [query, setQuery] = useState("");
-  const [openGroups, setOpenGroups] = useState<string[]>([]);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [lastOpen, setLastOpen] = useState(false);
-  if (open && !lastOpen) { setLastOpen(true); setSel(ids); setDates(parseAntecedentDates(datesRaw)); setCustoms(parseCustomAntecedents(customRaw)); setQuery(""); setOpenGroups([]); }
+  if (open && !lastOpen) { setLastOpen(true); setSel(ids); setDates(parseAntecedentDates(datesRaw)); setDetails(parseAntecedentDetails(detailsRaw)); setCustoms(parseCustomAntecedents(customRaw)); setQuery(""); setOpenGroup(null); }
   if (!open && lastOpen) setLastOpen(false);
   const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const q = fold(query.trim());
-  const matches = (label: string) => !q || fold(label).includes(q);
-  const noResult = q !== "" && items.every((it) => !matches(interventionLabel(it, en)));
-  const fmtDate = (v: string | undefined) => {
-    const [y = "", m = ""] = String(v ?? "").split("-");
-    return y ? (m ? `${m}/${y}` : y) : "";
-  };
+  const matchItem = (it: { id: string; fr: string; en: string }) =>
+    !q || fold(`${it.fr} ${it.en} ${ANTECEDENT_KEYWORDS[it.id] ?? ""}`).includes(q);
+  const noResult = q !== "" && items.filter((it) => !sel.includes(it.id)).every((it) => !matchItem(it));
 
   const nowY = new Date().getFullYear();
   const start = Math.max(1900, Math.min(minYear && minYear > 1800 ? minYear : 1950, nowY));
@@ -73,6 +80,7 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
     if (sel.includes(id)) {
       setSel(sel.filter((x) => x !== id));
       const d = { ...dates }; delete d[id]; setDates(d);
+      const t = { ...details }; delete t[id]; setDetails(t);
     } else setSel([...sel, id]);
   };
   const merge = (cur: string, part: "y" | "m", val: string) => {
@@ -115,67 +123,55 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
             <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" aria-label={en ? "Clear" : "Effacer"} onClick={() => setQuery("")}>✕</button>
           )}
         </div>
-        {(sel.length > 0 || customs.some((c) => c.label.trim())) && (
-          <div className="flex flex-wrap gap-1.5 border-b border-border pb-2">
+        {sel.length > 0 && (
+          <div className="space-y-1.5 border-b border-border pb-2">
             {sel.map((id) => {
               const it = items.find((i) => i.id === id);
-              const d = fmtDate(dates[id]);
               return (
-                <span key={id} className="list-chip list-chip-active">
-                  {it ? interventionLabel(it, en) : id}{d && ` (${d})`}
-                  <button type="button" className="ml-1" aria-label={en ? "Remove" : "Retirer"} onClick={() => toggle(id)}>✕</button>
-                </span>
+                <div key={id} className="flex flex-wrap items-center gap-1.5">
+                  <span className="list-chip list-chip-active">{it ? interventionLabel(it, en) : id}</span>
+                  <input value={details[id] ?? ""} onChange={(e) => setDetails({ ...details, [id]: e.target.value })} maxLength={80}
+                    placeholder={en ? "Optional detail: e.g. 10 keys" : "Détail optionnel : ex. 10 touches"} className="list-input min-w-0 flex-1" />
+                  {dateSelects(dates[id] ?? "", (p, v) => setPart(id, p, v))}
+                  <button type="button" className="px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"} onClick={() => toggle(id)}>✕</button>
+                </div>
               );
             })}
-            {customs.map((c, i) => c.label.trim() ? (
-              <span key={`s${i}`} className="list-chip list-chip-active">
-                {c.label.trim()}{fmtDate(c.date) && ` (${fmtDate(c.date)})`}
-                <button type="button" className="ml-1" aria-label={en ? "Remove" : "Retirer"} onClick={() => setCustoms(customs.filter((_, k) => k !== i))}>✕</button>
-              </span>
-            ) : null)}
           </div>
         )}
         <div className="max-h-[55vh] space-y-1 overflow-y-auto pr-1">
           {ANTECEDENT_GROUPS.map((g) => {
-            const visible = g.items.filter((it) => matches(interventionLabel(it, en)));
+            const remaining = g.items.filter((it) => !sel.includes(it.id));
+            const visible = remaining.filter(matchItem);
             if (q && visible.length === 0) return null;
-            const count = g.items.filter((it) => sel.includes(it.id)).length;
-            const isOpen = q ? true : openGroups.includes(g.id);
+            const count = g.items.length - remaining.length;
+            const isOpen = q ? true : openGroup === g.id;
             return (
               <div key={g.id} className="rounded border border-border">
                 <button type="button" className="flex w-full items-center justify-between px-2 py-1.5 text-left text-sm font-semibold"
-                  onClick={() => setOpenGroups(openGroups.includes(g.id) ? openGroups.filter((x) => x !== g.id) : [...openGroups, g.id])}>
+                  onClick={() => setOpenGroup(openGroup === g.id ? null : g.id)}>
                   <span>{isOpen ? "▾" : "▸"} {en ? g.en : g.fr}{count > 0 && ` (${count})`}</span>
                 </button>
                 {isOpen && (
-                  <div className="space-y-2 px-2 pb-2">
-                    {visible.map((item) => {
-                      const active = sel.includes(item.id);
-                      return (
-                        <div key={item.id} className="flex flex-wrap items-center gap-2">
-                          <button type="button" className={`list-chip ${active ? "list-chip-active" : ""}`} onClick={() => toggle(item.id)}>
-                            {interventionLabel(item, en)}
-                          </button>
-                          {active && dateSelects(dates[item.id] ?? "", (p, v) => setPart(item.id, p, v))}
-                        </div>
-                      );
-                    })}
+                  <div className="flex flex-wrap gap-1.5 px-2 pb-2">
+                    {visible.length === 0 && (
+                      <span className="text-xs italic text-muted-foreground">{en ? "All items selected" : "Toutes les tâches sont sélectionnées"}</span>
+                    )}
+                    {visible.map((item) => (
+                      <button key={item.id} type="button" className="list-chip" onClick={() => toggle(item.id)}>
+                        {interventionLabel(item, en)}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
             );
           })}
-          {extraItems.filter((it) => matches(interventionLabel(it, en))).length > 0 && (
-            <div className="space-y-2 px-2 py-1">
-              {extraItems.filter((it) => matches(interventionLabel(it, en))).map((item) => {
-                const active = sel.includes(item.id);
-                return (
-                  <div key={item.id} className="flex flex-wrap items-center gap-2">
-                    <button type="button" className={`list-chip ${active ? "list-chip-active" : ""}`} onClick={() => toggle(item.id)}>{interventionLabel(item, en)}</button>
-                    {active && dateSelects(dates[item.id] ?? "", (p, v) => setPart(item.id, p, v))}
-                  </div>
-                );
-              })}
+          {extraItems.filter((it) => !sel.includes(it.id) && matchItem(it)).length > 0 && (
+            <div className="flex flex-wrap gap-1.5 px-2 py-1">
+              {extraItems.filter((it) => !sel.includes(it.id) && matchItem(it)).map((item) => (
+                <button key={item.id} type="button" className="list-chip" onClick={() => toggle(item.id)}>{interventionLabel(item, en)}</button>
+              ))}
             </div>
           )}
           <div className="rounded border border-border">
@@ -201,8 +197,11 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
           <Button onClick={() => {
             const kept: Record<string, string> = {};
             sel.forEach((id) => { if (dates[id]) kept[id] = dates[id]; });
+            const keptDetails: Record<string, string> = {};
+            sel.forEach((id) => { const d = (details[id] ?? "").trim(); if (d) keptDetails[id] = d; });
             const cleanCustoms = customs.map((c) => ({ label: c.label.trim(), date: c.date })).filter((c) => c.label);
-            onSave(sel, serializeDates(kept), cleanCustoms.length ? JSON.stringify(cleanCustoms) : "");
+            onSave(sel, serializeDates(kept), cleanCustoms.length ? JSON.stringify(cleanCustoms) : "",
+              Object.keys(keptDetails).length ? JSON.stringify(keptDetails) : "");
             onOpenChange(false);
           }}>{en ? "Save" : "Valider"}</Button>
         </DialogFooter>
