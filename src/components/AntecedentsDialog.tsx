@@ -93,7 +93,7 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
   const setCustom = (i: number, patch: Partial<CustomAntecedent>) =>
     setCustoms(customs.map((c, k) => (k === i ? { ...c, ...patch } : c)));
 
-  const selectCls = "rounded border border-input bg-background px-1 py-0.5 text-sm";
+  const selectCls = "shrink-0 rounded border border-input bg-background px-1 py-0.5 text-sm";
   const dateSelects = (value: string, onPart: (part: "y" | "m", v: string) => void) => {
     const [y = "", m = ""] = value.split("-");
     return (
@@ -133,7 +133,7 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
                   <input value={details[id] ?? ""} onChange={(e) => setDetails({ ...details, [id]: e.target.value })} maxLength={80}
                     placeholder={en ? "Optional detail: e.g. 10 keys" : "Détail optionnel : ex. 10 touches"} className="list-input min-w-[14rem] flex-1" />
                   {dateSelects(dates[id] ?? "", (p, v) => setPart(id, p, v))}
-                  <button type="button" className="px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"} onClick={() => toggle(id)}>✕</button>
+                  <button type="button" className="shrink-0 px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"} onClick={() => toggle(id)}>✕</button>
                 </div>
               );
             })}
@@ -182,7 +182,7 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
                   <input value={c.label} onChange={(e) => setCustom(i, { label: e.target.value })} maxLength={120} autoFocus={!c.label}
                     placeholder={en ? "Describe the intervention..." : "Précisez l'intervention..."} className="list-input min-w-[14rem] flex-1" />
                   {dateSelects(c.date, (p, v) => setCustom(i, { date: merge(c.date, p, v) }))}
-                  <button type="button" className="px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"}
+                  <button type="button" className="shrink-0 px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"}
                     onClick={() => setCustoms(customs.filter((_, k) => k !== i))}>✕</button>
                 </div>
               ))}
