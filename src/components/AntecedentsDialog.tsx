@@ -167,6 +167,9 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
               </div>
             );
           })}
+          {noResult && (
+            <div className="px-2 py-1 text-xs italic text-muted-foreground">{en ? "No result" : "Aucun résultat"}</div>
+          )}
           {extraItems.filter((it) => !sel.includes(it.id) && matchItem(it)).length > 0 && (
             <div className="flex flex-wrap gap-1.5 px-2 py-1">
               {extraItems.filter((it) => !sel.includes(it.id) && matchItem(it)).map((item) => (
