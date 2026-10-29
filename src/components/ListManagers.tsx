@@ -59,7 +59,7 @@ export function ModelListDialog({ open, onOpenChange, en }: P) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90dvh] max-w-md overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{en ? "Piano models list" : "Liste modèles piano"}</DialogTitle>
+          <DialogTitle>{en ? "Brands & models list" : "Liste marques & modèles"}</DialogTitle>
           <DialogDescription>{en ? "Pick a brand and a type to view and edit its models." : "Choisissez une marque et un type pour afficher et modifier ses modèles."}</DialogDescription>
         </DialogHeader>
         <div className="flex flex-wrap items-center gap-2">

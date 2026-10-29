@@ -237,7 +237,7 @@ export const BRAND_MODELS_SUGGESTIONS: Record<string, string[]> = Object.fromEnt
 );
 
 /** Liste des marques connues. */
-export const BRAND_SUGGESTIONS = Object.keys(BRAND_MODELS_BY_TYPE);
+export const BRAND_SUGGESTIONS = Object.keys(BRAND_MODELS_BY_TYPE).sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }));
 
 // ---------------------------------------------------------------------------
 // Personnalisation locale du catalogue (ajouts appris / suppressions), hors ligne.
@@ -281,7 +281,8 @@ export function effectiveModels(brand: string, t: TypeKey): string[] {
     seen.add(n);
     out.push(m);
   }
-  return out.sort((x, y) => x.localeCompare(y, undefined, { numeric: true, sensitivity: "base" }));
+  // Ordre traditionnel des facteurs (gamme puis taille) conservé ; ajouts personnels à la suite.
+  return out;
 }
 
 /** Clé de comparaison tolérante : casse, espaces et tirets ignorés (K-500 = K500 = k 500). */
@@ -370,7 +371,7 @@ export function resetModels(brand: string, t: TypeKey): void {
 /** Marques connues + marques apprises localement. */
 export function knownBrands(): string[] {
   const o = readOverrides();
-  return Array.from(new Set([...BRAND_SUGGESTIONS, ...Object.keys(o.added)])).sort((a, b) => a.localeCompare(b));
+  return Array.from(new Set([...BRAND_SUGGESTIONS, ...Object.keys(o.added)])).sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }));
 }
 
 const hasBrand = (brand: string) => {

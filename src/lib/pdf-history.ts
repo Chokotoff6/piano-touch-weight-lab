@@ -2,7 +2,7 @@
 // indépendant des exports Bilan / Analyse. N'affiche que des données réellement saisies.
 import jsPDF from "jspdf";
 import type { KwDocument, KwRow } from "@/lib/kw-file";
-import { FACTORY_INTERVENTIONS } from "@/lib/interventions";
+import { FACTORY_INTERVENTIONS, ANTECEDENT_ITEMS } from "@/lib/interventions";
 import { parseAntecedents } from "@/lib/interventions";
 import { parseAntecedentDates, parseCustomAntecedents } from "@/components/AntecedentsDialog";
 
@@ -102,7 +102,7 @@ export function generateHistoryPdf(doc: KwDocument, info: Record<string, string>
   const customs = parseCustomAntecedents(info["antecedents_custom"]).filter((c) => c.label.trim());
   const ante = [
     ...ids.map((id) => {
-      const it = FACTORY_INTERVENTIONS.find((i) => i.id === id);
+      const it = ANTECEDENT_ITEMS.find((i) => i.id === id) ?? FACTORY_INTERVENTIONS.find((i) => i.id === id);
       return { label: it ? (en ? it.en : it.fr) : id, date: dates[id] ?? "" };
     }),
     ...customs.map((c) => ({ label: c.label.trim(), date: c.date })),
