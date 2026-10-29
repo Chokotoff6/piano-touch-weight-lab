@@ -129,7 +129,7 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[95vw] max-w-4xl">
         <DialogHeader>
-          <DialogTitle>{en ? "Piano history prior to KeyWeight" : "Historique du piano avant KeyWeight"}</DialogTitle>
+          <DialogTitle>{en ? "Instrument history" : "Antécédents de l'instrument"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-1.5 border-b-2 border-foreground/50 pb-2">
           {sel.length === 0 && customs.length === 0 && (

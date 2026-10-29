@@ -4205,7 +4205,7 @@ function Index() {
               <Tooltip>
                 <TooltipTrigger asChild>
               <div className={FIELD_LABEL_CLASS}>
-                <span className="block">{en ? "History prior to KeyWeight" : "Antécédents avant KeyWeight"}</span>
+                <span className="block">{en ? "Prior service" : "Antécédents"}</span>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <button type="button" className="list-chip" onClick={() => { antecedentsInvitedRef.current = true; setAntecedentsOpen(true); }}>
                     {hasAntecedents ? (en ? "Edit" : "Modifier") : (en ? "Enter" : "Renseigner")}
