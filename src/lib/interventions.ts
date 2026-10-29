@@ -50,13 +50,16 @@ export type AntecedentGroup = { id: string; fr: string; en: string; items: Inter
 export const ANTECEDENT_GROUPS: AntecedentGroup[] = [
   { id: "action", fr: "Mécanique & Clavier", en: "Action & Keyboard", items: [
     { id: "regulation", fr: "Régulation mécanique complète", en: "Full action regulation" },
+    { id: "bushings", fr: "Garnissage des mortaises de clavier", en: "Key bushing replacement" },
+    { id: "centerpins", fr: "Réfection des axes (fourches, centres)", en: "Center pin repinning" },
     { id: "lighten", fr: "Allègement des plombs", en: "Key lead removal" },
     { id: "weighten", fr: "Alourdissement des plombs", en: "Key lead addition" },
     { id: "hammers", fr: "Remplacement des marteaux", en: "Hammer replacement" },
-    { id: "felts", fr: "Remplacement feutres & garnitures", en: "Felts & bushings replacement" },
+    { id: "dampers", fr: "Remplacement des feutres d'étouffoirs", en: "Damper felt replacement" },
+    { id: "felts", fr: "Remplacement feutres & garnitures", en: "Felts & cloths replacement" },
   ] },
   { id: "structure", fr: "Structure & Lutherie lourde", en: "Structure & heavy repairs", items: [
-    { id: "restring", fr: "Recordage complet", en: "Full restringing" },
+    { id: "restring", fr: "Recordage complet (acier & basses)", en: "Full restringing" },
     { id: "repin", fr: "Rechevillage / Nouveau sommier", en: "Repinning / New pinblock" },
     { id: "soundboard", fr: "Réfection / Réparation table d'harmonie", en: "Soundboard repair / rebuild" },
     { id: "bridges", fr: "Remplacement ou réfection des chevalets", en: "Bridge replacement / repair" },
@@ -72,6 +75,27 @@ export const ANTECEDENT_GROUPS: AntecedentGroup[] = [
     { id: "silent", fr: "Installation système silencieux", en: "Silent system" },
   ] },
 ];
+/** Mots-clés techniques de recherche (synonymes métier, FR/EN) par tâche. */
+export const ANTECEDENT_KEYWORDS: Record<string, string> = {
+  regulation: "reglage echappement enfoncement chute mecanique regulation",
+  bushings: "mortaise mortaises balancier enfoncement bushing bushings garniture clavier jeu touche",
+  centerpins: "axe axes fourche fourches centre friction frottement grippe center pin",
+  lighten: "plomb plombs plombage poids allegement lead",
+  weighten: "plomb plombs plombage poids alourdissement lead",
+  hammers: "marteau marteaux tete tetes hammer",
+  dampers: "etouffoir etouffoirs feutre damper",
+  felts: "feutre feutres garniture drap cuir mouche felt",
+  restring: "corde cordes recordage filee basses acier string",
+  repin: "cheville chevilles sommier rechevillage tenue accord pinblock pin",
+  soundboard: "table harmonie flipot flipots fente barrage soundboard",
+  bridges: "chevalet chevalets pointe bridge",
+  restoration: "restauration renovation complete",
+  tuning: "accord diapason tuning",
+  voicing: "harmonisation piquage son timbre voicing",
+  hammer_filing: "poncage marteau marteaux mise en forme filing",
+  humidity: "hygrometrie humidite dampp chaser hygrometrique",
+  silent: "silencieux silent sourdine",
+};
 export const ANTECEDENT_ITEMS: Intervention[] = ANTECEDENT_GROUPS.flatMap((g) => g.items);
 export const parseAntecedents = (raw: string | undefined): string[] =>
   String(raw ?? "").split("|").map((s) => s.trim()).filter(Boolean);
