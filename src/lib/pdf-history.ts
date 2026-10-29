@@ -40,7 +40,7 @@ const fmtDate = (iso: string, en: boolean) => {
 };
 const fmtMonth = (v: string) => {
   const [y, m] = v.split("-");
-  return m ? `${m}/${y}` : y ?? "";
+  return m ? (y ? `${m}/${y}` : m) : y ?? "";
 };
 
 export function generateHistoryPdf(doc: KwDocument, info: Record<string, string>, en: boolean) {
