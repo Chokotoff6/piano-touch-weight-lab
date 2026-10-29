@@ -112,7 +112,7 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="w-[95vw] max-w-4xl">
         <DialogHeader>
           <DialogTitle>{en ? "Piano history prior to KeyWeight" : "Historique du piano avant KeyWeight"}</DialogTitle>
         </DialogHeader>
@@ -128,10 +128,10 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
             {sel.map((id) => {
               const it = items.find((i) => i.id === id);
               return (
-                <div key={id} className="flex flex-wrap items-center gap-1.5">
-                  <span className="list-chip list-chip-active">{it ? interventionLabel(it, en) : id}</span>
+                <div key={id} className="flex flex-nowrap items-center gap-1.5">
+                  <span className="list-chip list-chip-active shrink-0 whitespace-nowrap">{it ? interventionLabel(it, en) : id}</span>
                   <input value={details[id] ?? ""} onChange={(e) => setDetails({ ...details, [id]: e.target.value })} maxLength={80}
-                    placeholder={en ? "Optional detail: e.g. 10 keys" : "Détail optionnel : ex. 10 touches"} className="list-input min-w-0 flex-1" />
+                    placeholder={en ? "Optional detail: e.g. 10 keys" : "Détail optionnel : ex. 10 touches"} className="list-input min-w-[14rem] flex-1" />
                   {dateSelects(dates[id] ?? "", (p, v) => setPart(id, p, v))}
                   <button type="button" className="px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"} onClick={() => toggle(id)}>✕</button>
                 </div>
@@ -178,9 +178,9 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
             <div className="px-2 py-1.5 text-sm font-semibold">{en ? "Custom interventions" : "Interventions sur mesure"}</div>
             <div className="space-y-2 px-2 pb-2">
               {customs.map((c, i) => (
-                <div key={`c${i}`} className="flex flex-wrap items-center gap-2">
+                <div key={`c${i}`} className="flex flex-nowrap items-center gap-2">
                   <input value={c.label} onChange={(e) => setCustom(i, { label: e.target.value })} maxLength={120} autoFocus={!c.label}
-                    placeholder={en ? "Describe the intervention..." : "Précisez l'intervention..."} className="list-input min-w-0 flex-1" />
+                    placeholder={en ? "Describe the intervention..." : "Précisez l'intervention..."} className="list-input min-w-[14rem] flex-1" />
                   {dateSelects(c.date, (p, v) => setCustom(i, { date: merge(c.date, p, v) }))}
                   <button type="button" className="px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"}
                     onClick={() => setCustoms(customs.filter((_, k) => k !== i))}>✕</button>
