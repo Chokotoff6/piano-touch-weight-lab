@@ -96,7 +96,7 @@ export function generateHistoryPdf(doc: KwDocument, info: Record<string, string>
   }
   y += 5;
 
-  // 2. Antécédents avant KeyWeight (si renseignés)
+  // 2. Antécédents déclarés (si renseignés)
   const ids = parseAntecedents(info["antecedents"]).filter((id) => id !== "initial");
   const dates = parseAntecedentDates(info["antecedents_dates"]);
   const details = parseAntecedentDetails(info["antecedents_details"]);
@@ -112,7 +112,7 @@ export function generateHistoryPdf(doc: KwDocument, info: Record<string, string>
   const dKey = (d: string) => (/^\d{4}/.test(d ?? "") ? d : "9999");
   ante.sort((a, b) => dKey(a.date).localeCompare(dKey(b.date)));
   if (ante.length) {
-    section(en ? "HISTORY PRIOR TO KEYWEIGHT" : "ANTÉCÉDENTS AVANT KEYWEIGHT");
+    section(en ? "DECLARED PRIOR SERVICE" : "ANTÉCÉDENTS DÉCLARÉS");
     ante.forEach((a) => {
       pdf.text(`•  ${a.date ? fmtMonth(a.date) + " — " : ""}${a.label}`, M + 2, y);
       y += 5;
@@ -121,7 +121,7 @@ export function generateHistoryPdf(doc: KwDocument, info: Record<string, string>
   }
 
   // 3. Points d'historique KeyWeight
-  section(en ? "KEYWEIGHT HISTORY POINTS" : "POINTS D'HISTORIQUE KEYWEIGHT");
+  section(en ? "KEYWEIGHT SERVICE LOG" : "JOURNAL DES INTERVENTIONS KEYWEIGHT");
   const cols = [M, M + 24, M + 92, M + 112, M + 132, M + 152, M + 170] as const;
   const head = [en ? "Date" : "Date", en ? "Work carried out" : "Interventions", en ? "DW avg" : "PD moy", en ? "UW avg" : "PR moy", en ? "BW avg" : "PE moy", en ? "F avg" : "F moy", en ? "Keys" : "Touches"];
   pdf.setFont("helvetica", "bold");
