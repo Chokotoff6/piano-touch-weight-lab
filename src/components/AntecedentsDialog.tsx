@@ -113,11 +113,12 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
     const [y = "", m = ""] = value.split("-");
     return (
       <>
-        <select value={m} onChange={(e) => onPart("m", e.target.value)} className={selectCls} aria-label={en ? "Month" : "Mois"}>
+        <select value={m} onChange={(e) => onPart("m", e.target.value)} className={selectCls} aria-label={en ? "Month" : "Mois"}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); } }}>
           <option value="">{en ? "Month" : "Mois"}</option>
           {months.map((label, i) => <option key={i} value={String(i + 1).padStart(2, "0")}>{label}</option>)}
         </select>
-        <select value={y} onChange={(e) => onPart("y", e.target.value)} className={selectCls} aria-label={en ? "Year" : "Année"}>
+        <select value={y} onChange={(e) => { onPart("y", e.target.value); e.currentTarget.blur(); }} className={selectCls} aria-label={en ? "Year" : "Année"}>
           <option value="">{en ? "Year" : "Année"}</option>
           {years.map((yy) => <option key={yy} value={String(yy)}>{yy}</option>)}
         </select>
@@ -141,7 +142,8 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
               <div key={id} className="flex flex-nowrap items-center gap-1.5">
                 <span className="list-chip list-chip-active shrink-0 whitespace-nowrap">{it ? interventionLabel(it, en) : id}</span>
                 <input key={focusId === id ? "f" : "n"} autoFocus={focusId === id} value={details[id] ?? ""} onChange={(e) => setDetails({ ...details, [id]: e.target.value })} maxLength={80}
-                  placeholder={en ? "Optional detail: e.g. 10 keys" : "Détail optionnel : ex. 10 touches"} className="list-input min-w-[14rem] flex-1" />
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.currentTarget.nextElementSibling as HTMLElement | null)?.focus(); } }}
+                  placeholder={en ? "Optional detail..." : "Détail optionnel..."} className="list-input min-w-[14rem] flex-1" />
                 {dateSelects(dates[id] ?? "", (p, v) => setPart(id, p, v))}
                 <button type="button" className="shrink-0 px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"} onClick={() => toggle(id)}>✕</button>
               </div>
@@ -165,13 +167,18 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
             <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" aria-label={en ? "Clear" : "Effacer"} onClick={() => setQuery("")}>✕</button>
           )}
         </div>
+        <div className="flex justify-end">
+          <button type="button" className="text-xs text-muted-foreground underline" onClick={() => setOpenGroup(openGroup === "*" ? null : "*")}>
+            {openGroup === "*" ? (en ? "Collapse all" : "Tout replier") : (en ? "Expand all" : "Tout déplier")}
+          </button>
+        </div>
         <div className="max-h-[55vh] space-y-1 overflow-y-auto pr-1">
-          {ANTECEDENT_GROUPS.map((g) => {
+          {["sound", "action", "structure", "equipment"].map((gid) => ANTECEDENT_GROUPS.find((x) => x.id === gid)).filter((g): g is (typeof ANTECEDENT_GROUPS)[number] => !!g).map((g) => {
             const remaining = g.items.filter((it) => !sel.includes(it.id));
             const visible = remaining.filter(matchItem);
             if (q && visible.length === 0) return null;
             const count = g.items.length - remaining.length;
-            const isOpen = q ? true : openGroup === g.id;
+            const isOpen = q ? true : openGroup === "*" || openGroup === g.id;
             return (
               <div key={g.id} className="rounded border border-border">
                 <button type="button" className="flex w-full items-center justify-between px-2 py-1.5 text-left text-sm font-semibold"
