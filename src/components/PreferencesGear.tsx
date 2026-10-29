@@ -141,7 +141,7 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
                 </div></div>
               ))}
             </div>
-            {([["models", en ? "Piano models list" : "Liste modèles piano"], ["interventions", en ? "Intervention types list" : "Liste types d'intervention"]] as const).map(([id, label]) => (
+            {([["models", en ? "Brands & models list" : "Liste marques & modèles"], ["interventions", en ? "Intervention types list" : "Liste types d'intervention"]] as const).map(([id, label]) => (
               <button key={id} type="button" onClick={() => setSub(id)} className="flex items-center justify-between rounded-lg border border-foreground/40 bg-card p-3 text-left font-semibold hover:bg-muted">
                 {label}<ChevronRight className="h-4 w-4" />
               </button>

@@ -43,6 +43,36 @@ export const interventionLabel = (i: Intervention, en: boolean) => (en ? i.en : 
 const MAJOR_IDS = new Set(["lighten", "weighten", "hammers"]);
 const CUSTOM_IDS = new Set(["regulation"]);
 export const ANTECEDENTS_KEY = "antecedents";
+
+/** Catalogue enrichi des antécédents avant KeyWeight, distinct de la liste courte des points d'historique.
+ *  Les ids historiques (regulation, lighten, weighten, hammers, tuning, voicing) sont conservés pour compatibilité. */
+export type AntecedentGroup = { id: string; fr: string; en: string; items: Intervention[] };
+export const ANTECEDENT_GROUPS: AntecedentGroup[] = [
+  { id: "action", fr: "Mécanique & Clavier", en: "Action & Keyboard", items: [
+    { id: "regulation", fr: "Régulation mécanique complète", en: "Full action regulation" },
+    { id: "lighten", fr: "Allègement des plombs", en: "Key lead removal" },
+    { id: "weighten", fr: "Alourdissement des plombs", en: "Key lead addition" },
+    { id: "hammers", fr: "Remplacement des marteaux", en: "Hammer replacement" },
+    { id: "felts", fr: "Remplacement feutres & garnitures", en: "Felts & bushings replacement" },
+  ] },
+  { id: "structure", fr: "Structure & Lutherie lourde", en: "Structure & heavy repairs", items: [
+    { id: "restring", fr: "Recordage complet", en: "Full restringing" },
+    { id: "repin", fr: "Rechevillage / Nouveau sommier", en: "Repinning / New pinblock" },
+    { id: "soundboard", fr: "Réfection / Réparation table d'harmonie", en: "Soundboard repair / rebuild" },
+    { id: "bridges", fr: "Remplacement ou réfection des chevalets", en: "Bridge replacement / repair" },
+    { id: "restoration", fr: "Restauration complète de l'instrument", en: "Full instrument restoration" },
+  ] },
+  { id: "sound", fr: "Son & Harmonisation", en: "Sound & Voicing", items: [
+    { id: "tuning", fr: "Accord", en: "Tuning" },
+    { id: "voicing", fr: "Harmonisation", en: "Voicing" },
+    { id: "hammer_filing", fr: "Ponçage des marteaux", en: "Hammer filing" },
+  ] },
+  { id: "equipment", fr: "Équipements", en: "Equipment", items: [
+    { id: "humidity", fr: "Installation système hygrométrique", en: "Humidity control system" },
+    { id: "silent", fr: "Installation système silencieux", en: "Silent system" },
+  ] },
+];
+export const ANTECEDENT_ITEMS: Intervention[] = ANTECEDENT_GROUPS.flatMap((g) => g.items);
 export const parseAntecedents = (raw: string | undefined): string[] =>
   String(raw ?? "").split("|").map((s) => s.trim()).filter(Boolean);
 /** Déduit le code Cloud (Standard / Custom regulations / Major modifications) des antécédents cochés. */
