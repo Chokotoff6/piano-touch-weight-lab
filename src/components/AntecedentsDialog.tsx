@@ -64,7 +64,13 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
   const [query, setQuery] = useState("");
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [lastOpen, setLastOpen] = useState(false);
-  if (open && !lastOpen) { setLastOpen(true); setSel(ids); setDates(parseAntecedentDates(datesRaw)); setDetails(parseAntecedentDetails(detailsRaw)); setCustoms(parseCustomAntecedents(customRaw)); setRemovedCustoms([]); setDraft(null); setQuery(""); setOpenGroup(null); }
+  const [focusId, setFocusId] = useState<string | null>(null);
+  const dKey = (d: string | undefined) => (/^\d{4}/.test(d ?? "") ? (d as string) : "9999");
+  if (open && !lastOpen) {
+    const d0 = parseAntecedentDates(datesRaw);
+    setLastOpen(true); setSel([...ids].sort((a, b) => dKey(d0[a]).localeCompare(dKey(d0[b])))); setDates(d0); setDetails(parseAntecedentDetails(detailsRaw));
+    setCustoms(parseCustomAntecedents(customRaw).sort((a, b) => dKey(a.date).localeCompare(dKey(b.date)))); setRemovedCustoms([]); setDraft(null); setQuery(""); setOpenGroup(null); setFocusId(null);
+  }
   if (!open && lastOpen) setLastOpen(false);
   const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const q = fold(query.trim());
@@ -84,7 +90,7 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
       const d = { ...dates }; delete d[id]; setDates(d);
       const t = { ...details }; delete t[id]; setDetails(t);
     } else {
-      setSel([...sel, id]);
+      setSel([...sel, id]); setFocusId(id);
       if (q) {
         const g = ANTECEDENT_GROUPS.find((gr) => gr.items.some((it) => it.id === id));
         if (g) setOpenGroup(g.id);
@@ -134,7 +140,7 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
             return (
               <div key={id} className="flex flex-nowrap items-center gap-1.5">
                 <span className="list-chip list-chip-active shrink-0 whitespace-nowrap">{it ? interventionLabel(it, en) : id}</span>
-                <input value={details[id] ?? ""} onChange={(e) => setDetails({ ...details, [id]: e.target.value })} maxLength={80}
+                <input key={focusId === id ? "f" : "n"} autoFocus={focusId === id} value={details[id] ?? ""} onChange={(e) => setDetails({ ...details, [id]: e.target.value })} maxLength={80}
                   placeholder={en ? "Optional detail: e.g. 10 keys" : "Détail optionnel : ex. 10 touches"} className="list-input min-w-[14rem] flex-1" />
                 {dateSelects(dates[id] ?? "", (p, v) => setPart(id, p, v))}
                 <button type="button" className="shrink-0 px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"} onClick={() => toggle(id)}>✕</button>

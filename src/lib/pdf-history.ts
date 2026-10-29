@@ -109,6 +109,8 @@ export function generateHistoryPdf(doc: KwDocument, info: Record<string, string>
     }),
     ...customs.map((c) => ({ label: c.label.trim(), date: c.date })),
   ];
+  const dKey = (d: string) => (/^\d{4}/.test(d ?? "") ? d : "9999");
+  ante.sort((a, b) => dKey(a.date).localeCompare(dKey(b.date)));
   if (ante.length) {
     section(en ? "HISTORY PRIOR TO KEYWEIGHT" : "ANTÉCÉDENTS AVANT KEYWEIGHT");
     ante.forEach((a) => {
