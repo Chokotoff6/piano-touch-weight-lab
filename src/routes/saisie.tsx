@@ -97,7 +97,7 @@ import {
 } from "@/lib/field-codes";
 import { toast } from "sonner";
 import { useInterventions, interventionLabel, parseAntecedents, maintenanceFromAntecedents, ANTECEDENTS_KEY } from "@/lib/interventions";
-import { AntecedentsDialog, ANTECEDENTS_DATES_KEY, ANTECEDENTS_CUSTOM_KEY, parseCustomAntecedents } from "@/components/AntecedentsDialog";
+import { AntecedentsDialog, ANTECEDENTS_DATES_KEY, ANTECEDENTS_CUSTOM_KEY, ANTECEDENTS_DETAILS_KEY, parseCustomAntecedents } from "@/components/AntecedentsDialog";
 const parseCustomEntries = (raw: string | undefined) => parseCustomAntecedents(raw).length;
 import {
   SECURITY_BACKUP_KEY,
@@ -4225,10 +4225,12 @@ function Index() {
                 ids={antecedentIds}
                 datesRaw={info[ANTECEDENTS_DATES_KEY]}
                 customRaw={info[ANTECEDENTS_CUSTOM_KEY]}
-                onSave={(next, datesRaw, customRaw) => {
+                detailsRaw={info[ANTECEDENTS_DETAILS_KEY]}
+                onSave={(next, datesRaw, customRaw, detailsRaw) => {
                   updateInfo(ANTECEDENTS_KEY, next.join("|"));
                   updateInfo(ANTECEDENTS_DATES_KEY, datesRaw);
                   updateInfo(ANTECEDENTS_CUSTOM_KEY, customRaw);
+                  updateInfo(ANTECEDENTS_DETAILS_KEY, detailsRaw);
                   updateInfo("entretien", maintenanceFromAntecedents(next));
                 }}
               />

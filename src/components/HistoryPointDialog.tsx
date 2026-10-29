@@ -22,19 +22,24 @@ type Props = {
 export function HistoryPointDialog({ open, en, mode, boxClassName, btnClassName, onCancel, onUpdateCurrent, onCreate }: Props) {
   const items = useInterventions();
   const [picked, setPicked] = useState<string[]>([]);
+  const [details, setDetails] = useState<Record<string, string>>({});
   const [other, setOther] = useState(false);
   const [otherText, setOtherText] = useState("");
 
   useEffect(() => {
     if (!open) return;
     setPicked(mode === "first" && items.some((i) => i.id === INITIAL_DIAGNOSTIC_ID) ? [INITIAL_DIAGNOSTIC_ID] : []);
+    setDetails({});
     setOther(false);
     setOtherText("");
   }, [open, mode, items]);
 
   const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   const name = [
-    ...items.filter((i) => picked.includes(i.id)).map((i) => interventionLabel(i, en)),
+    ...items.filter((i) => picked.includes(i.id)).map((i) => {
+      const d = (details[i.id] ?? "").trim();
+      return `${interventionLabel(i, en)}${d ? ` (${d})` : ""}`;
+    }),
     ...(other && otherText.trim() ? [otherText.trim()] : []),
   ].join(" + ");
 
@@ -66,6 +71,14 @@ export function HistoryPointDialog({ open, en, mode, boxClassName, btnClassName,
             {other && <Check className="h-3.5 w-3.5" />}{en ? "Other" : "Autre"}
           </button>
         </div>
+        {items.filter((i) => picked.includes(i.id) && i.id !== INITIAL_DIAGNOSTIC_ID).map((i) => (
+          <div key={`d${i.id}`} className="flex items-center gap-2">
+            <span className="shrink-0 text-sm font-semibold">{interventionLabel(i, en)} :</span>
+            <input value={details[i.id] ?? ""} onChange={(e) => setDetails((d) => ({ ...d, [i.id]: e.target.value }))} maxLength={80}
+              placeholder={en ? "Optional detail: e.g. 10 keys, treble..." : "Détail optionnel : ex. 10 touches, médium..."}
+              className="list-input min-w-0 flex-1" />
+          </div>
+        ))}
         {other && (
           <input autoFocus value={otherText} onChange={(e) => setOtherText(e.target.value)} maxLength={120}
             placeholder={en ? "Describe the intervention..." : "Décrivez l'intervention..."}
