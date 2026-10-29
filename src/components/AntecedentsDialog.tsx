@@ -64,7 +64,13 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
   const [query, setQuery] = useState("");
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [lastOpen, setLastOpen] = useState(false);
-  if (open && !lastOpen) { setLastOpen(true); setSel(ids); setDates(parseAntecedentDates(datesRaw)); setDetails(parseAntecedentDetails(detailsRaw)); setCustoms(parseCustomAntecedents(customRaw)); setRemovedCustoms([]); setDraft(null); setQuery(""); setOpenGroup(null); }
+  const [focusId, setFocusId] = useState<string | null>(null);
+  const dKey = (d: string | undefined) => (/^\d{4}/.test(d ?? "") ? (d as string) : "9999");
+  if (open && !lastOpen) {
+    const d0 = parseAntecedentDates(datesRaw);
+    setLastOpen(true); setSel([...ids].sort((a, b) => dKey(d0[a]).localeCompare(dKey(d0[b])))); setDates(d0); setDetails(parseAntecedentDetails(detailsRaw));
+    setCustoms(parseCustomAntecedents(customRaw).sort((a, b) => dKey(a.date).localeCompare(dKey(b.date)))); setRemovedCustoms([]); setDraft(null); setQuery(""); setOpenGroup(null); setFocusId(null);
+  }
   if (!open && lastOpen) setLastOpen(false);
   const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const q = fold(query.trim());
