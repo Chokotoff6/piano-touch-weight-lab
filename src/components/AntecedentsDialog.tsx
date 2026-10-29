@@ -29,11 +29,11 @@ const MONTHS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","A
 const MONTHS_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 export const ANTECEDENTS_CUSTOM_KEY = "antecedents_custom";
-export type CustomAntecedent = { label: string; date: string };
+export type CustomAntecedent = { label: string; date: string; detail?: string };
 export const parseCustomAntecedents = (raw: string | undefined): CustomAntecedent[] => {
   try {
     const v = JSON.parse(String(raw ?? "") || "[]");
-    return Array.isArray(v) ? v.map((x) => ({ label: String(x?.label ?? ""), date: String(x?.date ?? "") })) : [];
+    return Array.isArray(v) ? v.map((x) => ({ label: String(x?.label ?? ""), date: String(x?.date ?? ""), ...(x?.detail ? { detail: String(x.detail) } : {}) })) : [];
   } catch { return []; }
 };
 
@@ -59,10 +59,12 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
   const [dates, setDates] = useState<Record<string, string>>(parseAntecedentDates(datesRaw));
   const [details, setDetails] = useState<Record<string, string>>(parseAntecedentDetails(detailsRaw));
   const [customs, setCustoms] = useState<CustomAntecedent[]>(parseCustomAntecedents(customRaw));
+  const [removedCustoms, setRemovedCustoms] = useState<CustomAntecedent[]>([]);
+  const [draft, setDraft] = useState<CustomAntecedent | null>(null);
   const [query, setQuery] = useState("");
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [lastOpen, setLastOpen] = useState(false);
-  if (open && !lastOpen) { setLastOpen(true); setSel(ids); setDates(parseAntecedentDates(datesRaw)); setDetails(parseAntecedentDetails(detailsRaw)); setCustoms(parseCustomAntecedents(customRaw)); setQuery(""); setOpenGroup(null); }
+  if (open && !lastOpen) { setLastOpen(true); setSel(ids); setDates(parseAntecedentDates(datesRaw)); setDetails(parseAntecedentDetails(detailsRaw)); setCustoms(parseCustomAntecedents(customRaw)); setRemovedCustoms([]); setDraft(null); setQuery(""); setOpenGroup(null); }
   if (!open && lastOpen) setLastOpen(false);
   const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const q = fold(query.trim());
@@ -81,7 +83,14 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
       setSel(sel.filter((x) => x !== id));
       const d = { ...dates }; delete d[id]; setDates(d);
       const t = { ...details }; delete t[id]; setDetails(t);
-    } else { setSel([...sel, id]); setQuery(""); }
+    } else {
+      setSel([...sel, id]);
+      if (q) {
+        const g = ANTECEDENT_GROUPS.find((gr) => gr.items.some((it) => it.id === id));
+        if (g) setOpenGroup(g.id);
+      }
+      setQuery("");
+    }
   };
   const merge = (cur: string, part: "y" | "m", val: string) => {
     const [y = "", m = ""] = (cur ?? "").split("-");
@@ -123,8 +132,8 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
             <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" aria-label={en ? "Clear" : "Effacer"} onClick={() => setQuery("")}>✕</button>
           )}
         </div>
-        {sel.length > 0 && (
-          <div className="space-y-1.5 border-b border-border pb-2">
+        {(sel.length > 0 || customs.length > 0) && (
+          <div className="space-y-1.5 border-b-2 border-foreground/50 pb-2">
             {sel.map((id) => {
               const it = items.find((i) => i.id === id);
               return (
@@ -137,6 +146,16 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
                 </div>
               );
             })}
+            {customs.map((c, i) => (
+              <div key={`c${i}`} className="flex flex-nowrap items-center gap-1.5">
+                <span className="list-chip shrink-0 whitespace-nowrap bg-muted text-foreground">{c.label}</span>
+                <input value={c.detail ?? ""} onChange={(e) => setCustom(i, { detail: e.target.value })} maxLength={80}
+                  placeholder={en ? "Optional remark" : "Remarque optionnelle"} className="list-input min-w-[14rem] flex-1" />
+                {dateSelects(c.date, (p, v) => setCustom(i, { date: merge(c.date, p, v) }))}
+                <button type="button" className="shrink-0 px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"}
+                  onClick={() => { setRemovedCustoms([...removedCustoms, c]); setCustoms(customs.filter((_, k) => k !== i)); }}>✕</button>
+              </div>
+            ))}
           </div>
         )}
         <div className="max-h-[55vh] space-y-1 overflow-y-auto pr-1">
@@ -180,18 +199,38 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
           <div className="rounded border border-border">
             <div className="px-2 py-1.5 text-sm font-semibold">{en ? "Custom interventions" : "Interventions sur mesure"}</div>
             <div className="space-y-2 px-2 pb-2">
-              {customs.map((c, i) => (
-                <div key={`c${i}`} className="flex flex-nowrap items-center gap-2">
-                  <input value={c.label} onChange={(e) => setCustom(i, { label: e.target.value })} maxLength={120} autoFocus={!c.label}
-                    placeholder={en ? "Describe the intervention..." : "Précisez l'intervention..."} className="list-input min-w-[14rem] flex-1" />
-                  {dateSelects(c.date, (p, v) => setCustom(i, { date: merge(c.date, p, v) }))}
-                  <button type="button" className="shrink-0 px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"}
-                    onClick={() => setCustoms(customs.filter((_, k) => k !== i))}>✕</button>
+              {removedCustoms.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {removedCustoms.map((c, i) => (
+                    <button key={`r${i}`} type="button" className="list-chip bg-muted"
+                      onClick={() => { setCustoms([...customs, c]); setRemovedCustoms(removedCustoms.filter((_, k) => k !== i)); }}>
+                      {c.label}
+                    </button>
+                  ))}
                 </div>
-              ))}
-              <button type="button" className="list-chip" onClick={() => setCustoms([...customs, { label: "", date: "" }])}>
-                {en ? "+ Add" : "+ Ajouter"}
-              </button>
+              )}
+              {draft ? (
+                <div className="flex flex-nowrap items-center gap-2">
+                  <input value={draft.label} onChange={(e) => setDraft({ ...draft, label: e.target.value })} maxLength={120} autoFocus
+                    onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+                    placeholder={en ? "Describe the intervention..." : "Nom de l'intervention..."} className="list-input min-w-[12rem] flex-1" />
+                  <input value={draft.detail ?? ""} onChange={(e) => setDraft({ ...draft, detail: e.target.value })} maxLength={80}
+                    onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+                    placeholder={en ? "Optional remark" : "Remarque optionnelle"} className="list-input min-w-[10rem] flex-1" />
+                  {dateSelects(draft.date, (p, v) => setDraft({ ...draft, date: merge(draft.date, p, v) }))}
+                  <Button type="button" size="sm" className="shrink-0" disabled={!draft.label.trim()}
+                    onClick={() => { setCustoms([...customs, { label: draft.label.trim(), date: draft.date, ...(draft.detail?.trim() ? { detail: draft.detail.trim() } : {}) }]); setDraft(null); }}>
+                    {en ? "Confirm" : "Valider"}
+                  </Button>
+                  <button type="button" className="shrink-0 text-xs text-muted-foreground underline" onClick={() => setDraft(null)}>
+                    {en ? "Cancel" : "Annuler"}
+                  </button>
+                </div>
+              ) : (
+                <button type="button" className="list-chip" onClick={() => setDraft({ label: "", date: "" })}>
+                  {en ? "+ Add" : "+ Ajouter"}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -202,7 +241,7 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
             sel.forEach((id) => { if (dates[id]) kept[id] = dates[id]; });
             const keptDetails: Record<string, string> = {};
             sel.forEach((id) => { const d = (details[id] ?? "").trim(); if (d) keptDetails[id] = d; });
-            const cleanCustoms = customs.map((c) => ({ label: c.label.trim(), date: c.date })).filter((c) => c.label);
+            const cleanCustoms = customs.map((c) => ({ label: c.label.trim(), date: c.date, ...(c.detail?.trim() ? { detail: c.detail.trim() } : {}) })).filter((c) => c.label);
             onSave(sel, serializeDates(kept), cleanCustoms.length ? JSON.stringify(cleanCustoms) : "",
               Object.keys(keptDetails).length ? JSON.stringify(keptDetails) : "");
             onOpenChange(false);
