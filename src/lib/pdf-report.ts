@@ -502,7 +502,7 @@ function drawHeader(pdf: jsPDF, lines: string[]) {
 }
 
 /** Horodatage d'export : « DD-MM-YYYY à HH:MM ». */
-function exportStamp(): string {
+export function exportStamp(): string {
   const now = new Date();
   const p = (n: number) => String(n).padStart(2, "0");
   return `${p(now.getDate())}-${p(now.getMonth() + 1)}-${now.getFullYear()} à ${p(now.getHours())}:${p(now.getMinutes())}`;
@@ -644,16 +644,16 @@ function drawTitle(pdf: jsPDF, title: string, underline = true, logo?: LogoImage
   }
   pdf.setFont("helvetica", "normal");
   if (logo) {
-    // Logo officiel calé contre la marge droite, centré sur la ligne du titre.
+    // Logo officiel calé en haut à gauche, centré sur la ligne du titre.
     const h = LOGO_H_MM;
     const w = h * logo.ratio;
-    pdf.addImage(logo.dataUrl, "PNG", PAGE_W - MARGIN - w, y - h * 0.72, w, h, undefined, "FAST");
+    pdf.addImage(logo.dataUrl, "PNG", MARGIN, y - h * 0.72, w, h, undefined, "FAST");
   }
   return TOP + BOTTOM; // mm réservés par le titre et ses marges
 }
 
 /** Logo KeyWeight prêt pour jsPDF (données PNG + rapport largeur/hauteur). */
-type LogoImage = { dataUrl: string; ratio: number };
+export type LogoImage = { dataUrl: string; ratio: number };
 
 /** Hauteur imposée du logo dans le PDF : 30 px ≈ 7,9 mm. */
 const LOGO_H_MM = 42 * 1.3 * 0.2646;
@@ -661,7 +661,7 @@ const LOGO_H_MM = 42 * 1.3 * 0.2646;
 let logoPromise: Promise<LogoImage | null> | null = null;
 
 /** Charge (une seule fois) le logo du bandeau et le convertit en PNG base64. */
-async function loadBrandLogo(): Promise<LogoImage | null> {
+export async function loadBrandLogo(): Promise<LogoImage | null> {
   if (!logoPromise) {
     logoPromise = (async () => {
       try {
