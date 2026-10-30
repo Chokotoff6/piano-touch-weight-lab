@@ -275,13 +275,26 @@ export function effectiveModels(brand: string, t: TypeKey): string[] {
   const removed = new Set((o.removed[b]?.[t] ?? []).map(normalizeEntry));
   const seen = new Set<string>();
   const out: string[] = [];
-  for (const m of [...base, ...(o.added[b]?.[t] ?? [])]) {
+  for (const m of base) {
     const n = normalizeEntry(m);
     if (!n || removed.has(n) || seen.has(n)) continue;
     seen.add(n);
     out.push(m);
   }
-  // Ordre traditionnel des facteurs (gamme puis taille) conservé ; ajouts personnels à la suite.
+  // Ordre d'usine conservé ; un ajout dérivé (K-500 AURES2) se place juste sous son modèle générique.
+  for (const m of o.added[b]?.[t] ?? []) {
+    const n = normalizeEntry(m);
+    if (!n || removed.has(n) || seen.has(n)) continue;
+    seen.add(n);
+    const root = factoryRoot(b, m);
+    const rootIdx = root ? out.findIndex((x) => modelKey(x) === modelKey(root)) : -1;
+    if (rootIdx < 0) { out.push(m); continue; }
+    const rk = modelKey(root!);
+    let i = rootIdx + 1;
+    while (i < out.length && modelKey(out[i]!).startsWith(rk) && factoryRoot(b, out[i]!) === root &&
+      out[i]!.localeCompare(m, "fr", { numeric: true, sensitivity: "base" }) < 0) i += 1;
+    out.splice(i, 0, m);
+  }
   return out;
 }
 
