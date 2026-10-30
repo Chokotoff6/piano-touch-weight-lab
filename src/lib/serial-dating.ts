@@ -100,7 +100,8 @@ export function chartKey(brand: string): string {
 function chartLookup(brand: string, n: number): number | null {
   const steps = PRODUCTION_YEAR_CHART.manufacturers[chartKey(brand)];
   if (!steps?.length) return null;
-  for (const s of steps) if (n <= s.max_sn) return s.year;
+  const sorted = steps.slice().sort((a, b) => a.max_sn - b.max_sn);
+  for (const s of sorted) if (n <= s.max_sn) return s.year;
   return null;
 }
 
