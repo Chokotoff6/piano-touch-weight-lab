@@ -27,6 +27,7 @@ import {
   factoryProfile,
   isSerialFormatValid,
   SERIAL_FORMAT_ERROR,
+  parseSerialNumber,
 } from "@/lib/serial-dating";
 import { HONEYPOT_NAME, markCsvOrigin, markSubmission, passesBotChecks } from "@/lib/anti-bot";
 import { buildCsv, buildExportFilename, downloadCsv, formatLocalDateTime } from "@/lib/export-csv";
@@ -2211,9 +2212,18 @@ function Index() {
     setInfo((p) => (p["fabrication"] === value ? p : { ...p, fabrication: value }));
   }, [info["marque"], info["sn_prefix"], info["sn_num"]]);
 
-  const onPrefixChange = (value: string) => {
-    updateInfo("sn_prefix", value.toUpperCase().slice(0, 3));
-    if (rule.autoPrefix && value.length >= 1) snRef.current["sn_num"]?.focus();
+  /** Champ unique : texte libre en cours de frappe, découpé au onBlur. */
+  const [snDraft, setSnDraft] = useState<string | null>(null);
+  const commitSerial = (raw: string) => {
+    const { prefix, num, suffix } = parseSerialNumber(raw);
+    setSnDraft(null);
+    setInfo((p) =>
+      p["sn_prefix"] === prefix && p["sn_num"] === num && p["sn_suffix"] === suffix
+        ? p
+        : { ...p, sn_prefix: prefix, sn_num: num, sn_suffix: suffix },
+    );
+    setDemoPersistedInk(false);
+    markDirty();
   };
 
   // --- Saisie des poids ---------------------------------------------------------
@@ -4111,49 +4121,20 @@ function Index() {
               </InfoDot>
               <div className="mt-1 flex items-end justify-start gap-4">
                 <div className="flex items-end gap-2">
-                  <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
-                     <span className="block whitespace-nowrap">{en ? "Letter" : "Lettre"}</span>
-                    <LockedIdentityTooltip id="prefix" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
-                    <input
-                      ref={(el) => {
-                        snRef.current["sn_prefix"] = el;
-                      }}
-                      value={info["sn_prefix"] ?? ""}
-                      onChange={(e) => onPrefixChange(e.target.value)}
-                      disabled={identityLocked || !rule.prefix}
-                      placeholder="ex: J, F"
-                    className={`${INPUT_CLASS} text-black max-w-[80px] disabled:border-muted-foreground/30`}
-                    />
-                    </LockedIdentityTooltip>
-                  </label>
-                  <label className={`min-w-[150px] ${SUB_LABEL_CLASS}`}>
-                    <span className="block whitespace-nowrap">{en ? "Serial N°" : "N° de série"}</span>
+                  <label className={`min-w-[220px] ${SUB_LABEL_CLASS}`}>
+                    <span className="block whitespace-nowrap">{en ? "Serial number" : "Numéro de série"}</span>
                     <LockedIdentityTooltip id="serial" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
                     <input
                       ref={(el) => {
                         snRef.current["sn_num"] = el;
                       }}
-                      value={info["sn_num"] ?? ""}
-                      onChange={(e) => updateInfo("sn_num", e.target.value.replace(/[^0-9]/g, ""))}
+                      value={snDraft ?? `${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`}
+                      onChange={(e) => setSnDraft(e.target.value.toUpperCase())}
+                      onBlur={(e) => commitSerial(e.currentTarget.value)}
                       disabled={identityLocked}
                       required
-                      inputMode="numeric"
-                      placeholder={en ? "Digits" : "Chiffres"}
-                      className={`${INPUT_CLASS} text-black max-w-[150px] disabled:border-muted-foreground/30`}
-                    />
-                    </LockedIdentityTooltip>
-                  </label>
-                  <label className={`min-w-[80px] ${SUB_LABEL_CLASS}`}>
-                    <span className="block whitespace-nowrap">{en ? "End letter" : "Lettre fin"}</span>
-                    <LockedIdentityTooltip id="suffix" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
-                    <input
-                      value={info["sn_suffix"] ?? ""}
-                      onChange={(e) =>
-                        updateInfo("sn_suffix", e.target.value.toUpperCase().slice(0, 3))
-                      }
-                      disabled={identityLocked || !rule.suffix}
-                      placeholder="ex: A, B"
-                      className={`${INPUT_CLASS} text-black max-w-[80px] disabled:border-muted-foreground/30`}
+                      placeholder={en ? "e.g. J1234567" : "ex : J1234567"}
+                      className={`${INPUT_CLASS} text-black max-w-[220px] disabled:border-muted-foreground/30`}
                     />
                     </LockedIdentityTooltip>
                   </label>

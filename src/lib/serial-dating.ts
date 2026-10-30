@@ -1,4 +1,5 @@
 import type { ClimateZone } from "./piano-constants";
+import { PRODUCTION_YEAR_CHART } from "@/data/serial-registers";
 
 /** Tables de datation : [seuil, année], évaluées du plus grand au plus petit. */
 type Table = Array<[number, number]>;
@@ -81,11 +82,44 @@ const lookup = (table: Table, n: number): number | null => {
 };
 
 /** Année de fabrication déduite de la marque et du numéro de série éclaté. */
+/** Découpe un numéro saisi d'un bloc : lettres de début / chiffres / lettres de fin. */
+export function parseSerialNumber(raw: string): { prefix: string; num: string; suffix: string } {
+  const s = (raw ?? "").toUpperCase().replace(/[\s\-_.\/]+/g, "");
+  const m = s.match(/^([A-Z]*)([0-9A-Z]*?)([A-Z]*)$/);
+  const prefix = (m?.[1] ?? "").slice(0, 3);
+  const num = (m?.[2] ?? "").replace(/[^0-9]/g, "");
+  const suffix = (m?.[3] ?? "").slice(0, 3);
+  return { prefix, num, suffix };
+}
+
+/** Thomaston USA (Yamaha) : reset de juin 1986 — période 1 si ≤ 504050, sinon période 2 dès 100001. */
+const THOMASTON_RESET_MAX = 504050;
+const THOMASTON_RESET_MIN = 100001;
+
+function chartLookup(key: string, p: string, n: number): number | null {
+  const regs = PRODUCTION_YEAR_CHART[key];
+  if (!regs?.length) return null;
+  const matching = regs
+    .filter((r) => r.prefix === undefined || clean(r.prefix) === p)
+    .sort((a, b) => (a.period ?? 0) - (b.period ?? 0));
+  for (const r of matching) {
+    if (r.factory?.toUpperCase() === "THOMASTON" && key === "YAMAHA") {
+      if (r.period === 1 && n > THOMASTON_RESET_MAX) continue;
+      if (r.period === 2 && n < THOMASTON_RESET_MIN) continue;
+    }
+    const y = lookup(r.table, n);
+    if (y !== null) return y;
+  }
+  return null;
+}
+
 export function datePiano(brand: string, prefix: string, num: string): number | null {
   const key = brandKey(brand);
   const p = clean(prefix);
   const n = parseInt(clean(num), 10);
   if (!Number.isFinite(n)) return null;
+  const fromChart = chartLookup(key, p, n);
+  if (fromChart !== null) return fromChart;
   switch (key) {
     case "YAMAHA":
       return p === "J" ? lookup(YAMAHA_J, n) : p === "" ? lookup(YAMAHA_PLAIN, n) : null;
