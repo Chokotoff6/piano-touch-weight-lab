@@ -2205,10 +2205,13 @@ function Index() {
 
 
   // Pré-remplissage de la date de fabrication (reste modifiable manuellement).
+  const [yearAuto, setYearAuto] = useState(false);
+  const fabricationRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     if (fabricationTouched.current) return;
     const year = datePiano(info["marque"] ?? "", info["sn_prefix"] ?? "", info["sn_num"] ?? "");
     const value = year === null ? "" : String(year);
+    setYearAuto(value !== "");
     setInfo((p) => (p["fabrication"] === value ? p : { ...p, fabrication: value }));
   }, [info["marque"], info["sn_prefix"], info["sn_num"]]);
 
@@ -4131,6 +4134,12 @@ function Index() {
                       value={snDraft ?? `${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`}
                       onChange={(e) => setSnDraft(e.target.value.toUpperCase())}
                       onBlur={(e) => commitSerial(e.currentTarget.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          fabricationRef.current?.focus();
+                        }
+                      }}
                       disabled={identityLocked}
                       required
                       placeholder={en ? "e.g. J1234567" : "ex : J1234567"}
@@ -4143,9 +4152,11 @@ function Index() {
                   <span className="block whitespace-nowrap">{en ? "Manufacturing date" : "Date fabrication"}</span>
                   <LockedIdentityTooltip id="year" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
                   <input
+                    ref={fabricationRef}
                     value={info["fabrication"] ?? ""}
                     onChange={(e) => {
                       fabricationTouched.current = true;
+                      setYearAuto(false);
                       updateInfo("fabrication", e.target.value);
                     }}
                     onBlur={(e) => {
@@ -4170,7 +4181,11 @@ function Index() {
                     </span>
                   )}
                 </label>
-                <div className="flex h-8 items-end gap-1 text-xs text-black" />
+                <div className="flex h-8 items-center gap-1 text-xs italic text-muted-foreground">
+                  {yearAuto && info["fabrication"]
+                    ? en ? "(Deduced from serial number. Editable.)" : "(Déduit via numéro de série. Ajustable.)"
+                    : null}
+                </div>
 
               </div>
               {!serialFormatValid && !isDemoActive() && !demoInk && (
