@@ -2230,7 +2230,7 @@ function Index() {
     if (serialChanged) setYearAuto(year !== null);
     setInfo((p) => {
       if (p["sn_prefix"] === prefix && p["sn_num"] === num && p["sn_suffix"] === suffix) return p;
-      const next = { ...p, sn_prefix: prefix, sn_num: num, sn_suffix: suffix };
+      const next: Record<string, string> = { ...p, sn_prefix: prefix, sn_num: num, sn_suffix: suffix };
       if (serialChanged) next.fabrication = year === null ? "" : String(year);
       return next;
     });
