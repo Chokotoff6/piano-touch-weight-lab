@@ -143,14 +143,16 @@ export function generateHistoryPdf(doc: KwDocument, info: Record<string, string>
   if (!doc.history_points.length) pdf.text("—", M, y);
 
   // Pied de page
-  const stamp = new Date().toLocaleDateString(en ? "en-GB" : "fr-FR");
+  const d = new Date();
+  const p2 = (n: number) => String(n).padStart(2, "0");
+  const stamp = `${p2(d.getDate())}-${p2(d.getMonth() + 1)}-${d.getFullYear()} ${en ? "at" : "à"} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
   const total = pdf.getNumberOfPages();
   for (let i = 1; i <= total; i++) {
     pdf.setPage(i);
     pdf.setFontSize(7);
     pdf.setTextColor(120);
     pdf.text("Keyweight.app © 2026", M, H - M);
-    pdf.text(`Page ${i} / ${total}`, W / 2, H - M, { align: "center" });
+    pdf.text(`Page ${i} / ${total}`, W - M, H - M - 3, { align: "right" });
     pdf.text(`${en ? "Exported on:" : "Exporté le :"} ${stamp}`, W - M, H - M, { align: "right" });
     pdf.setTextColor(0);
   }
