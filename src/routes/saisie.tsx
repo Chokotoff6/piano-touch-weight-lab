@@ -2231,7 +2231,7 @@ function Index() {
     setInfo((p) => {
       if (p["sn_prefix"] === prefix && p["sn_num"] === num && p["sn_suffix"] === suffix) return p;
       const next: Record<string, string> = { ...p, sn_prefix: prefix, sn_num: num, sn_suffix: suffix };
-      if (serialChanged) next.fabrication = year === null ? "" : String(year);
+      if (serialChanged) next["fabrication"] = year === null ? "" : String(year);
       return next;
     });
     setDemoPersistedInk(false);
