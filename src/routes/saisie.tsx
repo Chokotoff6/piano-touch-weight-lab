@@ -2226,14 +2226,12 @@ function Index() {
       fabricationTouched.current = false;
       setYearError(false);
     }
+    const year = serialChanged ? datePiano(info["marque"] ?? "", prefix, num) : null;
+    if (serialChanged) setYearAuto(year !== null);
     setInfo((p) => {
       if (p["sn_prefix"] === prefix && p["sn_num"] === num && p["sn_suffix"] === suffix) return p;
       const next = { ...p, sn_prefix: prefix, sn_num: num, sn_suffix: suffix };
-      if (serialChanged) {
-        const year = datePiano(p["marque"] ?? "", prefix, num);
-        next.fabrication = year === null ? "" : String(year);
-        setYearAuto(year !== null);
-      }
+      if (serialChanged) next.fabrication = year === null ? "" : String(year);
       return next;
     });
     setDemoPersistedInk(false);
