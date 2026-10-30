@@ -2205,10 +2205,13 @@ function Index() {
 
 
   // Pré-remplissage de la date de fabrication (reste modifiable manuellement).
+  const [yearAuto, setYearAuto] = useState(false);
+  const fabricationRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     if (fabricationTouched.current) return;
     const year = datePiano(info["marque"] ?? "", info["sn_prefix"] ?? "", info["sn_num"] ?? "");
     const value = year === null ? "" : String(year);
+    setYearAuto(value !== "");
     setInfo((p) => (p["fabrication"] === value ? p : { ...p, fabrication: value }));
   }, [info["marque"], info["sn_prefix"], info["sn_num"]]);
 

@@ -143,7 +143,7 @@ function yamahaLookup(p: string, n: number): number | null {
     case "J":
       return lookup(YAMAHA_J, n) ?? factoryLookup("Jakarta_Indonesie", n);
     case "":
-      return lookup(YAMAHA_PLAIN, n) ?? factoryLookup("Hamamatsu_Japon", n);
+      return factoryLookup("Hamamatsu_Japon", n) ?? lookup(YAMAHA_PLAIN, n);
     default:
       return null;
   }
