@@ -2220,11 +2220,22 @@ function Index() {
   const commitSerial = (raw: string) => {
     const { prefix, num, suffix } = parseSerialNumber(raw);
     setSnDraft(null);
-    setInfo((p) =>
-      p["sn_prefix"] === prefix && p["sn_num"] === num && p["sn_suffix"] === suffix
-        ? p
-        : { ...p, sn_prefix: prefix, sn_num: num, sn_suffix: suffix },
-    );
+    const serialChanged = (info["sn_prefix"] ?? "") !== prefix || (info["sn_num"] ?? "") !== num;
+    if (serialChanged) {
+      // Nouveau N° de série : la date manuelle antérieure n'est plus fiable, on recalcule.
+      fabricationTouched.current = false;
+      setYearError(false);
+    }
+    setInfo((p) => {
+      if (p["sn_prefix"] === prefix && p["sn_num"] === num && p["sn_suffix"] === suffix) return p;
+      const next = { ...p, sn_prefix: prefix, sn_num: num, sn_suffix: suffix };
+      if (serialChanged) {
+        const year = datePiano(p["marque"] ?? "", prefix, num);
+        next.fabrication = year === null ? "" : String(year);
+        setYearAuto(year !== null);
+      }
+      return next;
+    });
     setDemoPersistedInk(false);
     markDirty();
   };
