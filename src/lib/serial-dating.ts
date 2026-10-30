@@ -1,5 +1,5 @@
 import type { ClimateZone } from "./piano-constants";
-import { PRODUCTION_YEAR_CHART } from "@/data/serial-registers";
+import { PRODUCTION_YEAR_CHART, YAMAHA_REGISTERS } from "@/data/serial-registers";
 
 /** Tables de datation : [seuil, année], évaluées du plus grand au plus petit. */
 type Table = Array<[number, number]>;
@@ -114,10 +114,45 @@ export function datePiano(brand: string, prefix: string, num: string): number | 
   return chartLookup(brand, n);
 }
 
+/** Balayage par borne supérieure sur un registre d'usine Yamaha. */
+function factoryLookup(site: string, n: number): number | null {
+  const steps = YAMAHA_REGISTERS[site];
+  if (!steps?.length) return null;
+  for (const s of steps) if (n <= s.max_sn) return s.year;
+  return null;
+}
+
+/** Thomaston (USA) : série 500101–504050 jusqu'à mai 1986, puis reset à 100001 en juin 1986. */
+function thomastonLookup(n: number): number | null {
+  const steps = YAMAHA_REGISTERS["Thomaston_USA"] ?? [];
+  const pre = steps.filter((s) => s.max_sn >= 500000);
+  const post = steps.filter((s) => s.max_sn < 500000);
+  const series = n >= 500000 ? pre : post;
+  for (const s of series) if (n <= s.max_sn) return s.year;
+  return null;
+}
+
+function yamahaLookup(p: string, n: number): number | null {
+  switch (p) {
+    case "E":
+      return factoryLookup("Kemble_Angleterre", n);
+    case "H":
+      return factoryLookup("Hangzhou_Chine", n);
+    case "T":
+      return thomastonLookup(n);
+    case "J":
+      return lookup(YAMAHA_J, n) ?? factoryLookup("Jakarta_Indonesie", n);
+    case "":
+      return lookup(YAMAHA_PLAIN, n) ?? factoryLookup("Hamamatsu_Japon", n);
+    default:
+      return null;
+  }
+}
+
 function fineLookup(key: string, p: string, n: number): number | null {
   switch (key) {
     case "YAMAHA":
-      return p === "J" ? lookup(YAMAHA_J, n) : p === "" ? lookup(YAMAHA_PLAIN, n) : null;
+      return yamahaLookup(p, n);
     case "KAWAI":
       return p === "F" ? lookup(KAWAI_F, n) : p === "" ? lookup(KAWAI_PLAIN, n) : null;
     case "STEINWAY":
@@ -137,7 +172,7 @@ export const SERIAL_FORMAT_ERROR =
 type FormatSpec = { prefixes: string[]; suffixAllowed: boolean; digits: [number, number] };
 
 const FORMATS: Record<string, FormatSpec> = {
-  YAMAHA: { prefixes: ["", "J"], suffixAllowed: false, digits: [6, 7] },
+  YAMAHA: { prefixes: ["", "J", "E", "H", "T"], suffixAllowed: false, digits: [4, 7] },
   KAWAI: { prefixes: ["", "F"], suffixAllowed: true, digits: [4, 7] },
   STEINWAY: { prefixes: [""], suffixAllowed: false, digits: [6, 6] },
   BECHSTEIN: { prefixes: [""], suffixAllowed: false, digits: [6, 6] },
