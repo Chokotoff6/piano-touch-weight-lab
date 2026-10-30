@@ -1,4 +1,5 @@
 import type { ClimateZone } from "./piano-constants";
+import { PRODUCTION_YEAR_CHART } from "@/data/serial-registers";
 
 /** Tables de datation : [seuil, année], évaluées du plus grand au plus petit. */
 type Table = Array<[number, number]>;
