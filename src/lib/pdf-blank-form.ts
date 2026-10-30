@@ -266,27 +266,64 @@ function drawFooter(pdf: jsPDF, lang: "fr" | "en", pageWidth: number, y: number)
   pdf.setTextColor(0);
 }
 
-/** Option 4 : formulaire vierge, dessin graphique du clavier (4 sections / 2 pages). */
-export function generateBlankKeyboardPdf(
+/** Option 4 : feuille de pesée papier (paysage, 2 pages), à remplir au crayon. */
+export async function generateBlankKeyboardPdf(
   filename: string,
   lang: "fr" | "en" = "fr",
-  meta: BlankFormMeta = {},
-): void {
+  _meta: BlankFormMeta = {},
+): Promise<void> {
   const isEn = lang === "en";
   const W = 297;
+  const H = 210;
   const pdf = new jsPDF({ orientation: "landscape", format: "a4", unit: "mm" });
+  const { loadBrandLogo } = await import("./pdf-report");
+  const logo = await loadBrandLogo();
 
-  // Dessin miroir de l'UI : blanches pleine hauteur, noires 62 % centrees
-  // sur la separation, deux casiers de saisie empiles dans le corps.
+  const drawLogo = () => {
+    if (!logo) return;
+    const h = 9;
+    pdf.addImage(logo.dataUrl, "PNG", MARGIN, 8, h * logo.ratio, h, undefined, "FAST");
+  };
+
+  // Cadre Info piano vierge (sans antécédents ni intensité d'usage).
+  const drawInfoBox = (top: number): number => {
+    const labels = isEn
+      ? ["Brand", "Model", "Serial number", "Piano type", "Year", "Remarks"]
+      : ["Marque", "Modèle", "N° de série", "Type de piano", "Année", "Remarques"];
+    const boxH = 30;
+    pdf.setDrawColor(60);
+    pdf.setLineWidth(0.3);
+    pdf.rect(MARGIN, top, W - MARGIN * 2, boxH);
+    pdf.setFontSize(8);
+    pdf.setFont("helvetica", "bold");
+    pdf.text(isEn ? "Piano information" : "Informations piano", MARGIN + 3, top + 5);
+    pdf.setFont("helvetica", "normal");
+    const colW = (W - MARGIN * 2 - 6) / 3;
+    pdf.setDrawColor(170);
+    pdf.setLineWidth(0.2);
+    labels.slice(0, 5).forEach((label, i) => {
+      const col = i % 3;
+      const row = Math.floor(i / 3);
+      const x = MARGIN + 3 + col * colW;
+      const y = top + 12 + row * 8;
+      pdf.text(`${label} :`, x, y);
+      const lx = x + pdf.getTextWidth(`${label} : `) + 1;
+      pdf.line(lx, y + 0.8, x + colW - 4, y + 0.8);
+    });
+    const ry = top + 12 + 16;
+    const rx = MARGIN + 3;
+    pdf.text(`${labels[5]} :`, rx, ry);
+    pdf.line(rx + pdf.getTextWidth(`${labels[5]} : `) + 1, ry + 0.8, W - MARGIN - 4, ry + 0.8);
+    return top + boxH;
+  };
+
   const drawKeyboard = (from: number, to: number, top: number) => {
     const keys = Array.from({ length: to - from + 1 }, (_, i) => from + i);
     const whites = keys.filter((k) => !isBlackKey(k)).length;
-    const avail = W - MARGIN * 2;
-    const wKey = avail / whites;
+    const wKey = (W - MARGIN * 2) / whites;
     const bKey = wKey * 0.605;
-    const kbH = 46;
+    const kbH = 50;
     const blackH = kbH * 0.62;
-
     let whiteIdx = 0;
     const geo = new Map<number, { x: number; w: number; black: boolean }>();
     pdf.setDrawColor(40);
@@ -301,38 +338,33 @@ export function generateBlankKeyboardPdf(
     }
     whiteIdx = 0;
     for (const k of keys) {
-      if (!isBlackKey(k)) {
-        whiteIdx++;
-        continue;
-      }
+      if (!isBlackKey(k)) { whiteIdx++; continue; }
       const x = MARGIN + whiteIdx * wKey - bKey / 2;
       pdf.setFillColor(20, 20, 20);
       pdf.rect(x, top, bKey, blackH, "F");
       geo.set(k, { x, w: bKey, black: true });
     }
-
-    // Casiers de saisie Wd / Wa dans le corps de chaque touche
-    const fh = 5;
+    const fh = 6;
     for (const k of keys) {
       const g = geo.get(k)!;
       const fw = Math.max(g.w - 1, 3.4);
       const fx = g.x + (g.w - fw) / 2;
       const yWd = g.black ? top + blackH - fh * 2 - 2.4 : top + kbH - fh * 2 - 6;
       const yWa = yWd + fh + 1.2;
-      // Repere textuel gris tres clair, visible sous le champ vide
-      pdf.setFontSize(5);
-      pdf.setTextColor(g.black ? 120 : 205);
       pdf.setFillColor(255, 255, 255);
-      if (g.black) pdf.rect(fx, yWd, fw, fh * 2 + 1.2, "F");
-      pdf.text(lang === "en" ? "DW" : "PD", fx + fw / 2, yWd + fh - 1.4, { align: "center" });
-      pdf.text(lang === "en" ? "UW" : "PR", fx + fw / 2, yWa + fh - 1.4, { align: "center" });
+      pdf.setDrawColor(g.black ? 255 : 150);
+      pdf.setLineWidth(0.15);
+      pdf.rect(fx, yWd, fw, fh, "FD");
+      pdf.rect(fx, yWa, fw, fh, "FD");
+      pdf.setFontSize(4.5);
+      pdf.setTextColor(185);
+      pdf.text(isEn ? "DW" : "PD", fx + 0.6, yWd + 1.9);
+      pdf.text(isEn ? "UW" : "PR", fx + 0.6, yWa + 1.9);
       pdf.setTextColor(0);
-      textField(pdf, `wa_${k}`, fx, yWd, fw, fh, "", 5);
-      textField(pdf, `wd_${k}`, fx, yWa, fw, fh, "", 5);
-      // Numero de touche sous le clavier
-      pdf.setFontSize(5);
-      pdf.text(String(k), g.x + g.w / 2, top + kbH + 3, { align: "center" });
+      pdf.setFontSize(5.5);
+      pdf.text(String(k), g.x + g.w / 2, top + kbH + 3.2, { align: "center" });
     }
+    pdf.setDrawColor(0);
   };
 
   const section = (from: number, to: number, top: number) => {
@@ -342,24 +374,35 @@ export function generateBlankKeyboardPdf(
     drawKeyboard(from, to, top);
   };
 
-  header(
-    pdf,
-    isEn
-      ? "PIANO TOUCH ANALYZER - BLANK KEYBOARD FORM"
-      : "PIANO TOUCH ANALYZER - FORMULAIRE CLAVIER VIERGE",
-    W,
-  );
-  drawCompliance(pdf, lang, W);
-  const y = drawIdentity(pdf, meta, lang, 24, W, 40, 90);
-  section(1, 22, y + 8);
-  section(23, 44, y + 68);
+  const footer = (page: number) => {
+    pdf.setFontSize(7);
+    pdf.setTextColor(120);
+    pdf.text("Keyweight.app © 2026", MARGIN, H - MARGIN + 4);
+    pdf.text(`Page ${page} / 2`, W - MARGIN, H - MARGIN + 4, { align: "right" });
+    pdf.setTextColor(0);
+  };
+
+  const title = isEn ? "BLANK WEIGHING SHEET" : "FEUILLE DE PESÉE VIERGE";
+  const drawTitle = () => {
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(13);
+    pdf.text(title, W / 2, 15, { align: "center" });
+    pdf.setFont("helvetica", "normal");
+  };
+
+  drawLogo();
+  drawTitle();
+  const y = drawInfoBox(22);
+  section(1, 22, y + 10);
+  section(23, 44, y + 76);
+  footer(1);
 
   pdf.addPage("a4", "landscape");
-  pdf.setFontSize(12);
-  pdf.text(isEn ? "KEYS 45 - 88" : "TOUCHES 45 - 88", W / 2, 12, { align: "center" });
-  section(45, 66, 26);
-  section(67, 88, 96);
-  drawFooter(pdf, lang, W, 190);
+  drawLogo();
+  drawTitle();
+  section(45, 66, 32);
+  section(67, 88, 104);
+  footer(2);
 
   pdf.save(filename);
 }
