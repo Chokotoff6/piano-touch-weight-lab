@@ -92,24 +92,15 @@ export function parseSerialNumber(raw: string): { prefix: string; num: string; s
   return { prefix, num, suffix };
 }
 
-/** Thomaston USA (Yamaha) : reset de juin 1986 — période 1 si ≤ 504050, sinon période 2 dès 100001. */
-const THOMASTON_RESET_MAX = 504050;
-const THOMASTON_RESET_MIN = 100001;
+/** Clé du registre : majuscules, "&", ".", espaces et tirets → "_". */
+export function chartKey(brand: string): string {
+  return (brand ?? "").toUpperCase().replace(/[&.\s\-]+/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
+}
 
-function chartLookup(key: string, p: string, n: number): number | null {
-  const regs = PRODUCTION_YEAR_CHART[key];
-  if (!regs?.length) return null;
-  const matching = regs
-    .filter((r) => r.prefix === undefined || clean(r.prefix) === p)
-    .sort((a, b) => (a.period ?? 0) - (b.period ?? 0));
-  for (const r of matching) {
-    if (r.factory?.toUpperCase() === "THOMASTON" && key === "YAMAHA") {
-      if (r.period === 1 && n > THOMASTON_RESET_MAX) continue;
-      if (r.period === 2 && n < THOMASTON_RESET_MIN) continue;
-    }
-    const y = lookup(r.table, n);
-    if (y !== null) return y;
-  }
+function chartLookup(brand: string, n: number): number | null {
+  const steps = PRODUCTION_YEAR_CHART.manufacturers[chartKey(brand)];
+  if (!steps?.length) return null;
+  for (const s of steps) if (n <= s.max_sn) return s.year;
   return null;
 }
 
@@ -118,8 +109,12 @@ export function datePiano(brand: string, prefix: string, num: string): number | 
   const p = clean(prefix);
   const n = parseInt(clean(num), 10);
   if (!Number.isFinite(n)) return null;
-  const fromChart = chartLookup(key, p, n);
-  if (fromChart !== null) return fromChart;
+  const fine = fineLookup(key, p, n);
+  if (fine !== null) return fine;
+  return chartLookup(brand, n);
+}
+
+function fineLookup(key: string, p: string, n: number): number | null {
   switch (key) {
     case "YAMAHA":
       return p === "J" ? lookup(YAMAHA_J, n) : p === "" ? lookup(YAMAHA_PLAIN, n) : null;
