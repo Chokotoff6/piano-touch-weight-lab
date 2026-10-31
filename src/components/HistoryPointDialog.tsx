@@ -3,7 +3,7 @@ import { Check } from "lucide-react";
 import {
   AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useInterventions, interventionLabel, INITIAL_DIAGNOSTIC_ID } from "@/lib/interventions";
+import { useInterventions, interventionLabel, INITIAL_DIAGNOSTIC_ID, ANTECEDENT_GROUPS, ANTECEDENT_ITEMS, ANTECEDENT_KEYWORDS } from "@/lib/interventions";
 
 type Props = {
   open: boolean;
@@ -20,19 +20,30 @@ type Props = {
 
 /** Choix multiple des interventions + « Autre » libre, pour nommer un point d'historique. */
 export function HistoryPointDialog({ open, en, mode, boxClassName, btnClassName, onCancel, onUpdateCurrent, onCreate }: Props) {
-  const items = useInterventions();
+  const shortList = useInterventions();
+  // Catalogue unifié : liste d'atelier + catalogue complet (mêmes familles que l'historique instrument).
+  const shortIds = new Set(shortList.map((i) => i.id));
+  const items = [...shortList, ...ANTECEDENT_ITEMS.filter((i) => !shortIds.has(i.id))];
   const [picked, setPicked] = useState<string[]>([]);
   const [details, setDetails] = useState<Record<string, string>>({});
   const [other, setOther] = useState(false);
   const [otherText, setOtherText] = useState("");
+  const [query, setQuery] = useState("");
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const q = fold(query.trim());
+  const matchItem = (it: { id: string; fr: string; en: string }) =>
+    !q || fold(`${it.fr} ${it.en} ${ANTECEDENT_KEYWORDS[it.id] ?? ""}`).includes(q);
 
   useEffect(() => {
     if (!open) return;
-    setPicked(mode === "first" && items.some((i) => i.id === INITIAL_DIAGNOSTIC_ID) ? [INITIAL_DIAGNOSTIC_ID] : []);
+    setPicked(mode === "first" && shortList.some((i) => i.id === INITIAL_DIAGNOSTIC_ID) ? [INITIAL_DIAGNOSTIC_ID] : []);
     setDetails({});
     setOther(false);
     setOtherText("");
-  }, [open, mode, items]);
+    setQuery("");
+    setOpenGroup(null);
+  }, [open, mode, shortList]);
 
   const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   const name = [
@@ -62,14 +73,45 @@ export function HistoryPointDialog({ open, en, mode, boxClassName, btnClassName,
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="flex flex-wrap gap-2">
-          {items.map((i) => (
+          {shortList.filter((i) => matchItem(i)).map((i) => (
             <button key={i.id} type="button" aria-pressed={picked.includes(i.id)} className={chip(picked.includes(i.id))} onClick={() => toggle(i.id)}>
               {picked.includes(i.id) && <Check className="h-3.5 w-3.5" />}{interventionLabel(i, en)}
             </button>
           ))}
           <button type="button" aria-pressed={other} className={chip(other)} onClick={() => setOther((o) => !o)}>
-            {other && <Check className="h-3.5 w-3.5" />}{en ? "Other" : "Autre"}
+            {other && <Check className="h-3.5 w-3.5" />}{en ? "+ Add" : "+ Ajouter"}
           </button>
+        </div>
+        <div className="relative">
+          <input value={query} onChange={(e) => setQuery(e.target.value)} className="list-input w-full pr-7"
+            placeholder={en ? "Search an intervention (e.g. hammers, bushings, pinblock)" : "Rechercher une intervention (ex : marteaux, mortaises, sommier)"} />
+          {query && (
+            <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" aria-label={en ? "Clear" : "Effacer"} onClick={() => setQuery("")}>✕</button>
+          )}
+        </div>
+        <div className="max-h-[40vh] space-y-1 overflow-y-auto pr-1">
+          {ANTECEDENT_GROUPS.map((g) => {
+            const visible = g.items.filter((it) => !shortIds.has(it.id) && matchItem(it));
+            if (visible.length === 0) return null;
+            const count = visible.filter((it) => picked.includes(it.id)).length;
+            const isOpen = q !== "" || openGroup === g.id;
+            return (
+              <div key={g.id} className="rounded border border-border">
+                <button type="button" className="flex w-full px-2 py-1 text-left text-sm font-semibold" onClick={() => setOpenGroup(openGroup === g.id ? null : g.id)}>
+                  {isOpen ? "▾" : "▸"} {en ? g.en : g.fr}{count > 0 && ` (${count})`}
+                </button>
+                {isOpen && (
+                  <div className="flex flex-wrap gap-1.5 px-2 pb-2">
+                    {visible.map((i) => (
+                      <button key={i.id} type="button" aria-pressed={picked.includes(i.id)} className={chip(picked.includes(i.id))} onClick={() => { toggle(i.id); if (q) { setOpenGroup(g.id); setQuery(""); } }}>
+                        {picked.includes(i.id) && <Check className="h-3.5 w-3.5" />}{interventionLabel(i, en)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
         {items.filter((i) => picked.includes(i.id) && i.id !== INITIAL_DIAGNOSTIC_ID).map((i) => (
           <div key={`d${i.id}`} className="flex items-center gap-2">
