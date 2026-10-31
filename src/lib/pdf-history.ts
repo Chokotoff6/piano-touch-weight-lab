@@ -96,7 +96,8 @@ export function generateHistoryPdf(doc: KwDocument, info: Record<string, string>
   }
   y += 5;
 
-  // 2. Antécédents déclarés (si renseignés)
+  // 2. Chronologie unique, du plus récent au plus ancien : points KeyWeight,
+  //    repère « Début suivi KeyWeight », puis événements passés datés.
   const ids = parseAntecedents(info["antecedents"]).filter((id) => id !== "initial");
   const dates = parseAntecedentDates(info["antecedents_dates"]);
   const details = parseAntecedentDetails(info["antecedents_details"]);
@@ -107,40 +108,50 @@ export function generateHistoryPdf(doc: KwDocument, info: Record<string, string>
       const det = (details[id] ?? "").trim();
       return { label: `${it ? (en ? it.en : it.fr) : id}${det ? ` (${det})` : ""}`, date: dates[id] ?? "" };
     }),
-    ...customs.map((c) => ({ label: c.label.trim(), date: c.date })),
+    ...customs.map((c) => ({ label: `${c.label.trim()}${c.detail?.trim() ? ` (${c.detail.trim()})` : ""}`, date: c.date })),
   ];
-  const dKey = (d: string) => (/^\d{4}/.test(d ?? "") ? d : "9999");
-  ante.sort((a, b) => dKey(a.date).localeCompare(dKey(b.date)));
-  if (ante.length) {
-    section(en ? "DECLARED PRIOR SERVICE" : "ANTÉCÉDENTS DÉCLARÉS");
-    ante.forEach((a) => {
-      pdf.text(`•  ${a.date ? fmtMonth(a.date) + " — " : ""}${a.label}`, M + 2, y);
-      y += 5;
-    });
-    y += 4;
-  }
+  ante.sort((a, b) => (b.date || "0").localeCompare(a.date || "0"));
 
-  // 3. Points d'historique KeyWeight
-  section(en ? "KEYWEIGHT SERVICE LOG" : "JOURNAL DES INTERVENTIONS KEYWEIGHT");
   const cols = [M, M + 24, M + 92, M + 112, M + 132, M + 152, M + 170] as const;
-  const head = [en ? "Date" : "Date", en ? "Work carried out" : "Interventions", en ? "DW avg" : "PD moy", en ? "UW avg" : "PR moy", en ? "BW avg" : "PE moy", en ? "F avg" : "F moy", en ? "Keys" : "Touches"];
-  pdf.setFont("helvetica", "bold");
-  head.forEach((h, i) => pdf.text(h, cols[i] ?? M, y));
-  pdf.setFont("helvetica", "normal");
-  y += 2;
-  pdf.setLineWidth(0.15);
-  pdf.line(M, y, W - M, y);
-  y += 4.5;
-  doc.history_points.forEach((p) => {
-    const av = historyAverages(p.rows);
-    const label = pdf.splitTextToSize(p.name || "—", cols[2] - cols[1] - 3) as string[];
-    if (y + label.length * 4.5 > H - 22) { pdf.addPage(); y = M + 6; }
-    pdf.text(fmtDate(p.created_at, en), cols[0], y);
-    pdf.text(label, cols[1], y);
-    [g(av.pd), g(av.pr), g(av.pe), g(av.f), String(av.count)].forEach((v, i) => pdf.text(v, cols[i + 2] ?? M, y));
-    y += Math.max(1, label.length) * 4.5 + 1.5;
+  if (doc.history_points.length) {
+    const head = [en ? "Date" : "Date", en ? "Work carried out" : "Interventions", en ? "DW avg" : "PD moy", en ? "UW avg" : "PR moy", en ? "BW avg" : "PE moy", en ? "F avg" : "F moy", en ? "Keys" : "Touches"];
+    pdf.setFont("helvetica", "bold");
+    head.forEach((h, i) => pdf.text(h, cols[i] ?? M, y));
+    pdf.setFont("helvetica", "normal");
+    y += 2;
+    pdf.setLineWidth(0.15);
+    pdf.line(M, y, W - M, y);
+    y += 4.5;
+    [...doc.history_points].reverse().forEach((p) => {
+      const av = historyAverages(p.rows);
+      const label = pdf.splitTextToSize(p.name || "—", cols[2] - cols[1] - 3) as string[];
+      if (y + label.length * 4.5 > H - 22) { pdf.addPage(); y = M + 6; }
+      pdf.text(fmtDate(p.created_at, en), cols[0], y);
+      pdf.text(label, cols[1], y);
+      [g(av.pd), g(av.pr), g(av.pe), g(av.f), String(av.count)].forEach((v, i) => pdf.text(v, cols[i + 2] ?? M, y));
+      y += Math.max(1, label.length) * 4.5 + 1.5;
+    });
+    // Repère de début de suivi
+    if (y > H - 30) { pdf.addPage(); y = M + 6; }
+    y += 2;
+    const sep = `↑  ${en ? "Start of KeyWeight tracking" : "Début suivi KeyWeight"}  ↑`.replace(/↑/g, "^");
+    pdf.setFont("helvetica", "bold");
+    const tw = pdf.getTextWidth(sep);
+    pdf.setLineWidth(0.3);
+    pdf.line(M, y - 1, W / 2 - tw / 2 - 3, y - 1);
+    pdf.line(W / 2 + tw / 2 + 3, y - 1, W - M, y - 1);
+    pdf.text(sep, W / 2, y, { align: "center" });
+    pdf.setFont("helvetica", "normal");
+    y += 7;
+  }
+  ante.forEach((a) => {
+    const lines = pdf.splitTextToSize(a.label, W - 2 * M - 26) as string[];
+    if (y + lines.length * 4.5 > H - 22) { pdf.addPage(); y = M + 6; }
+    pdf.text(a.date ? fmtMonth(a.date) : "—", cols[0], y);
+    pdf.text(lines, cols[1], y);
+    y += lines.length * 4.5 + 1.5;
   });
-  if (!doc.history_points.length) pdf.text("—", M, y);
+  if (!doc.history_points.length && !ante.length) pdf.text("—", M, y);
 
   // Pied de page
   const d = new Date();
