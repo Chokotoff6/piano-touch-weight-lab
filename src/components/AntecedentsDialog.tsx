@@ -50,7 +50,7 @@ type Props = {
   minYear?: number;
   /** Points d'historique KeyWeight du .kw actif (lecture seule). */
   points?: KwHistoryPoint[];
-  activePointId?: string;
+  activePointId?: string | undefined;
   onSave: (ids: string[], datesRaw: string, customRaw: string, detailsRaw: string) => void;
 };
 
