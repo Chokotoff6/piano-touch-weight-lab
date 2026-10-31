@@ -85,6 +85,15 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
     setEditing(points.length === 0 && ids.length === 0 && parseCustomAntecedents(customRaw).length === 0);
   }
   if (!open && lastOpen) setLastOpen(false);
+  // Événements passés (état en cours d'édition), du plus récent au plus ancien.
+  const pastEntries = [
+    ...sel.map((id) => {
+      const it = items.find((i) => i.id === id);
+      const det = (details[id] ?? "").trim();
+      return { label: `${it ? interventionLabel(it, en) : id}${det ? ` (${det})` : ""}`, date: dates[id] ?? "" };
+    }),
+    ...customs.filter((c) => c.label.trim()).map((c) => ({ label: `${c.label.trim()}${c.detail?.trim() ? ` (${c.detail.trim()})` : ""}`, date: c.date })),
+  ].sort((a, b) => (b.date || "0").localeCompare(a.date || "0"));
   const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const q = fold(query.trim());
   const matchItem = (it: { id: string; fr: string; en: string }) =>
