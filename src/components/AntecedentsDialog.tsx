@@ -1,4 +1,6 @@
 import { useState } from "react";
+import type { KwHistoryPoint } from "@/lib/kw-file";
+import { historyAverages } from "@/lib/pdf-history";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useInterventions, interventionLabel, INITIAL_DIAGNOSTIC_ID, ANTECEDENT_GROUPS, ANTECEDENT_ITEMS, ANTECEDENT_KEYWORDS } from "@/lib/interventions";
@@ -46,15 +48,24 @@ type Props = {
   customRaw?: string | undefined;
   detailsRaw?: string | undefined;
   minYear?: number;
+  /** Points d'historique KeyWeight du .kw actif (lecture seule). */
+  points?: KwHistoryPoint[];
+  activePointId?: string;
   onSave: (ids: string[], datesRaw: string, customRaw: string, detailsRaw: string) => void;
 };
 
-export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, customRaw, detailsRaw, minYear, onSave }: Props) {
+export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, customRaw, detailsRaw, minYear, points = [], activePointId, onSave }: Props) {
   const workshop = useInterventions().filter((i) => i.id !== INITIAL_DIAGNOSTIC_ID);
   const known = new Set(ANTECEDENT_ITEMS.map((i) => i.id));
   // Étiquettes déjà cochées hors catalogue (ex. ajouts d'atelier anciens) : conservées et affichées.
   const extraItems = workshop.filter((i) => !known.has(i.id) && i.id !== "final" && ids.includes(i.id));
   const items = [...ANTECEDENT_ITEMS, ...extraItems];
+  const g = (v: number | null) => (v === null ? "—" : `${v.toFixed(1).replace(".", en ? "." : ",")} g`);
+  const fmtMonthLabel = (v: string) => {
+    const [y = "", m = ""] = v.split("-");
+    const mi = Number(m) - 1;
+    return m && mi >= 0 ? `${(en ? MONTHS_EN : MONTHS_FR)[mi]} ${y}`.trim() : y;
+  };
   const [sel, setSel] = useState<string[]>(ids);
   const [dates, setDates] = useState<Record<string, string>>(parseAntecedentDates(datesRaw));
   const [details, setDetails] = useState<Record<string, string>>(parseAntecedentDetails(detailsRaw));
