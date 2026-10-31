@@ -91,10 +91,10 @@ const safe = (v: unknown) =>
     .replace(/[^A-Za-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-/** Nom stable par piano : Marque_Modele_SN.kw (sans date), sans caractère spécial. */
+/** Nom stable par piano : MARQUE_MODELE_ANNEE_SN-xxx.kw (sans date de mesure). */
 export function kwFileName(info: Record<string, string>): string {
   const sn = safe(`${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`);
-  const parts = [safe(info["marque"]), safe(info["modele"]), sn].filter(Boolean);
+  const parts = [safe(info["marque"]).toUpperCase(), safe(info["modele"]).toUpperCase(), safe(info["fabrication"]), sn ? `SN-${sn.toUpperCase()}` : ""].filter(Boolean);
   return `${parts.join("_") || "piano"}.kw`;
 }
 
@@ -323,13 +323,15 @@ export async function saveDraftToKw(): Promise<boolean> {
   return true;
 }
 
-/** Nom de PDF : MARQUE_MODELE_SERIE_AAAA-MM-JJ_HHMM_SUFFIXE.pdf (INCONNU si vide). */
+/** Nom de PDF : MARQUE_MODELE_ANNEE_SN-xxx_AAAA-MM-JJ_SUFFIXE.pdf (champs vides omis). */
 export function pianoPdfName(suffix: string, info?: Record<string, string>): string {
   const src = info ?? readDraftProfile().info;
   const seg = (v: string | undefined) =>
-    (v ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-|-$/g, "") || "INCONNU";
+    (v ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-|-$/g, "");
   const d = new Date();
   const p = (n: number) => String(n).padStart(2, "0");
-  const stamp = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`;
-  return `${seg(src["marque"])}_${seg(src["modele"])}_${seg(kwSerial(src))}_${stamp}_${suffix}.pdf`;
+  const stamp = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  const sn = seg(kwSerial(src));
+  const parts = [seg(src["marque"]), seg(src["modele"]), seg(src["fabrication"]), sn ? `SN-${sn}` : "", stamp, suffix].filter(Boolean);
+  return `${parts.join("_")}.pdf`;
 }
