@@ -114,6 +114,8 @@ import {
   writeKwFile,
   type KwDocument,
   pianoPdfName,
+  kwSerial,
+  differentSerial,
 } from "@/lib/kw-file";
 import {
   AlertDialog,
@@ -3131,6 +3133,17 @@ function Index() {
         if (!doc) {
           showMessage(lang === "en" ? "⚠️ Invalid .kw file." : "⚠️ Fichier .kw invalide.");
           return;
+        }
+        {
+          const curSn = kwSerial(info);
+          const inSn = kwSerial(doc.info);
+          const hasWork = rows.some((r) => r.wd || r.wa) || Boolean(info["marque"] || info["modele"]);
+          if (hasWork && differentSerial(curSn, inSn)) {
+            const ok = window.confirm(lang === "en"
+              ? `The file's serial number (${inSn}) differs from the current piano (${curSn}). Replace the current sheet?`
+              : `Le n° de série du fichier (${inSn}) diffère du piano en cours (${curSn}). Remplacer la fiche en cours ?`);
+            if (!ok) return;
+          }
         }
         kwDocRef.current = doc;
         setKwActive(Boolean(kwDocRef.current));

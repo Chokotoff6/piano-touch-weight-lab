@@ -135,7 +135,12 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
     const [y = "", m = ""] = value.split("-");
     return (
       <>
-        <select value={m} onChange={(e) => onPart("m", e.target.value)} className={selectCls} aria-label={en ? "Month" : "Mois"}
+        <select value={m} onChange={(e) => {
+          onPart("m", e.target.value);
+          // Enchaînement : ouvre directement le sélecteur d'année.
+          const next = e.currentTarget.nextElementSibling as (HTMLSelectElement & { showPicker?: () => void }) | null;
+          if (next && e.target.value) { next.focus(); try { next.showPicker?.(); } catch { /* non supporté */ } }
+        }} className={selectCls} aria-label={en ? "Month" : "Mois"}
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); } }}>
           <option value="">{en ? "Month" : "Mois"}</option>
           {months.map((label, i) => <option key={i} value={String(i + 1).padStart(2, "0")}>{label}</option>)}
@@ -163,7 +168,6 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
                 <div key={p.id} className="border-b border-border px-3 py-2 text-sm">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-semibold">{Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString(en ? "en-GB" : "fr-FR")}</span>
-                    {p.id === activePointId && <span className="rounded border border-foreground/40 px-1.5 text-xs">{en ? "Active point" : "Point actif"}</span>}
                   </div>
                   <div>{p.name || "—"}</div>
                   <div className="text-xs text-muted-foreground">
