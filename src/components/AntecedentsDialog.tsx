@@ -1,4 +1,6 @@
 import { useState } from "react";
+import type { KwHistoryPoint } from "@/lib/kw-file";
+import { historyAverages } from "@/lib/pdf-history";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useInterventions, interventionLabel, INITIAL_DIAGNOSTIC_ID, ANTECEDENT_GROUPS, ANTECEDENT_ITEMS, ANTECEDENT_KEYWORDS } from "@/lib/interventions";
@@ -46,15 +48,24 @@ type Props = {
   customRaw?: string | undefined;
   detailsRaw?: string | undefined;
   minYear?: number;
+  /** Points d'historique KeyWeight du .kw actif (lecture seule). */
+  points?: KwHistoryPoint[];
+  activePointId?: string | undefined;
   onSave: (ids: string[], datesRaw: string, customRaw: string, detailsRaw: string) => void;
 };
 
-export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, customRaw, detailsRaw, minYear, onSave }: Props) {
+export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, customRaw, detailsRaw, minYear, points = [], activePointId, onSave }: Props) {
   const workshop = useInterventions().filter((i) => i.id !== INITIAL_DIAGNOSTIC_ID);
   const known = new Set(ANTECEDENT_ITEMS.map((i) => i.id));
   // Étiquettes déjà cochées hors catalogue (ex. ajouts d'atelier anciens) : conservées et affichées.
   const extraItems = workshop.filter((i) => !known.has(i.id) && i.id !== "final" && ids.includes(i.id));
   const items = [...ANTECEDENT_ITEMS, ...extraItems];
+  const g = (v: number | null) => (v === null ? "—" : `${v.toFixed(1).replace(".", en ? "." : ",")} g`);
+  const fmtMonthLabel = (v: string) => {
+    const [y = "", m = ""] = v.split("-");
+    const mi = Number(m) - 1;
+    return m && mi >= 0 ? `${(en ? MONTHS_EN : MONTHS_FR)[mi]} ${y}`.trim() : y;
+  };
   const [sel, setSel] = useState<string[]>(ids);
   const [dates, setDates] = useState<Record<string, string>>(parseAntecedentDates(datesRaw));
   const [details, setDetails] = useState<Record<string, string>>(parseAntecedentDetails(detailsRaw));
@@ -65,13 +76,24 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [lastOpen, setLastOpen] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
   const dKey = (d: string | undefined) => (/^\d{4}/.test(d ?? "") ? (d as string) : "9999");
   if (open && !lastOpen) {
     const d0 = parseAntecedentDates(datesRaw);
     setLastOpen(true); setSel([...ids].sort((a, b) => dKey(d0[a]).localeCompare(dKey(d0[b])))); setDates(d0); setDetails(parseAntecedentDetails(detailsRaw));
     setCustoms(parseCustomAntecedents(customRaw).sort((a, b) => dKey(a.date).localeCompare(dKey(b.date)))); setRemovedCustoms([]); setDraft(null); setQuery(""); setOpenGroup(null); setFocusId(null);
+    setEditing(points.length === 0 && ids.length === 0 && parseCustomAntecedents(customRaw).length === 0);
   }
   if (!open && lastOpen) setLastOpen(false);
+  // Événements passés (état en cours d'édition), du plus récent au plus ancien.
+  const pastEntries = [
+    ...sel.map((id) => {
+      const it = items.find((i) => i.id === id);
+      const det = (details[id] ?? "").trim();
+      return { label: `${it ? interventionLabel(it, en) : id}${det ? ` (${det})` : ""}`, date: dates[id] ?? "" };
+    }),
+    ...customs.filter((c) => c.label.trim()).map((c) => ({ label: `${c.label.trim()}${c.detail?.trim() ? ` (${c.detail.trim()})` : ""}`, date: c.date })),
+  ].sort((a, b) => (b.date || "0").localeCompare(a.date || "0"));
   const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const q = fold(query.trim());
   const matchItem = (it: { id: string; fr: string; en: string }) =>
@@ -130,8 +152,50 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[95vw] max-w-4xl">
         <DialogHeader>
-          <DialogTitle>{en ? "Instrument history (prior to KeyWeight)" : "Antécédents de l'instrument (avant KeyWeight)"}</DialogTitle>
+          <DialogTitle>{en ? "Instrument history" : "Historique instrument"}</DialogTitle>
         </DialogHeader>
+        {!editing && (
+          <div className="max-h-[60vh] space-y-0 overflow-y-auto rounded border border-border">
+            {[...points].reverse().map((p) => {
+              const av = historyAverages(p.rows);
+              const d = new Date(p.created_at);
+              return (
+                <div key={p.id} className="border-b border-border px-3 py-2 text-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-semibold">{Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString(en ? "en-GB" : "fr-FR")}</span>
+                    {p.id === activePointId && <span className="rounded border border-foreground/40 px-1.5 text-xs">{en ? "Active point" : "Point actif"}</span>}
+                  </div>
+                  <div>{p.name || "—"}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {av.count} {en ? "keys" : "touches"} • {en ? "DW" : "PD"} : {g(av.pd)} • {en ? "UW" : "PR"} : {g(av.pr)} • {en ? "BW" : "PE"} : {g(av.pe)} • F : {g(av.f)}
+                  </div>
+                </div>
+              );
+            })}
+            {points.length > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-muted-foreground">
+                <span className="h-px flex-1 bg-foreground/40" />
+                <span>↑ {en ? "Start of KeyWeight tracking" : "Début suivi KeyWeight"} ↑</span>
+                <span className="h-px flex-1 bg-foreground/40" />
+              </div>
+            )}
+            {pastEntries.map((a, i) => (
+              <div key={`a${i}`} className="border-b border-border px-3 py-2 text-sm last:border-b-0">
+                <span className="font-semibold">{a.date ? fmtMonthLabel(a.date) : "—"}</span>
+                <div>{a.label}</div>
+              </div>
+            ))}
+            {points.length === 0 && pastEntries.length === 0 && (
+              <div className="px-3 py-3 text-xs italic text-muted-foreground">{en ? "No history yet" : "Aucun historique pour l'instant"}</div>
+            )}
+          </div>
+        )}
+        <div className="flex justify-end">
+          <button type="button" className="list-chip" onClick={() => setEditing(!editing)}>
+            {editing ? (en ? "← Back to history" : "← Retour à l'historique") : (en ? "+ Add / edit a past event" : "+ Ajouter / modifier un événement passé")}
+          </button>
+        </div>
+        {editing && (<>
         <div className="space-y-1.5 border-b-2 border-foreground/50 pb-2">
           {sel.length === 0 && customs.length === 0 && (
             <div className="text-xs italic text-muted-foreground">{en ? "No prior history entered" : "Aucun antécédent renseigné"}</div>
@@ -248,6 +312,7 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
             </div>
           </div>
         </div>
+        </>)}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>{en ? "Cancel" : "Annuler"}</Button>
           <Button onClick={() => {
