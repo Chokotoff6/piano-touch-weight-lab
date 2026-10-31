@@ -1733,6 +1733,8 @@ function Index() {
   const kwDocRef = useRef<KwDocument | null>(null);
   const [importedProfile, setImportedProfile] = useState(false);
   const [kwActive, setKwActive] = useState(false);
+  /** Pesées telles qu'importées : affichées en gris tant qu'elles ne sont pas retouchées. */
+  const [importBaseline, setImportBaseline] = useState<{ wd: string; wa: string }[] | null>(null);
   const [activePointName, setActivePointName] = useState("");
   useEffect(() => {
     kwDocRef.current = readSessionKwDocument();
@@ -1923,6 +1925,7 @@ function Index() {
   const handleFullReset = () => {
     kwDocRef.current = null;
     setKwActive(Boolean(kwDocRef.current));
+    setImportBaseline(null);
     kwHandleRef.current = null;
     rememberKwDocument(null);
     setShowDemoAuto(false);
@@ -3090,7 +3093,9 @@ function Index() {
         wa: imported.map((row) => row.wa),
       });
       saveCurrentPiano(piano);
-      setRows(imported.map((r) => ({ wd: cleanWeight(r.wd), wa: cleanWeight(r.wa) })));
+      const loadedCsv = imported.map((r) => ({ wd: cleanWeight(r.wd), wa: cleanWeight(r.wa) }));
+      setRows(loadedCsv);
+      setImportBaseline(loadedCsv);
       setInfo((prev) => ({
         ...prev,
         marque: brand || prev["marque"] || "",
@@ -3133,7 +3138,9 @@ function Index() {
         setActivePointName(activePoint(doc)?.name ?? "");
         kwHandleRef.current = null;
         setInfo({ ...doc.info });
-        setRows(doc.rows.map((r) => ({ wd: cleanWeight(r.wd), wa: cleanWeight(r.wa) })));
+        const loaded = doc.rows.map((r) => ({ wd: cleanWeight(r.wd), wa: cleanWeight(r.wa) }));
+        setRows(loaded);
+        setImportBaseline(loaded);
         setIsDirty(false);
         setImportedProfile(true);
         return;
@@ -3822,7 +3829,7 @@ function Index() {
         // Aucune coloration rouge : les cases restent d'apparence normale même
         // en anomalie. Seuls les messages FF et le blocage du focus subsistent.
         data-demo-measure-value={demoInk ? "" : undefined}
-        className={`weight-input !font-sans ${demoInk ? "!font-bold !text-[#4c1d95]" : "font-semibold !text-black"} focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"}`}
+        className={`weight-input !font-sans ${demoInk ? "!font-bold !text-[#4c1d95]" : importBaseline && rows[index]![field] !== "" && importBaseline[index]?.[field] === rows[index]![field] ? "font-semibold !text-gray-500" : "font-semibold !text-black"} focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"}`}
 
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
       />
@@ -4206,23 +4213,21 @@ function Index() {
 
 
             <div className="mt-4 flex flex-wrap items-start justify-start gap-6 sm:col-span-2 md:col-span-4">
-              {!kwActive && (
               <Tooltip>
                 <TooltipTrigger asChild>
               <div className={FIELD_LABEL_CLASS}>
-                <span className="block">{en ? "Prior service" : "Antécédents"}</span>
+                <span className="block">{en ? "Instrument history" : "Historique instrument"}</span>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <button type="button" className="list-chip" onClick={() => { antecedentsInvitedRef.current = true; setAntecedentsOpen(true); }}>
-                    {hasAntecedents ? (en ? "Edit" : "Modifier") : (en ? "Enter" : "Renseigner")}
+                    {hasAntecedents || kwActive ? (en ? "Open" : "Consulter") : (en ? "Enter" : "Renseigner")}
                   </button>
                 </div>
               </div>
                 </TooltipTrigger>
-                {!hasAntecedents && (
+                {!hasAntecedents && !kwActive && (
                 <TooltipContent side="top" className={UNIFIED_TOOLTIP_CLASS}>{antecedentsInvite(en)}</TooltipContent>
                 )}
               </Tooltip>
-              )}
               <AntecedentsDialog
                 open={antecedentsOpen}
                 onOpenChange={setAntecedentsOpen}
@@ -4231,6 +4236,8 @@ function Index() {
                 datesRaw={info[ANTECEDENTS_DATES_KEY]}
                 customRaw={info[ANTECEDENTS_CUSTOM_KEY]}
                 detailsRaw={info[ANTECEDENTS_DETAILS_KEY]}
+                points={kwActive ? kwDocRef.current?.history_points ?? [] : []}
+                activePointId={kwDocRef.current?.active_point_id}
                 onSave={(next, datesRaw, customRaw, detailsRaw) => {
                   updateInfo(ANTECEDENTS_KEY, next.join("|"));
                   updateInfo(ANTECEDENTS_DATES_KEY, datesRaw);
