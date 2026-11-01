@@ -195,6 +195,8 @@ export function InfoDot({
           event.stopPropagation();
           setOpen(true);
         }}
+        onMouseEnter={onHoverEnter}
+        onMouseLeave={onHoverLeave}
         className={
           icon
             ? `inline-flex shrink-0 cursor-pointer items-center align-middle ${className ?? ""}`
