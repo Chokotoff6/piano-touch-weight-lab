@@ -172,11 +172,11 @@ export const SERIAL_FORMAT_ERROR =
 type FormatSpec = { prefixes: string[]; suffixAllowed: boolean; digits: [number, number] };
 
 const FORMATS: Record<string, FormatSpec> = {
-  YAMAHA: { prefixes: ["", "J", "E", "H", "T"], suffixAllowed: false, digits: [4, 7] },
-  KAWAI: { prefixes: ["", "F"], suffixAllowed: true, digits: [4, 7] },
-  STEINWAY: { prefixes: [""], suffixAllowed: false, digits: [6, 6] },
-  BECHSTEIN: { prefixes: [""], suffixAllowed: false, digits: [6, 6] },
-  PLEYEL: { prefixes: [""], suffixAllowed: false, digits: [6, 6] },
+  YAMAHA: { prefixes: ["", "J", "E", "H", "T"], suffixAllowed: false, digits: [3, 7] },
+  KAWAI: { prefixes: ["", "F"], suffixAllowed: true, digits: [3, 7] },
+  STEINWAY: { prefixes: [""], suffixAllowed: false, digits: [3, 7] },
+  BECHSTEIN: { prefixes: [""], suffixAllowed: false, digits: [3, 7] },
+  PLEYEL: { prefixes: [""], suffixAllowed: false, digits: [3, 7] },
 };
 
 /** true si la combinaison lettres/chiffres est cohérente avec la marque. */

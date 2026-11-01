@@ -4231,7 +4231,7 @@ function Index() {
                 <span className="block">{en ? "Instrument history" : "Historique instrument"}</span>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <button type="button" className="list-chip" onClick={() => { antecedentsInvitedRef.current = true; setAntecedentsOpen(true); }}>
-                    {en ? "Open" : "Consulter"}
+                    {en ? "View / Edit" : "Consulter / Modifier"}
                   </button>
                 </div>
               </div>
