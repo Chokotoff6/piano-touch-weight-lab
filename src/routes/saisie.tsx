@@ -179,7 +179,7 @@ const DRAFT_ROWS_KEY = "ptw_draft_rows";
 const DRAFT_INFO_KEY = "ptw_draft_info";
 
 const FORM_INCOMPLETE_MESSAGE =
-  "⚠️ Complétez d'abord Marque, Modèle, N° de série, Type de piano, Pays, Ville, Type d'entretien et Niveau d'usage avant de sauver.";
+  "⚠️ Complétez d'abord Marque, Type de piano, Modèle, N° de série, Date fabrication et Intensité d'usage.";
 const SAVE_UPDATE_MESSAGE =
   "⚠️ Diagnostic synchronisé avec succès dans la base de données de l'application (Cloud)";
 const SAVE_NEW_MESSAGE =
@@ -1403,8 +1403,7 @@ function Index() {
           info["sn_num"]?.trim() &&
           info["type_piano"] &&
           info["fabrication"]?.trim() &&
-          info["entretien"] &&
-           info["usage_level"]
+          info["usage_level"]
       ),
     [info],
   );
@@ -4232,7 +4231,7 @@ function Index() {
                 <span className="block">{en ? "Instrument history" : "Historique instrument"}</span>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <button type="button" className="list-chip" onClick={() => { antecedentsInvitedRef.current = true; setAntecedentsOpen(true); }}>
-                    {hasAntecedents || kwActive ? (en ? "Open" : "Consulter") : (en ? "Enter" : "Renseigner")}
+                    {en ? "Open" : "Consulter"}
                   </button>
                 </div>
               </div>
