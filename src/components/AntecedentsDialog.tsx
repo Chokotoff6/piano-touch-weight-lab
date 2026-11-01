@@ -291,8 +291,11 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
             </div>
           )}
           <div className="rounded border border-border">
-            <div className="px-2 py-1.5 text-sm font-semibold">{en ? "Custom interventions" : "Interventions sur mesure"}</div>
-            <div className="space-y-2 px-2 pb-2">
+            <button type="button" className="flex w-full items-center justify-between px-2 py-1.5 text-left text-sm font-semibold"
+              onClick={() => setOpenGroup(openGroup === "custom" ? null : "custom")}>
+              <span>{(q || openGroup === "*" || openGroup === "custom") ? "▾" : "▸"} {en ? "Custom interventions" : "Interventions sur mesure"}</span>
+            </button>
+            <div className={`space-y-2 px-2 pb-2 ${(q || openGroup === "*" || openGroup === "custom") ? "" : "hidden"}`}>
               {removedCustoms.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {removedCustoms.map((c, i) => (
