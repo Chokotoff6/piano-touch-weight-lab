@@ -203,6 +203,19 @@ function RootComponent() {
       }
     };
   }, [likedActivePages]);
+  /** Infobulle ancrée « Exporter l'historique » : masquée après 3 s ou à la sortie du survol. */
+  const [historyHint, setHistoryHint] = useState(false);
+  const historyHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showHistoryHint = () => {
+    setHistoryHint(true);
+    if (historyHintTimer.current) clearTimeout(historyHintTimer.current);
+    historyHintTimer.current = setTimeout(() => setHistoryHint(false), 3000);
+  };
+  const hideHistoryHint = () => {
+    if (historyHintTimer.current) clearTimeout(historyHintTimer.current);
+    historyHintTimer.current = null;
+    setHistoryHint(false);
+  };
   /** Infobulle « Importer » : visible au survol, masquée après 3 secondes. */
   const [importHint, setImportHint] = useState(false);
   const importHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -544,11 +557,9 @@ function RootComponent() {
                     type="button"
                     className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
                     onClick={() => requireConsent(() => {
-                      // Formulaire vierge fourni ultérieurement : public/formulaire-vierge.pdf
-                      void fetch("/formulaire-vierge.pdf", { method: "HEAD" }).then(async (r) => {
-                        if (r.ok && (r.headers.get("content-type") ?? "").includes("pdf")) { window.open("/formulaire-vierge.pdf", "_blank"); return; }
-                        const { toast } = await import("sonner");
-                        toast(lang === "en" ? "Blank form coming soon." : "Formulaire vierge bientôt disponible.");
+                      // Formulaire vierge fourni ultérieurement : public/formulaire-vierge.pdf (silencieux tant qu'absent).
+                      void fetch("/formulaire-vierge.pdf", { method: "HEAD" }).then((r) => {
+                        if (r.ok && (r.headers.get("content-type") ?? "").includes("pdf")) window.open("/formulaire-vierge.pdf", "_blank");
                       });
                     })}
                   >
@@ -557,26 +568,30 @@ function RootComponent() {
                 )}
 
                 {/* Carnet d'historique du piano (A4 portrait, document autonome). */}
+                <div className="relative">
                 <button
                   type="button"
                   className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
+                  onMouseLeave={hideHistoryHint}
                   onClick={() => {
-                    if (isSaisie) { dispatchAction("piano-export-history-pdf"); return; }
-                    // Bilan / Analyse : lecture directe du .kw actif en session.
                     void (async () => {
-                      const [{ readSessionKwDocument, readDraftProfile }, { generateHistoryPdf }, { toast }] = await Promise.all([
-                        import("@/lib/kw-file"),
-                        import("@/lib/pdf-history"),
-                        import("sonner"),
-                      ]);
+                      const { readSessionKwDocument, readDraftProfile } = await import("@/lib/kw-file");
                       const doc = readSessionKwDocument();
-                      if (!doc) { toast(lang === "en" ? "Save the profile (.kw) first." : "Enregistrez d'abord le profil (.kw)."); return; }
+                      if (!doc) { showHistoryHint(); return; }
+                      if (isSaisie) { dispatchAction("piano-export-history-pdf"); return; }
+                      const { generateHistoryPdf } = await import("@/lib/pdf-history");
                       generateHistoryPdf(doc, readDraftProfile().info, lang === "en");
                     })();
                   }}
                 >
                   <span className="pointer-events-none">{lang === "en" ? "Export instrument history (pdf)" : "Exporter l'historique instrument (pdf)"}</span>
                 </button>
+                {historyHint && (
+                  <span role="tooltip" className="pointer-events-none absolute right-full top-1/2 mr-2 -translate-y-1/2 whitespace-nowrap rounded border border-gray-300 bg-white px-2.5 py-2 text-xs font-semibold text-black shadow-lg">
+                    {lang === "en" ? "Save the profile (.kw) first." : "Enregistrez d'abord le profil (.kw)."}
+                  </span>
+                )}
+                </div>
 
                 {/* 3. Importer : uniquement sur la page Pesée. */}
                 {isSaisie && (
