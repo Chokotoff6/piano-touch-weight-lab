@@ -1717,11 +1717,6 @@ function Index() {
       }, 5000);
       return;
     }
-    // Invitation non bloquante, une seule fois, si les antécédents n'ont jamais été vus.
-    if (!hasAntecedents && !antecedentsInvitedRef.current && !kwDocRef.current) {
-      antecedentsInvitedRef.current = true;
-      toast(antecedentsInvite(en));
-    }
     setWeighingMode(true);
     focusFirstWeight();
   }, [requiredSheetFieldsComplete, remarquesInvalid, focusFirstWeight, hasAntecedents, en]);
@@ -1768,7 +1763,6 @@ function Index() {
     } catch {
       /* stockage indisponible */
     }
-    toast.success(getLang() === "en" ? "Profile saved to a .kw file." : "Profil enregistré dans un fichier .kw.");
   };
 
   /** Vrai si des pesées existent sans avoir été enregistrées dans un fichier .kw. */
@@ -3515,7 +3509,7 @@ function Index() {
       "piano-export-blank-keyboard-pdf": onBlankKeyboardPdf,
       "piano-export-history-pdf": () => {
         const doc = kwDocRef.current;
-        if (!doc) { toast(getLang() === "en" ? "Save the profile (.kw) first." : "Enregistrez d'abord le profil (.kw)."); return; }
+        if (!doc) return; // Infobulle ancrée gérée par le menu Fichier.
         generateHistoryPdf(doc, info, getLang() === "en");
       },
       "piano-open-antecedents": () => setAntecedentsOpen(true),
