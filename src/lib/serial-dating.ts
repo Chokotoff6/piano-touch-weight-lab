@@ -154,7 +154,9 @@ function fineLookup(key: string, p: string, n: number): number | null {
     case "YAMAHA":
       return yamahaLookup(p, n);
     case "KAWAI":
-      return p === "F" ? lookup(KAWAI_F, n) : p === "" ? lookup(KAWAI_PLAIN, n) : null;
+      // Série F indonésienne bornée à sa plage réelle (≤ 200 000) ; au-delà, registre général.
+      if (p === "F") return n <= 200000 ? lookup(KAWAI_F, n) : null;
+      return p === "" ? lookup(KAWAI_PLAIN, n) : null;
     case "STEINWAY":
       return lookup(STEINWAY, n);
     case "BECHSTEIN":

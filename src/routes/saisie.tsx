@@ -4188,15 +4188,10 @@ function Index() {
                       updateInfo("fabrication", e.target.value);
                     }}
                     onBlur={(e) => {
-                      if (!validateYear(e.currentTarget.value)) {
-                        const el = e.currentTarget;
-                        setTimeout(() => el.focus(), 0);
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if ((e.key === "Enter" || e.key === "Tab") && !validateYear(e.currentTarget.value)) {
-                        e.preventDefault();
-                      }
+                      // Avertissement seul : aucun verrouillage du curseur.
+                      const v = e.currentTarget.value.trim();
+                      if (v === "") setYearError(false);
+                      else validateYear(v);
                     }}
                     aria-invalid={yearError}
                     disabled={identityLocked}
