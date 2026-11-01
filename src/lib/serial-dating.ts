@@ -104,6 +104,11 @@ function chartLookup(brand: string, n: number): number | null {
   return null;
 }
 
+const FACTORY_PREFIXES: Record<string, string[]> = {
+  YAMAHA: ["T", "E", "H", "J"],
+  KAWAI: ["F"],
+};
+
 export function datePiano(brand: string, prefix: string, num: string): number | null {
   const key = brandKey(brand);
   const p = clean(prefix);
@@ -111,6 +116,8 @@ export function datePiano(brand: string, prefix: string, num: string): number | 
   if (!Number.isFinite(n)) return null;
   const fine = fineLookup(key, p, n);
   if (fine !== null) return fine;
+  // Préfixe d'usine reconnu : aucun repli vers le registre général (null = année à saisir à la main).
+  if (FACTORY_PREFIXES[key]?.includes(p)) return null;
   return chartLookup(brand, n);
 }
 
