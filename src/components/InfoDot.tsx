@@ -35,6 +35,9 @@ export function InfoDot({
   autoOpenForeverKey?: string;
   /** Durée d'ouverture avant le début du fondu automatique. */
   autoCloseMs?: number;
+  /** Ouvre la fenêtre au survol (et la referme quand le pointeur quitte
+      l'icône et la fenêtre). Le clic reste actif. */
+  openOnHover?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
