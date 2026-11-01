@@ -67,9 +67,26 @@ export function InfoDot({
   const finishClose = useCallback(() => setOpen(false), []);
   const { rendered, closing, requestClose } = useFadeClose(open, finishClose);
   const requestCloseAndLock = useCallback(() => {
+    cancelHoverTimer();
     writeForeverLock();
     requestClose();
-  }, [requestClose, writeForeverLock]);
+  }, [cancelHoverTimer, requestClose, writeForeverLock]);
+
+  // Survol : ouverture immédiate, fermeture différée (le pointeur peut
+  // rejoindre la fenêtre sans la perdre).
+  const onHoverEnter = useCallback(() => {
+    if (!openOnHover) return;
+    cancelHoverTimer();
+    setOpen(true);
+  }, [cancelHoverTimer, openOnHover]);
+  const onHoverLeave = useCallback(() => {
+    if (!openOnHover) return;
+    cancelHoverTimer();
+    hoverTimerRef.current = window.setTimeout(() => {
+      hoverTimerRef.current = null;
+      requestCloseAndLock();
+    }, 250);
+  }, [cancelHoverTimer, openOnHover, requestCloseAndLock]);
 
   useEffect(() => {
     if (autoOpenForeverKey) {
