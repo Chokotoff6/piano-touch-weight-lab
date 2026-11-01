@@ -190,6 +190,8 @@ const FORMATS: Record<string, FormatSpec> = {
   PLEYEL: { prefixes: [""], suffixAllowed: false, digits: [3, 7] },
 };
 
+const DEFAULT_FORMAT: FormatSpec = { prefixes: [""], suffixAllowed: false, digits: [1, 8] };
+
 /** true si la combinaison lettres/chiffres est cohérente avec la marque. */
 export function isSerialFormatValid(
   brand: string,
@@ -197,9 +199,10 @@ export function isSerialFormatValid(
   num: string,
   suffix: string,
 ): boolean {
-  const spec = FORMATS[brandKey(brand)];
+  if (!clean(brand)) return true;
+  // Marques non lettrées (Schimmel, Sauter, Seiler…) : numéro strictement numérique, sans préfixe.
+  const spec = FORMATS[brandKey(brand)] ?? DEFAULT_FORMAT;
   const digits = clean(num);
-  if (!spec) return true;
   // Aucun chiffre saisi : pas encore d'erreur à signaler (préfixe/suffixe seuls tolérés).
   if (digits === "") return true;
   if (!/^\d+$/.test(digits)) return false;

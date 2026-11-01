@@ -36,6 +36,7 @@ import { getLang, useLang } from "@/data/translations";
 import { buildReportPdf, captureReportPages, rawPdfMirror } from "@/lib/pdf-report";
 import { generateBlankFormPdf, generateBlankKeyboardPdf } from "@/lib/pdf-blank-form";
 import { generateHistoryPdf } from "@/lib/pdf-history";
+import { AutoDismissAlert } from "@/components/AutoDismissAlert";
 
 import {
   PdfComparisonChart,
@@ -4150,11 +4151,13 @@ function Index() {
               <div className="mt-1 flex items-end justify-start gap-4">
                 <div className="flex items-end gap-2">
                   <label className={`relative min-w-[220px] ${SUB_LABEL_CLASS}`}>
-                    {!serialFormatValid && !isDemoActive() && !demoInk && (
-                      <span role="alert" className={`pointer-events-none absolute bottom-full left-0 mb-2 w-[18rem] ${UNIFIED_TOOLTIP_CLASS}`}>
-                        {SERIAL_FORMAT_ERROR}
-                      </span>
-                    )}
+                    <AutoDismissAlert
+                      show={!serialFormatValid && !isDemoActive() && !demoInk}
+                      resetKey={`${info["marque"] ?? ""}|${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`}
+                      className={`pointer-events-none absolute bottom-full left-0 mb-2 w-[18rem] ${UNIFIED_TOOLTIP_CLASS}`}
+                    >
+                      {SERIAL_FORMAT_ERROR}
+                    </AutoDismissAlert>
                     <span className="block whitespace-nowrap">{en ? "Serial number" : "Numéro de série"}</span>
                     <LockedIdentityTooltip id="serial" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
                     <input
@@ -4162,7 +4165,18 @@ function Index() {
                         snRef.current["sn_num"] = el;
                       }}
                       value={snDraft ?? `${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`}
-                      onChange={(e) => setSnDraft(e.target.value.toUpperCase())}
+                      onChange={(e) => {
+                        const v = e.target.value.toUpperCase();
+                        setSnDraft(v);
+                        // Recalcul en direct : toute modification du SN lève le verrou manuel de l'année.
+                        const { prefix, num } = parseSerialNumber(v);
+                        fabricationTouched.current = false;
+                        setYearError(false);
+                        const y = datePiano(info["marque"] ?? "", prefix, num);
+                        setYearAuto(y !== null);
+                        const value = y === null ? "" : String(y);
+                        setInfo((p) => (p["fabrication"] === value ? p : { ...p, fabrication: value }));
+                      }}
                       onBlur={(e) => commitSerial(e.currentTarget.value)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
@@ -4200,11 +4214,13 @@ function Index() {
                     className={`${INPUT_CLASS} text-black max-w-[120px] disabled:border-muted-foreground/30 ${yearError ? "border-destructive" : ""}`}
                   />
                   </LockedIdentityTooltip>
-                  {yearError && (
-                    <span role="alert" className="pointer-events-none absolute bottom-full left-0 z-[120] mb-2 w-max rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-lg">
-                      {en ? `Complete: Valid date (1700-${new Date().getFullYear()})` : `Complétez : Date valide (1700-${new Date().getFullYear()})`}
-                    </span>
-                  )}
+                  <AutoDismissAlert
+                    show={yearError}
+                    resetKey={info["fabrication"] ?? ""}
+                    className="pointer-events-none absolute bottom-full left-0 z-[120] mb-2 w-max rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-lg"
+                  >
+                    {en ? `Complete: Valid date (1700-${new Date().getFullYear()})` : `Complétez : Date valide (1700-${new Date().getFullYear()})`}
+                  </AutoDismissAlert>
                 </label>
                 <div className="flex h-8 items-center gap-1 text-xs italic text-muted-foreground">
                   {yearAuto && info["fabrication"]
