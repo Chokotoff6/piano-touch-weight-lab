@@ -162,6 +162,8 @@ export function InfoDot({
           visibility: pos ? "visible" : "hidden",
         }}
         onClick={(event) => event.stopPropagation()}
+        onMouseEnter={onHoverEnter}
+        onMouseLeave={onHoverLeave}
         role="dialog"
         aria-modal="true"
       >
