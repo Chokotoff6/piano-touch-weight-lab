@@ -4017,7 +4017,7 @@ function Index() {
       <input
         ref={importInputRef}
         type="file"
-        accept=".csv,text/csv,.kw,application/json"
+        accept=".kw,application/json"
         style={{ display: "none" }}
         onChange={(e) => {
           onImportFile(e.target.files?.[0]);

@@ -1802,7 +1802,7 @@ function SidebarPanel(props: SidebarPanelProps) {
           <FastTip text={tipTarget}><Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><span className="w-full text-center font-bold uppercase">{en ? "Standard target" : "Cible standard"}</span></Button></FastTip>
            <FastTip text={tipCsv}><Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else props.onOpenHistory(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} ${props.csvActive ? "!border-black !text-blue-700 [&_svg]:!text-blue-700" : "!border-black !text-black"}`}><span className="w-full text-center font-bold uppercase">{en ? "HISTORY POINT" : "POINT D'HISTORIQUE"}</span></Button></FastTip>
           <FastTip text={tipCloud}><Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={sourceButtonClass(props.cloudEnabled, "!text-orange-600")}><span className="w-full text-center font-bold uppercase">Cloud</span></Button></FastTip>
-          <input ref={inputRef} type="file" accept=".kw,.csv,text/csv,application/json" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
+          <input ref={inputRef} type="file" accept=".kw,application/json" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
           {props.cloudEnabled && (
             <>
           <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold" style={{ color: "#f97316" }}>{en ? "CLOUD filters" : "Filtres CLOUD"}</div>
@@ -2456,7 +2456,7 @@ function Comparer() {
           </div>
         </>
       )}
-      <input ref={historyInputRef} type="file" accept=".kw,.csv,text/csv,application/json" className="sr-only" onChange={(e) => { const file = e.target.files?.[0]; if (file) void handleImport(file); e.target.value = ""; }} />
+      <input ref={historyInputRef} type="file" accept=".kw,application/json" className="sr-only" onChange={(e) => { const file = e.target.files?.[0]; if (file) void handleImport(file); e.target.value = ""; }} />
       <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>{historyLabel}</DialogTitle><DialogDescription>{historyDocument ? [historyDocument.info["marque"], historyDocument.info["modele"], kwSerial(historyDocument.info)].filter(Boolean).join(" · ") : (en ? "Local .kw file" : "Fichier local .kw")}</DialogDescription></DialogHeader>
