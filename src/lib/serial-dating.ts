@@ -167,7 +167,7 @@ function fineLookup(key: string, p: string, n: number): number | null {
 }
 
 export const SERIAL_FORMAT_ERROR =
-  "❌ Le format du numéro de série ne correspond pas à la marque sélectionnée. Vérifiez les lettres de début/fin et le nombre de caractères.";
+  "Le format du numéro de série ne correspond pas à la marque sélectionnée. Vérifiez les lettres de début/fin et le nombre de caractères.";
 
 type FormatSpec = { prefixes: string[]; suffixAllowed: boolean; digits: [number, number] };
 
