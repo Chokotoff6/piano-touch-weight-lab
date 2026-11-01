@@ -556,6 +556,28 @@ function Index() {
     }
   });
 
+  // Bulle d'aide « Ajustez mode saisie → » : à l'arrivée en mode pesée sur un
+  // piano vierge, 5 s, clignote une fois à 1 s, s'éteint au moindre clic/frappe.
+  const [showModeTip, setShowModeTip] = useState(false);
+  useEffect(() => {
+    if (!weighingMode) { setShowModeTip(false); return; }
+    const start = window.setTimeout(() => {
+      if (hasAnyMeasurement(rowsRef.current)) return;
+      setShowModeTip(true);
+    }, 200);
+    const end = window.setTimeout(() => setShowModeTip(false), 5200);
+    const off = () => setShowModeTip(false);
+    document.addEventListener("pointerdown", off, true);
+    document.addEventListener("keydown", off, true);
+    return () => {
+      window.clearTimeout(start);
+      window.clearTimeout(end);
+      document.removeEventListener("pointerdown", off, true);
+      document.removeEventListener("keydown", off, true);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weighingMode]);
+
   // Persistance du Mode Rapide : tant qu'il reste actif, les graphiques des
   // pages de diagnostic s'ouvrent par défaut en rendu « Réel » (échelle 88
   // notes, interpolation linéaire entre les points mesurés).
@@ -4540,7 +4562,15 @@ function Index() {
 
           {/* Barre d'outils d'atelier centrée : touches, reset.
               Undo / Redo sont désormais calés dans le cadre des mesures. */}
-          <div className="flex items-center gap-2">
+          <div className="relative flex items-center gap-2">
+            {showModeTip && (
+              <span
+                role="status"
+                className="mode-tip-blink pointer-events-none absolute right-full top-1/2 z-[120] mr-2 -translate-y-1/2 whitespace-nowrap rounded-md border border-border bg-popover px-2 py-1 text-xs font-semibold text-popover-foreground shadow-md"
+              >
+                {en ? "Adjust weighing mode →" : "Ajustez mode saisie →"}
+              </span>
+            )}
             <TooltipProvider delayDuration={200}>
               <Tooltip>
                 <TooltipTrigger asChild>
