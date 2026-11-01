@@ -4152,7 +4152,12 @@ function Index() {
               </InfoDot>
               <div className="mt-1 flex items-end justify-start gap-4">
                 <div className="flex items-end gap-2">
-                  <label className={`min-w-[220px] ${SUB_LABEL_CLASS}`}>
+                  <label className={`relative min-w-[220px] ${SUB_LABEL_CLASS}`}>
+                    {!serialFormatValid && !isDemoActive() && !demoInk && (
+                      <span role="alert" className={`pointer-events-none absolute bottom-full left-0 mb-2 w-[18rem] ${UNIFIED_TOOLTIP_CLASS}`}>
+                        {SERIAL_FORMAT_ERROR}
+                      </span>
+                    )}
                     <span className="block whitespace-nowrap">{en ? "Serial number" : "Numéro de série"}</span>
                     <LockedIdentityTooltip id="serial" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
                     <input
@@ -4216,17 +4221,10 @@ function Index() {
                 </div>
 
               </div>
-              {!serialFormatValid && !isDemoActive() && !demoInk && (
-                <p className="mt-1 text-[0.7rem] leading-snug text-destructive">
-                  {SERIAL_FORMAT_ERROR}
-                </p>
-              )}
             </div>
 
 
             <div className="mt-4 flex flex-wrap items-start justify-start gap-6 sm:col-span-2 md:col-span-4">
-              <Tooltip>
-                <TooltipTrigger asChild>
               <div className={FIELD_LABEL_CLASS}>
                 <span className="block">{en ? "Instrument history" : "Historique instrument"}</span>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -4235,11 +4233,6 @@ function Index() {
                   </button>
                 </div>
               </div>
-                </TooltipTrigger>
-                {!hasAntecedents && !kwActive && (
-                <TooltipContent side="top" className={UNIFIED_TOOLTIP_CLASS}>{antecedentsInvite(en)}</TooltipContent>
-                )}
-              </Tooltip>
               <AntecedentsDialog
                 open={antecedentsOpen}
                 onOpenChange={setAntecedentsOpen}
