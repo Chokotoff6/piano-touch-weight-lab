@@ -35,10 +35,22 @@ export function InfoDot({
   autoOpenForeverKey?: string;
   /** Durée d'ouverture avant le début du fondu automatique. */
   autoCloseMs?: number;
+  /** Ouvre la fenêtre au survol (et la referme quand le pointeur quitte
+      l'icône et la fenêtre). Le clic reste actif. */
+  openOnHover?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const anchorRef = useRef<HTMLButtonElement>(null);
+  // Survol : petit délai de sortie pour laisser le pointeur glisser de
+  // l'icône vers la fenêtre sans la fermer.
+  const hoverTimerRef = useRef<number | null>(null);
+  const cancelHoverTimer = useCallback(() => {
+    if (hoverTimerRef.current !== null) {
+      window.clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+  }, []);
 
   // Verrou à vie : écrit uniquement à la FERMETURE de la bannière (clic
   // extérieur, croix ou fondu automatique) — jamais à l'ouverture, pour que
@@ -55,9 +67,26 @@ export function InfoDot({
   const finishClose = useCallback(() => setOpen(false), []);
   const { rendered, closing, requestClose } = useFadeClose(open, finishClose);
   const requestCloseAndLock = useCallback(() => {
+    cancelHoverTimer();
     writeForeverLock();
     requestClose();
-  }, [requestClose, writeForeverLock]);
+  }, [cancelHoverTimer, requestClose, writeForeverLock]);
+
+  // Survol : ouverture immédiate, fermeture différée (le pointeur peut
+  // rejoindre la fenêtre sans la perdre).
+  const onHoverEnter = useCallback(() => {
+    if (!openOnHover) return;
+    cancelHoverTimer();
+    setOpen(true);
+  }, [cancelHoverTimer, openOnHover]);
+  const onHoverLeave = useCallback(() => {
+    if (!openOnHover) return;
+    cancelHoverTimer();
+    hoverTimerRef.current = window.setTimeout(() => {
+      hoverTimerRef.current = null;
+      requestCloseAndLock();
+    }, 250);
+  }, [cancelHoverTimer, openOnHover, requestCloseAndLock]);
 
   useEffect(() => {
     if (autoOpenForeverKey) {
@@ -133,6 +162,8 @@ export function InfoDot({
           visibility: pos ? "visible" : "hidden",
         }}
         onClick={(event) => event.stopPropagation()}
+        onMouseEnter={onHoverEnter}
+        onMouseLeave={onHoverLeave}
         role="dialog"
         aria-modal="true"
       >
@@ -164,6 +195,8 @@ export function InfoDot({
           event.stopPropagation();
           setOpen(true);
         }}
+        onMouseEnter={onHoverEnter}
+        onMouseLeave={onHoverLeave}
         className={
           icon
             ? `inline-flex shrink-0 cursor-pointer items-center align-middle ${className ?? ""}`
