@@ -2219,7 +2219,9 @@ function Index() {
   const commitSerial = (raw: string) => {
     const { prefix, num, suffix } = parseSerialNumber(raw);
     setSnDraft(null);
-    const serialChanged = (info["sn_prefix"] ?? "") !== prefix || (info["sn_num"] ?? "") !== num;
+    // Toute édition du champ SN (brouillon ouvert) relance le calcul, même si l'année a été retouchée à la main.
+    const serialChanged =
+      snDraft !== null || (info["sn_prefix"] ?? "") !== prefix || (info["sn_num"] ?? "") !== num;
     if (serialChanged) {
       // Nouveau N° de série : la date manuelle antérieure n'est plus fiable, on recalcule.
       fabricationTouched.current = false;
@@ -2228,7 +2230,7 @@ function Index() {
     const year = serialChanged ? datePiano(info["marque"] ?? "", prefix, num) : null;
     if (serialChanged) setYearAuto(year !== null);
     setInfo((p) => {
-      if (p["sn_prefix"] === prefix && p["sn_num"] === num && p["sn_suffix"] === suffix) return p;
+      if (!serialChanged && p["sn_prefix"] === prefix && p["sn_num"] === num && p["sn_suffix"] === suffix) return p;
       const next: Record<string, string> = { ...p, sn_prefix: prefix, sn_num: num, sn_suffix: suffix };
       if (serialChanged) next["fabrication"] = year === null ? "" : String(year);
       return next;

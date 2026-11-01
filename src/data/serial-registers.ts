@@ -495,22 +495,30 @@ export const YAMAHA_REGISTERS: Record<string, SerialStep[]> = {
     }
   ],
   "Thomaston_USA": [
-    {
-      "max_sn": 500101,
-      "year": 1983
-    },
-    {
-      "max_sn": 504050,
-      "year": 1986
-    },
-    {
-      "max_sn": 100001,
-      "year": 1986
-    },
-    {
-      "max_sn": 304000,
-      "year": 2005
-    }
+    { "max_sn": 500421, "year": 1983 },
+    { "max_sn": 500997, "year": 1984 },
+    { "max_sn": 502873, "year": 1985 },
+    { "max_sn": 504050, "year": 1986 },
+    { "max_sn": 101855, "year": 1986 },
+    { "max_sn": 110500, "year": 1987 },
+    { "max_sn": 122420, "year": 1988 },
+    { "max_sn": 132705, "year": 1989 },
+    { "max_sn": 143100, "year": 1990 },
+    { "max_sn": 155130, "year": 1991 },
+    { "max_sn": 167385, "year": 1992 },
+    { "max_sn": 177710, "year": 1993 },
+    { "max_sn": 189740, "year": 1994 },
+    { "max_sn": 202944, "year": 1995 },
+    { "max_sn": 212916, "year": 1996 },
+    { "max_sn": 224052, "year": 1997 },
+    { "max_sn": 237163, "year": 1998 },
+    { "max_sn": 251145, "year": 1999 },
+    { "max_sn": 265754, "year": 2000 },
+    { "max_sn": 275257, "year": 2001 },
+    { "max_sn": 283502, "year": 2002 },
+    { "max_sn": 294876, "year": 2003 },
+    { "max_sn": 303999, "year": 2004 },
+    { "max_sn": 499999, "year": 2005 }
   ],
   "South_Haven_USA": [
     {
