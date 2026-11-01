@@ -4165,7 +4165,7 @@ function Index() {
 
             <div className="text-xs text-muted-foreground sm:col-span-2 md:col-span-4" style={{ marginTop: "12px", paddingTop: "0px", display: "block" }}>
               <span className={FIELD_LABEL_CLASS}>{en ? "Serial number" : "Numéro de série"}</span>{" "}
-              <InfoDot className="relative -top-[2px]" label={en ? "Serial number" : "Numéro de série"}>
+              <InfoDot className="relative -top-[2px]" label={en ? "Serial number" : "Numéro de série"} openOnHover>
                 {en
                   ? "Enter the number from the metallic plate - include letters if any."
                   : "Reportez le numéro du cadre métallique - inclure les lettres si existantes."}
