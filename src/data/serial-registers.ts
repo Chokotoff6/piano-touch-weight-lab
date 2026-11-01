@@ -6,11 +6,19 @@
 export type SerialStep = { max_sn: number; year: number };
 
 export const PRODUCTION_YEAR_CHART: { manufacturers: Record<string, SerialStep[]> } = {
-  manufacturers: {
+  "manufacturers": {
     "BALDWIN": [
       {
         "max_sn": 115000,
         "year": 1950
+      },
+      {
+        "max_sn": 135000,
+        "year": 1955
+      },
+      {
+        "max_sn": 165000,
+        "year": 1965
       },
       {
         "max_sn": 245000,
@@ -29,6 +37,10 @@ export const PRODUCTION_YEAR_CHART: { manufacturers: Record<string, SerialStep[]
       {
         "max_sn": 500000,
         "year": 1980
+      },
+      {
+        "max_sn": 750000,
+        "year": 1995
       },
       {
         "max_sn": 999999,
@@ -165,6 +177,10 @@ export const PRODUCTION_YEAR_CHART: { manufacturers: Record<string, SerialStep[]
         "year": 1950
       },
       {
+        "max_sn": 41000,
+        "year": 1970
+      },
+      {
         "max_sn": 47000,
         "year": 1980
       },
@@ -189,12 +205,28 @@ export const PRODUCTION_YEAR_CHART: { manufacturers: Record<string, SerialStep[]
     ],
     "KAWAI": [
       {
+        "max_sn": 45000,
+        "year": 1950
+      },
+      {
         "max_sn": 120000,
         "year": 1965
       },
       {
         "max_sn": 500000,
         "year": 1972
+      },
+      {
+        "max_sn": 1000000,
+        "year": 1978
+      },
+      {
+        "max_sn": 1500000,
+        "year": 1984
+      },
+      {
+        "max_sn": 2000000,
+        "year": 1991
       },
       {
         "max_sn": 2500000,
@@ -297,8 +329,16 @@ export const PRODUCTION_YEAR_CHART: { manufacturers: Record<string, SerialStep[]
         "year": 1950
       },
       {
+        "max_sn": 42000,
+        "year": 1965
+      },
+      {
         "max_sn": 70000,
         "year": 1980
+      },
+      {
+        "max_sn": 90000,
+        "year": 1995
       },
       {
         "max_sn": 110000,
@@ -341,8 +381,16 @@ export const PRODUCTION_YEAR_CHART: { manufacturers: Record<string, SerialStep[]
         "year": 1955
       },
       {
+        "max_sn": 95000,
+        "year": 1970
+      },
+      {
         "max_sn": 120000,
         "year": 1980
+      },
+      {
+        "max_sn": 150000,
+        "year": 1995
       },
       {
         "max_sn": 180000,
@@ -437,6 +485,10 @@ export const PRODUCTION_YEAR_CHART: { manufacturers: Record<string, SerialStep[]
         "year": 1978
       },
       {
+        "max_sn": 500000,
+        "year": 1983
+      },
+      {
         "max_sn": 1300000,
         "year": 1988
       },
@@ -463,10 +515,10 @@ export const PRODUCTION_YEAR_CHART: { manufacturers: Record<string, SerialStep[]
         "year": 2026
       }
     ]
-  },
+  }
 };
 
-/** Registres Yamaha par usine (réservés aux règles avancées par site de fabrication). */
+/** Thomaston (USA) fermée : dernière borne 304000, au-delà aucune datation. */
 export const YAMAHA_REGISTERS: Record<string, SerialStep[]> = {
   "Hamamatsu_Japon": [
     {
@@ -495,30 +547,38 @@ export const YAMAHA_REGISTERS: Record<string, SerialStep[]> = {
     }
   ],
   "Thomaston_USA": [
-    { "max_sn": 500421, "year": 1983 },
-    { "max_sn": 500997, "year": 1984 },
-    { "max_sn": 502873, "year": 1985 },
-    { "max_sn": 504050, "year": 1986 },
-    { "max_sn": 101855, "year": 1986 },
-    { "max_sn": 110500, "year": 1987 },
-    { "max_sn": 122420, "year": 1988 },
-    { "max_sn": 132705, "year": 1989 },
-    { "max_sn": 143100, "year": 1990 },
-    { "max_sn": 155130, "year": 1991 },
-    { "max_sn": 167385, "year": 1992 },
-    { "max_sn": 177710, "year": 1993 },
-    { "max_sn": 189740, "year": 1994 },
-    { "max_sn": 202944, "year": 1995 },
-    { "max_sn": 212916, "year": 1996 },
-    { "max_sn": 224052, "year": 1997 },
-    { "max_sn": 237163, "year": 1998 },
-    { "max_sn": 251145, "year": 1999 },
-    { "max_sn": 265754, "year": 2000 },
-    { "max_sn": 275257, "year": 2001 },
-    { "max_sn": 283502, "year": 2002 },
-    { "max_sn": 294876, "year": 2003 },
-    { "max_sn": 303999, "year": 2004 },
-    { "max_sn": 499999, "year": 2005 }
+    {
+      "max_sn": 500101,
+      "year": 1983
+    },
+    {
+      "max_sn": 504050,
+      "year": 1986
+    },
+    {
+      "max_sn": 100001,
+      "year": 1986
+    },
+    {
+      "max_sn": 124000,
+      "year": 1990
+    },
+    {
+      "max_sn": 148000,
+      "year": 1995
+    },
+    {
+      "max_sn": 153000,
+      "year": 1996
+    },
+    {
+      "max_sn": 202945,
+      "year": 1998
+    },
+    {
+      "max_sn": 304000,
+      "year": 2005
+    }
   ],
   "South_Haven_USA": [
     {
