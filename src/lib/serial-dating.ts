@@ -183,7 +183,7 @@ export const SERIAL_FORMAT_ERROR =
 type FormatSpec = { prefixes: string[]; suffixAllowed: boolean; digits: [number, number] };
 
 const FORMATS: Record<string, FormatSpec> = {
-  YAMAHA: { prefixes: ["", "J", "E", "H", "T"], suffixAllowed: false, digits: [3, 7] },
+  YAMAHA: { prefixes: ["", "J", "E", "H", "T"], suffixAllowed: true, digits: [3, 7] },
   KAWAI: { prefixes: ["", "F"], suffixAllowed: true, digits: [3, 7] },
   STEINWAY: { prefixes: [""], suffixAllowed: false, digits: [3, 7] },
   BECHSTEIN: { prefixes: [""], suffixAllowed: false, digits: [3, 7] },
