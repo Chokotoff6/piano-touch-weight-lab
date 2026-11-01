@@ -42,6 +42,15 @@ export function InfoDot({
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const anchorRef = useRef<HTMLButtonElement>(null);
+  // Survol : petit délai de sortie pour laisser le pointeur glisser de
+  // l'icône vers la fenêtre sans la fermer.
+  const hoverTimerRef = useRef<number | null>(null);
+  const cancelHoverTimer = useCallback(() => {
+    if (hoverTimerRef.current !== null) {
+      window.clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+  }, []);
 
   // Verrou à vie : écrit uniquement à la FERMETURE de la bannière (clic
   // extérieur, croix ou fondu automatique) — jamais à l'ouverture, pour que
