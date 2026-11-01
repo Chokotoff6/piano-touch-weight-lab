@@ -43,7 +43,8 @@ import {
   type ChartPoint,
   type PdfInfo,
 } from "@/components/PdfReportBlocks";
-import { ComparisonChart, buildChartData, type RefProfile } from "@/routes/comparer";
+import { ComparisonChart } from "@/routes/comparer";
+import { buildChartData, type RefProfile } from "@/lib/chart-data";
 
 import { buildCurrentPiano, cleanStringOrNull, toCloudTypePiano, normalizeTypePiano, loadCurrentPiano, saveCurrentPiano, saveCurrentPianoToCloud, upsertCurrentPianoBuffer, findHistoryProfileId, CURRENT_PIANO_KEY } from "@/lib/current-piano";
 
@@ -52,7 +53,7 @@ import { buildCurrentPiano, cleanStringOrNull, toCloudTypePiano, normalizeTypePi
  * Retourne strictement `null` si la valeur est absente, vide, composée d'espaces
  * ou égale au mot sentinelle "EMPTY" (insensible à la casse).
  */
-export function clean(val: unknown): string | null {
+function clean(val: unknown): string | null {
   if (val === null || val === undefined) return null;
   const s = String(val).normalize("NFC").trim();
   if (!s || s.toUpperCase() === "EMPTY") return null;

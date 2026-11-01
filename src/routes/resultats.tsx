@@ -6,10 +6,8 @@ import {
   AverageRow,
   ComparisonChart,
   Frame,
-  buildChartData,
-  type KeyFilter,
-  type RefProfile,
 } from "@/routes/comparer";
+import { buildChartData, type KeyFilter, type RefProfile } from "@/lib/chart-data";
 import { setCloudProfileSaved, setCompareUnlocked, setResultsVisited, setTopbarState, useTopbarState } from "@/lib/topbar-store";
 import {
   buildCurrentPiano,
