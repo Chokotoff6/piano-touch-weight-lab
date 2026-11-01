@@ -117,7 +117,9 @@ export function datePiano(brand: string, prefix: string, num: string): number | 
   const fine = fineLookup(key, p, n);
   if (fine !== null) return fine;
   // Préfixe d'usine reconnu : aucun repli vers le registre général (null = année à saisir à la main).
-  if (FACTORY_PREFIXES[key]?.includes(p)) return null;
+  // Exception Kawai F > 200 000 : série japonaise, datée par le registre général.
+  const kawaiJapanF = key === "KAWAI" && p === "F" && n > 200000;
+  if (!kawaiJapanF && FACTORY_PREFIXES[key]?.includes(p)) return null;
   return chartLookup(brand, n);
 }
 
@@ -198,7 +200,8 @@ export function isSerialFormatValid(
   const spec = FORMATS[brandKey(brand)];
   const digits = clean(num);
   if (!spec) return true;
-  if (digits === "" && clean(prefix) === "" && clean(suffix) === "") return true;
+  // Aucun chiffre saisi : pas encore d'erreur à signaler (préfixe/suffixe seuls tolérés).
+  if (digits === "") return true;
   if (!/^\d+$/.test(digits)) return false;
   if (digits.length < spec.digits[0] || digits.length > spec.digits[1]) return false;
   const p = clean(prefix);
