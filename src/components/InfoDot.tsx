@@ -19,6 +19,7 @@ export function InfoDot({
   autoOpenSessionKey,
   autoOpenForeverKey,
   autoCloseMs = 5000,
+  openOnHover = false,
 }: {
   children: ReactNode;
   label?: string;
