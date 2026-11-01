@@ -189,7 +189,7 @@ export function isSerialFormatValid(
   const spec = FORMATS[brandKey(brand)];
   const digits = clean(num);
   if (!spec) return true;
-  if (digits === "") return true;
+  if (digits === "" && clean(prefix) === "" && clean(suffix) === "") return true;
   if (!/^\d+$/.test(digits)) return false;
   if (digits.length < spec.digits[0] || digits.length > spec.digits[1]) return false;
   const p = clean(prefix);
