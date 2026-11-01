@@ -154,7 +154,9 @@ export function fuzzyMatch(option: string, query: string): boolean {
 }
 
 export function fuzzyFilter(options: string[], query: string): string[] {
-  return options.filter((o) => fuzzyMatch(o, query));
+  const q = fold(query.trim());
+  const rank = (o: string) => { const f = fold(o); return !q ? 0 : f.startsWith(q) ? 0 : f.includes(q) ? 1 : 2; };
+  return options.filter((o) => fuzzyMatch(o, query)).map((o, i) => ({ o, i, r: rank(o) })).sort((a, b) => a.r - b.r || a.i - b.i).map((x) => x.o);
 }
 
 /** Fait correspondre une saisie à une suggestion (insensible à la casse), sinon MAJUSCULES libres. */

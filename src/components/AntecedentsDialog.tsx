@@ -82,7 +82,7 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
     const d0 = parseAntecedentDates(datesRaw);
     setLastOpen(true); setSel([...ids].sort((a, b) => dKey(d0[a]).localeCompare(dKey(d0[b])))); setDates(d0); setDetails(parseAntecedentDetails(detailsRaw));
     setCustoms(parseCustomAntecedents(customRaw).sort((a, b) => dKey(a.date).localeCompare(dKey(b.date)))); setRemovedCustoms([]); setDraft(null); setQuery(""); setOpenGroup(null); setFocusId(null);
-    setEditing(points.length === 0 && ids.length === 0 && parseCustomAntecedents(customRaw).length === 0);
+    setEditing(false);
   }
   if (!open && lastOpen) setLastOpen(false);
   // Événements passés (état en cours d'édition), du plus récent au plus ancien.
@@ -159,46 +159,58 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
         <DialogHeader>
           <DialogTitle>{en ? "Instrument history" : "Historique instrument"}</DialogTitle>
         </DialogHeader>
-        {!editing && (
+        {!editing && (() => {
+          // Frise unique, plus récent en haut : points KeyWeight + événements passés.
+          const firstTs = points.length ? Math.min(...points.map((p) => new Date(p.created_at).getTime()).filter((t) => !Number.isNaN(t))) : null;
+          const pastTs = (d: string) => { const [y, m] = d.split("-"); return y ? new Date(Number(y), m ? Number(m) - 1 : 0, 1).getTime() : -Infinity; };
+          type E = { k: string; ts: number; kw?: KwHistoryPoint; past?: { label: string; date: string } };
+          const list: E[] = [
+            ...points.map((p) => ({ k: p.id, ts: new Date(p.created_at).getTime() || 0, kw: p })),
+            ...pastEntries.map((a, i) => ({ k: `a${i}`, ts: pastTs(a.date), past: a })),
+          ].sort((x, y) => y.ts - x.ts);
+          const sepAt = firstTs === null ? -1 : list.findIndex((e) => e.past && e.ts < firstTs);
+          return (
           <div className="max-h-[60vh] space-y-0 overflow-y-auto rounded border border-border">
-            {[...points].reverse().map((p) => {
-              const av = historyAverages(p.rows);
-              const d = new Date(p.created_at);
-              return (
-                <div key={p.id} className="border-b border-border px-3 py-2 text-sm">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-semibold">{Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString(en ? "en-GB" : "fr-FR")}</span>
+            {list.map((e, i) => (
+              <div key={e.k}>
+                {i === sepAt && (
+                  <div className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-muted-foreground">
+                    <span className="h-px flex-1 bg-foreground/40" />
+                    <span>↓ {en ? "Before first KeyWeight weighing" : "Avant 1ère pesée KeyWeight"} ↓</span>
+                    <span className="h-px flex-1 bg-foreground/40" />
                   </div>
-                  <div>{p.name || "—"}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {av.count} {en ? "keys" : "touches"} • {en ? "DW" : "PD"} : {g(av.pd)} • {en ? "UW" : "PR"} : {g(av.pr)} • {en ? "BW" : "PE"} : {g(av.pe)} • F : {g(av.f)}
+                )}
+                {e.kw ? (() => {
+                  const av = historyAverages(e.kw.rows);
+                  const d = new Date(e.kw.created_at);
+                  return (
+                    <div className="border-b border-border px-3 py-2 text-sm">
+                      <span className="font-semibold">{Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString(en ? "en-GB" : "fr-FR")}</span>
+                      <div>{e.kw.name || "—"}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {av.count} {en ? "keys" : "touches"} • {en ? "DW" : "PD"} : {g(av.pd)} • {en ? "UW" : "PR"} : {g(av.pr)} • {en ? "BW" : "PE"} : {g(av.pe)} • F : {g(av.f)}
+                      </div>
+                    </div>
+                  );
+                })() : (
+                  <div className="border-b border-border px-3 py-2 text-sm">
+                    <span className="font-semibold">{e.past!.date ? fmtMonthLabel(e.past!.date) : "—"}</span>
+                    <div>{e.past!.label}</div>
                   </div>
-                </div>
-              );
-            })}
-            {points.length > 0 && (
-              <div className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-muted-foreground">
-                <span className="h-px flex-1 bg-foreground/40" />
-                <span>↑ {en ? "Start of KeyWeight tracking" : "Début suivi KeyWeight"} ↑</span>
-                <span className="h-px flex-1 bg-foreground/40" />
-              </div>
-            )}
-            {pastEntries.map((a, i) => (
-              <div key={`a${i}`} className="border-b border-border px-3 py-2 text-sm last:border-b-0">
-                <span className="font-semibold">{a.date ? fmtMonthLabel(a.date) : "—"}</span>
-                <div>{a.label}</div>
+                )}
               </div>
             ))}
-            {points.length === 0 && pastEntries.length === 0 && (
+            {list.length === 0 && (
               <div className="px-3 py-3 text-xs italic text-muted-foreground">{en ? "No history yet" : "Aucun historique pour l'instant"}</div>
             )}
           </div>
+          );
+        })()}
+        {!editing && (
+          <div className="flex justify-start">
+            <button type="button" className="list-chip" onClick={() => setEditing(true)}>{en ? "+ Add" : "+ Ajouter"}</button>
+          </div>
         )}
-        <div className="flex justify-end">
-          <button type="button" className="list-chip" onClick={() => setEditing(!editing)}>
-            {editing ? (en ? "← Back to history" : "← Retour à l'historique") : (en ? "+ Add / edit a past event" : "+ Ajouter / modifier un événement passé")}
-          </button>
-        </div>
         {editing && (<>
         <div className="space-y-1.5 border-b-2 border-foreground/50 pb-2">
           {sel.length === 0 && customs.length === 0 && (

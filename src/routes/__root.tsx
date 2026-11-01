@@ -540,31 +540,20 @@ function RootComponent() {
                     <span className="pointer-events-none">{lang === "en" ? "Export dashboard (PDF)" : "Exporter le bilan (PDF)"}</span>
                   </button>
                 ) : (
-                  <div className="group/sub relative">
-                    <button
-                      type="button"
-                      className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
-                    >
-                      <span className="pointer-events-none">{lang === "en" ? "Export a blank weighing form (pdf)" : "Exporter un formulaire de pesée vierge (pdf)"}</span>
-                      <ChevronDown className="pointer-events-none h-3 w-3 -rotate-90" />
-                    </button>
-                    <div className="absolute right-full top-0 -mr-[2px] z-[100000] min-w-[240px] rounded-md border border-gray-200 bg-white py-1 shadow-lg opacity-0 pointer-events-none transition-opacity duration-100 group-hover/sub:pointer-events-auto group-hover/sub:opacity-100">
-                      <button
-                        type="button"
-                        className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
-                        onClick={() => requireConsent(() => dispatchAction("piano-export-blank-pdf"))}
-                      >
-                        <span className="pointer-events-none">{lang === "en" ? "Table format" : "Format tableau"}</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
-                        onClick={() => requireConsent(() => dispatchAction("piano-export-blank-keyboard-pdf"))}
-                      >
-                        <span className="pointer-events-none">{lang === "en" ? "Keyboard drawing format" : "Format dessin clavier"}</span>
-                      </button>
-                    </div>
-                  </div>
+                  <button
+                    type="button"
+                    className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
+                    onClick={() => requireConsent(() => {
+                      // Formulaire vierge fourni ultérieurement : public/formulaire-vierge.pdf
+                      void fetch("/formulaire-vierge.pdf", { method: "HEAD" }).then(async (r) => {
+                        if (r.ok && (r.headers.get("content-type") ?? "").includes("pdf")) { window.open("/formulaire-vierge.pdf", "_blank"); return; }
+                        const { toast } = await import("sonner");
+                        toast(lang === "en" ? "Blank form coming soon." : "Formulaire vierge bientôt disponible.");
+                      });
+                    })}
+                  >
+                    <span className="pointer-events-none">{lang === "en" ? "Export a blank weighing form (pdf)" : "Exporter un formulaire de pesée vierge (pdf)"}</span>
+                  </button>
                 )}
 
                 {/* Carnet d'historique du piano (A4 portrait, document autonome). */}
@@ -586,14 +575,14 @@ function RootComponent() {
                     })();
                   }}
                 >
-                  <span className="pointer-events-none">{lang === "en" ? "Export piano history (pdf)" : "Exporter l'historique du piano (pdf)"}</span>
+                  <span className="pointer-events-none">{lang === "en" ? "Export instrument history (pdf)" : "Exporter l'historique instrument (pdf)"}</span>
                 </button>
 
                 {/* 3. Importer : uniquement sur la page Pesée. */}
                 {isSaisie && (
                   <button
                     type="button"
-                    className="block w-full border-t border-gray-200 px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
+                    className="block w-full border-t border-gray-500 px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
                     onClick={() => dispatchAction("piano-import-csv")}
                   >
                     <span className="pointer-events-none">{lang === "en" ? "Import a file (.kw, .csv)" : "Importer un fichier (.kw, .csv)"}</span>
