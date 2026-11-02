@@ -15,6 +15,7 @@ import { Route as ComparerRouteImport } from './routes/comparer'
 import { Route as PolitiqueConfidentialiteRouteImport } from './routes/politique-confidentialite'
 import { Route as ResultatsRouteImport } from './routes/resultats'
 import { Route as SaisieRouteImport } from './routes/saisie'
+import { Route as SaisieTabletteRouteImport } from './routes/saisie-tablette'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -47,6 +48,11 @@ const SaisieRoute = SaisieRouteImport.update({
   path: '/saisie',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SaisieTabletteRoute = SaisieTabletteRouteImport.update({
+  id: '/saisie-tablette',
+  path: '/saisie-tablette',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -55,6 +61,7 @@ export interface FileRoutesByFullPath {
   '/politique-confidentialite': typeof PolitiqueConfidentialiteRoute
   '/resultats': typeof ResultatsRoute
   '/saisie': typeof SaisieRoute
+  '/saisie-tablette': typeof SaisieTabletteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -63,6 +70,7 @@ export interface FileRoutesByTo {
   '/politique-confidentialite': typeof PolitiqueConfidentialiteRoute
   '/resultats': typeof ResultatsRoute
   '/saisie': typeof SaisieRoute
+  '/saisie-tablette': typeof SaisieTabletteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -72,6 +80,7 @@ export interface FileRoutesById {
   '/politique-confidentialite': typeof PolitiqueConfidentialiteRoute
   '/resultats': typeof ResultatsRoute
   '/saisie': typeof SaisieRoute
+  '/saisie-tablette': typeof SaisieTabletteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -82,6 +91,7 @@ export interface FileRouteTypes {
     | '/politique-confidentialite'
     | '/resultats'
     | '/saisie'
+    | '/saisie-tablette'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -90,6 +100,7 @@ export interface FileRouteTypes {
     | '/politique-confidentialite'
     | '/resultats'
     | '/saisie'
+    | '/saisie-tablette'
   id:
     | '__root__'
     | '/'
@@ -98,6 +109,7 @@ export interface FileRouteTypes {
     | '/politique-confidentialite'
     | '/resultats'
     | '/saisie'
+    | '/saisie-tablette'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -107,6 +119,7 @@ export interface RootRouteChildren {
   PolitiqueConfidentialiteRoute: typeof PolitiqueConfidentialiteRoute
   ResultatsRoute: typeof ResultatsRoute
   SaisieRoute: typeof SaisieRoute
+  SaisieTabletteRoute: typeof SaisieTabletteRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -153,6 +166,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SaisieRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/saisie-tablette': {
+      id: '/saisie-tablette'
+      path: '/saisie-tablette'
+      fullPath: '/saisie-tablette'
+      preLoaderRoute: typeof SaisieTabletteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -163,6 +183,7 @@ const rootRouteChildren: RootRouteChildren = {
   PolitiqueConfidentialiteRoute: PolitiqueConfidentialiteRoute,
   ResultatsRoute: ResultatsRoute,
   SaisieRoute: SaisieRoute,
+  SaisieTabletteRoute: SaisieTabletteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

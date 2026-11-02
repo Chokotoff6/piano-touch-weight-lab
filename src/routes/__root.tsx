@@ -422,6 +422,11 @@ function RootComponent() {
                   {lang === "en" ? "Weighing" : "Pesée"}
                 </Link>
               )}
+              {!topbar.cloudSaving && (
+                <Link to="/saisie-tablette" className={linkClass} activeProps={{ className: activeLinkClass }}>
+                  {lang === "en" ? "Tablet (Lab)" : "Tablette (Lab)"}
+                </Link>
+              )}
               {topbar.gateReady ? (
                 <Link to="/resultats" className={linkClass} activeProps={{ className: activeLinkClass }}>
                   {lang === "en" ? "Dashboard" : "Bilan"}
