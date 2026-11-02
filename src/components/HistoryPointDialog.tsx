@@ -111,6 +111,7 @@ export function HistoryPointDialog({ open, en, mode, boxClassName, btnClassName,
               <div key={id} className="flex flex-nowrap items-center gap-1.5">
                 <span className="list-chip list-chip-active shrink-0 whitespace-nowrap">{it ? interventionLabel(it, en) : id}</span>
                 <input value={details[id] ?? ""} onChange={(e) => setDetails((d) => ({ ...d, [id]: e.target.value }))} maxLength={80}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); } }}
                   placeholder={en ? "Optional detail: e.g. 10 keys, treble..." : "Détail optionnel : ex. 10 touches, médium..."}
                   className="list-input min-w-[14rem] flex-1" />
                 <button type="button" className="shrink-0 px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"} onClick={() => toggle(id)}>✕</button>
@@ -120,26 +121,27 @@ export function HistoryPointDialog({ open, en, mode, boxClassName, btnClassName,
           {customs.map((c, k) => (
             <div key={`c${k}`} className="flex flex-nowrap items-center gap-1.5">
               <input autoFocus value={c} onChange={(e) => { const v = e.target.value; setCustoms((cs) => cs.map((x, j) => (j === k ? v : x))); setErrorKey(0); }} maxLength={120}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); } }}
                 placeholder={en ? "Describe the intervention..." : "Décrivez l'intervention..."}
                 className="list-input min-w-[14rem] flex-1" />
               <button type="button" className="shrink-0 px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"} onClick={() => setCustoms((cs) => cs.filter((_, j) => j !== k))}>✕</button>
             </div>
           ))}
         </div>
-        <div className="relative">
-          <input value={query} onChange={(e) => setQuery(e.target.value)} className="list-input w-full pr-7"
-            placeholder={en ? "Search an intervention (e.g. hammers, tuning, pinblock)" : "Rechercher une intervention (ex : marteaux, accord, sommier)"} />
-          {query && (
-            <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" aria-label={en ? "Clear" : "Effacer"} onClick={() => setQuery("")}>✕</button>
-          )}
-        </div>
-        <div className="flex justify-end">
-          <button type="button" className="text-xs text-muted-foreground underline" onClick={() => setOpenGroups(allOpen ? new Set() : new Set(["*"]))}>
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <input value={query} onChange={(e) => setQuery(e.target.value)} className="list-input w-full pr-7"
+              placeholder={en ? "Search an intervention (e.g. hammers, tuning, pinblock)" : "Rechercher une intervention (ex : marteaux, accord, sommier)"} />
+            {query && (
+              <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" aria-label={en ? "Clear" : "Effacer"} onClick={() => setQuery("")}>✕</button>
+            )}
+          </div>
+          <button type="button" className="shrink-0 whitespace-nowrap text-xs text-muted-foreground underline" onClick={() => setOpenGroups(allOpen ? new Set() : new Set(["*"]))}>
             {allOpen ? (en ? "Collapse all" : "Tout replier") : (en ? "Expand all" : "Tout déplier")}
           </button>
         </div>
         <div className="max-h-[45vh] space-y-1 overflow-y-auto pr-1">
-          {group("shortcuts", en ? "Shortcuts" : "Raccourcis", shortList,
+          {group("shortcuts", en ? "Common interventions" : "Interventions courantes", shortList,
             !q && <button type="button" className="list-chip" onClick={() => { setCustoms((cs) => [...cs, ""]); setErrorKey(0); }}>{en ? "+ Add" : "+ Ajouter"}</button>)}
           {ANTECEDENT_GROUPS.map((g) => group(g.id, en ? g.en : g.fr, g.items.filter((it) => !shortIds.has(it.id))))}
         </div>
