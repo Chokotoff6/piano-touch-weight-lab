@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Check } from "lucide-react";
 import {
   AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useInterventions, interventionLabel, INITIAL_DIAGNOSTIC_ID, ANTECEDENT_GROUPS, ANTECEDENT_ITEMS, ANTECEDENT_KEYWORDS } from "@/lib/interventions";
+import { AutoDismissAlert } from "@/components/AutoDismissAlert";
+import { useInterventions, interventionLabel, ANTECEDENT_GROUPS, ANTECEDENT_ITEMS, ANTECEDENT_KEYWORDS } from "@/lib/interventions";
 
 type Props = {
   open: boolean;
@@ -18,18 +18,18 @@ type Props = {
   onCreate: (name: string) => void;
 };
 
-/** Choix multiple des interventions + « Autre » libre, pour nommer un point d'historique. */
+/** Choix des interventions pour nommer un point d'historique — même présentation que l'historique instrument. */
 export function HistoryPointDialog({ open, en, mode, boxClassName, btnClassName, onCancel, onUpdateCurrent, onCreate }: Props) {
   const shortList = useInterventions();
-  // Catalogue unifié : liste d'atelier + catalogue complet (mêmes familles que l'historique instrument).
   const shortIds = new Set(shortList.map((i) => i.id));
   const items = [...shortList, ...ANTECEDENT_ITEMS.filter((i) => !shortIds.has(i.id))];
   const [picked, setPicked] = useState<string[]>([]);
   const [details, setDetails] = useState<Record<string, string>>({});
-  const [other, setOther] = useState(false);
-  const [otherText, setOtherText] = useState("");
+  const [customs, setCustoms] = useState<string[]>([]);
   const [query, setQuery] = useState("");
-  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  // "shortcuts" ouvert par défaut ; "*" = tout déplié.
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(["shortcuts"]));
+  const [errorKey, setErrorKey] = useState(0);
   const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const q = fold(query.trim());
   const matchItem = (it: { id: string; fr: string; en: string }) =>
@@ -37,29 +37,58 @@ export function HistoryPointDialog({ open, en, mode, boxClassName, btnClassName,
 
   useEffect(() => {
     if (!open) return;
-    setPicked(mode === "first" && shortList.some((i) => i.id === INITIAL_DIAGNOSTIC_ID) ? [INITIAL_DIAGNOSTIC_ID] : []);
+    setPicked([]);
     setDetails({});
-    setOther(false);
-    setOtherText("");
+    setCustoms([]);
     setQuery("");
-    setOpenGroup(null);
-  }, [open, mode, shortList]);
+    setOpenGroups(new Set(["shortcuts"]));
+    setErrorKey(0);
+  }, [open, mode]);
 
-  const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+  const toggle = (id: string) => { setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id])); setErrorKey(0); };
+  const toggleGroup = (id: string) => setOpenGroups((s) => { const n = new Set(s); n.delete("*"); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const allOpen = openGroups.has("*");
+  const isOpen = (id: string) => q !== "" || allOpen || openGroups.has(id);
+
   const name = [
-    ...items.filter((i) => picked.includes(i.id)).map((i) => {
-      const d = (details[i.id] ?? "").trim();
-      return `${interventionLabel(i, en)}${d ? ` (${d})` : ""}`;
+    ...picked.map((id) => {
+      const i = items.find((x) => x.id === id);
+      const d = (details[id] ?? "").trim();
+      return `${i ? interventionLabel(i, en) : id}${d ? ` (${d})` : ""}`;
     }),
-    ...(other && otherText.trim() ? [otherText.trim()] : []),
+    ...customs.map((c) => c.trim()).filter(Boolean),
   ].join(" + ");
 
-  const chip = (active: boolean) =>
-    `list-chip ${active ? "list-chip-active" : ""}`;
+  const submit = () => {
+    if (!name) { setErrorKey((k) => k + 1); return; }
+    onCreate(name);
+  };
+
+  const group = (id: string, label: string, list: { id: string; fr: string; en: string }[], extra?: React.ReactNode) => {
+    const visible = list.filter((it) => !picked.includes(it.id) && matchItem(it));
+    if (q && visible.length === 0) return null;
+    const count = list.filter((it) => picked.includes(it.id)).length;
+    const o = isOpen(id);
+    return (
+      <div key={id} className="rounded border border-border">
+        <button type="button" className="flex w-full px-2 py-1.5 text-left text-sm font-semibold" onClick={() => toggleGroup(id)}>
+          {o ? "▾" : "▸"} {label}{count > 0 && ` (${count})`}
+        </button>
+        {o && (
+          <div className="flex flex-wrap gap-1.5 px-2 pb-2">
+            {visible.map((i) => (
+              <button key={i.id} type="button" className="list-chip" onClick={() => toggle(i.id)}>{interventionLabel(i, en)}</button>
+            ))}
+            {extra}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <AlertDialog open={open} onOpenChange={(o) => { if (!o) onCancel(); }}>
-      <AlertDialogContent className={boxClassName}>
+      <AlertDialogContent className={`${boxClassName} w-[95vw] max-w-4xl`}>
         <AlertDialogHeader>
           <AlertDialogTitle>
             {mode === "propose"
@@ -72,61 +101,53 @@ export function HistoryPointDialog({ open, en, mode, boxClassName, btnClassName,
               : (en ? "To create a new history point, select the work carried out:" : "Pour créer un nouveau point d'historique, sélectionnez les interventions :")}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <div className="flex flex-wrap gap-2">
-          {shortList.filter((i) => matchItem(i)).map((i) => (
-            <button key={i.id} type="button" aria-pressed={picked.includes(i.id)} className={chip(picked.includes(i.id))} onClick={() => toggle(i.id)}>
-              {picked.includes(i.id) && <Check className="h-3.5 w-3.5" />}{interventionLabel(i, en)}
-            </button>
+        <div className="space-y-1.5 border-b-2 border-foreground/50 pb-2">
+          {picked.length === 0 && customs.length === 0 && (
+            <div className="text-xs italic text-muted-foreground">{en ? "No intervention selected" : "Aucune intervention sélectionnée"}</div>
+          )}
+          {picked.map((id) => {
+            const it = items.find((i) => i.id === id);
+            return (
+              <div key={id} className="flex flex-nowrap items-center gap-1.5">
+                <span className="list-chip list-chip-active shrink-0 whitespace-nowrap">{it ? interventionLabel(it, en) : id}</span>
+                <input value={details[id] ?? ""} onChange={(e) => setDetails((d) => ({ ...d, [id]: e.target.value }))} maxLength={80}
+                  placeholder={en ? "Optional detail: e.g. 10 keys, treble..." : "Détail optionnel : ex. 10 touches, médium..."}
+                  className="list-input min-w-[14rem] flex-1" />
+                <button type="button" className="shrink-0 px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"} onClick={() => toggle(id)}>✕</button>
+              </div>
+            );
+          })}
+          {customs.map((c, k) => (
+            <div key={`c${k}`} className="flex flex-nowrap items-center gap-1.5">
+              <input autoFocus value={c} onChange={(e) => { const v = e.target.value; setCustoms((cs) => cs.map((x, j) => (j === k ? v : x))); setErrorKey(0); }} maxLength={120}
+                placeholder={en ? "Describe the intervention..." : "Décrivez l'intervention..."}
+                className="list-input min-w-[14rem] flex-1" />
+              <button type="button" className="shrink-0 px-1 text-muted-foreground" aria-label={en ? "Remove" : "Retirer"} onClick={() => setCustoms((cs) => cs.filter((_, j) => j !== k))}>✕</button>
+            </div>
           ))}
-          <button type="button" aria-pressed={other} className={chip(other)} onClick={() => setOther((o) => !o)}>
-            {other && <Check className="h-3.5 w-3.5" />}{en ? "+ Add" : "+ Ajouter"}
-          </button>
         </div>
         <div className="relative">
           <input value={query} onChange={(e) => setQuery(e.target.value)} className="list-input w-full pr-7"
-            placeholder={en ? "Search an intervention (e.g. hammers, bushings, pinblock)" : "Rechercher une intervention (ex : marteaux, mortaises, sommier)"} />
+            placeholder={en ? "Search an intervention (e.g. hammers, tuning, pinblock)" : "Rechercher une intervention (ex : marteaux, accord, sommier)"} />
           {query && (
             <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" aria-label={en ? "Clear" : "Effacer"} onClick={() => setQuery("")}>✕</button>
           )}
         </div>
-        <div className="max-h-[40vh] space-y-1 overflow-y-auto pr-1">
-          {ANTECEDENT_GROUPS.map((g) => {
-            const visible = g.items.filter((it) => !shortIds.has(it.id) && matchItem(it));
-            if (visible.length === 0) return null;
-            const count = visible.filter((it) => picked.includes(it.id)).length;
-            const isOpen = q !== "" || openGroup === g.id;
-            return (
-              <div key={g.id} className="rounded border border-border">
-                <button type="button" className="flex w-full px-2 py-1 text-left text-sm font-semibold" onClick={() => setOpenGroup(openGroup === g.id ? null : g.id)}>
-                  {isOpen ? "▾" : "▸"} {en ? g.en : g.fr}{count > 0 && ` (${count})`}
-                </button>
-                {isOpen && (
-                  <div className="flex flex-wrap gap-1.5 px-2 pb-2">
-                    {visible.map((i) => (
-                      <button key={i.id} type="button" aria-pressed={picked.includes(i.id)} className={chip(picked.includes(i.id))} onClick={() => { toggle(i.id); if (q) { setOpenGroup(g.id); setQuery(""); } }}>
-                        {picked.includes(i.id) && <Check className="h-3.5 w-3.5" />}{interventionLabel(i, en)}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+        <div className="flex justify-end">
+          <button type="button" className="text-xs text-muted-foreground underline" onClick={() => setOpenGroups(allOpen ? new Set() : new Set(["*"]))}>
+            {allOpen ? (en ? "Collapse all" : "Tout replier") : (en ? "Expand all" : "Tout déplier")}
+          </button>
         </div>
-        {items.filter((i) => picked.includes(i.id) && i.id !== INITIAL_DIAGNOSTIC_ID).map((i) => (
-          <div key={`d${i.id}`} className="flex items-center gap-2">
-            <span className="shrink-0 text-sm font-semibold">{interventionLabel(i, en)} :</span>
-            <input value={details[i.id] ?? ""} onChange={(e) => setDetails((d) => ({ ...d, [i.id]: e.target.value }))} maxLength={80}
-              placeholder={en ? "Optional detail: e.g. 10 keys, treble..." : "Détail optionnel : ex. 10 touches, médium..."}
-              className="list-input min-w-0 flex-1" />
-          </div>
-        ))}
-        {other && (
-          <input autoFocus value={otherText} onChange={(e) => setOtherText(e.target.value)} maxLength={120}
-            placeholder={en ? "Describe the intervention..." : "Décrivez l'intervention..."}
-            className="list-input" />
-        )}
-        <AlertDialogFooter className="flex-wrap gap-2 sm:justify-end">
+        <div className="max-h-[45vh] space-y-1 overflow-y-auto pr-1">
+          {group("shortcuts", en ? "Shortcuts" : "Raccourcis", shortList,
+            !q && <button type="button" className="list-chip" onClick={() => { setCustoms((cs) => [...cs, ""]); setErrorKey(0); }}>{en ? "+ Add" : "+ Ajouter"}</button>)}
+          {ANTECEDENT_GROUPS.map((g) => group(g.id, en ? g.en : g.fr, g.items.filter((it) => !shortIds.has(it.id))))}
+        </div>
+        <AlertDialogFooter className="relative flex-wrap gap-2 sm:justify-end">
+          <AutoDismissAlert show={errorKey > 0} resetKey={errorKey}
+            className="absolute bottom-full right-0 mb-2 rounded bg-gray-950 px-3 py-1.5 text-xs font-medium text-white shadow">
+            {en ? "Please select at least one intervention or add one." : "Sélectionnez au moins une intervention ou ajoutez-en une."}
+          </AutoDismissAlert>
           <button type="button" className={btnClassName} onClick={onCancel}>{en ? "Cancel" : "Annuler"}</button>
           {mode === "propose" && (
             <button
@@ -140,7 +161,7 @@ export function HistoryPointDialog({ open, en, mode, boxClassName, btnClassName,
               {en ? "Update current history point" : "Actualiser le point d'historique actuel"}
             </button>
           )}
-          <button type="button" className={btnClassName} onClick={() => onCreate(name)}>
+          <button type="button" className={btnClassName} onClick={submit}>
             {mode === "first" ? (en ? "Save" : "Enregistrer") : (en ? "Create a new history point" : "Créer un nouveau point d'historique")}
           </button>
         </AlertDialogFooter>
