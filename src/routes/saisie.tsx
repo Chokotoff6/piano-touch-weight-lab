@@ -3157,11 +3157,16 @@ function Index() {
           const curSn = kwSerial(info);
           const inSn = kwSerial(doc.info);
           const hasWork = rows.some((r) => r.wd || r.wa) || Boolean(info["marque"] || info["modele"]);
-          if (hasWork && differentSerial(curSn, inSn)) {
-            const ok = window.confirm(lang === "en"
-              ? `The file's serial number (${inSn}) differs from the current piano (${curSn}). Replace the current sheet?`
-              : `Le n° de série du fichier (${inSn}) diffère du piano en cours (${curSn}). Remplacer la fiche en cours ?`);
-            if (!ok) return;
+          if (hasWork) {
+            const ref = [doc.info["marque"], doc.info["modele"]].filter(Boolean).join(" ") || file.name;
+            const msg = differentSerial(curSn, inSn)
+              ? (lang === "en"
+                ? `The file's serial number (${inSn}) differs from the current piano (${curSn}). Replace the current data with ${ref}?`
+                : `Le n° de série du fichier (${inSn}) diffère du piano en cours (${curSn}). Remplacer les données en cours par ${ref} ?`)
+              : (lang === "en"
+                ? `Replace the current data with ${ref}?`
+                : `Remplacer les données en cours par ${ref} ?`);
+            if (!window.confirm(msg)) return;
           }
         }
         kwDocRef.current = doc;
@@ -3175,6 +3180,7 @@ function Index() {
         setImportBaseline(loaded);
         setIsDirty(false);
         setImportedProfile(true);
+        setWeighingMode(false);
         return;
       }
       importCsvContent(text);
@@ -4255,6 +4261,22 @@ function Index() {
 
 
             <div className="mt-4 flex flex-wrap items-start justify-start gap-6 sm:col-span-2 md:col-span-4">
+              <label className={FIELD_LABEL_CLASS}>
+                <span className="block">{en ? "Usage intensity" : "Intensité d'usage"}</span>
+                <select
+                  value={info["usage_level"] ?? ""}
+                  onChange={(e) => updateInfo("usage_level", e.target.value)}
+                  className={`${INPUT_CLASS} !bg-white !block !w-fit !min-w-0 !max-w-full mt-2 ${info["usage_level"] ? "not-italic" : "!text-muted-foreground !italic"}`}
+                >
+                  <option value="" className="italic text-muted-foreground">{en ? "— Select —" : "— Sélectionner —"}</option>
+                  {USAGE_OPTIONS.map((option) => (
+                    <option key={option} value={option} className="not-italic text-foreground">
+                      {en ? USAGE_LABELS_EN[option] : USAGE_LABELS_FR[option]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
               <div className={FIELD_LABEL_CLASS}>
                 <span className="block">{en ? "Instrument history" : "Historique instrument"}</span>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -4281,22 +4303,6 @@ function Index() {
                   updateInfo("entretien", maintenanceFromAntecedents(next));
                 }}
               />
-
-              <label className={FIELD_LABEL_CLASS}>
-                <span className="block">{en ? "Usage intensity" : "Intensité d'usage"}</span>
-                <select
-                  value={info["usage_level"] ?? ""}
-                  onChange={(e) => updateInfo("usage_level", e.target.value)}
-                  className={`${INPUT_CLASS} !bg-white !block !w-fit !min-w-0 !max-w-full mt-2 ${info["usage_level"] ? "not-italic" : "!text-muted-foreground !italic"}`}
-                >
-                  <option value="" className="italic text-muted-foreground">{en ? "— Select —" : "— Sélectionner —"}</option>
-                  {USAGE_OPTIONS.map((option) => (
-                    <option key={option} value={option} className="not-italic text-foreground">
-                      {en ? USAGE_LABELS_EN[option] : USAGE_LABELS_FR[option]}
-                    </option>
-                  ))}
-                </select>
-              </label>
 
             </div>
 

@@ -520,7 +520,7 @@ function RootComponent() {
                 {/* 1. Enregistrer : fichier local souverain .kw, sur les 3 pages. */}
                 <button
                   type="button"
-                  className="block w-full px-3 py-2 text-left text-sm font-bold text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
+                  className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
                   onClick={() => {
                     // Pesée gère ses points d'historique ; ailleurs, enregistrement direct du brouillon (clic natif conservé).
                     if (isSaisie) {
@@ -531,7 +531,7 @@ function RootComponent() {
                     }
                   }}
                 >
-                  <span className="pointer-events-none">{lang === "en" ? "Save profile (.kw)" : "Enregistrer le profil (.kw)"}</span>
+                  <span className="pointer-events-none">{lang === "en" ? "Save piano (.kw)" : "Enregistrer piano (.kw)"}</span>
                 </button>
 
                 {/* 2. Export PDF selon la page. */}
@@ -556,12 +556,12 @@ function RootComponent() {
                   <button
                     type="button"
                     className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
-                    onClick={() => requireConsent(() => {
+                    onClick={() => {
                       // Formulaire vierge fourni ultérieurement : public/formulaire-vierge.pdf (silencieux tant qu'absent).
                       void fetch("/formulaire-vierge.pdf", { method: "HEAD" }).then((r) => {
                         if (r.ok && (r.headers.get("content-type") ?? "").includes("pdf")) window.open("/formulaire-vierge.pdf", "_blank");
                       });
-                    })}
+                    }}
                   >
                     <span className="pointer-events-none">{lang === "en" ? "Export a blank weighing form (pdf)" : "Exporter un formulaire de pesée vierge (pdf)"}</span>
                   </button>
@@ -572,6 +572,11 @@ function RootComponent() {
                 <button
                   type="button"
                   className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
+                  onMouseEnter={() => {
+                    void import("@/lib/kw-file").then(({ readSessionKwDocument }) => {
+                      if (!readSessionKwDocument()) setHistoryHint(true);
+                    });
+                  }}
                   onMouseLeave={hideHistoryHint}
                   onClick={() => {
                     void (async () => {
@@ -588,20 +593,35 @@ function RootComponent() {
                 </button>
                 {historyHint && (
                   <span role="tooltip" className="pointer-events-none absolute right-full top-1/2 mr-2 -translate-y-1/2 whitespace-nowrap rounded border border-gray-300 bg-white px-2.5 py-2 text-xs font-semibold text-black shadow-lg">
-                    {lang === "en" ? "Save the profile (.kw) first." : "Enregistrez d'abord le profil (.kw)."}
+                    {lang === "en" ? "Save the piano (.kw) first." : "Enregistrez d'abord le piano (.kw)."}
                   </span>
                 )}
                 </div>
 
                 {/* 3. Importer : uniquement sur la page Pesée. */}
                 {isSaisie && (
+                  <div className="relative">
                   <button
                     type="button"
                     className="block w-full border-t border-gray-500 px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
-                    onClick={() => dispatchAction("piano-import-csv")}
+                    onMouseEnter={() => {
+                      void import("@/lib/kw-file").then(({ readDraftProfile }) => {
+                        const { info, rows } = readDraftProfile();
+                        const has = rows.some((r) => r.wd || r.wa) || Boolean(info["marque"] || info["modele"]);
+                        setImportHint(has);
+                      });
+                    }}
+                    onMouseLeave={() => setImportHint(false)}
+                    onClick={() => { setImportHint(false); dispatchAction("piano-import-csv"); }}
                   >
-                    <span className="pointer-events-none">{lang === "en" ? "Import a profile (.kw)" : "Importer un profil (.kw)"}</span>
+                    <span className="pointer-events-none">{lang === "en" ? "Import piano (.kw)" : "Importer piano (.kw)"}</span>
                   </button>
+                  {importHint && (
+                    <span role="tooltip" className="pointer-events-none absolute right-full top-1/2 mr-2 -translate-y-1/2 whitespace-nowrap rounded border border-gray-300 bg-white px-2.5 py-2 text-xs font-semibold text-black shadow-lg">
+                      {lang === "en" ? "Overwrites current data" : "Écrase les données en cours"}
+                    </span>
+                  )}
+                  </div>
                 )}
               </div>
             </div>
