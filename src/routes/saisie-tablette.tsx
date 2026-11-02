@@ -4,8 +4,8 @@
 // synchronisées. Le dessin réutilise les mêmes classes CSS que le clavier
 // bureau, rendu à taille native puis agrandi par homothétie stricte (scale).
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import type React from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useLang } from "@/data/translations";
 import { DRAFT_EDITED_EVENT } from "@/lib/zoom-edit";
 import { SECURITY_BACKUP_KEY } from "@/lib/kw-file";
