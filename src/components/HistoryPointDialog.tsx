@@ -110,7 +110,7 @@ export function HistoryPointDialog({ open, en, mode, boxClassName, btnClassName,
             return (
               <div key={id} className="flex flex-nowrap items-center gap-1.5">
                 <span className="list-chip list-chip-active shrink-0 whitespace-nowrap">{it ? interventionLabel(it, en) : id}</span>
-                <input value={details[id] ?? ""} onChange={(e) => setDetails((d) => ({ ...d, [id]: e.target.value }))} maxLength={80}
+                <input autoFocus value={details[id] ?? ""} onChange={(e) => setDetails((d) => ({ ...d, [id]: e.target.value }))} maxLength={80}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); } }}
                   placeholder={en ? "Optional detail: e.g. 10 keys, treble..." : "Détail optionnel : ex. 10 touches, médium..."}
                   className="list-input min-w-[14rem] flex-1" />
