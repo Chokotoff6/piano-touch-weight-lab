@@ -128,11 +128,13 @@ function useWidth() {
 }
 
 function KeyGrid({
-  from, to, rows, editable, onChange, onCommit,
+  from, to, rows, editable, mini = false, active, onChange, onCommit, onFocusField,
 }: {
-  from: number; to: number; rows: Row[]; editable: boolean;
+  from: number; to: number; rows: Row[]; editable: boolean; mini?: boolean;
+  active?: { index: number; field: "wd" | "wa" } | null;
   onChange?: (index: number, field: "wd" | "wa", value: string) => void;
   onCommit?: () => void;
+  onFocusField?: (index: number, field: "wd" | "wa") => void;
 }) {
   const g = useMemo(() => geometry(from, to, NATIVE_WHITE), [from, to]);
   const style = {
@@ -150,43 +152,67 @@ function KeyGrid({
         const leftBlack = !black && BLACK_KEYS.has(k - 1);
         const rightBlack = !black && BLACK_KEYS.has(k + 1);
         const shift = leftBlack === rightBlack ? "" : leftBlack ? "shift-left" : "shift-right";
+        const showNumber = !mini || C_KEYS.has(k);
         return (
           <div
             key={k}
             style={g.vars[i]}
             className={`piano-measure-column ${black ? "is-black" : "is-white"} ${shift} ${NATURAL_KEY_BREAKS.has(k) ? "natural-key-break" : ""} ${k === to ? "is-last-key" : ""}`}
           >
-            <div className={`key-number ${C_KEYS.has(k) ? "is-c-key" : ""}`}>{k}</div>
+            <div className={`key-number ${C_KEYS.has(k) ? "is-c-key" : ""}`}>{showNumber ? k : "\u00A0"}</div>
             <div className="key-body">
-              {(["wd", "wa"] as const).map((field) => (
-                <div key={field} className={`weight-fields weight-fields-${field}`}>
-                  {editable ? (
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      autoComplete="off"
-                      aria-label={`${field === "wd" ? "PD" : "PR"} ${k}`}
-                      value={rows[index]![field]}
-                      onChange={(e) => onChange?.(index, field, e.target.value.replace(/[^0-9.,]/g, ""))}
-                      onBlur={() => onCommit?.()}
-                      onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
-                      className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${black ? "" : "![background-color:#cbd5e1]"}`}
-                      style={black ? { backgroundColor: "#cbd5e1" } : undefined}
-                    />
-                  ) : (
-                    <span
-                      className={`weight-input !font-sans font-semibold !text-black ${black ? "" : "![background-color:#cbd5e1]"}`}
-                      style={{ backgroundColor: "#cbd5e1", textAlign: "center" }}
-                    >
-                      {rows[index]![field]}
-                    </span>
-                  )}
-                </div>
-              ))}
+              {!mini && (["wd", "wa"] as const).map((field) => {
+                const isActive = active?.index === index && active.field === field;
+                return (
+                  <div key={field} className={`weight-fields weight-fields-${field}`}>
+                    {editable ? (
+                      <input
+                        type="text"
+                        inputMode="none"
+                        autoComplete="off"
+                        aria-label={`${field === "wd" ? "PD" : "PR"} ${k}`}
+                        value={rows[index]![field]}
+                        onFocus={() => onFocusField?.(index, field)}
+                        onChange={(e) => onChange?.(index, field, e.target.value.replace(/[^0-9.,]/g, ""))}
+                        onBlur={() => onCommit?.()}
+                        onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                        className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isActive ? "!border-2 !border-black" : ""} ${black ? "" : "![background-color:#cbd5e1]"}`}
+                        style={black ? { backgroundColor: "#cbd5e1" } : undefined}
+                      />
+                    ) : (
+                      <span
+                        className={`weight-input !font-sans font-semibold !text-black ${black ? "" : "![background-color:#cbd5e1]"}`}
+                        style={{ backgroundColor: "#cbd5e1", textAlign: "center" }}
+                      >
+                        {rows[index]![field]}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/** Pavé numérique tactile dédié (aperçu ergonomique). */
+function Keypad({ onKey, en }: { onKey: (k: string) => void; en: boolean }) {
+  const keys = ["7", "8", "9", "4", "5", "6", "1", "2", "3", ",", "0", "⌫"];
+  const btn = "flex h-16 items-center justify-center rounded-lg border border-input bg-background text-2xl font-semibold text-foreground shadow-sm active:bg-accent select-none";
+  return (
+    <div className="grid w-[264px] shrink-0 grid-cols-3 gap-2" onPointerDown={(e) => e.preventDefault()}>
+      {keys.map((k) => (
+        <button key={k} type="button" className={btn} onClick={() => onKey(k)} aria-label={k === "⌫" ? (en ? "Delete" : "Effacer") : k}>
+          {k}
+        </button>
+      ))}
+      <button type="button" className={`${btn} text-base`} onClick={() => onKey("C")}>{en ? "Clear" : "Vider"}</button>
+      <button type="button" className={`${btn} col-span-2 bg-foreground text-lg !text-background`} onClick={() => onKey("OK")}>
+        {en ? "Enter ↵" : "Valider ↵"}
+      </button>
     </div>
   );
 }
