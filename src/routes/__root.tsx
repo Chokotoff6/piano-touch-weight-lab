@@ -422,7 +422,7 @@ function RootComponent() {
                   {lang === "en" ? "Weighing" : "Pesée"}
                 </Link>
               )}
-              {!topbar.saving && (
+              {!topbar.cloudSaving && (
                 <Link to="/saisie-tablette" className={linkClass} activeProps={{ className: activeLinkClass }}>
                   {lang === "en" ? "Tablet (Lab)" : "Tablette (Lab)"}
                 </Link>
