@@ -205,7 +205,6 @@ function RootComponent() {
   }, [likedActivePages]);
   /** Infobulle ancrée « Exporter l'historique » : masquée après 3 s ou à la sortie du survol. */
   const [historyHint, setHistoryHint] = useState(false);
-  const [importHint, setImportHint] = useState(false);
   const historyHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showHistoryHint = () => {
     setHistoryHint(true);
