@@ -466,6 +466,14 @@ function TabletWeighingPage() {
           <span className="summary-text block min-w-0 flex-1 truncate" title={summaryLine}>{summaryLine}</span>
         </div>
 
+        {/* Numéros des Do au-dessus de la mini-map (taille réelle, police de l'appli) */}
+        <div className="relative mt-2 h-5 w-full font-sans text-sm font-bold text-foreground select-none" aria-hidden="true">
+          {[...C_KEYS].map((k) => {
+            const c = full.cols[k - 1]!;
+            const center = ((c.start + c.end) / 2 - full.left) * miniScale;
+            return <span key={k} className="absolute top-0 -translate-x-1/2" style={{ left: center }}>{k}</span>;
+          })}
+        </div>
         {/* Mini-map 88 touches + viseur glissable */}
         <div
           ref={miniRef}
