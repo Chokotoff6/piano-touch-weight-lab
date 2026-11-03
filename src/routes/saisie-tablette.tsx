@@ -10,6 +10,9 @@ import { useLang } from "@/data/translations";
 import { DRAFT_EDITED_EVENT } from "@/lib/zoom-edit";
 import { SECURITY_BACKUP_KEY } from "@/lib/kw-file";
 import { useTopbarState } from "@/lib/topbar-store";
+import { getPreferences } from "@/lib/preferences";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/saisie-tablette")({
   head: () => ({
@@ -157,7 +160,7 @@ function KeyGrid({
         const leftBlack = !black && BLACK_KEYS.has(k - 1);
         const rightBlack = !black && BLACK_KEYS.has(k + 1);
         const shift = leftBlack === rightBlack ? "" : leftBlack ? "shift-left" : "shift-right";
-        const showNumber = !mini || C_KEYS.has(k);
+        const showNumber = !mini;
         return (
           <div
             key={k}
@@ -451,6 +454,7 @@ function TabletWeighingPage() {
     }
   };
 
+  const cmdBtn = "h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground";
   const arrowBtn = "shrink-0 cursor-pointer px-1 text-2xl leading-none !text-black hover:opacity-70 disabled:cursor-default disabled:opacity-20";
 
   return (
