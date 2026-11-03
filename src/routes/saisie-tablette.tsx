@@ -128,13 +128,16 @@ function useWidth() {
 }
 
 function KeyGrid({
-  from, to, rows, editable, mini = false, active, onChange, onCommit, onFocusField,
+  from, to, rows, editable, mini = false, active, onChange, onCommit, onFocusField, isVisible, weightFilter = "all", numberFontPx,
 }: {
   from: number; to: number; rows: Row[]; editable: boolean; mini?: boolean;
   active?: { index: number; field: "wd" | "wa" } | null;
   onChange?: (index: number, field: "wd" | "wa", value: string) => void;
   onCommit?: () => void;
   onFocusField?: (index: number, field: "wd" | "wa") => void;
+  isVisible?: (index: number) => boolean;
+  weightFilter?: "all" | "wd" | "wa";
+  numberFontPx?: number;
 }) {
   const g = useMemo(() => geometry(from, to, NATIVE_WHITE), [from, to]);
   const style = {
