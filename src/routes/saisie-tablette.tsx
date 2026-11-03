@@ -586,7 +586,7 @@ function TabletWeighingPage() {
           <Keypad onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />
         </div>
         <div className="mt-2 min-h-6 text-center">
-          <AutoDismissAlert show={alert !== null} resetKey={alert?.tick} className="inline-block rounded-md border border-foreground/30 bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-md">
+          <AutoDismissAlert show={alert !== null} resetKey={alert?.tick ?? 0} className="inline-block rounded-md border border-foreground/30 bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-md">
             {alert?.text}
           </AutoDismissAlert>
         </div>
