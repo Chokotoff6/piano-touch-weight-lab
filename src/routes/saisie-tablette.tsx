@@ -412,22 +412,43 @@ function TabletWeighingPage() {
 
   const label = (k: "wd" | "wa") => (k === "wd" ? (en ? "Downweight" : "Poids descendant") : (en ? "Upweight" : "Poids remontant"));
 
+  // Case suivante visible (filtres et Mode Rapide respectés), toutes octaves.
+  const nextCell = (index: number, field: "wd" | "wa") => {
+    const fields = (["wd", "wa"] as const).filter((f) => weightFilter === "all" || weightFilter === f);
+    let i = index;
+    let fi = fields.indexOf(field as never);
+    for (let guard = 0; guard < 200; guard++) {
+      fi++;
+      if (fi >= fields.length) { fi = 0; i++; }
+      if (i > 87) return null;
+      if (isVisible(i)) return { index: i, field: fields[fi]! };
+    }
+    return null;
+  };
+  const goTo = (cell: { index: number; field: "wd" | "wa" } | null) => {
+    setActive(cell);
+    if (!cell) return;
+    const o = OCTAVES.findIndex(([a, b]) => cell.index + 1 >= a && cell.index + 1 <= b);
+    if (o >= 0 && o !== octave) setOctave(o);
+  };
+
   // Pavé numérique : agit sur la case active.
   const onKey = (k: string) => {
+    if (k === "UNDO") { undo(); return; }
+    if (k === "REDO") { redo(); return; }
     if (!active) return;
     const cur = rowsRef.current[active.index]![active.field];
-    if (k === "OK") {
-      onCommit();
-      const next = active.field === "wd" ? { index: active.index, field: "wa" as const } : active.index + 1 <= to - 1 ? { index: active.index + 1, field: "wd" as const } : null;
-      setActive(next);
-      return;
-    }
     let v = cur;
     if (k === "⌫") v = cur.slice(0, -1);
     else if (k === "C") v = "";
     else if (k === ",") v = cur.includes(",") || cur.includes(".") ? cur : `${cur || "0"},`;
     else v = cur + k;
     onChange(active.index, active.field, v);
+    // Avance automatique (préférence) : 2 chiffres entiers, ou 1 décimale.
+    if (/^\d$/.test(k) && getPreferences().autoAdvance && (/^\d{2}$/.test(v) || /^\d+[.,]\d$/.test(v))) {
+      onCommit();
+      goTo(nextCell(active.index, active.field));
+    }
   };
 
   const arrowBtn = "shrink-0 cursor-pointer px-1 text-2xl leading-none !text-black hover:opacity-70 disabled:cursor-default disabled:opacity-20";
