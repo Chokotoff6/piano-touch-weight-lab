@@ -162,10 +162,17 @@ function KeyGrid({
             style={g.vars[i]}
             className={`piano-measure-column ${black ? "is-black" : "is-white"} ${shift} ${NATURAL_KEY_BREAKS.has(k) ? "natural-key-break" : ""} ${k === to ? "is-last-key" : ""}`}
           >
-            <div className={`key-number ${C_KEYS.has(k) ? "is-c-key" : ""}`}>{showNumber ? k : "\u00A0"}</div>
+            <div
+              className={`key-number ${C_KEYS.has(k) ? "is-c-key" : ""} ${numberFontPx ? "!font-sans" : ""}`}
+              style={numberFontPx ? { fontSize: numberFontPx, fontWeight: 700, WebkitTextStroke: 0, whiteSpace: "nowrap" } : undefined}
+            >
+              {showNumber ? k : "\u00A0"}
+            </div>
             <div className="key-body">
               {!mini && (["wd", "wa"] as const).map((field) => {
                 const isActive = active?.index === index && active.field === field;
+                const shown = (!isVisible || isVisible(index)) && (weightFilter === "all" || weightFilter === field);
+                if (!shown) return <div key={field} className={`weight-fields weight-fields-${field}`} />;
                 return (
                   <div key={field} className={`weight-fields weight-fields-${field}`}>
                     {editable ? (
