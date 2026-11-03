@@ -13,6 +13,30 @@ import { useTopbarState } from "@/lib/topbar-store";
 import { getPreferences } from "@/lib/preferences";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import { AutoDismissAlert } from "@/components/AutoDismissAlert";
+
+// Règles et messages copiés à l'identique de la Pesée bureau (saisie.tsx).
+const WEIGHT_RANGES = { wd: [30, 90], wa: [10, 40] } as const;
+const rangeMessage = (field: "wd" | "wa", en: boolean) =>
+  field === "wd"
+    ? en
+      ? "⚠️ Out of shop range: Down weight (DW) must be between 30g and 90g."
+      : "⚠️ Valeur hors plage d'atelier : Le Poids Descendant (PD) doit être compris entre 30g et 90g."
+    : en
+      ? "⚠️ Out of shop range: Up weight (UW) must be between 10g and 40g."
+      : "⚠️ Valeur hors plage d'atelier : Le Poids Remontant (PR) doit être compris entre 10g et 40g.";
+const PEDAL_MESSAGE_FR =
+  "⚠️ Attention : Valeur élevée détectée. Assurez-vous que la pédale de sustain (forte) est bien enfoncée à fond durant la mesure pour libérer les étouffoirs.";
+const PEDAL_MESSAGE_EN =
+  "⚠️ Warning: high value detected. Make sure the sustain pedal is fully pressed during the measurement to release the dampers.";
+const COHERENCE_MESSAGE =
+  "⚠️ Erreur mécanique : Le Poids Descendant (PD) doit être strictement supérieur au Poids Remontant (PR) pour calculer la Friction.";
+const parseW = (s: string) => {
+  const t = s.trim().replace(",", ".");
+  if (!t) return null;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : null;
+};
 
 export const Route = createFileRoute("/saisie-tablette")({
   head: () => ({
@@ -248,6 +272,9 @@ function TabletWeighingPage() {
   const [octave, setOctave] = useState(0);
   const [active, setActive] = useState<{ index: number; field: "wd" | "wa" } | null>(null);
   const dirty = useRef(false);
+  /** Équivalent tactile de input.select() : la prochaine frappe remplace la valeur. */
+  const replaceNext = useRef(true);
+  const [alert, setAlert] = useState<{ text: string; tick: number } | null>(null);
   const rowsRef = useRef(rows);
   rowsRef.current = rows;
 
@@ -429,29 +456,54 @@ function TabletWeighingPage() {
     return null;
   };
   const goTo = (cell: { index: number; field: "wd" | "wa" } | null) => {
+    replaceNext.current = true;
     setActive(cell);
     if (!cell) return;
     const o = OCTAVES.findIndex(([a, b]) => cell.index + 1 >= a && cell.index + 1 <= b);
     if (o >= 0 && o !== octave) setOctave(o);
   };
 
-  // Pavé numérique : agit sur la case active.
+  // Pavé numérique : agit sur la case active. Comme sur bureau (input.select()),
+  // la valeur d'une case qui vient de recevoir le focus est remplacée par la 1re frappe.
   const onKey = (k: string) => {
     if (k === "UNDO") { undo(); return; }
     if (k === "REDO") { redo(); return; }
     if (!active) return;
     const cur = rowsRef.current[active.index]![active.field];
+    const replace = replaceNext.current;
+    replaceNext.current = false;
     let v = cur;
-    if (k === "⌫") v = cur.slice(0, -1);
+    if (k === "⌫") v = replace ? "" : cur.slice(0, -1);
     else if (k === "C") v = "";
-    else if (k === ",") v = cur.includes(",") || cur.includes(".") ? cur : `${cur || "0"},`;
-    else v = cur + k;
+    else if (k === ",") v = replace ? "0," : cur.includes(",") || cur.includes(".") ? cur : `${cur || "0"},`;
+    else v = (replace ? "" : cur) + k;
+    v = v.replace(/^(\d{2})\d+$/, "$1");
     onChange(active.index, active.field, v);
-    // Avance automatique (préférence) : 2 chiffres entiers, ou 1 décimale.
-    if (/^\d$/.test(k) && getPreferences().autoAdvance && (/^\d{2}$/.test(v) || /^\d+[.,]\d$/.test(v))) {
-      onCommit();
-      goTo(nextCell(active.index, active.field));
+    if (!/^\d$/.test(k)) return;
+    // Contrôles identiques à la Pesée bureau (aucun tant que < 2 chiffres).
+    if (v.replace(/[.,]/g, "").length < 2) { setAlert(null); return; }
+    const row = rowsRef.current[active.index]!;
+    const num = parseW(v);
+    const wd = parseW(row.wd);
+    const wa = parseW(row.wa);
+    const mechanical = wd !== null && wa !== null && wd <= wa;
+    const showErr = (text: string) => { setAlert({ text, tick: Date.now() }); replaceNext.current = true; };
+    if (mechanical) { showErr(COHERENCE_MESSAGE); return; }
+    if (num !== null && (num < WEIGHT_RANGES[active.field][0] || num > WEIGHT_RANGES[active.field][1])) {
+      showErr(rangeMessage(active.field, en));
+      return;
     }
+    setAlert(null);
+    let hidePedal = false;
+    try { hidePedal = window.localStorage.getItem("ptw_hide_pedal_alert") === "1"; } catch { /* indisponible */ }
+    if (active.field === "wd" && num !== null && num >= 70 && num <= 90 && !hidePedal) {
+      setAlert({ text: en ? PEDAL_MESSAGE_EN : PEDAL_MESSAGE_FR, tick: Date.now() });
+      onCommit();
+      return;
+    }
+    if (!getPreferences().autoAdvance) return;
+    onCommit();
+    goTo(nextCell(active.index, active.field));
   };
 
   const cmdBtn = "h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground";
@@ -525,13 +577,18 @@ function TabletWeighingPage() {
                   <div className="label-wa-white">{label("wa")}</div>
                 </div>
                 <div style={{ marginLeft: -seg.left }}>
-                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onChange} onCommit={onCommit} onFocusField={(index, field) => setActive({ index, field })} isVisible={isVisible} weightFilter={weightFilter} />
+                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onChange} onCommit={onCommit} onFocusField={(index, field) => { replaceNext.current = true; setActive({ index, field }); }} isVisible={isVisible} weightFilter={weightFilter} />
                 </div>
               </div>
             </div>
           </div>
           <button type="button" aria-label={en ? "Next octave" : "Octave suivante"} disabled={octave === OCTAVES.length - 1} onClick={() => setOctave((o) => Math.min(OCTAVES.length - 1, o + 1))} className={arrowBtn}>▶</button>
           <Keypad onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />
+        </div>
+        <div className="mt-2 min-h-6 text-center">
+          <AutoDismissAlert show={alert !== null} resetKey={alert?.tick ?? 0} className="inline-block rounded-md border border-foreground/30 bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-md">
+            {alert?.text}
+          </AutoDismissAlert>
         </div>
 
         {/* Actions */}
