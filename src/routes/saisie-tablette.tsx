@@ -33,6 +33,8 @@ const BLACK_KEYS = new Set([
 ]);
 const NATURAL_KEY_BREAKS = new Set([3, 10, 15, 22, 27, 34, 39, 46, 51, 58, 63, 70, 75, 82, 87]);
 const C_KEYS = new Set([4, 16, 28, 40, 52, 64, 76, 88]);
+/** Mode Rapide (identique au bureau) : index zéro-based des Do et Do#. */
+const RAPID_INDEX_SET = new Set<number>([3, 4, 15, 16, 27, 28, 39, 40, 51, 52, 63, 64, 75, 76, 87]);
 const BLACK_RATIO = 0.605;
 /** Largeur native d'une touche blanche (référence bureau ~1280 px). */
 const NATIVE_WHITE = 41;
