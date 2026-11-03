@@ -628,6 +628,3 @@ body {
 .tablet-keyboard .is-black .key-body::before {
   top: calc(-1 * var(--hairline, 1px));
 }
-.tablet-keyboard .key-body {
-  border-bottom-width: calc(2 * var(--hairline, 1px));
-}

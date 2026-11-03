@@ -577,13 +577,18 @@ function TabletWeighingPage() {
                   <div className="label-wa-white">{label("wa")}</div>
                 </div>
                 <div style={{ marginLeft: -seg.left }}>
-                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onChange} onCommit={onCommit} onFocusField={(index, field) => setActive({ index, field })} isVisible={isVisible} weightFilter={weightFilter} />
+                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onChange} onCommit={onCommit} onFocusField={(index, field) => { replaceNext.current = true; setActive({ index, field }); }} isVisible={isVisible} weightFilter={weightFilter} />
                 </div>
               </div>
             </div>
           </div>
           <button type="button" aria-label={en ? "Next octave" : "Octave suivante"} disabled={octave === OCTAVES.length - 1} onClick={() => setOctave((o) => Math.min(OCTAVES.length - 1, o + 1))} className={arrowBtn}>▶</button>
           <Keypad onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />
+        </div>
+        <div className="mt-2 min-h-6 text-center">
+          <AutoDismissAlert show={alert !== null} resetKey={alert?.tick} className="inline-block rounded-md border border-foreground/30 bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-md">
+            {alert?.text}
+          </AutoDismissAlert>
         </div>
 
         {/* Actions */}
