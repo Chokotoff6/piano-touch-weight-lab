@@ -208,10 +208,10 @@ function KeyGrid({
   );
 }
 
-/** Pavé numérique tactile dédié (aperçu ergonomique). */
-function Keypad({ onKey, en }: { onKey: (k: string) => void; en: boolean }) {
+/** Pavé numérique tactile dédié. Rangée basse : Vider / Annuler / Rétablir. */
+function Keypad({ onKey, en, canUndo, canRedo }: { onKey: (k: string) => void; en: boolean; canUndo: boolean; canRedo: boolean }) {
   const keys = ["7", "8", "9", "4", "5", "6", "1", "2", "3", ",", "0", "⌫"];
-  const btn = "flex h-16 items-center justify-center rounded-lg border border-input bg-background text-2xl font-semibold text-foreground shadow-sm active:bg-accent select-none";
+  const btn = "flex h-16 items-center justify-center rounded-lg border border-input bg-background text-2xl font-semibold text-foreground shadow-sm active:bg-accent select-none disabled:opacity-30";
   return (
     <div className="grid w-[264px] shrink-0 grid-cols-3 gap-2" onPointerDown={(e) => e.preventDefault()}>
       {keys.map((k) => (
@@ -220,9 +220,8 @@ function Keypad({ onKey, en }: { onKey: (k: string) => void; en: boolean }) {
         </button>
       ))}
       <button type="button" className={`${btn} text-base`} onClick={() => onKey("C")}>{en ? "Clear" : "Vider"}</button>
-      <button type="button" className={`${btn} col-span-2 bg-foreground text-lg !text-background`} onClick={() => onKey("OK")}>
-        {en ? "Enter ↵" : "Valider ↵"}
-      </button>
+      <button type="button" className={btn} disabled={!canUndo} onClick={() => onKey("UNDO")} aria-label={en ? "Undo" : "Annuler"} title={en ? "Undo" : "Annuler"}>↶</button>
+      <button type="button" className={btn} disabled={!canRedo} onClick={() => onKey("REDO")} aria-label={en ? "Redo" : "Rétablir"} title={en ? "Redo" : "Rétablir"}>↷</button>
     </div>
   );
 }
