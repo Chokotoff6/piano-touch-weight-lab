@@ -10,6 +10,9 @@ import { useLang } from "@/data/translations";
 import { DRAFT_EDITED_EVENT } from "@/lib/zoom-edit";
 import { SECURITY_BACKUP_KEY } from "@/lib/kw-file";
 import { useTopbarState } from "@/lib/topbar-store";
+import { getPreferences } from "@/lib/preferences";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/saisie-tablette")({
   head: () => ({
@@ -33,6 +36,8 @@ const BLACK_KEYS = new Set([
 ]);
 const NATURAL_KEY_BREAKS = new Set([3, 10, 15, 22, 27, 34, 39, 46, 51, 58, 63, 70, 75, 82, 87]);
 const C_KEYS = new Set([4, 16, 28, 40, 52, 64, 76, 88]);
+/** Mode Rapide (identique au bureau) : index zéro-based des Do et Do#. */
+const RAPID_INDEX_SET = new Set<number>([3, 4, 15, 16, 27, 28, 39, 40, 51, 52, 63, 64, 75, 76, 87]);
 const BLACK_RATIO = 0.605;
 /** Largeur native d'une touche blanche (référence bureau ~1280 px). */
 const NATIVE_WHITE = 41;
@@ -128,13 +133,16 @@ function useWidth() {
 }
 
 function KeyGrid({
-  from, to, rows, editable, mini = false, active, onChange, onCommit, onFocusField,
+  from, to, rows, editable, mini = false, active, onChange, onCommit, onFocusField, isVisible, weightFilter = "all", numberFontPx,
 }: {
   from: number; to: number; rows: Row[]; editable: boolean; mini?: boolean;
   active?: { index: number; field: "wd" | "wa" } | null;
   onChange?: (index: number, field: "wd" | "wa", value: string) => void;
   onCommit?: () => void;
   onFocusField?: (index: number, field: "wd" | "wa") => void;
+  isVisible?: (index: number) => boolean;
+  weightFilter?: "all" | "wd" | "wa";
+  numberFontPx?: number;
 }) {
   const g = useMemo(() => geometry(from, to, NATIVE_WHITE), [from, to]);
   const style = {
@@ -152,17 +160,24 @@ function KeyGrid({
         const leftBlack = !black && BLACK_KEYS.has(k - 1);
         const rightBlack = !black && BLACK_KEYS.has(k + 1);
         const shift = leftBlack === rightBlack ? "" : leftBlack ? "shift-left" : "shift-right";
-        const showNumber = !mini || C_KEYS.has(k);
+        const showNumber = !mini;
         return (
           <div
             key={k}
             style={g.vars[i]}
             className={`piano-measure-column ${black ? "is-black" : "is-white"} ${shift} ${NATURAL_KEY_BREAKS.has(k) ? "natural-key-break" : ""} ${k === to ? "is-last-key" : ""}`}
           >
-            <div className={`key-number ${C_KEYS.has(k) ? "is-c-key" : ""}`}>{showNumber ? k : "\u00A0"}</div>
+            <div
+              className={`key-number ${C_KEYS.has(k) ? "is-c-key" : ""} ${numberFontPx ? "!font-sans" : ""}`}
+              style={numberFontPx ? { fontSize: numberFontPx, fontWeight: 700, WebkitTextStroke: 0, whiteSpace: "nowrap" } : undefined}
+            >
+              {showNumber ? k : "\u00A0"}
+            </div>
             <div className="key-body">
               {!mini && (["wd", "wa"] as const).map((field) => {
                 const isActive = active?.index === index && active.field === field;
+                const shown = (!isVisible || isVisible(index)) && (weightFilter === "all" || weightFilter === field);
+                if (!shown) return <div key={field} className={`weight-fields weight-fields-${field}`} />;
                 return (
                   <div key={field} className={`weight-fields weight-fields-${field}`}>
                     {editable ? (
@@ -198,10 +213,10 @@ function KeyGrid({
   );
 }
 
-/** Pavé numérique tactile dédié (aperçu ergonomique). */
-function Keypad({ onKey, en }: { onKey: (k: string) => void; en: boolean }) {
+/** Pavé numérique tactile dédié. Rangée basse : Vider / Annuler / Rétablir. */
+function Keypad({ onKey, en, canUndo, canRedo }: { onKey: (k: string) => void; en: boolean; canUndo: boolean; canRedo: boolean }) {
   const keys = ["7", "8", "9", "4", "5", "6", "1", "2", "3", ",", "0", "⌫"];
-  const btn = "flex h-16 items-center justify-center rounded-lg border border-input bg-background text-2xl font-semibold text-foreground shadow-sm active:bg-accent select-none";
+  const btn = "flex h-16 items-center justify-center rounded-lg border border-input bg-background text-2xl font-semibold text-foreground shadow-sm active:bg-accent select-none disabled:opacity-30";
   return (
     <div className="grid w-[264px] shrink-0 grid-cols-3 gap-2" onPointerDown={(e) => e.preventDefault()}>
       {keys.map((k) => (
@@ -210,9 +225,8 @@ function Keypad({ onKey, en }: { onKey: (k: string) => void; en: boolean }) {
         </button>
       ))}
       <button type="button" className={`${btn} text-base`} onClick={() => onKey("C")}>{en ? "Clear" : "Vider"}</button>
-      <button type="button" className={`${btn} col-span-2 bg-foreground text-lg !text-background`} onClick={() => onKey("OK")}>
-        {en ? "Enter ↵" : "Valider ↵"}
-      </button>
+      <button type="button" className={btn} disabled={!canUndo} onClick={() => onKey("UNDO")} aria-label={en ? "Undo" : "Annuler"} title={en ? "Undo" : "Annuler"}>↶</button>
+      <button type="button" className={btn} disabled={!canRedo} onClick={() => onKey("REDO")} aria-label={en ? "Redo" : "Rétablir"} title={en ? "Redo" : "Rétablir"}>↷</button>
     </div>
   );
 }
@@ -249,14 +263,75 @@ function TabletWeighingPage() {
     };
   }, []);
 
+  // Historique Annuler / Rétablir : un instantané par case modifiée.
+  const undoStack = useRef<Row[][]>([]);
+  const redoStack = useRef<Row[][]>([]);
+  const [, setHistTick] = useState(0);
   const onChange = (index: number, field: "wd" | "wa", value: string) => {
+    if (!dirty.current) {
+      undoStack.current.push(rowsRef.current.map((r) => ({ ...r })));
+      if (undoStack.current.length > 200) undoStack.current.shift();
+      redoStack.current = [];
+      setHistTick((t) => t + 1);
+    }
     dirty.current = true;
-    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
+    const next = rowsRef.current.map((r, i) => (i === index ? { ...r, [field]: value } : r));
+    rowsRef.current = next;
+    setRows(next);
   };
   const onCommit = () => {
     if (!dirty.current) return;
     writeRows(rowsRef.current);
     dirty.current = false;
+  };
+  const applySnapshot = (snap: Row[]) => {
+    rowsRef.current = snap;
+    setRows(snap);
+    writeRows(snap);
+    dirty.current = false;
+    setHistTick((t) => t + 1);
+  };
+  const undo = () => {
+    onCommit();
+    const snap = undoStack.current.pop();
+    if (!snap) return;
+    redoStack.current.push(rowsRef.current.map((r) => ({ ...r })));
+    applySnapshot(snap);
+  };
+  const redo = () => {
+    const snap = redoStack.current.pop();
+    if (!snap) return;
+    undoStack.current.push(rowsRef.current.map((r) => ({ ...r })));
+    applySnapshot(snap);
+  };
+
+  // Commandes identiques au bureau : Mode, Touches, PD/PR, Effacer.
+  const [rapidMode, setRapidMode] = useState(false);
+  useEffect(() => {
+    try { setRapidMode(window.localStorage.getItem("ptw_rapid_mode") === "1"); } catch { /* indisponible */ }
+  }, []);
+  const toggleRapid = () => {
+    setRapidMode((v) => {
+      try { window.localStorage.setItem("ptw_rapid_mode", v ? "0" : "1"); } catch { /* indisponible */ }
+      return !v;
+    });
+  };
+  const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
+  const [weightFilter, setWeightFilter] = useState<"all" | "wd" | "wa">("all");
+  const [confirmReset, setConfirmReset] = useState(false);
+  const isVisible = (index: number) => {
+    if (rapidMode && !RAPID_INDEX_SET.has(index)) return false;
+    if (viewFilter === "white") return !BLACK_KEYS.has(index + 1);
+    if (viewFilter === "black") return BLACK_KEYS.has(index + 1);
+    return true;
+  };
+  const hasData = rows.some((r) => r.wd.trim() || r.wa.trim());
+  const doReset = () => {
+    undoStack.current.push(rowsRef.current.map((r) => ({ ...r })));
+    redoStack.current = [];
+    applySnapshot(Array.from({ length: 88 }, () => ({ wd: "", wa: "" })));
+    setActive(null);
+    setConfirmReset(false);
   };
 
   // Flèches clavier ← / → (hors saisie) pour changer d'octave.
@@ -340,24 +415,46 @@ function TabletWeighingPage() {
 
   const label = (k: "wd" | "wa") => (k === "wd" ? (en ? "Downweight" : "Poids descendant") : (en ? "Upweight" : "Poids remontant"));
 
+  // Case suivante visible (filtres et Mode Rapide respectés), toutes octaves.
+  const nextCell = (index: number, field: "wd" | "wa") => {
+    const fields = (["wd", "wa"] as const).filter((f) => weightFilter === "all" || weightFilter === f);
+    let i = index;
+    let fi = fields.indexOf(field as never);
+    for (let guard = 0; guard < 200; guard++) {
+      fi++;
+      if (fi >= fields.length) { fi = 0; i++; }
+      if (i > 87) return null;
+      if (isVisible(i)) return { index: i, field: fields[fi]! };
+    }
+    return null;
+  };
+  const goTo = (cell: { index: number; field: "wd" | "wa" } | null) => {
+    setActive(cell);
+    if (!cell) return;
+    const o = OCTAVES.findIndex(([a, b]) => cell.index + 1 >= a && cell.index + 1 <= b);
+    if (o >= 0 && o !== octave) setOctave(o);
+  };
+
   // Pavé numérique : agit sur la case active.
   const onKey = (k: string) => {
+    if (k === "UNDO") { undo(); return; }
+    if (k === "REDO") { redo(); return; }
     if (!active) return;
     const cur = rowsRef.current[active.index]![active.field];
-    if (k === "OK") {
-      onCommit();
-      const next = active.field === "wd" ? { index: active.index, field: "wa" as const } : active.index + 1 <= to - 1 ? { index: active.index + 1, field: "wd" as const } : null;
-      setActive(next);
-      return;
-    }
     let v = cur;
     if (k === "⌫") v = cur.slice(0, -1);
     else if (k === "C") v = "";
     else if (k === ",") v = cur.includes(",") || cur.includes(".") ? cur : `${cur || "0"},`;
     else v = cur + k;
     onChange(active.index, active.field, v);
+    // Avance automatique (préférence) : 2 chiffres entiers, ou 1 décimale.
+    if (/^\d$/.test(k) && getPreferences().autoAdvance && (/^\d{2}$/.test(v) || /^\d+[.,]\d$/.test(v))) {
+      onCommit();
+      goTo(nextCell(active.index, active.field));
+    }
   };
 
+  const cmdBtn = "h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground";
   const arrowBtn = "shrink-0 cursor-pointer px-1 text-2xl leading-none !text-black hover:opacity-70 disabled:cursor-default disabled:opacity-20";
 
   return (
@@ -369,6 +466,14 @@ function TabletWeighingPage() {
           <span className="summary-text block min-w-0 flex-1 truncate" title={summaryLine}>{summaryLine}</span>
         </div>
 
+        {/* Numéros des Do au-dessus de la mini-map (taille réelle, police de l'appli) */}
+        <div className="relative mt-2 h-5 w-full font-sans text-sm font-bold text-foreground select-none" aria-hidden="true">
+          {[...C_KEYS].map((k) => {
+            const c = full.cols[k - 1]!;
+            const center = ((c.start + c.end) / 2 - full.left) * miniScale;
+            return <span key={k} className="absolute top-0 -translate-x-1/2" style={{ left: center }}>{k}</span>;
+          })}
+        </div>
         {/* Mini-map 88 touches + viseur glissable */}
         <div
           ref={miniRef}
@@ -405,11 +510,14 @@ function TabletWeighingPage() {
               setOctave((o) => (end < start ? Math.min(OCTAVES.length - 1, o + 1) : Math.max(0, o - 1)));
             }}
           >
-            <div className="absolute left-1/2 top-0 origin-top" style={{ transform: `translateX(-50%) scale(${octScale})` }}>
+            <div className="tablet-keyboard absolute left-1/2 top-0 origin-top" style={{ transform: `translateX(-50%) scale(${octScale})` }}>
               <div className="technical-sheet" style={{ width: LABELS_W + seg.width, gridTemplateColumns: `${LABELS_W}px ${seg.width}px` }}>
                 <div className="technical-labels" style={{ width: LABELS_W }}>
-                  <div className="label-key">
-                    <span className="inline-block rounded-md border border-foreground/20 bg-muted px-1.5 py-0.5">{noteLabel(from, en)}–{noteLabel(to, en)}</span>
+                  <div className="label-key" style={{ top: "1.6rem" }}>
+                    <span className="inline-flex flex-col items-end rounded-md border border-foreground/20 bg-muted px-1.5 py-1 leading-tight">
+                      <span>{en ? "Octave" : "Octave"} {octave + 1}/{OCTAVES.length}</span>
+                      <span>{noteLabel(from, en)}–{noteLabel(to, en)}</span>
+                    </span>
                   </div>
                   <div className="label-wd">{label("wd")}</div>
                   <div className="label-wa">{label("wa")}</div>
@@ -417,13 +525,13 @@ function TabletWeighingPage() {
                   <div className="label-wa-white">{label("wa")}</div>
                 </div>
                 <div style={{ marginLeft: -seg.left }}>
-                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onChange} onCommit={onCommit} onFocusField={(index, field) => setActive({ index, field })} />
+                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onChange} onCommit={onCommit} onFocusField={(index, field) => setActive({ index, field })} isVisible={isVisible} weightFilter={weightFilter} />
                 </div>
               </div>
             </div>
           </div>
           <button type="button" aria-label={en ? "Next octave" : "Octave suivante"} disabled={octave === OCTAVES.length - 1} onClick={() => setOctave((o) => Math.min(OCTAVES.length - 1, o + 1))} className={arrowBtn}>▶</button>
-          <Keypad onKey={onKey} en={en} />
+          <Keypad onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />
         </div>
 
         {/* Actions */}
@@ -435,16 +543,57 @@ function TabletWeighingPage() {
           >
             {en ? "Edit piano info" : "Modifier info piano"}
           </button>
-          <span className="text-sm text-muted-foreground">
-            {en ? "Octave" : "Octave"} {octave + 1}/{OCTAVES.length} · {en ? "keys" : "touches"} {from}–{to}
-          </span>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button type="button" variant="outline" onClick={toggleRapid} className={cmdBtn}>
+              <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
+              <span>{en ? (rapidMode ? "Mode: Quick" : "Mode: Normal") : (rapidMode ? "Mode : Rapide" : "Mode : Normal")}</span>
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setViewFilter((c) => (c === "all" ? "white" : c === "white" ? "black" : "all"))} className={cmdBtn}>
+              <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
+              <span>
+                {en
+                  ? viewFilter === "all" ? "Keys: All" : viewFilter === "white" ? "Keys: Whites" : "Keys: Blacks"
+                  : viewFilter === "all" ? "Touches : Toutes" : viewFilter === "white" ? "Touches : Blanches" : "Touches : Noires"}
+              </span>
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setWeightFilter((c) => (c === "all" ? "wd" : c === "wd" ? "wa" : "all"))} className={cmdBtn}>
+              <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
+              <span>
+                {en
+                  ? weightFilter === "all" ? "DW/UW: All" : weightFilter === "wd" ? "DW/UW: Down" : "DW/UW: Up"
+                  : weightFilter === "all" ? "PD/PR : Tous" : weightFilter === "wd" ? "PD/PR : Descendants" : "PD/PR : Remontants"}
+              </span>
+            </Button>
+            <div className="relative flex items-center">
+              {confirmReset && (
+                <div className="fixed inset-0" style={{ background: "rgba(0,0,0,0.15)", zIndex: 40 }} onClick={() => setConfirmReset(false)} role="presentation" />
+              )}
+              {confirmReset && (
+                <div
+                  className="absolute left-1/2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
+                  style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
+                >
+                  <span>{en ? "Do you want to erase all weighing data?" : "Voulez-vous effacer toutes les données de pesées ?"}</span>
+                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={doReset}>{en ? "Yes" : "Oui"}</button>
+                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(false)}>{en ? "No" : "Non"}</button>
+                </div>
+              )}
+              <Button type="button" variant="outline" disabled={!hasData} onClick={() => setConfirmReset(true)} className={cmdBtn}>
+                {en ? "Reset weighings" : "Effacer les pesées"}
+              </Button>
+            </div>
+          </div>
           {topbar.gateReady ? (
-            <Link to="/resultats" className="rounded-md border border-green-700 bg-green-600 px-4 py-2 text-sm font-semibold !text-white">
-              {en ? "Dashboard" : "Bilan"}
+            <Link
+              to="/resultats"
+              className="rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold"
+              style={{ backgroundColor: "#dcfce7", borderColor: "#16a34a", color: "#000000" }}
+            >
+              {en ? "Dashboard >" : "Bilan >"}
             </Link>
           ) : (
-            <span aria-disabled="true" className="cursor-not-allowed rounded-md border border-input bg-muted px-4 py-2 text-sm font-semibold text-muted-foreground">
-              {en ? "Dashboard" : "Bilan"}
+            <span aria-disabled="true" className="cursor-not-allowed rounded-md border-2 border-input bg-background px-4 py-1.5 text-[0.9rem] font-bold !text-gray-400 opacity-60">
+              {en ? "Dashboard >" : "Bilan >"}
             </span>
           )}
         </div>
