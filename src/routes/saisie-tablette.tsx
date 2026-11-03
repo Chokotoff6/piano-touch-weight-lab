@@ -498,11 +498,14 @@ function TabletWeighingPage() {
               setOctave((o) => (end < start ? Math.min(OCTAVES.length - 1, o + 1) : Math.max(0, o - 1)));
             }}
           >
-            <div className="absolute left-1/2 top-0 origin-top" style={{ transform: `translateX(-50%) scale(${octScale})` }}>
+            <div className="tablet-keyboard absolute left-1/2 top-0 origin-top" style={{ transform: `translateX(-50%) scale(${octScale})` }}>
               <div className="technical-sheet" style={{ width: LABELS_W + seg.width, gridTemplateColumns: `${LABELS_W}px ${seg.width}px` }}>
                 <div className="technical-labels" style={{ width: LABELS_W }}>
-                  <div className="label-key">
-                    <span className="inline-block rounded-md border border-foreground/20 bg-muted px-1.5 py-0.5">{noteLabel(from, en)}–{noteLabel(to, en)}</span>
+                  <div className="label-key" style={{ top: "1.6rem" }}>
+                    <span className="inline-flex flex-col items-end rounded-md border border-foreground/20 bg-muted px-1.5 py-1 leading-tight">
+                      <span>{en ? "Octave" : "Octave"} {octave + 1}/{OCTAVES.length}</span>
+                      <span>{noteLabel(from, en)}–{noteLabel(to, en)}</span>
+                    </span>
                   </div>
                   <div className="label-wd">{label("wd")}</div>
                   <div className="label-wa">{label("wa")}</div>
@@ -510,13 +513,13 @@ function TabletWeighingPage() {
                   <div className="label-wa-white">{label("wa")}</div>
                 </div>
                 <div style={{ marginLeft: -seg.left }}>
-                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onChange} onCommit={onCommit} onFocusField={(index, field) => setActive({ index, field })} />
+                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onChange} onCommit={onCommit} onFocusField={(index, field) => setActive({ index, field })} isVisible={isVisible} weightFilter={weightFilter} />
                 </div>
               </div>
             </div>
           </div>
           <button type="button" aria-label={en ? "Next octave" : "Octave suivante"} disabled={octave === OCTAVES.length - 1} onClick={() => setOctave((o) => Math.min(OCTAVES.length - 1, o + 1))} className={arrowBtn}>▶</button>
-          <Keypad onKey={onKey} en={en} />
+          <Keypad onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />
         </div>
 
         {/* Actions */}
@@ -528,16 +531,57 @@ function TabletWeighingPage() {
           >
             {en ? "Edit piano info" : "Modifier info piano"}
           </button>
-          <span className="text-sm text-muted-foreground">
-            {en ? "Octave" : "Octave"} {octave + 1}/{OCTAVES.length} · {en ? "keys" : "touches"} {from}–{to}
-          </span>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button type="button" variant="outline" onClick={toggleRapid} className={cmdBtn}>
+              <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
+              <span>{en ? (rapidMode ? "Mode: Quick" : "Mode: Normal") : (rapidMode ? "Mode : Rapide" : "Mode : Normal")}</span>
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setViewFilter((c) => (c === "all" ? "white" : c === "white" ? "black" : "all"))} className={cmdBtn}>
+              <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
+              <span>
+                {en
+                  ? viewFilter === "all" ? "Keys: All" : viewFilter === "white" ? "Keys: Whites" : "Keys: Blacks"
+                  : viewFilter === "all" ? "Touches : Toutes" : viewFilter === "white" ? "Touches : Blanches" : "Touches : Noires"}
+              </span>
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setWeightFilter((c) => (c === "all" ? "wd" : c === "wd" ? "wa" : "all"))} className={cmdBtn}>
+              <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
+              <span>
+                {en
+                  ? weightFilter === "all" ? "DW/UW: All" : weightFilter === "wd" ? "DW/UW: Down" : "DW/UW: Up"
+                  : weightFilter === "all" ? "PD/PR : Tous" : weightFilter === "wd" ? "PD/PR : Descendants" : "PD/PR : Remontants"}
+              </span>
+            </Button>
+            <div className="relative flex items-center">
+              {confirmReset && (
+                <div className="fixed inset-0" style={{ background: "rgba(0,0,0,0.15)", zIndex: 40 }} onClick={() => setConfirmReset(false)} role="presentation" />
+              )}
+              {confirmReset && (
+                <div
+                  className="absolute left-1/2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
+                  style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
+                >
+                  <span>{en ? "Do you want to erase all weighing data?" : "Voulez-vous effacer toutes les données de pesées ?"}</span>
+                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={doReset}>{en ? "Yes" : "Oui"}</button>
+                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(false)}>{en ? "No" : "Non"}</button>
+                </div>
+              )}
+              <Button type="button" variant="outline" disabled={!hasData} onClick={() => setConfirmReset(true)} className={cmdBtn}>
+                {en ? "Reset weighings" : "Effacer les pesées"}
+              </Button>
+            </div>
+          </div>
           {topbar.gateReady ? (
-            <Link to="/resultats" className="rounded-md border border-green-700 bg-green-600 px-4 py-2 text-sm font-semibold !text-white">
-              {en ? "Dashboard" : "Bilan"}
+            <Link
+              to="/resultats"
+              className="rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold"
+              style={{ backgroundColor: "#dcfce7", borderColor: "#16a34a", color: "#000000" }}
+            >
+              {en ? "Dashboard >" : "Bilan >"}
             </Link>
           ) : (
-            <span aria-disabled="true" className="cursor-not-allowed rounded-md border border-input bg-muted px-4 py-2 text-sm font-semibold text-muted-foreground">
-              {en ? "Dashboard" : "Bilan"}
+            <span aria-disabled="true" className="cursor-not-allowed rounded-md border-2 border-input bg-background px-4 py-1.5 text-[0.9rem] font-bold !text-gray-400 opacity-60">
+              {en ? "Dashboard >" : "Bilan >"}
             </span>
           )}
         </div>
