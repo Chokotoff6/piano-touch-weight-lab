@@ -13,6 +13,30 @@ import { useTopbarState } from "@/lib/topbar-store";
 import { getPreferences } from "@/lib/preferences";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import { AutoDismissAlert } from "@/components/AutoDismissAlert";
+
+// Règles et messages copiés à l'identique de la Pesée bureau (saisie.tsx).
+const WEIGHT_RANGES = { wd: [30, 90], wa: [10, 40] } as const;
+const rangeMessage = (field: "wd" | "wa", en: boolean) =>
+  field === "wd"
+    ? en
+      ? "⚠️ Out of shop range: Down weight (DW) must be between 30g and 90g."
+      : "⚠️ Valeur hors plage d'atelier : Le Poids Descendant (PD) doit être compris entre 30g et 90g."
+    : en
+      ? "⚠️ Out of shop range: Up weight (UW) must be between 10g and 40g."
+      : "⚠️ Valeur hors plage d'atelier : Le Poids Remontant (PR) doit être compris entre 10g et 40g.";
+const PEDAL_MESSAGE_FR =
+  "⚠️ Attention : Valeur élevée détectée. Assurez-vous que la pédale de sustain (forte) est bien enfoncée à fond durant la mesure pour libérer les étouffoirs.";
+const PEDAL_MESSAGE_EN =
+  "⚠️ Warning: high value detected. Make sure the sustain pedal is fully pressed during the measurement to release the dampers.";
+const COHERENCE_MESSAGE =
+  "⚠️ Erreur mécanique : Le Poids Descendant (PD) doit être strictement supérieur au Poids Remontant (PR) pour calculer la Friction.";
+const parseW = (s: string) => {
+  const t = s.trim().replace(",", ".");
+  if (!t) return null;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : null;
+};
 
 export const Route = createFileRoute("/saisie-tablette")({
   head: () => ({
