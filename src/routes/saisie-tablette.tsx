@@ -258,14 +258,75 @@ function TabletWeighingPage() {
     };
   }, []);
 
+  // Historique Annuler / Rétablir : un instantané par case modifiée.
+  const undoStack = useRef<Row[][]>([]);
+  const redoStack = useRef<Row[][]>([]);
+  const [, setHistTick] = useState(0);
   const onChange = (index: number, field: "wd" | "wa", value: string) => {
+    if (!dirty.current) {
+      undoStack.current.push(rowsRef.current.map((r) => ({ ...r })));
+      if (undoStack.current.length > 200) undoStack.current.shift();
+      redoStack.current = [];
+      setHistTick((t) => t + 1);
+    }
     dirty.current = true;
-    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
+    const next = rowsRef.current.map((r, i) => (i === index ? { ...r, [field]: value } : r));
+    rowsRef.current = next;
+    setRows(next);
   };
   const onCommit = () => {
     if (!dirty.current) return;
     writeRows(rowsRef.current);
     dirty.current = false;
+  };
+  const applySnapshot = (snap: Row[]) => {
+    rowsRef.current = snap;
+    setRows(snap);
+    writeRows(snap);
+    dirty.current = false;
+    setHistTick((t) => t + 1);
+  };
+  const undo = () => {
+    onCommit();
+    const snap = undoStack.current.pop();
+    if (!snap) return;
+    redoStack.current.push(rowsRef.current.map((r) => ({ ...r })));
+    applySnapshot(snap);
+  };
+  const redo = () => {
+    const snap = redoStack.current.pop();
+    if (!snap) return;
+    undoStack.current.push(rowsRef.current.map((r) => ({ ...r })));
+    applySnapshot(snap);
+  };
+
+  // Commandes identiques au bureau : Mode, Touches, PD/PR, Effacer.
+  const [rapidMode, setRapidMode] = useState(false);
+  useEffect(() => {
+    try { setRapidMode(window.localStorage.getItem("ptw_rapid_mode") === "1"); } catch { /* indisponible */ }
+  }, []);
+  const toggleRapid = () => {
+    setRapidMode((v) => {
+      try { window.localStorage.setItem("ptw_rapid_mode", v ? "0" : "1"); } catch { /* indisponible */ }
+      return !v;
+    });
+  };
+  const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
+  const [weightFilter, setWeightFilter] = useState<"all" | "wd" | "wa">("all");
+  const [confirmReset, setConfirmReset] = useState(false);
+  const isVisible = (index: number) => {
+    if (rapidMode && !RAPID_INDEX_SET.has(index)) return false;
+    if (viewFilter === "white") return !BLACK_KEYS.has(index + 1);
+    if (viewFilter === "black") return BLACK_KEYS.has(index + 1);
+    return true;
+  };
+  const hasData = rows.some((r) => r.wd.trim() || r.wa.trim());
+  const doReset = () => {
+    undoStack.current.push(rowsRef.current.map((r) => ({ ...r })));
+    redoStack.current = [];
+    applySnapshot(Array.from({ length: 88 }, () => ({ wd: "", wa: "" })));
+    setActive(null);
+    setConfirmReset(false);
   };
 
   // Flèches clavier ← / → (hors saisie) pour changer d'octave.
