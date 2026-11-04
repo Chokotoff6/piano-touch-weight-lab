@@ -379,6 +379,21 @@ function TabletWeighingPage() {
   const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
   const [weightFilter, setWeightFilter] = useState<"all" | "wd" | "wa">("all");
   const [confirmReset, setConfirmReset] = useState(false);
+  // Pavé tactile : affiché par défaut sur écran tactile, masqué sur ordinateur
+  // (la vue Octave depuis la page bureau s'affiche ainsi centrée, sans pavé).
+  const [showKeypad, setShowKeypad] = useState(() => {
+    try {
+      const saved = window.localStorage.getItem("ptw_tablet_keypad");
+      if (saved !== null) return saved === "1";
+    } catch { /* indisponible */ }
+    return typeof window !== "undefined" && Boolean(window.matchMedia?.("(pointer: coarse)").matches);
+  });
+  const toggleKeypad = () => {
+    setShowKeypad((v) => {
+      try { window.localStorage.setItem("ptw_tablet_keypad", v ? "0" : "1"); } catch { /* indisponible */ }
+      return !v;
+    });
+  };
   const isVisible = (index: number) => {
     if (rapidMode && !RAPID_INDEX_SET.has(index)) return false;
     if (viewFilter === "white") return !BLACK_KEYS.has(index + 1);
@@ -494,6 +509,36 @@ function TabletWeighingPage() {
     if (!cell) return;
     const o = OCTAVES.findIndex(([a, b]) => cell.index + 1 >= a && cell.index + 1 <= b);
     if (o >= 0 && o !== octave) setOctave(o);
+    focusCell(cell);
+  };
+
+  // Pipeline unique de validation : contrôles identiques à la Pesée bureau
+  // (aucun tant que < 2 chiffres), puis avance automatique avec vrai focus DOM.
+  // Partagé par le pavé tactile et le clavier physique.
+  const validateAndAdvance = (index: number, field: "wd" | "wa", v: string) => {
+    if (v.replace(/[.,]/g, "").length < 2) { setAlert(null); return; }
+    const row = rowsRef.current[index]!;
+    const value = parseW(v);
+    const wd = parseW(row.wd);
+    const wa = parseW(row.wa);
+    const mechanical = wd !== null && wa !== null && wd <= wa;
+    const showErr = (text: string) => { setAlert({ text, tick: Date.now() }); replaceNext.current = true; };
+    if (mechanical) { showErr(COHERENCE_MESSAGE); return; }
+    if (value !== null && (value < WEIGHT_RANGES[field][0] || value > WEIGHT_RANGES[field][1])) {
+      showErr(rangeMessage(field, en));
+      return;
+    }
+    setAlert(null);
+    let hidePedal = false;
+    try { hidePedal = window.localStorage.getItem("ptw_hide_pedal_alert") === "1"; } catch { /* indisponible */ }
+    if (field === "wd" && value !== null && value >= 70 && value <= 90 && !hidePedal) {
+      setAlert({ text: en ? PEDAL_MESSAGE_EN : PEDAL_MESSAGE_FR, tick: Date.now() });
+      onCommit();
+      return;
+    }
+    if (!getPreferences().autoAdvance) return;
+    onCommit();
+    goTo(nextCell(index, field));
   };
 
   // Pavé numérique : agit sur la case active. Comme sur bureau (input.select()),
@@ -501,49 +546,28 @@ function TabletWeighingPage() {
   const onKey = (k: string) => {
     if (k === "UNDO") { undo(); return; }
     if (k === "REDO") { redo(); return; }
-    if (!active) return;
+    if (!active || !/^\d$/.test(k)) return;
     const cur = rowsRef.current[active.index]![active.field];
     const replace = replaceNext.current;
     replaceNext.current = false;
-    let v = cur;
-    if (k === "⌫") v = replace ? "" : cur.slice(0, -1);
-    else if (k === "C") v = "";
-    else if (k === ",") v = replace ? "0," : cur.includes(",") || cur.includes(".") ? cur : `${cur || "0"},`;
-    else v = (replace ? "" : cur) + k;
-    v = v.replace(/^(\d{2})\d+$/, "$1");
+    const v = ((replace ? "" : cur) + k).replace(/^(\d{2})\d+$/, "$1");
     onChange(active.index, active.field, v);
-    if (!/^\d$/.test(k)) return;
-    // Contrôles identiques à la Pesée bureau (aucun tant que < 2 chiffres).
-    if (v.replace(/[.,]/g, "").length < 2) { setAlert(null); return; }
-    const row = rowsRef.current[active.index]!;
-    const num = parseW(v);
-    const wd = parseW(row.wd);
-    const wa = parseW(row.wa);
-    const mechanical = wd !== null && wa !== null && wd <= wa;
-    const showErr = (text: string) => { setAlert({ text, tick: Date.now() }); replaceNext.current = true; };
-    if (mechanical) { showErr(COHERENCE_MESSAGE); return; }
-    if (num !== null && (num < WEIGHT_RANGES[active.field][0] || num > WEIGHT_RANGES[active.field][1])) {
-      showErr(rangeMessage(active.field, en));
-      return;
-    }
-    setAlert(null);
-    let hidePedal = false;
-    try { hidePedal = window.localStorage.getItem("ptw_hide_pedal_alert") === "1"; } catch { /* indisponible */ }
-    if (active.field === "wd" && num !== null && num >= 70 && num <= 90 && !hidePedal) {
-      setAlert({ text: en ? PEDAL_MESSAGE_EN : PEDAL_MESSAGE_FR, tick: Date.now() });
-      onCommit();
-      return;
-    }
-    if (!getPreferences().autoAdvance) return;
-    onCommit();
-    goTo(nextCell(active.index, active.field));
+    validateAndAdvance(active.index, active.field, v);
   };
 
-  const cmdBtn = "h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground";
+  // Clavier physique : la saisie passe par l'input (la sélection native remplace
+  // la valeur), puis le même pipeline de validation et d'avance automatique.
+  const onTyped = (index: number, field: "wd" | "wa", value: string) => {
+    replaceNext.current = false;
+    onChange(index, field, value);
+    validateAndAdvance(index, field, value);
+  };
+
+  const cmdBtn = "h-auto min-h-8 gap-2 whitespace-nowrap px-[clamp(0.4rem,1vw,0.75rem)] py-1.5 !text-[clamp(0.68rem,1.4vw,0.84rem)] font-bold text-muted-foreground";
   const arrowBtn = "shrink-0 cursor-pointer px-1 text-2xl leading-none !text-black hover:opacity-70 disabled:cursor-default disabled:opacity-20";
 
   return (
-    <main className="mx-auto w-full max-w-[1280px] px-4 py-3">
+    <main className="mx-auto w-full max-w-[1280px] px-4 pb-3 pt-7">
       <div className="relative rounded-md border-2 border-foreground bg-card p-4 pt-5">
         <div className="absolute -top-3.5 left-4 flex max-w-[calc(100%-2rem)] items-baseline gap-2 whitespace-nowrap bg-card px-2 text-lg font-bold text-black">
           <span className="shrink-0">{en ? "Static touch weight measurements" : "Mesures poids statiques"}</span>
