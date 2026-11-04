@@ -12,7 +12,7 @@ import { SECURITY_BACKUP_KEY } from "@/lib/kw-file";
 import { useTopbarState } from "@/lib/topbar-store";
 import { getPreferences } from "@/lib/preferences";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { Redo2, RefreshCw, Undo2 } from "lucide-react";
 import { AutoDismissAlert } from "@/components/AutoDismissAlert";
 
 // Règles et messages copiés à l'identique de la Pesée bureau (saisie.tsx).
@@ -157,7 +157,7 @@ function useWidth() {
 }
 
 function KeyGrid({
-  from, to, rows, editable, mini = false, active, onChange, onCommit, onFocusField, isVisible, weightFilter = "all", numberFontPx,
+  from, to, rows, editable, mini = false, active, onChange, onCommit, onFocusField, isVisible, weightFilter = "all", numberFontPx, registerInput,
 }: {
   from: number; to: number; rows: Row[]; editable: boolean; mini?: boolean;
   active?: { index: number; field: "wd" | "wa" } | null;
@@ -167,6 +167,7 @@ function KeyGrid({
   isVisible?: (index: number) => boolean;
   weightFilter?: "all" | "wd" | "wa";
   numberFontPx?: number;
+  registerInput?: (index: number, field: "wd" | "wa", el: HTMLInputElement | null) => void;
 }) {
   const g = useMemo(() => geometry(from, to, NATIVE_WHITE), [from, to]);
   const style = {
@@ -198,14 +199,24 @@ function KeyGrid({
               {showNumber ? k : "\u00A0"}
             </div>
             <div className="key-body">
-              {!mini && (["wd", "wa"] as const).map((field) => {
+              {(["wd", "wa"] as const).map((field) => {
                 const isActive = active?.index === index && active.field === field;
                 const shown = (!isVisible || isVisible(index)) && (weightFilter === "all" || weightFilter === field);
                 if (!shown) return <div key={field} className={`weight-fields weight-fields-${field}`} />;
+                if (mini) {
+                  // Mini-map : rectangles de saisie vides, repères visuels des
+                  // filtres Touches et PD/PR (jamais de chiffres à cette échelle).
+                  return (
+                    <div key={field} className={`weight-fields weight-fields-${field}`}>
+                      <span className="weight-input" style={{ backgroundColor: "#cbd5e1" }} />
+                    </div>
+                  );
+                }
                 return (
                   <div key={field} className={`weight-fields weight-fields-${field}`}>
                     {editable ? (
                       <input
+                        ref={(el) => registerInput?.(index, field, el)}
                         type="text"
                         inputMode="none"
                         autoComplete="off"
@@ -237,20 +248,21 @@ function KeyGrid({
   );
 }
 
-/** Pavé numérique tactile dédié. Rangée basse : Vider / Annuler / Rétablir. */
+/** Pavé numérique tactile 3 × 4 : chiffres, puis Annuler / 0 / Rétablir
+    (icônes identiques à la page bureau). Dimensions adaptatives bornées. */
 function Keypad({ onKey, en, canUndo, canRedo }: { onKey: (k: string) => void; en: boolean; canUndo: boolean; canRedo: boolean }) {
-  const keys = ["7", "8", "9", "4", "5", "6", "1", "2", "3", ",", "0", "⌫"];
-  const btn = "flex h-16 items-center justify-center rounded-lg border border-input bg-background text-2xl font-semibold text-foreground shadow-sm active:bg-accent select-none disabled:opacity-30";
+  const keys = ["7", "8", "9", "4", "5", "6", "1", "2", "3"];
+  const btn = "flex h-[clamp(2.6rem,7vh,4rem)] items-center justify-center rounded-lg border border-input bg-background text-[clamp(1.1rem,2.4vw,1.5rem)] font-semibold text-foreground shadow-sm active:bg-accent select-none disabled:opacity-30";
   return (
-    <div className="grid w-[264px] shrink-0 grid-cols-3 gap-2" onPointerDown={(e) => e.preventDefault()}>
+    <div className="grid w-[clamp(200px,20vw,264px)] shrink-0 grid-cols-3 gap-2" onPointerDown={(e) => e.preventDefault()}>
       {keys.map((k) => (
-        <button key={k} type="button" className={btn} onClick={() => onKey(k)} aria-label={k === "⌫" ? (en ? "Delete" : "Effacer") : k}>
+        <button key={k} type="button" className={btn} onClick={() => onKey(k)}>
           {k}
         </button>
       ))}
-      <button type="button" className={`${btn} text-base`} onClick={() => onKey("C")}>{en ? "Clear" : "Vider"}</button>
-      <button type="button" className={btn} disabled={!canUndo} onClick={() => onKey("UNDO")} aria-label={en ? "Undo" : "Annuler"} title={en ? "Undo" : "Annuler"}>↶</button>
-      <button type="button" className={btn} disabled={!canRedo} onClick={() => onKey("REDO")} aria-label={en ? "Redo" : "Rétablir"} title={en ? "Redo" : "Rétablir"}>↷</button>
+      <button type="button" className={btn} disabled={!canUndo} onClick={() => onKey("UNDO")} aria-label={en ? "Undo" : "Annuler"} title={en ? "Undo" : "Annuler"}><Undo2 className="h-[1.1em] w-[1.1em]" /></button>
+      <button type="button" className={btn} onClick={() => onKey("0")}>0</button>
+      <button type="button" className={btn} disabled={!canRedo} onClick={() => onKey("REDO")} aria-label={en ? "Redo" : "Rétablir"} title={en ? "Redo" : "Rétablir"}><Redo2 className="h-[1.1em] w-[1.1em]" /></button>
     </div>
   );
 }
@@ -277,6 +289,27 @@ function TabletWeighingPage() {
   const [alert, setAlert] = useState<{ text: string; tick: number } | null>(null);
   const rowsRef = useRef(rows);
   rowsRef.current = rows;
+
+  /** Références DOM des cases : vrai focus + sélection à l'avance automatique,
+      y compris lorsque la case suivante se trouve dans une autre octave. */
+  const inputs = useRef(new Map<string, HTMLInputElement>());
+  const registerInput = useCallback((index: number, field: "wd" | "wa", el: HTMLInputElement | null) => {
+    const key = `${index}-${field}`;
+    if (el) inputs.current.set(key, el);
+    else inputs.current.delete(key);
+  }, []);
+  const focusCell = useCallback((cell: { index: number; field: "wd" | "wa" }) => {
+    // Double rAF : laisser la nouvelle octave se monter avant de cibler l'input.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const el = inputs.current.get(`${cell.index}-${cell.field}`);
+        if (el) {
+          el.focus();
+          el.select();
+        }
+      });
+    });
+  }, []);
 
   useEffect(() => {
     setRows(readRows());
