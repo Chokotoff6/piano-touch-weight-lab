@@ -657,7 +657,11 @@ function TabletWeighingPage() {
           >
             {en ? "Edit piano info" : "Modifier info piano"}
           </button>
-          <div className="flex flex-wrap items-center justify-center gap-2">
+          <div className="flex flex-nowrap items-center justify-center gap-2">
+            <Button type="button" variant="outline" onClick={() => void navigate({ to: "/saisie" })} className={cmdBtn}>
+              <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
+              <span>{en ? "View: Keyboard" : "Vue : Clavier"}</span>
+            </Button>
             <Button type="button" variant="outline" onClick={toggleRapid} className={cmdBtn}>
               <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
               <span>{en ? (rapidMode ? "Mode: Quick" : "Mode: Normal") : (rapidMode ? "Mode : Rapide" : "Mode : Normal")}</span>
@@ -678,6 +682,10 @@ function TabletWeighingPage() {
                   : weightFilter === "all" ? "PD/PR : Tous" : weightFilter === "wd" ? "PD/PR : Descendants" : "PD/PR : Remontants"}
               </span>
             </Button>
+            <Button type="button" variant="outline" onClick={toggleKeypad} className={cmdBtn}>
+              <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
+              <span>{en ? (showKeypad ? "Keypad: Shown" : "Keypad: Hidden") : (showKeypad ? "Pavé tactile : Affiché" : "Pavé tactile : Masqué")}</span>
+            </Button>
             <div className="relative flex items-center">
               {confirmReset && (
                 <div className="fixed inset-0" style={{ background: "rgba(0,0,0,0.15)", zIndex: 40 }} onClick={() => setConfirmReset(false)} role="presentation" />
@@ -692,9 +700,16 @@ function TabletWeighingPage() {
                   <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(false)}>{en ? "No" : "Non"}</button>
                 </div>
               )}
-              <Button type="button" variant="outline" disabled={!hasData} onClick={() => setConfirmReset(true)} className={cmdBtn}>
-                {en ? "Reset weighings" : "Effacer les pesées"}
-              </Button>
+              <span className="group/rst relative inline-block">
+                {hasData && (
+                  <span className="pointer-events-none absolute bottom-full left-1/2 z-[120] mb-2 hidden w-56 -translate-x-1/2 rounded-md border border-gray-300 bg-white px-3 py-2 text-left text-sm font-medium text-gray-950 shadow-lg group-hover/rst:block">
+                    {en ? "Erases all current weighings" : "Efface toutes les pesées en cours"}
+                  </span>
+                )}
+                <Button type="button" variant="outline" disabled={!hasData} onClick={() => setConfirmReset(true)} className={cmdBtn}>
+                  Reset
+                </Button>
+              </span>
             </div>
           </div>
           {topbar.gateReady ? (
