@@ -576,7 +576,7 @@ function TabletWeighingPage() {
         </div>
 
         {/* Numéros des Do au-dessus de la mini-map (taille réelle, police de l'appli) */}
-        <div className="relative mt-2 h-5 w-full font-sans text-sm font-bold text-foreground select-none" aria-hidden="true">
+        <div className="relative mt-1 h-4 w-full font-sans text-xs font-bold text-foreground select-none" aria-hidden="true">
           {[...C_KEYS].map((k) => {
             const c = full.cols[k - 1]!;
             const center = ((c.start + c.end) / 2 - full.left) * miniScale;
@@ -586,7 +586,7 @@ function TabletWeighingPage() {
         {/* Mini-map 88 touches + viseur glissable */}
         <div
           ref={miniRef}
-          className="relative mt-2 w-full cursor-pointer touch-none overflow-hidden select-none"
+          className="relative mt-0.5 w-full cursor-pointer touch-none overflow-hidden select-none"
           style={{ height: nativeH * miniScale }}
           onPointerDown={onMiniDown}
           onPointerMove={onMiniMove}
@@ -595,7 +595,7 @@ function TabletWeighingPage() {
         >
           <div className="pointer-events-none absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${miniScale})`, width: full.width }}>
             <div style={{ marginLeft: -full.left }}>
-              <KeyGrid from={1} to={88} rows={rows} editable={false} mini />
+              <KeyGrid from={1} to={88} rows={rows} editable={false} mini isVisible={isVisible} weightFilter={weightFilter} />
             </div>
           </div>
           <div
@@ -623,7 +623,7 @@ function TabletWeighingPage() {
               <div className="technical-sheet" style={{ width: LABELS_W + seg.width, gridTemplateColumns: `${LABELS_W}px ${seg.width}px` }}>
                 <div className="technical-labels" style={{ width: LABELS_W }}>
                   <div className="label-key" style={{ top: "1.6rem" }}>
-                    <span className="inline-flex flex-col items-end rounded-md border border-foreground/20 bg-muted px-1.5 py-1 leading-tight">
+                    <span className="inline-flex flex-col items-center rounded-md border border-foreground/20 bg-muted px-1.5 py-1 text-center leading-tight">
                       <span>{en ? "Octave" : "Octave"} {octave + 1}/{OCTAVES.length}</span>
                       <span>{noteLabel(from, en)}–{noteLabel(to, en)}</span>
                     </span>
@@ -634,13 +634,13 @@ function TabletWeighingPage() {
                   <div className="label-wa-white">{label("wa")}</div>
                 </div>
                 <div style={{ marginLeft: -seg.left }}>
-                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onChange} onCommit={onCommit} onFocusField={(index, field) => { replaceNext.current = true; setActive({ index, field }); }} isVisible={isVisible} weightFilter={weightFilter} />
+                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onTyped} onCommit={onCommit} onFocusField={(index, field) => { replaceNext.current = true; setActive({ index, field }); }} isVisible={isVisible} weightFilter={weightFilter} registerInput={registerInput} />
                 </div>
               </div>
             </div>
           </div>
           <button type="button" aria-label={en ? "Next octave" : "Octave suivante"} disabled={octave === OCTAVES.length - 1} onClick={() => setOctave((o) => Math.min(OCTAVES.length - 1, o + 1))} className={arrowBtn}>▶</button>
-          <Keypad onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />
+          {showKeypad && <Keypad onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />}
         </div>
         <div className="mt-2 min-h-6 text-center">
           <AutoDismissAlert show={alert !== null} resetKey={alert?.tick ?? 0} className="inline-block rounded-md border border-foreground/30 bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-md">
