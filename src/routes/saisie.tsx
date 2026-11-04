@@ -4577,6 +4577,17 @@ function Index() {
                 {en ? "Adjust weighing mode →" : "Ajustez mode saisie →"}
               </span>
             )}
+            <Button
+              type="button"
+              variant="outline"
+              data-pdf-hide
+              onClick={() => void navigate({ to: "/saisie-tablette" })}
+              className="h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground"
+            >
+              <RefreshCw size={14} strokeWidth={2.5} aria-hidden="true" />
+              {en ? "View: Octave" : "Vue : Octave"}
+            </Button>
+
             <TooltipProvider delayDuration={200}>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -4599,7 +4610,7 @@ function Index() {
                     className="h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground"
                   >
                     <RefreshCw size={14} strokeWidth={2.5} aria-hidden="true" />
-                    {en ? `Mode: ${rapidMode ? "Rapid" : "Normal"}` : `Mode : ${rapidMode ? "Rapide" : "Normal"}`}
+                    {en ? `Weighing: ${rapidMode ? "C-C#" : "Full"}` : `Pesée : ${rapidMode ? "Do-Do#" : "Intégrale"}`}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" align="center" className="z-[120] w-[min(29rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] border border-border bg-card p-3 text-left text-foreground shadow-lg">
@@ -4672,16 +4683,23 @@ function Index() {
                   <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(null)}>Non</button>
                 </div>
               )}
-              <Button
-                variant="outline"
-                disabled={!rows.some((r) => r.wd.trim() || r.wa.trim())}
-                type="button"
-                data-pdf-hide
-                onClick={() => setConfirmReset("rows")}
-                className="relative z-10 rounded-md border border-input bg-background px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
-              >
-                Reset
-              </Button>
+              <span className="group/rst relative inline-block">
+                {rows.some((r) => r.wd.trim() || r.wa.trim()) && (
+                  <span className="pointer-events-none absolute bottom-full left-1/2 z-[120] mb-2 hidden w-56 -translate-x-1/2 rounded-md border border-gray-300 bg-white px-3 py-2 text-left text-sm font-medium text-gray-950 shadow-lg group-hover/rst:block">
+                    {en ? "Erases all current weighings" : "Efface toutes les pesées en cours"}
+                  </span>
+                )}
+                <Button
+                  variant="outline"
+                  disabled={!rows.some((r) => r.wd.trim() || r.wa.trim())}
+                  type="button"
+                  data-pdf-hide
+                  onClick={() => setConfirmReset("rows")}
+                  className="relative z-10 rounded-md border border-input bg-background px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground transition-colors hover:bg-accent"
+                >
+                  Reset
+                </Button>
+              </span>
             </div>
           </div>
 
