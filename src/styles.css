@@ -300,11 +300,18 @@
     pointer-events: none;
   }
 
+  /* Pas de séparateur vertical propre aux colonnes noires : il dessinait
+     une ligne parasite descendant du coin inférieur des touches noires. */
+  .piano-measure-column.is-black::before {
+    display: none;
+  }
+
 
   .key-number {
     height: 1.05rem;
     overflow: visible;
     text-align: center;
+    font-family: "Work Sans", Arial, Helvetica, sans-serif;
     font-size: clamp(0.4rem, 0.72vw, 0.7rem);
     font-weight: 500;
     line-height: 1.05rem;
@@ -330,8 +337,9 @@
 
   .is-black .key-body::before {
     position: absolute;
+    box-sizing: border-box;
     z-index: 1;
-    top: 0;
+    top: calc(-1 * var(--hairline, 1px));
     right: calc(-1 * var(--hairline, 1px));
     left: calc(-1 * var(--hairline, 1px));
     height: 7.275rem;
@@ -623,8 +631,7 @@ body {
 @keyframes mode-tip-slide { from { transform: translateY(-14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 .mode-tip-blink { animation: mode-tip-slide 0.45s ease-out, mode-tip-blink 0.5s ease-in-out 1s 1; }
 
-/* Pesée Tablette uniquement : trait haut des noires fusionné avec le cadre,
-   trait bas des blanches de même épaisseur que les séparateurs verticaux. */
-.tablet-keyboard .is-black .key-body::before {
-  top: calc(-1 * var(--hairline, 1px));
+/* Pesée Tablette : badge d'octave légèrement écarté du dessin du clavier. */
+.tablet-keyboard .label-key {
+  right: 1.4rem;
 }
