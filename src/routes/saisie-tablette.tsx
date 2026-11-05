@@ -255,11 +255,11 @@ function KeyGrid({
 
 /** Pavé numérique tactile 3 × 4 : chiffres, puis Annuler / 0 / Rétablir
     (icônes identiques à la page bureau). Dimensions adaptatives bornées. */
-function Keypad({ onKey, en, canUndo, canRedo }: { onKey: (k: string) => void; en: boolean; canUndo: boolean; canRedo: boolean }) {
+function Keypad({ onKey, en, canUndo, canRedo, height }: { onKey: (k: string) => void; en: boolean; canUndo: boolean; canRedo: boolean; height: number }) {
   const keys = ["7", "8", "9", "4", "5", "6", "1", "2", "3"];
   const btn = "tablet-keypad-button flex items-center justify-center rounded-md border border-input bg-background font-semibold text-foreground shadow-sm active:bg-accent select-none disabled:opacity-30";
   return (
-    <div className="tablet-keypad grid shrink-0 grid-cols-3" onPointerDown={(e) => e.preventDefault()}>
+    <div className="tablet-keypad grid shrink-0 grid-cols-3 grid-rows-4" style={{ height }} onPointerDown={(e) => e.preventDefault()}>
       {keys.map((k) => (
         <Button variant="outline" key={k} type="button" className={btn} onClick={() => onKey(k)}>
           {k}
@@ -575,6 +575,9 @@ function TabletWeighingPage() {
     onCommit();
     goTo(target);
   };
+  const octaveDelay = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelOctaveDelay = () => { if (octaveDelay.current) { clearTimeout(octaveDelay.current); octaveDelay.current = null; } };
+  useEffect(() => cancelOctaveDelay, []);
   const validateAndAdvance = (index: number, field: Cell["field"], v: string) => {
     const cell = { index, field };
     setAlert(null);
@@ -590,10 +593,20 @@ function TabletWeighingPage() {
       onCommit(); return;
     }
     if (!getPreferences().autoAdvance || problem) return;
-    navigateCell(cell, nextCell(index, field));
+    const target = nextCell(index, field);
+    const octOf = (i: number) => OCTAVES.findIndex(([a, b]) => i + 1 >= a && i + 1 <= b);
+    if (target && octOf(target.index) !== octOf(index)) {
+      // Dernière case de l'octave : 2 s pour relire avant de passer à la suivante.
+      onCommit();
+      if (octaveDelay.current) clearTimeout(octaveDelay.current);
+      octaveDelay.current = setTimeout(() => { octaveDelay.current = null; navigateCell(cell, target); }, 2000);
+      return;
+    }
+    navigateCell(cell, target);
   };
   // Un seul chemin pour saisie physique et pavé : nettoyage, contrôles, avance.
   const onTyped = (index: number, field: Cell["field"], value: string) => {
+    cancelOctaveDelay();
     if (!formGuard({ index, field })) return;
     const cleaned = cleanWeight(value);
     replaceNext.current = false;
@@ -602,6 +615,7 @@ function TabletWeighingPage() {
     validateAndAdvance(index, field, cleaned);
   };
   const onKey = (k: string) => {
+    cancelOctaveDelay();
     if (k === "UNDO") { setAlert(null); undo(); return; }
     if (k === "REDO") { setAlert(null); redo(); return; }
     if (!active || !/^\d$/.test(k)) return;
@@ -739,7 +753,7 @@ function TabletWeighingPage() {
             </div>
           </div>
           <button type="button" aria-label={en ? "Next octave" : "Octave suivante"} disabled={octave === OCTAVES.length - 1} onClick={() => setOctave((o) => Math.min(OCTAVES.length - 1, o + 1))} className={arrowBtn}>▶</button>
-          {showKeypad && <Keypad onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />}
+          {showKeypad && <Keypad height={Math.max(180, 0.8 * (nativeH * octScale + 2))} onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />}
         </div>
         {alert && alertAnchor && (
           <div className="fixed z-[99999] w-[min(22rem,calc(100vw-1rem))]" style={{ left: alertAnchor.x, top: alertAnchor.y }}>
