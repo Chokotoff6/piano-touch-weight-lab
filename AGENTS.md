@@ -25,3 +25,5 @@ Les étiquettes de fin des graphiques Recharts sont placées à partir des éche
 - Pure chart calculations (buildChartData, smoothing, factory ramp, chart types) live in src/lib/chart-data.ts, never exported from route files — keeps Vite Fast Refresh working.
 
 - Tablet weighing layout lives in its own route (src/routes/saisie-tablette.tsx) sharing only the localStorage draft with /saisie; reuses keyboard CSS classes at native size scaled uniformly — keeps the desktop page untouched and the feature removable by deleting the file and its header link.
+- Tablet physical and tactile entry use one local validation pipeline, with post-render focus requests and viewport-anchored feedback; desktop handlers remain untouched to avoid cross-page regressions.
+- Tablet control dimensions use container-relative CSS with minimum touch sizes and horizontal toolbar overflow, so resizing changes actual controls without shrinking text below readable sizes.

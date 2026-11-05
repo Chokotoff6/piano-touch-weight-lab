@@ -1,5 +1,11 @@
 # Roadmap
 
+## Corrections pesée octave — novembre 2026
+- [x] Rétablir sélection, messages près des champs et contrôles de saisie tablette sans modifier le moteur bureau.
+- [x] Pavé ON par défaut, vue Complète, badge et mentions plus petits.
+- [x] Corriger le bord inférieur et rendre pavé/commandes réellement adaptatifs.
+- [x] Vérifier uniquement la compilation automatique ; essais interactifs confiés à Ben.
+
 - [x] Forcer les invitations Historique/Intensité en italique et l’infobulle de verrouillage noire, multiligne et grasse.
 - [x] Remplacer la borne 2026 par l’année système dans le contrôle et son avertissement.
 - [x] Vérifier la compilation automatique des corrections.
