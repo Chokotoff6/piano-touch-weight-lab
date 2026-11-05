@@ -326,6 +326,7 @@
 
   .key-body {
     position: relative;
+    box-sizing: border-box;
     height: 11.55rem;
     border-top: var(--hairline, 1px) solid var(--piano-line);
     border-bottom: var(--hairline, 1px) solid var(--piano-line);
@@ -399,7 +400,7 @@
     z-index: 2;
     top: 7.275rem;
     right: calc(-1 * var(--hairline, 1px));
-    bottom: 0;
+    bottom: var(--hairline, 1px);
     left: calc(-1 * var(--hairline, 1px));
     background:
       linear-gradient(var(--piano-line), var(--piano-line)) no-repeat
@@ -408,6 +409,35 @@
 
     content: "";
     pointer-events: none;
+  }
+
+  .tablet-weighing {
+    container-type: inline-size;
+  }
+  .tablet-keypad {
+    width: clamp(144px, 21cqw, 288px);
+    gap: clamp(4px, 0.7cqw, 10px);
+  }
+  .tablet-keypad-button {
+    height: clamp(44px, 5.2cqw, 72px);
+    font-size: 1.25rem;
+  }
+  .tablet-commands {
+    gap: clamp(4px, 0.65cqw, 12px);
+  }
+  .tablet-command {
+    height: clamp(44px, 4.1cqw, 56px);
+    padding-inline: clamp(6px, 0.85cqw, 16px);
+    gap: clamp(4px, 0.5cqw, 8px);
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+  .tablet-keyboard .technical-labels {
+    font-size: 0.55rem;
+  }
+  .tablet-keyboard .label-key {
+    right: 0.75rem;
+    font-size: 0.5rem;
   }
 
 
