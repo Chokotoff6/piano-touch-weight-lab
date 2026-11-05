@@ -5,7 +5,7 @@
 // bureau, rendu à taille native puis agrandi par homothétie stricte (scale).
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import type React from "react";
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useLang } from "@/data/translations";
 import { DRAFT_EDITED_EVENT } from "@/lib/zoom-edit";
 import { SECURITY_BACKUP_KEY } from "@/lib/kw-file";
@@ -130,7 +130,8 @@ function geometry(from: number, to: number, v: number) {
     return { start: prev?.black ? prev.end : m.start, end: next?.black ? next.start : m.end };
   });
   const vars = meta.map((m, i) => {
-    const c = cols[i]!;
+    const c = cols[i];
+    if (!c) return {} as CSSProperties;
     if (m.black) return { "--line-x": `${m.boundary - c.start}px` } as CSSProperties;
     const ws = m.start - c.start;
     return {
@@ -139,8 +140,8 @@ function geometry(from: number, to: number, v: number) {
       "--sep": ws < 0 ? "0px" : "var(--hairline, 1px)",
     } as CSSProperties;
   });
-  const left = cols[0]!.start;
-  const width = cols[cols.length - 1]!.end - left;
+  const left = cols[0]?.start ?? 0;
+  const width = (cols[cols.length - 1]?.end ?? left) - left;
   return { keys, b, cols, vars, template: cols.map((c) => `${c.end - c.start}px`).join(" "), left, width };
 }
 
@@ -157,13 +158,15 @@ function useWidth() {
 }
 
 function KeyGrid({
-  from, to, rows, editable, mini = false, active, onChange, onCommit, onFocusField, isVisible, weightFilter = "all", numberFontPx, registerInput,
+  from, to, rows, editable, mini = false, active, onChange, onCommit, onFocusField, onBlurField, onNavigate, isVisible, weightFilter = "all", numberFontPx, registerInput,
 }: {
   from: number; to: number; rows: Row[]; editable: boolean; mini?: boolean;
   active?: { index: number; field: "wd" | "wa" } | null;
   onChange?: (index: number, field: "wd" | "wa", value: string) => void;
   onCommit?: () => void;
   onFocusField?: (index: number, field: "wd" | "wa") => void;
+  onBlurField?: (index: number, field: "wd" | "wa") => void;
+  onNavigate?: (e: React.KeyboardEvent<HTMLInputElement>, index: number, field: "wd" | "wa") => void;
   isVisible?: (index: number) => boolean;
   weightFilter?: "all" | "wd" | "wa";
   numberFontPx?: number;
@@ -220,12 +223,14 @@ function KeyGrid({
                         type="text"
                         inputMode="none"
                         autoComplete="off"
+                        maxLength={2}
                         aria-label={`${field === "wd" ? "PD" : "PR"} ${k}`}
-                        value={rows[index]![field]}
-                        onFocus={() => onFocusField?.(index, field)}
-                        onChange={(e) => onChange?.(index, field, e.target.value.replace(/[^0-9.,]/g, ""))}
-                        onBlur={() => onCommit?.()}
-                        onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                        value={rows[index]?.[field] ?? ""}
+                        onFocus={(e) => { onFocusField?.(index, field); e.currentTarget.select(); }}
+                        onClick={(e) => { onFocusField?.(index, field); e.currentTarget.select(); }}
+                        onChange={(e) => onChange?.(index, field, e.target.value.replace(/[^0-9]/g, "").slice(0, 2))}
+                        onBlur={() => { onBlurField?.(index, field); onCommit?.(); }}
+                        onKeyDown={(e) => onNavigate?.(e, index, field)}
                         className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isActive ? "!border-2 !border-black" : ""} ${black ? "" : "![background-color:#cbd5e1]"}`}
                         style={black ? { backgroundColor: "#cbd5e1" } : undefined}
                       />
@@ -234,7 +239,7 @@ function KeyGrid({
                         className={`weight-input !font-sans font-semibold !text-black ${black ? "" : "![background-color:#cbd5e1]"}`}
                         style={{ backgroundColor: "#cbd5e1", textAlign: "center" }}
                       >
-                        {rows[index]![field]}
+                        {rows[index]?.[field] ?? ""}
                       </span>
                     )}
                   </div>
@@ -252,17 +257,17 @@ function KeyGrid({
     (icônes identiques à la page bureau). Dimensions adaptatives bornées. */
 function Keypad({ onKey, en, canUndo, canRedo }: { onKey: (k: string) => void; en: boolean; canUndo: boolean; canRedo: boolean }) {
   const keys = ["7", "8", "9", "4", "5", "6", "1", "2", "3"];
-  const btn = "flex h-[clamp(2.6rem,7vh,4rem)] items-center justify-center rounded-lg border border-input bg-background text-[clamp(1.1rem,2.4vw,1.5rem)] font-semibold text-foreground shadow-sm active:bg-accent select-none disabled:opacity-30";
+  const btn = "tablet-keypad-button flex items-center justify-center rounded-md border border-input bg-background font-semibold text-foreground shadow-sm active:bg-accent select-none disabled:opacity-30";
   return (
-    <div className="grid w-[clamp(200px,20vw,264px)] shrink-0 grid-cols-3 gap-2" onPointerDown={(e) => e.preventDefault()}>
+    <div className="tablet-keypad grid shrink-0 grid-cols-3" onPointerDown={(e) => e.preventDefault()}>
       {keys.map((k) => (
-        <button key={k} type="button" className={btn} onClick={() => onKey(k)}>
+        <Button variant="outline" key={k} type="button" className={btn} onClick={() => onKey(k)}>
           {k}
-        </button>
+        </Button>
       ))}
-      <button type="button" className={btn} disabled={!canUndo} onClick={() => onKey("UNDO")} aria-label={en ? "Undo" : "Annuler"} title={en ? "Undo" : "Annuler"}><Undo2 className="h-[1.1em] w-[1.1em]" /></button>
-      <button type="button" className={btn} onClick={() => onKey("0")}>0</button>
-      <button type="button" className={btn} disabled={!canRedo} onClick={() => onKey("REDO")} aria-label={en ? "Redo" : "Rétablir"} title={en ? "Redo" : "Rétablir"}><Redo2 className="h-[1.1em] w-[1.1em]" /></button>
+      <Button variant="outline" type="button" className={btn} disabled={!canUndo} onClick={() => onKey("UNDO")} aria-label={en ? "Undo" : "Annuler"} title={en ? "Undo" : "Annuler"}><Undo2 className="h-[1.1em] w-[1.1em]" /></Button>
+      <Button variant="outline" type="button" className={btn} onClick={() => onKey("0")}>0</Button>
+      <Button variant="outline" type="button" className={btn} disabled={!canRedo} onClick={() => onKey("REDO")} aria-label={en ? "Redo" : "Rétablir"} title={en ? "Redo" : "Rétablir"}><Redo2 className="h-[1.1em] w-[1.1em]" /></Button>
     </div>
   );
 }
@@ -286,7 +291,15 @@ function TabletWeighingPage() {
   const dirty = useRef(false);
   /** Équivalent tactile de input.select() : la prochaine frappe remplace la valeur. */
   const replaceNext = useRef(true);
-  const [alert, setAlert] = useState<{ text: string; tick: number } | null>(null);
+  type Cell = { index: number; field: "wd" | "wa" };
+  type Feedback = Cell & { text: string; tick: number; kind: "range" | "mechanical" | "incomplete" | "pedal" | "form" };
+  const [alert, setAlertState] = useState<Feedback | null>(null);
+  const alertRef = useRef<Feedback | null>(null);
+  const setAlert = (value: Feedback | null) => { alertRef.current = value; setAlertState(value); };
+  const [alertAnchor, setAlertAnchor] = useState<{ x: number; y: number } | null>(null);
+  const [focusRequest, setFocusRequest] = useState<(Cell & { token: number }) | null>(null);
+  const focusing = useRef(false);
+  const hidePedal = useRef(false);
   const rowsRef = useRef(rows);
   rowsRef.current = rows;
 
@@ -298,18 +311,38 @@ function TabletWeighingPage() {
     if (el) inputs.current.set(key, el);
     else inputs.current.delete(key);
   }, []);
-  const focusCell = useCallback((cell: { index: number; field: "wd" | "wa" }) => {
-    // Double rAF : laisser la nouvelle octave se monter avant de cibler l'input.
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const el = inputs.current.get(`${cell.index}-${cell.field}`);
-        if (el) {
-          el.focus();
-          el.select();
-        }
-      });
-    });
+  const focusCell = useCallback((cell: Cell) => {
+    setFocusRequest({ ...cell, token: Date.now() });
   }, []);
+  useLayoutEffect(() => {
+    if (!focusRequest) return;
+    const el = inputs.current.get(`${focusRequest.index}-${focusRequest.field}`);
+    if (!el) return;
+    focusing.current = true;
+    el.focus({ preventScroll: true });
+    el.select();
+    focusing.current = false;
+  }, [focusRequest, octave]);
+
+  useLayoutEffect(() => {
+    if (!alert) { setAlertAnchor(null); return; }
+    const place = () => {
+      const el = inputs.current.get(`${alert.index}-${alert.field}`);
+      if (!el) { setAlertAnchor(null); return; }
+      const r = el.getBoundingClientRect();
+      const width = Math.min(352, window.innerWidth - 16);
+      setAlertAnchor({ x: Math.max(8, Math.min(r.left, window.innerWidth - width - 8)), y: r.bottom + 6 });
+    };
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => { window.removeEventListener("resize", place); window.removeEventListener("scroll", place, true); };
+  }, [alert, octave]);
+  useEffect(() => {
+    if (alert?.kind !== "pedal") return;
+    const timer = window.setTimeout(() => setAlert(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [alert]);
 
   useEffect(() => {
     setRows(readRows());
@@ -379,21 +412,9 @@ function TabletWeighingPage() {
   const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
   const [weightFilter, setWeightFilter] = useState<"all" | "wd" | "wa">("all");
   const [confirmReset, setConfirmReset] = useState(false);
-  // Pavé tactile : affiché par défaut sur écran tactile, masqué sur ordinateur
-  // (la vue Octave depuis la page bureau s'affiche ainsi centrée, sans pavé).
-  const [showKeypad, setShowKeypad] = useState(() => {
-    try {
-      const saved = window.localStorage.getItem("ptw_tablet_keypad");
-      if (saved !== null) return saved === "1";
-    } catch { /* indisponible */ }
-    return typeof window !== "undefined" && Boolean(window.matchMedia?.("(pointer: coarse)").matches);
-  });
-  const toggleKeypad = () => {
-    setShowKeypad((v) => {
-      try { window.localStorage.setItem("ptw_tablet_keypad", v ? "0" : "1"); } catch { /* indisponible */ }
-      return !v;
-    });
-  };
+  // ON à chaque ouverture, indépendamment du type d'écran et des anciens choix.
+  const [showKeypad, setShowKeypad] = useState(true);
+  const toggleKeypad = () => setShowKeypad((v) => !v);
   const isVisible = (index: number) => {
     if (rapidMode && !RAPID_INDEX_SET.has(index)) return false;
     if (viewFilter === "white") return !BLACK_KEYS.has(index + 1);
@@ -435,7 +456,7 @@ function TabletWeighingPage() {
     return `${v(info["marque"])}\u00A0\u00A0${v(info["modele"])} - ${year} - SN ${serial || "—"} - ${en ? "Measurement" : "Mesure"} ${p(now.getDate())}-${p(now.getMonth() + 1)}-${now.getFullYear()} - ${p(now.getHours())}:${p(now.getMinutes())} - ${white} ${en ? "Whites" : "Blanches"} / ${black} ${en ? "Blacks" : "Noires"}`;
   }, [info, rows, en]);
 
-  const [from, to] = OCTAVES[octave]!;
+  const [from, to] = OCTAVES[octave] ?? [1, 15];
   const full = useMemo(() => geometry(1, 88, NATIVE_WHITE), []);
   const nativeH = NATIVE_HEIGHT_REM * 16;
 
@@ -443,14 +464,14 @@ function TabletWeighingPage() {
   const [miniRef, miniW] = useWidth();
   const miniScale = miniW > 0 ? miniW / full.width : 0.4;
   const seg = geometry(from, to, NATIVE_WHITE);
-  const segOffset = full.cols[from - 1]!.start - full.left;
+  const segOffset = (full.cols[from - 1]?.start ?? 0) - full.left;
 
   // Glisser du viseur : suit le pointeur, l'octave bascule au relâchement.
   const [dragLeft, setDragLeft] = useState<number | null>(null);
   const dragging = useRef(false);
   const octCenters = useMemo(() => OCTAVES.map(([a, b]) => {
-    const s = full.cols[a - 1]!.start - full.left;
-    const e = full.cols[b - 1]!.end - full.left;
+    const s = (full.cols[a - 1]?.start ?? 0) - full.left;
+    const e = (full.cols[b - 1]?.end ?? 0) - full.left;
     return (s + e) / 2;
   }), [full]);
   const localX = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -459,7 +480,7 @@ function TabletWeighingPage() {
   };
   const nearestOctave = (x: number) => {
     let best = 0;
-    octCenters.forEach((c, i) => { if (Math.abs(c - x) < Math.abs(octCenters[best]! - x)) best = i; });
+    octCenters.forEach((c, i) => { if (Math.abs(c - x) < Math.abs((octCenters[best] ?? 0) - x)) best = i; });
     return best;
   };
   const onMiniDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -490,84 +511,151 @@ function TabletWeighingPage() {
 
   const label = (k: "wd" | "wa") => (k === "wd" ? (en ? "Downweight" : "Poids descendant") : (en ? "Upweight" : "Poids remontant"));
 
-  // Case suivante visible (filtres et Mode Rapide respectés), toutes octaves.
-  const nextCell = (index: number, field: "wd" | "wa") => {
-    const fields = (["wd", "wa"] as const).filter((f) => weightFilter === "all" || weightFilter === f);
-    let i = index;
-    let fi = fields.indexOf(field as never);
-    for (let guard = 0; guard < 200; guard++) {
-      fi++;
-      if (fi >= fields.length) { fi = 0; i++; }
-      if (i > 87) return null;
-      if (isVisible(i)) return { index: i, field: fields[fi]! };
+  const canEnterWeights = ["marque", "modele", "sn_num", "type_piano", "fabrication", "usage_level"].every((k) => info[k]?.trim());
+  const cleanWeight = (v: string) => v.replace(/[^0-9]/g, "").slice(0, 2);
+  const outOfRange = (field: Cell["field"], v: number) => v < WEIGHT_RANGES[field][0] || v > WEIGHT_RANGES[field][1];
+  const nextCell = (index: number, field: Cell["field"], direction: 1 | -1 = 1): Cell | null => {
+    const cells: Cell[] = [];
+    for (let i = 0; i < 88; i++) {
+      if (!isVisible(i)) continue;
+      for (const f of ["wd", "wa"] as const) if (weightFilter === "all" || weightFilter === f) cells.push({ index: i, field: f });
     }
-    return null;
+    const pos = cells.findIndex((c) => c.index === index && c.field === field);
+    return cells[pos + direction] ?? null;
   };
-  const goTo = (cell: { index: number; field: "wd" | "wa" } | null) => {
+  const goTo = (cell: Cell | null) => {
+    if (!cell) return;
     replaceNext.current = true;
     setActive(cell);
-    if (!cell) return;
     const o = OCTAVES.findIndex(([a, b]) => cell.index + 1 >= a && cell.index + 1 <= b);
-    if (o >= 0 && o !== octave) setOctave(o);
+    if (o >= 0) setOctave(o);
     focusCell(cell);
   };
-
-  // Pipeline unique de validation : contrôles identiques à la Pesée bureau
-  // (aucun tant que < 2 chiffres), puis avance automatique avec vrai focus DOM.
-  // Partagé par le pavé tactile et le clavier physique.
-  const validateAndAdvance = (index: number, field: "wd" | "wa", v: string) => {
-    if (v.replace(/[.,]/g, "").length < 2) { setAlert(null); return; }
-    const row = rowsRef.current[index]!;
-    const value = parseW(v);
-    const wd = parseW(row.wd);
-    const wa = parseW(row.wa);
-    const mechanical = wd !== null && wa !== null && wd <= wa;
-    const showErr = (text: string) => { setAlert({ text, tick: Date.now() }); replaceNext.current = true; };
-    if (mechanical) { showErr(COHERENCE_MESSAGE); return; }
-    if (value !== null && (value < WEIGHT_RANGES[field][0] || value > WEIGHT_RANGES[field][1])) {
-      showErr(rangeMessage(field, en));
-      return;
+  const showFeedback = (cell: Cell, text: string, kind: Feedback["kind"], select = true) => {
+    setAlert({ ...cell, text, kind, tick: Date.now() });
+    if (select) { replaceNext.current = true; focusCell(cell); }
+  };
+  const pairProblem = (index: number, leaving = false): { field: Cell["field"]; text: string; kind: Feedback["kind"] } | null => {
+    const row = rowsRef.current[index];
+    if (!row) return null;
+    const wd = parseW(row.wd); const wa = parseW(row.wa);
+    if (wd !== null && wa !== null && wd <= wa) return { field: "wa", text: en ? "⚠️ Mechanical error: Down weight (DW) must be strictly greater than Up weight (UW) to calculate Friction." : COHERENCE_MESSAGE, kind: "mechanical" };
+    for (const field of ["wd", "wa"] as const) {
+      const value = parseW(row[field]);
+      if (value !== null && outOfRange(field, value) && (leaving || cleanWeight(row[field]).length === 2)) return { field, text: rangeMessage(field, en), kind: "range" };
     }
-    setAlert(null);
-    let hidePedal = false;
-    try { hidePedal = window.localStorage.getItem("ptw_hide_pedal_alert") === "1"; } catch { /* indisponible */ }
-    if (field === "wd" && value !== null && value >= 70 && value <= 90 && !hidePedal) {
-      setAlert({ text: en ? PEDAL_MESSAGE_EN : PEDAL_MESSAGE_FR, tick: Date.now() });
-      onCommit();
-      return;
-    }
-    if (!getPreferences().autoAdvance) return;
+    if (leaving && (row.wd || row.wa) && (cleanWeight(row.wd).length !== 2 || cleanWeight(row.wa).length !== 2)) return {
+      field: cleanWeight(row.wd).length !== 2 ? "wd" : "wa",
+      text: en ? "⚠️ Incomplete entry: Down weight and Up weight must both be entered for this key." : "⚠️ Saisie incomplète : Le Poids Descendant et le Poids Remontant doivent être tous les deux renseignés pour cette touche.",
+      kind: "incomplete",
+    };
+    return null;
+  };
+  const formGuard = (cell: Cell) => {
+    if (canEnterWeights) return true;
+    showFeedback(cell, en ? "⚠️ First complete Brand, Piano type, Model, Serial number, Manufacturing date and Usage intensity." : "⚠️ Complétez d'abord Marque, Type de piano, Modèle, N° de série, Date fabrication et Intensité d'usage.", "form", false);
+    return false;
+  };
+  const navigateCell = (origin: Cell, target: Cell | null) => {
+    if (!target) return;
+    const value = parseW(rowsRef.current[origin.index]?.[origin.field] ?? "");
+    if (alertRef.current?.kind === "pedal" && alertRef.current.index === origin.index && alertRef.current.field === origin.field) { focusCell(origin); return; }
+    if (value !== null && outOfRange(origin.field, value)) { showFeedback(origin, rangeMessage(origin.field, en), "range"); return; }
+    const problem = pairProblem(origin.index, target.index !== origin.index);
+    if (target.index !== origin.index && problem) { showFeedback({ index: origin.index, field: problem.field }, problem.text, problem.kind); goTo({ index: origin.index, field: problem.field }); return; }
     onCommit();
-    goTo(nextCell(index, field));
+    goTo(target);
   };
-
-  // Pavé numérique : agit sur la case active. Comme sur bureau (input.select()),
-  // la valeur d'une case qui vient de recevoir le focus est remplacée par la 1re frappe.
+  const validateAndAdvance = (index: number, field: Cell["field"], v: string) => {
+    const cell = { index, field };
+    setAlert(null);
+    if (v.length < 2) return;
+    const problem = pairProblem(index);
+    if (problem?.kind === "mechanical") { showFeedback(cell, problem.text, problem.kind); return; }
+    const value = parseW(v);
+    if (value !== null && outOfRange(field, value)) { showFeedback(cell, rangeMessage(field, en), "range"); return; }
+    let suppressed = hidePedal.current;
+    try { suppressed ||= window.sessionStorage.getItem("ptw_hide_pedal_alert") === "1"; } catch { /* indisponible */ }
+    if (field === "wd" && value !== null && value >= 70 && value <= 90 && !suppressed) {
+      showFeedback(cell, en ? PEDAL_MESSAGE_EN : PEDAL_MESSAGE_FR, "pedal");
+      onCommit(); return;
+    }
+    if (!getPreferences().autoAdvance || problem) return;
+    navigateCell(cell, nextCell(index, field));
+  };
+  // Un seul chemin pour saisie physique et pavé : nettoyage, contrôles, avance.
+  const onTyped = (index: number, field: Cell["field"], value: string) => {
+    if (!formGuard({ index, field })) return;
+    const cleaned = cleanWeight(value);
+    replaceNext.current = false;
+    onChange(index, field, cleaned);
+    validateAndAdvance(index, field, cleaned);
+  };
   const onKey = (k: string) => {
-    if (k === "UNDO") { undo(); return; }
-    if (k === "REDO") { redo(); return; }
+    if (k === "UNDO") { setAlert(null); undo(); return; }
+    if (k === "REDO") { setAlert(null); redo(); return; }
     if (!active || !/^\d$/.test(k)) return;
-    const cur = rowsRef.current[active.index]![active.field];
-    const replace = replaceNext.current;
-    replaceNext.current = false;
-    const v = ((replace ? "" : cur) + k).replace(/^(\d{2})\d+$/, "$1");
-    onChange(active.index, active.field, v);
-    validateAndAdvance(active.index, active.field, v);
+    const el = inputs.current.get(`${active.index}-${active.field}`);
+    const cur = rowsRef.current[active.index]?.[active.field] ?? "";
+    const start = replaceNext.current ? 0 : el?.selectionStart ?? cur.length;
+    const end = replaceNext.current ? cur.length : el?.selectionEnd ?? cur.length;
+    const v = cleanWeight(cur.slice(0, start) + k + cur.slice(end));
+    onTyped(active.index, active.field, v);
   };
-
-  // Clavier physique : la saisie passe par l'input (la sélection native remplace
-  // la valeur), puis le même pipeline de validation et d'avance automatique.
-  const onTyped = (index: number, field: "wd" | "wa", value: string) => {
-    replaceNext.current = false;
-    onChange(index, field, value);
-    validateAndAdvance(index, field, value);
+  const onFocusField = (index: number, field: Cell["field"]) => {
+    const cell = { index, field };
+    if (!focusing.current && active && active.index !== index) {
+      const pedal = alertRef.current;
+      if (pedal?.kind === "pedal" && pedal.index === active.index) { goTo(active); return; }
+      const problem = pairProblem(active.index, true);
+      if (problem) { const target = { index: active.index, field: problem.field }; showFeedback(target, problem.text, problem.kind); goTo(target); return; }
+    }
+    replaceNext.current = true;
+    setActive(cell);
+    if (!formGuard(cell)) return;
+    if (!focusing.current) setAlert(null);
   };
-
-  const cmdBtn = "h-auto min-h-8 gap-2 whitespace-nowrap px-[clamp(0.4rem,1vw,0.75rem)] py-1.5 !text-[clamp(0.68rem,1.4vw,0.84rem)] font-bold text-muted-foreground";
+  const onBlurField = (index: number, field: Cell["field"]) => {
+    if (focusing.current || !canEnterWeights) return;
+    const value = parseW(rowsRef.current[index]?.[field] ?? "");
+    if (value !== null && outOfRange(field, value)) { showFeedback({ index, field }, rangeMessage(field, en), "range"); return; }
+    // Vérifier la sortie après le changement réel de focus, sans temporisation.
+    queueMicrotask(() => {
+      const samePair = (["wd", "wa"] as const).some((f) => inputs.current.get(`${index}-${f}`) === document.activeElement);
+      const problem = pairProblem(index, !samePair);
+      if (problem && !samePair) { const cell = { index, field: problem.field }; showFeedback(cell, problem.text, problem.kind); goTo(cell); }
+    });
+  };
+  const onNavigate = (e: React.KeyboardEvent<HTMLInputElement>, index: number, field: Cell["field"]) => {
+    if (!formGuard({ index, field })) { e.preventDefault(); return; }
+    if (e.key === "Escape") { setAlert(null); return; }
+    if (/^\d$/.test(e.key) && replaceNext.current && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); onTyped(index, field, e.key); return; }
+    if (!["Tab", "Enter", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) return;
+    e.preventDefault();
+    if (e.repeat) return;
+    const origin = { index, field };
+    if (e.altKey && e.key === "Tab") {
+      const keys = [...(viewFilter === "black" && !rapidMode ? new Set([...C_KEYS].map((k) => k + 1).filter((k) => k <= 88)) : C_KEYS)];
+      const next = keys.find((k) => k > index + 1 && isVisible(k - 1));
+      if (next !== undefined) navigateCell(origin, { index: next - 1, field: weightFilter === "wa" ? "wa" : "wd" });
+      return;
+    }
+    if (pairProblem(index) && ["Tab", "Enter", "ArrowUp", "ArrowDown"].includes(e.key) && weightFilter === "all") {
+      navigateCell(origin, { index, field: field === "wd" ? "wa" : "wd" }); return;
+    }
+    const direction = e.key === "ArrowLeft" || e.key === "ArrowUp" || (e.key === "Tab" && e.shiftKey) ? -1 : 1;
+    navigateCell(origin, nextCell(index, field, direction));
+  };
+  const closePedal = () => {
+    const origin = alertRef.current;
+    setAlert(null);
+    if (origin) { onCommit(); goTo(nextCell(origin.index, origin.field)); }
+  };
+  const cmdBtn = "tablet-command font-bold text-muted-foreground shrink-0";
   const arrowBtn = "shrink-0 cursor-pointer px-1 text-2xl leading-none !text-black hover:opacity-70 disabled:cursor-default disabled:opacity-20";
 
   return (
-    <main className="mx-auto w-full max-w-[1280px] px-4 pb-3 pt-7">
+    <main className="tablet-weighing mx-auto w-full max-w-[1280px] px-4 pb-3 pt-7">
       <div className="relative rounded-md border-2 border-foreground bg-card p-4 pt-5">
         <div className="absolute -top-3.5 left-4 flex max-w-[calc(100%-2rem)] items-baseline gap-2 whitespace-nowrap bg-card px-2 text-lg font-bold text-black">
           <span className="shrink-0">{en ? "Static touch weight measurements" : "Mesures poids statiques"}</span>
@@ -578,7 +666,8 @@ function TabletWeighingPage() {
         {/* Numéros des Do au-dessus de la mini-map (taille réelle, police de l'appli) */}
         <div className="relative mt-1 h-4 w-full font-sans text-xs font-bold text-foreground select-none" aria-hidden="true">
           {[...C_KEYS].map((k) => {
-            const c = full.cols[k - 1]!;
+            const c = full.cols[k - 1];
+            if (!c) return null;
             const center = ((c.start + c.end) / 2 - full.left) * miniScale;
             return <span key={k} className="absolute top-0 -translate-x-1/2" style={{ left: center }}>{k}</span>;
           })}
@@ -587,7 +676,7 @@ function TabletWeighingPage() {
         <div
           ref={miniRef}
           className="relative mt-0.5 w-full cursor-pointer touch-none overflow-hidden select-none"
-          style={{ height: nativeH * miniScale }}
+          style={{ height: nativeH * miniScale + 2 }}
           onPointerDown={onMiniDown}
           onPointerMove={onMiniMove}
           onPointerUp={onMiniUp}
@@ -610,7 +699,7 @@ function TabletWeighingPage() {
           <div
             ref={octRef}
             className="relative min-w-0 flex-1 overflow-hidden"
-            style={{ height: nativeH * octScale }}
+            style={{ height: nativeH * octScale + 2 }}
             onTouchStart={(e) => { touchX.current = e.touches[0]?.clientX ?? null; }}
             onTouchEnd={(e) => {
               const start = touchX.current; touchX.current = null;
@@ -623,7 +712,7 @@ function TabletWeighingPage() {
               <div className="technical-sheet" style={{ width: LABELS_W + seg.width, gridTemplateColumns: `${LABELS_W}px ${seg.width}px` }}>
                 <div className="technical-labels" style={{ width: LABELS_W }}>
                   <div className="label-key" style={{ top: "1.6rem" }}>
-                    <span className="inline-flex flex-col items-center rounded-md border border-foreground/20 bg-muted px-1.5 py-1 text-center leading-tight">
+                    <span className="inline-flex flex-col items-center rounded-md border border-foreground/20 bg-muted px-1 py-0.5 text-center leading-tight">
                       <span>{en ? "Octave" : "Octave"} {octave + 1}/{OCTAVES.length}</span>
                       <span>{noteLabel(from, en)}–{noteLabel(to, en)}</span>
                     </span>
@@ -634,7 +723,7 @@ function TabletWeighingPage() {
                   <div className="label-wa-white">{label("wa")}</div>
                 </div>
                 <div style={{ marginLeft: -seg.left }}>
-                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onTyped} onCommit={onCommit} onFocusField={(index, field) => { replaceNext.current = true; setActive({ index, field }); }} isVisible={isVisible} weightFilter={weightFilter} registerInput={registerInput} />
+                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onTyped} onCommit={onCommit} onFocusField={onFocusField} onBlurField={onBlurField} onNavigate={onNavigate} isVisible={isVisible} weightFilter={weightFilter} registerInput={registerInput} />
                 </div>
               </div>
             </div>
@@ -642,29 +731,40 @@ function TabletWeighingPage() {
           <button type="button" aria-label={en ? "Next octave" : "Octave suivante"} disabled={octave === OCTAVES.length - 1} onClick={() => setOctave((o) => Math.min(OCTAVES.length - 1, o + 1))} className={arrowBtn}>▶</button>
           {showKeypad && <Keypad onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />}
         </div>
-        <div className="mt-2 min-h-6 text-center">
-          <AutoDismissAlert show={alert !== null} resetKey={alert?.tick ?? 0} className="inline-block rounded-md border border-foreground/30 bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-md">
-            {alert?.text}
-          </AutoDismissAlert>
-        </div>
+        {alert && alertAnchor && (
+          <div className="fixed z-[99999] w-[min(22rem,calc(100vw-1rem))]" style={{ left: alertAnchor.x, top: alertAnchor.y }}>
+            {alert.kind === "pedal" ? (
+              <div role="alert" className="rounded-md border border-border bg-popover p-3 text-xs font-semibold leading-4 text-popover-foreground shadow-md">
+                {alert.text}
+                <label className="mt-2 flex items-center gap-2 font-normal">
+                  <input type="checkbox" onChange={(e) => { hidePedal.current = e.target.checked; try { if (e.target.checked) window.sessionStorage.setItem("ptw_hide_pedal_alert", "1"); } catch { /* indisponible */ } if (e.target.checked) closePedal(); }} />
+                  {en ? "Do not show this message again" : "Ne plus afficher ce message"}
+                </label>
+                <div className="mt-2 flex justify-end"><Button variant="outline" size="sm" onClick={closePedal}>OK</Button></div>
+              </div>
+            ) : (
+              <AutoDismissAlert show resetKey={alert.tick} className="block rounded-md border border-border bg-popover px-3 py-2 text-xs font-semibold leading-4 text-popover-foreground shadow-md">{alert.text}</AutoDismissAlert>
+            )}
+          </div>
+        )}
 
         {/* Actions */}
-        <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="tablet-commands mt-4 flex items-center justify-between overflow-x-auto pb-2">
           <button
             type="button"
             onClick={() => void navigate({ to: "/saisie" })}
-            className="rounded-md border border-input bg-background px-4 py-2 text-sm font-semibold text-black hover:bg-accent"
+            className="tablet-command shrink-0 rounded-md border border-input bg-background font-semibold text-foreground hover:bg-accent"
           >
             {en ? "Edit piano info" : "Modifier info piano"}
           </button>
-          <div className="flex flex-nowrap items-center justify-center gap-2">
+          <div className="tablet-commands flex shrink-0 flex-nowrap items-center justify-center">
             <Button type="button" variant="outline" onClick={() => void navigate({ to: "/saisie" })} className={cmdBtn}>
               <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
-              <span>{en ? "View: Keyboard" : "Vue : Clavier"}</span>
+              <span>{en ? "View: Full" : "Vue : Complète"}</span>
             </Button>
             <Button type="button" variant="outline" onClick={toggleRapid} className={cmdBtn}>
               <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
-              <span>{en ? (rapidMode ? "Mode: Quick" : "Mode: Normal") : (rapidMode ? "Mode : Rapide" : "Mode : Normal")}</span>
+              <span>{en ? (rapidMode ? "Weighing: C-C#" : "Weighing: Full") : (rapidMode ? "Pesée : Do-Do#" : "Pesée : Intégrale")}</span>
             </Button>
             <Button type="button" variant="outline" onClick={() => setViewFilter((c) => (c === "all" ? "white" : c === "white" ? "black" : "all"))} className={cmdBtn}>
               <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
@@ -715,13 +815,13 @@ function TabletWeighingPage() {
           {topbar.gateReady ? (
             <Link
               to="/resultats"
-              className="rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold"
+              className="tablet-command flex shrink-0 items-center rounded-md border-2 font-bold"
               style={{ backgroundColor: "#dcfce7", borderColor: "#16a34a", color: "#000000" }}
             >
               {en ? "Dashboard >" : "Bilan >"}
             </Link>
           ) : (
-            <span aria-disabled="true" className="cursor-not-allowed rounded-md border-2 border-input bg-background px-4 py-1.5 text-[0.9rem] font-bold !text-gray-400 opacity-60">
+            <span aria-disabled="true" className="tablet-command flex shrink-0 cursor-not-allowed items-center rounded-md border-2 border-input bg-background font-bold text-muted-foreground opacity-60">
               {en ? "Dashboard >" : "Bilan >"}
             </span>
           )}
