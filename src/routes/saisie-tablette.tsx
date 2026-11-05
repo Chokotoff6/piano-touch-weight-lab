@@ -299,6 +299,7 @@ function TabletWeighingPage() {
   const [alertAnchor, setAlertAnchor] = useState<{ x: number; y: number } | null>(null);
   const [focusRequest, setFocusRequest] = useState<(Cell & { token: number }) | null>(null);
   const focusing = useRef(false);
+  const pendingCaret = useRef<(Cell & { position: number }) | null>(null);
   const hidePedal = useRef(false);
   const rowsRef = useRef(rows);
   rowsRef.current = rows;
@@ -323,6 +324,14 @@ function TabletWeighingPage() {
     el.select();
     focusing.current = false;
   }, [focusRequest, octave]);
+
+  useLayoutEffect(() => {
+    const caret = pendingCaret.current;
+    pendingCaret.current = null;
+    if (!caret || replaceNext.current) return;
+    const el = inputs.current.get(`${caret.index}-${caret.field}`);
+    if (el && document.activeElement === el) el.setSelectionRange(caret.position, caret.position);
+  }, [rows]);
 
   useLayoutEffect(() => {
     if (!alert) { setAlertAnchor(null); return; }
@@ -588,6 +597,7 @@ function TabletWeighingPage() {
     if (!formGuard({ index, field })) return;
     const cleaned = cleanWeight(value);
     replaceNext.current = false;
+    pendingCaret.current = { index, field, position: cleaned.length };
     onChange(index, field, cleaned);
     validateAndAdvance(index, field, cleaned);
   };
