@@ -393,7 +393,7 @@ function TabletWeighingPage() {
   useEffect(() => {
     const openImport = () => {
       const currentInfo = readInfo();
-      const hasWork = rowsRef.current.some((r) => r.wd || r.wa) || Boolean(currentInfo.marque || currentInfo.modele);
+      const hasWork = rowsRef.current.some((r) => r.wd || r.wa) || Boolean(currentInfo["marque"] || currentInfo["modele"]);
       if (hasWork && !window.confirm(en ? "Importing a piano will replace the current data. Continue?" : "Importer un piano remplacera les données en cours. Continuer ?")) return;
       importInput.current?.click();
     };
