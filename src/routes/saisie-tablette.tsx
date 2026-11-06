@@ -8,12 +8,13 @@ import type React from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useLang } from "@/data/translations";
 import { DRAFT_EDITED_EVENT } from "@/lib/zoom-edit";
-import { SECURITY_BACKUP_KEY } from "@/lib/kw-file";
-import { useTopbarState } from "@/lib/topbar-store";
+import { SECURITY_BACKUP_KEY, parseKwDocument, rememberKwDocument, kwSerial, differentSerial } from "@/lib/kw-file";
+import { showTopbarAlert, useTopbarState } from "@/lib/topbar-store";
 import { getPreferences } from "@/lib/preferences";
 import { Button } from "@/components/ui/button";
 import { Redo2, RefreshCw, Undo2 } from "lucide-react";
 import { AutoDismissAlert } from "@/components/AutoDismissAlert";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Règles et messages copiés à l'identique de la Pesée bureau (saisie.tsx).
 const WEIGHT_RANGES = { wd: [30, 90], wa: [10, 40] } as const;
@@ -257,7 +258,7 @@ function KeyGrid({
     (icônes identiques à la page bureau). Dimensions adaptatives bornées. */
 function Keypad({ onKey, en, canUndo, canRedo, height }: { onKey: (k: string) => void; en: boolean; canUndo: boolean; canRedo: boolean; height: number }) {
   const keys = ["7", "8", "9", "4", "5", "6", "1", "2", "3"];
-  const btn = "tablet-keypad-button flex items-center justify-center rounded-md border border-input bg-background font-semibold text-foreground shadow-sm active:bg-accent select-none disabled:opacity-30";
+  const btn = "tablet-keypad-button h-full min-h-0 self-stretch py-0 flex items-center justify-center rounded-md border border-input bg-background font-semibold text-foreground shadow-sm active:bg-accent select-none disabled:opacity-30";
   return (
     <div className="tablet-keypad grid shrink-0 grid-cols-3 grid-rows-4" style={{ height }} onPointerDown={(e) => e.preventDefault()}>
       {keys.map((k) => (
@@ -289,6 +290,7 @@ function TabletWeighingPage() {
   const [octave, setOctave] = useState(0);
   const [active, setActive] = useState<{ index: number; field: "wd" | "wa" } | null>(null);
   const dirty = useRef(false);
+  const importInput = useRef<HTMLInputElement | null>(null);
   /** Équivalent tactile de input.select() : la prochaine frappe remplace la valeur. */
   const replaceNext = useRef(true);
   type Cell = { index: number; field: "wd" | "wa" };
@@ -385,6 +387,57 @@ function TabletWeighingPage() {
     if (!dirty.current) return;
     writeRows(rowsRef.current);
     dirty.current = false;
+  };
+  // Même commande Fichier et même parseur .kw que le bureau ; pas de détour
+  // par une autre page, ni reconstruction du carnet/historique importé.
+  useEffect(() => {
+    const openImport = () => {
+      const currentInfo = readInfo();
+      const hasWork = rowsRef.current.some((r) => r.wd || r.wa) || Boolean(currentInfo["marque"] || currentInfo["modele"]);
+      if (hasWork && !window.confirm(en ? "Importing a piano will replace the current data. Continue?" : "Importer un piano remplacera les données en cours. Continuer ?")) return;
+      importInput.current?.click();
+    };
+    window.addEventListener("piano-import-csv", openImport);
+    return () => window.removeEventListener("piano-import-csv", openImport);
+  }, [en]);
+  const importFile = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const doc = parseKwDocument(await file.text());
+      if (!doc) { showTopbarAlert("import", en ? "⚠️ Invalid .kw file." : "⚠️ Fichier .kw invalide."); return; }
+      const currentSerial = kwSerial(readInfo());
+      const incomingSerial = kwSerial(doc.info);
+      if (differentSerial(currentSerial, incomingSerial) && !window.confirm(en
+        ? `The file's serial number (${incomingSerial}) differs from the current piano (${currentSerial}). Replace the current data?`
+        : `Le n° de série du fichier (${incomingSerial}) diffère du piano en cours (${currentSerial}). Remplacer les données en cours ?`)) return;
+      cancelOctaveDelay();
+      const loaded = doc.rows.map((r) => ({ ...r }));
+      window.localStorage.setItem("ptw_draft_info", JSON.stringify(doc.info));
+      window.localStorage.setItem(DRAFT_ROWS_KEY, JSON.stringify(loaded));
+      window.localStorage.setItem(SECURITY_BACKUP_KEY, JSON.stringify({ info: doc.info, rows: loaded, savedToFile: true, at: Date.now() }));
+      rememberKwDocument(doc);
+      dirty.current = false;
+      rowsRef.current = loaded;
+      setRows(loaded);
+      setInfo({ ...doc.info });
+      undoStack.current = [];
+      redoStack.current = [];
+      setHistTick((t) => t + 1);
+      setActive(null);
+      setFocusRequest(null);
+      setAlert(null);
+      setConfirmReset(false);
+      setOctave(0);
+      window.dispatchEvent(new CustomEvent(DRAFT_EDITED_EVENT));
+    } catch {
+      showTopbarAlert("import", en ? "⚠️ Unable to load the file. Current data could not be replaced." : "⚠️ Chargement impossible. Les données en cours n’ont pas pu être remplacées.");
+    }
+  };
+  const openDesktop = (weighing: boolean) => {
+    cancelOctaveDelay();
+    onCommit();
+    try { window.sessionStorage.setItem("ptw_weighing_mode", weighing ? "1" : "0"); } catch { /* stockage indisponible */ }
+    void navigate({ to: "/saisie" });
   };
   const applySnapshot = (snap: Row[]) => {
     rowsRef.current = snap;
@@ -680,6 +733,7 @@ function TabletWeighingPage() {
 
   return (
     <main className="tablet-weighing mx-auto w-full max-w-[1280px] px-4 pb-3 pt-7">
+      <input ref={importInput} type="file" accept=".kw,application/json" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ""; void importFile(file); }} />
       <div className="relative rounded-md border-2 border-foreground bg-card p-4 pt-5">
         <div className="absolute -top-3.5 left-4 flex max-w-[calc(100%-2rem)] items-baseline gap-2 whitespace-nowrap bg-card px-2 text-lg font-bold text-black">
           <span className="shrink-0">{en ? "Static touch weight measurements" : "Mesures poids statiques"}</span>
@@ -776,19 +830,19 @@ function TabletWeighingPage() {
         <div className="tablet-commands mt-4 flex items-center justify-between overflow-x-auto pb-2">
           <button
             type="button"
-            onClick={() => void navigate({ to: "/saisie" })}
+            onClick={() => openDesktop(false)}
             className="tablet-command shrink-0 rounded-md border border-input bg-background font-semibold text-foreground hover:bg-accent"
           >
             {en ? "Edit piano info" : "Modifier info piano"}
           </button>
           <div className="tablet-commands flex shrink-0 flex-nowrap items-center justify-center">
-            <Button type="button" variant="outline" onClick={() => void navigate({ to: "/saisie" })} className={cmdBtn}>
+            <Button type="button" variant="outline" onClick={() => openDesktop(true)} className={cmdBtn}>
               <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
               <span>{en ? "View: Full" : "Vue : Complète"}</span>
             </Button>
             <Button type="button" variant="outline" onClick={toggleRapid} className={cmdBtn}>
               <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
-              <span>{en ? (rapidMode ? "Weighing: C-C#" : "Weighing: Full") : (rapidMode ? "Pesée : Do-Do#" : "Pesée : Intégrale")}</span>
+              <span>{en ? (rapidMode ? "Weighing: C-C#" : "Weighing: Custom") : (rapidMode ? "Pesée : Do-Do#" : "Pesée : Libre")}</span>
             </Button>
             <Button type="button" variant="outline" onClick={() => setViewFilter((c) => (c === "all" ? "white" : c === "white" ? "black" : "all"))} className={cmdBtn}>
               <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
@@ -824,16 +878,14 @@ function TabletWeighingPage() {
                   <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(false)}>{en ? "No" : "Non"}</button>
                 </div>
               )}
-              <span className="group/rst relative inline-block">
-                {hasData && (
-                  <span className="pointer-events-none absolute bottom-full left-1/2 z-[120] mb-2 hidden w-56 -translate-x-1/2 rounded-md border border-gray-300 bg-white px-3 py-2 text-left text-sm font-medium text-gray-950 shadow-lg group-hover/rst:block">
-                    {en ? "Erases all current weighings" : "Efface toutes les pesées en cours"}
-                  </span>
-                )}
-                <Button type="button" variant="outline" disabled={!hasData} onClick={() => setConfirmReset(true)} className={cmdBtn}>
-                  Reset
-                </Button>
-              </span>
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button type="button" variant="outline" disabled={!hasData} onClick={() => setConfirmReset(true)} className={cmdBtn}>Reset</Button>
+                  </TooltipTrigger>
+                  {hasData && <TooltipContent side="top">{en ? "Erases all current weighings" : "Efface toutes les pesées en cours"}</TooltipContent>}
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
           {topbar.gateReady ? (

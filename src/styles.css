@@ -306,6 +306,17 @@
     display: none;
   }
 
+  /* Les frontières de colonnes ne sont pas les frontières des touches
+     blanches : sous une noire, le séparateur appartient à son axe central. */
+  .piano-measure-column.is-white::before {
+    left: var(--wstart, 0px);
+    width: var(--sep, var(--hairline, 1px));
+  }
+  .piano-measure-column:first-child::before {
+    left: 0;
+    width: var(--hairline, 1px);
+  }
+
 
   .key-number {
     height: 1.05rem;
@@ -341,8 +352,8 @@
     box-sizing: border-box;
     z-index: 1;
     top: calc(-1 * var(--hairline, 1px));
-    right: calc(-1 * var(--hairline, 1px));
-    left: calc(-1 * var(--hairline, 1px));
+    right: 0;
+    left: 0;
     height: 7.275rem;
     border: var(--hairline, 1px) solid var(--piano-line);
     background: var(--piano-black);
@@ -398,13 +409,13 @@
   .is-black .key-body::after {
     position: absolute;
     z-index: 2;
-    top: 7.275rem;
-    right: calc(-1 * var(--hairline, 1px));
-    bottom: var(--hairline, 1px);
-    left: calc(-1 * var(--hairline, 1px));
+    top: calc(7.275rem - var(--hairline, 1px));
+    right: 0;
+    bottom: 0;
+    left: 0;
     background:
       linear-gradient(var(--piano-line), var(--piano-line)) no-repeat
-      calc(var(--line-x, 50%) + var(--hairline, 1px)) 0 / var(--hairline, 1px) 100%,
+      var(--line-x, 50%) 0 / var(--hairline, 1px) 100%,
       var(--background);
 
     content: "";
@@ -416,7 +427,7 @@
   }
   .tablet-keypad {
     width: clamp(144px, 21cqw, 288px);
-    gap: clamp(4px, 0.7cqw, 10px);
+    gap: clamp(6px, 0.7cqw, 8px);
   }
   .tablet-keypad-button {
     height: 100%;

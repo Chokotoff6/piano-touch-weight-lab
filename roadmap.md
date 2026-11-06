@@ -1,5 +1,14 @@
 # Roadmap
 
+## Lot validé — 6 novembre 2026
+- [x] Corriger les séparateurs et ergots du dessin partagé bureau/tablette.
+- [x] Étendre les touches du pavé sur toute la hauteur de leurs rangées (Button conservé, hauteur explicitement surchargée).
+- [x] Ouvrir la pesée bureau depuis « Vue : Complète ».
+- [x] Afficher l’avertissement Reset tablette hors du conteneur défilant.
+- [x] Renommer Intégrale en Libre / Custom sur les deux pages.
+- [x] Activer l’import .kw tablette avec avertissement avant sélection et conservation du document.
+- [x] Vérifier uniquement la compilation automatique (build OK) ; essais visuels et interactifs confiés à Ben.
+
 ## Corrections pesée octave — novembre 2026
 - [x] Rétablir sélection, messages près des champs et contrôles de saisie tablette sans modifier le moteur bureau.
 - [x] Pavé ON par défaut, vue Complète, badge et mentions plus petits.
