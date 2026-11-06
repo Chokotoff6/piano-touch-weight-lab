@@ -603,8 +603,8 @@ function RootComponent() {
                 )}
                 </div>
 
-                {/* 3. Importer : uniquement sur la page Pesée. */}
-                {isSaisie && (
+                {/* 3. Importer : pesée bureau et tablette, même commande native. */}
+                {(isSaisie || pathname === "/saisie-tablette") && (
                   <div className="relative">
                   <button
                     type="button"

@@ -4610,7 +4610,7 @@ function Index() {
                     className="h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground"
                   >
                     <RefreshCw size={14} strokeWidth={2.5} aria-hidden="true" />
-                    {en ? `Weighing: ${rapidMode ? "C-C#" : "Full"}` : `Pesée : ${rapidMode ? "Do-Do#" : "Intégrale"}`}
+                    {en ? `Weighing: ${rapidMode ? "C-C#" : "Custom"}` : `Pesée : ${rapidMode ? "Do-Do#" : "Libre"}`}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" align="center" className="z-[120] w-[min(29rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] border border-border bg-card p-3 text-left text-foreground shadow-lg">
