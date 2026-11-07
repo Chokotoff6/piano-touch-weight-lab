@@ -9,7 +9,7 @@ const BLACK_KEYS = new Set([
 ]);
 const NATURAL_KEY_BREAKS = new Set([3, 10, 15, 22, 27, 34, 39, 46, 51, 58, 63, 70, 75, 82, 87]);
 const C_KEYS = new Set([4, 16, 28, 40, 52, 64, 76, 88]);
-const BLACK_RATIO = 0.605;
+const BLACK_RATIO = 0.66;
 const BLACK_OFFSET: Record<number, number> = { 1: 0, 3: 0, 6: 0, 8: 0, 10: 0 };
 const pitchClass = (key: number) => (key + 20) % 12;
 

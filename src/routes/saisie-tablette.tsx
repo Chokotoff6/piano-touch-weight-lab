@@ -63,7 +63,7 @@ const NATURAL_KEY_BREAKS = new Set([3, 10, 15, 22, 27, 34, 39, 46, 51, 58, 63, 7
 const C_KEYS = new Set([4, 16, 28, 40, 52, 64, 76, 88]);
 /** Mode Rapide (identique au bureau) : index zéro-based des Do et Do#. */
 const RAPID_INDEX_SET = new Set<number>([3, 4, 15, 16, 27, 28, 39, 40, 51, 52, 63, 64, 75, 76, 87]);
-const BLACK_RATIO = 0.605;
+const BLACK_RATIO = 0.66;
 /** Largeur native d'une touche blanche (référence bureau ~1280 px). */
 const NATIVE_WHITE = 41;
 const NATIVE_HEIGHT_REM = 12.6;
@@ -212,7 +212,7 @@ function KeyGrid({
                   // filtres Touches et PD/PR (jamais de chiffres à cette échelle).
                   return (
                     <div key={field} className={`weight-fields weight-fields-${field}`}>
-                      <span className="weight-input" style={{ backgroundColor: "#cbd5e1" }} />
+                      <span className="weight-input" style={{ backgroundColor: rows[index]?.[field] ? "#64748b" : "#e2e8f0" }} />
                     </div>
                   );
                 }
@@ -258,9 +258,9 @@ function KeyGrid({
     (icônes identiques à la page bureau). Dimensions adaptatives bornées. */
 function Keypad({ onKey, en, canUndo, canRedo, height }: { onKey: (k: string) => void; en: boolean; canUndo: boolean; canRedo: boolean; height: number }) {
   const keys = ["7", "8", "9", "4", "5", "6", "1", "2", "3"];
-  const btn = "tablet-keypad-button h-full min-h-0 self-stretch py-0 flex items-center justify-center rounded-md border border-input bg-background font-semibold text-foreground shadow-sm active:bg-accent select-none disabled:opacity-30";
+  const btn = "tablet-keypad-button h-full min-h-0 self-stretch py-0 flex items-center justify-center rounded-md font-bold !text-black select-none disabled:opacity-30 hover:!bg-white";
   return (
-    <div className="tablet-keypad grid shrink-0 grid-cols-3 grid-rows-4" style={{ height }} onPointerDown={(e) => e.preventDefault()}>
+    <div className="tablet-keypad tablet-keypad-frame grid shrink-0 grid-cols-3 grid-rows-4" style={{ height }} onPointerDown={(e) => e.preventDefault()}>
       {keys.map((k) => (
         <Button variant="outline" key={k} type="button" className={btn} onClick={() => onKey(k)}>
           {k}
@@ -270,6 +270,16 @@ function Keypad({ onKey, en, canUndo, canRedo, height }: { onKey: (k: string) =>
       <Button variant="outline" type="button" className={btn} onClick={() => onKey("0")}>0</Button>
       <Button variant="outline" type="button" className={btn} disabled={!canRedo} onClick={() => onKey("REDO")} aria-label={en ? "Redo" : "Rétablir"} title={en ? "Redo" : "Rétablir"}><Redo2 className="h-[1.1em] w-[1.1em]" /></Button>
     </div>
+  );
+}
+
+/** Texte explicatif du bouton Pesée : Libre / Do-Do# (identique bureau). */
+export function WeighingModeHelp({ en }: { en: boolean }) {
+  return (
+    <>
+      <p>{en ? "Custom: weigh any keys you like (a full set or a few keys after importing a .kw file). At least 2 notes per octave (octaves 1 to 7) are needed to unlock the Dashboard." : "Libre : pesez les touches de votre choix (série complète ou quelques notes après import d'un .kw). Au moins 2 notes par octave (octaves 1 à 7) sont nécessaires pour débloquer le Bilan."}</p>
+      <p className="mt-2">{en ? "C-C#: guided Stanwood sampling — only the 15 C and C# keys are requested; entering them all unlocks the Dashboard." : "Do-Do# : échantillonnage Stanwood guidé — seules les 15 touches Do et Do# sont demandées ; les encoder toutes débloque le Bilan."}</p>
+    </>
   );
 }
 
@@ -342,7 +352,9 @@ function TabletWeighingPage() {
       if (!el) { setAlertAnchor(null); return; }
       const r = el.getBoundingClientRect();
       const width = Math.min(352, window.innerWidth - 16);
-      setAlertAnchor({ x: Math.max(8, Math.min(r.left, window.innerWidth - width - 8)), y: r.bottom + 6 });
+      const right = r.right + 10;
+      const x = right + width <= window.innerWidth - 8 ? right : Math.max(8, r.left - width - 10);
+      setAlertAnchor({ x, y: Math.max(8, r.top - 4) });
     };
     place();
     window.addEventListener("resize", place);
@@ -840,10 +852,19 @@ function TabletWeighingPage() {
               <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
               <span>{en ? "View: Full" : "Vue : Complète"}</span>
             </Button>
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
             <Button type="button" variant="outline" onClick={toggleRapid} className={cmdBtn}>
               <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
               <span>{en ? (rapidMode ? "Weighing: C-C#" : "Weighing: Custom") : (rapidMode ? "Pesée : Do-Do#" : "Pesée : Libre")}</span>
             </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="w-[min(29rem,calc(100vw-2rem))] border border-border bg-card p-3 text-left text-foreground shadow-lg">
+                  <WeighingModeHelp en={en} />
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <Button type="button" variant="outline" onClick={() => setViewFilter((c) => (c === "all" ? "white" : c === "white" ? "black" : "all"))} className={cmdBtn}>
               <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
               <span>
@@ -888,7 +909,7 @@ function TabletWeighingPage() {
               </TooltipProvider>
             </div>
           </div>
-          {topbar.gateReady ? (
+          {topbar.gateReady && !hasEntryError ? (
             <Link
               to="/resultats"
               className="tablet-command flex shrink-0 items-center rounded-md border-2 font-bold"
