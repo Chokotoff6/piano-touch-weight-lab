@@ -84,7 +84,7 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
     setLastOpen(true); setSel([...ids].sort((a, b) => dKey(d0[a]).localeCompare(dKey(d0[b])))); setDates(d0); setDetails(parseAntecedentDetails(detailsRaw));
     setCustoms(parseCustomAntecedents(customRaw).sort((a, b) => dKey(a.date).localeCompare(dKey(b.date)))); setRemovedCustoms([]); setDraft(null); setQuery(""); setOpenGroup(null); setFocusId(null);
     setEditing(false);
-    setInitialSnap(JSON.stringify([[...ids].sort(), d0, parseAntecedentDetails(detailsRaw), parseCustomAntecedents(customRaw).map((c) => [c.label, c.date, c.detail ?? ""]).sort()]));
+    setInitialSnap(JSON.stringify([[...ids].sort(), Object.fromEntries(Object.entries(d0).filter(([, v]) => v)), Object.fromEntries(Object.entries(parseAntecedentDetails(detailsRaw)).filter(([, v]) => v)), parseCustomAntecedents(customRaw).map((c) => [c.label, c.date, c.detail ?? ""]).sort()]));
   }
   const dirty = JSON.stringify([[...sel].sort(), Object.fromEntries(Object.entries(dates).filter(([, v]) => v)), Object.fromEntries(Object.entries(details).filter(([, v]) => v)), customs.map((c) => [c.label, c.date, c.detail ?? ""]).sort()])
     !== initialSnap.replace(/^$/, "x");
