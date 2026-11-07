@@ -276,7 +276,7 @@ const DEFAULT_RULE: SerialRule = { prefix: true, suffix: true };
 const MAINTENANCE_OPTIONS = MAINTENANCE_CODES;
 const USAGE_OPTIONS = USAGE_CODES;
 
-const BLACK_RATIO = 0.605;
+const BLACK_RATIO = 0.66;
 
 // décalages réels des touches noires (en largeur de touche blanche),
 // mesurés depuis la séparation entre les deux blanches voisines
@@ -4614,8 +4614,8 @@ function Index() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" align="center" className="z-[120] w-[min(29rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] border border-border bg-card p-3 text-left text-foreground shadow-lg">
-                  <p>{en ? "Rapid mode: entering every C and C# unlocks the Results page" : "Mode rapide : encoder tous les DO et DO# valide un accès à la page Résultat"}</p>
-                  <p className="mt-2">{en ? "Normal mode: choose any keys to enter. A minimum of 2 notes per octave is required to generate the charts." : "Mode Normal : choix libre des touches encodées. Un minimum de 2 notes par octave est requis pour générer les graphiques."}</p>
+                  <p>{en ? "Custom: weigh any keys you like (a full set or a few keys after importing a .kw file). At least 2 notes per octave (octaves 1 to 7) are needed to unlock the Dashboard." : "Libre : pesez les touches de votre choix (série complète ou quelques notes après import d'un .kw). Au moins 2 notes par octave (octaves 1 à 7) sont nécessaires pour débloquer le Bilan."}</p>
+                  <p className="mt-2">{en ? "C-C#: guided Stanwood sampling — only the 15 C and C# keys are requested; entering them all unlocks the Dashboard." : "Do-Do# : échantillonnage Stanwood guidé — seules les 15 touches Do et Do# sont demandées ; les encoder toutes débloque le Bilan."}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
