@@ -77,13 +77,17 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
   const [lastOpen, setLastOpen] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [initialSnap, setInitialSnap] = useState("");
   const dKey = (d: string | undefined) => (/^\d{4}/.test(d ?? "") ? (d as string) : "9999");
   if (open && !lastOpen) {
     const d0 = parseAntecedentDates(datesRaw);
     setLastOpen(true); setSel([...ids].sort((a, b) => dKey(d0[a]).localeCompare(dKey(d0[b])))); setDates(d0); setDetails(parseAntecedentDetails(detailsRaw));
     setCustoms(parseCustomAntecedents(customRaw).sort((a, b) => dKey(a.date).localeCompare(dKey(b.date)))); setRemovedCustoms([]); setDraft(null); setQuery(""); setOpenGroup(null); setFocusId(null);
     setEditing(false);
+    setInitialSnap(JSON.stringify([[...ids].sort(), d0, parseAntecedentDetails(detailsRaw), parseCustomAntecedents(customRaw).map((c) => [c.label, c.date, c.detail ?? ""]).sort()]));
   }
+  const dirty = JSON.stringify([[...sel].sort(), Object.fromEntries(Object.entries(dates).filter(([, v]) => v)), Object.fromEntries(Object.entries(details).filter(([, v]) => v)), customs.map((c) => [c.label, c.date, c.detail ?? ""]).sort()])
+    !== initialSnap.replace(/^$/, "x");
   if (!open && lastOpen) setLastOpen(false);
   // Événements passés (état en cours d'édition), du plus récent au plus ancien.
   const pastEntries = [
@@ -334,7 +338,7 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
         </>)}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>{en ? "Cancel" : "Annuler"}</Button>
-          <Button onClick={() => {
+          {dirty && <Button onClick={() => {
             const kept: Record<string, string> = {};
             sel.forEach((id) => { if (dates[id]) kept[id] = dates[id]; });
             const keptDetails: Record<string, string> = {};
@@ -343,7 +347,7 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
             onSave(sel, serializeDates(kept), cleanCustoms.length ? JSON.stringify(cleanCustoms) : "",
               Object.keys(keptDetails).length ? JSON.stringify(keptDetails) : "");
             onOpenChange(false);
-          }}>{en ? "Save" : "Valider"}</Button>
+          }}>{en ? "Save" : "Valider"}</Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>

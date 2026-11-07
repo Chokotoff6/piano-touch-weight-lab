@@ -274,7 +274,7 @@ function Keypad({ onKey, en, canUndo, canRedo, height }: { onKey: (k: string) =>
 }
 
 /** Texte explicatif du bouton Pesée : Libre / Do-Do# (identique bureau). */
-export function WeighingModeHelp({ en }: { en: boolean }) {
+function WeighingModeHelp({ en }: { en: boolean }) {
   return (
     <>
       <p>{en ? "Custom: weigh any keys you like (a full set or a few keys after importing a .kw file). At least 2 notes per octave (octaves 1 to 7) are needed to unlock the Dashboard." : "Libre : pesez les touches de votre choix (série complète ou quelques notes après import d'un .kw). Au moins 2 notes par octave (octaves 1 à 7) sont nécessaires pour débloquer le Bilan."}</p>
@@ -625,6 +625,7 @@ function TabletWeighingPage() {
     };
     return null;
   };
+  const hasEntryError = (alert !== null && alert.kind !== "pedal") || rows.some((_, i) => pairProblem(i, true) !== null);
   const formGuard = (cell: Cell) => {
     if (canEnterWeights) return true;
     showFeedback(cell, en ? "⚠️ First complete Brand, Piano type, Model, Serial number, Manufacturing date and Usage intensity." : "⚠️ Complétez d'abord Marque, Type de piano, Modèle, N° de série, Date fabrication et Intensité d'usage.", "form", false);
