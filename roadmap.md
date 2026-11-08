@@ -1,5 +1,13 @@
 # Roadmap
 
+## Lot Pesée validé — 8 novembre 2026
+- [ ] Unifier le Bilan immédiat bureau/tablette/menu sur les mesures réelles, supprimer le badge.
+- [ ] Conserver la case active entre vues et connecter les raccourcis Annuler/Rétablir.
+- [ ] Saut d’octave 500 ms ; deux sons indépendants, activés par défaut, octave auto/flèches/map.
+- [ ] Ajuster mini-map, Reset visible, alertes, pavé neutre, Undo/Redo et libellés exacts.
+- [ ] Foncer les bordures des commandes de 10 %, conserver le vert Bilan bureau.
+- [ ] Vérifier la compilation ; essais visuels et interactifs par Ben.
+
 ## Lot validé — 6 novembre 2026
 - [x] Corriger les séparateurs et ergots du dessin partagé bureau/tablette.
 - [x] Étendre les touches du pavé sur toute la hauteur de leurs rangées (Button conservé, hauteur explicitement surchargée).

@@ -7,7 +7,7 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/comp
 import { useLang } from "@/data/translations";
 import { isDemoActive, toggleDemoMode } from "@/lib/demo-mode";
 import {
-  usePreferences, setCorridorG, setSmoothDefault, setSmoothAnalyse, setAutoAdvance, type SmoothPref,
+  usePreferences, setCorridorG, setSmoothDefault, setSmoothAnalyse, setAutoAdvance, setKeySound, setOctaveSound, type SmoothPref,
   setTargetMode, setCustomTarget, DEFAULT_TARGETS, type TargetKind, type TargetRamp,
 } from "@/lib/preferences";
 
@@ -106,6 +106,8 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
                 <Choice value={true} current={prefs.autoAdvance} label={"Auto" + def} tip={en ? "Weighing input: the cursor jumps to the next key without \"Enter\" or \"Tab\"." : "Saisie pesée : curseur saute à la touche suivante sans « Enter » ou « Tab »."} onPick={setAutoAdvance} />
                 <Choice value={false} current={prefs.autoAdvance} label={en ? "Manual" : "Manuel"} onPick={setAutoAdvance} />
               </div>
+              <label className="flex items-start gap-2 text-xs"><input type="checkbox" checked={prefs.keySound} onChange={(e) => setKeySound(e.target.checked)} />{(en ? "Sound when advancing to the next key" : "Signal sonore au passage à la touche suivante") + (prefs.keySound ? def : "")}</label>
+              <label className="flex items-start gap-2 text-xs"><input type="checkbox" checked={prefs.octaveSound} onChange={(e) => setOctaveSound(e.target.checked)} />{(en ? "Sound when changing octave" : "Signal sonore lors du saut d’octave") + (prefs.octaveSound ? def : "")}</label>
             </div>
             </div>
             <div className={row}>
