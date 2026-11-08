@@ -1,4 +1,6 @@
 import { getPreferences } from "@/lib/preferences";
+import { weighingReadiness, weighingLockMessage } from "@/lib/weighing-readiness";
+import { rememberWeighingCell, readWeighingCell, unlockWeighingAudio, playWeighingSound } from "@/lib/weighing-feedback";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Redo2, RefreshCw, Undo2 } from "lucide-react";
@@ -642,9 +644,7 @@ function Index() {
   /** Binôme actuellement verrouillé : interdiction absolue d'en sortir. */
   const lockedPairRef = useRef<number | null>(null);
 
-  /** Badge vert retardé : ne s'allume qu'après 0,5 s sans cadre rouge ni erreur. */
-  const [badgeVisible, setBadgeVisible] = useState(false);
-  const badgeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
   /** Miroir toujours à jour des 88 touches (évite les closures périmées). */
   const rowsRef = useRef<Row[]>(EMPTY);
@@ -1522,91 +1522,8 @@ function Index() {
 
 
 
-  /**
-   * Validité instantanée du clavier (calcul brut, recalculé à chaque frappe) :
-   * porte logique AND stricte.
-   * TEST 1 (prioritaire) : touche orpheline (cadre rouge) ou erreur Wd<=Wa => faux.
-   * TEST 2 (successif) : échantillonnage des octaves, uniquement si zéro cadre rouge.
-   * Les carrés rouges s'affichent instantanément ; le badge vert, lui, est retardé
-   * (voir badgeVisible) : il ne s'allume qu'après 0,5 s sans aucun cadre rouge.
-   */
-  const keyboardValid = useMemo(() => {
-    const clean = (raw: unknown): string => String(raw ?? "").trim();
-    const num = (raw: unknown): number | null => {
-      const cleaned = clean(raw).replace(",", ".");
-      if (!cleaned) return null;
-      const n = Number(cleaned);
-      return Number.isFinite(n) ? n : null;
-    };
-
-    const parsedRows = rows.map((row) => ({
-      pd: num(row.wd),
-      pr: num(row.wa),
-      hasPd: Boolean(clean(row.wd)),
-      hasPr: Boolean(clean(row.wa)),
-    }));
-
-    // CONDITION 1 : chaque mesure présente forme un binôme PD/PR.
-    const cond1 = parsedRows.every((row) => row.hasPd === row.hasPr);
-
-    // Mode rapide : tous les Do/Do# (Do8 inclus) ; mode normal : deux notes
-    // distinctes au choix dans chacune des octaves 1 à 7.
-    const cond2 = rapidMode
-      ? RAPID_INDEXES.every((index) => Boolean(parsedRows[index]?.hasPd && parsedRows[index]?.hasPr))
-      : octaveGaps.length === 0;
-
-    const measuredRows = parsedRows.filter((row) => row.hasPd || row.hasPr);
-
-    // CONDITION 3 : toutes les valeurs présentes sont numériques et PD est dans la plage 10–90.
-    const cond3 = measuredRows.every(
-      (row) => row.pd !== null && row.pr !== null && row.pd >= 10 && row.pd <= 90,
-    );
-
-    // CONDITION 4 : comparaison exclusivement numérique, jamais lexicographique.
-    const cond4 = measuredRows.every(
-      (row) => row.pd !== null && row.pr !== null && Number(row.pd) > Number(row.pr),
-    );
-
-    // CONDITION 5 : le profil contient au moins une mesure exploitable.
-    const cond5 = measuredRows.length > 0;
-    const complete88 =
-      parsedRows.length === 88 &&
-      parsedRows.every((row) => row.hasPd && row.hasPr && row.pd !== null && row.pr !== null);
-
-    console.log("ÉTAT DE VALIDATION :", { cond1, cond2, cond3, cond4, cond5 });
-    if (complete88) {
-      console.log("[Saisie conforme] Profil complet : 88 touches numériques validées.");
-      return true;
-    }
-
-    return cond1 && cond2 && cond3 && cond4 && cond5;
-  }, [rows, rapidMode, octaveGaps]);
-
-  /**
-   * Badge vert retardé : extinction instantanée dès qu'un cadre rouge apparaît,
-   * allumage uniquement après un délai de sécurité de 500 ms pendant lequel
-   * le clavier reste strictement valide (octaves complètes + zéro cadre rouge).
-   */
-  useEffect(() => {
-    if (!keyboardValid) {
-      if (badgeTimeout.current) {
-        clearTimeout(badgeTimeout.current);
-        badgeTimeout.current = null;
-      }
-      setBadgeVisible(false);
-      return;
-    }
-    if (badgeTimeout.current) clearTimeout(badgeTimeout.current);
-    badgeTimeout.current = setTimeout(() => {
-      setBadgeVisible(true);
-    }, 500);
-    return () => {
-      if (badgeTimeout.current) {
-        clearTimeout(badgeTimeout.current);
-        badgeTimeout.current = null;
-      }
-    };
-  }, [keyboardValid]);
+  const readiness = useMemo(() => weighingReadiness(rows, rapidMode), [rows, rapidMode]);
+  const keyboardValid = readiness.ready;
 
   /** Les réglages personnalisés et les modifications importantes exigent des remarques. */
   const antecedentItems = useInterventions();
@@ -1646,31 +1563,13 @@ function Index() {
     setYearError(!ok);
     return ok;
   };
-  const resultsReady = badgeVisible && !remarquesInvalid;
+  const resultsReady = keyboardValid && requiredSheetFieldsComplete && !remarquesInvalid;
 
   /** Diagnostic de blocage du Bilan, par priorité : paire incomplète, erreur mécanique,
    *  valeur hors plage, remarques requises, puis seuil minimal de pesée. */
   const lockReason = (): string => {
-    if (orphanKeys.length > 0) {
-      return en
-        ? "⚠️ Incomplete entry: both Down Weight and Up Weight must be filled in for each measured key."
-        : ORPHAN_MESSAGE;
-    }
-    const incoherent = rows.some((r) => {
-      const d = Number(String(r.wd).replace(",", "."));
-      const a = Number(String(r.wa).replace(",", "."));
-      return r.wd.trim() !== "" && r.wa.trim() !== "" && Number.isFinite(d) && Number.isFinite(a) && d <= a;
-    });
-    if (incoherent) {
-      return en
-        ? "⚠️ Mechanical error: the Down Weight (DW) must be strictly greater than the Up Weight (UW) to compute Friction."
-        : COHERENCE_MESSAGE;
-    }
-    if (Object.values(errorsRef.current).some(Boolean)) {
-      return en ? "⚠️ Some values are out of range. Please correct the keys marked in red." : "⚠️ Certaines valeurs sont hors plage. Corrigez les touches signalées en rouge.";
-    }
-    if (badgeVisible && remarquesInvalid) return en ? "Complete: Remarks" : "Complétez : Remarques";
-    return lockedResultsMessage(en);
+    if (!requiredSheetFieldsComplete) return en ? "Complete the piano information first." : "Complétez d’abord les informations du piano.";
+    return weighingLockMessage(readiness.issue, rapidMode, en);
   };
 
   /**
@@ -2501,6 +2400,7 @@ function Index() {
 
   const setValue = (index: number, field: "wd" | "wa", value: string) => {
     // Frappe pendant la cascade démo : on la termine sans écraser la saisie.
+    unlockWeighingAudio();
     finishCascadeEarly();
     markDirty();
     clearError(`${index}-${field}`);
@@ -2560,7 +2460,7 @@ function Index() {
       if (field === "wd") focusCell(index, "wa");
       else {
         const next = nextVisibleKey(index, 1);
-        if (next !== null) focusCell(next, "wd");
+        if (next !== null) { focusCell(next, "wd"); playWeighingSound("key"); }
       }
     }, 0);
   };
@@ -2590,6 +2490,25 @@ function Index() {
       return prev.slice(0, -1);
     });
   };
+
+  useEffect(() => {
+    const shortcut = (e: KeyboardEvent) => {
+      if (!weighingMode || !(e.ctrlKey || e.metaKey) || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("input, textarea, [contenteditable=true]") && !target.classList.contains("weight-input")) return;
+      if (e.key.toLowerCase() === "z" || e.key.toLowerCase() === "y") {
+        e.preventDefault(); e.stopPropagation();
+        if (e.shiftKey || e.key.toLowerCase() === "y") redoRows(); else undoRows();
+      }
+    };
+    window.addEventListener("keydown", shortcut, true);
+    return () => window.removeEventListener("keydown", shortcut, true);
+  }, [weighingMode, rows, undoStack, redoStack]);
+  useEffect(() => {
+    if (!weighingMode) return;
+    const cell = readWeighingCell();
+    if (cell) inputs.current[`${cell.index}-${cell.field}`]?.focus({ preventScroll: true });
+  }, [weighingMode]);
 
   /** Alerte sustain : PD uniquement, strictement 70-90 g, ancrée sous la case, 5 s. */
   const isPedalValue = (field: "wd" | "wa", num: number | null) =>
@@ -2651,7 +2570,7 @@ function Index() {
       if (origin.field === "wd") focusCell(origin.index, "wa");
       else {
         const next = nextVisibleKey(origin.index, 1);
-        if (next !== null) focusCell(next, "wd");
+        if (next !== null) { focusCell(next, "wd"); playWeighingSound("key"); }
       }
     }, 0);
   };
@@ -3417,7 +3336,7 @@ function Index() {
   useEffect(() => {
     setTopbarState({
       exportReady,
-      measuresReady: requiredSheetFieldsComplete && badgeVisible,
+      measuresReady: requiredSheetFieldsComplete && keyboardValid,
       serialFilled: Boolean(info["sn_num"]?.trim()),
       isExporting,
       isDirty,
@@ -3430,7 +3349,7 @@ function Index() {
     const demoCascadeOk =
       !isDemoActive() ||
       (weighingMode && hasSeenDemoCascade() && !cascadeTarget.current);
-    setGateReady(badgeVisible && requiredSheetFieldsComplete && demoCascadeOk);
+    setGateReady(resultsReady && demoCascadeOk);
     return () => {
       setTopbarState({
         exportReady: false,
@@ -3442,7 +3361,7 @@ function Index() {
         historyRows: [],
       });
     };
-  }, [exportReady, requiredSheetFieldsComplete, badgeVisible, info, isExporting, isDirty, currentDbId, weighingMode, rows]);
+  }, [exportReady, requiredSheetFieldsComplete, keyboardValid, resultsReady, info, isExporting, isDirty, currentDbId, weighingMode, rows]);
 
   useEffect(() => {
     // Comparer et Exporter partagent exactement la même décision cloud.
@@ -3644,7 +3563,8 @@ function Index() {
     );
 
   const handleResultsClick = async () => {
-    if (!resultsReady || isExporting) return;
+    if (!resultsReady) { toast.error(lockReason()); return; }
+    if (isExporting) return;
     if (isDemoActive()) {
       navigate({ to: "/resultats" });
       return;
@@ -3840,6 +3760,8 @@ function Index() {
         aria-label={`${field === "wd" ? (en ? "DW" : "PD") : en ? "UW" : "PR"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
         onFocus={(e) => {
+          rememberWeighingCell({ index, field });
+          unlockWeighingAudio();
           // Verrou du binôme : impossible de rejoindre une autre touche tant
           // que le binôme précédent est en anomalie (mécanique, fourchette,
           // ou binôme incomplet).
@@ -4508,19 +4430,6 @@ function Index() {
       >
         {/* Undo / Redo déplacés dans la barre d'outils centrale du bas. */}
 
-        {badgeVisible && (
-          <div
-            data-pdf-hide
-            className="pointer-events-none absolute left-0 top-0 z-10 flex w-32 justify-center"
-            style={{ transform: "translateY(30px)" }}
-          >
-            <div className="flex items-center !rounded-md !border !border-green-600 !bg-green-100 !px-2.5 !py-1 !shadow-sm">
-              <span className="text-[10px] font-semibold !text-gray-950">
-                {en ? "Compliant input" : "Saisie conforme"}
-              </span>
-            </div>
-          </div>
-        )}
         <div className="mx-auto flex w-full flex-col items-center justify-center">
           {renderSection(1, 44, gridRef1)}
           {renderSection(45, 88, gridRef2)}
@@ -4614,8 +4523,8 @@ function Index() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" align="center" className="z-[120] w-[min(29rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] border border-border bg-card p-3 text-left text-foreground shadow-lg">
-                  <p>{en ? "Custom: weigh any keys you like (a full set or a few keys after importing a .kw file). At least 2 notes per octave (octaves 1 to 7) are needed to unlock the Dashboard." : "Libre : pesez les touches de votre choix (série complète ou quelques notes après import d'un .kw). Au moins 2 notes par octave (octaves 1 à 7) sont nécessaires pour débloquer le Bilan."}</p>
-                  <p className="mt-2">{en ? "C-C#: guided Stanwood sampling — only the 15 C and C# keys are requested; entering them all unlocks the Dashboard." : "Do-Do# : échantillonnage Stanwood guidé — seules les 15 touches Do et Do# sont demandées ; les encoder toutes débloque le Bilan."}</p>
+                  <p>{en ? "Custom: weigh at least 2 notes per octave (octaves 1 to 7) to generate a Dashboard." : "Libre : pesez au moins 2 notes par octave (octaves 1 à 7) pour pouvoir générer un Bilan."}</p>
+                  <p className="mt-2">{en ? "C-C#: weigh only every C and C# to generate a Dashboard." : "Do-Do# : pesez uniquement tous les Do et Do# pour générer un Bilan."}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -4710,27 +4619,11 @@ function Index() {
               {lockReason()}
             </span>
           )}
-          <button
-            type="button"
-            data-pdf-hide
-            // Toujours cliquable : la redirection est bloquée (infobulle) tant
-            // que « Saisie conforme » n'est pas au vert intense.
-            aria-disabled={!resultsReady}
+          <Button type="button" variant="outline" data-pdf-hide aria-disabled={!resultsReady}
             onClick={() => void handleResultsClick()}
-            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold transition-colors ${resultsReady ? "!border-green-600 !bg-green-100 !text-black" : "border-input bg-background !text-gray-400 opacity-60"}`}
-            style={
-              resultsReady
-                ? {
-                    backgroundColor: "#dcfce7",
-                    borderColor: "#16a34a",
-                    color: "#000000",
-                    fontWeight: "bold",
-                  }
-                : undefined
-            }
-          >
+            className={`rounded-md border-2 px-4 py-1.5 text-[0.9rem] font-bold ${resultsReady ? "weighing-results-ready" : "border-input bg-background text-muted-foreground opacity-60"}`}>
             {en ? "Dashboard >" : "Bilan >"}
-          </button>
+          </Button>
           </span>
         </div>
       )}

@@ -64,6 +64,7 @@
   --color-piano-black: var(--piano-black);
   --color-technical-border: var(--technical-border);
   --color-piano-line: var(--piano-line);
+  --color-command-border: var(--command-border);
 }
 
 :root {
@@ -103,6 +104,18 @@
   --piano-black: oklch(0.744 0 0);
   --technical-border: oklch(0 0 0);
   --piano-line: oklch(0 0 0);
+  --command-border: color-mix(in srgb, var(--input) 90%, oklch(0 0 0));
+  --keypad-surface: oklch(1 0 0);
+  --keypad-chassis: oklch(0.92 0 0);
+  --keypad-edge: oklch(0.5 0 0);
+  --keypad-pressed: oklch(0.84 0 0);
+  --keypad-shadow: oklch(0 0 0 / 12%);
+  --keypad-inset: oklch(0 0 0 / 25%);
+  --mini-progress-empty: oklch(0.94 0 0);
+  --mini-progress-filled: oklch(0.6 0 0);
+  --results-ready: oklch(0.962 0.044 156.743);
+  --results-ready-border: oklch(0.627 0.194 149.214);
+  --results-ready-text: oklch(0 0 0);
 }
 
 .dark {
@@ -141,6 +154,17 @@
   --piano-black: oklch(0.744 0 0);
   --technical-border: oklch(0 0 0);
   --piano-line: oklch(0 0 0);
+  --command-border: color-mix(in srgb, var(--input) 90%, var(--foreground));
+}
+
+/* Command borders only: do not change form fields, piano lines or PDF frames. */
+button, a[data-slot="button"], .app-command {
+  border-color: color-mix(in srgb, var(--tw-border-color, var(--input)) 90%, oklch(0 0 0));
+}
+.weighing-results-ready {
+  background-color: var(--results-ready) !important;
+  border-color: var(--results-ready-border) !important;
+  color: var(--results-ready-text) !important;
 }
 
 @layer components {
@@ -436,20 +460,20 @@
     height: 100%;
     min-height: 40px;
     font-size: clamp(1.4rem, 2.6cqw, 2rem);
-    background: #ffffff;
-    border: 1px solid #64748b;
-    box-shadow: 0 3px 0 #64748b, 0 4px 8px rgba(0, 0, 0, 0.12);
+    background: var(--keypad-surface);
+    border: 1px solid var(--keypad-edge);
+    box-shadow: 0 3px 0 var(--keypad-edge), 0 4px 8px var(--keypad-shadow);
     transition: transform 60ms ease, box-shadow 60ms ease, background-color 60ms ease;
   }
   .tablet-keypad-button:active:not(:disabled) {
     transform: translateY(3px);
-    background: #bfdbfe;
-    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.25);
+    background: var(--keypad-pressed) !important;
+    box-shadow: inset 0 2px 5px var(--keypad-inset);
   }
   .tablet-keypad-frame {
-    background: #e2e8f0;
-    border: 1px solid #94a3b8;
-    border-radius: 0.6rem;
+    background: var(--keypad-chassis);
+    border: 1px solid var(--keypad-edge);
+    border-radius: 0.5rem;
     padding: clamp(6px, 0.8cqw, 10px);
     padding-bottom: calc(clamp(6px, 0.8cqw, 10px) + 3px);
   }
@@ -463,6 +487,10 @@
     line-height: 0.7rem;
     -webkit-text-stroke: 0;
   }
+  .tablet-mini-progress { background: var(--mini-progress-empty); }
+  .tablet-mini-progress[data-filled="true"] { background: var(--mini-progress-filled); }
+  .tablet-mini-map .key-number { visibility: hidden; }
+  .tablet-keypad-button:disabled { opacity: 1; }
   .tablet-commands {
     gap: clamp(4px, 0.65cqw, 12px);
   }

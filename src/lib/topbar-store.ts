@@ -17,6 +17,7 @@ type TopbarState = {
   historyRows: HistoryRowRef[];
   /** Seuil minimal de pesée franchi sur la page Saisie (débloque "Résultats"). */
   gateReady: boolean;
+  gateMessage?: string;
   /** Consentement RGPD validé sur la page Résultats (débloque "Comparer"). */
   compareUnlocked: boolean;
   /** Profil définitivement enregistré dans la base via « J'accepte » (verrouille l'identité). */

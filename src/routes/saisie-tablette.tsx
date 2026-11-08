@@ -9,8 +9,11 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { useLang } from "@/data/translations";
 import { DRAFT_EDITED_EVENT } from "@/lib/zoom-edit";
 import { SECURITY_BACKUP_KEY, parseKwDocument, rememberKwDocument, kwSerial, differentSerial } from "@/lib/kw-file";
-import { showTopbarAlert, useTopbarState } from "@/lib/topbar-store";
+import { showTopbarAlert, setGateReady, setTopbarState } from "@/lib/topbar-store";
 import { getPreferences } from "@/lib/preferences";
+import { weighingReadiness, weighingLockMessage, OCTAVE_ADVANCE_MS } from "@/lib/weighing-readiness";
+import { rememberWeighingCell, readWeighingCell, unlockWeighingAudio, playWeighingSound } from "@/lib/weighing-feedback";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Redo2, RefreshCw, Undo2 } from "lucide-react";
 import { AutoDismissAlert } from "@/components/AutoDismissAlert";
@@ -212,7 +215,7 @@ function KeyGrid({
                   // filtres Touches et PD/PR (jamais de chiffres à cette échelle).
                   return (
                     <div key={field} className={`weight-fields weight-fields-${field}`}>
-                      <span className="weight-input" style={{ backgroundColor: rows[index]?.[field] ? "#64748b" : "#e2e8f0" }} />
+                      <span className="weight-input tablet-mini-progress" data-filled={Boolean(rows[index]?.[field]?.trim())} />
                     </div>
                   );
                 }
@@ -258,7 +261,7 @@ function KeyGrid({
     (icônes identiques à la page bureau). Dimensions adaptatives bornées. */
 function Keypad({ onKey, en, canUndo, canRedo, height }: { onKey: (k: string) => void; en: boolean; canUndo: boolean; canRedo: boolean; height: number }) {
   const keys = ["7", "8", "9", "4", "5", "6", "1", "2", "3"];
-  const btn = "tablet-keypad-button h-full min-h-0 self-stretch py-0 flex items-center justify-center rounded-md font-bold !text-black select-none disabled:opacity-30 hover:!bg-white";
+  const btn = "tablet-keypad-button h-full min-h-0 self-stretch py-0 flex items-center justify-center rounded-md font-bold !text-black select-none disabled:!opacity-100 hover:!bg-white";
   return (
     <div className="tablet-keypad tablet-keypad-frame grid shrink-0 grid-cols-3 grid-rows-4" style={{ height }} onPointerDown={(e) => e.preventDefault()}>
       {keys.map((k) => (
@@ -266,9 +269,9 @@ function Keypad({ onKey, en, canUndo, canRedo, height }: { onKey: (k: string) =>
           {k}
         </Button>
       ))}
-      <Button variant="outline" type="button" className={btn} disabled={!canUndo} onClick={() => onKey("UNDO")} aria-label={en ? "Undo" : "Annuler"} title={en ? "Undo" : "Annuler"}><Undo2 className="h-[1.1em] w-[1.1em]" /></Button>
+      <Button variant="outline" type="button" className={btn} disabled={!canUndo} onClick={() => onKey("UNDO")} aria-label={en ? "Undo" : "Annuler"} title={en ? "Undo" : "Annuler"}><Undo2 strokeWidth={2.75} className={`h-[1.1em] w-[1.1em] ${canUndo ? "" : "text-muted-foreground"}`} /></Button>
       <Button variant="outline" type="button" className={btn} onClick={() => onKey("0")}>0</Button>
-      <Button variant="outline" type="button" className={btn} disabled={!canRedo} onClick={() => onKey("REDO")} aria-label={en ? "Redo" : "Rétablir"} title={en ? "Redo" : "Rétablir"}><Redo2 className="h-[1.1em] w-[1.1em]" /></Button>
+      <Button variant="outline" type="button" className={btn} disabled={!canRedo} onClick={() => onKey("REDO")} aria-label={en ? "Redo" : "Rétablir"} title={en ? "Redo" : "Rétablir"}><Redo2 strokeWidth={2.75} className={`h-[1.1em] w-[1.1em] ${canRedo ? "" : "text-muted-foreground"}`} /></Button>
     </div>
   );
 }
@@ -277,8 +280,8 @@ function Keypad({ onKey, en, canUndo, canRedo, height }: { onKey: (k: string) =>
 function WeighingModeHelp({ en }: { en: boolean }) {
   return (
     <>
-      <p>{en ? "Custom: weigh any keys you like (a full set or a few keys after importing a .kw file). At least 2 notes per octave (octaves 1 to 7) are needed to unlock the Dashboard." : "Libre : pesez les touches de votre choix (série complète ou quelques notes après import d'un .kw). Au moins 2 notes par octave (octaves 1 à 7) sont nécessaires pour débloquer le Bilan."}</p>
-      <p className="mt-2">{en ? "C-C#: guided Stanwood sampling — only the 15 C and C# keys are requested; entering them all unlocks the Dashboard." : "Do-Do# : échantillonnage Stanwood guidé — seules les 15 touches Do et Do# sont demandées ; les encoder toutes débloque le Bilan."}</p>
+      <p>{en ? "Custom: weigh at least 2 notes per octave (octaves 1 to 7) to generate a Dashboard." : "Libre : pesez au moins 2 notes par octave (octaves 1 à 7) pour pouvoir générer un Bilan."}</p>
+      <p className="mt-2">{en ? "C-C#: weigh only every C and C# to generate a Dashboard." : "Do-Do# : pesez uniquement tous les Do et Do# pour générer un Bilan."}</p>
     </>
   );
 }
@@ -294,7 +297,7 @@ function readInfo(): Record<string, string> {
 function TabletWeighingPage() {
   const en = useLang() === "en";
   const navigate = useNavigate();
-  const topbar = useTopbarState();
+
   const [rows, setRows] = useState<Row[]>(() => Array.from({ length: 88 }, () => ({ wd: "", wa: "" })));
   const [info, setInfo] = useState<Record<string, string>>({});
   const [octave, setOctave] = useState(0);
@@ -370,6 +373,12 @@ function TabletWeighingPage() {
   useEffect(() => {
     setRows(readRows());
     setInfo(readInfo());
+    const cell = readWeighingCell();
+    if (cell) {
+      setActive(cell);
+      setOctave(Math.max(0, OCTAVES.findIndex(([a, b]) => cell.index + 1 >= a && cell.index + 1 <= b)));
+      focusCell(cell);
+    }
     const reload = () => { if (!dirty.current) setRows(readRows()); setInfo(readInfo()); };
     window.addEventListener(DRAFT_EDITED_EVENT, reload);
     window.addEventListener("storage", reload);
@@ -504,6 +513,22 @@ function TabletWeighingPage() {
     setConfirmReset(false);
   };
 
+  useEffect(() => {
+    const shortcut = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+      if (e.key.toLowerCase() !== "z" && e.key.toLowerCase() !== "y") return;
+      e.preventDefault(); e.stopPropagation(); cancelOctaveDelay(); setAlert(null);
+      if (e.shiftKey || e.key.toLowerCase() === "y") redo(); else undo();
+    };
+    window.addEventListener("keydown", shortcut, true);
+    return () => window.removeEventListener("keydown", shortcut, true);
+  }, [rows]);
+  const soundingOctave = useRef(octave);
+  useEffect(() => {
+    if (soundingOctave.current !== octave) playWeighingSound("octave");
+    soundingOctave.current = octave;
+  }, [octave]);
+
   // Flèches clavier ← / → (hors saisie) pour changer d'octave.
   useEffect(() => {
     const fn = (e: KeyboardEvent) => {
@@ -560,12 +585,16 @@ function TabletWeighingPage() {
   const onMiniDown = (e: React.PointerEvent<HTMLDivElement>) => {
     dragging.current = true;
     e.currentTarget.setPointerCapture(e.pointerId);
+    unlockWeighingAudio();
+    cancelOctaveDelay();
+    setOctave(nearestOctave(localX(e)));
     setDragLeft(localX(e) - seg.width / 2);
   };
   const onMiniMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!dragging.current) return;
     const x = Math.max(0, Math.min(full.width - seg.width, localX(e) - seg.width / 2));
     setDragLeft(x);
+    setOctave(nearestOctave(localX(e)));
   };
   const onMiniUp = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!dragging.current) return;
@@ -600,6 +629,7 @@ function TabletWeighingPage() {
   const goTo = (cell: Cell | null) => {
     if (!cell) return;
     replaceNext.current = true;
+    rememberWeighingCell(cell);
     setActive(cell);
     const o = OCTAVES.findIndex(([a, b]) => cell.index + 1 >= a && cell.index + 1 <= b);
     if (o >= 0) setOctave(o);
@@ -625,13 +655,21 @@ function TabletWeighingPage() {
     };
     return null;
   };
-  const hasEntryError = (alert !== null && alert.kind !== "pedal") || rows.some((_, i) => pairProblem(i, true) !== null);
+  const readiness = useMemo(() => weighingReadiness(rows, rapidMode), [rows, rapidMode]);
+  const resultsReady = readiness.ready && canEnterWeights;
+  const lockReason = !canEnterWeights
+    ? en ? "Complete the piano information first." : "Complétez d’abord les informations du piano."
+    : weighingLockMessage(readiness.issue, rapidMode, en);
+  useEffect(() => {
+    setGateReady(resultsReady);
+    setTopbarState({ measuresReady: resultsReady, weighingMode: true, serialFilled: Boolean(info["sn_num"]?.trim()) });
+  }, [resultsReady, info]);
   const formGuard = (cell: Cell) => {
     if (canEnterWeights) return true;
     showFeedback(cell, en ? "⚠️ First complete Brand, Piano type, Model, Serial number, Manufacturing date and Usage intensity." : "⚠️ Complétez d'abord Marque, Type de piano, Modèle, N° de série, Date fabrication et Intensité d'usage.", "form", false);
     return false;
   };
-  const navigateCell = (origin: Cell, target: Cell | null) => {
+  const navigateCell = (origin: Cell, target: Cell | null, automatic = false) => {
     if (!target) return;
     const value = parseW(rowsRef.current[origin.index]?.[origin.field] ?? "");
     if (alertRef.current?.kind === "pedal" && alertRef.current.index === origin.index && alertRef.current.field === origin.field) { focusCell(origin); return; }
@@ -640,6 +678,7 @@ function TabletWeighingPage() {
     if (target.index !== origin.index && problem) { showFeedback({ index: origin.index, field: problem.field }, problem.text, problem.kind); goTo({ index: origin.index, field: problem.field }); return; }
     onCommit();
     goTo(target);
+    if (automatic && origin.index !== target.index) playWeighingSound("key");
   };
   const octaveDelay = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelOctaveDelay = () => { if (octaveDelay.current) { clearTimeout(octaveDelay.current); octaveDelay.current = null; } };
@@ -662,16 +701,17 @@ function TabletWeighingPage() {
     const target = nextCell(index, field);
     const octOf = (i: number) => OCTAVES.findIndex(([a, b]) => i + 1 >= a && i + 1 <= b);
     if (target && octOf(target.index) !== octOf(index)) {
-      // Dernière case de l'octave : 2 s pour relire avant de passer à la suivante.
+      // Dernière case : 0,5 s de relecture avant le saut automatique.
       onCommit();
       if (octaveDelay.current) clearTimeout(octaveDelay.current);
-      octaveDelay.current = setTimeout(() => { octaveDelay.current = null; navigateCell(cell, target); }, 2000);
+      octaveDelay.current = setTimeout(() => { octaveDelay.current = null; navigateCell(cell, target, true); }, OCTAVE_ADVANCE_MS);
       return;
     }
-    navigateCell(cell, target);
+    navigateCell(cell, target, true);
   };
   // Un seul chemin pour saisie physique et pavé : nettoyage, contrôles, avance.
   const onTyped = (index: number, field: Cell["field"], value: string) => {
+    unlockWeighingAudio();
     cancelOctaveDelay();
     if (!formGuard({ index, field })) return;
     const cleaned = cleanWeight(value);
@@ -694,6 +734,9 @@ function TabletWeighingPage() {
   };
   const onFocusField = (index: number, field: Cell["field"]) => {
     const cell = { index, field };
+    cancelOctaveDelay();
+    unlockWeighingAudio();
+    rememberWeighingCell(cell);
     if (!focusing.current && active && active.index !== index) {
       const pedal = alertRef.current;
       if (pedal?.kind === "pedal" && pedal.index === active.index) { goTo(active); return; }
@@ -755,18 +798,18 @@ function TabletWeighingPage() {
         </div>
 
         {/* Numéros des Do au-dessus de la mini-map (taille réelle, police de l'appli) */}
-        <div className="relative mt-1 h-4 w-full font-sans text-xs font-bold text-foreground select-none" aria-hidden="true">
+        <div className="relative mt-1 h-3 w-full font-sans text-xs font-medium leading-none text-foreground select-none" aria-hidden="true">
           {[...C_KEYS].map((k) => {
             const c = full.cols[k - 1];
             if (!c) return null;
             const center = ((c.start + c.end) / 2 - full.left) * miniScale;
-            return <span key={k} className="absolute top-0 -translate-x-1/2" style={{ left: center }}>{k}</span>;
+            return <span key={k} className="absolute bottom-0 -translate-x-1/2" style={{ left: center }}>{k}</span>;
           })}
         </div>
         {/* Mini-map 88 touches + viseur glissable */}
         <div
           ref={miniRef}
-          className="relative mt-0.5 w-full cursor-pointer touch-none overflow-hidden select-none"
+          className="tablet-mini-map relative mt-0 w-full cursor-pointer touch-none overflow-hidden select-none"
           style={{ height: nativeH * miniScale + 2 }}
           onPointerDown={onMiniDown}
           onPointerMove={onMiniMove}
@@ -779,14 +822,14 @@ function TabletWeighingPage() {
             </div>
           </div>
           <div
-            className={`pointer-events-none absolute top-0 rounded-sm border-2 border-foreground/60 bg-foreground/20 ${dragLeft === null ? "transition-all duration-300" : ""}`}
-            style={{ left: viewLeft * miniScale, width: seg.width * miniScale, height: nativeH * miniScale }}
+            className={`pointer-events-none absolute rounded-sm border-2 border-foreground/60 bg-foreground/10 ${dragLeft === null ? "transition-all duration-300" : ""}`}
+            style={{ top: 1.05 * 16 * miniScale, left: viewLeft * miniScale, width: seg.width * miniScale, height: 11.55 * 16 * miniScale }}
           />
         </div>
 
         {/* Octave zoomée + pavé numérique */}
         <div className="mt-4 flex items-center gap-3">
-          <button type="button" aria-label={en ? "Previous octave" : "Octave précédente"} disabled={octave === 0} onClick={() => setOctave((o) => Math.max(0, o - 1))} className={arrowBtn}>◀</button>
+          <button type="button" aria-label={en ? "Previous octave" : "Octave précédente"} disabled={octave === 0} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.max(0, o - 1)); }} className={arrowBtn}>◀</button>
           <div
             ref={octRef}
             className="relative min-w-0 flex-1 overflow-hidden"
@@ -819,7 +862,7 @@ function TabletWeighingPage() {
               </div>
             </div>
           </div>
-          <button type="button" aria-label={en ? "Next octave" : "Octave suivante"} disabled={octave === OCTAVES.length - 1} onClick={() => setOctave((o) => Math.min(OCTAVES.length - 1, o + 1))} className={arrowBtn}>▶</button>
+          <button type="button" aria-label={en ? "Next octave" : "Octave suivante"} disabled={octave === OCTAVES.length - 1} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.min(OCTAVES.length - 1, o + 1)); }} className={arrowBtn}>▶</button>
           {showKeypad && <Keypad height={Math.max(180, 0.8 * (nativeH * octScale + 2))} onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />}
         </div>
         {alert && alertAnchor && (
@@ -839,15 +882,25 @@ function TabletWeighingPage() {
           </div>
         )}
 
+        {confirmReset && (
+          <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-foreground/15 p-4" onClick={() => setConfirmReset(false)}>
+            <div role="alertdialog" aria-modal="true" aria-label={en ? "Reset weighings" : "Effacer les pesées"} className="flex max-w-full flex-wrap items-center justify-center gap-3 rounded-md border border-border bg-background p-4 text-sm text-foreground shadow-lg" onClick={(e) => e.stopPropagation()}>
+              <span>{en ? "Do you want to erase all weighing data?" : "Voulez-vous effacer toutes les données de pesées ?"}</span>
+              <Button variant="outline" onClick={doReset}>{en ? "Yes" : "Oui"}</Button>
+              <Button variant="outline" onClick={() => setConfirmReset(false)}>{en ? "No" : "Non"}</Button>
+            </div>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="tablet-commands mt-4 flex items-center justify-between overflow-x-auto pb-2">
-          <button
+          <Button variant="outline"
             type="button"
             onClick={() => openDesktop(false)}
             className="tablet-command shrink-0 rounded-md border border-input bg-background font-semibold text-foreground hover:bg-accent"
           >
-            {en ? "Edit piano info" : "Modifier info piano"}
-          </button>
+            {en ? "← Edit Piano Info" : "← Modifier Infos piano"}
+          </Button>
           <div className="tablet-commands flex shrink-0 flex-nowrap items-center justify-center">
             <Button type="button" variant="outline" onClick={() => openDesktop(true)} className={cmdBtn}>
               <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
@@ -884,22 +937,9 @@ function TabletWeighingPage() {
             </Button>
             <Button type="button" variant="outline" onClick={toggleKeypad} className={cmdBtn}>
               <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
-              <span>{en ? (showKeypad ? "Keypad: Shown" : "Keypad: Hidden") : (showKeypad ? "Pavé tactile : Affiché" : "Pavé tactile : Masqué")}</span>
+              <span>{en ? (showKeypad ? "Keypad: Shown" : "Keypad: Hidden") : (showKeypad ? "Pavé : Affiché" : "Pavé : Masqué")}</span>
             </Button>
             <div className="relative flex items-center">
-              {confirmReset && (
-                <div className="fixed inset-0" style={{ background: "rgba(0,0,0,0.15)", zIndex: 40 }} onClick={() => setConfirmReset(false)} role="presentation" />
-              )}
-              {confirmReset && (
-                <div
-                  className="absolute left-1/2 flex min-w-max -translate-x-1/2 items-center gap-2 !rounded-md !border !border-gray-300 !bg-white px-3 py-2 text-sm font-medium !text-gray-950 !shadow-lg"
-                  style={{ bottom: "100%", marginBottom: "8px", zIndex: 50 }}
-                >
-                  <span>{en ? "Do you want to erase all weighing data?" : "Voulez-vous effacer toutes les données de pesées ?"}</span>
-                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={doReset}>{en ? "Yes" : "Oui"}</button>
-                  <button type="button" className="rounded border border-gray-950/40 px-2 py-0.5 font-bold !text-gray-950" onClick={() => setConfirmReset(false)}>{en ? "No" : "Non"}</button>
-                </div>
-              )}
               <TooltipProvider delayDuration={200}>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -910,19 +950,16 @@ function TabletWeighingPage() {
               </TooltipProvider>
             </div>
           </div>
-          {topbar.gateReady && !hasEntryError ? (
-            <Link
-              to="/resultats"
-              className="tablet-command flex shrink-0 items-center rounded-md border-2 font-bold"
-              style={{ backgroundColor: "#dcfce7", borderColor: "#16a34a", color: "#000000" }}
-            >
+          <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
+            <Button variant="outline" type="button" aria-disabled={!resultsReady}
+              className={`tablet-command shrink-0 border-2 font-bold ${resultsReady ? "weighing-results-ready" : "border-input bg-background text-muted-foreground opacity-60"}`}
+              onClick={() => {
+                if (!resultsReady) { toast.error(lockReason); return; }
+                onCommit(); void navigate({ to: "/resultats" });
+              }}>
               {en ? "Dashboard >" : "Bilan >"}
-            </Link>
-          ) : (
-            <span aria-disabled="true" className="tablet-command flex shrink-0 cursor-not-allowed items-center rounded-md border-2 border-input bg-background font-bold text-muted-foreground opacity-60">
-              {en ? "Dashboard >" : "Bilan >"}
-            </span>
-          )}
+            </Button>
+          </TooltipTrigger>{!resultsReady && <TooltipContent side="top" className="max-w-72">{lockReason}</TooltipContent>}</Tooltip></TooltipProvider>
         </div>
       </div>
     </main>

@@ -24,6 +24,8 @@ type Preferences = {
   pdfRedKeys: boolean;
   /** Avance automatique après 2 chiffres valides. */
   autoAdvance: boolean;
+  keySound: boolean;
+  octaveSound: boolean;
   /** Cible standard : défaut (selon type) ou personnalisée. */
   targetMode: "default" | "custom";
   customTargets: Record<TargetKind, TargetRamp>;
@@ -34,6 +36,8 @@ const SMOOTH_KEY = "ptw_pref_smooth";
 const SMOOTH_ANALYSE_KEY = "ptw_pref_smooth_analyse";
 const PDF_RED_KEY = "ptw_pref_pdf_red";
 const AUTO_ADV_KEY = "ptw_pref_auto_advance";
+const KEY_SOUND_KEY = "ptw_pref_key_sound";
+const OCTAVE_SOUND_KEY = "ptw_pref_octave_sound";
 const TARGET_MODE_KEY = "ptw_pref_target_mode";
 const TARGET_CUSTOM_KEY = "ptw_pref_target_custom";
 
@@ -65,7 +69,7 @@ const write = (key: string, value: string) => {
 };
 
 function load(): Preferences {
-  if (typeof window === "undefined") return { corridorG: 3, smoothDefault: "smooth", smoothAnalyse: "real", pdfRedKeys: true, autoAdvance: true, targetMode: "default", customTargets: { ...DEFAULT_TARGETS } };
+  if (typeof window === "undefined") return { corridorG: 3, smoothDefault: "smooth", smoothAnalyse: "real", pdfRedKeys: true, autoAdvance: true, keySound: true, octaveSound: true, targetMode: "default", customTargets: { ...DEFAULT_TARGETS } };
   const rawCorridor = read(CORRIDOR_KEY);
   const corridor = rawCorridor === null || rawCorridor === "" ? NaN : Number(rawCorridor);
   const smooth = read(SMOOTH_KEY);
@@ -77,6 +81,8 @@ function load(): Preferences {
     smoothAnalyse: smoothA === "smooth" || smoothA === "smoothPlus" ? smoothA : "real",
     pdfRedKeys: read(PDF_RED_KEY) !== "0",
     autoAdvance: read(AUTO_ADV_KEY) !== "0",
+    keySound: read(KEY_SOUND_KEY) !== "0",
+    octaveSound: read(OCTAVE_SOUND_KEY) !== "0",
     targetMode: read(TARGET_MODE_KEY) === "custom" ? "custom" : "default",
     customTargets: loadCustom(),
   };
@@ -128,6 +134,13 @@ export function setTargetMode(value: "default" | "custom") {
   prefs = { ...prefs, targetMode: value };
   write(TARGET_MODE_KEY, value);
   emit();
+}
+
+export function setKeySound(value: boolean) {
+  prefs = { ...prefs, keySound: value }; write(KEY_SOUND_KEY, value ? "1" : "0"); emit();
+}
+export function setOctaveSound(value: boolean) {
+  prefs = { ...prefs, octaveSound: value }; write(OCTAVE_SOUND_KEY, value ? "1" : "0"); emit();
 }
 
 export function setCustomTarget(kind: TargetKind, ramp: TargetRamp) {
