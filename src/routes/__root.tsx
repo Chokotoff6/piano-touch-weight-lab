@@ -444,7 +444,7 @@ function RootComponent() {
                   </button>
                   {resTipOpen && (
                     <span className="pointer-events-none absolute left-0 top-full z-[99999] mt-2 block w-72 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-950 shadow-lg">
-                      {lockedResultsMessage(lang === "en")}
+                      {topbar.gateMessage || lockedResultsMessage(lang === "en")}
                     </span>
                   )}
                 </span>

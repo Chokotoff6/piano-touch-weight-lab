@@ -29,3 +29,5 @@ Les étiquettes de fin des graphiques Recharts sont placées à partir des éche
 - Tablet control dimensions use container-relative CSS with minimum touch sizes and horizontal toolbar overflow, so resizing changes actual controls without shrinking text below readable sizes.
 - Tablet .kw import consumes the existing file-menu event and shared parser, retaining the parsed session document and updating the local draft without navigating, so partial measurements and instrument history remain intact.
 - Keypad buttons retain the shared Button component with explicit full-row height utilities, so the default button height cannot constrain the tablet grid.
+- Both weighing routes derive Dashboard access from the pure current-measurement validator in weighing-readiness; never use UI error caches or badge timers, so desktop, tablet and header stay consistent.
+- Weighing feedback uses a browser-only lazy Web Audio context and session-scoped active-cell handoff, so offline audio and view changes require neither network calls nor screen detours.
