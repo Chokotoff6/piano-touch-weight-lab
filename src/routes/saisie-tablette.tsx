@@ -12,7 +12,7 @@ import { SECURITY_BACKUP_KEY, parseKwDocument, rememberKwDocument, kwSerial, dif
 import { showTopbarAlert, setGateReady, setTopbarState } from "@/lib/topbar-store";
 import { getPreferences } from "@/lib/preferences";
 import { weighingReadiness, weighingLockMessage, OCTAVE_ADVANCE_MS } from "@/lib/weighing-readiness";
-import { rememberWeighingCell, readWeighingCell, unlockWeighingAudio, playWeighingSound } from "@/lib/weighing-feedback";
+import { rememberWeighingCell, readWeighingCell, unlockWeighingAudio, playWeighingSound, playReadyChime } from "@/lib/weighing-feedback";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Redo2, RefreshCw, Undo2 } from "lucide-react";
@@ -664,6 +664,11 @@ function TabletWeighingPage() {
     setGateReady(resultsReady);
     setTopbarState({ measuresReady: resultsReady, weighingMode: true, serialFilled: Boolean(info["sn_num"]?.trim()) });
   }, [resultsReady, info]);
+  const readyChimeRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (readyChimeRef.current === false && resultsReady) playReadyChime();
+    readyChimeRef.current = resultsReady;
+  }, [resultsReady]);
   const formGuard = (cell: Cell) => {
     if (canEnterWeights) return true;
     showFeedback(cell, en ? "⚠️ First complete Brand, Piano type, Model, Serial number, Manufacturing date and Usage intensity." : "⚠️ Complétez d'abord Marque, Type de piano, Modèle, N° de série, Date fabrication et Intensité d'usage.", "form", false);

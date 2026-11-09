@@ -1,6 +1,6 @@
 import { getPreferences } from "@/lib/preferences";
 import { weighingReadiness, weighingLockMessage } from "@/lib/weighing-readiness";
-import { rememberWeighingCell, readWeighingCell, unlockWeighingAudio, playWeighingSound } from "@/lib/weighing-feedback";
+import { rememberWeighingCell, readWeighingCell, unlockWeighingAudio, playWeighingSound, playReadyChime } from "@/lib/weighing-feedback";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Redo2, RefreshCw, Undo2 } from "lucide-react";
@@ -3362,6 +3362,11 @@ function Index() {
       });
     };
   }, [exportReady, requiredSheetFieldsComplete, keyboardValid, resultsReady, info, isExporting, isDirty, currentDbId, weighingMode, rows]);
+  const readyChimeRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (readyChimeRef.current === false && resultsReady) playReadyChime();
+    readyChimeRef.current = resultsReady;
+  }, [resultsReady]);
 
   useEffect(() => {
     // Comparer et Exporter partagent exactement la même décision cloud.
