@@ -509,8 +509,9 @@ function TabletWeighingPage() {
     undoStack.current.push(rowsRef.current.map((r) => ({ ...r })));
     redoStack.current = [];
     applySnapshot(Array.from({ length: 88 }, () => ({ wd: "", wa: "" })));
-    setActive(null);
     setConfirmReset(false);
+    // Reset : curseur sur la 1ʳᵉ note prête (La 0 en Libre, Do 1 en Do/Do#), champ PD.
+    goTo({ index: rapidMode ? 3 : 0, field: "wd" });
   };
 
   useEffect(() => {

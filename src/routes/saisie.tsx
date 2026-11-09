@@ -1792,6 +1792,7 @@ function Index() {
       setTopbarState({ measuresReady: false, exportReady: false });
       setConfirmReset(null);
       markDirty();
+      focusFirstWeight();
       if (previousRows.some((r) => r.wd || r.wa)) {
         toast(en ? "Weighings erased." : "Pesées effacées.", {
           duration: 8000,
