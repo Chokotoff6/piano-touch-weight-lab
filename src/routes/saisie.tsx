@@ -3987,7 +3987,7 @@ function Index() {
         data-saved-at={savedAt ?? ""}
         data-climate-zone={climateZone ?? ""}
       >
-        <TooltipProvider delayDuration={200}><Frame title={
+        <TooltipProvider delayDuration={50}><Frame title={
           <span className="flex min-w-0 items-baseline gap-2 whitespace-nowrap">
             <span className="shrink-0">{en ? "Piano information" : "Informations piano"}</span>
             <span className="shrink-0 text-muted-foreground">-</span>
@@ -4497,7 +4497,7 @@ function Index() {
               {en ? "View: Octave" : "Vue : Octave"}
             </Button>
 
-            <TooltipProvider delayDuration={200}>
+            <TooltipProvider delayDuration={50}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button

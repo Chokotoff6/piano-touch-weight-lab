@@ -906,7 +906,7 @@ function TabletWeighingPage() {
               <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
               <span>{en ? "View: Full" : "Vue : Complète"}</span>
             </Button>
-            <TooltipProvider delayDuration={200}>
+            <TooltipProvider delayDuration={50}>
               <Tooltip>
                 <TooltipTrigger asChild>
             <Button type="button" variant="outline" onClick={toggleRapid} className={cmdBtn}>
@@ -940,7 +940,7 @@ function TabletWeighingPage() {
               <span>{en ? (showKeypad ? "Keypad: Shown" : "Keypad: Hidden") : (showKeypad ? "Pavé : Affiché" : "Pavé : Masqué")}</span>
             </Button>
             <div className="relative flex items-center">
-              <TooltipProvider delayDuration={200}>
+              <TooltipProvider delayDuration={50}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button type="button" variant="outline" disabled={!hasData} onClick={() => setConfirmReset(true)} className={cmdBtn}>Reset</Button>
@@ -950,7 +950,7 @@ function TabletWeighingPage() {
               </TooltipProvider>
             </div>
           </div>
-          <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
+          <TooltipProvider delayDuration={50}><Tooltip><TooltipTrigger asChild>
             <Button variant="outline" type="button" aria-disabled={!resultsReady}
               className={`tablet-command shrink-0 border-2 font-bold ${resultsReady ? "weighing-results-ready" : "border-input bg-background text-muted-foreground opacity-60"}`}
               onClick={() => {

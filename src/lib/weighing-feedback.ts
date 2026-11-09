@@ -41,3 +41,21 @@ export function playWeighingSound(kind: "key" | "octave") {
     oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
   } catch { /* never block input for sound */ }
 }
+/** Single crystal chime when Dashboard access turns green (follows the key-sound preference). */
+export function playReadyChime() {
+  const prefs = getPreferences();
+  if (!(prefs.keySound || prefs.octaveSound) || !audio || audio.state !== "running") return;
+  try {
+    const now = audio.currentTime;
+    [[880, 0], [1320, 0.07]].forEach(([freq, delay]) => {
+      const o = audio!.createOscillator(); const g = audio!.createGain();
+      o.type = "sine"; o.frequency.setValueAtTime(freq, now + delay);
+      g.gain.setValueAtTime(0, now + delay);
+      g.gain.linearRampToValueAtTime(0.07, now + delay + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.15);
+      o.connect(g); g.connect(audio!.destination);
+      o.start(now + delay); o.stop(now + delay + 0.16);
+      o.onended = () => { o.disconnect(); g.disconnect(); };
+    });
+  } catch { /* never block input for sound */ }
+}
