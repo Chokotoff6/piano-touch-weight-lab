@@ -11,12 +11,12 @@ import {
   setTargetMode, setCustomTarget, DEFAULT_TARGETS, type TargetKind, type TargetRamp,
 } from "@/lib/preferences";
 
-function Choice<T extends string | number | boolean>({ value, current, label, onPick, tip }: { value: T; current: T; label: string; onPick: (v: T) => void; tip?: string | undefined }) {
+function Choice<T extends string | number | boolean>({ value, current, label, onPick, tip, inline }: { value: T; current: T; label: string; onPick: (v: T) => void; tip?: string | undefined; inline?: boolean }) {
   const active = value === current;
   const control = (
     <Button type="button" variant="outline" size="sm" onClick={() => onPick(value)} aria-pressed={active}
-      className={`h-auto min-h-8 rounded-md px-2 py-1 text-xs ${active ? "border-2 border-foreground bg-muted font-bold text-foreground shadow-sm hover:bg-muted" : "border-foreground/30 bg-background text-foreground hover:bg-muted"}`}>
-      {label.includes(" (") ? <span>{label.split(" (")[0]}<span className="block text-[10px]">({label.split(" (")[1]}</span></span> : label}
+      className={`h-auto min-h-8 whitespace-nowrap rounded-md px-2 py-1 text-xs ${active ? "border-2 border-foreground bg-muted font-bold text-foreground shadow-sm hover:bg-muted" : "border-foreground/30 bg-background text-foreground hover:bg-muted"}`}>
+      {label.includes(" (") && !inline ? <span>{label.split(" (")[0]}<span className="block text-[10px]">({label.split(" (")[1]}</span></span> : label}
     </Button>
   );
   return tip ? <Tooltip delayDuration={0}><TooltipTrigger asChild>{control}</TooltipTrigger><TooltipContent className="z-[100000] max-w-72 border border-foreground/30 bg-popover text-popover-foreground shadow-lg">{tip}</TooltipContent></Tooltip> : control;
@@ -87,12 +87,13 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
         <Settings className="h-5 w-5" />
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90dvh] max-w-xl overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-h-[90dvh] max-w-2xl overflow-y-auto">
+          <DialogHeader className="sr-only">
             <DialogTitle>{en ? "Preferences" : "Préférences"}</DialogTitle>
           </DialogHeader>
-          <TooltipProvider delayDuration={0}><div className="flex flex-col gap-3 text-sm">
-            <div className="grid grid-cols-2 gap-3">
+          <TooltipProvider delayDuration={0}><div className="relative mt-3 flex flex-col gap-3 rounded-lg border-2 border-foreground/60 p-3 pt-6 text-sm">
+            <span aria-hidden="true" className="absolute -top-3 left-4 rounded bg-foreground px-3 py-0.5 text-sm font-bold text-background">{en ? "Preferences" : "Préférences"}</span>
+            <div className="grid grid-cols-[auto_1fr] gap-3">
             <div className={row}>
               <span className="font-semibold">{en ? "Demo mode" : "Mode Démo"}</span>
               <div className="flex gap-2">
@@ -106,8 +107,8 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
                 <Choice value={true} current={prefs.autoAdvance} label={"Auto" + def} tip={en ? "Weighing input: the cursor jumps to the next key without \"Enter\" or \"Tab\"." : "Saisie pesée : curseur saute à la touche suivante sans « Enter » ou « Tab »."} onPick={setAutoAdvance} />
                 <Choice value={false} current={prefs.autoAdvance} label={en ? "Manual" : "Manuel"} onPick={setAutoAdvance} />
               </div>
-              <label className="flex items-start gap-2 text-xs"><input type="checkbox" checked={prefs.keySound} onChange={(e) => setKeySound(e.target.checked)} />{(en ? "Sound when advancing to the next key" : "Signal sonore au passage à la touche suivante") + (prefs.keySound ? def : "")}</label>
-              <label className="flex items-start gap-2 text-xs"><input type="checkbox" checked={prefs.octaveSound} onChange={(e) => setOctaveSound(e.target.checked)} />{(en ? "Sound when changing octave" : "Signal sonore lors du saut d’octave") + (prefs.octaveSound ? def : "")}</label>
+              <label className="flex items-start gap-2 whitespace-nowrap text-xs"><input type="checkbox" checked={prefs.keySound} onChange={(e) => setKeySound(e.target.checked)} />{(en ? "Sound when advancing to the next key" : "Signal sonore au passage à la touche suivante") + (prefs.keySound ? def : "")}</label>
+              <label className="flex items-start gap-2 whitespace-nowrap text-xs"><input type="checkbox" checked={prefs.octaveSound} onChange={(e) => setOctaveSound(e.target.checked)} />{(en ? "Sound when changing octave" : "Signal sonore lors du saut d’octave") + (prefs.octaveSound ? def : "")}</label>
             </div>
             </div>
             <div className={row}>
@@ -138,7 +139,7 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
                 <div key={id} className="flex items-center gap-3">
                   <span className="w-20 text-sm font-bold">{title}</span><div className="flex flex-nowrap gap-1">
                   {([["real", en ? "Raw" : "Réel"], ["smooth", en ? "Smoothed 3 pts" : "Lissé 3 pts"], ["smoothPlus", en ? "Smoothed+ 5 pts" : "Lissé+ 5 pts"]] as [SmoothPref, string][]).map(([v, l]) => (
-                    <Choice key={v} value={v} current={cur} label={l + (v === dflt ? def : "")} onPick={pick} />
+                    <Choice key={v} value={v} current={cur} label={l + (v === dflt ? def : "")} onPick={pick} inline />
                   ))}
                 </div></div>
               ))}
