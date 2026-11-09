@@ -12,7 +12,7 @@ import { SECURITY_BACKUP_KEY, parseKwDocument, rememberKwDocument, kwSerial, dif
 import { showTopbarAlert, setGateReady, setTopbarState } from "@/lib/topbar-store";
 import { getPreferences } from "@/lib/preferences";
 import { weighingReadiness, weighingLockMessage, OCTAVE_ADVANCE_MS } from "@/lib/weighing-readiness";
-import { rememberWeighingCell, readWeighingCell, unlockWeighingAudio, playWeighingSound } from "@/lib/weighing-feedback";
+import { rememberWeighingCell, readWeighingCell, unlockWeighingAudio, playWeighingSound, playReadyChime } from "@/lib/weighing-feedback";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Redo2, RefreshCw, Undo2 } from "lucide-react";
@@ -301,6 +301,7 @@ function TabletWeighingPage() {
   const [rows, setRows] = useState<Row[]>(() => Array.from({ length: 88 }, () => ({ wd: "", wa: "" })));
   const [info, setInfo] = useState<Record<string, string>>({});
   const [octave, setOctave] = useState(0);
+  const [pressedArrow, setPressedArrow] = useState<"prev" | "next" | null>(null);
   const [active, setActive] = useState<{ index: number; field: "wd" | "wa" } | null>(null);
   const dirty = useRef(false);
   const importInput = useRef<HTMLInputElement | null>(null);
@@ -509,8 +510,9 @@ function TabletWeighingPage() {
     undoStack.current.push(rowsRef.current.map((r) => ({ ...r })));
     redoStack.current = [];
     applySnapshot(Array.from({ length: 88 }, () => ({ wd: "", wa: "" })));
-    setActive(null);
     setConfirmReset(false);
+    // Reset : curseur sur la 1ʳᵉ note prête (La 0 en Libre, Do 1 en Do/Do#), champ PD.
+    goTo({ index: rapidMode ? 3 : 0, field: "wd" });
   };
 
   useEffect(() => {
@@ -607,7 +609,7 @@ function TabletWeighingPage() {
   // Octave : un seul facteur pour toutes les octaves (basé sur la plus large).
   const [octRef, octW] = useWidth();
   const widest = useMemo(() => Math.max(...OCTAVES.map(([a, b]) => geometry(a, b, NATIVE_WHITE).width)), []);
-  const octScale = octW > 0 ? Math.min(octW / (widest + LABELS_W), 3) : 1;
+  const octScale = octW > 0 ? Math.min(Math.max(0.2, (octW - 72) / (widest + LABELS_W)), 3) : 1;
 
   // Swipe horizontal sur l'octave.
   const touchX = useRef<number | null>(null);
@@ -664,6 +666,11 @@ function TabletWeighingPage() {
     setGateReady(resultsReady);
     setTopbarState({ measuresReady: resultsReady, weighingMode: true, serialFilled: Boolean(info["sn_num"]?.trim()) });
   }, [resultsReady, info]);
+  const readyChimeRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (readyChimeRef.current === false && resultsReady) playReadyChime();
+    readyChimeRef.current = resultsReady;
+  }, [resultsReady]);
   const formGuard = (cell: Cell) => {
     if (canEnterWeights) return true;
     showFeedback(cell, en ? "⚠️ First complete Brand, Piano type, Model, Serial number, Manufacturing date and Usage intensity." : "⚠️ Complétez d'abord Marque, Type de piano, Modèle, N° de série, Date fabrication et Intensité d'usage.", "form", false);
@@ -704,7 +711,13 @@ function TabletWeighingPage() {
       // Dernière case : 0,5 s de relecture avant le saut automatique.
       onCommit();
       if (octaveDelay.current) clearTimeout(octaveDelay.current);
-      octaveDelay.current = setTimeout(() => { octaveDelay.current = null; navigateCell(cell, target, true); }, OCTAVE_ADVANCE_MS);
+      octaveDelay.current = setTimeout(() => {
+        octaveDelay.current = null;
+        // Simule l'enfoncement de la flèche correspondant au saut automatique.
+        const dir = octOf(target.index) > octOf(index) ? "next" : "prev";
+        setPressedArrow(dir); setTimeout(() => setPressedArrow((p) => (p === dir ? null : p)), 200);
+        navigateCell(cell, target, true);
+      }, OCTAVE_ADVANCE_MS);
       return;
     }
     navigateCell(cell, target, true);
@@ -785,10 +798,10 @@ function TabletWeighingPage() {
     if (origin) { onCommit(); goTo(nextCell(origin.index, origin.field)); }
   };
   const cmdBtn = "tablet-command font-bold text-muted-foreground shrink-0";
-  const arrowBtn = "shrink-0 cursor-pointer px-1 text-2xl leading-none !text-black hover:opacity-70 disabled:cursor-default disabled:opacity-20";
+  const arrowBtn = "shrink-0 cursor-pointer px-1 text-2xl leading-none !text-black transition-transform duration-100 hover:opacity-70 active:scale-75 disabled:cursor-default disabled:opacity-20";
 
   return (
-    <main className="tablet-weighing mx-auto w-full max-w-[1280px] px-4 pb-3 pt-7">
+    <main className="tablet-weighing mx-auto w-full max-w-[1280px] px-4 pb-3 pt-14">
       <input ref={importInput} type="file" accept=".kw,application/json" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ""; void importFile(file); }} />
       <div className="relative rounded-md border-2 border-foreground bg-card p-4 pt-5">
         <div className="absolute -top-3.5 left-4 flex max-w-[calc(100%-2rem)] items-baseline gap-2 whitespace-nowrap bg-card px-2 text-lg font-bold text-black">
@@ -827,12 +840,11 @@ function TabletWeighingPage() {
           />
         </div>
 
-        {/* Octave zoomée + pavé numérique */}
-        <div className="mt-4 flex items-center gap-3">
-          <button type="button" aria-label={en ? "Previous octave" : "Octave précédente"} disabled={octave === 0} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.max(0, o - 1)); }} className={arrowBtn}>◀</button>
+        {/* Octave zoomée + pavé numérique : [étiquettes] ◀ [octave] ▶ centrés à gauche du pavé */}
+        <div className="mt-4 flex items-center gap-3 pr-10">
           <div
             ref={octRef}
-            className="relative min-w-0 flex-1 overflow-hidden"
+            className="flex min-w-0 flex-1 items-center justify-center gap-2 overflow-hidden"
             style={{ height: nativeH * octScale + 2 }}
             onTouchStart={(e) => { touchX.current = e.touches[0]?.clientX ?? null; }}
             onTouchEnd={(e) => {
@@ -842,8 +854,9 @@ function TabletWeighingPage() {
               setOctave((o) => (end < start ? Math.min(OCTAVES.length - 1, o + 1) : Math.max(0, o - 1)));
             }}
           >
-            <div className="tablet-keyboard absolute left-1/2 top-0 origin-top" style={{ transform: `translateX(-50%) scale(${octScale})` }}>
-              <div className="technical-sheet" style={{ width: LABELS_W + seg.width, gridTemplateColumns: `${LABELS_W}px ${seg.width}px` }}>
+            <div className="relative shrink-0" style={{ width: LABELS_W * octScale, height: nativeH * octScale + 2 }}>
+              <div className="tablet-keyboard absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${octScale})` }}>
+                <div className="technical-sheet" style={{ width: LABELS_W, gridTemplateColumns: `${LABELS_W}px` }}>
                 <div className="technical-labels" style={{ width: LABELS_W }}>
                   <div className="label-key" style={{ top: "1.6rem" }}>
                     <span className="inline-flex flex-col items-center rounded-md border border-foreground/20 bg-muted px-1 py-0.5 text-center leading-tight">
@@ -856,13 +869,21 @@ function TabletWeighingPage() {
                   <div className="label-wd-white">{label("wd")}</div>
                   <div className="label-wa-white">{label("wa")}</div>
                 </div>
-                <div style={{ marginLeft: -seg.left }}>
-                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onTyped} onCommit={onCommit} onFocusField={onFocusField} onBlurField={onBlurField} onNavigate={onNavigate} isVisible={isVisible} weightFilter={weightFilter} registerInput={registerInput} />
                 </div>
               </div>
             </div>
+            <button type="button" aria-label={en ? "Previous octave" : "Octave précédente"} disabled={octave === 0} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.max(0, o - 1)); }} className={`${arrowBtn} ${pressedArrow === "prev" ? "scale-75 opacity-60" : ""}`}>◀</button>
+            <div className="relative shrink-0 overflow-hidden" style={{ width: seg.width * octScale, height: nativeH * octScale + 2 }}>
+              <div className="tablet-keyboard absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${octScale})` }}>
+                <div className="technical-sheet" style={{ width: seg.width, gridTemplateColumns: `${seg.width}px` }}>
+                <div style={{ marginLeft: -seg.left }}>
+                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onTyped} onCommit={onCommit} onFocusField={onFocusField} onBlurField={onBlurField} onNavigate={onNavigate} isVisible={isVisible} weightFilter={weightFilter} registerInput={registerInput} />
+                </div>
+                </div>
+              </div>
+            </div>
+            <button type="button" aria-label={en ? "Next octave" : "Octave suivante"} disabled={octave === OCTAVES.length - 1} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.min(OCTAVES.length - 1, o + 1)); }} className={`${arrowBtn} ${pressedArrow === "next" ? "scale-75 opacity-60" : ""}`}>▶</button>
           </div>
-          <button type="button" aria-label={en ? "Next octave" : "Octave suivante"} disabled={octave === OCTAVES.length - 1} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.min(OCTAVES.length - 1, o + 1)); }} className={arrowBtn}>▶</button>
           {showKeypad && <Keypad height={Math.max(180, 0.8 * (nativeH * octScale + 2))} onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />}
         </div>
         {alert && alertAnchor && (
@@ -892,8 +913,10 @@ function TabletWeighingPage() {
           </div>
         )}
 
-        {/* Actions */}
-        <div className="tablet-commands mt-4 flex items-center justify-between overflow-x-auto pb-2">
+      </div>
+
+        {/* Actions : sous le cadre, comme en Vue Complète */}
+        <div className="tablet-commands mt-3 flex items-center justify-between overflow-x-auto pb-2">
           <Button variant="outline"
             type="button"
             onClick={() => openDesktop(false)}
@@ -906,7 +929,7 @@ function TabletWeighingPage() {
               <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
               <span>{en ? "View: Full" : "Vue : Complète"}</span>
             </Button>
-            <TooltipProvider delayDuration={200}>
+            <TooltipProvider delayDuration={50}>
               <Tooltip>
                 <TooltipTrigger asChild>
             <Button type="button" variant="outline" onClick={toggleRapid} className={cmdBtn}>
@@ -940,7 +963,7 @@ function TabletWeighingPage() {
               <span>{en ? (showKeypad ? "Keypad: Shown" : "Keypad: Hidden") : (showKeypad ? "Pavé : Affiché" : "Pavé : Masqué")}</span>
             </Button>
             <div className="relative flex items-center">
-              <TooltipProvider delayDuration={200}>
+              <TooltipProvider delayDuration={50}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button type="button" variant="outline" disabled={!hasData} onClick={() => setConfirmReset(true)} className={cmdBtn}>Reset</Button>
@@ -950,7 +973,7 @@ function TabletWeighingPage() {
               </TooltipProvider>
             </div>
           </div>
-          <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild>
+          <TooltipProvider delayDuration={50}><Tooltip><TooltipTrigger asChild>
             <Button variant="outline" type="button" aria-disabled={!resultsReady}
               className={`tablet-command shrink-0 border-2 font-bold ${resultsReady ? "weighing-results-ready" : "border-input bg-background text-muted-foreground opacity-60"}`}
               onClick={() => {
@@ -961,7 +984,6 @@ function TabletWeighingPage() {
             </Button>
           </TooltipTrigger>{!resultsReady && <TooltipContent side="top" className="max-w-72">{lockReason}</TooltipContent>}</Tooltip></TooltipProvider>
         </div>
-      </div>
     </main>
   );
 }

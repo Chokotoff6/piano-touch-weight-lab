@@ -1,6 +1,6 @@
 import { getPreferences } from "@/lib/preferences";
 import { weighingReadiness, weighingLockMessage } from "@/lib/weighing-readiness";
-import { rememberWeighingCell, readWeighingCell, unlockWeighingAudio, playWeighingSound } from "@/lib/weighing-feedback";
+import { rememberWeighingCell, readWeighingCell, unlockWeighingAudio, playWeighingSound, playReadyChime } from "@/lib/weighing-feedback";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Redo2, RefreshCw, Undo2 } from "lucide-react";
@@ -1792,6 +1792,7 @@ function Index() {
       setTopbarState({ measuresReady: false, exportReady: false });
       setConfirmReset(null);
       markDirty();
+      focusFirstWeight();
       if (previousRows.some((r) => r.wd || r.wa)) {
         toast(en ? "Weighings erased." : "Pesées effacées.", {
           duration: 8000,
@@ -3362,6 +3363,11 @@ function Index() {
       });
     };
   }, [exportReady, requiredSheetFieldsComplete, keyboardValid, resultsReady, info, isExporting, isDirty, currentDbId, weighingMode, rows]);
+  const readyChimeRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (readyChimeRef.current === false && resultsReady) playReadyChime();
+    readyChimeRef.current = resultsReady;
+  }, [resultsReady]);
 
   useEffect(() => {
     // Comparer et Exporter partagent exactement la même décision cloud.
@@ -3987,7 +3993,7 @@ function Index() {
         data-saved-at={savedAt ?? ""}
         data-climate-zone={climateZone ?? ""}
       >
-        <TooltipProvider delayDuration={200}><Frame title={
+        <TooltipProvider delayDuration={50}><Frame title={
           <span className="flex min-w-0 items-baseline gap-2 whitespace-nowrap">
             <span className="shrink-0">{en ? "Piano information" : "Informations piano"}</span>
             <span className="shrink-0 text-muted-foreground">-</span>
@@ -4497,7 +4503,7 @@ function Index() {
               {en ? "View: Octave" : "Vue : Octave"}
             </Button>
 
-            <TooltipProvider delayDuration={200}>
+            <TooltipProvider delayDuration={50}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button

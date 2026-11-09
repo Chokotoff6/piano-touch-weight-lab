@@ -244,6 +244,7 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
             </div>
           ))}
         </div>
+        <p className="text-xs italic text-muted-foreground">{en ? "Missing an intervention? The full catalogue is editable in the Preferences tool (gear icon)." : "Une intervention manque ? Le catalogue complet est éditable dans l'outil Préférences (roue dentée)."}</p>
         <div className="relative">
           <input value={query} onChange={(e) => setQuery(e.target.value)} className="list-input w-full pr-7"
             placeholder={en ? "Search an intervention (e.g. hammers, tuning, pinblock)" : "Rechercher une intervention (ex : marteaux, accord, sommier)"} />
