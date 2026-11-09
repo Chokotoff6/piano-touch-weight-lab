@@ -47,7 +47,7 @@ export function playReadyChime() {
   if (!(prefs.keySound || prefs.octaveSound) || !audio || audio.state !== "running") return;
   try {
     const now = audio.currentTime;
-    [[880, 0], [1320, 0.07]].forEach(([freq, delay]) => {
+    ([[880, 0], [1320, 0.07]] as const).forEach(([freq, delay]) => {
       const o = audio!.createOscillator(); const g = audio!.createGain();
       o.type = "sine"; o.frequency.setValueAtTime(freq, now + delay);
       g.gain.setValueAtTime(0, now + delay);
