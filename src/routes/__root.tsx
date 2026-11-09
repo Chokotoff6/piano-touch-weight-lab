@@ -378,10 +378,10 @@ function RootComponent() {
         }}
       />
       <nav className="!sticky !top-0 !z-[100] !bg-white !shadow-md border-b border-border">
-        <div className="mx-auto w-full max-w-7xl pb-1 pt-[2px] px-[100px]">
+        <div className="mx-auto w-full max-w-7xl pb-1 pt-[2px] px-4 xl:px-[100px]">
           <div className="flex flex-wrap items-center gap-2">
             {/* Logo officiel KeyWeight : calé à gauche, retour à l'accueil. */}
-            <div className="relative z-10 flex shrink-0 flex-col items-center translate-y-[26px]">
+            <div className="relative z-10 flex shrink-0 flex-col items-center xl:translate-y-[26px]">
               <Link
                 to="/"
                 aria-label={lang === "en" ? "Home" : "Accueil"}
@@ -405,7 +405,7 @@ function RootComponent() {
               </Link>
             </div>
             {!isHome && (
-            <div className="flex translate-x-[50px] translate-y-[9px] flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
+            <div className="flex xl:translate-x-[50px] xl:translate-y-[9px] flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
               {topbar.cloudSaving ? (
                 <span className="group/save relative inline-block">
                   <span aria-disabled="true" className={lockedLinkClass}>
@@ -489,7 +489,7 @@ function RootComponent() {
             {/* Conteneur parent 100 % CSS : le survol du groupe ouvre/ferme le menu.
                 Aucun état JS, aucun timer, aucun gestionnaire onMouseEnter/onMouseLeave. */}
             {!isHome && (
-            <div className="group relative flex translate-y-[15px] items-center">
+            <div className="group relative flex xl:translate-y-[15px] items-center">
               <button
                 type="button"
                 onClick={(e) => e.preventDefault()}
@@ -666,11 +666,11 @@ function RootComponent() {
                    <button
                      type="button"
                      onClick={() => setFaqOpen(true)}
-                     className="mr-2 shrink-0 translate-y-[19px] rounded-md border border-gray-400 bg-white px-2 py-0.5 text-[1rem] font-bold !text-gray-900 transition-colors hover:bg-gray-100"
+                     className="mr-2 shrink-0 xl:translate-y-[19px] rounded-md border border-gray-400 bg-white px-2 py-0.5 text-[1rem] font-bold !text-gray-900 transition-colors hover:bg-gray-100"
                    >
                      FAQ
                    </button>
-                   <div className="flex shrink-0 translate-y-[19px] items-center gap-0 text-[1.14rem] font-semibold">
+                   <div className="flex shrink-0 xl:translate-y-[19px] items-center gap-0 text-[1.14rem] font-semibold">
                      <Button
                        variant="ghost"
                        size="sm"
@@ -693,7 +693,7 @@ function RootComponent() {
                    </div>
                    {(pathname === "/resultats" || pathname === "/comparer") && (
                     <div
-                       className="relative order-first mr-4 translate-y-[16px] transition-opacity duration-[2000ms] ease-in-out"
+                       className="relative order-first mr-4 xl:translate-y-[16px] transition-opacity duration-[2000ms] ease-in-out"
                        style={{ opacity: likedVisible ? 1 : 0, pointerEvents: likedVisible ? "auto" : "none" }}
                      onMouseEnter={() => {
                        if (supportHintTimer.current) clearTimeout(supportHintTimer.current);
@@ -746,7 +746,7 @@ function RootComponent() {
       {/* Bouton « Mode démo » : interrupteur bistable permanent, présent sur
           toutes les pages (hors accueil). Mauve pâle = ON, gris clair = OFF. */}
       {!isHome && (
-        <div className="relative !z-[60] mx-auto w-full max-w-7xl overflow-visible px-[100px] pb-2 pt-3">
+        <div className="relative !z-[60] mx-auto w-full max-w-7xl overflow-visible px-4 xl:px-[100px] pb-2 pt-3">
           <div className="relative !z-[60] flex items-center justify-end gap-2">
             {/* Infobulle au survol du libellé : gris graphite, sans flèche ni croix. */}
             <div className="relative">
@@ -940,6 +940,12 @@ function RootComponent() {
         </DialogContent>
       </Dialog>
 
+      {/* Écran de garde smartphone (< 768 px) : CSS seul, aucune redirection. */}
+      <div className="fixed inset-0 z-[200000] flex flex-col items-center justify-center gap-4 bg-background p-8 text-center md:hidden">
+        <span role="img" aria-label="KeyWeight" className="block h-[85px] w-auto [&>svg]:block [&>svg]:h-[85px] [&>svg]:w-auto" dangerouslySetInnerHTML={{ __html: staticKeyweightLogo }} />
+        <h1 className="text-xl font-bold text-foreground">{lang === "en" ? "Screen size not supported" : "Résolution non prise en charge"}</h1>
+        <p className="max-w-xs text-sm text-muted-foreground">{lang === "en" ? "KeyWeight requires a larger screen (tablet in landscape mode or computer)." : "KeyWeight nécessite un écran plus grand (tablette en mode paysage ou ordinateur)."}</p>
+      </div>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
 
