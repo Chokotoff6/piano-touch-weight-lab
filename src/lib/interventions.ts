@@ -47,7 +47,7 @@ export const ANTECEDENTS_KEY = "antecedents";
 /** Catalogue enrichi des antécédents avant KeyWeight, distinct de la liste courte des points d'historique.
  *  Les ids historiques (regulation, lighten, weighten, hammers, tuning, voicing) sont conservés pour compatibilité. */
 export type AntecedentGroup = { id: string; fr: string; en: string; items: Intervention[] };
-export const ANTECEDENT_GROUPS: AntecedentGroup[] = [
+const FACTORY_ANTECEDENT_GROUPS: AntecedentGroup[] = [
   { id: "action", fr: "Mécanique & Clavier", en: "Action & Keyboard", items: [
     { id: "regulation", fr: "Régulation mécanique complète", en: "Full action regulation" },
     { id: "bushings", fr: "Garnissage des mortaises de clavier", en: "Key bushing replacement" },
@@ -96,7 +96,51 @@ export const ANTECEDENT_KEYWORDS: Record<string, string> = {
   humidity: "hygrometrie humidite dampp chaser hygrometrique",
   silent: "silencieux silent sourdine",
 };
-export const ANTECEDENT_ITEMS: Intervention[] = ANTECEDENT_GROUPS.flatMap((g) => g.items);
+/** Catalogue effectif = usine + ajouts − retraits (overlay localStorage, hors ligne).
+ *  Les tableaux exportés sont mis à jour en place pour que tous les lecteurs existants suivent. */
+type CatalogOverlay = { added: Record<string, Intervention[]>; removed: string[] };
+const CATALOG_KEY = "ptw_antecedent_catalog";
+const catalogListeners = new Set<() => void>();
+let catalogVersion = 0;
+function loadOverlay(): CatalogOverlay {
+  try {
+    if (typeof window === "undefined") return { added: {}, removed: [] };
+    const raw = JSON.parse(window.localStorage.getItem(CATALOG_KEY) ?? "null");
+    if (raw && typeof raw.added === "object" && Array.isArray(raw.removed)) return raw;
+  } catch { /* stockage indisponible */ }
+  return { added: {}, removed: [] };
+}
+let overlay = loadOverlay();
+export const ANTECEDENT_GROUPS: AntecedentGroup[] = FACTORY_ANTECEDENT_GROUPS.map((g) => ({ ...g, items: [] }));
+export const ANTECEDENT_ITEMS: Intervention[] = [];
+function rebuildCatalog() {
+  const removed = new Set(overlay.removed);
+  ANTECEDENT_GROUPS.forEach((g, i) => {
+    const next = [...FACTORY_ANTECEDENT_GROUPS[i]!.items, ...(overlay.added[g.id] ?? [])].filter((it) => !removed.has(it.id));
+    g.items.length = 0; g.items.push(...next);
+  });
+  ANTECEDENT_ITEMS.length = 0; ANTECEDENT_ITEMS.push(...ANTECEDENT_GROUPS.flatMap((g) => g.items));
+}
+rebuildCatalog();
+function saveOverlay(next: CatalogOverlay) {
+  overlay = next; rebuildCatalog(); catalogVersion += 1;
+  try { window.localStorage.setItem(CATALOG_KEY, JSON.stringify(next)); } catch { /* stockage indisponible */ }
+  catalogListeners.forEach((l) => l());
+}
+export function addCatalogItem(groupId: string, label: string) {
+  const l = label.trim();
+  if (!l || ANTECEDENT_ITEMS.some((i) => i.fr.toLowerCase() === l.toLowerCase() || i.en.toLowerCase() === l.toLowerCase())) return;
+  saveOverlay({ ...overlay, added: { ...overlay.added, [groupId]: [...(overlay.added[groupId] ?? []), { id: `cat_${Date.now().toString(36)}`, fr: l, en: l }] } });
+}
+export function removeCatalogItem(id: string) {
+  const added = Object.fromEntries(Object.entries(overlay.added).map(([k, v]) => [k, v.filter((i) => i.id !== id)]));
+  const factory = FACTORY_ANTECEDENT_GROUPS.some((g) => g.items.some((i) => i.id === id));
+  saveOverlay({ added, removed: factory ? [...overlay.removed, id] : overlay.removed });
+}
+export function resetCatalog() { saveOverlay({ added: {}, removed: [] }); }
+export function useAntecedentCatalog(): number {
+  return useSyncExternalStore((cb) => { catalogListeners.add(cb); return () => { catalogListeners.delete(cb); }; }, () => catalogVersion, () => 0);
+}
 export const parseAntecedents = (raw: string | undefined): string[] =>
   String(raw ?? "").split("|").map((s) => s.trim()).filter(Boolean);
 /** Déduit le code Cloud (Standard / Custom regulations / Major modifications) des antécédents cochés. */

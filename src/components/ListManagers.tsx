@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import {
   useInterventions, interventionLabel, addIntervention, removeIntervention, moveIntervention, resetInterventions,
+  useAntecedentCatalog, ANTECEDENT_GROUPS, addCatalogItem, removeCatalogItem, resetCatalog,
 } from "@/lib/interventions";
 import { effectiveModels, addModel, removeModel, resetModels, knownBrands, subscribeModelCatalog } from "@/data/pianoModels";
 
@@ -14,13 +15,18 @@ export function InterventionListDialog({ open, onOpenChange, en }: P) {
   const items = useInterventions();
   const [draft, setDraft] = useState("");
   const add = () => { addIntervention(draft); setDraft(""); };
+  useAntecedentCatalog();
+  const [catGroup, setCatGroup] = useState(ANTECEDENT_GROUPS[0]?.id ?? "action");
+  const [catDraft, setCatDraft] = useState("");
+  const addCat = () => { addCatalogItem(catGroup, catDraft); setCatDraft(""); };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90dvh] max-w-md overflow-y-auto">
+      <DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{en ? "Intervention types list" : "Liste types d'intervention"}</DialogTitle>
-          <DialogDescription>{en ? "Order, add or remove the suggestions offered when creating a history point." : "Ordonnez, ajoutez ou supprimez les suggestions proposées à la création d'un point d'historique."}</DialogDescription>
+          <DialogDescription>{en ? "Manage the frequent-intervention shortcuts and the full catalogue used by Instrument history and history points." : "Gérez les raccourcis d'interventions fréquentes et le catalogue complet utilisé par Historique instrument et les points d'historique."}</DialogDescription>
         </DialogHeader>
+        <h3 className="text-sm font-bold">{en ? "1. Frequent-intervention shortcuts" : "1. Raccourcis d'interventions fréquentes"}</h3>
         <ul className="list-panel">
           {items.map((i, idx) => (
             <li key={i.id} className="list-row">
@@ -36,6 +42,28 @@ export function InterventionListDialog({ open, onOpenChange, en }: P) {
           <Button type="button" variant="outline" disabled={!draft.trim()} onClick={add}>{en ? "Add" : "Ajouter"}</Button>
         </div>
         <Button type="button" variant="outline" size="sm" className="self-start" onClick={resetInterventions}>{en ? "Restore factory list" : "Restaurer la liste d'usine"}</Button>
+        <h3 className="border-t border-foreground/30 pt-3 text-sm font-bold">{en ? "2. Full catalogue by family" : "2. Catalogue complet par familles"}</h3>
+        {ANTECEDENT_GROUPS.map((g) => (
+          <div key={g.id} className="flex flex-col gap-1">
+            <span className="text-xs font-semibold text-muted-foreground">{en ? g.en : g.fr}</span>
+            <ul className="list-panel">
+              {g.items.map((i) => (
+                <li key={i.id} className="list-row">
+                  <span className="min-w-0 flex-1 truncate">{interventionLabel(i, en)}</span>
+                  <button type="button" className="list-icon" aria-label={en ? "Remove" : "Supprimer"} onClick={() => removeCatalogItem(i.id)}><Trash2 className="h-4 w-4" /></button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+        <div className="flex gap-2">
+          <select className="list-input max-w-[11rem]" value={catGroup} onChange={(e) => setCatGroup(e.target.value)}>
+            {ANTECEDENT_GROUPS.map((g) => <option key={g.id} value={g.id}>{en ? g.en : g.fr}</option>)}
+          </select>
+          <input className="list-input" value={catDraft} maxLength={80} onChange={(e) => setCatDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") addCat(); }} placeholder={en ? "New catalogue entry..." : "Nouvelle entrée du catalogue..."} />
+          <Button type="button" variant="outline" disabled={!catDraft.trim()} onClick={addCat}>{en ? "Add" : "Ajouter"}</Button>
+        </div>
+        <Button type="button" variant="outline" size="sm" className="self-start" onClick={resetCatalog}>{en ? "Restore factory catalogue" : "Restaurer le catalogue d'usine"}</Button>
       </DialogContent>
     </Dialog>
   );
