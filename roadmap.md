@@ -1,5 +1,16 @@
 # Roadmap
 
+## Lot consolidé — 10 novembre 2026
+- [ ] Centrage réel octave, étiquettes dynamiques et badge épuré plus lisible.
+- [ ] Mini-map au ras, même taille des deux lignes Do, ancrage haut commun aux vues.
+- [ ] Désélection Échap / extérieur et passage entre vues sans focus fantôme.
+- [ ] Sons uniquement aux changements d’octave réels, pas à la restauration de vue.
+- [ ] Vue automatique selon largeur, choix explicite conservé jusqu'au prochain changement de catégorie d’écran.
+- [ ] Infobulles Pesée exactes, aucune sur Vue ; boutons titre / deux flèches / état.
+- [ ] Moyennes et résumés sans chevauchement ; Analyse pleine largeur et volet Réglages à droite.
+- [ ] Menu Fichiers compact, options sur une seule ligne.
+- [ ] Compilation automatique ; essais visuels et interactifs par Ben.
+
 ## Lot Pesée validé — 8 novembre 2026
 - [ ] Unifier le Bilan immédiat bureau/tablette/menu sur les mesures réelles, supprimer le badge.
 - [ ] Conserver la case active entre vues et connecter les raccourcis Annuler/Rétablir.

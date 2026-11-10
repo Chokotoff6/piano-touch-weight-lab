@@ -4,8 +4,11 @@ export type WeighingCell = { index: number; field: "wd" | "wa" };
 const ACTIVE_KEY = "ptw_active_weighing_cell";
 let audio: AudioContext | undefined;
 
-export function rememberWeighingCell(cell: WeighingCell) {
+export function rememberWeighingCell(cell: WeighingCell | null) {
   try { window.sessionStorage.setItem(ACTIVE_KEY, JSON.stringify(cell)); } catch { /* offline/private storage */ }
+}
+export function hasWeighingHandoff() {
+  try { return window.sessionStorage.getItem(ACTIVE_KEY) !== null; } catch { return false; }
 }
 export function readWeighingCell(): WeighingCell | null {
   try {
@@ -45,15 +48,16 @@ export function playWeighingSound(kind: "key" | "octave") {
 export function playReadyChime() {
   const prefs = getPreferences();
   if (!(prefs.keySound || prefs.octaveSound) || !audio || audio.state !== "running") return;
+  const context = audio;
   try {
     const now = audio.currentTime;
     ([[880, 0], [1320, 0.07]] as const).forEach(([freq, delay]) => {
-      const o = audio!.createOscillator(); const g = audio!.createGain();
+      const o = context.createOscillator(); const g = context.createGain();
       o.type = "sine"; o.frequency.setValueAtTime(freq, now + delay);
       g.gain.setValueAtTime(0, now + delay);
       g.gain.linearRampToValueAtTime(0.07, now + delay + 0.004);
       g.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.15);
-      o.connect(g); g.connect(audio!.destination);
+      o.connect(g); g.connect(context.destination);
       o.start(now + delay); o.stop(now + delay + 0.16);
       o.onended = () => { o.disconnect(); g.disconnect(); };
     });
