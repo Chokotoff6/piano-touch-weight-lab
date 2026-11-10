@@ -1,6 +1,7 @@
 import { TabletWeighingPage } from "@/routes/saisie-tablette";
 import { useWeighingView } from "@/lib/weighing-view";
 import { CycleLabel } from "@/components/CycleLabel";
+import { DRAFT_EDITED_EVENT } from "@/lib/zoom-edit";
 import { getPreferences } from "@/lib/preferences";
 import { weighingReadiness, weighingLockMessage } from "@/lib/weighing-readiness";
 import { rememberWeighingCell, readWeighingCell, hasWeighingHandoff, unlockWeighingAudio, playWeighingSound, playReadyChime } from "@/lib/weighing-feedback";
@@ -1375,6 +1376,19 @@ function Index() {
   }, [weighingMode]);
 
   // Garde anti-écrasement : jamais de brouillon vide par-dessus un brouillon valide.
+  useEffect(() => {
+    const reload = () => {
+      try {
+        const draft = JSON.parse(window.localStorage.getItem(DRAFT_ROWS_KEY) ?? "null") as Row[] | null;
+        const identity = JSON.parse(window.localStorage.getItem(DRAFT_INFO_KEY) ?? "null") as Record<string, string> | null;
+        if (Array.isArray(draft) && draft.length === 88) { rowsRef.current = draft; setRows(draft); }
+        if (identity) setInfo(identity);
+        setRapidMode(window.localStorage.getItem("ptw_rapid_mode") === "1");
+      } catch { /* local storage unavailable */ }
+    };
+    window.addEventListener(DRAFT_EDITED_EVENT, reload);
+    return () => window.removeEventListener(DRAFT_EDITED_EVENT, reload);
+  }, []);
   useEffect(() => {
     if (!draftLoaded.current) return;
     try {
@@ -3371,9 +3385,9 @@ function Index() {
   }, [exportReady, requiredSheetFieldsComplete, keyboardValid, resultsReady, info, isExporting, isDirty, currentDbId, weighingMode, rows]);
   const readyChimeRef = useRef<boolean | null>(null);
   useEffect(() => {
-    if (readyChimeRef.current === false && resultsReady) playReadyChime();
+    if (!octaveView && readyChimeRef.current === false && resultsReady) playReadyChime();
     readyChimeRef.current = resultsReady;
-  }, [resultsReady]);
+  }, [resultsReady, octaveView]);
 
   useEffect(() => {
     // Comparer et Exporter partagent exactement la même décision cloud.

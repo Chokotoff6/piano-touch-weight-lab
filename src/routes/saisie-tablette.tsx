@@ -302,6 +302,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   const [rows, setRows] = useState<Row[]>(() => Array.from({ length: 88 }, () => ({ wd: "", wa: "" })));
   const [info, setInfo] = useState<Record<string, string>>({});
   const [octave, setOctave] = useState(0);
+  const [loaded, setLoaded] = useState(false);
   const [pressedArrow, setPressedArrow] = useState<"prev" | "next" | null>(null);
   const [active, setActive] = useState<{ index: number; field: "wd" | "wa" } | null>(null);
   const dirty = useRef(false);
@@ -382,6 +383,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
       setOctave(Math.max(0, OCTAVES.findIndex(([a, b]) => cell.index + 1 >= a && cell.index + 1 <= b)));
       focusCell(cell);
     }
+    setLoaded(true);
     const reload = () => { if (!dirty.current) setRows(readRows()); setInfo(readInfo()); };
     window.addEventListener(DRAFT_EDITED_EVENT, reload);
     window.addEventListener("storage", reload);
@@ -495,6 +497,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   const toggleRapid = () => {
     setRapidMode((v) => {
       try { window.localStorage.setItem("ptw_rapid_mode", v ? "0" : "1"); } catch { /* indisponible */ }
+      queueMicrotask(() => window.dispatchEvent(new CustomEvent(DRAFT_EDITED_EVENT)));
       return !v;
     });
   };
@@ -532,9 +535,10 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   }, [rows]);
   const soundingOctave = useRef(octave);
   useEffect(() => {
+    if (!loaded) return;
     if (soundingOctave.current !== octave) playWeighingSound("octave");
     soundingOctave.current = octave;
-  }, [octave]);
+  }, [octave, loaded]);
 
   // Flèches clavier ← / → (hors saisie) pour changer d'octave.
   useEffect(() => {
@@ -674,9 +678,10 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   }, [resultsReady, info]);
   const readyChimeRef = useRef<boolean | null>(null);
   useEffect(() => {
+    if (!loaded) return;
     if (readyChimeRef.current === false && resultsReady) playReadyChime();
     readyChimeRef.current = resultsReady;
-  }, [resultsReady]);
+  }, [resultsReady, loaded]);
   const formGuard = (cell: Cell) => {
     if (canEnterWeights) return true;
     showFeedback(cell, en ? "⚠️ First complete Brand, Piano type, Model, Serial number, Manufacturing date and Usage intensity." : "⚠️ Complétez d'abord Marque, Type de piano, Modèle, N° de série, Date fabrication et Intensité d'usage.", "form", false);
