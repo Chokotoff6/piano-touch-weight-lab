@@ -482,7 +482,7 @@ function Resultats() {
         <div className="min-w-0">
           <div ref={averagesRef} className="sticky top-[127px] z-50 mb-[50px] w-full bg-white pb-2 relative">
               <Frame
-                titleClassName="absolute -top-4 left-4 max-w-[calc(100%-2rem)] whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground"
+                titleClassName="absolute -top-4 left-4 max-w-[calc(100%-2rem)] whitespace-nowrap bg-card px-2 text-sm xl:text-lg font-bold text-foreground"
                 title={
                   <span className="flex min-w-0 items-baseline gap-2">
                     <span className="shrink-0">{en ? "Averages" : "Moyennes"}</span>

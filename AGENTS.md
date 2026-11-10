@@ -31,3 +31,8 @@ Les étiquettes de fin des graphiques Recharts sont placées à partir des éche
 - Keypad buttons retain the shared Button component with explicit full-row height utilities, so the default button height cannot constrain the tablet grid.
 - Both weighing routes derive Dashboard access from the pure current-measurement validator in weighing-readiness; never use UI error caches or badge timers, so desktop, tablet and header stay consistent.
 - Weighing feedback uses a browser-only lazy Web Audio context and session-scoped active-cell handoff, so offline audio and view changes require neither network calls nor screen detours.
+
+- Automatic weighing views share the existing desktop session in place, with the desktop PDF engine off-screen and an explicit override reset only at the screen breakpoint — avoids navigation flashes and preserves offline history/export listeners.
+- Weighing focus handoff stores an explicit null on deselection — prevents a cleared selection from being recreated on view changes.
+- Analysis settings use a right-side Sheet and a permanently painted off-screen settings mirror for PDF capture — keeps charts full-width without omitting exported settings.
+- Octave labels use intrinsic text width outside the scaled keyboard, and Do-number size is compensated for the keyboard scale — keeps real visible margins balanced and the two marker lines equally readable.

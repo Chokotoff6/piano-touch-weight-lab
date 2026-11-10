@@ -9,6 +9,7 @@ import { forceCollide, forceSimulation, forceX, forceY, type SimulationNodeDatum
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, type SetStateAction, type RefObject } from "react";
 import { flushSync } from "react-dom";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useLang, getLang } from "@/data/translations";
 import { Info, RefreshCw, Square, SquareX, Waves } from "lucide-react";
 import { BrandTargetInfoIcon } from "@/components/BrandTargetInfo";
@@ -1345,9 +1346,9 @@ export function ComparisonChart({ chartData: rawChartData, keyFilter, comparison
 export const Route = createFileRoute("/comparer")({
   head: () => ({
     meta: [
-      { title: "Comparer — KeyWeight" },
+      { title: "Analyse — KeyWeight" },
       { name: "description", content: "Confrontation des moyennes de touchweight statique entre le piano actuel et les profils externes correspondant aux critères choisis." },
-      { property: "og:title", content: "Comparer — Touchweight piano" },
+      { property: "og:title", content: "Analyse — KeyWeight" },
       { property: "og:description", content: "Comparez les mesures de touchweight statique avec les profils externes correspondants." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -1357,7 +1358,7 @@ export const Route = createFileRoute("/comparer")({
 });
 
 const FRAME_CLASS = "relative rounded-md border-2 border-foreground bg-card p-4 pt-5";
-const FRAME_TITLE_CLASS = "absolute -top-3.5 left-4 bg-card px-2 text-lg font-bold text-black";
+const FRAME_TITLE_CLASS = "absolute -top-3.5 left-4 max-w-[calc(100%-2rem)] bg-card px-2 text-sm xl:text-lg font-bold text-foreground";
 export function Frame({ title, className = "", titleClassName, dataFrame, onClick, onWheelCapture, children }: { title: ReactNode; className?: string; titleClassName?: string; dataFrame?: string | undefined; onClick?: (() => void) | undefined; onWheelCapture?: (() => void) | undefined; children: ReactNode }) {
   return <section data-frame={dataFrame} onClick={onClick} onWheelCapture={onWheelCapture} className={`${FRAME_CLASS} ${className}`}><h2 className={titleClassName ?? FRAME_TITLE_CLASS}>{title}</h2>{children}</section>;
 }
@@ -1387,9 +1388,9 @@ function AverageBlock({ label, global, white, black, tone, alert = false }: { la
   const val = (v: string) => v === "—" ? <span className={toneClass}>—</span> : <>{v}<span className="!text-xs !font-medium"> gr.</span></>;
   const sub = (v: string) => v === "—" ? "—" : <>{v}<span className={toneClass}> gr.</span></>;
   return (
-    <div className="flex h-full flex-col justify-end rounded bg-muted px-2 py-1.5 text-center">
-      <div className="!text-[1.1rem] font-bold tracking-wide !text-black">{label}</div>
-      <div className={`mt-1 !text-2xl !font-bold tabular-nums ${alert ? "!text-red-600" : toneClass}`}>{val(global)}</div>
+    <div className="average-block min-w-0 flex h-full flex-col justify-end rounded bg-muted px-2 py-1.5 text-center">
+      <div className="average-label font-bold text-foreground">{label}</div>
+      <div className={`mt-1 average-value font-bold tabular-nums ${alert ? "!text-red-600" : toneClass}`}>{val(global)}</div>
       <div className={`mt-0.5 flex items-end justify-center gap-2 text-[0.65rem] tabular-nums ${toneClass}`}>
         <span>{sub(white)}</span>
         <span className={toneClass}>/</span>
@@ -1416,7 +1417,7 @@ export function AverageRow({ chartData, source, hasData, csv = false }: { chartD
   const lang = useLang();
   const { corridorG } = usePreferences();
   return (
-    <div className="grid grid-cols-4 gap-3">
+    <div className="average-grid grid grid-cols-4 gap-3">
       {COLUMNS.map(({ key, label, labelEn }) => {
         const [globalKey, whiteKey, blackKey] = AVG_KEYS[key][source];
         // Corridor : moyenne du piano actuel en rouge si elle s'écarte de la Cible standard de plus de ±N g.
@@ -1458,15 +1459,15 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
     return typeof value === "number" ? value.toFixed(1) : "—";
   };
   return (
-    <div className="grid grid-cols-4 gap-3">
+    <div className="average-grid grid grid-cols-4 gap-3">
       {STD_KEYS.map(({ key, globalKey }) => {
         const col = COLUMNS.find((c) => c.key === key)!;
         const label = lang === "en" ? col.labelEn : col.label;
         const value = seriesAverage(chartData, globalKey);
         return (
-          <div key={key} className="flex h-full flex-col justify-end rounded bg-muted px-2 py-1.5 text-center">
-            <div className="!text-[1.1rem] font-bold tracking-wide !text-black">{label}</div>
-            <div className="mt-1 !text-2xl !font-bold tabular-nums !text-green-600">
+          <div key={key} className="average-block min-w-0 flex h-full flex-col justify-end rounded bg-muted px-2 py-1.5 text-center">
+            <div className="average-label font-bold text-foreground">{label}</div>
+            <div className="mt-1 average-value font-bold tabular-nums !text-green-600">
               {value === "—" ? <span className="!text-green-600">—</span> : <>{value}<span className="!text-xs !font-medium"> gr.</span></>}
             </div>
             {/* Rangée 3 : valeurs extrêmes de la droite théorique (touche 1 / touche 88). */}
@@ -1502,7 +1503,7 @@ function FastTip({ text, children }: { text: string; children: ReactNode }) {
   return (
     <div
       className="relative w-full"
-      onMouseEnter={() => { const d = seen.current ? 250 : 125; timer.current = setTimeout(() => { seen.current = true; setOpen(true); }, d); }}
+      onMouseEnter={() => { const d = 50; timer.current = setTimeout(() => { seen.current = true; setOpen(true); }, d); }}
       onMouseLeave={() => { if (timer.current) clearTimeout(timer.current); setOpen(false); }}
     >
       {children}
@@ -1733,6 +1734,7 @@ function Comparer() {
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
   const averagesRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   // Miroir hors écran de la page Saisie : pages 1 à 3 du rapport unique.
   const mirrorAveragesRef = useRef<HTMLElement | null>(null);
   const mirrorSheetRef = useRef<HTMLElement | null>(null);
@@ -2241,11 +2243,11 @@ function Comparer() {
       </div>
       {status === "loading" ? <p className="py-16 text-center text-muted-foreground">Chargement des profils externes…</p> : (
         <>
-          <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(250px,300px)] items-stretch gap-6">
+          <div className="w-full">
             <div className="min-w-0">
               
-              <div ref={averagesRef} data-pdf-expand data-pdf-lock-w="980" className="sticky top-[127px] z-50 mb-[50px] w-full bg-white pb-2 relative">
-                <Frame titleClassName="absolute -top-3.5 left-4 max-w-[calc(100%-2rem)] whitespace-nowrap bg-card px-2 text-lg font-bold text-foreground" title={<span className="flex min-w-0 items-baseline gap-2"><span className="shrink-0">{en ? "Averages" : "Moyennes"}</span><span className="shrink-0 text-slate-400">-</span><span className="summary-text block min-w-0 flex-1 truncate" title={typeof summary === "string" ? summary : undefined}>{summary}</span></span>} className="h-fit">
+              <div ref={averagesRef} data-pdf-expand data-pdf-lock-w="980" className="sticky top-[127px] z-50 mb-[50px] w-full bg-card pb-2 relative">
+                <Frame titleClassName="absolute -top-3.5 left-4 max-w-[calc(100%-2rem)] whitespace-nowrap bg-card px-2 text-sm xl:text-lg font-bold text-foreground" title={<span className="flex min-w-0 items-baseline gap-2"><span className="shrink-0">{en ? "Averages" : "Moyennes"}</span><span className="shrink-0 text-slate-400">-</span><span className="summary-text block min-w-0 flex-1 truncate" title={typeof summary === "string" ? summary : undefined}>{summary}</span></span>} className="h-fit">
                   {/* Séparateurs affichés uniquement si au moins deux sources sont présentes. */}
                   <div className={(comparedPiano !== null || sourceMode === "cloud" || standardEnabled) ? "mb-3 border-b border-gray-400 pb-3" : ""}><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">{en ? "Current piano" : "Piano actuel"}</div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
                   {(comparedPiano !== null || sourceMode === "cloud") && (
@@ -2262,16 +2264,26 @@ function Comparer() {
                     </div>
                   )}
                 </Frame>
+                <div data-pdf-hide className="mt-2 flex justify-end">
+                  <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+                    <SheetTrigger asChild><Button variant="outline" className="gap-2 font-bold text-foreground"><SquareX size={16} />{en ? "Settings / Comparison" : "Réglages / Comparaison"}</Button></SheetTrigger>
+                    <SheetContent side="right" aria-describedby={undefined} className="z-[100001] w-[min(26rem,90vw)] overflow-y-auto pt-12 sm:max-w-[26rem] motion-reduce:animate-none">
+                      <SheetHeader className="mb-6"><SheetTitle>{en ? "Comparison" : "Comparaison"}</SheetTitle></SheetHeader>
+                      <SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onOpenHistory={openHistory} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} modelScope={modelScope} setModelScope={setModelScope} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} />
+                    </SheetContent>
+                  </Sheet>
+                </div>
               </div>
 
               <div ref={liveChartsRef}>
                 <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? historyLabel : "Cloud"} comparisonShort={comparedPiano ? historyLabel : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible standard"} onCycleKeyFilter={cycleKeyFilter} currentBaseName={en ? "Current piano" : "Piano actuel"} showSourceControls={mine !== null && sourceMode === "cloud" && comparedPiano === null && standardEnabled && cloudProfile !== null} />
               </div>
             </div>
-            <aside className="min-w-0"><div ref={settingsRef} data-pdf-expand className="sticky top-[127px] z-50 flex flex-col overflow-visible" ><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onOpenHistory={openHistory} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} modelScope={modelScope} setModelScope={setModelScope} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></aside>
+
           </div>
         </>
       )}
+      <div aria-hidden="true" className="absolute -left-[9999px] top-0 w-[300px] pointer-events-none"><div ref={settingsRef} data-pdf-expand><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onOpenHistory={openHistory} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} modelScope={modelScope} setModelScope={setModelScope} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></div>
       <input ref={historyInputRef} type="file" accept=".kw,application/json" className="sr-only" onChange={(e) => { const file = e.target.files?.[0]; if (file) void handleImport(file); e.target.value = ""; }} />
       <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
         <DialogContent className="max-w-md">
