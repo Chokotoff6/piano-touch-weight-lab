@@ -381,7 +381,7 @@ function RootComponent() {
         <div className="mx-auto w-full max-w-7xl pb-1 pt-[2px] px-4 xl:px-[100px]">
           <div className="flex flex-wrap items-center gap-2">
             {/* Logo officiel KeyWeight : calé à gauche, retour à l'accueil. */}
-            <div className="relative z-10 flex shrink-0 flex-col items-center xl:translate-y-[26px]">
+            <div className="relative z-10 flex shrink-0 flex-col items-center ">
               <Link
                 to="/"
                 aria-label={lang === "en" ? "Home" : "Accueil"}
@@ -405,7 +405,7 @@ function RootComponent() {
               </Link>
             </div>
             {!isHome && (
-            <div className="flex xl:translate-x-[50px] xl:translate-y-[9px] flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
+            <div className="flex  flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
               {topbar.cloudSaving ? (
                 <span className="group/save relative inline-block">
                   <span aria-disabled="true" className={lockedLinkClass}>
@@ -484,12 +484,12 @@ function RootComponent() {
             </div>
             )}
 
-            {!isHome && <div className="mx-10 h-6 w-[2px] bg-gray-400" aria-hidden="true" />}
+            {!isHome && <div className="mx-2 xl:mx-6 h-6 w-[2px] bg-gray-400" aria-hidden="true" />}
 
             {/* Conteneur parent 100 % CSS : le survol du groupe ouvre/ferme le menu.
                 Aucun état JS, aucun timer, aucun gestionnaire onMouseEnter/onMouseLeave. */}
             {!isHome && (
-            <div className="group relative flex xl:translate-y-[15px] items-center">
+            <div className="group relative flex  items-center">
               <button
                 type="button"
                 onClick={(e) => e.preventDefault()}
@@ -497,7 +497,7 @@ function RootComponent() {
                   menuEnabled ? "!text-black hover:bg-gray-50" : "!text-gray-400 cursor-default"
                 }`}
               >
-                <span className="pointer-events-none">{lang === "en" ? "File" : "Fichier"}</span>
+                <span className="pointer-events-none">{lang === "en" ? "Files" : "Fichiers"}</span>
                 <ChevronDown className="pointer-events-none ml-1 h-4 w-4" />
               </button>
 
@@ -521,11 +521,11 @@ function RootComponent() {
                 </div>
               )}
 
-              <div className={`absolute right-0 top-full -mt-[2px] z-[99999] min-w-[300px] max-w-[520px] rounded-md border border-gray-200 bg-white py-1 shadow-lg opacity-0 pointer-events-none transition-opacity duration-100 ${menuEnabled ? "group-hover:opacity-100 group-hover:pointer-events-auto" : ""}`}>
+              <div className={`absolute right-0 top-full -mt-[2px] z-[99999] w-max min-w-[300px] max-w-[calc(100vw-2rem)] [&>button]:whitespace-nowrap [&>div>button]:whitespace-nowrap rounded-md border border-gray-200 bg-white py-1 shadow-lg opacity-0 pointer-events-none transition-opacity duration-100 ${menuEnabled ? "group-hover:opacity-100 group-hover:pointer-events-auto" : ""}`}>
                 {/* 1. Enregistrer : fichier local souverain .kw, sur les 3 pages. */}
                 <button
                   type="button"
-                  className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
+                  className="block w-full px-3 py-1.5 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
                   onClick={() => {
                     // Pesée gère ses points d'historique ; ailleurs, enregistrement direct du brouillon (clic natif conservé).
                     if (isSaisie) {
@@ -543,7 +543,7 @@ function RootComponent() {
                 {isComparer ? (
                   <button
                     type="button"
-                    className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
+                    className="block w-full px-3 py-1.5 text-left text-sm text-gray-900 hover:bg-gray-100"
                     onClick={() => setPdfDialogOpen(true)}
                   >
                     <span className="pointer-events-none">{lang === "en" ? "Export analysis (PDF)" : "Exporter l'analyse (PDF)"}</span>
@@ -552,7 +552,7 @@ function RootComponent() {
                   <button
                     type="button"
                     disabled={!filesEnabled}
-                    className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
+                    className="block w-full px-3 py-1.5 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
                     onClick={() => exportPdf()}
                   >
                     <span className="pointer-events-none">{lang === "en" ? "Export dashboard (PDF)" : "Exporter le bilan (PDF)"}</span>
@@ -560,7 +560,7 @@ function RootComponent() {
                 ) : (
                   <button
                     type="button"
-                    className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
+                    className="block w-full px-3 py-1.5 text-left text-sm text-gray-900 hover:bg-gray-100"
                     onClick={() => {
                       // Formulaire vierge fourni ultérieurement : public/formulaire-vierge.pdf (silencieux tant qu'absent).
                       void fetch("/formulaire-vierge.pdf", { method: "HEAD" }).then((r) => {
@@ -576,7 +576,7 @@ function RootComponent() {
                 <div className="relative">
                 <button
                   type="button"
-                  className="block w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
+                  className="block w-full px-3 py-1.5 text-left text-sm text-gray-900 hover:bg-gray-100"
                   onMouseEnter={() => {
                     void import("@/lib/kw-file").then(({ readSessionKwDocument }) => {
                       if (!readSessionKwDocument()) setHistoryHint(true);
@@ -608,7 +608,7 @@ function RootComponent() {
                   <div className="relative">
                   <button
                     type="button"
-                    className="block w-full border-t border-gray-500 px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-100"
+                    className="block w-full border-t border-gray-500 px-3 py-1.5 text-left text-sm text-gray-900 hover:bg-gray-100"
                     onMouseEnter={() => {
                       void import("@/lib/kw-file").then(({ readDraftProfile }) => {
                         const { info, rows } = readDraftProfile();

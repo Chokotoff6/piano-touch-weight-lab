@@ -1,6 +1,10 @@
+import { TabletWeighingPage } from "@/routes/saisie-tablette";
+import { useWeighingView } from "@/lib/weighing-view";
+import { CycleLabel } from "@/components/CycleLabel";
+import { DRAFT_EDITED_EVENT } from "@/lib/zoom-edit";
 import { getPreferences } from "@/lib/preferences";
 import { weighingReadiness, weighingLockMessage } from "@/lib/weighing-readiness";
-import { rememberWeighingCell, readWeighingCell, unlockWeighingAudio, playWeighingSound, playReadyChime } from "@/lib/weighing-feedback";
+import { rememberWeighingCell, readWeighingCell, hasWeighingHandoff, unlockWeighingAudio, playWeighingSound, playReadyChime } from "@/lib/weighing-feedback";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Redo2, RefreshCw, Undo2 } from "lucide-react";
@@ -496,9 +500,9 @@ export const Route = createFileRoute("/saisie")({
       {
         name: "description",
         content:
-          "Saisie des poids ascendant (Wd) et descendant (Wa) des 88 touches, avec calcul automatique de la friction et de la balance.",
+          "Saisie des poids descendant (PD) et remontant (PR) des 88 touches, avec calcul automatique de la friction et de la balance.",
       },
-      { property: "og:title", content: "Saisie des mesures — Touchweight piano" },
+      { property: "og:title", content: "Pesée — KeyWeight" },
       {
         property: "og:description",
         content: "Consignez Wd et Wa sur 88 touches et obtenez friction et balance instantanément.",
@@ -543,6 +547,8 @@ function Index() {
     }
   }
   const [weighingMode, setWeighingMode] = useState(false);
+  const { octaveView, chooseOctave } = useWeighingView();
+  const selectionCleared = useRef(false);
   /** Filtrage visuel cyclique des touches affichées à l'écran. */
   const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
   // Filtre « Poids » : Descendants (wd seul), Remontants (wa seul) ou Tous.
@@ -1371,6 +1377,19 @@ function Index() {
 
   // Garde anti-écrasement : jamais de brouillon vide par-dessus un brouillon valide.
   useEffect(() => {
+    const reload = () => {
+      try {
+        const draft = JSON.parse(window.localStorage.getItem(DRAFT_ROWS_KEY) ?? "null") as Row[] | null;
+        const identity = JSON.parse(window.localStorage.getItem(DRAFT_INFO_KEY) ?? "null") as Record<string, string> | null;
+        if (Array.isArray(draft) && draft.length === 88) { rowsRef.current = draft; setRows(draft); }
+        if (identity) setInfo(identity);
+        setRapidMode(window.localStorage.getItem("ptw_rapid_mode") === "1");
+      } catch { /* local storage unavailable */ }
+    };
+    window.addEventListener(DRAFT_EDITED_EVENT, reload);
+    return () => window.removeEventListener(DRAFT_EDITED_EVENT, reload);
+  }, []);
+  useEffect(() => {
     if (!draftLoaded.current) return;
     try {
       if (!rows.some((r) => r.wd || r.wa)) {
@@ -1581,6 +1600,7 @@ function Index() {
   const focusFirstWeight = useCallback(() => {
     setTimeout(() => {
       const current = rowsRef.current;
+      if (selectionCleared.current || (octaveView && weighingModeRef.current) || hasWeighingHandoff()) return;
       if (hasAnyMeasurement(current)) return; // profil chargé ou en cours : on ne touche à rien
        const first = rapidMode ? RAPID_INDEXES[0] : 0;
        if ((current[first]?.wd ?? "").trim() !== "") return;
@@ -1588,7 +1608,7 @@ function Index() {
        inputs.current[`${first}-wd`]?.select();
     }, 100);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, [rapidMode]);
+   }, [rapidMode, octaveView]);
 
   /**
    * Au chargement de la page en mode pesée, le curseur se place sur le PD du La 0,
@@ -2506,10 +2526,10 @@ function Index() {
     return () => window.removeEventListener("keydown", shortcut, true);
   }, [weighingMode, rows, undoStack, redoStack]);
   useEffect(() => {
-    if (!weighingMode) return;
+    if (!weighingMode || octaveView) return;
     const cell = readWeighingCell();
     if (cell) inputs.current[`${cell.index}-${cell.field}`]?.focus({ preventScroll: true });
-  }, [weighingMode]);
+  }, [weighingMode, octaveView]);
 
   /** Alerte sustain : PD uniquement, strictement 70-90 g, ancrée sous la case, 5 s. */
   const isPedalValue = (field: "wd" | "wa", num: number | null) =>
@@ -3365,9 +3385,9 @@ function Index() {
   }, [exportReady, requiredSheetFieldsComplete, keyboardValid, resultsReady, info, isExporting, isDirty, currentDbId, weighingMode, rows]);
   const readyChimeRef = useRef<boolean | null>(null);
   useEffect(() => {
-    if (readyChimeRef.current === false && resultsReady) playReadyChime();
+    if (!octaveView && readyChimeRef.current === false && resultsReady) playReadyChime();
     readyChimeRef.current = resultsReady;
-  }, [resultsReady]);
+  }, [resultsReady, octaveView]);
 
   useEffect(() => {
     // Comparer et Exporter partagent exactement la même décision cloud.
@@ -3666,6 +3686,26 @@ function Index() {
     return () => window.removeEventListener("piano-nav-guard", fn);
   }, []);
 
+  const clearWeighingSelection = () => {
+    selectionCleared.current = true;
+    lockedPairRef.current = null;
+    rememberWeighingCell(null);
+    if (document.activeElement instanceof HTMLInputElement && document.activeElement.classList.contains("weight-input")) document.activeElement.blur();
+    hideRangeMessage(true); setCoherenceIndex(null); setCoherenceAnchor(null);
+  };
+  useEffect(() => {
+    if (!weighingMode || octaveView) return;
+    const escape = (e: KeyboardEvent) => { if (e.key === "Escape") { e.preventDefault(); clearWeighingSelection(); } };
+    const outside = (e: PointerEvent) => {
+      const target = e.target instanceof Element ? e.target : null;
+      if (target?.closest(".weight-input, .weighing-view-toggle, [role=dialog], [role=alertdialog]")) return;
+      clearWeighingSelection();
+    };
+    document.addEventListener("keydown", escape, true);
+    document.addEventListener("pointerdown", outside, true);
+    return () => { document.removeEventListener("keydown", escape, true); document.removeEventListener("pointerdown", outside, true); };
+  });
+
   // --- Rendu : champ de saisie d'un poids (Wd ou Wa) ------------------------------
 
   const renderWeightInput = (
@@ -3725,6 +3765,7 @@ function Index() {
         placeholder=""
         onChange={pdfMirror ? undefined : (e) => canEnterWeights && setValue(index, field, e.target.value)}
         onBlur={(e) => {
+          if (selectionCleared.current) return;
           if (!canEnterWeights) return;
           const key = `${index}-${field}`;
           const restored = e.target.value === "" ? (prevWeight.current[key] ?? "") : e.target.value;
@@ -3766,6 +3807,8 @@ function Index() {
         aria-label={`${field === "wd" ? (en ? "DW" : "PD") : en ? "UW" : "PR"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
         onFocus={(e) => {
+          if (octaveView && weighingMode) { e.currentTarget.blur(); return; }
+          selectionCleared.current = false;
           rememberWeighingCell({ index, field });
           unlockWeighingAudio();
           // Verrou du binôme : impossible de rejoindre une autre touche tant
@@ -3973,7 +4016,7 @@ function Index() {
       onUpdateCurrent={() => { void performKwSave(null).finally(() => finishKwAsk(true)); setKwPointAsk(null); }}
       onCreate={(name) => { void performKwSave(name).finally(() => finishKwAsk(true)); setKwPointAsk(null); }}
     />
-    <main className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"}`}>
+    <main aria-hidden={weighingMode && octaveView ? true : undefined} className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"} ${weighingMode && octaveView ? "absolute -left-[9999px] top-0 w-[1250px] pointer-events-none" : ""}`}>
       <input
         ref={importInputRef}
         type="file"
@@ -4466,7 +4509,7 @@ function Index() {
       {/* Bouton de navigation officiel : placé sous le cadre « Mesures poids
           statiques » (et non plus à l'intérieur), donc jamais capturé au PDF. */}
       {weighingMode && (
-        <div className="mt-3 flex w-full items-center justify-between pl-2 pr-2">
+        <div className="mt-3 flex w-full flex-wrap items-center justify-between gap-2 pl-2 pr-2">
           {/* Retour à la fiche piano : bordure grise standard. */}
           <button
             type="button"
@@ -4496,11 +4539,10 @@ function Index() {
               type="button"
               variant="outline"
               data-pdf-hide
-              onClick={() => void navigate({ to: "/saisie-tablette" })}
-              className="h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground"
+              onClick={() => chooseOctave(true)}
+              className="weighing-view-toggle h-auto min-h-8 gap-1 px-3 py-1.5 text-xs font-bold text-foreground"
             >
-              <RefreshCw size={14} strokeWidth={2.5} aria-hidden="true" />
-              {en ? "View: Octave" : "Vue : Octave"}
+              <CycleLabel title={en ? "View" : "Vue"} value="Octave" />
             </Button>
 
             <TooltipProvider delayDuration={50}>
@@ -4524,13 +4566,12 @@ function Index() {
                     }}
                     className="h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground"
                   >
-                    <RefreshCw size={14} strokeWidth={2.5} aria-hidden="true" />
-                    {en ? `Weighing: ${rapidMode ? "C-C#" : "Custom"}` : `Pesée : ${rapidMode ? "Do-Do#" : "Libre"}`}
+                    <CycleLabel title={en ? "Weighing" : "Pesée"} value={rapidMode ? (en ? "C-C#" : "Do-Do#") : (en ? "Free" : "Libre")} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" align="center" className="z-[120] w-[min(29rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] border border-border bg-card p-3 text-left text-foreground shadow-lg">
-                  <p>{en ? "Custom: weigh at least 2 notes per octave (octaves 1 to 7) to generate a Dashboard." : "Libre : pesez au moins 2 notes par octave (octaves 1 à 7) pour pouvoir générer un Bilan."}</p>
-                  <p className="mt-2">{en ? "C-C#: weigh only every C and C# to generate a Dashboard." : "Do-Do# : pesez uniquement tous les Do et Do# pour générer un Bilan."}</p>
+                  <p>{en ? "Free: weigh at least 2 notes per octave to access the Dashboard." : "Libre : peser au moins 2 notes par octave pour accéder au Bilan."}</p>
+                  <p className="mt-2">{en ? "C-C#: weigh every C and C# to access the Dashboard." : "Do-Do# : peser chaque Do et Do# pour accéder au Bilan."}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -4546,20 +4587,7 @@ function Index() {
               }
               className="h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground"
             >
-              <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
-              <span>
-                {en
-                  ? viewFilter === "all"
-                    ? "Keys: All"
-                    : viewFilter === "white"
-                      ? "Keys: Whites"
-                      : "Keys: Blacks"
-                  : viewFilter === "all"
-                    ? "Touches : Toutes"
-                    : viewFilter === "white"
-                      ? "Touches : Blanches"
-                      : "Touches : Noires"}
-              </span>
+              <CycleLabel title={en ? "Keys" : "Touches"} value={viewFilter === "all" ? (en ? "All" : "Toutes") : viewFilter === "white" ? (en ? "Whites" : "Blanches") : (en ? "Blacks" : "Noires")} />
             </Button>
 
             <Button
@@ -4571,12 +4599,7 @@ function Index() {
               }
               className="h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground"
             >
-              <RefreshCw size={14} strokeWidth={2.5} className="shrink-0" />
-              <span>
-                {en
-                  ? weightFilter === "all" ? "DW/UW: All" : weightFilter === "wd" ? "DW/UW: Down" : "DW/UW: Up"
-                  : weightFilter === "all" ? "PD/PR : Tous" : weightFilter === "wd" ? "PD/PR : Descendants" : "PD/PR : Remontants"}
-              </span>
+              <CycleLabel title={en ? "DW/UW" : "PD/PR"} value={weightFilter === "all" ? (en ? "All" : "Tous") : weightFilter === "wd" ? (en ? "Down" : "Descendants") : (en ? "Up" : "Remontants")} />
             </Button>
 
             <div className="relative flex items-center">
@@ -4828,6 +4851,7 @@ Moyennes{" "}
         </div>
       )}
     </main>
+    {weighingMode && octaveView && <TabletWeighingPage onFullView={() => chooseOctave(false)} onPianoInfo={() => setWeighingMode(false)} />}
     </>
   );
 }

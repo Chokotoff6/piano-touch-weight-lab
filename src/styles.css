@@ -489,7 +489,7 @@ button, a[data-slot="button"], .app-command {
   }
   .tablet-mini-progress { background: var(--mini-progress-empty); }
   .tablet-mini-progress[data-filled="true"] { background: var(--mini-progress-filled); }
-  .tablet-mini-map .key-number { visibility: hidden; }
+  .tablet-mini-map .key-number { display: none; }
   .tablet-keypad-button:disabled { opacity: 1; }
   .tablet-commands {
     gap: clamp(4px, 0.65cqw, 12px);
@@ -733,4 +733,23 @@ body {
 /* Pesée Tablette : badge d'octave légèrement écarté du dessin du clavier. */
 .tablet-keyboard .label-key {
   right: 1.4rem;
+}
+
+/* Intrinsic label width keeps the visible octave group centered, not its old empty box. */
+.octave-label-content { font-size: 0.75rem; white-space: nowrap; }
+.octave-labels { min-width: max-content; }
+.average-label { font-size: 1.1rem; line-height: 1.2; overflow-wrap: anywhere; }
+.average-value { font-size: 1.5rem; line-height: 1.25; }
+.average-block > div { min-width: 0; flex-wrap: wrap; }
+@media (max-width: 1199px) {
+  .summary-text { font-size: 0.75rem; }
+  .average-label { font-size: 0.875rem; }
+  .average-value { font-size: 1.25rem; }
+  .average-grid { gap: 0.5rem; }
+  .octave-label-content { font-size: 0.6875rem; }
+}
+@media (max-width: 899px) {
+  .average-label { font-size: 0.8125rem; }
+  .average-block { padding-inline: 0.25rem; }
+  .average-block > div { column-gap: 0.25rem; }
 }
