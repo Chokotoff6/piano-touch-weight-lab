@@ -34,5 +34,5 @@ Les étiquettes de fin des graphiques Recharts sont placées à partir des éche
 
 - Automatic weighing views share the existing desktop session in place, with the desktop PDF engine off-screen and an explicit override reset only at the screen breakpoint — avoids navigation flashes and preserves offline history/export listeners.
 - Weighing focus handoff stores an explicit null on deselection — prevents a cleared selection from being recreated on view changes.
-- Analysis settings use a right-side Sheet and a permanently painted off-screen settings mirror for PDF capture — keeps charts full-width without omitting exported settings.
+- Analysis comparison buttons stay inline under Averages while Cloud filters open in a draggable non-modal FloatingPanel, with a permanently painted off-screen full settings mirror for PDF capture — keeps charts visible and exported settings complete.
 - Octave labels use intrinsic text width outside the scaled keyboard, and Do-number size is compensated for the keyboard scale — keeps real visible margins balanced and the two marker lines equally readable.

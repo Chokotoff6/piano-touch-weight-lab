@@ -76,3 +76,12 @@
 - [x] Bouton de mode de rendu imprimé sur les PDF.
 - [ ] Export Analyse 4 pages / option grand angle 6 pages.
 - [ ] Sync Cloud conditionnelle (.kw/PDF) + file hors ligne ptw_pending_cloud_sync.
+
+## Lot 11 novembre 2026
+- [x] Accueil (titre mauve, cartes PESÉE/BILAN/ANALYSE)
+- [x] Logos mauve Web + PDF
+- [x] Vue Octave : clavier -10 % hauteur, cartouche descendu
+- [x] Icônes cycle grises
+- [x] Option Bilan alertes hors tolérance (OFF)
+- [x] Analyse : 3 boutons permanents + fenêtre volante Filtres Cloud
+- [x] Garde-fou smartphone < 640 px
