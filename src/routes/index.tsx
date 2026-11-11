@@ -5,13 +5,13 @@ import logoKwText from "@/assets/logo-kw-text.svg.asset.json";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "KeyWeight — Diagnostic du poids de touche du piano" },
+      { title: "KeyWeight — Outil de mesure et de diagnostique du toucher de piano" },
       {
         name: "description",
         content:
-          "Application collaborative pour pianistes et techniciens : saisie des poids statiques des 88 touches, friction, balance et comparaison graphique.",
+          "Pesée assistée, bilan mécanique, rapports et analyses comparatives du toucher de piano, sur tablette ou ordinateur.",
       },
-      { property: "og:title", content: "KeyWeight — Diagnostic du poids de touche" },
+      { property: "og:title", content: "KeyWeight — Mesure et diagnostique du toucher de piano" },
       {
         property: "og:description",
         content:
@@ -40,47 +40,29 @@ function Accueil() {
             decoding="async"
           />
           <h1 className="text-2xl font-semibold leading-snug !text-[#4c1d95]">
-            {en ? "Precision diagnosis for keyboard touch" : "Diagnostic de précision pour le toucher de clavier"}
+            {en ? "Piano touch measurement and diagnostic tool" : "Outil de mesure et de diagnostique du toucher de piano"}
           </h1>
-          <p className="text-base !text-black">
-            {en
-              ? "Collaborative and independent application for pianists and instrument makers"
-              : "Application collaborative et indépendante pour pianistes et artisans facteurs d'instrument"}
-          </p>
         </header>
 
-        <section className="space-y-2">
-          <h2 className="text-base font-semibold">
-            {en ? "Is your keyboard too heavy or tiring?" : "Votre clavier est-il trop dur ou fatiguant ?"}
-          </h2>
-          <p>
-            {en
-              ? "Heavy touch, muscle fatigue, lack of repetition speed...? KeyWeight automatically generates a detailed dashboard of your instrument's weighing weights and friction, enabling the craftsman to quickly identify a potential regulation problem."
-              : "Toucher lourd, fatigue musculaire, manque de vitesse de répétition... ? KeyWeight génère automatiquement un tableau de bord détaillé des poids de pesée et de la friction de votre instrument, permettant à l'artisan d'identifier rapidement un éventuel problème de régulation."}
-          </p>
-        </section>
-
         <section className="space-y-4">
-          <h2 className="text-2xl font-bold uppercase tracking-wide !text-[#4c1d95]">
-            {en ? "3 modules" : "3 modules"}
-          </h2>
           <div className="grid gap-4 sm:grid-cols-3">
             {(en
               ? [
-                  ["DATA ENTRY", "INTERACTIVE INTERFACE", "Fast measurement encoding via the online graphic keyboard, or from a PDF form."],
-                  ["RESULTS", "INTERACTIVE DASHBOARD", "Immediate visualization of the action: dynamic figures & graphs. Instant generation of a complete workshop report (PDF)."],
-                  ["COMPARE", "COMPARATIVE ANALYSIS", "“Before/after” regulation graphs, comparison with standard factory targets and with community data (Cloud)."],
+                  ["WEIGHING", ["Assisted weighing, action dashboard, reports and comparative analysis.", "Touch keypad, automatic advance, consistency checks; express C / C# mode.", "Farewell Excel spreadsheets and loose sheets!"]],
+                  ["DASHBOARD", ["Immediate Stanwood mapping (Friction and Balance Weight).", "Spot regulation leads at a glance.", "Summaries by register (bass, mid, treble).", "Clear PDF reports for quotes and certification."]],
+                  ["ANALYSIS", ["Before/after regulation curve comparison (History points, Standard factory targets, Cloud data).", "Fine diagnosis (adjustable corridor, out-of-tolerance keys, note-by-note Zoom with direct editing).", "Instrument memory (local .kw, 100% offline)."]],
                 ]
               : [
-                  ["SAISIE", "INTERFACE INTERACTIVE", "Encodage rapide des mesures via clavier graphique en ligne, ou depuis formulaire PDF."],
-                  ["RESULTATS", "TABLEAU DE BORD INTERACTIF", "Visualisation immédiate de la mécanique : chiffres & graphiques dynamiques. Génération instantanée d’un Rapport d'atelier complet (PDF)."],
-                  ["COMPARER", "ANALYSE COMPARATIVE", "Graphiques « avant/après » régulation, confrontation aux cibles d’usine standards et comparaison avec les données de la communauté (Cloud)."],
+                  ["PESÉE", ["Pesée assistée, bilan mécanique, rapports et analyses comparatives.", "Pavé tactile, avance automatique, contrôles de cohérence ; mode rapide Do / Do#.", "Adieu tableurs Excel et feuilles volantes !"]],
+                  ["BILAN", ["Cartographie immédiate Stanwood (Friction et Poids d'équilibre).", "Déterminer en un clin d'œil les pistes de régulation.", "Synthèses par registre (basses, médiums, aigus).", "Rapports PDF clairs pour devis et certification."]],
+                  ["ANALYSE", ["Comparaison des courbes avant/après régulation (Points d'historique, Cibles standards d'usine, données Cloud).", "Diagnostic fin (corridor ajustable, touches hors tolérance, mode Zoom note à note avec retouche directe).", "Mémoire de l'instrument (.kw local 100 % hors ligne)."]],
                 ]
-            ).map(([title, sub, text]) => (
-              <div key={title} className="space-y-1 rounded-lg border border-gray-300 bg-white/80 p-4">
-                <h3 className="text-base font-bold !text-[#4c1d95]">{title}</h3>
-                <p className="text-xs font-semibold uppercase tracking-wide !text-black">{sub}</p>
-                <p className="!text-black">{text}</p>
+            ).map(([title, items]) => (
+              <div key={title as string} className="space-y-2 rounded-lg border border-gray-300 bg-white/80 p-4">
+                <h3 className="text-base font-bold !text-[#4c1d95]">{title as string}</h3>
+                <ul className="list-disc space-y-1 pl-5 !text-black">
+                  {(items as string[]).map((t) => <li key={t}>{t}</li>)}
+                </ul>
               </div>
             ))}
           </div>
