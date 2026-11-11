@@ -665,7 +665,7 @@ export async function loadBrandLogo(): Promise<LogoImage | null> {
   if (!logoPromise) {
     logoPromise = (async () => {
       try {
-        const asset = await import("@/assets/keyweight-logo.png.asset.json");
+        const asset = await import("@/assets/keyweight-logo-mauve.png.asset.json");
         const url = (asset as { url?: string; default?: { url: string } }).url ?? asset.default?.url;
         if (!url) return null;
         const blob = await fetch(url).then((r) => r.blob());
