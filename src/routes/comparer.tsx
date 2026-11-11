@@ -9,9 +9,9 @@ import { forceCollide, forceSimulation, forceX, forceY, type SimulationNodeDatum
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, type SetStateAction, type RefObject } from "react";
 import { flushSync } from "react-dom";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { FloatingPanel } from "@/components/FloatingPanel";
 import { useLang, getLang } from "@/data/translations";
-import { Info, RefreshCw, Settings, Square, SquareX, Waves, X } from "lucide-react";
+import { Info, RefreshCw, Settings, Square, SquareX, Waves } from "lucide-react";
 import { BrandTargetInfoIcon } from "@/components/BrandTargetInfo";
 import { paddedDomain } from "@/components/PdfReportBlocks";
 import { PianoSheetMirror } from "@/components/PianoSheetMirror";
@@ -2278,14 +2278,11 @@ function Comparer() {
                     </div>
                   )}
                 </Frame>
-                <div data-pdf-hide className="mt-2 flex justify-end">
-                  <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
-                    <SheetTrigger asChild><Button variant="outline" className="gap-2 font-bold text-foreground"><SquareX size={16} />{en ? "Settings / Comparison" : "Réglages / Comparaison"}</Button></SheetTrigger>
-                    <SheetContent side="right" aria-describedby={undefined} className="z-[100001] w-[min(26rem,90vw)] overflow-y-auto pt-12 sm:max-w-[26rem] motion-reduce:animate-none">
-                      <SheetHeader className="mb-6"><SheetTitle>{en ? "Comparison" : "Comparaison"}</SheetTitle></SheetHeader>
-                      <SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onOpenHistory={openHistory} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} modelScope={modelScope} setModelScope={setModelScope} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} />
-                    </SheetContent>
-                  </Sheet>
+                <div data-pdf-hide className="mt-2 flex">
+                  <div data-floating-keep className="w-full"><SidebarPanel variant="bar" onOpenFilters={() => setSettingsOpen((v) => !v)} cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); setSettingsOpen(true); setSourceMode("cloud"); } else { setSourceMode((value) => { const next = value === "cloud" ? "none" : "cloud"; setSettingsOpen(next === "cloud"); return next; }); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onOpenHistory={openHistory} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} modelScope={modelScope} setModelScope={setModelScope} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div>
+                  <FloatingPanel open={settingsOpen && sourceMode === "cloud" && !comparedPiano} onClose={() => setSettingsOpen(false)} title={en ? "CLOUD filters" : "Filtres CLOUD"}>
+                    <SidebarPanel variant="filters" cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); setSettingsOpen(true); setSourceMode("cloud"); } else { setSourceMode((value) => { const next = value === "cloud" ? "none" : "cloud"; setSettingsOpen(next === "cloud"); return next; }); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onOpenHistory={openHistory} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} modelScope={modelScope} setModelScope={setModelScope} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} />
+                  </FloatingPanel>
                 </div>
               </div>
 
