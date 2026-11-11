@@ -11,7 +11,7 @@ import { flushSync } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useLang, getLang } from "@/data/translations";
-import { Info, RefreshCw, Square, SquareX, Waves } from "lucide-react";
+import { Info, RefreshCw, Settings, Square, SquareX, Waves, X } from "lucide-react";
 import { BrandTargetInfoIcon } from "@/components/BrandTargetInfo";
 import { paddedDomain } from "@/components/PdfReportBlocks";
 import { PianoSheetMirror } from "@/components/PianoSheetMirror";
@@ -1565,7 +1565,9 @@ type SidebarPanelProps = {
   setImportantChanges: (value: ChangesFilter) => void;
   setYoungOnly: (value: boolean) => void;
   cycleUsage: () => void;
-
+  /** full = panneau complet (miroir PDF) ; bar = 3 boutons en ligne ; filters = filtres Cloud seuls. */
+  variant?: "full" | "bar" | "filters";
+  onOpenFilters?: () => void;
 };
 
 function SidebarPanel(props: SidebarPanelProps) {
@@ -1612,16 +1614,16 @@ function SidebarPanel(props: SidebarPanelProps) {
   const sourceButtonClass = (active: boolean, activeText: string) =>
     `${PILL_BASE} flex w-full items-center justify-start gap-2 bg-white !opacity-100 disabled:!opacity-100 !border-black ${active ? activeText : "!text-black"} [&_svg]:!opacity-100`;
 
-  return (
-    <Frame title={en ? "Settings" : "Réglages"} className="flex flex-1 flex-col">
-      <div className="flex h-auto flex-col items-stretch justify-start gap-2 pt-2">
-          <div className="text-sm font-bold !text-black">{en ? "Compare current piano with:" : "Comparer piano actuel avec :"}</div>
+  const buttons = (
+    <>
           <FastTip text={tipTarget}><Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><span className="w-full text-center font-bold uppercase">{en ? "Standard target" : "Cible standard"}</span></Button></FastTip>
            <FastTip text={tipCsv}><Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else props.onOpenHistory(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} ${props.csvActive ? "!border-black !text-blue-700 [&_svg]:!text-blue-700" : "!border-black !text-black"}`}><span className="w-full text-center font-bold uppercase">{en ? "HISTORY POINT" : "POINT D'HISTORIQUE"}</span></Button></FastTip>
           <FastTip text={tipCloud}><Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={sourceButtonClass(props.cloudEnabled, "!text-orange-600")}><span className="w-full text-center font-bold uppercase">Cloud</span></Button></FastTip>
-          <input ref={inputRef} type="file" accept=".kw,application/json" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
-          {props.cloudEnabled && (
-            <>
+    </>
+  );
+  const filters = (
+    <>
+
           <div className="mt-5 border-t border-gray-400 pt-5 text-sm font-bold" style={{ color: "#f97316" }}>{en ? "CLOUD filters" : "Filtres CLOUD"}</div>
           <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={() => props.setModelScope(props.modelScope === "versions" ? "exact" : "versions")} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.modelScope !== "versions" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">{en ? "Model name: " : "Nom modèle : "}<span className="!text-black font-semibold uppercase">{props.modelScope === "versions" ? (en ? "All versions" : "Toutes versions") : (en ? "Exact" : "Exact")}</span></span></Button>
           <Button type="button" variant="outline" disabled={props.filtersDisabled} onClick={props.cycleUsage} aria-label={`Usage instrument : ${usageLabel}`} className={`${FILTER_ROW} justify-start [&_svg]:!text-black [&_svg]:!opacity-100`}><RefreshCw size={14} strokeWidth={props.usageLevel !== "all" ? 2.5 : 1.2} className="shrink-0" /><span className="min-w-0 !text-black font-bold uppercase">{en ? "Instrument usage: " : "Usage instrument : "}<span className="!text-black font-semibold uppercase">{usageLabel}</span></span></Button>
@@ -1639,13 +1641,25 @@ function SidebarPanel(props: SidebarPanelProps) {
               <div>{en ? `No ${props.brandModel} profile shared in the CLOUD yet. Activate the STANDARD TARGET button to compare with a "standard" regulation curve.` : `Pas encore de profil de ${props.brandModel} partagé dans le CLOUD. Activez le bouton CIBLE STANDARD pour comparer avec une courbe de régulation "standard".`}</div>
             )}
           </div>
-            </>
-          )}
-
+    </>
+  );
+  if (props.variant === "bar") {
+    return (
+      <div className="flex flex-wrap items-center gap-2 [&>*]:w-auto [&_button]:w-auto [&_button]:min-w-[9rem]">
+        {buttons}
+        <Button type="button" variant="outline" aria-label={en ? "CLOUD filters" : "Filtres CLOUD"} disabled={!props.cloudEnabled} onClick={props.onOpenFilters} className="!min-w-0 h-9 w-9 p-0 !border-black disabled:opacity-40"><Settings size={16} /></Button>
+      </div>
+    );
+  }
+  if (props.variant === "filters") return <div className="flex flex-col gap-2">{filters}</div>;
+  return (
+    <Frame title={en ? "Settings" : "Réglages"} className="flex flex-1 flex-col">
+      <div className="flex h-auto flex-col items-stretch justify-start gap-2 pt-2">
+          <div className="text-sm font-bold !text-black">{en ? "Compare current piano with:" : "Comparer piano actuel avec :"}</div>
+          {buttons}
+          <input ref={inputRef} type="file" accept=".kw,application/json" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) props.onImport(file); event.target.value = ""; }} />
+          {props.cloudEnabled && filters}
         </div>
-
-
-
       </Frame>
     );
 }
