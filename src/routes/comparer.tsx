@@ -835,8 +835,8 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   // avant la touche 1 afin de préserver l'espace entre l'axe et les courbes.
   const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [-3, 88];
   const DotComp = zoomed ? ZoomDot : SampleDot;
-  const { corridorG } = usePreferences();
-  const tolOn = !simple && corridorG > 0;
+  const { corridorG, bilanRedKeys } = usePreferences();
+  const tolOn = (!simple || bilanRedKeys) && corridorG > 0;
   const title = familyTitle(family.id, lang, family.title);
   // Domaine vertical FIGÉ sur le mode groupé : l'échelle et ses graduations ne
   // sont jamais recalculées quand l'artisan bascule N/B (groupé, séparé,
