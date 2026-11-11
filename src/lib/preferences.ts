@@ -22,6 +22,8 @@ type Preferences = {
   smoothAnalyse: SmoothPref;
   /** Touches hors tolérance surlignées en rouge dans le PDF. */
   pdfRedKeys: boolean;
+  /** Bilan : touches hors tolérance signalées en rouge sur les graphiques. */
+  bilanRedKeys: boolean;
   /** Avance automatique après 2 chiffres valides. */
   autoAdvance: boolean;
   keySound: boolean;
@@ -35,6 +37,7 @@ const CORRIDOR_KEY = "ptw_pref_corridor_g";
 const SMOOTH_KEY = "ptw_pref_smooth";
 const SMOOTH_ANALYSE_KEY = "ptw_pref_smooth_analyse";
 const PDF_RED_KEY = "ptw_pref_pdf_red";
+const BILAN_RED_KEY = "ptw_pref_bilan_red";
 const AUTO_ADV_KEY = "ptw_pref_auto_advance";
 const KEY_SOUND_KEY = "ptw_pref_key_sound";
 const OCTAVE_SOUND_KEY = "ptw_pref_octave_sound";
@@ -69,7 +72,7 @@ const write = (key: string, value: string) => {
 };
 
 function load(): Preferences {
-  if (typeof window === "undefined") return { corridorG: 3, smoothDefault: "smooth", smoothAnalyse: "real", pdfRedKeys: true, autoAdvance: true, keySound: true, octaveSound: true, targetMode: "default", customTargets: { ...DEFAULT_TARGETS } };
+  if (typeof window === "undefined") return { corridorG: 3, smoothDefault: "smooth", smoothAnalyse: "real", pdfRedKeys: true, bilanRedKeys: false, autoAdvance: true, keySound: true, octaveSound: true, targetMode: "default", customTargets: { ...DEFAULT_TARGETS } };
   const rawCorridor = read(CORRIDOR_KEY);
   const corridor = rawCorridor === null || rawCorridor === "" ? NaN : Number(rawCorridor);
   const smooth = read(SMOOTH_KEY);
@@ -80,6 +83,7 @@ function load(): Preferences {
     smoothDefault: smooth === "real" || smooth === "smoothPlus" ? smooth : "smooth",
     smoothAnalyse: smoothA === "smooth" || smoothA === "smoothPlus" ? smoothA : "real",
     pdfRedKeys: read(PDF_RED_KEY) !== "0",
+    bilanRedKeys: read(BILAN_RED_KEY) === "1",
     autoAdvance: read(AUTO_ADV_KEY) !== "0",
     keySound: read(KEY_SOUND_KEY) !== "0",
     octaveSound: read(OCTAVE_SOUND_KEY) !== "0",
@@ -121,6 +125,12 @@ export function setSmoothAnalyse(value: SmoothPref) {
 export function setPdfRedKeys(value: boolean) {
   prefs = { ...prefs, pdfRedKeys: value };
   write(PDF_RED_KEY, value ? "1" : "0");
+  emit();
+}
+
+export function setBilanRedKeys(value: boolean) {
+  prefs = { ...prefs, bilanRedKeys: value };
+  write(BILAN_RED_KEY, value ? "1" : "0");
   emit();
 }
 
