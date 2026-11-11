@@ -7,7 +7,7 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/comp
 import { useLang } from "@/data/translations";
 import { isDemoActive, toggleDemoMode } from "@/lib/demo-mode";
 import {
-  usePreferences, setCorridorG, setSmoothDefault, setSmoothAnalyse, setAutoAdvance, setKeySound, setOctaveSound, type SmoothPref,
+  usePreferences, setCorridorG, setSmoothDefault, setSmoothAnalyse, setAutoAdvance, setKeySound, setOctaveSound, setBilanRedKeys, type SmoothPref,
   setTargetMode, setCustomTarget, DEFAULT_TARGETS, type TargetKind, type TargetRamp,
 } from "@/lib/preferences";
 
@@ -132,6 +132,7 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
                   onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
                   className="w-9 rounded border border-input px-0.5 text-center" /> g{prefs.corridorG === 3 ? def : ""}
               </div>
+              <label className="flex items-start gap-2 whitespace-nowrap border-t border-foreground/40 pt-3 text-sm"><input type="checkbox" checked={prefs.bilanRedKeys} onChange={(e) => setBilanRedKeys(e.target.checked)} />{(en ? "Dashboard: out-of-tolerance key alerts" : "Bilan : alertes touches hors tolérance") + (!prefs.bilanRedKeys ? (en ? " (default: OFF)" : " (défaut : OFF)") : "")}</label>
             </div>
             <div className={row}>
               <span className="font-semibold">{en ? "Curve smoothing" : "Lissage des courbes"}</span>
