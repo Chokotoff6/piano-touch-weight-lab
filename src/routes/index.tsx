@@ -33,11 +33,24 @@ function Accueil() {
     <main className="relative mx-auto flex max-w-[1400px] flex-col px-6 pb-6 pt-2">
       <div className="mx-auto mt-[66px] w-full max-w-4xl space-y-8 text-left text-sm leading-relaxed !text-black">
         <header className="space-y-1">
-          <img
-            src={logoKwText.url}
-            alt="KeyWeight"
-            className="mb-6 h-12 w-auto"
-            decoding="async"
+          {/* Mot KEYWEIGHT teinté au mauve exact du logo via masque (compatible iOS 15). */}
+          <img src={logoKwText.url} alt="" aria-hidden="true" className="invisible absolute h-12 w-auto" decoding="async" />
+          <div
+            role="img"
+            aria-label="KeyWeight"
+            className="mb-6 h-12"
+            style={{
+              aspectRatio: "var(--kw-text-ratio, 6.5)",
+              backgroundColor: "#7149ab",
+              WebkitMaskImage: `url(${logoKwText.url})`,
+              maskImage: `url(${logoKwText.url})`,
+              WebkitMaskRepeat: "no-repeat",
+              maskRepeat: "no-repeat",
+              WebkitMaskSize: "contain",
+              maskSize: "contain",
+              WebkitMaskPosition: "left center",
+              maskPosition: "left center",
+            }}
           />
           <h1 className="text-2xl font-semibold leading-snug !text-black">
             {en ? "Piano touch measurement and diagnostic tool" : "Outil de mesure et de diagnostique du toucher de piano"}
