@@ -11,7 +11,7 @@ import { flushSync } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { FloatingPanel } from "@/components/FloatingPanel";
 import { useLang, getLang } from "@/data/translations";
-import { Info, RefreshCw, Settings, Square, SquareX, Waves } from "lucide-react";
+import { Info, RefreshCw, Square, SquareX, Waves } from "lucide-react";
 import { BrandTargetInfoIcon } from "@/components/BrandTargetInfo";
 import { paddedDomain } from "@/components/PdfReportBlocks";
 import { PianoSheetMirror } from "@/components/PianoSheetMirror";
@@ -1391,14 +1391,11 @@ function AverageBlock({ label, global, white, black, tone, alert = false }: { la
     <div className="average-block min-w-0 flex h-full flex-col justify-end rounded bg-muted px-2 py-1.5 text-center">
       <div className="average-label font-bold text-foreground">{label}</div>
       <div className={`mt-1 average-value font-bold tabular-nums ${alert ? "!text-red-600" : toneClass}`}>{val(global)}</div>
-      <div className={`mt-0.5 flex items-end justify-center gap-2 text-[0.65rem] tabular-nums ${toneClass}`}>
+      <div className={`mt-0.5 flex items-baseline justify-center gap-1.5 text-[0.65rem] tabular-nums ${toneClass}`}>
+        <span className="!text-xs font-medium">{lang === "en" ? "White" : "Blanches"}</span>
         <span>{sub(white)}</span>
         <span className={toneClass}>/</span>
         <span>{sub(black)}</span>
-      </div>
-      <div className={`flex items-end justify-center gap-2 text-[0.55rem] tabular-nums ${toneClass}`}>
-        <span className="!text-xs font-medium">{lang === "en" ? "White" : "Blanches"}</span>
-        <span className="invisible">/</span>
         <span className="!text-xs font-medium">{lang === "en" ? "Black" : "Noires"}</span>
       </div>
     </div>
@@ -1470,15 +1467,11 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
             <div className="mt-1 average-value font-bold tabular-nums !text-green-600">
               {value === "—" ? <span className="!text-green-600">—</span> : <>{value}<span className="!text-xs !font-medium"> gr.</span></>}
             </div>
-            {/* Rangée 3 : valeurs extrêmes de la droite théorique (touche 1 / touche 88). */}
-            <div className="flex justify-center gap-2 tabular-nums !text-green-600">
+            <div className="mt-0.5 flex items-baseline justify-center gap-1.5 tabular-nums !text-green-600">
+              <span className="!text-xs font-medium">{lowLabel}</span>
               <span className="!text-xs font-medium">{extremeValue(globalKey, "first")} gr.</span>
               <span className="!text-xs font-medium">/</span>
               <span className="!text-xs font-medium">{extremeValue(globalKey, "last")} gr.</span>
-            </div>
-            <div className="flex justify-center gap-2 tabular-nums !text-green-600">
-              <span className="!text-xs font-medium">{lowLabel}</span>
-              <span className="invisible">/</span>
               <span className="!text-xs font-medium">{highLabel}</span>
             </div>
           </div>
@@ -1508,7 +1501,7 @@ function FastTip({ text, children }: { text: string; children: ReactNode }) {
     >
       {children}
       {open && (
-        <div className="pointer-events-none absolute right-full top-1/2 z-50 mr-[-30px] w-60 -translate-y-1/2 rounded-md border border-gray-300 bg-white px-2 py-1 text-[0.7rem] font-medium !text-black shadow-lg">{text}</div>
+        <div className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 w-60 -translate-x-1/2 rounded-md text-center border border-gray-300 bg-white px-2 py-1 text-[0.7rem] font-medium !text-black shadow-lg">{text}</div>
       )}
     </div>
   );
@@ -1645,9 +1638,8 @@ function SidebarPanel(props: SidebarPanelProps) {
   );
   if (props.variant === "bar") {
     return (
-      <div className="flex flex-wrap items-center gap-2 [&>*]:w-auto [&_button]:w-auto [&_button]:min-w-[9rem]">
+      <div className="flex flex-wrap items-center justify-center gap-2 [&>*]:w-auto [&_button]:w-auto [&_button]:min-w-[9rem]">
         {buttons}
-        <Button type="button" variant="outline" aria-label={en ? "CLOUD filters" : "Filtres CLOUD"} disabled={!props.cloudEnabled} onClick={props.onOpenFilters} className="!min-w-0 h-9 w-9 p-0 !border-black disabled:opacity-40"><Settings size={16} /></Button>
       </div>
     );
   }

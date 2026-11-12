@@ -381,7 +381,7 @@ function RootComponent() {
         <div className="mx-auto w-full max-w-7xl pb-1 pt-[2px] px-4 xl:px-[100px]">
           <div className="flex flex-wrap items-center gap-2">
             {/* Logo officiel KeyWeight : calé à gauche, retour à l'accueil. */}
-            <div className="relative z-10 flex shrink-0 flex-col items-center ">
+            <div className="relative z-10 flex shrink-0 flex-col items-center xl:translate-y-[26px]">
               <Link
                 to="/"
                 aria-label={lang === "en" ? "Home" : "Accueil"}
@@ -395,6 +395,7 @@ function RootComponent() {
                 }}
               >
                 <span
+                  key={isHome ? "kw-anim" : "kw-static"}
                   role="img"
                   aria-label="KeyWeight"
                   className="block h-[85px] w-auto [&>svg]:block [&>svg]:h-[85px] [&>svg]:w-auto"
@@ -525,7 +526,7 @@ function RootComponent() {
                 {/* 1. Enregistrer : fichier local souverain .kw, sur les 3 pages. */}
                 <button
                   type="button"
-                  className="block w-full px-3 py-1.5 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
+                  className="block w-full px-3 py-1 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
                   onClick={() => {
                     // Pesée gère ses points d'historique ; ailleurs, enregistrement direct du brouillon (clic natif conservé).
                     if (isSaisie) {
@@ -543,7 +544,7 @@ function RootComponent() {
                 {isComparer ? (
                   <button
                     type="button"
-                    className="block w-full px-3 py-1.5 text-left text-sm text-gray-900 hover:bg-gray-100"
+                    className="block w-full px-3 py-1 text-left text-sm text-gray-900 hover:bg-gray-100"
                     onClick={() => setPdfDialogOpen(true)}
                   >
                     <span className="pointer-events-none">{lang === "en" ? "Export analysis (PDF)" : "Exporter l'analyse (PDF)"}</span>
@@ -552,7 +553,7 @@ function RootComponent() {
                   <button
                     type="button"
                     disabled={!filesEnabled}
-                    className="block w-full px-3 py-1.5 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
+                    className="block w-full px-3 py-1 text-left text-sm text-gray-900 hover:bg-gray-100 disabled:cursor-default disabled:text-gray-300"
                     onClick={() => exportPdf()}
                   >
                     <span className="pointer-events-none">{lang === "en" ? "Export dashboard (PDF)" : "Exporter le bilan (PDF)"}</span>
@@ -560,7 +561,7 @@ function RootComponent() {
                 ) : (
                   <button
                     type="button"
-                    className="block w-full px-3 py-1.5 text-left text-sm text-gray-900 hover:bg-gray-100"
+                    className="block w-full px-3 py-1 text-left text-sm text-gray-900 hover:bg-gray-100"
                     onClick={() => {
                       // Formulaire vierge fourni ultérieurement : public/formulaire-vierge.pdf (silencieux tant qu'absent).
                       void fetch("/formulaire-vierge.pdf", { method: "HEAD" }).then((r) => {
@@ -576,7 +577,7 @@ function RootComponent() {
                 <div className="relative">
                 <button
                   type="button"
-                  className="block w-full px-3 py-1.5 text-left text-sm text-gray-900 hover:bg-gray-100"
+                  className="block w-full px-3 py-1 text-left text-sm text-gray-900 hover:bg-gray-100"
                   onMouseEnter={() => {
                     void import("@/lib/kw-file").then(({ readSessionKwDocument }) => {
                       if (!readSessionKwDocument()) setHistoryHint(true);
@@ -608,7 +609,7 @@ function RootComponent() {
                   <div className="relative">
                   <button
                     type="button"
-                    className="block w-full border-t border-gray-500 px-3 py-1.5 text-left text-sm text-gray-900 hover:bg-gray-100"
+                    className="block w-full border-t border-gray-500 px-3 py-1 text-left text-sm text-gray-900 hover:bg-gray-100"
                     onMouseEnter={() => {
                       void import("@/lib/kw-file").then(({ readDraftProfile }) => {
                         const { info, rows } = readDraftProfile();
@@ -940,8 +941,8 @@ function RootComponent() {
         </DialogContent>
       </Dialog>
 
-      {/* Écran de garde smartphone (< 768 px) : CSS seul, aucune redirection. */}
-      <div className="fixed inset-0 z-[200000] flex flex-col items-center justify-center gap-4 bg-background p-8 text-center md:hidden">
+      {/* Écran de garde smartphone (< 640 px) : CSS seul, aucune redirection. */}
+      <div className="fixed inset-0 z-[200000] flex flex-col items-center justify-center gap-4 bg-background p-8 text-center sm:hidden">
         <span role="img" aria-label="KeyWeight" className="block h-[85px] w-auto [&>svg]:block [&>svg]:h-[85px] [&>svg]:w-auto" dangerouslySetInnerHTML={{ __html: staticKeyweightLogo }} />
         <h1 className="text-xl font-bold text-foreground">{lang === "en" ? "Screen size not supported" : "Résolution non prise en charge"}</h1>
         <p className="max-w-xs text-sm text-muted-foreground">{lang === "en" ? "KeyWeight requires a larger screen (tablet in landscape mode or computer)." : "KeyWeight nécessite un écran plus grand (tablette en mode paysage ou ordinateur)."}</p>

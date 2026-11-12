@@ -895,11 +895,11 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
               </div>
             </div>
             <Button variant="ghost" type="button" aria-label={en ? "Previous octave" : "Octave précédente"} disabled={octave === 0} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.max(0, o - 1)); }} className={`${arrowBtn} ${pressedArrow === "prev" ? "scale-75 opacity-60" : ""}`}>◀</Button>
-            <div className="relative shrink-0 overflow-hidden" style={{ width: seg.width * octScale, height: nativeH * octScale * 0.9 + 2 }}>
-              <div className="tablet-keyboard absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${octScale}, ${octScale * 0.9})` }}>
+            <div className="relative shrink-0 overflow-hidden" style={{ width: seg.width * octScale * 0.9, height: nativeH * octScale * 0.9 + 2 }}>
+              <div className="tablet-keyboard absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${octScale * 0.9})` }}>
                 <div className="technical-sheet" style={{ width: seg.width, gridTemplateColumns: `${seg.width}px` }}>
                 <div style={{ marginLeft: -seg.left }}>
-                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onTyped} onCommit={onCommit} onFocusField={onFocusField} onBlurField={onBlurField} onNavigate={onNavigate} isVisible={isVisible} weightFilter={weightFilter} registerInput={registerInput} numberFontPx={12 / octScale} />
+                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onTyped} onCommit={onCommit} onFocusField={onFocusField} onBlurField={onBlurField} onNavigate={onNavigate} isVisible={isVisible} weightFilter={weightFilter} registerInput={registerInput} numberFontPx={12 / (octScale * 0.9)} />
                 </div>
                 </div>
               </div>
