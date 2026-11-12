@@ -326,9 +326,9 @@ export function PianoSheetMirror({
                   </span>
                 </div>
                 <div className="flex justify-center gap-2 text-[0.55rem] text-muted-foreground tabular-nums">
-                  <span className="!text-xs font-medium">Blanches</span>
+                  <span className="!text-xs font-medium">▢</span>
                   <span className="invisible">/</span>
-                  <span className="!text-xs font-medium">Noires</span>
+                  <span className="!text-xs font-medium">◼</span>
                 </div>
               </div>
             ))}

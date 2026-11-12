@@ -3838,7 +3838,7 @@ function Index() {
         // Aucune coloration rouge : les cases restent d'apparence normale même
         // en anomalie. Seuls les messages FF et le blocage du focus subsistent.
         data-demo-measure-value={demoInk ? "" : undefined}
-        className={`weight-input !font-sans ${demoInk ? "!font-bold !text-[#4c1d95]" : importBaseline && rows[index]![field] !== "" && importBaseline[index]?.[field] === rows[index]![field] ? "font-semibold !text-gray-500" : "font-semibold !text-black"} focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"}`}
+        className={`weight-input !font-sans ${demoInk ? "!font-bold !text-[#4c1d95]" : importBaseline && rows[index]![field] !== "" && importBaseline[index]?.[field] === rows[index]![field] ? "font-semibold !text-gray-500" : "font-semibold !text-black"} focus:!border-2 focus:!border-[#7149ab] focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"}`}
 
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
       />

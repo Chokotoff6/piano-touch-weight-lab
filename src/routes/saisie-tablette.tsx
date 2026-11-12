@@ -236,7 +236,7 @@ function KeyGrid({
                         onChange={(e) => onChange?.(index, field, e.target.value.replace(/[^0-9]/g, "").slice(0, 2))}
                         onBlur={() => { onBlurField?.(index, field); onCommit?.(); }}
                         onKeyDown={(e) => onNavigate?.(e, index, field)}
-                        className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-black focus:!ring-0 focus:!outline-none ${isActive ? "!border-2 !border-black" : ""} ${black ? "" : "![background-color:#cbd5e1]"}`}
+                        className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-[#7149ab] focus:!ring-0 focus:!outline-none ${isActive ? "!border-2 !border-[#7149ab]" : ""} ${black ? "" : "![background-color:#cbd5e1]"}`}
                         style={black ? { backgroundColor: "#cbd5e1" } : undefined}
                       />
                     ) : (

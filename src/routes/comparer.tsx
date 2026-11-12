@@ -1392,11 +1392,11 @@ function AverageBlock({ label, global, white, black, tone, alert = false }: { la
       <div className="average-label font-bold text-foreground">{label}</div>
       <div className={`mt-1 average-value font-bold tabular-nums ${alert ? "!text-red-600" : toneClass}`}>{val(global)}</div>
       <div className={`mt-0.5 flex items-baseline justify-center gap-1.5 text-[0.65rem] tabular-nums ${toneClass}`}>
-        <span className="!text-xs font-medium">{lang === "en" ? "White" : "Blanches"}</span>
+        <span className="!text-xs font-medium" aria-label={lang === "en" ? "White" : "Blanches"}>▢</span>
         <span>{sub(white)}</span>
         <span className={toneClass}>/</span>
         <span>{sub(black)}</span>
-        <span className="!text-xs font-medium">{lang === "en" ? "Black" : "Noires"}</span>
+        <span className="!text-xs font-medium" aria-label={lang === "en" ? "Black" : "Noires"}>◼</span>
       </div>
     </div>
   );
@@ -1447,14 +1447,8 @@ const STD_KEYS: { key: MetricKey; globalKey: SeriesKey }[] = [
 ];
 function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
   const lang = useLang();
-  const lowLabel = lang === "en" ? "A0" : "La0";
-  const highLabel = lang === "en" ? "C8" : "Do8";
-  const extremeValue = (globalKey: SeriesKey, side: "first" | "last") => {
-    const points = side === "first" ? chartData : [...chartData].reverse();
-    const found = points.find((point) => typeof point[globalKey] === "number" && Number.isFinite(point[globalKey] as number));
-    const value = found?.[globalKey];
-    return typeof value === "number" ? value.toFixed(1) : "—";
-  };
+  const whites = chartData.filter((point) => !point.isBlack);
+  const blacks = chartData.filter((point) => point.isBlack);
   return (
     <div className="average-grid grid grid-cols-4 gap-3">
       {STD_KEYS.map(({ key, globalKey }) => {
@@ -1468,11 +1462,11 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
               {value === "—" ? <span className="!text-green-600">—</span> : <>{value}<span className="!text-xs !font-medium"> gr.</span></>}
             </div>
             <div className="mt-0.5 flex items-baseline justify-center gap-1.5 tabular-nums !text-green-600">
-              <span className="!text-xs font-medium">{lowLabel}</span>
-              <span className="!text-xs font-medium">{extremeValue(globalKey, "first")} gr.</span>
+              <span className="!text-xs font-medium" aria-label={lang === "en" ? "White" : "Blanches"}>▢</span>
+              <span className="!text-xs font-medium">{seriesAverage(whites, globalKey)} gr.</span>
               <span className="!text-xs font-medium">/</span>
-              <span className="!text-xs font-medium">{extremeValue(globalKey, "last")} gr.</span>
-              <span className="!text-xs font-medium">{highLabel}</span>
+              <span className="!text-xs font-medium">{seriesAverage(blacks, globalKey)} gr.</span>
+              <span className="!text-xs font-medium" aria-label={lang === "en" ? "Black" : "Noires"}>◼</span>
             </div>
           </div>
 
@@ -1561,6 +1555,8 @@ type SidebarPanelProps = {
   /** full = panneau complet (miroir PDF) ; bar = 3 boutons en ligne ; filters = filtres Cloud seuls. */
   variant?: "full" | "bar" | "filters";
   onOpenFilters?: () => void;
+  /** Fenêtre Filtres Cloud actuellement ouverte (bar uniquement). */
+  filtersOpen?: boolean;
 };
 
 function SidebarPanel(props: SidebarPanelProps) {
@@ -1611,7 +1607,7 @@ function SidebarPanel(props: SidebarPanelProps) {
     <>
           <FastTip text={tipTarget}><Button type="button" variant="outline" aria-pressed={props.standardEnabled} onClick={props.onToggleStandard} className={sourceButtonClass(props.standardEnabled, "!text-green-600")}><span className="w-full text-center font-bold uppercase">{en ? "Standard target" : "Cible standard"}</span></Button></FastTip>
            <FastTip text={tipCsv}><Button type="button" variant="outline" aria-pressed={props.csvActive} onClick={() => { if (props.csvActive) props.onClearCsv(); else props.onOpenHistory(); }} className={`${sourceButtonClass(props.csvActive, "!text-blue-600")} ${props.csvActive ? "!border-black !text-blue-700 [&_svg]:!text-blue-700" : "!border-black !text-black"}`}><span className="w-full text-center font-bold uppercase">{en ? "HISTORY POINT" : "POINT D'HISTORIQUE"}</span></Button></FastTip>
-          <FastTip text={tipCloud}><Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={sourceButtonClass(props.cloudEnabled, "!text-orange-600")}><span className="w-full text-center font-bold uppercase">Cloud</span></Button></FastTip>
+          <FastTip text={tipCloud}><Button type="button" variant="outline" aria-pressed={props.cloudEnabled} onClick={props.onToggleCloud} className={`relative ${sourceButtonClass(props.cloudEnabled, "!text-orange-600")}`}><span className="w-full text-center font-bold uppercase">Cloud</span>{props.variant === "bar" && props.cloudEnabled && !props.filtersOpen && <Settings aria-hidden="true" className="absolute bottom-0.5 right-0.5 !h-3 !w-3 !text-orange-600" />}</Button></FastTip>
     </>
   );
   const filters = (
@@ -2256,22 +2252,28 @@ function Comparer() {
                 <Frame titleClassName="absolute -top-3.5 left-4 max-w-[calc(100%-2rem)] whitespace-nowrap bg-card px-2 text-sm xl:text-lg font-bold text-foreground" title={<span className="flex min-w-0 items-baseline gap-2"><span className="shrink-0">{en ? "Averages" : "Moyennes"}</span><span className="shrink-0 text-slate-400">-</span><span className="summary-text block min-w-0 flex-1 truncate" title={typeof summary === "string" ? summary : undefined}>{summary}</span></span>} className="h-fit">
                   {/* Séparateurs affichés uniquement si au moins deux sources sont présentes. */}
                   <div className={(comparedPiano !== null || sourceMode === "cloud" || standardEnabled) ? "mb-3 border-b border-gray-400 pb-3" : ""}><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">{en ? "Current piano" : "Piano actuel"}</div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
-                  {(comparedPiano !== null || sourceMode === "cloud") && (
+                  {comparedPiano !== null && (
                     <div className={standardEnabled ? "mb-3 border-b border-gray-400 pb-3" : ""}>
                       <div className={`mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide ${comparedPiano ? "!text-blue-600" : "!text-orange-600"}`}>{comparedPiano ? <>IMPORT CSV : <span className="normal-case">{csvIdentity}{csvStats}</span></> : <>Cloud</>}{cloudActive && <span className="ml-2 normal-case !text-orange-600">{cloudCounterText}</span>}</div>
                       <AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} csv={comparedPiano !== null} />
                     </div>
                   )}
                   {standardEnabled && (
-                    <div>
+                    <div className={(comparedPiano === null && sourceMode === "cloud") ? "mb-3 border-b border-gray-400 pb-3" : ""}>
                       <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-green-600">{displayStandardLabel}<BrandTargetInfoIcon variant={/standard/i.test(standardLabel) ? "standard" : "brand"} /></div>
 
                       <StandardRow chartData={chartData} />
                     </div>
                   )}
+                  {(comparedPiano === null && sourceMode === "cloud") && (
+                    <div >
+                      <div className={`mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide ${comparedPiano ? "!text-blue-600" : "!text-orange-600"}`}>{comparedPiano ? <>IMPORT CSV : <span className="normal-case">{csvIdentity}{csvStats}</span></> : <>Cloud</>}{cloudActive && <span className="ml-2 normal-case !text-orange-600">{cloudCounterText}</span>}</div>
+                      <AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} csv={comparedPiano !== null} />
+                    </div>
+                  )}
                 </Frame>
                 <div data-pdf-hide className="mt-2 flex">
-                  <div data-floating-keep className="w-full"><SidebarPanel variant="bar" onOpenFilters={() => setSettingsOpen((v) => !v)} cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); setSettingsOpen(true); setSourceMode("cloud"); } else { setSourceMode((value) => { const next = value === "cloud" ? "none" : "cloud"; setSettingsOpen(next === "cloud"); return next; }); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onOpenHistory={openHistory} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} modelScope={modelScope} setModelScope={setModelScope} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div>
+                  <div data-floating-keep className="w-full"><SidebarPanel variant="bar" filtersOpen={settingsOpen} onOpenFilters={() => setSettingsOpen((v) => !v)} cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); setSettingsOpen(true); setSourceMode("cloud"); } else if (sourceMode === "cloud" && !settingsOpen) { setSettingsOpen(true); } else { setSourceMode((value) => { const next = value === "cloud" ? "none" : "cloud"; setSettingsOpen(next === "cloud"); return next; }); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onOpenHistory={openHistory} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} modelScope={modelScope} setModelScope={setModelScope} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div>
                   <FloatingPanel open={settingsOpen && sourceMode === "cloud" && !comparedPiano} onClose={() => setSettingsOpen(false)} title={en ? "CLOUD filters" : "Filtres CLOUD"}>
                     <SidebarPanel variant="filters" cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); setSettingsOpen(true); setSourceMode("cloud"); } else { setSourceMode((value) => { const next = value === "cloud" ? "none" : "cloud"; setSettingsOpen(next === "cloud"); return next; }); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onOpenHistory={openHistory} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} modelScope={modelScope} setModelScope={setModelScope} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} />
                   </FloatingPanel>
