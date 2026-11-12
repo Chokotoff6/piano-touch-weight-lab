@@ -553,7 +553,7 @@ button, a[data-slot="button"], .app-command {
   }
 
   .weight-input:focus {
-    box-shadow: inset 0 0 0 1px #000000;
+    box-shadow: inset 0 0 0 1px #7149ab;
   }
 
   /* Plus aucun cadre rouge sur les cases en anomalie (décision produit). */

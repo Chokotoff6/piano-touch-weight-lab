@@ -33,38 +33,51 @@ function Accueil() {
     <main className="relative mx-auto flex max-w-[1400px] flex-col px-6 pb-6 pt-2">
       <div className="mx-auto mt-[66px] w-full max-w-4xl space-y-8 text-left text-sm leading-relaxed !text-black">
         <header className="space-y-1">
-          <img
-            src={logoKwText.url}
-            alt="KeyWeight"
-            className="mb-6 h-12 w-auto"
-            decoding="async"
+          {/* Mot KEYWEIGHT teinté au mauve exact du logo via masque (compatible iOS 15). */}
+          <img src={logoKwText.url} alt="" aria-hidden="true" className="invisible absolute h-12 w-auto" decoding="async" />
+          <div
+            role="img"
+            aria-label="KeyWeight"
+            className="mb-6 h-12"
+            style={{
+              aspectRatio: "var(--kw-text-ratio, 6.5)",
+              backgroundColor: "#7149ab",
+              WebkitMaskImage: `url(${logoKwText.url})`,
+              maskImage: `url(${logoKwText.url})`,
+              WebkitMaskRepeat: "no-repeat",
+              maskRepeat: "no-repeat",
+              WebkitMaskSize: "contain",
+              maskSize: "contain",
+              WebkitMaskPosition: "left center",
+              maskPosition: "left center",
+            }}
           />
-          <h1 className="text-2xl font-semibold leading-snug !text-[#4c1d95]">
+          <h1 className="text-2xl font-semibold leading-snug !text-black">
             {en ? "Piano touch measurement and diagnostic tool" : "Outil de mesure et de diagnostique du toucher de piano"}
           </h1>
         </header>
 
         <section className="space-y-4">
           <h2 className="text-2xl font-bold uppercase tracking-wide !text-[#4c1d95]">3 modules</h2>
-          <div className="grid gap-6 pt-2 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-3">
             {(en
               ? [
-                  ["WEIGHING", ["Assisted entry: touch keypad, automatic advance, consistency checks.", "Express C / C# mode, display filters W/B - DW/UW.", "Farewell Excel spreadsheets and loose sheets!"]],
-                  ["DASHBOARD", ["Immediate Stanwood mapping (Friction and Balance Weight).", "Spot regulation leads at a glance.", "Summaries by register (bass, mid, treble).", "Clear PDF reports for quotes and certification."]],
-                  ["ANALYSIS", ["Before/after regulation curve comparison (History points, Standard factory targets, Cloud data).", "Fine diagnosis (adjustable corridor, out-of-tolerance keys, note-by-note Zoom with direct editing).", "Instrument memory (local .kw, 100% offline)."]],
+                  ["WEIGHING", ["Farewell Excel spreadsheets and loose sheets!", "Assisted entry: touch keypad, automatic advance, consistency checks.", "Express C/C# mode, selective display filters W/B - DW/UW.", "Full / Octave view."]],
+                  ["DASHBOARD", ["Interactive dashboard: weights & curves (DW-UW-Friction and BW).", "Instrument sheet import/export.", "Detailed PDF reports for quotes and certification."]],
+                  ["ANALYSIS", ["Before/after regulation curve comparison (History points, Standard factory targets, Cloud data).", "Fine diagnosis: out-of-tolerance keys, note-by-note Zoom mode with direct editing.", "Instrument profile and history points archived in a local .kw file (100% offline)."]],
                 ]
               : [
-                  ["PESÉE", ["Saisie assistée : pavé tactile, avance automatique, contrôles de cohérence.", "Mode rapide Do / Do#, filtres d'affichage N/B - PD/PR.", "Adieu tableurs Excel et feuilles volantes !"]],
-                  ["BILAN", ["Cartographie immédiate Stanwood (Friction et Poids d'équilibre).", "Déterminer en un clin d'œil les pistes de régulation.", "Synthèses par registre (basses, médiums, aigus).", "Rapports PDF clairs pour devis et certification."]],
-                  ["ANALYSE", ["Comparaison des courbes avant/après régulation (Points d'historique, Cibles standards d'usine, données Cloud).", "Diagnostic fin (corridor ajustable, touches hors tolérance, mode Zoom note à note avec retouche directe).", "Mémoire de l'instrument (.kw local 100 % hors ligne)."]],
+                  ["PESÉE", ["Adieu tableurs Excel et feuilles volantes !", "Saisie assistée : pavé tactile, avance automatique, contrôles de cohérence.", "Mode rapide Do/Do#, filtres d'affichage sélectif N/B - PD/PR.", "Vue Complète / Octave."]],
+                  ["BILAN", ["Tableau de bord interactif : poids & courbes (PD-PR-Friction et PB).", "Import/export de fiche d'instrument.", "Rapports PDF détaillés pour devis et certification."]],
+                  ["ANALYSE", ["Comparaison courbes avant/après régulation (Points d'historique, Cibles standards d'usine, données Cloud).", "Diagnostic fin : touches hors tolérance, mode Zoom note à note avec retouche directe.", "Profil et points d'historique d'instrument archivés dans fichier .kw local (100 % hors ligne)."]],
                 ]
             ).map(([title, items]) => (
-              <div key={title as string} className="relative rounded-md border-2 border-foreground bg-card p-4 pt-5">
-                <h3 className="absolute -top-3.5 left-4 bg-card px-2 text-base font-extrabold !text-[#4c1d95]">{title as string}</h3>
-                <ul className="list-disc space-y-1 pl-5 !text-black">
-                  {(items as string[]).map((t) => <li key={t}>{t}</li>)}
+              <fieldset key={title as string} className="min-w-0 rounded-lg border border-gray-300 bg-white/80 px-4 pb-4 pt-1">
+                <legend className="px-2 text-lg font-extrabold !text-[#7149ab]">{title as string}</legend>
+                <ul className="list-disc space-y-1 pl-5 marker:font-normal">
+                  {(items as string[]).map((t) => <li key={t}><span className="font-medium !text-black">{t}</span></li>)}
                 </ul>
-              </div>
+              </fieldset>
             ))}
           </div>
         </section>
