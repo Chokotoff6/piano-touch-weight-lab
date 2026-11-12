@@ -453,12 +453,15 @@ button, a[data-slot="button"], .app-command {
     container-type: inline-size;
   }
   .tablet-keypad {
+    width: clamp(144px, 21vw, 288px);
     width: clamp(144px, 21cqw, 288px);
+    gap: clamp(6px, 0.7vw, 8px);
     gap: clamp(6px, 0.7cqw, 8px);
   }
   .tablet-keypad-button {
     height: 100%;
     min-height: 40px;
+    font-size: clamp(1.4rem, 2.6vw, 2rem);
     font-size: clamp(1.4rem, 2.6cqw, 2rem);
     background: var(--keypad-surface);
     border: 1px solid var(--keypad-edge);
@@ -474,7 +477,9 @@ button, a[data-slot="button"], .app-command {
     background: var(--keypad-chassis);
     border: 1px solid var(--keypad-edge);
     border-radius: 0.5rem;
+    padding: clamp(6px, 0.8vw, 10px);
     padding: clamp(6px, 0.8cqw, 10px);
+    padding-bottom: calc(clamp(6px, 0.8vw, 10px) + 3px);
     padding-bottom: calc(clamp(6px, 0.8cqw, 10px) + 3px);
   }
   .tablet-keyboard .key-number,
@@ -492,11 +497,15 @@ button, a[data-slot="button"], .app-command {
   .tablet-mini-map .key-number { display: none; }
   .tablet-keypad-button:disabled { opacity: 1; }
   .tablet-commands {
+    gap: clamp(4px, 0.65vw, 12px);
     gap: clamp(4px, 0.65cqw, 12px);
   }
   .tablet-command {
+    height: clamp(44px, 4.1vw, 56px);
     height: clamp(44px, 4.1cqw, 56px);
+    padding-inline: clamp(6px, 0.85vw, 16px);
     padding-inline: clamp(6px, 0.85cqw, 16px);
+    gap: clamp(4px, 0.5vw, 8px);
     gap: clamp(4px, 0.5cqw, 8px);
     font-size: 0.75rem;
     white-space: nowrap;
