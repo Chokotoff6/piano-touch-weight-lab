@@ -11,7 +11,7 @@ import { flushSync } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { FloatingPanel } from "@/components/FloatingPanel";
 import { useLang, getLang } from "@/data/translations";
-import { Info, RefreshCw, Square, SquareX, Waves } from "lucide-react";
+import { Info, RefreshCw, Settings, Square, SquareX, Waves } from "lucide-react";
 import { BrandTargetInfoIcon } from "@/components/BrandTargetInfo";
 import { paddedDomain } from "@/components/PdfReportBlocks";
 import { PianoSheetMirror } from "@/components/PianoSheetMirror";
