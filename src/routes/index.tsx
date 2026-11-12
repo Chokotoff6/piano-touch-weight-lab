@@ -45,21 +45,22 @@ function Accueil() {
         </header>
 
         <section className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-3">
+          <h2 className="text-2xl font-bold uppercase tracking-wide !text-[#4c1d95]">3 modules</h2>
+          <div className="grid gap-6 pt-2 sm:grid-cols-3">
             {(en
               ? [
-                  ["WEIGHING", ["Assisted weighing, action dashboard, reports and comparative analysis.", "Touch keypad, automatic advance, consistency checks; express C / C# mode.", "Farewell Excel spreadsheets and loose sheets!"]],
+                  ["WEIGHING", ["Assisted entry: touch keypad, automatic advance, consistency checks.", "Express C / C# mode, display filters W/B - DW/UW.", "Farewell Excel spreadsheets and loose sheets!"]],
                   ["DASHBOARD", ["Immediate Stanwood mapping (Friction and Balance Weight).", "Spot regulation leads at a glance.", "Summaries by register (bass, mid, treble).", "Clear PDF reports for quotes and certification."]],
                   ["ANALYSIS", ["Before/after regulation curve comparison (History points, Standard factory targets, Cloud data).", "Fine diagnosis (adjustable corridor, out-of-tolerance keys, note-by-note Zoom with direct editing).", "Instrument memory (local .kw, 100% offline)."]],
                 ]
               : [
-                  ["PESÉE", ["Pesée assistée, bilan mécanique, rapports et analyses comparatives.", "Pavé tactile, avance automatique, contrôles de cohérence ; mode rapide Do / Do#.", "Adieu tableurs Excel et feuilles volantes !"]],
+                  ["PESÉE", ["Saisie assistée : pavé tactile, avance automatique, contrôles de cohérence.", "Mode rapide Do / Do#, filtres d'affichage N/B - PD/PR.", "Adieu tableurs Excel et feuilles volantes !"]],
                   ["BILAN", ["Cartographie immédiate Stanwood (Friction et Poids d'équilibre).", "Déterminer en un clin d'œil les pistes de régulation.", "Synthèses par registre (basses, médiums, aigus).", "Rapports PDF clairs pour devis et certification."]],
                   ["ANALYSE", ["Comparaison des courbes avant/après régulation (Points d'historique, Cibles standards d'usine, données Cloud).", "Diagnostic fin (corridor ajustable, touches hors tolérance, mode Zoom note à note avec retouche directe).", "Mémoire de l'instrument (.kw local 100 % hors ligne)."]],
                 ]
             ).map(([title, items]) => (
-              <div key={title as string} className="space-y-2 rounded-lg border border-gray-300 bg-white/80 p-4">
-                <h3 className="text-base font-bold !text-[#4c1d95]">{title as string}</h3>
+              <div key={title as string} className="relative rounded-md border-2 border-foreground bg-card p-4 pt-5">
+                <h3 className="absolute -top-3.5 left-4 bg-card px-2 text-base font-extrabold !text-[#4c1d95]">{title as string}</h3>
                 <ul className="list-disc space-y-1 pl-5 !text-black">
                   {(items as string[]).map((t) => <li key={t}>{t}</li>)}
                 </ul>
