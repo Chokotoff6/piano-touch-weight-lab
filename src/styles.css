@@ -762,3 +762,10 @@ body {
   .average-block { padding-inline: 0.25rem; }
   .average-block > div { column-gap: 0.25rem; }
 }
+
+/* iOS 15 WebKit ignore la syntaxe range de Tailwind v4 : syntaxe classique. */
+@media (min-width: 640px) {
+  .screen-guard {
+    display: none !important;
+  }
+}

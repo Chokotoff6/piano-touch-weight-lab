@@ -942,7 +942,7 @@ function RootComponent() {
       </Dialog>
 
       {/* Écran de garde smartphone (< 640 px) : CSS seul, aucune redirection. */}
-      <div className="fixed inset-0 z-[200000] flex flex-col items-center justify-center gap-4 bg-background p-8 text-center sm:hidden">
+      <div className="fixed inset-0 z-[200000] flex flex-col items-center justify-center gap-4 bg-background p-8 text-center screen-guard">
         <span role="img" aria-label="KeyWeight" className="block h-[85px] w-auto [&>svg]:block [&>svg]:h-[85px] [&>svg]:w-auto" dangerouslySetInnerHTML={{ __html: staticKeyweightLogo }} />
         <h1 className="text-xl font-bold text-foreground">{lang === "en" ? "Screen size not supported" : "Résolution non prise en charge"}</h1>
         <p className="max-w-xs text-sm text-muted-foreground">{lang === "en" ? "KeyWeight requires a larger screen (tablet in landscape mode or computer)." : "KeyWeight nécessite un écran plus grand (tablette en mode paysage ou ordinateur)."}</p>
