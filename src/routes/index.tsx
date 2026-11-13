@@ -5,7 +5,7 @@ import logoKwText from "@/assets/logo-kw-text.svg.asset.json";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "KeyWeight — Outil de mesure et de diagnostique du toucher de piano" },
+      { title: "KeyWeight — Outil de mesure et diagnostic du touché de piano" },
       {
         name: "description",
         content:
@@ -53,7 +53,7 @@ function Accueil() {
             }}
           />
           <h1 className="text-2xl font-semibold leading-snug !text-black">
-            {en ? "Piano touch measurement and diagnostic tool" : "Outil de mesure et de diagnostique du toucher de piano"}
+            {en ? "Piano touch measurement and diagnostic tool" : "Outil de mesure et diagnostic du touché de piano"}
           </h1>
         </header>
 
@@ -62,17 +62,17 @@ function Accueil() {
           <div className="grid gap-4 sm:grid-cols-3">
             {(en
               ? [
-                  ["WEIGHING", ["Farewell Excel spreadsheets and loose sheets!", "Assisted entry: touch keypad, automatic advance, consistency checks.", "Express C/C# mode, selective display filters W/B - DW/UW.", "Full / Octave view."]],
-                  ["DASHBOARD", ["Interactive dashboard: weights & curves (DW-UW-Friction and BW).", "Instrument sheet import/export.", "Detailed PDF reports for quotes and certification."]],
-                  ["ANALYSIS", ["Before/after regulation curve comparison (History points, Standard factory targets, Cloud data).", "Fine diagnosis: out-of-tolerance keys, note-by-note Zoom mode with direct editing.", "Instrument profile and history points archived in a local .kw file (100% offline)."]],
+                  ["WEIGHING", ["Assisted entry: touch keypad, automatic advance, consistency checks.", "Express C/C# mode, selective entry filters W/B - DW/UW.", "Full / Octave view. Farewell Excel spreadsheets and loose sheets!"]],
+                  ["DASHBOARD", ["Interactive dashboard: curves and averages by key colour.", "Regulation history saved in a local .kw file (100% offline).", "Detailed PDF reports for quotes and certification."]],
+                  ["ANALYSIS", ["Comparison: before/after regulation, Standard targets and Cloud (collaborative database).", "Diagnosis: Zoom mode with out-of-tolerance alerts and direct editing."]],
                 ]
               : [
-                  ["PESÉE", ["Adieu tableurs Excel et feuilles volantes !", "Saisie assistée : pavé tactile, avance automatique, contrôles de cohérence.", "Mode rapide Do/Do#, filtres d'affichage sélectif N/B - PD/PR.", "Vue Complète / Octave."]],
-                  ["BILAN", ["Tableau de bord interactif : poids & courbes (PD-PR-Friction et PB).", "Import/export de fiche d'instrument.", "Rapports PDF détaillés pour devis et certification."]],
-                  ["ANALYSE", ["Comparaison courbes avant/après régulation (Points d'historique, Cibles standards d'usine, données Cloud).", "Diagnostic fin : touches hors tolérance, mode Zoom note à note avec retouche directe.", "Profil et points d'historique d'instrument archivés dans fichier .kw local (100 % hors ligne)."]],
+                  ["PESÉE", ["Saisie assistée : pavé tactile, avance automatique, contrôles de cohérence.", "Mode rapide Do/Do#, filtres de saisie sélective N/B - PD/PR.", "Vue Complète / Octave. Adieu tableurs Excel et feuilles volantes !"]],
+                  ["BILAN", ["Tableau de bord interactif : courbes et moyennes par couleur de touche.", "Sauvegarde historique régulations dans fichier .kw local (100 % hors ligne).", "Rapports PDF détaillés pour devis et certification."]],
+                  ["ANALYSE", ["Comparaison : avant/après régulation, Cibles standard et Cloud (base de donnée collaborative).", "Diagnostic : mode Zoom avec alertes hors tolérance et retouche directe."]],
                 ]
             ).map(([title, items]) => (
-              <fieldset key={title as string} className="min-w-0 rounded-lg border border-gray-300 bg-white/80 px-4 pb-4 pt-1">
+              <fieldset key={title as string} className="min-w-0 rounded-lg border border-gray-300 bg-neutral-500/20 backdrop-blur-sm px-4 pb-4 pt-1">
                 <legend className="px-2 text-lg font-extrabold !text-[#7149ab]">{title as string}</legend>
                 <ul className="list-disc space-y-1 pl-5 marker:font-normal">
                   {(items as string[]).map((t) => <li key={t}><span className="font-medium !text-black">{t}</span></li>)}
@@ -106,7 +106,7 @@ function Accueil() {
         </Link>
       </div>
       <div className="mt-4 w-full text-center">
-        <Link to="/saisie" search={{ demo: "true" }} className="block font-bold !text-[#4c1d95] hover:underline">
+        <Link to="/saisie" search={{ demo: "true" }} title={en ? "Fictional piano profile: test every feature without touching your real data." : "Profil de piano fictif : testez toutes les fonctions sans toucher à vos données réelles."} className="block font-bold !text-[#4c1d95] hover:underline">
           {en
             ? 'Test the application in "Demo Mode" with a fictional piano profile.'
             : 'Tester l\'application en "Mode Demo" avec un profil de piano fictif.'}

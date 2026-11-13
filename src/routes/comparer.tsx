@@ -1382,21 +1382,27 @@ const TONE_CLASS: Record<Tone, string> = {
 };
 
 // Bloc de moyenne façon page Saisie : moyenne globale en grand + détail Blanches/Noires.
+// Moyennes blanches / noires : deux pavés de taille identique, coins vifs.
+function KeyBadge({ value, black }: { value: string; black?: boolean }) {
+  return (
+    <span className={`inline-block w-[4.6rem] rounded-none border px-1 py-0 text-center !text-xs font-medium leading-tight tabular-nums ${black ? "border-black bg-black !text-white" : "border-neutral-500 bg-white !text-black"}`}>
+      {value === "—" ? "—" : `${value} gr.`}
+    </span>
+  );
+}
+
 function AverageBlock({ label, global, white, black, tone, alert = false }: { label: string; global: string; white: string; black: string; tone: Tone; alert?: boolean }) {
   const lang = useLang();
   const toneClass = TONE_CLASS[tone];
   const val = (v: string) => v === "—" ? <span className={toneClass}>—</span> : <>{v}<span className="!text-xs !font-medium"> gr.</span></>;
-  const sub = (v: string) => v === "—" ? "—" : <>{v}<span className={toneClass}> gr.</span></>;
   return (
     <div className="average-block min-w-0 flex h-full flex-col justify-end rounded bg-muted px-2 py-1.5 text-center">
       <div className="average-label font-bold text-foreground">{label}</div>
       <div className={`mt-1 average-value font-bold tabular-nums ${alert ? "!text-red-600" : toneClass}`}>{val(global)}</div>
       <div className={`mt-0.5 flex items-baseline justify-center gap-1.5 text-[0.65rem] tabular-nums ${toneClass}`}>
-        <span className="!text-xs font-medium" aria-label={lang === "en" ? "White" : "Blanches"}>▢</span>
-        <span>{sub(white)}</span>
+        <span aria-label={lang === "en" ? "White" : "Blanches"}><KeyBadge value={white} /></span>
         <span className={toneClass}>/</span>
-        <span>{sub(black)}</span>
-        <span className="!text-xs font-medium" aria-label={lang === "en" ? "Black" : "Noires"}>◼</span>
+        <span aria-label={lang === "en" ? "Black" : "Noires"}><KeyBadge value={black} black /></span>
       </div>
     </div>
   );
@@ -1462,11 +1468,9 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
               {value === "—" ? <span className="!text-green-600">—</span> : <>{value}<span className="!text-xs !font-medium"> gr.</span></>}
             </div>
             <div className="mt-0.5 flex items-baseline justify-center gap-1.5 tabular-nums !text-green-600">
-              <span className="!text-xs font-medium" aria-label={lang === "en" ? "White" : "Blanches"}>▢</span>
-              <span className="!text-xs font-medium">{seriesAverage(whites, globalKey)} gr.</span>
+              <span aria-label={lang === "en" ? "White" : "Blanches"}><KeyBadge value={seriesAverage(whites, globalKey)} /></span>
               <span className="!text-xs font-medium">/</span>
-              <span className="!text-xs font-medium">{seriesAverage(blacks, globalKey)} gr.</span>
-              <span className="!text-xs font-medium" aria-label={lang === "en" ? "Black" : "Noires"}>◼</span>
+              <span aria-label={lang === "en" ? "Black" : "Noires"}><KeyBadge value={seriesAverage(blacks, globalKey)} black /></span>
             </div>
           </div>
 

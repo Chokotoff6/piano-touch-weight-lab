@@ -22,7 +22,7 @@ export function FloatingPanel({ open, onClose, title, children }: { open: boolea
 
   if (!open || !pos) return null;
   return (
-    <div ref={ref} role="dialog" aria-label={title} className="fixed z-[100001] w-[min(22rem,90vw)] rounded-lg border border-foreground/40 bg-muted/70 backdrop-blur-sm shadow-xl" style={{ left: pos.x, top: pos.y }}>
+    <div ref={ref} role="dialog" aria-label={title} className="fixed z-[100001] w-[min(22rem,90vw)] rounded-lg border border-foreground/40 bg-muted/20 backdrop-blur-sm shadow-xl" style={{ left: pos.x, top: pos.y }}>
       <div
         className="flex cursor-move select-none items-center justify-between border-b border-foreground/20 px-3 py-2 text-sm font-bold"
         style={{ color: "#f97316", touchAction: "none" }}

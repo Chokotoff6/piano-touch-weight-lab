@@ -202,7 +202,7 @@ function KeyGrid({
           >
             <div
               className={`key-number ${C_KEYS.has(k) ? "is-c-key" : ""} ${numberFontPx ? "!font-sans" : ""}`}
-              style={numberFontPx ? { fontSize: numberFontPx, fontWeight: 700, WebkitTextStroke: 0, whiteSpace: "nowrap" } : undefined}
+              style={numberFontPx ? { fontSize: numberFontPx, lineHeight: 1, fontWeight: 700, WebkitTextStroke: 0, whiteSpace: "nowrap" } : undefined}
             >
               {showNumber ? k : "\u00A0"}
             </div>
@@ -874,7 +874,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
         <div className="mt-4 flex items-center gap-0 pr-10">
           <div
             ref={octRef}
-            className="flex min-w-0 flex-1 items-center justify-center gap-2 overflow-hidden px-8"
+            className="flex min-w-0 flex-1 items-start justify-center gap-1 overflow-hidden px-8"
             style={{ height: nativeH * octScale * 0.9 + 2 }}
             onTouchStart={(e) => { touchX.current = e.touches[0]?.clientX ?? null; }}
             onTouchEnd={(e) => {
@@ -884,18 +884,18 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
               setOctave((o) => (end < start ? Math.min(OCTAVES.length - 1, o + 1) : Math.max(0, o - 1)));
             }}
           >
+            <Button variant="ghost" type="button" aria-label={en ? "Previous octave" : "Octave précédente"} disabled={octave === 0} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.max(0, o - 1)); }} style={{ marginTop: Math.max(0, 1.05 * 16 * octScale * 0.9 - 30) }} className={`${arrowBtn} mr-2 ${pressedArrow === "prev" ? "scale-75 opacity-60" : ""}`}>◀</Button>
             <div ref={labelsRef} className="octave-labels relative shrink-0" style={{ height: nativeH * octScale * 0.9 + 2 }}>
               <div className="octave-label-content grid w-max text-right font-bold text-muted-foreground">
                 <span className="invisible">{label("wd")}</span>
-                <div className="absolute right-0 top-16"><span className="rounded-md border border-foreground/60 bg-muted px-1.5 py-1 text-xs font-bold text-foreground">Octave {octave + 1}</span></div>
                 <div className="absolute right-0 -translate-y-1/2" style={{ top: 5.81 * 16 * octScale * 0.9 }}>{label("wd")}</div>
                 <div className="absolute right-0 -translate-y-1/2" style={{ top: 6.96 * 16 * octScale * 0.9 }}>{label("wa")}</div>
                 <div className="absolute right-0 -translate-y-1/2" style={{ top: 9.99 * 16 * octScale * 0.9 }}>{label("wd")}</div>
                 <div className="absolute right-0 -translate-y-1/2" style={{ top: 11.04 * 16 * octScale * 0.9 }}>{label("wa")}</div>
               </div>
             </div>
-            <Button variant="ghost" type="button" aria-label={en ? "Previous octave" : "Octave précédente"} disabled={octave === 0} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.max(0, o - 1)); }} className={`${arrowBtn} ${pressedArrow === "prev" ? "scale-75 opacity-60" : ""}`}>◀</Button>
             <div className="relative shrink-0 overflow-hidden" style={{ width: seg.width * octScale * 0.9, height: nativeH * octScale * 0.9 + 2 }}>
+              <div className="pointer-events-none absolute left-1/2 top-16 z-10 -translate-x-1/2"><span className="whitespace-nowrap rounded-md border border-foreground/60 bg-muted px-2 py-1.5 text-[0.9rem] font-bold leading-none text-foreground">Octave {octave + 1}</span></div>
               <div className="tablet-keyboard absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${octScale * 0.9})` }}>
                 <div className="technical-sheet" style={{ width: seg.width, gridTemplateColumns: `${seg.width}px` }}>
                 <div style={{ marginLeft: -seg.left }}>
@@ -904,7 +904,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
                 </div>
               </div>
             </div>
-            <Button variant="ghost" type="button" aria-label={en ? "Next octave" : "Octave suivante"} disabled={octave === OCTAVES.length - 1} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.min(OCTAVES.length - 1, o + 1)); }} className={`${arrowBtn} ${pressedArrow === "next" ? "scale-75 opacity-60" : ""}`}>▶</Button>
+            <Button variant="ghost" type="button" aria-label={en ? "Next octave" : "Octave suivante"} disabled={octave === OCTAVES.length - 1} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.min(OCTAVES.length - 1, o + 1)); }} style={{ marginTop: Math.max(0, 1.05 * 16 * octScale * 0.9 - 30) }} className={`${arrowBtn} ml-2 ${pressedArrow === "next" ? "scale-75 opacity-60" : ""}`}>▶</Button>
           </div>
           {showKeypad && <Keypad height={Math.max(180, 0.8 * (nativeH * octScale * 0.9 + 2))} onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />}
         </div>
