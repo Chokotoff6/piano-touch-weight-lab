@@ -314,21 +314,10 @@ export function PianoSheetMirror({
                   {formatAverage(global[key])}
                   {global[key] !== "—" && <span className="!text-xs !font-medium"> gr.</span>}
                 </div>
-                <div className="mt-0.5 flex justify-center gap-2 text-[0.65rem] text-muted-foreground tabular-nums">
-                  <span>
-                    {whites[key]}
-                    {whites[key] !== "—" && <span className="text-muted-foreground"> gr.</span>}
-                  </span>
-                  <span className="text-muted-foreground">/</span>
-                  <span>
-                    {blacks[key]}
-                    {blacks[key] !== "—" && <span className="text-muted-foreground"> gr.</span>}
-                  </span>
-                </div>
-                <div className="flex justify-center gap-2 text-[0.55rem] text-muted-foreground tabular-nums">
-                  <span className="!text-xs font-medium">▢</span>
-                  <span className="invisible">/</span>
-                  <span className="!text-xs font-medium">◼</span>
+                <div className="mt-0.5 flex items-baseline justify-center gap-1.5 tabular-nums">
+                  <KeyBadge value={whites[key]} />
+                  <span className="!text-xs text-muted-foreground">/</span>
+                  <KeyBadge value={blacks[key]} black />
                 </div>
               </div>
             ))}
@@ -350,5 +339,14 @@ export function PianoSheetMirror({
         </section>
       </div>
     </div>
+  );
+}
+
+// Moyennes blanches / noires : deux pavés de taille identique, coins vifs.
+function KeyBadge({ value, black }: { value: string; black?: boolean }) {
+  return (
+    <span className={`inline-block w-[4.6rem] rounded-none border px-1 py-0 text-center !text-xs font-medium leading-tight tabular-nums ${black ? "border-black bg-black !text-white" : "border-neutral-500 bg-white !text-black"}`}>
+      {value === "—" ? "—" : `${value} gr.`}
+    </span>
   );
 }
