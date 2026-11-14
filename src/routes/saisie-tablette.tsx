@@ -827,7 +827,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
     document.addEventListener("pointerdown", outside, true);
     return () => { document.removeEventListener("keydown", escape, true); document.removeEventListener("pointerdown", outside, true); };
   });
-  const cmdBtn = "tablet-command font-bold text-foreground shrink-0";
+  const cmdBtn = "tablet-command min-w-0 font-bold text-foreground";
   const arrowBtn = "h-auto w-7 min-w-7 shrink-0 cursor-pointer px-1 text-2xl leading-none !text-black transition-transform duration-100 hover:opacity-70 active:scale-75 disabled:cursor-default disabled:opacity-20";
 
   return (
@@ -895,7 +895,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
               </div>
             </div>
             <div className="relative shrink-0 overflow-hidden" style={{ width: seg.width * octScale * 0.9, height: nativeH * octScale * 0.9 + 2 }}>
-              <div className="pointer-events-none absolute left-1/2 top-16 z-10 -translate-x-1/2"><span className="whitespace-nowrap rounded-md border border-foreground/60 bg-muted px-2 py-1.5 text-[0.9rem] font-bold leading-none text-foreground">Octave {octave + 1}</span></div>
+              <div className="pointer-events-none absolute left-1/2 top-8 z-10 -translate-x-1/2"><span className="whitespace-nowrap rounded-md border border-foreground/60 bg-muted px-2 py-1.5 text-[0.9rem] font-bold leading-none text-foreground">Octave {octave + 1}</span></div>
               <div className="tablet-keyboard absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${octScale * 0.9})` }}>
                 <div className="technical-sheet" style={{ width: seg.width, gridTemplateColumns: `${seg.width}px` }}>
                 <div style={{ marginLeft: -seg.left }}>
@@ -942,11 +942,12 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
           <Button variant="outline"
             type="button"
             onClick={() => openDesktop(false)}
-            className="tablet-command shrink-0 rounded-md border border-input bg-background font-semibold text-foreground hover:bg-accent"
+            className="tablet-command min-w-0 rounded-md border border-input bg-background font-semibold text-foreground hover:bg-accent"
           >
-            {en ? "← Edit Piano Info" : "← Modifier Infos piano"}
+            <span className="tablet-label-long">{en ? "← Edit Piano Info" : "← Modifier Infos piano"}</span>
+            <span className="tablet-label-short">{en ? "← Piano info" : "← Infos piano"}</span>
           </Button>
-          <div className="tablet-commands flex shrink-0 flex-nowrap items-center justify-center">
+          <div className="tablet-commands flex min-w-0 flex-nowrap items-center justify-center">
             <Button type="button" variant="outline" onClick={() => openDesktop(true)} className={`${cmdBtn} weighing-view-toggle`}>
               <CycleLabel title={en ? "View" : "Vue"} value={en ? "Full" : "Complète"} />
             </Button>
@@ -984,7 +985,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
           </div>
           <TooltipProvider delayDuration={50}><Tooltip><TooltipTrigger asChild>
             <Button variant="outline" type="button" aria-disabled={!resultsReady}
-              className={`tablet-command shrink-0 border-2 font-bold ${resultsReady ? "weighing-results-ready" : "border-input bg-background text-muted-foreground opacity-60"}`}
+              className={`tablet-command min-w-0 border-2 font-bold ${resultsReady ? "weighing-results-ready" : "border-input bg-background text-muted-foreground opacity-60"}`}
               onClick={() => {
                 if (!resultsReady) { toast.error(lockReason); return; }
                 onCommit(); void navigate({ to: "/resultats" });
