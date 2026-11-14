@@ -895,7 +895,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
               </div>
             </div>
             <div className="relative shrink-0 overflow-hidden" style={{ width: seg.width * octScale * 0.9, height: nativeH * octScale * 0.9 + 2 }}>
-              <div className="pointer-events-none absolute left-1/2 top-8 z-10 -translate-x-1/2"><span className="whitespace-nowrap rounded-md border border-foreground/60 bg-muted px-2 py-1.5 text-[0.9rem] font-bold leading-none text-foreground">Octave {octave + 1}</span></div>
+              <div className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2" style={{ top: 1.05 * 16 * octScale * 0.9 + 4 }}><span className="whitespace-nowrap rounded-md border border-foreground/60 bg-muted px-2 py-1.5 text-[0.9rem] font-bold leading-none text-foreground">Octave {octave + 1}</span></div>
               <div className="tablet-keyboard absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${octScale * 0.9})` }}>
                 <div className="technical-sheet" style={{ width: seg.width, gridTemplateColumns: `${seg.width}px` }}>
                 <div style={{ marginLeft: -seg.left }}>

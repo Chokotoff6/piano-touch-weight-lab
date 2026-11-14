@@ -72,7 +72,7 @@ function Accueil() {
                   ["ANALYSE", ["Comparaison courbes avant/après régulation (Points d'historique, Cibles standards d'usine, données Cloud).", "Diagnostic fin : touches hors tolérance, mode Zoom note à note avec retouche directe.", "Profil et points d'historique d'instrument archivés dans fichier .kw local (100 % hors ligne)."]],
                 ]
             ).map(([title, items]) => (
-              <fieldset key={title as string} className="min-w-0 rounded-lg border border-gray-300 bg-neutral-500/20 backdrop-blur-sm px-4 pb-4 pt-1">
+              <fieldset key={title as string} className="min-w-0 rounded-lg border border-gray-300 bg-neutral-500/20 px-4 pb-4 pt-1">
                 <legend className="px-2 text-lg font-extrabold !text-[#7149ab]">{title as string}</legend>
                 <ul className="list-disc space-y-1 pl-5 marker:font-normal">
                   {(items as string[]).map((t) => <li key={t}><span className="font-medium !text-black">{t}</span></li>)}

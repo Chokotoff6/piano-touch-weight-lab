@@ -345,7 +345,7 @@ export function PianoSheetMirror({
 // Moyennes blanches / noires : deux pavés de taille identique, coins vifs.
 function KeyBadge({ value, black }: { value: string; black?: boolean }) {
   return (
-    <span className={`inline-block w-[4.6rem] rounded-none border px-1 py-0 text-center !text-xs font-medium leading-tight tabular-nums ${black ? "border-[#262626] bg-[#262626] !text-white" : "border-neutral-500 bg-white !text-black"}`}>
+    <span className={`inline-block min-w-[3.2rem] rounded-none border px-1 py-0 text-center !text-xs font-medium leading-tight tabular-nums ${black ? "border-[#3f3f46] bg-[#3f3f46] !text-white" : "border-neutral-500 bg-white !text-black"}`}>
       {value === "—" ? "—" : `${value} gr.`}
     </span>
   );
