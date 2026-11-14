@@ -964,8 +964,10 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             tabIndex={0}
             aria-label={lang === "en" ? "Zoom navigation help" : "Aide à la navigation du zoom"}
             aria-expanded={showZoomHelp}
-            onClick={(event) => { event.stopPropagation(); setShowZoomHelp((visible) => !visible); }}
-            className="cursor-pointer !text-black"
+            onMouseEnter={() => setShowZoomHelp(true)}
+            onMouseLeave={() => setShowZoomHelp(false)}
+            onClick={(event) => event.stopPropagation()}
+            className="cursor-help !text-black"
           >
             <Info size={25.2} strokeWidth={2.5} />
           </span>
@@ -1385,7 +1387,7 @@ const TONE_CLASS: Record<Tone, string> = {
 // Moyennes blanches / noires : deux pavés de taille identique, coins vifs.
 function KeyBadge({ value, black }: { value: string; black?: boolean }) {
   return (
-    <span className={`inline-block w-[4.6rem] rounded-none border px-1 py-0 text-center !text-xs font-medium leading-tight tabular-nums ${black ? "border-black bg-black !text-white" : "border-neutral-500 bg-white !text-black"}`}>
+    <span className={`inline-block w-[4.6rem] rounded-none border px-1 py-0 text-center !text-xs font-medium leading-tight tabular-nums ${black ? "border-[#262626] bg-[#262626] !text-white" : "border-neutral-500 bg-white !text-black"}`}>
       {value === "—" ? "—" : `${value} gr.`}
     </span>
   );
@@ -1396,9 +1398,8 @@ function AverageBlock({ label, global, white, black, tone, alert = false }: { la
   const toneClass = TONE_CLASS[tone];
   const val = (v: string) => v === "—" ? <span className={toneClass}>—</span> : <>{v}<span className="!text-xs !font-medium"> gr.</span></>;
   return (
-    <div className="average-block min-w-0 flex h-full flex-col justify-end rounded bg-muted px-2 py-1.5 text-center">
-      <div className="average-label font-bold text-foreground">{label}</div>
-      <div className={`mt-1 average-value font-bold tabular-nums ${alert ? "!text-red-600" : toneClass}`}>{val(global)}</div>
+    <div aria-label={label} className="average-block min-w-0 flex h-full flex-col justify-center rounded bg-muted px-2 py-1 text-center">
+      <div className={`average-value font-bold tabular-nums ${alert ? "!text-red-600" : toneClass}`}>{val(global)}</div>
       <div className={`mt-0.5 flex items-baseline justify-center gap-1.5 text-[0.65rem] tabular-nums ${toneClass}`}>
         <span aria-label={lang === "en" ? "White" : "Blanches"}><KeyBadge value={white} /></span>
         <span className={toneClass}>/</span>
@@ -1444,6 +1445,20 @@ export function AverageRow({ chartData, source, hasData, csv = false }: { chartD
   );
 }
 
+// En-tête commun : les 4 types de mesure, une seule fois en haut du cadre.
+function AverageHeaderRow() {
+  const lang = useLang();
+  return (
+    <div className="average-grid mb-2 grid grid-cols-4 gap-3">
+      {COLUMNS.map(({ key, label, labelEn }) => (
+        <div key={key} className="flex min-h-[1.9rem] items-center justify-center rounded bg-muted px-2 py-1 text-center text-[0.72rem] font-bold uppercase tracking-wide text-foreground">
+          {lang === "en" ? labelEn : label}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Rangée Standard : valeur globale théorique centrée, sans détail Blanches/Noires.
 const STD_KEYS: { key: MetricKey; globalKey: SeriesKey }[] = [
   { key: "wd", globalKey: "stdWd" },
@@ -1462,9 +1477,8 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
         const label = lang === "en" ? col.labelEn : col.label;
         const value = seriesAverage(chartData, globalKey);
         return (
-          <div key={key} className="average-block min-w-0 flex h-full flex-col justify-end rounded bg-muted px-2 py-1.5 text-center">
-            <div className="average-label font-bold text-foreground">{label}</div>
-            <div className="mt-1 average-value font-bold tabular-nums !text-green-600">
+          <div key={key} aria-label={label} className="average-block min-w-0 flex h-full flex-col justify-center rounded bg-muted px-2 py-1 text-center">
+            <div className="average-value font-bold tabular-nums !text-green-600">
               {value === "—" ? <span className="!text-green-600">—</span> : <>{value}<span className="!text-xs !font-medium"> gr.</span></>}
             </div>
             <div className="mt-0.5 flex items-baseline justify-center gap-1.5 tabular-nums !text-green-600">
@@ -1480,7 +1494,7 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
   );
 }
 
-const PILL_BASE = "h-[31px] min-h-[31px] max-h-[31px] min-w-0 flex-none shrink-0 rounded-full border px-1.5 py-0 text-[0.68rem] leading-none transition-colors whitespace-nowrap";
+const PILL_BASE = "h-[25px] min-h-[25px] max-h-[25px] min-w-0 flex-none shrink-0 rounded-full border px-1.5 py-0 text-[0.68rem] leading-none transition-colors whitespace-nowrap";
 const pillClass = (active: boolean) => `${PILL_BASE} ${active ? "border-black bg-gray-100 font-semibold text-slate-700" : "border-gray-200 bg-white text-gray-400 hover:border-gray-300 hover:text-gray-500"}`;
 // Boutons cycliques Oui/Non (CLOUD, CIBLE, IMPORT CSV) : bordure noire quand actif.
 const cyclePillClass = (active: boolean) =>
@@ -2254,25 +2268,30 @@ function Comparer() {
               
               <div ref={averagesRef} data-pdf-expand data-pdf-lock-w="980" className="sticky top-[127px] z-50 mb-[50px] w-full bg-card pb-2 relative">
                 <Frame titleClassName="absolute -top-3.5 left-4 max-w-[calc(100%-2rem)] whitespace-nowrap bg-card px-2 text-sm xl:text-lg font-bold text-foreground" title={<span className="flex min-w-0 items-baseline gap-2"><span className="shrink-0">{en ? "Averages" : "Moyennes"}</span><span className="shrink-0 text-slate-400">-</span><span className="summary-text block min-w-0 flex-1 truncate" title={typeof summary === "string" ? summary : undefined}>{summary}</span></span>} className="h-fit">
-                  {/* Séparateurs affichés uniquement si au moins deux sources sont présentes. */}
-                  <div className={(comparedPiano !== null || sourceMode === "cloud" || standardEnabled) ? "mb-3 border-b border-gray-400 pb-3" : ""}><div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">{en ? "Current piano" : "Piano actuel"}</div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
-                  {comparedPiano !== null && (
-                    <div className={standardEnabled ? "mb-3 border-b border-gray-400 pb-3" : ""}>
-                      <div className={`mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide ${comparedPiano ? "!text-blue-600" : "!text-orange-600"}`}>{comparedPiano ? <>IMPORT CSV : <span className="normal-case">{csvIdentity}{csvStats}</span></> : <>Cloud</>}{cloudActive && <span className="ml-2 normal-case !text-orange-600">{cloudCounterText}</span>}</div>
-                      <AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} csv={comparedPiano !== null} />
-                    </div>
-                  )}
+                  <AverageHeaderRow />
+                  <div><div className="mb-1 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">{en ? "Current piano" : "Piano actuel"}</div><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></div>
                   {standardEnabled && (
-                    <div className={(comparedPiano === null && sourceMode === "cloud") ? "mb-3 border-b border-gray-400 pb-3" : ""}>
-                      <div className="mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-green-600">{displayStandardLabel}<BrandTargetInfoIcon variant={/standard/i.test(standardLabel) ? "standard" : "brand"} /></div>
-
+                    <div className="mt-2 border-t border-gray-400 pt-2">
+                      <div className="mb-1 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-green-600">{displayStandardLabel}<BrandTargetInfoIcon variant={/standard/i.test(standardLabel) ? "standard" : "brand"} /></div>
                       <StandardRow chartData={chartData} />
                     </div>
                   )}
+                  {comparedPiano !== null && (
+                    <div className="mt-2 border-t border-gray-400 pt-2">
+                      <div className="mb-1 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-blue-600">{en ? "History point" : "Point d'historique"} : <span className="normal-case">{csvIdentity}{csvStats}</span></div>
+                      <AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} csv />
+                    </div>
+                  )}
                   {(comparedPiano === null && sourceMode === "cloud") && (
-                    <div >
-                      <div className={`mb-1.5 px-1 text-[0.7rem] font-semibold uppercase tracking-wide ${comparedPiano ? "!text-blue-600" : "!text-orange-600"}`}>{comparedPiano ? <>IMPORT CSV : <span className="normal-case">{csvIdentity}{csvStats}</span></> : <>Cloud</>}{cloudActive && <span className="ml-2 normal-case !text-orange-600">{cloudCounterText}</span>}</div>
-                      <AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} csv={comparedPiano !== null} />
+                    <div className="mt-2 border-t border-gray-400 pt-2">
+                      {comparisonProfile !== null ? (
+                        <>
+                          <div className="mb-1 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-orange-600">Cloud{cloudActive && <span className="ml-2 normal-case !text-orange-600">{cloudCounterText}</span>}</div>
+                          <AverageRow chartData={chartData} source="ref" hasData />
+                        </>
+                      ) : (
+                        <div className="px-1 text-[0.7rem] font-semibold !text-orange-600">☁ CLOUD : <span className="font-normal">{en ? "Insufficient sample" : "Échantillon insuffisant"}{cloudActive ? ` — ${cloudCounterText}` : ""}</span></div>
+                      )}
                     </div>
                   )}
                 </Frame>
@@ -2285,7 +2304,7 @@ function Comparer() {
               </div>
 
               <div ref={liveChartsRef}>
-                <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? historyLabel : "Cloud"} comparisonShort={comparedPiano ? historyLabel : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible standard"} onCycleKeyFilter={cycleKeyFilter} currentBaseName={en ? "Current piano" : "Piano actuel"} showSourceControls={mine !== null && sourceMode === "cloud" && comparedPiano === null && standardEnabled && cloudProfile !== null} />
+                <ComparisonChart chartData={chartData} keyFilter={keyFilter} comparisonLabel={comparedPiano ? historyLabel : "Cloud"} comparisonShort={comparedPiano ? historyLabel : "Cloud"} csvActive={comparedPiano !== null} targetLabel={standardEnabled ? standardLabel : "Cible standard"} onCycleKeyFilter={cycleKeyFilter} currentBaseName={en ? "Current piano" : "Piano actuel"} showSourceControls={mine !== null && standardEnabled && (comparedPiano !== null || (sourceMode === "cloud" && cloudProfile !== null))} />
               </div>
             </div>
 

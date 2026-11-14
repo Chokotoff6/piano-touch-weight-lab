@@ -507,8 +507,13 @@ button, a[data-slot="button"], .app-command {
     padding-inline: clamp(6px, 0.85cqw, 16px);
     gap: clamp(4px, 0.5vw, 8px);
     gap: clamp(4px, 0.5cqw, 8px);
-    font-size: 0.75rem;
+    font-size: clamp(0.62rem, 0.8vw, 0.75rem);
     white-space: nowrap;
+  }
+  .tablet-label-short { display: none; }
+  @media (max-width: 899px) {
+    .tablet-label-long { display: none; }
+    .tablet-label-short { display: inline; }
   }
   .tablet-keyboard .technical-labels {
     font-size: 0.55rem;
@@ -767,5 +772,11 @@ body {
 @media (min-width: 640px) {
   .screen-guard {
     display: none !important;
+  }
+}
+/* Smartphone en paysage : écran tactile de faible hauteur (tablettes ≥ 700 px). */
+@media (pointer: coarse) and (max-height: 500px) {
+  .screen-guard {
+    display: flex !important;
   }
 }

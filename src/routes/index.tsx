@@ -5,7 +5,7 @@ import logoKwText from "@/assets/logo-kw-text.svg.asset.json";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "KeyWeight — Outil de mesure et diagnostic du touché de piano" },
+      { title: "KeyWeight — Outil de mesure et de diagnostic du touché de piano" },
       {
         name: "description",
         content:
@@ -38,7 +38,7 @@ function Accueil() {
           <div
             role="img"
             aria-label="KeyWeight"
-            className="mb-6 h-12"
+            className="mb-2 h-12"
             style={{
               aspectRatio: "var(--kw-text-ratio, 6.5)",
               backgroundColor: "#7149ab",
@@ -53,7 +53,7 @@ function Accueil() {
             }}
           />
           <h1 className="text-2xl font-semibold leading-snug !text-black">
-            {en ? "Piano touch measurement and diagnostic tool" : "Outil de mesure et diagnostic du touché de piano"}
+            {en ? "Piano touch measurement and diagnostic tool" : "Outil de mesure et de diagnostic du touché de piano"}
           </h1>
         </header>
 
@@ -67,9 +67,9 @@ function Accueil() {
                   ["ANALYSIS", ["Comparison: before/after regulation, Standard targets and Cloud (collaborative database).", "Diagnosis: Zoom mode with out-of-tolerance alerts and direct editing."]],
                 ]
               : [
-                  ["PESÉE", ["Saisie assistée : pavé tactile, avance automatique, contrôles de cohérence.", "Mode rapide Do/Do#, filtres de saisie sélective N/B - PD/PR.", "Vue Complète / Octave. Adieu tableurs Excel et feuilles volantes !"]],
-                  ["BILAN", ["Tableau de bord interactif : courbes et moyennes par couleur de touche.", "Sauvegarde historique régulations dans fichier .kw local (100 % hors ligne).", "Rapports PDF détaillés pour devis et certification."]],
-                  ["ANALYSE", ["Comparaison : avant/après régulation, Cibles standard et Cloud (base de donnée collaborative).", "Diagnostic : mode Zoom avec alertes hors tolérance et retouche directe."]],
+                  ["PESÉE", ["Adieu tableurs Excel et feuilles volantes !", "Saisie assistée : pavé tactile, avance automatique, contrôles de cohérence.", "Mode rapide Do/Do#, filtres d'affichage sélectif N/B - PD/PR.", "Vue Complète / Octave."]],
+                  ["BILAN", ["Tableau de bord interactif : poids & courbes (PD-PR-Friction et PB).", "Import/export de fiche d'instrument.", "Rapports PDF détaillés pour devis et certification."]],
+                  ["ANALYSE", ["Comparaison courbes avant/après régulation (Points d'historique, Cibles standards d'usine, données Cloud).", "Diagnostic fin : touches hors tolérance, mode Zoom note à note avec retouche directe.", "Profil et points d'historique d'instrument archivés dans fichier .kw local (100 % hors ligne)."]],
                 ]
             ).map(([title, items]) => (
               <fieldset key={title as string} className="min-w-0 rounded-lg border border-gray-300 bg-neutral-500/20 backdrop-blur-sm px-4 pb-4 pt-1">
