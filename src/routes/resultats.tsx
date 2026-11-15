@@ -4,6 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   AverageRow,
+  AverageHeaderRow,
+  AverageGuideLines,
+  AverageFrame,
   ComparisonChart,
   Frame,
 } from "@/routes/comparer";
@@ -483,16 +486,16 @@ function Resultats() {
           <div ref={averagesRef} className="sticky top-[127px] z-50 mb-[50px] w-full bg-white pb-2 relative">
               <Frame
                 titleClassName="absolute -top-4 left-4 max-w-[calc(100%-2rem)] whitespace-nowrap bg-card px-2 text-sm xl:text-lg font-bold text-foreground"
-                title={
-                  <span className="flex min-w-0 items-baseline gap-2">
-                    <span className="shrink-0">{en ? "Averages" : "Moyennes"}</span>
-                    <span className="shrink-0 text-slate-400">-</span>
-                    <span className="summary-text block min-w-0 flex-1 truncate" title={summary.line}>{summary.line}</span>
-                  </span>
-                }
+                title={en ? "Averages" : "Moyennes"}
                 className="h-fit"
               >
-                <AverageRow chartData={chartData} source="cur" hasData={hasData} />
+                <div className="relative">
+                  <AverageGuideLines />
+                  <AverageHeaderRow />
+                  <AverageFrame strong className="mt-[26px]" name={en ? "Current piano" : "Piano actuel"} detail={<span title={summary.line}>{summary.line}</span>}>
+                    <AverageRow chartData={chartData} source="cur" hasData={hasData} />
+                  </AverageFrame>
+                </div>
               </Frame>
           </div>
 
