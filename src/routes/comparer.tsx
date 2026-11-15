@@ -1412,7 +1412,7 @@ function DeltaValue({ delta, tolerance }: { delta: number; tolerance: number }) 
   return <span className={`ml-2 text-xs font-semibold ${ok ? "!text-green-700" : "!text-orange-700"}`}>{sign}{Math.abs(delta).toFixed(1)}</span>;
 }
 
-function AverageBlock({ label, global, white, black, tone, delta, tolerance = 0 }: { label: string; global: string; white: string; black: string; tone: Tone; alert?: boolean; delta?: number; tolerance?: number }) {
+function AverageBlock({ label, global, white, black, tone, delta, tolerance = 0 }: { label: string; global: string; white: string; black: string; tone: Tone; alert?: boolean; delta?: number | undefined; tolerance?: number }) {
   const lang = useLang();
   const toneClass = TONE_CLASS[tone];
   return (
@@ -1492,7 +1492,7 @@ export function AverageGuideLines() {
 }
 
 /** Cadre fin d'un profil, titre + résumé incrustés dans la bordure. */
-export function AverageFrame({ strong = false, name, detail, nameClass = "!text-black", className = "mt-[23px]", children }: { strong?: boolean; name: ReactNode; detail?: ReactNode; nameClass?: string; className?: string; children?: ReactNode }) {
+export function AverageFrame({ strong = false, name, detail, nameClass = "!text-black", className = "mt-[23px]", children }: { strong?: boolean; name: ReactNode; detail?: ReactNode | undefined; nameClass?: string; className?: string; children?: ReactNode }) {
   return (
     <fieldset className={`relative z-[1] rounded-lg bg-card px-3 pb-2 pt-0 ${strong ? "border-[1.5px] border-neutral-800" : "border-[0.5px] border-neutral-500"} ${className}`}>
       <legend className="ml-2 max-w-[calc(100%-1rem)] truncate px-1 text-[0.7rem] leading-tight">
