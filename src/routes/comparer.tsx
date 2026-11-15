@@ -1782,6 +1782,7 @@ function Comparer() {
   const en = lang === "en";
   const [sourceMode, setSourceMode] = useState<SourceMode>("none");
   const [standardEnabled, setStandardEnabled] = useState(false);
+  const [deltaRef, setDeltaRef] = useState<DeltaRef>("none");
   // Le mode « Réel » est supprimé sur Comparer : le graphique démarre et reste
   // en rendu lissé (Lissé 3 points / Lissé+ 5 points), quel que soit le Mode Rapide.
   // Arrivée sur Comparer : les 4 graphiques démarrent en « N/B : séparées ».
@@ -2270,6 +2271,9 @@ function Comparer() {
         : `${cloudSampleCount} profil(s) de ${brandModel} partagé(s) par les utilisateurs`;
 
   // Étiquette de la cible constructeur, traduite à l'affichage (marque conservée).
+  useEffect(() => {
+    if ((deltaRef === "std" && !standardEnabled) || (deltaRef === "hist" && comparedPiano === null)) setDeltaRef("none");
+  }, [deltaRef, standardEnabled, comparedPiano]);
   const displayStandardLabel = !en
     ? standardLabel
     : standardLabel.startsWith("CIBLE : GÉNÉRIQUE ")
@@ -2331,21 +2335,22 @@ function Comparer() {
               
               <div ref={averagesRef} data-pdf-expand data-pdf-lock-w="980" className="sticky top-[127px] z-50 mb-[50px] w-full bg-card pb-2 relative">
                 <Frame titleClassName="absolute -top-3.5 left-4 max-w-[calc(100%-2rem)] whitespace-nowrap bg-card px-2 text-sm xl:text-lg font-bold text-foreground" title={en ? "Averages" : "Moyennes"} className="h-fit">
+                  <DeltaPill value={deltaRef} onChange={setDeltaRef} stdAvailable={standardEnabled} histAvailable={comparedPiano !== null} />
                   <div className="relative">
-                    <div aria-hidden="true" className="pointer-events-none absolute inset-0 grid grid-cols-4 gap-3 px-[13px]">{[0, 1, 2, 3].map((i) => <div key={i} className="rounded bg-muted" />)}</div>
+                    <AverageGuideLines />
                     <AverageHeaderRow />
-                    <fieldset className="relative mt-2 rounded-lg border border-black px-3 pb-2 pt-0"><legend className="ml-2 max-w-[calc(100%-1rem)] truncate px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">{en ? "Current piano" : "Piano actuel"} : <span className="summary-text normal-case font-medium" title={typeof summary === "string" ? summary : undefined}>{summary}</span></legend><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></fieldset>
+                    <AverageFrame strong className="mt-[26px]" name={en ? "Current piano" : "Piano actuel"} detail={<>{summary}{deltaRef !== "none" && (deltaRef === "std" ? (en ? " · gap vs target" : " · écart vs cible") : (en ? " · gap vs history" : " · écart vs historique"))}</>}><AverageRow chartData={chartData} source="cur" hasData={mine !== null} deltaRef={deltaRef} /></AverageFrame>
                     {standardEnabled && (
-                      <fieldset className="relative mt-2 rounded-lg border border-black px-3 pb-2 pt-0"><legend className="ml-2 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-green-600">{displayStandardLabel}<BrandTargetInfoIcon variant={/standard/i.test(standardLabel) ? "standard" : "brand"} /></legend><StandardRow chartData={chartData} /></fieldset>
+                      <AverageFrame nameClass="!text-green-600" name={<>{displayStandardLabel}<BrandTargetInfoIcon variant={/standard/i.test(standardLabel) ? "standard" : "brand"} /></>}><StandardRow chartData={chartData} /></AverageFrame>
                     )}
                     {comparedPiano !== null && (
-                      <fieldset className="relative mt-2 rounded-lg border border-black px-3 pb-2 pt-0"><legend className="ml-2 max-w-[calc(100%-1rem)] truncate px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-blue-600">{en ? "History point" : "Point d'historique"} : <span className="normal-case">{csvIdentity}{csvStats}</span></legend><AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} csv /></fieldset>
+                      <AverageFrame nameClass="!text-blue-600" name={en ? "History point" : "Point d'historique"} detail={<>{csvIdentity}{csvStats}</>}><AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} csv /></AverageFrame>
                     )}
                     {(comparedPiano === null && sourceMode === "cloud") && (
                       comparisonProfile !== null ? (
-                        <fieldset className="relative mt-2 rounded-lg border border-black px-3 pb-2 pt-0"><legend className="ml-2 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-orange-600">Cloud{cloudActive && <span className="ml-2 normal-case !text-orange-600">{cloudCounterText}</span>}</legend><AverageRow chartData={chartData} source="ref" hasData /></fieldset>
+                        <AverageFrame nameClass="!text-orange-600" name="Cloud" detail={cloudActive ? cloudCounterText : undefined}><AverageRow chartData={chartData} source="ref" hasData /></AverageFrame>
                       ) : (
-                        <fieldset className="relative mt-2 rounded-lg border border-black px-3 pb-2 pt-0"><legend className="ml-2 px-1 text-[0.7rem] font-semibold !text-orange-600">☁ CLOUD : <span className="font-normal">{en ? "Insufficient sample" : "Échantillon insuffisant"}{cloudActive ? ` — ${cloudCounterText}` : ""}</span></legend></fieldset>
+                        <AverageFrame nameClass="!text-orange-600" name="☁ Cloud" detail={<>{en ? "Insufficient sample" : "Échantillon insuffisant"}{cloudActive ? ` — ${cloudCounterText}` : ""}</>} />
                       )
                     )}
                   </div>
