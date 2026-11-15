@@ -1383,27 +1383,47 @@ const TONE_CLASS: Record<Tone, string> = {
   std: "!text-green-600",
 };
 
-// Bloc de moyenne façon page Saisie : moyenne globale en grand + détail Blanches/Noires.
-// Moyennes blanches / noires : deux pavés de taille identique, coins vifs.
+// Moyennes blanches / noires : deux pavés de taille identique, coins vifs, gris #808080.
 function KeyBadge({ value, black }: { value: string; black?: boolean }) {
   return (
-    <span className={`inline-block min-w-[3.2rem] rounded-none border px-1 py-0 text-center !text-xs font-medium leading-tight tabular-nums ${black ? "border-[#3f3f46] bg-[#3f3f46] !text-white" : "border-neutral-500 bg-white !text-black"}`}>
+    <span className={`inline-block min-w-[2.6rem] rounded-none border px-0.5 py-0 text-center !text-xs font-medium leading-tight tabular-nums ${black ? "border-[#808080] bg-[#808080] !text-white" : "border-[#808080] bg-white !text-black"}`}>
       {value === "—" ? "—" : `${value} gr.`}
     </span>
   );
 }
 
-function AverageBlock({ label, global, white, black, tone, alert = false }: { label: string; global: string; white: string; black: string; tone: Tone; alert?: boolean }) {
+// Grand chiffre : entier et point à 24 px, décimale à 16 px.
+function BigValue({ value, toneClass }: { value: string; toneClass: string }) {
+  if (value === "—") return <span className={toneClass}>—</span>;
+  const [int, dec] = value.split(".");
+  return (
+    <span className={`font-bold tabular-nums leading-none ${toneClass}`}>
+      <span className="text-[24px]">{int}{dec !== undefined ? "." : ""}</span>
+      {dec !== undefined && <span className="text-[16px]">{dec}</span>}
+      <span className="!text-xs !font-medium"> gr.</span>
+    </span>
+  );
+}
+
+function DeltaValue({ delta, tolerance }: { delta: number; tolerance: number }) {
+  if (!Number.isFinite(delta)) return null;
+  const ok = Math.abs(delta) <= tolerance;
+  const sign = delta > 0 ? "+" : delta < 0 ? "−" : "±";
+  return <span className={`ml-2 text-xs font-semibold ${ok ? "!text-green-700" : "!text-orange-700"}`}>{sign}{Math.abs(delta).toFixed(1)}</span>;
+}
+
+function AverageBlock({ label, global, white, black, tone, delta, tolerance = 0 }: { label: string; global: string; white: string; black: string; tone: Tone; alert?: boolean; delta?: number; tolerance?: number }) {
   const lang = useLang();
   const toneClass = TONE_CLASS[tone];
-  const val = (v: string) => v === "—" ? <span className={toneClass}>—</span> : <>{v}<span className="!text-xs !font-medium"> gr.</span></>;
   return (
-    <div aria-label={label} className="average-block min-w-0 flex h-full flex-col justify-center rounded bg-transparent px-2 py-1 text-center">
-      <div className={`average-value font-bold tabular-nums ${alert ? "!text-red-600" : toneClass}`}>{val(global)}</div>
-      <div className={`mt-0.5 flex items-baseline justify-center gap-1.5 text-[0.65rem] tabular-nums ${toneClass}`}>
-        <span aria-label={lang === "en" ? "White" : "Blanches"}><KeyBadge value={white} /></span>
-        <span className={toneClass}>/</span>
-        <span aria-label={lang === "en" ? "Black" : "Noires"}><KeyBadge value={black} black /></span>
+    <div aria-label={label} className="average-block flex min-w-0 justify-center">
+      <div className="inline-flex flex-col items-center rounded-md bg-slate-100 px-2 py-1 text-center">
+        <div className="whitespace-nowrap"><BigValue value={global} toneClass={toneClass} />{delta !== undefined && <DeltaValue delta={delta} tolerance={tolerance} />}</div>
+        <div className={`mt-1 flex items-baseline justify-center gap-1 tabular-nums ${toneClass}`}>
+          <span aria-label={lang === "en" ? "White" : "Blanches"}><KeyBadge value={white} /></span>
+          <span className={`!text-xs ${toneClass}`}>/</span>
+          <span aria-label={lang === "en" ? "Black" : "Noires"}><KeyBadge value={black} black /></span>
+        </div>
       </div>
     </div>
   );
@@ -1417,18 +1437,20 @@ const AVG_KEYS: Record<MetricKey, { cur: [SeriesKey, SeriesKey, SeriesKey]; ref:
   balance: { cur: ["balCur", "balCurW", "balCurB"], ref: ["sameBal", "sameBalW", "sameBalB"] },
 };
 
-export function AverageRow({ chartData, source, hasData, csv = false }: { chartData: ChartPoint[]; source: "cur" | "ref"; hasData: boolean; csv?: boolean }) {
+export type DeltaRef = "none" | "std" | "hist";
+
+export function AverageRow({ chartData, source, hasData, csv = false, deltaRef = "none" }: { chartData: ChartPoint[]; source: "cur" | "ref"; hasData: boolean; csv?: boolean; deltaRef?: DeltaRef }) {
   const lang = useLang();
   const { corridorG } = usePreferences();
   return (
     <div className="average-grid grid grid-cols-4 gap-3">
       {COLUMNS.map(({ key, label, labelEn }) => {
         const [globalKey, whiteKey, blackKey] = AVG_KEYS[key][source];
-        // Corridor : moyenne du piano actuel en rouge si elle s'écarte de la Cible standard de plus de ±N g.
-        const stdKey = STD_KEYS.find((s) => s.key === key)?.globalKey;
-        const cur = hasData ? Number(seriesAverage(chartData, globalKey)) : NaN;
-        const std = stdKey ? Number(seriesAverage(chartData, stdKey)) : NaN;
-        const alert = false; void cur; void std; void corridorG;
+        let delta: number | undefined;
+        if (source === "cur" && hasData && deltaRef !== "none") {
+          const refKey = deltaRef === "std" ? STD_KEYS.find((s) => s.key === key)!.globalKey : AVG_KEYS[key].ref[0];
+          delta = Number(seriesAverage(chartData, globalKey)) - Number(seriesAverage(chartData, refKey));
+        }
         return (
           <AverageBlock
             key={key}
@@ -1437,7 +1459,8 @@ export function AverageRow({ chartData, source, hasData, csv = false }: { chartD
             global={hasData ? seriesAverage(chartData, globalKey) : "—"}
             white={hasData ? seriesAverage(chartData, whiteKey) : "—"}
             black={hasData ? seriesAverage(chartData, blackKey) : "—"}
-            alert={alert}
+            delta={delta}
+            tolerance={corridorG}
           />
         );
       })}
@@ -1445,13 +1468,13 @@ export function AverageRow({ chartData, source, hasData, csv = false }: { chartD
   );
 }
 
-// En-tête commun : les 4 types de mesure, une seule fois en haut du cadre.
-function AverageHeaderRow() {
+// En-tête : 4 cartouches gris des types de mesure.
+export function AverageHeaderRow() {
   const lang = useLang();
   return (
-    <div className="average-grid relative mb-1 grid grid-cols-4 gap-3 px-[13px]">
+    <div className="average-grid relative grid grid-cols-4 gap-3 px-[13px]">
       {COLUMNS.map(({ key, label, labelEn }) => (
-        <div key={key} className="flex min-h-[2.2rem] items-center justify-center px-2 py-1 text-center text-sm font-extrabold uppercase tracking-wide !text-black">
+        <div key={key} className="flex min-h-[1.9rem] items-center justify-center rounded-lg bg-neutral-300 px-2 py-0.5 text-center text-[0.9rem] font-black uppercase leading-tight tracking-wide !text-black">
           {lang === "en" ? labelEn : label}
         </div>
       ))}
@@ -1459,7 +1482,29 @@ function AverageHeaderRow() {
   );
 }
 
-// Rangée Standard : valeur globale théorique centrée, sans détail Blanches/Noires.
+/** Une ligne verticale de 2 px par colonne, derrière les cadres opaques. */
+export function AverageGuideLines() {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-[1.9rem] bottom-0 grid grid-cols-4 gap-3 px-[13px]">
+      {[0, 1, 2, 3].map((i) => <div key={i} className="mx-auto h-full w-[2px] bg-neutral-300" />)}
+    </div>
+  );
+}
+
+/** Cadre fin d'un profil, titre + résumé incrustés dans la bordure. */
+export function AverageFrame({ strong = false, name, detail, nameClass = "!text-black", className = "mt-[23px]", children }: { strong?: boolean; name: ReactNode; detail?: ReactNode; nameClass?: string; className?: string; children?: ReactNode }) {
+  return (
+    <fieldset className={`relative z-[1] rounded-lg bg-card px-3 pb-2 pt-0 ${strong ? "border-[1.5px] border-neutral-800" : "border-[0.5px] border-neutral-500"} ${className}`}>
+      <legend className="ml-2 max-w-[calc(100%-1rem)] truncate px-1 text-[0.7rem] leading-tight">
+        <span className={`font-bold uppercase tracking-wide ${nameClass}`}>{name}</span>
+        {detail ? <span className="text-[11px] italic normal-case !text-neutral-400"> · {detail}</span> : null}
+      </legend>
+      {children}
+    </fieldset>
+  );
+}
+
+// Rangée Standard : valeur globale théorique + Blanches/Noires.
 const STD_KEYS: { key: MetricKey; globalKey: SeriesKey }[] = [
   { key: "wd", globalKey: "stdWd" },
   { key: "wa", globalKey: "stdWa" },
@@ -1474,22 +1519,40 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
     <div className="average-grid grid grid-cols-4 gap-3">
       {STD_KEYS.map(({ key, globalKey }) => {
         const col = COLUMNS.find((c) => c.key === key)!;
-        const label = lang === "en" ? col.labelEn : col.label;
-        const value = seriesAverage(chartData, globalKey);
         return (
-          <div key={key} aria-label={label} className="average-block min-w-0 flex h-full flex-col justify-center rounded bg-transparent px-2 py-1 text-center">
-            <div className="average-value font-bold tabular-nums !text-green-600">
-              {value === "—" ? <span className="!text-green-600">—</span> : <>{value}<span className="!text-xs !font-medium"> gr.</span></>}
-            </div>
-            <div className="mt-0.5 flex items-baseline justify-center gap-1.5 tabular-nums !text-green-600">
-              <span aria-label={lang === "en" ? "White" : "Blanches"}><KeyBadge value={seriesAverage(whites, globalKey)} /></span>
-              <span className="!text-xs font-medium">/</span>
-              <span aria-label={lang === "en" ? "Black" : "Noires"}><KeyBadge value={seriesAverage(blacks, globalKey)} black /></span>
-            </div>
-          </div>
-
+          <AverageBlock key={key} label={lang === "en" ? col.labelEn : col.label} tone="std" global={seriesAverage(chartData, globalKey)} white={seriesAverage(whites, globalKey)} black={seriesAverage(blacks, globalKey)} />
         );
       })}
+    </div>
+  );
+}
+
+/** Pilule Δ incrustée sur la bordure haute : menu Aucun / vs Cible / vs Historique. */
+function DeltaPill({ value, onChange, stdAvailable, histAvailable }: { value: DeltaRef; onChange: (v: DeltaRef) => void; stdAvailable: boolean; histAvailable: boolean }) {
+  const [open, setOpen] = useState(false);
+  const en = useLang() === "en";
+  const items: { v: DeltaRef; label: string }[] = [
+    { v: "none", label: en ? "None" : "Aucun" },
+    ...(stdAvailable ? [{ v: "std" as DeltaRef, label: en ? "vs Target" : "vs Cible" }] : []),
+    ...(histAvailable ? [{ v: "hist" as DeltaRef, label: en ? "vs History" : "vs Historique" }] : []),
+  ];
+  const active = value !== "none";
+  return (
+    <div data-pdf-hide className="absolute -top-[9px] right-4 z-[60]" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <button type="button" onClick={() => setOpen((o) => !o)} className={`inline-flex h-[18px] min-h-0 items-center justify-center rounded-full border px-2.5 py-0 text-xs font-medium leading-none ${active ? "border-slate-900 bg-slate-900 !text-white" : "border-neutral-400 bg-white !text-black"}`}>
+        <span className="-mt-px">{value === "std" ? (en ? "Δ target" : "Δ cible") : value === "hist" ? (en ? "Δ hist." : "Δ histo.") : "Δ"}</span>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full pt-1">
+          <div className="min-w-[8rem] rounded-lg border bg-white p-1 shadow-md">
+            {items.map((it) => (
+              <button key={it.v} type="button" onClick={() => { onChange(it.v); setOpen(false); }} className="flex w-full items-center gap-1.5 rounded px-2.5 py-1 text-left text-xs !text-black hover:bg-slate-100">
+                <span className="w-3">{value === it.v ? "✓" : ""}</span>{it.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
