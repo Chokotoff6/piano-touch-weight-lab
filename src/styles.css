@@ -768,15 +768,3 @@ body {
   .average-block > div { column-gap: 0.25rem; }
 }
 
-/* iOS 15 WebKit ignore la syntaxe range de Tailwind v4 : syntaxe classique. */
-@media (min-width: 640px) {
-  .screen-guard {
-    display: none !important;
-  }
-}
-/* Smartphone en paysage : écran tactile de faible hauteur (tablettes ≥ 700 px). */
-@media (pointer: coarse) and (max-height: 500px) {
-  .screen-guard {
-    display: flex !important;
-  }
-}

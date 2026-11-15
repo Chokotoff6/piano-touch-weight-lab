@@ -283,9 +283,9 @@ function ToleranceButton({ zoomed, lang }: { zoomed: boolean; lang: string }) {
       data-pdf-hide
       title={lang === "en" ? "Tolerance" : "Tolérance"}
       onClick={(event) => event.stopPropagation()}
-      className={`flex cursor-text items-center rounded-full [border-width:1.3px] !border-black bg-white font-medium !text-black ${zoomed ? "gap-[0.45rem] px-[0.9rem] py-[0.225rem] text-[1.224rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"}`}
+      className={`flex cursor-text items-center rounded-full [border-width:1.3px] !border-black bg-white font-medium !text-black ${zoomed ? "gap-[0.35rem] px-[0.65rem] py-[0.16rem] text-[0.85rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"}`}
     >
-      <AlertTriangle size={zoomed ? 25.2 : 14} strokeWidth={2.5} className="shrink-0 !text-black" />
+      <AlertTriangle size={zoomed ? 17 : 14} strokeWidth={2.5} className="shrink-0 !text-black" />
       <span className="!text-black">±</span>
       <input
         type="text"
@@ -901,9 +901,9 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             type="button"
             aria-label={bwLabel}
             onClick={() => cycleFor(family.id)}
-            className={`flex items-center rounded-full [border-width:1.3px] !border-black bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-[0.45rem] px-[0.9rem] py-[0.225rem] text-[1.224rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"}`}
+            className={`flex items-center rounded-full [border-width:1.3px] !border-black bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-[0.35rem] px-[0.65rem] py-[0.16rem] text-[0.85rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"}`}
           >
-            <RefreshCw size={zoomed ? 25.2 : 14} strokeWidth={2.5} className="shrink-0" />
+            <RefreshCw size={zoomed ? 17 : 14} strokeWidth={2.5} className="shrink-0" />
             <span className="!text-black">{bwLabel}</span>
           </button>
           <button
@@ -913,9 +913,9 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               event.stopPropagation();
               cycleSmoothMode();
             }}
-            className={`flex items-center rounded-full [border-width:1.3px] !border-black bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-[0.45rem] px-[0.9rem] py-[0.225rem] text-[1.224rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"} ${smoothMode === "real" ? "opacity-60" : "opacity-100"}`}
+            className={`flex items-center rounded-full [border-width:1.3px] !border-black bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-[0.35rem] px-[0.65rem] py-[0.16rem] text-[0.85rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"} ${smoothMode === "real" ? "opacity-60" : "opacity-100"}`}
           >
-            <Waves size={zoomed ? 25.2 : 14} strokeWidth={2.5} className="shrink-0" />
+            <Waves size={zoomed ? 17 : 14} strokeWidth={2.5} className="shrink-0" />
             <span className="!text-black">
               {lang === "en" ? "Mode: " : "Mode : "}{smoothMode === "real" ? (lang === "en" ? "Raw" : "Réel") : smoothMode === "smooth" ? (lang === "en" ? "Smoothed" : "Lissé") : (lang === "en" ? "Smoothed+" : "Lissé+")}
             </span>
@@ -930,7 +930,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           onClick={(event) => event.stopPropagation()}
         >
           <div className="flex flex-col gap-0.5 rounded-lg border border-gray-300 bg-white px-2 py-1 shadow-sm">
-            <span className="mb-0.5 text-[0.682rem] font-bold leading-tight" style={{ color: "#000000" }}>{lang === "en" ? "Show/hide" : "Afficher/masquer"}</span>
+            <span className="mb-1.5 border-b border-gray-200 pb-1 text-[0.78rem] font-bold leading-tight" style={{ color: "#000000" }}>{lang === "en" ? "Show/hide" : "Afficher/masquer"}</span>
             {([
               { group: "current" as const, label: keyFilter === "all" ? currentLines[0]?.name ?? currentBaseName : currentBaseName, color: "#000000", off: zoomCurveOff.current },
               { group: "reference" as const, label: keyFilter === "all" ? referenceLines[0]?.name ?? comparisonLabel : comparisonLabel, color: csvActive ? "#2563EB" : "#f97316", off: zoomCurveOff.reference },
@@ -969,7 +969,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             onClick={(event) => event.stopPropagation()}
             className="cursor-help !text-black"
           >
-            <Info size={25.2} strokeWidth={2.5} />
+            <Info size={17} strokeWidth={2.5} />
           </span>
         </div>
       )}
@@ -1008,7 +1008,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             // Anti-chevauchement : la marge droite garantit toujours la place
             // du libellé « Moy: xx.xg » déporté de 25 px + sa ligne de rappel,
             // la marge gauche celle des noms courts.
-            margin={{ top: 22, right: Math.max(sideMargin, 110) + groupedShift, bottom: 15, left: chartLeftMargin }}
+            margin={{ top: zoomed ? 36 : 22, right: Math.max(sideMargin, 110) + groupedShift, bottom: 15, left: chartLeftMargin }}
           >
             <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
             <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
