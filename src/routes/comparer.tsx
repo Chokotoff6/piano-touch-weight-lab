@@ -283,9 +283,9 @@ function ToleranceButton({ zoomed, lang }: { zoomed: boolean; lang: string }) {
       data-pdf-hide
       title={lang === "en" ? "Tolerance" : "Tolérance"}
       onClick={(event) => event.stopPropagation()}
-      className={`flex cursor-text items-center rounded-full [border-width:1.3px] !border-black bg-white font-medium !text-black ${zoomed ? "gap-[0.45rem] px-[0.9rem] py-[0.225rem] text-[1.224rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"}`}
+      className={`flex cursor-text items-center rounded-full [border-width:1.3px] !border-black bg-white font-medium !text-black ${zoomed ? "gap-[0.35rem] px-[0.65rem] py-[0.16rem] text-[0.85rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"}`}
     >
-      <AlertTriangle size={zoomed ? 25.2 : 14} strokeWidth={2.5} className="shrink-0 !text-black" />
+      <AlertTriangle size={zoomed ? 17 : 14} strokeWidth={2.5} className="shrink-0 !text-black" />
       <span className="!text-black">±</span>
       <input
         type="text"
@@ -901,9 +901,9 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             type="button"
             aria-label={bwLabel}
             onClick={() => cycleFor(family.id)}
-            className={`flex items-center rounded-full [border-width:1.3px] !border-black bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-[0.45rem] px-[0.9rem] py-[0.225rem] text-[1.224rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"}`}
+            className={`flex items-center rounded-full [border-width:1.3px] !border-black bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-[0.35rem] px-[0.65rem] py-[0.16rem] text-[0.85rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"}`}
           >
-            <RefreshCw size={zoomed ? 25.2 : 14} strokeWidth={2.5} className="shrink-0" />
+            <RefreshCw size={zoomed ? 17 : 14} strokeWidth={2.5} className="shrink-0" />
             <span className="!text-black">{bwLabel}</span>
           </button>
           <button
@@ -913,9 +913,9 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
               event.stopPropagation();
               cycleSmoothMode();
             }}
-            className={`flex items-center rounded-full [border-width:1.3px] !border-black bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-[0.45rem] px-[0.9rem] py-[0.225rem] text-[1.224rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"} ${smoothMode === "real" ? "opacity-60" : "opacity-100"}`}
+            className={`flex items-center rounded-full [border-width:1.3px] !border-black bg-white font-medium !text-black hover:bg-gray-100 ${zoomed ? "gap-[0.35rem] px-[0.65rem] py-[0.16rem] text-[0.85rem]" : "gap-1 px-2 py-0.5 text-[0.68rem]"} ${smoothMode === "real" ? "opacity-60" : "opacity-100"}`}
           >
-            <Waves size={zoomed ? 25.2 : 14} strokeWidth={2.5} className="shrink-0" />
+            <Waves size={zoomed ? 17 : 14} strokeWidth={2.5} className="shrink-0" />
             <span className="!text-black">
               {lang === "en" ? "Mode: " : "Mode : "}{smoothMode === "real" ? (lang === "en" ? "Raw" : "Réel") : smoothMode === "smooth" ? (lang === "en" ? "Smoothed" : "Lissé") : (lang === "en" ? "Smoothed+" : "Lissé+")}
             </span>
@@ -930,7 +930,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
           onClick={(event) => event.stopPropagation()}
         >
           <div className="flex flex-col gap-0.5 rounded-lg border border-gray-300 bg-white px-2 py-1 shadow-sm">
-            <span className="mb-0.5 text-[0.682rem] font-bold leading-tight" style={{ color: "#000000" }}>{lang === "en" ? "Show/hide" : "Afficher/masquer"}</span>
+            <span className="mb-1.5 border-b border-gray-200 pb-1 text-[0.78rem] font-bold leading-tight" style={{ color: "#000000" }}>{lang === "en" ? "Show/hide" : "Afficher/masquer"}</span>
             {([
               { group: "current" as const, label: keyFilter === "all" ? currentLines[0]?.name ?? currentBaseName : currentBaseName, color: "#000000", off: zoomCurveOff.current },
               { group: "reference" as const, label: keyFilter === "all" ? referenceLines[0]?.name ?? comparisonLabel : comparisonLabel, color: csvActive ? "#2563EB" : "#f97316", off: zoomCurveOff.reference },
@@ -969,7 +969,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             onClick={(event) => event.stopPropagation()}
             className="cursor-help !text-black"
           >
-            <Info size={25.2} strokeWidth={2.5} />
+            <Info size={17} strokeWidth={2.5} />
           </span>
         </div>
       )}
@@ -1008,7 +1008,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             // Anti-chevauchement : la marge droite garantit toujours la place
             // du libellé « Moy: xx.xg » déporté de 25 px + sa ligne de rappel,
             // la marge gauche celle des noms courts.
-            margin={{ top: 22, right: Math.max(sideMargin, 110) + groupedShift, bottom: 15, left: chartLeftMargin }}
+            margin={{ top: zoomed ? 36 : 22, right: Math.max(sideMargin, 110) + groupedShift, bottom: 15, left: chartLeftMargin }}
           >
             <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
             <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
@@ -1383,27 +1383,47 @@ const TONE_CLASS: Record<Tone, string> = {
   std: "!text-green-600",
 };
 
-// Bloc de moyenne façon page Saisie : moyenne globale en grand + détail Blanches/Noires.
-// Moyennes blanches / noires : deux pavés de taille identique, coins vifs.
+// Moyennes blanches / noires : deux pavés de taille identique, coins vifs, gris #808080.
 function KeyBadge({ value, black }: { value: string; black?: boolean }) {
   return (
-    <span className={`inline-block min-w-[3.2rem] rounded-none border px-1 py-0 text-center !text-xs font-medium leading-tight tabular-nums ${black ? "border-[#3f3f46] bg-[#3f3f46] !text-white" : "border-neutral-500 bg-white !text-black"}`}>
+    <span className={`inline-block min-w-[2.6rem] rounded-none border px-0.5 py-0 text-center !text-xs font-medium leading-tight tabular-nums ${black ? "border-[#808080] bg-[#808080] !text-white" : "border-[#808080] bg-white !text-black"}`}>
       {value === "—" ? "—" : `${value} gr.`}
     </span>
   );
 }
 
-function AverageBlock({ label, global, white, black, tone, alert = false }: { label: string; global: string; white: string; black: string; tone: Tone; alert?: boolean }) {
+// Grand chiffre : entier et point à 24 px, décimale à 16 px.
+function BigValue({ value, toneClass }: { value: string; toneClass: string }) {
+  if (value === "—") return <span className={toneClass}>—</span>;
+  const [int, dec] = value.split(".");
+  return (
+    <span className={`font-bold tabular-nums leading-none ${toneClass}`}>
+      <span className="text-[24px]">{int}{dec !== undefined ? "." : ""}</span>
+      {dec !== undefined && <span className="text-[16px]">{dec}</span>}
+      <span className="!text-xs !font-medium"> gr.</span>
+    </span>
+  );
+}
+
+function DeltaValue({ delta, tolerance }: { delta: number; tolerance: number }) {
+  if (!Number.isFinite(delta)) return null;
+  const ok = Math.abs(delta) <= tolerance;
+  const sign = delta > 0 ? "+" : delta < 0 ? "−" : "±";
+  return <span className={`ml-2 text-xs font-semibold ${ok ? "!text-green-700" : "!text-orange-700"}`}>{sign}{Math.abs(delta).toFixed(1)}</span>;
+}
+
+function AverageBlock({ label, global, white, black, tone, delta, tolerance = 0 }: { label: string; global: string; white: string; black: string; tone: Tone; alert?: boolean; delta?: number | undefined; tolerance?: number }) {
   const lang = useLang();
   const toneClass = TONE_CLASS[tone];
-  const val = (v: string) => v === "—" ? <span className={toneClass}>—</span> : <>{v}<span className="!text-xs !font-medium"> gr.</span></>;
   return (
-    <div aria-label={label} className="average-block min-w-0 flex h-full flex-col justify-center rounded bg-transparent px-2 py-1 text-center">
-      <div className={`average-value font-bold tabular-nums ${alert ? "!text-red-600" : toneClass}`}>{val(global)}</div>
-      <div className={`mt-0.5 flex items-baseline justify-center gap-1.5 text-[0.65rem] tabular-nums ${toneClass}`}>
-        <span aria-label={lang === "en" ? "White" : "Blanches"}><KeyBadge value={white} /></span>
-        <span className={toneClass}>/</span>
-        <span aria-label={lang === "en" ? "Black" : "Noires"}><KeyBadge value={black} black /></span>
+    <div aria-label={label} className="average-block flex min-w-0 justify-center">
+      <div className="inline-flex flex-col items-center rounded-md bg-slate-100 px-2 py-1 text-center">
+        <div className="whitespace-nowrap"><BigValue value={global} toneClass={toneClass} />{delta !== undefined && <DeltaValue delta={delta} tolerance={tolerance} />}</div>
+        <div className={`mt-1 flex items-baseline justify-center gap-1 tabular-nums ${toneClass}`}>
+          <span aria-label={lang === "en" ? "White" : "Blanches"}><KeyBadge value={white} /></span>
+          <span className={`!text-xs ${toneClass}`}>/</span>
+          <span aria-label={lang === "en" ? "Black" : "Noires"}><KeyBadge value={black} black /></span>
+        </div>
       </div>
     </div>
   );
@@ -1417,18 +1437,20 @@ const AVG_KEYS: Record<MetricKey, { cur: [SeriesKey, SeriesKey, SeriesKey]; ref:
   balance: { cur: ["balCur", "balCurW", "balCurB"], ref: ["sameBal", "sameBalW", "sameBalB"] },
 };
 
-export function AverageRow({ chartData, source, hasData, csv = false }: { chartData: ChartPoint[]; source: "cur" | "ref"; hasData: boolean; csv?: boolean }) {
+export type DeltaRef = "none" | "std" | "hist";
+
+export function AverageRow({ chartData, source, hasData, csv = false, deltaRef = "none" }: { chartData: ChartPoint[]; source: "cur" | "ref"; hasData: boolean; csv?: boolean; deltaRef?: DeltaRef }) {
   const lang = useLang();
   const { corridorG } = usePreferences();
   return (
     <div className="average-grid grid grid-cols-4 gap-3">
       {COLUMNS.map(({ key, label, labelEn }) => {
         const [globalKey, whiteKey, blackKey] = AVG_KEYS[key][source];
-        // Corridor : moyenne du piano actuel en rouge si elle s'écarte de la Cible standard de plus de ±N g.
-        const stdKey = STD_KEYS.find((s) => s.key === key)?.globalKey;
-        const cur = hasData ? Number(seriesAverage(chartData, globalKey)) : NaN;
-        const std = stdKey ? Number(seriesAverage(chartData, stdKey)) : NaN;
-        const alert = false; void cur; void std; void corridorG;
+        let delta: number | undefined;
+        if (source === "cur" && hasData && deltaRef !== "none") {
+          const refKey = deltaRef === "std" ? STD_KEYS.find((s) => s.key === key)!.globalKey : AVG_KEYS[key].ref[0];
+          delta = Number(seriesAverage(chartData, globalKey)) - Number(seriesAverage(chartData, refKey));
+        }
         return (
           <AverageBlock
             key={key}
@@ -1437,7 +1459,8 @@ export function AverageRow({ chartData, source, hasData, csv = false }: { chartD
             global={hasData ? seriesAverage(chartData, globalKey) : "—"}
             white={hasData ? seriesAverage(chartData, whiteKey) : "—"}
             black={hasData ? seriesAverage(chartData, blackKey) : "—"}
-            alert={alert}
+            delta={delta}
+            tolerance={corridorG}
           />
         );
       })}
@@ -1445,13 +1468,13 @@ export function AverageRow({ chartData, source, hasData, csv = false }: { chartD
   );
 }
 
-// En-tête commun : les 4 types de mesure, une seule fois en haut du cadre.
-function AverageHeaderRow() {
+// En-tête : 4 cartouches gris des types de mesure.
+export function AverageHeaderRow() {
   const lang = useLang();
   return (
-    <div className="average-grid relative mb-1 grid grid-cols-4 gap-3 px-[13px]">
+    <div className="average-grid relative grid grid-cols-4 gap-3 px-[13px]">
       {COLUMNS.map(({ key, label, labelEn }) => (
-        <div key={key} className="flex min-h-[2.2rem] items-center justify-center px-2 py-1 text-center text-sm font-extrabold uppercase tracking-wide !text-black">
+        <div key={key} className="flex min-h-[1.9rem] items-center justify-center rounded-lg bg-neutral-300 px-2 py-0.5 text-center text-[0.9rem] font-black uppercase leading-tight tracking-wide !text-black">
           {lang === "en" ? labelEn : label}
         </div>
       ))}
@@ -1459,7 +1482,29 @@ function AverageHeaderRow() {
   );
 }
 
-// Rangée Standard : valeur globale théorique centrée, sans détail Blanches/Noires.
+/** Une ligne verticale de 2 px par colonne, derrière les cadres opaques. */
+export function AverageGuideLines() {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-[1.9rem] bottom-0 grid grid-cols-4 gap-3 px-[13px]">
+      {[0, 1, 2, 3].map((i) => <div key={i} className="mx-auto h-full w-[2px] bg-neutral-300" />)}
+    </div>
+  );
+}
+
+/** Cadre fin d'un profil, titre + résumé incrustés dans la bordure. */
+export function AverageFrame({ strong = false, name, detail, nameClass = "!text-black", className = "mt-[23px]", children }: { strong?: boolean; name: ReactNode; detail?: ReactNode | undefined; nameClass?: string; className?: string; children?: ReactNode }) {
+  return (
+    <fieldset className={`relative z-[1] rounded-lg bg-card px-3 pb-2 pt-0 ${strong ? "border-[1.5px] border-neutral-800" : "border-[0.5px] border-neutral-500"} ${className}`}>
+      <legend className="ml-2 max-w-[calc(100%-1rem)] truncate px-1 text-[0.7rem] leading-tight">
+        <span className={`font-bold uppercase tracking-wide ${nameClass}`}>{name}</span>
+        {detail ? <span className="text-[11px] italic normal-case !text-neutral-400"> · {detail}</span> : null}
+      </legend>
+      {children}
+    </fieldset>
+  );
+}
+
+// Rangée Standard : valeur globale théorique + Blanches/Noires.
 const STD_KEYS: { key: MetricKey; globalKey: SeriesKey }[] = [
   { key: "wd", globalKey: "stdWd" },
   { key: "wa", globalKey: "stdWa" },
@@ -1474,22 +1519,40 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
     <div className="average-grid grid grid-cols-4 gap-3">
       {STD_KEYS.map(({ key, globalKey }) => {
         const col = COLUMNS.find((c) => c.key === key)!;
-        const label = lang === "en" ? col.labelEn : col.label;
-        const value = seriesAverage(chartData, globalKey);
         return (
-          <div key={key} aria-label={label} className="average-block min-w-0 flex h-full flex-col justify-center rounded bg-transparent px-2 py-1 text-center">
-            <div className="average-value font-bold tabular-nums !text-green-600">
-              {value === "—" ? <span className="!text-green-600">—</span> : <>{value}<span className="!text-xs !font-medium"> gr.</span></>}
-            </div>
-            <div className="mt-0.5 flex items-baseline justify-center gap-1.5 tabular-nums !text-green-600">
-              <span aria-label={lang === "en" ? "White" : "Blanches"}><KeyBadge value={seriesAverage(whites, globalKey)} /></span>
-              <span className="!text-xs font-medium">/</span>
-              <span aria-label={lang === "en" ? "Black" : "Noires"}><KeyBadge value={seriesAverage(blacks, globalKey)} black /></span>
-            </div>
-          </div>
-
+          <AverageBlock key={key} label={lang === "en" ? col.labelEn : col.label} tone="std" global={seriesAverage(chartData, globalKey)} white={seriesAverage(whites, globalKey)} black={seriesAverage(blacks, globalKey)} />
         );
       })}
+    </div>
+  );
+}
+
+/** Pilule Δ incrustée sur la bordure haute : menu Aucun / vs Cible / vs Historique. */
+function DeltaPill({ value, onChange, stdAvailable, histAvailable }: { value: DeltaRef; onChange: (v: DeltaRef) => void; stdAvailable: boolean; histAvailable: boolean }) {
+  const [open, setOpen] = useState(false);
+  const en = useLang() === "en";
+  const items: { v: DeltaRef; label: string }[] = [
+    { v: "none", label: en ? "None" : "Aucun" },
+    ...(stdAvailable ? [{ v: "std" as DeltaRef, label: en ? "vs Target" : "vs Cible" }] : []),
+    ...(histAvailable ? [{ v: "hist" as DeltaRef, label: en ? "vs History" : "vs Historique" }] : []),
+  ];
+  const active = value !== "none";
+  return (
+    <div data-pdf-hide className="absolute -top-[9px] right-4 z-[60]" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <button type="button" onClick={() => setOpen((o) => !o)} className={`inline-flex h-[18px] min-h-0 items-center justify-center rounded-full border px-2.5 py-0 text-xs font-medium leading-none ${active ? "border-slate-900 bg-slate-900 !text-white" : "border-neutral-400 bg-white !text-black"}`}>
+        <span className="-mt-px">{value === "std" ? (en ? "Δ target" : "Δ cible") : value === "hist" ? (en ? "Δ hist." : "Δ histo.") : "Δ"}</span>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full pt-1">
+          <div className="min-w-[8rem] rounded-lg border bg-white p-1 shadow-md">
+            {items.map((it) => (
+              <button key={it.v} type="button" onClick={() => { onChange(it.v); setOpen(false); }} className="flex w-full items-center gap-1.5 rounded px-2.5 py-1 text-left text-xs !text-black hover:bg-slate-100">
+                <span className="w-3">{value === it.v ? "✓" : ""}</span>{it.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1719,6 +1782,7 @@ function Comparer() {
   const en = lang === "en";
   const [sourceMode, setSourceMode] = useState<SourceMode>("none");
   const [standardEnabled, setStandardEnabled] = useState(false);
+  const [deltaRef, setDeltaRef] = useState<DeltaRef>("none");
   // Le mode « Réel » est supprimé sur Comparer : le graphique démarre et reste
   // en rendu lissé (Lissé 3 points / Lissé+ 5 points), quel que soit le Mode Rapide.
   // Arrivée sur Comparer : les 4 graphiques démarrent en « N/B : séparées ».
@@ -2207,6 +2271,9 @@ function Comparer() {
         : `${cloudSampleCount} profil(s) de ${brandModel} partagé(s) par les utilisateurs`;
 
   // Étiquette de la cible constructeur, traduite à l'affichage (marque conservée).
+  useEffect(() => {
+    if ((deltaRef === "std" && !standardEnabled) || (deltaRef === "hist" && comparedPiano === null)) setDeltaRef("none");
+  }, [deltaRef, standardEnabled, comparedPiano]);
   const displayStandardLabel = !en
     ? standardLabel
     : standardLabel.startsWith("CIBLE : GÉNÉRIQUE ")
@@ -2268,21 +2335,22 @@ function Comparer() {
               
               <div ref={averagesRef} data-pdf-expand data-pdf-lock-w="980" className="sticky top-[127px] z-50 mb-[50px] w-full bg-card pb-2 relative">
                 <Frame titleClassName="absolute -top-3.5 left-4 max-w-[calc(100%-2rem)] whitespace-nowrap bg-card px-2 text-sm xl:text-lg font-bold text-foreground" title={en ? "Averages" : "Moyennes"} className="h-fit">
+                  <DeltaPill value={deltaRef} onChange={setDeltaRef} stdAvailable={standardEnabled} histAvailable={comparedPiano !== null} />
                   <div className="relative">
-                    <div aria-hidden="true" className="pointer-events-none absolute inset-0 grid grid-cols-4 gap-3 px-[13px]">{[0, 1, 2, 3].map((i) => <div key={i} className="rounded bg-muted" />)}</div>
+                    <AverageGuideLines />
                     <AverageHeaderRow />
-                    <fieldset className="relative mt-2 rounded-lg border border-black px-3 pb-2 pt-0"><legend className="ml-2 max-w-[calc(100%-1rem)] truncate px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-black">{en ? "Current piano" : "Piano actuel"} : <span className="summary-text normal-case font-medium" title={typeof summary === "string" ? summary : undefined}>{summary}</span></legend><AverageRow chartData={chartData} source="cur" hasData={mine !== null} /></fieldset>
+                    <AverageFrame strong className="mt-[26px]" name={en ? "Current piano" : "Piano actuel"} detail={<>{summary}{deltaRef !== "none" && (deltaRef === "std" ? (en ? " · gap vs target" : " · écart vs cible") : (en ? " · gap vs history" : " · écart vs historique"))}</>}><AverageRow chartData={chartData} source="cur" hasData={mine !== null} deltaRef={deltaRef} /></AverageFrame>
                     {standardEnabled && (
-                      <fieldset className="relative mt-2 rounded-lg border border-black px-3 pb-2 pt-0"><legend className="ml-2 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-green-600">{displayStandardLabel}<BrandTargetInfoIcon variant={/standard/i.test(standardLabel) ? "standard" : "brand"} /></legend><StandardRow chartData={chartData} /></fieldset>
+                      <AverageFrame nameClass="!text-green-600" name={<>{displayStandardLabel}<BrandTargetInfoIcon variant={/standard/i.test(standardLabel) ? "standard" : "brand"} /></>}><StandardRow chartData={chartData} /></AverageFrame>
                     )}
                     {comparedPiano !== null && (
-                      <fieldset className="relative mt-2 rounded-lg border border-black px-3 pb-2 pt-0"><legend className="ml-2 max-w-[calc(100%-1rem)] truncate px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-blue-600">{en ? "History point" : "Point d'historique"} : <span className="normal-case">{csvIdentity}{csvStats}</span></legend><AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} csv /></fieldset>
+                      <AverageFrame nameClass="!text-blue-600" name={en ? "History point" : "Point d'historique"} detail={<>{csvIdentity}{csvStats}</>}><AverageRow chartData={chartData} source="ref" hasData={comparisonProfile !== null} csv /></AverageFrame>
                     )}
                     {(comparedPiano === null && sourceMode === "cloud") && (
                       comparisonProfile !== null ? (
-                        <fieldset className="relative mt-2 rounded-lg border border-black px-3 pb-2 pt-0"><legend className="ml-2 px-1 text-[0.7rem] font-semibold uppercase tracking-wide !text-orange-600">Cloud{cloudActive && <span className="ml-2 normal-case !text-orange-600">{cloudCounterText}</span>}</legend><AverageRow chartData={chartData} source="ref" hasData /></fieldset>
+                        <AverageFrame nameClass="!text-orange-600" name="Cloud" detail={cloudActive ? cloudCounterText : undefined}><AverageRow chartData={chartData} source="ref" hasData /></AverageFrame>
                       ) : (
-                        <fieldset className="relative mt-2 rounded-lg border border-black px-3 pb-2 pt-0"><legend className="ml-2 px-1 text-[0.7rem] font-semibold !text-orange-600">☁ CLOUD : <span className="font-normal">{en ? "Insufficient sample" : "Échantillon insuffisant"}{cloudActive ? ` — ${cloudCounterText}` : ""}</span></legend></fieldset>
+                        <AverageFrame nameClass="!text-orange-600" name="☁ Cloud" detail={<>{en ? "Insufficient sample" : "Échantillon insuffisant"}{cloudActive ? ` — ${cloudCounterText}` : ""}</>} />
                       )
                     )}
                   </div>

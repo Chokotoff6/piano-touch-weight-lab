@@ -841,7 +841,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
         </div>
 
         {/* Numéros des Do au-dessus de la mini-map (taille réelle, police de l'appli) */}
-        <div className="relative mt-1 h-3 w-full font-sans text-xs font-medium leading-none text-foreground select-none" aria-hidden="true">
+        <div className="relative mt-1 h-3 w-full font-sans text-[clamp(0.55rem,1.1vw,0.75rem)] font-medium leading-none text-foreground select-none" aria-hidden="true">
           {[...C_KEYS].map((k) => {
             const c = full.cols[k - 1];
             if (!c) return null;
@@ -884,7 +884,6 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
               setOctave((o) => (end < start ? Math.min(OCTAVES.length - 1, o + 1) : Math.max(0, o - 1)));
             }}
           >
-            <Button variant="ghost" type="button" aria-label={en ? "Previous octave" : "Octave précédente"} disabled={octave === 0} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.max(0, o - 1)); }} style={{ marginTop: Math.max(0, 1.05 * 16 * octScale * 0.9 - 30) }} className={`${arrowBtn} mr-2 ${pressedArrow === "prev" ? "scale-75 opacity-60" : ""}`}>◀</Button>
             <div ref={labelsRef} className="octave-labels relative shrink-0" style={{ height: nativeH * octScale * 0.9 + 2 }}>
               <div className="octave-label-content grid w-max text-right font-bold text-muted-foreground">
                 <span className="invisible">{label("wd")}</span>
@@ -894,12 +893,13 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
                 <div className="absolute right-0 -translate-y-1/2" style={{ top: 11.04 * 16 * octScale * 0.9 }}>{label("wa")}</div>
               </div>
             </div>
+            <Button variant="ghost" type="button" aria-label={en ? "Previous octave" : "Octave précédente"} disabled={octave === 0} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.max(0, o - 1)); }} style={{ marginTop: Math.max(0, 1.05 * 16 * octScale * 0.9 - 30) }} className={`${arrowBtn} mr-2 ${pressedArrow === "prev" ? "scale-75 opacity-60" : ""}`}>◀</Button>
             <div className="relative shrink-0 overflow-hidden" style={{ width: seg.width * octScale * 0.9, height: nativeH * octScale * 0.9 + 2 }}>
-              <div className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2" style={{ top: 1.05 * 16 * octScale * 0.9 + 4 }}><span className="whitespace-nowrap rounded-md border border-foreground/60 bg-muted px-2 py-1.5 text-[0.9rem] font-bold leading-none text-foreground">Octave {octave + 1}</span></div>
+              <div className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2" style={{ top: 1.05 * 16 * octScale * 0.9 + 4 }}><span className="whitespace-nowrap rounded-md border border-foreground/60 bg-muted font-bold leading-none text-foreground" style={{ fontSize: Math.max(10, 14.4 * octScale), padding: `${Math.max(3, 6 * octScale)}px ${Math.max(5, 8 * octScale)}px` }}>Octave {octave + 1}</span></div>
               <div className="tablet-keyboard absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${octScale * 0.9})` }}>
                 <div className="technical-sheet" style={{ width: seg.width, gridTemplateColumns: `${seg.width}px` }}>
                 <div style={{ marginLeft: -seg.left }}>
-                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onTyped} onCommit={onCommit} onFocusField={onFocusField} onBlurField={onBlurField} onNavigate={onNavigate} isVisible={isVisible} weightFilter={weightFilter} registerInput={registerInput} numberFontPx={12 / (octScale * 0.9)} />
+                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onTyped} onCommit={onCommit} onFocusField={onFocusField} onBlurField={onBlurField} onNavigate={onNavigate} isVisible={isVisible} weightFilter={weightFilter} registerInput={registerInput} numberFontPx={Math.max(8, 12 * octScale) / (octScale * 0.9)} />
                 </div>
                 </div>
               </div>
