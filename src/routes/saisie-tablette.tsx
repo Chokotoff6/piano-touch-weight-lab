@@ -18,7 +18,8 @@ import { Button } from "@/components/ui/button";
 import { CycleLabel } from "@/components/CycleLabel";
 import { Redo2, Undo2 } from "lucide-react";
 import { AutoDismissAlert } from "@/components/AutoDismissAlert";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TouchTooltip as Tooltip } from "@/components/TouchTooltip";
 
 // Règles et messages copiés à l'identique de la Pesée bureau (saisie.tsx).
 const WEIGHT_RANGES = { wd: [30, 90], wa: [10, 40] } as const;
