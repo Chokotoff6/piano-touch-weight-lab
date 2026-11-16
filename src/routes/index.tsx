@@ -67,15 +67,15 @@ function Accueil() {
                   ["ANALYSIS", ["Comparison: before/after regulation, Standard targets and Cloud (collaborative database).", "Diagnosis: Zoom mode with out-of-tolerance alerts and direct editing."]],
                 ]
               : [
-                  ["PESÉE", ["Adieu tableurs Excel et feuilles volantes !", "Saisie assistée : pavé tactile, avance automatique, contrôles de cohérence.", "Mode rapide Do/Do#, filtres d'affichage sélectif N/B - PD/PR.", "Vue Complète / Octave."]],
-                  ["BILAN", ["Tableau de bord interactif : poids & courbes (PD-PR-Friction et PB).", "Import/export de fiche d'instrument.", "Rapports PDF détaillés pour devis et certification."]],
-                  ["ANALYSE", ["Comparaison courbes avant/après régulation (Points d'historique, Cibles standards d'usine, données Cloud).", "Diagnostic fin : touches hors tolérance, mode Zoom note à note avec retouche directe.", "Profil et points d'historique d'instrument archivés dans fichier .kw local (100 % hors ligne)."]],
+                  ["PESÉE", ["Saisie assistée| : pavé tactile, avance automatique, contrôles de cohérence.", "Mode rapide| : Do/Do#, avec filtres d’affichage sélectif N/B - PD/PR.", "Vue Complète / Octave| pour tablettes.", "Sans papier| : adieu les feuilles volantes et les tableurs à recopier."]],
+                  ["BILAN", ["Tableau de bord interactif| : moyennes & courbes (PD-PR-Friction et PB).", "Import/export| de fiches d’instrument.", "Rapports PDF détaillés| pour devis et certification."]],
+                  ["ANALYSE", ["Comparaison courbes| avant/après régulation, cibles standards et données Cloud.", "Écarts Δ| : auto par rapport à cible standard ou point d’historique", "Diagnostic| : touches hors tolérance, mode Zoom avec retouche directe.", "Sauvegarde en local| : fichier .kw avec profil et points d’historique d’instrument."]],
                 ]
             ).map(([title, items]) => (
               <fieldset key={title as string} className="min-w-0 rounded-lg border border-black bg-white/60 backdrop-blur-sm px-4 pb-4 pt-1">
                 <legend className="px-2 text-lg font-extrabold !text-[#7149ab]">{title as string}</legend>
                 <ul className="list-disc space-y-1 pl-5 marker:font-normal">
-                  {(items as string[]).map((t) => <li key={t}><span className="font-medium !text-black">{t}</span></li>)}
+                  {(items as string[]).map((t) => <li key={t}><span className="font-medium !text-black">{t.includes("|") ? <><strong className="font-bold">{t.split("|")[0]}</strong>{t.split("|")[1]}</> : t}</span></li>)}
                 </ul>
               </fieldset>
             ))}
