@@ -490,9 +490,8 @@ function Resultats() {
                 className="h-fit"
               >
                 <div className="relative">
-                  <AverageGuideLines />
                   <AverageHeaderRow />
-                  <AverageFrame strong className="mt-[26px]" name={en ? "Current piano" : "Piano actuel"} detail={<span title={summary.line}>{summary.line}</span>}>
+                  <AverageFrame strong className="mt-2.5" name={en ? "Current piano" : "Piano actuel"} detail={<span title={summary.line}>{summary.line}</span>}>
                     <AverageRow chartData={chartData} source="cur" hasData={hasData} />
                   </AverageFrame>
                 </div>

@@ -967,7 +967,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             onMouseEnter={() => setShowZoomHelp(true)}
             onMouseLeave={() => setShowZoomHelp(false)}
             onClick={(event) => event.stopPropagation()}
-            className="cursor-help !text-black"
+            className="cursor-pointer !text-black"
           >
             <Info size={17} strokeWidth={2.5} />
           </span>
@@ -2337,9 +2337,9 @@ function Comparer() {
                 <Frame titleClassName="absolute -top-3.5 left-4 max-w-[calc(100%-2rem)] whitespace-nowrap bg-card px-2 text-sm xl:text-lg font-bold text-foreground" title={en ? "Averages" : "Moyennes"} className="h-fit">
                   <DeltaPill value={deltaRef} onChange={setDeltaRef} stdAvailable={standardEnabled} histAvailable={comparedPiano !== null} />
                   <div className="relative">
-                    <AverageGuideLines />
+                    {(standardEnabled || comparedPiano !== null || sourceMode === "cloud") && <AverageGuideLines />}
                     <AverageHeaderRow />
-                    <AverageFrame strong className="mt-[26px]" name={en ? "Current piano" : "Piano actuel"} detail={<>{summary}{deltaRef !== "none" && (deltaRef === "std" ? (en ? " · gap vs target" : " · écart vs cible") : (en ? " · gap vs history" : " · écart vs historique"))}</>}><AverageRow chartData={chartData} source="cur" hasData={mine !== null} deltaRef={deltaRef} /></AverageFrame>
+                    <AverageFrame strong className={(standardEnabled || comparedPiano !== null || sourceMode === "cloud") ? "mt-[26px]" : "mt-2.5"} name={en ? "Current piano" : "Piano actuel"} detail={<>{summary}{deltaRef !== "none" && (deltaRef === "std" ? (en ? " · gap vs target" : " · écart vs cible") : (en ? " · gap vs history" : " · écart vs historique"))}</>}><AverageRow chartData={chartData} source="cur" hasData={mine !== null} deltaRef={deltaRef} /></AverageFrame>
                     {standardEnabled && (
                       <AverageFrame nameClass="!text-green-600" name={<>{displayStandardLabel}<BrandTargetInfoIcon variant={/standard/i.test(standardLabel) ? "standard" : "brand"} /></>}><StandardRow chartData={chartData} /></AverageFrame>
                     )}
