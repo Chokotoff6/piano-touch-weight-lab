@@ -896,8 +896,8 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
               </div>
             </div>
             <div className="relative shrink-0 overflow-hidden" style={{ width: seg.width * octScale * 0.9, height: nativeH * octScale * 0.9 + 2 }}>
-              <div className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2" style={{ top: 1.05 * 16 * octScale * 0.9 + 4 }}><span className="whitespace-nowrap rounded-md border border-foreground/60 bg-muted font-bold leading-none text-foreground" style={{ fontSize: Math.max(10, 14.4 * octScale), padding: `${Math.max(3, 6 * octScale)}px ${Math.max(5, 8 * octScale)}px` }}>Octave {octave + 1}</span></div>
               <div className="tablet-keyboard absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${octScale * 0.9})` }}>
+                <div className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2" style={{ top: "calc(1.05rem + 3px)" }}><span className="whitespace-nowrap rounded-md border border-foreground/60 bg-muted px-2 py-0.5 text-[13px] font-bold leading-none text-foreground">Octave {octave + 1}</span></div>
                 <div className="technical-sheet" style={{ width: seg.width, gridTemplateColumns: `${seg.width}px` }}>
                 <div style={{ marginLeft: -seg.left }}>
                   <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onTyped} onCommit={onCommit} onFocusField={onFocusField} onBlurField={onBlurField} onNavigate={onNavigate} isVisible={isVisible} weightFilter={weightFilter} registerInput={registerInput} numberFontPx={Math.min(12, Math.max(8.8, (typeof window !== "undefined" ? window.innerWidth : 1000) * 0.011)) / (octScale * 0.9)} />

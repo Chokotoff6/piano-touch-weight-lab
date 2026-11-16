@@ -333,9 +333,9 @@ function RootComponent() {
     pendingActionRef.current = null;
   };
 
-  const linkClass = "rounded-md px-3 py-2 text-base font-semibold !text-black transition-colors hover:bg-background sm:px-4 sm:text-lg";
+  const linkClass = "whitespace-nowrap rounded-md px-2 py-1.5 text-sm font-semibold !text-black transition-colors hover:bg-background xl:px-3 xl:text-base";
   const activeLinkClass = "rounded-md bg-background px-3 py-2 text-base font-semibold !text-black shadow-sm sm:px-4 sm:text-lg";
-  const lockedLinkClass = "cursor-default rounded-md px-3 py-2 text-base font-semibold !text-gray-300 sm:px-4 sm:text-lg";
+  const lockedLinkClass = "whitespace-nowrap cursor-default rounded-md px-2 py-1.5 text-sm font-semibold !text-gray-300 xl:px-3 xl:text-base";
 
   // Le bouton « Fichiers » reste actif hors Comparer dès qu'une saisie
   // exploitable existe (retour depuis Comparer inclus).
@@ -379,9 +379,9 @@ function RootComponent() {
       />
       <nav className="!sticky !top-0 !z-[100] !bg-white !shadow-md border-b border-border">
         <div className="mx-auto w-full max-w-7xl pb-1 pt-[2px] px-4 xl:px-[100px]">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-nowrap items-center gap-1 xl:gap-2">
             {/* Logo officiel KeyWeight : calé à gauche, retour à l'accueil. */}
-            <div className="relative z-10 flex shrink-0 flex-col items-center xl:translate-y-[26px]">
+            <div className="relative z-10 flex h-10 shrink-0 flex-col items-center justify-start overflow-visible translate-y-[2px]">
               <Link
                 to="/"
                 aria-label={lang === "en" ? "Home" : "Accueil"}
@@ -406,7 +406,7 @@ function RootComponent() {
               </Link>
             </div>
             {!isHome && (
-            <div className="flex  flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
+            <div className="flex flex-nowrap items-center gap-0.5 rounded-lg bg-muted p-1">
               {topbar.cloudSaving ? (
                 <span className="group/save relative inline-block">
                   <span aria-disabled="true" className={lockedLinkClass}>
@@ -425,7 +425,7 @@ function RootComponent() {
               )}
               {!topbar.cloudSaving && (
                 <Link to="/saisie-tablette" className={linkClass} activeProps={{ className: activeLinkClass }}>
-                  {lang === "en" ? "Tablet (Lab)" : "Tablette (Lab)"}
+                  {lang === "en" ? "Tablet" : "Tablette"}<span className="hidden xl:inline"> (Lab)</span>
                 </Link>
               )}
               {topbar.gateReady ? (
@@ -485,12 +485,12 @@ function RootComponent() {
             </div>
             )}
 
-            {!isHome && <div className="mx-2 xl:mx-6 h-6 w-[2px] bg-gray-400" aria-hidden="true" />}
+            {!isHome && <div className="mx-1 xl:mx-6 h-6 shrink-0 w-[2px] bg-gray-400" aria-hidden="true" />}
 
             {/* Conteneur parent 100 % CSS : le survol du groupe ouvre/ferme le menu.
                 Aucun état JS, aucun timer, aucun gestionnaire onMouseEnter/onMouseLeave. */}
             {!isHome && (
-            <div className="group relative flex  items-center">
+            <div className="group relative flex shrink-0 items-center">
               <button
                 type="button"
                 onClick={(e) => e.preventDefault()}
