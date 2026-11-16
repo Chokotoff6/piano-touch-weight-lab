@@ -170,13 +170,14 @@ button, a[data-slot="button"], .app-command {
 @layer components {
   /* Ligne de résumé piano : un peu plus petite que les titres de cadre, casse normale. */
   .summary-text {
-    font-size: 0.82rem;
-    font-weight: 500;
+    font-size: 0.7rem;
+    font-weight: 400;
+    font-style: italic;
     line-height: 1.25;
     text-transform: none;
     letter-spacing: normal;
     white-space: nowrap;
-    color: var(--foreground);
+    color: #a3a3a3;
   }
   /* Style commun clair des listes (interventions, modèles, sélections). */
   .list-panel {
@@ -501,13 +502,10 @@ button, a[data-slot="button"], .app-command {
     gap: clamp(4px, 0.65cqw, 12px);
   }
   .tablet-command {
-    height: clamp(44px, 4.1vw, 56px);
-    height: clamp(44px, 4.1cqw, 56px);
-    padding-inline: clamp(6px, 0.85vw, 16px);
-    padding-inline: clamp(6px, 0.85cqw, 16px);
-    gap: clamp(4px, 0.5vw, 8px);
-    gap: clamp(4px, 0.5cqw, 8px);
-    font-size: clamp(0.62rem, 0.8vw, 0.75rem);
+    height: clamp(30px, 2.6vw, 36px) !important;
+    padding-inline: clamp(5px, 0.6vw, 10px) !important;
+    gap: clamp(3px, 0.35vw, 6px);
+    font-size: clamp(0.6rem, 0.75vw, 0.72rem) !important;
     white-space: nowrap;
   }
   .tablet-label-short { display: none; }
@@ -756,7 +754,7 @@ body {
 .average-value { font-size: 1.5rem; line-height: 1.25; }
 .average-block > div { min-width: 0; flex-wrap: wrap; }
 @media (max-width: 1199px) {
-  .summary-text { font-size: 0.75rem; }
+  .summary-text { font-size: 0.66rem; }
   .average-label { font-size: 0.875rem; }
   .average-value { font-size: 1.25rem; }
   .average-grid { gap: 0.5rem; }

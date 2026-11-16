@@ -156,10 +156,10 @@ const RGPD_CONSENT_KEY = "rgpd-cgu-consent";
 const staticKeyweightLogo = animatedKeyweightLogo.replace(
   "</svg>",
   `<style>
-    .draw { animation: none !important; stroke-dashoffset: 0 !important; }
-    .reveal { animation: none !important; transform: translateY(0) !important; }
-    #poids { animation: none !important; opacity: 1 !important; transform: none !important; }
-    #wordmark { animation: none !important; opacity: 1 !important; }
+    .kw-static .draw { animation: none !important; stroke-dashoffset: 0 !important; }
+    .kw-static .reveal { animation: none !important; transform: translateY(0) !important; }
+    .kw-static #poids { animation: none !important; opacity: 1 !important; transform: none !important; }
+    .kw-static #wordmark { animation: none !important; opacity: 1 !important; }
   </style></svg>`,
 );
 
@@ -398,7 +398,7 @@ function RootComponent() {
                   key={isHome ? "kw-anim" : "kw-static"}
                   role="img"
                   aria-label="KeyWeight"
-                  className="block h-[85px] w-auto [&>svg]:block [&>svg]:h-[85px] [&>svg]:w-auto"
+                  className={`${isHome ? "" : "kw-static "}block h-[85px] w-auto [&>svg]:block [&>svg]:h-[85px] [&>svg]:w-auto`}
                   dangerouslySetInnerHTML={{
                     __html: isHome ? animatedKeyweightLogo : staticKeyweightLogo,
                   }}
@@ -944,7 +944,7 @@ function RootComponent() {
       {/* Écran de garde smartphone (< 640 px) : CSS seul, aucune redirection. */}
       <style dangerouslySetInnerHTML={{ __html: ".screen-guard{display:none}@media screen and (max-width:639px){.screen-guard{display:flex!important}}@media screen and (pointer:coarse) and (max-height:500px){.screen-guard{display:flex!important}}" }} />
       <div className="fixed inset-0 z-[200000] flex-col items-center justify-center gap-4 bg-background p-8 text-center screen-guard">
-        <span role="img" aria-label="KeyWeight" className="block h-[85px] w-auto [&>svg]:block [&>svg]:h-[85px] [&>svg]:w-auto" dangerouslySetInnerHTML={{ __html: staticKeyweightLogo }} />
+        <span role="img" aria-label="KeyWeight" className="kw-static block h-[85px] w-auto [&>svg]:block [&>svg]:h-[85px] [&>svg]:w-auto" dangerouslySetInnerHTML={{ __html: staticKeyweightLogo }} />
         <h1 className="text-xl font-bold text-foreground">{lang === "en" ? "Screen size not supported" : "Résolution non prise en charge"}</h1>
         <p className="max-w-xs text-sm text-muted-foreground">{lang === "en" ? "KeyWeight requires a larger screen (tablet in landscape mode or computer)." : "KeyWeight nécessite un écran plus grand (tablette en mode paysage ou ordinateur)."}</p>
       </div>

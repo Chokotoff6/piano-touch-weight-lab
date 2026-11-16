@@ -202,7 +202,7 @@ function KeyGrid({
           >
             <div
               className={`key-number ${C_KEYS.has(k) ? "is-c-key" : ""} ${numberFontPx ? "!font-sans" : ""}`}
-              style={numberFontPx ? { fontSize: numberFontPx, lineHeight: 1, fontWeight: 700, WebkitTextStroke: 0, whiteSpace: "nowrap" } : undefined}
+              style={numberFontPx ? { fontSize: numberFontPx, lineHeight: 1, fontWeight: 500, WebkitTextStroke: 0, whiteSpace: "nowrap" } : undefined}
             >
               {showNumber ? k : "\u00A0"}
             </div>
@@ -264,15 +264,15 @@ function Keypad({ onKey, en, canUndo, canRedo, height }: { onKey: (k: string) =>
   const keys = ["7", "8", "9", "4", "5", "6", "1", "2", "3"];
   const btn = "tablet-keypad-button h-full min-h-0 self-stretch py-0 flex items-center justify-center rounded-md font-bold !text-black select-none disabled:!opacity-100 hover:!bg-white";
   return (
-    <div className="tablet-keypad tablet-keypad-frame grid shrink-0 grid-cols-3 grid-rows-4" style={{ height }} onPointerDown={(e) => e.preventDefault()}>
+    <div className="tablet-keypad tablet-keypad-frame grid shrink-0 grid-cols-3 grid-rows-4" style={{ height }}>
       {keys.map((k) => (
-        <Button variant="outline" key={k} type="button" className={btn} onClick={() => onKey(k)}>
+        <Button variant="outline" key={k} type="button" className={btn} onPointerDown={(e) => { e.preventDefault(); onKey(k); }}>
           {k}
         </Button>
       ))}
-      <Button variant="outline" type="button" className={btn} disabled={!canUndo} onClick={() => onKey("UNDO")} aria-label={en ? "Undo" : "Annuler"} title={en ? "Undo" : "Annuler"}><Undo2 strokeWidth={2.75} className={`h-[1.1em] w-[1.1em] ${canUndo ? "" : "text-muted-foreground"}`} /></Button>
-      <Button variant="outline" type="button" className={btn} onClick={() => onKey("0")}>0</Button>
-      <Button variant="outline" type="button" className={btn} disabled={!canRedo} onClick={() => onKey("REDO")} aria-label={en ? "Redo" : "Rétablir"} title={en ? "Redo" : "Rétablir"}><Redo2 strokeWidth={2.75} className={`h-[1.1em] w-[1.1em] ${canRedo ? "" : "text-muted-foreground"}`} /></Button>
+      <Button variant="outline" type="button" className={btn} disabled={!canUndo} onPointerDown={(e) => { e.preventDefault(); if (canUndo) onKey("UNDO"); }} aria-label={en ? "Undo" : "Annuler"} title={en ? "Undo" : "Annuler"}><Undo2 strokeWidth={2.75} className={`h-[1.1em] w-[1.1em] ${canUndo ? "" : "text-muted-foreground"}`} /></Button>
+      <Button variant="outline" type="button" className={btn} onPointerDown={(e) => { e.preventDefault(); onKey("0"); }}>0</Button>
+      <Button variant="outline" type="button" className={btn} disabled={!canRedo} onPointerDown={(e) => { e.preventDefault(); if (canRedo) onKey("REDO"); }} aria-label={en ? "Redo" : "Rétablir"} title={en ? "Redo" : "Rétablir"}><Redo2 strokeWidth={2.75} className={`h-[1.1em] w-[1.1em] ${canRedo ? "" : "text-muted-foreground"}`} /></Button>
     </div>
   );
 }
@@ -595,7 +595,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   };
   const onMiniDown = (e: React.PointerEvent<HTMLDivElement>) => {
     dragging.current = true;
-    e.currentTarget.setPointerCapture(e.pointerId);
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* WebKit ancien */ }
     unlockWeighingAudio();
     cancelOctaveDelay();
     setOctave(nearestOctave(localX(e)));
@@ -820,7 +820,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
     const escape = (e: KeyboardEvent) => { if (e.key === "Escape") { e.preventDefault(); clearSelection(); } };
     const outside = (e: PointerEvent) => {
       const target = e.target instanceof Element ? e.target : null;
-      if (target?.closest(".weight-input, .tablet-keypad, .weighing-view-toggle, [role=alert], [role=dialog], [role=alertdialog]")) return;
+      if (target?.closest(".weight-input, .tablet-keypad, .weighing-view-toggle, .tablet-commands, .tablet-mini-map, [role=alert], [role=dialog], [role=alertdialog]")) return;
       clearSelection();
     };
     document.addEventListener("keydown", escape, true);
@@ -865,7 +865,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
             </div>
           </div>
           <div
-            className={`pointer-events-none absolute rounded-sm border-2 border-foreground/60 bg-foreground/10 ${dragLeft === null ? "transition-all duration-300" : ""}`}
+            className={`pointer-events-none absolute rounded-sm border-2 border-[#808080] bg-[#808080]/20 ${dragLeft === null ? "transition-all duration-300" : ""}`}
             style={{ top: 0, left: viewLeft * miniScale, width: seg.width * miniScale, height: 11.55 * 16 * miniScale }}
           />
         </div>
@@ -885,6 +885,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
             }}
           >
             <div ref={labelsRef} className="octave-labels relative shrink-0" style={{ height: nativeH * octScale * 0.9 + 2 }}>
+              <Button variant="ghost" type="button" aria-label={en ? "Previous octave" : "Octave précédente"} disabled={octave === 0} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.max(0, o - 1)); }} style={{ top: Math.max(0, 1.05 * 16 * octScale * 0.9 - 30) }} className={`${arrowBtn} absolute right-0 ${pressedArrow === "prev" ? "scale-75 opacity-60" : ""}`}>◀</Button>
               <div className="octave-label-content grid w-max text-right font-bold text-muted-foreground">
                 <span className="invisible">{label("wd")}</span>
                 <div className="absolute right-0 -translate-y-1/2" style={{ top: 5.81 * 16 * octScale * 0.9 }}>{label("wd")}</div>
@@ -893,13 +894,12 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
                 <div className="absolute right-0 -translate-y-1/2" style={{ top: 11.04 * 16 * octScale * 0.9 }}>{label("wa")}</div>
               </div>
             </div>
-            <Button variant="ghost" type="button" aria-label={en ? "Previous octave" : "Octave précédente"} disabled={octave === 0} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.max(0, o - 1)); }} style={{ marginTop: Math.max(0, 1.05 * 16 * octScale * 0.9 - 30) }} className={`${arrowBtn} mr-2 ${pressedArrow === "prev" ? "scale-75 opacity-60" : ""}`}>◀</Button>
             <div className="relative shrink-0 overflow-hidden" style={{ width: seg.width * octScale * 0.9, height: nativeH * octScale * 0.9 + 2 }}>
               <div className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2" style={{ top: 1.05 * 16 * octScale * 0.9 + 4 }}><span className="whitespace-nowrap rounded-md border border-foreground/60 bg-muted font-bold leading-none text-foreground" style={{ fontSize: Math.max(10, 14.4 * octScale), padding: `${Math.max(3, 6 * octScale)}px ${Math.max(5, 8 * octScale)}px` }}>Octave {octave + 1}</span></div>
               <div className="tablet-keyboard absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${octScale * 0.9})` }}>
                 <div className="technical-sheet" style={{ width: seg.width, gridTemplateColumns: `${seg.width}px` }}>
                 <div style={{ marginLeft: -seg.left }}>
-                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onTyped} onCommit={onCommit} onFocusField={onFocusField} onBlurField={onBlurField} onNavigate={onNavigate} isVisible={isVisible} weightFilter={weightFilter} registerInput={registerInput} numberFontPx={Math.max(8, 12 * octScale) / (octScale * 0.9)} />
+                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onTyped} onCommit={onCommit} onFocusField={onFocusField} onBlurField={onBlurField} onNavigate={onNavigate} isVisible={isVisible} weightFilter={weightFilter} registerInput={registerInput} numberFontPx={Math.min(12, Math.max(8.8, (typeof window !== "undefined" ? window.innerWidth : 1000) * 0.011)) / (octScale * 0.9)} />
                 </div>
                 </div>
               </div>

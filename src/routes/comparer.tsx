@@ -1387,7 +1387,7 @@ const TONE_CLASS: Record<Tone, string> = {
 function KeyBadge({ value, black }: { value: string; black?: boolean }) {
   return (
     <span className={`inline-block min-w-[2.6rem] rounded-none border px-0.5 py-0 text-center !text-xs font-medium leading-tight tabular-nums ${black ? "border-[#808080] bg-[#808080] !text-white" : "border-[#808080] bg-white !text-black"}`}>
-      {value === "—" ? "—" : `${value} gr.`}
+      {value === "—" ? "—" : (() => { const [i, d] = value.split("."); return <>{i}{d !== undefined ? <>.<span className="text-[0.6rem]">{d}</span></> : null} gr.</>; })()}
     </span>
   );
 }
@@ -1417,9 +1417,9 @@ function AverageBlock({ label, global, white, black, tone, delta, tolerance = 0 
   const toneClass = TONE_CLASS[tone];
   return (
     <div aria-label={label} className="average-block flex min-w-0 justify-center">
-      <div className="inline-flex flex-col items-center rounded-md bg-slate-100 px-2 py-1 text-center">
+      <div className="inline-flex flex-col items-center rounded-md bg-slate-100 px-2 pt-1 pb-0.5 text-center">
         <div className="whitespace-nowrap"><BigValue value={global} toneClass={toneClass} />{delta !== undefined && <DeltaValue delta={delta} tolerance={tolerance} />}</div>
-        <div className={`mt-1 flex items-baseline justify-center gap-1 tabular-nums ${toneClass}`}>
+        <div className={`mt-0 flex items-baseline justify-center gap-1 tabular-nums ${toneClass}`}>
           <span aria-label={lang === "en" ? "White" : "Blanches"}><KeyBadge value={white} /></span>
           <span className={`!text-xs ${toneClass}`}>/</span>
           <span aria-label={lang === "en" ? "Black" : "Noires"}><KeyBadge value={black} black /></span>
@@ -1474,7 +1474,7 @@ export function AverageHeaderRow() {
   return (
     <div className="average-grid relative grid grid-cols-4 gap-3 px-[13px]">
       {COLUMNS.map(({ key, label, labelEn }) => (
-        <div key={key} className="flex min-h-[1.9rem] items-center justify-center rounded-lg bg-neutral-300 px-2 py-0.5 text-center text-[0.9rem] font-black uppercase leading-tight tracking-wide !text-black">
+        <div key={key} className="mx-[12%] flex min-h-[1.9rem] items-center justify-center rounded-lg bg-neutral-300 px-2 py-0.5 text-center text-[0.9rem] font-black uppercase leading-tight tracking-wide !text-black">
           {lang === "en" ? labelEn : label}
         </div>
       ))}
@@ -1494,10 +1494,10 @@ export function AverageGuideLines() {
 /** Cadre fin d'un profil, titre + résumé incrustés dans la bordure. */
 export function AverageFrame({ strong = false, name, detail, nameClass = "!text-black", className = "mt-[23px]", children }: { strong?: boolean; name: ReactNode; detail?: ReactNode | undefined; nameClass?: string; className?: string; children?: ReactNode }) {
   return (
-    <fieldset className={`relative z-[1] rounded-lg bg-card px-3 pb-2 pt-0 ${strong ? "border-[1.5px] border-neutral-800" : "border-[0.5px] border-neutral-500"} ${className}`}>
-      <legend className="ml-2 max-w-[calc(100%-1rem)] truncate px-1 text-[0.7rem] leading-tight">
+    <fieldset className={`relative z-[1] rounded-lg bg-card px-3 pb-1 pt-0 ${strong ? "border-[1.5px] border-neutral-800" : "border-[0.5px] border-neutral-500"} ${className}`}>
+      <legend className="ml-2 max-w-[calc(100%-1rem)] truncate bg-card px-2 text-[0.7rem] leading-tight">
         <span className={`font-bold uppercase tracking-wide ${nameClass}`}>{name}</span>
-        {detail ? <span className="text-[11px] italic normal-case !text-neutral-400"> · {detail}</span> : null}
+        {detail ? <span className="text-[10px] italic font-normal normal-case !text-neutral-400"> · {detail}</span> : null}
       </legend>
       {children}
     </fieldset>
