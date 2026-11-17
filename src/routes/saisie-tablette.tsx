@@ -899,7 +899,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
           >
             <div ref={labelsRef} className="octave-labels relative shrink-0" style={{ height: nativeH * octScale * 0.9 + 2 }}>
               <Button variant="ghost" type="button" aria-label={en ? "Previous octave" : "Octave précédente"} disabled={octave === 0} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.max(0, o - 1)); }} style={{ top: 1.05 * 16 * octScale * 0.9 + 4 }} className={`${arrowBtn} absolute right-0 ${pressedArrow === "prev" ? "scale-75 opacity-60" : ""}`}>◀</Button>
-              <div className="octave-label-content grid w-max text-right font-bold text-muted-foreground" style={{ fontSize: Math.min(15, Math.max(9, 14 * octScale * 0.9)) }}>
+              <div className="octave-label-content grid w-max text-right font-bold text-muted-foreground" style={{ fontSize: Math.min(13, Math.max(9, 13 * octScale * 0.9)) }}>
                 <span className="invisible">{label("wd")}</span>
                 <div className="absolute right-0 -translate-y-1/2" style={{ top: 5.81 * 16 * octScale * 0.9 }}>{label("wd")}</div>
                 <div className="absolute right-0 -translate-y-1/2" style={{ top: 6.96 * 16 * octScale * 0.9 }}>{label("wa")}</div>

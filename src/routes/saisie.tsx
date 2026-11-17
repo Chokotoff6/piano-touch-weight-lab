@@ -4251,9 +4251,10 @@ function Index() {
               <div className={FIELD_LABEL_CLASS}>
                 <span className="block">{en ? "Instrument history" : "Historique instrument"}</span>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <button type="button" className="list-chip" onClick={() => { antecedentsInvitedRef.current = true; setAntecedentsOpen(true); }}>
-                    {en ? "View / Edit" : "Consulter / Modifier"}
-                  </button>
+                  {(() => { const hasHistory = antecedentIds.length > 0 || !!info[ANTECEDENTS_CUSTOM_KEY] || (kwActive && (kwDocRef.current?.history_points?.length ?? 0) > 0); return (
+                  <button type="button" className="list-chip" title={hasHistory ? undefined : (en ? "Instrument history before KeyWeight" : "Historique de l'instrument avant KeyWeight")} onClick={() => { antecedentsInvitedRef.current = true; setAntecedentsOpen(true); }}>
+                    {hasHistory ? (en ? "View / Edit" : "Consulter / Editer") : (en ? "Fill in" : "Renseigner")}
+                  </button>); })()}
                 </div>
               </div>
               <AntecedentsDialog

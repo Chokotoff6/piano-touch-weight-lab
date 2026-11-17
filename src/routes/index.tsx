@@ -41,7 +41,7 @@ function Accueil() {
             className="mb-2 h-12"
             style={{
               aspectRatio: "var(--kw-text-ratio, 6.5)",
-              backgroundColor: "#7149ab",
+              backgroundColor: "#000000",
               WebkitMaskImage: `url(${logoKwText.url})`,
               maskImage: `url(${logoKwText.url})`,
               WebkitMaskRepeat: "no-repeat",
@@ -52,13 +52,13 @@ function Accueil() {
               maskPosition: "left center",
             }}
           />
-          <h1 className="text-2xl font-semibold leading-snug !text-black">
+          <h1 className="text-2xl font-semibold italic leading-snug !text-[#7149ab]">
             {en ? "Piano touch measurement and diagnostic tool" : "Outil de mesure et de diagnostic du toucher de piano"}
           </h1>
         </header>
 
         <section className="space-y-4">
-          <h2 className="text-2xl font-bold uppercase tracking-wide !text-[#4c1d95]">3 modules</h2>
+          <h2 className="text-2xl font-bold uppercase tracking-wide !text-black">3 modules</h2>
           <div className="grid gap-4 sm:grid-cols-3">
             {(en
               ? [
@@ -67,9 +67,9 @@ function Accueil() {
                   ["ANALYSIS", ["Comparison: before/after regulation, Standard targets and Cloud (collaborative database).", "Diagnosis: Zoom mode with out-of-tolerance alerts and direct editing."]],
                 ]
               : [
-                  ["PESÉE", ["Saisie assistée| : pavé tactile, avance automatique, contrôles de cohérence.", "Mode rapide| : Do/Do#, avec filtres d’affichage sélectif N/B - PD/PR.", "Vue Complète / Octave| pour tablettes.", "Sans papier| : adieu les feuilles volantes et les tableurs à recopier."]],
-                  ["BILAN", ["Tableau de bord interactif| : moyennes & courbes (PD-PR-Friction et PB).", "Import/export| de fiches d’instrument.", "Rapports PDF détaillés| pour devis et certification."]],
-                  ["ANALYSE", ["Comparaison courbes| avant/après régulation, cibles standards et données Cloud.", "Écarts Δ| : auto par rapport à cible standard ou point d’historique", "Diagnostic| : touches hors tolérance, mode Zoom avec retouche directe.", "Sauvegarde en local| : fichier .kw avec profil et points d’historique d’instrument."]],
+                  ["PESÉE", ["Saisie assistée| : pavé tactile, avance automatique, contrôles de cohérence.", "Ergonomie| : mode rapide Do/Do#, filtres d’affichage sélectif N/B - PD/PR.", "Vue par Octave| ou clavier complet.", "Fini les tableurs| indigestes et feuilles volantes."]],
+                  ["BILAN", ["Tableau de bord interactif| : valeurs moyennes & graphiques (PD-PR-Friction et PB).", "Import/export| fiches d’instrument.", "Rapports PDF détaillés| pour devis et certification."]],
+                  ["ANALYSE", ["Comparaisons| : avant/après régulation, cibles standards et données Cloud.", "Delta Δ| : par rapport à Cible standard ou Point d’historique.", "Diagnostic| : alertes tolérance, mode Zoom, retouche interactive sur courbe.", "Sauvegarde en local| mesures et points d’historique."]],
                 ]
             ).map(([title, items]) => (
               <fieldset key={title as string} className="min-w-0 rounded-lg border border-black bg-white/60 backdrop-blur-sm px-4 pb-4 pt-1">
