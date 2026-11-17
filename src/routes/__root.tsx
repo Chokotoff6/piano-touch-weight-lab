@@ -378,7 +378,7 @@ function RootComponent() {
         }}
       />
       <nav className="!sticky !top-0 !z-[100] !bg-white !shadow-md border-b border-border">
-        <div className="mx-auto w-full max-w-7xl pb-1 pt-[2px] px-4 xl:px-[100px]">
+        <div className="mx-auto w-full max-w-7xl pb-1 pt-[2px] px-4 sm:px-6">
           <div className="flex flex-nowrap items-center gap-1 xl:gap-2">
             {/* Logo officiel KeyWeight : calé à gauche, retour à l'accueil. */}
             <div className="relative z-10 flex h-10 shrink-0 flex-col items-center justify-start overflow-visible translate-y-[2px]">
@@ -398,7 +398,7 @@ function RootComponent() {
                   key={isHome ? "kw-anim" : "kw-static"}
                   role="img"
                   aria-label="KeyWeight"
-                  className={`${isHome ? "" : "kw-static "}block h-[85px] w-auto [&>svg]:block [&>svg]:h-[85px] [&>svg]:w-auto`}
+                  className={`${isHome ? "" : "kw-static "}block h-[70px] w-auto [&>svg]:block [&>svg]:h-[70px] [&>svg]:w-auto`}
                   dangerouslySetInnerHTML={{
                     __html: isHome ? animatedKeyweightLogo : staticKeyweightLogo,
                   }}
@@ -667,11 +667,11 @@ function RootComponent() {
                    <button
                      type="button"
                      onClick={() => setFaqOpen(true)}
-                     className="mr-2 shrink-0 xl:translate-y-[19px] rounded-md border border-gray-400 bg-white px-2 py-0.5 text-[1rem] font-bold !text-gray-900 transition-colors hover:bg-gray-100"
+                     className="mr-2 shrink-0 rounded-md border border-gray-400 bg-white px-2 py-0.5 text-[1rem] font-bold !text-gray-900 transition-colors hover:bg-gray-100"
                    >
                      FAQ
                    </button>
-                   <div className="flex shrink-0 xl:translate-y-[19px] items-center gap-0 text-[1.14rem] font-semibold">
+                   <div className="flex shrink-0 items-center gap-0 text-[1.14rem] font-semibold">
                      <Button
                        variant="ghost"
                        size="sm"
@@ -694,7 +694,7 @@ function RootComponent() {
                    </div>
                    {(pathname === "/resultats" || pathname === "/comparer") && (
                     <div
-                       className="relative order-first mr-4 xl:translate-y-[16px] transition-opacity duration-[2000ms] ease-in-out"
+                       className="relative order-first mr-4 transition-opacity duration-[2000ms] ease-in-out"
                        style={{ opacity: likedVisible ? 1 : 0, pointerEvents: likedVisible ? "auto" : "none" }}
                      onMouseEnter={() => {
                        if (supportHintTimer.current) clearTimeout(supportHintTimer.current);
@@ -944,7 +944,7 @@ function RootComponent() {
       {/* Écran de garde smartphone (< 640 px) : CSS seul, aucune redirection. */}
       <style dangerouslySetInnerHTML={{ __html: ".screen-guard{display:none}@media screen and (max-width:639px){.screen-guard{display:flex!important}}@media screen and (pointer:coarse) and (max-height:500px){.screen-guard{display:flex!important}}" }} />
       <div className="fixed inset-0 z-[200000] flex-col items-center justify-center gap-4 bg-background p-8 text-center screen-guard">
-        <span role="img" aria-label="KeyWeight" className="kw-static block h-[85px] w-auto [&>svg]:block [&>svg]:h-[85px] [&>svg]:w-auto" dangerouslySetInnerHTML={{ __html: staticKeyweightLogo }} />
+        <span role="img" aria-label="KeyWeight" className="kw-static block h-[70px] w-auto [&>svg]:block [&>svg]:h-[70px] [&>svg]:w-auto" dangerouslySetInnerHTML={{ __html: staticKeyweightLogo }} />
         <h1 className="text-xl font-bold text-foreground">{lang === "en" ? "Screen size not supported" : "Résolution non prise en charge"}</h1>
         <p className="max-w-xs text-sm text-muted-foreground">{lang === "en" ? "KeyWeight requires a larger screen (tablet in landscape mode or computer)." : "KeyWeight nécessite un écran plus grand (tablette en mode paysage ou ordinateur)."}</p>
       </div>

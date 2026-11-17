@@ -837,7 +837,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
     document.addEventListener("pointerdown", outside, true);
     return () => { document.removeEventListener("keydown", escape, true); document.removeEventListener("pointerdown", outside, true); };
   });
-  const cmdBtn = "tablet-command min-w-0 font-bold text-foreground";
+  const cmdBtn = "tablet-command shrink-0 font-bold text-foreground";
   const arrowBtn = "h-auto w-7 min-w-7 shrink-0 cursor-pointer px-1 text-2xl leading-none !text-black transition-transform duration-100 hover:opacity-70 active:scale-75 disabled:cursor-default disabled:opacity-20";
 
   return (
@@ -960,7 +960,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
             <span className="tablet-label-long">{en ? "← Edit Piano Info" : "← Modifier Infos piano"}</span>
             <span className="tablet-label-short">{en ? "← Piano info" : "← Infos piano"}</span>
           </Button>
-          <div className="tablet-commands flex min-w-0 flex-nowrap items-center justify-center">
+          <div className="tablet-commands flex shrink-0 flex-nowrap items-center justify-center">
             <Button type="button" variant="outline" onClick={() => openDesktop(true)} className={`${cmdBtn} weighing-view-toggle`}>
               <CycleLabel title={en ? "View" : "Vue"} value={en ? "Full" : "Complète"} />
             </Button>
