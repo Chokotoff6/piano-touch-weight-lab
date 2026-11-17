@@ -585,9 +585,18 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
     const e = (full.cols[b - 1]?.end ?? 0) - full.left;
     return (s + e) / 2;
   }), [full]);
-  const localX = (e: React.PointerEvent<HTMLDivElement>) => {
+  const localX = (e: { clientX: number; currentTarget: HTMLElement }) => {
     const r = e.currentTarget.getBoundingClientRect();
     return (e.clientX - r.left) / miniScale;
+  };
+  // Glisser tactile natif (WebKit iOS 15 préempte parfois pointermove pour le défilement).
+  const onMiniTouch = (e: React.TouchEvent<HTMLDivElement>, start: boolean) => {
+    const t = e.touches[0]; if (!t) return;
+    const x = localX({ clientX: t.clientX, currentTarget: e.currentTarget });
+    if (start) { dragging.current = true; unlockWeighingAudio(); cancelOctaveDelay(); }
+    if (!dragging.current) return;
+    setDragLeft(Math.max(0, Math.min(full.width - seg.width, x - seg.width / 2)));
+    setOctave(nearestOctave(x));
   };
   const nearestOctave = (x: number) => {
     let best = 0;
@@ -620,7 +629,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   const [octRef, octW] = useWidth();
   const widest = useMemo(() => Math.max(...OCTAVES.map(([a, b]) => geometry(a, b, NATIVE_WHITE).width)), []);
   const [labelsRef, labelsW] = useWidth();
-  const octScale = octW > 0 ? Math.min(Math.max(0.2, (octW - labelsW - 112) / widest), 3) : 1;
+  const octScale = octW > 0 ? Math.min(Math.max(0.55, (octW - labelsW - 48) / widest), 3) : 1;
 
   // Swipe horizontal sur l'octave.
   const touchX = useRef<number | null>(null);
@@ -859,6 +868,9 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
           onPointerMove={onMiniMove}
           onPointerUp={onMiniUp}
           onPointerCancel={() => { dragging.current = false; setDragLeft(null); }}
+          onTouchStart={(e) => onMiniTouch(e, true)}
+          onTouchMove={(e) => onMiniTouch(e, false)}
+          onTouchEnd={() => { dragging.current = false; setDragLeft(null); }}
         >
           <div className="pointer-events-none absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${miniScale})`, width: full.width }}>
             <div style={{ marginLeft: -full.left }}>
@@ -866,8 +878,8 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
             </div>
           </div>
           <div
-            className={`pointer-events-none absolute rounded-sm border-2 border-[#808080] bg-[#808080]/20 ${dragLeft === null ? "transition-all duration-300" : ""}`}
-            style={{ top: 0, left: viewLeft * miniScale, width: seg.width * miniScale, height: 11.55 * 16 * miniScale }}
+            className={`pointer-events-none absolute rounded-sm border-2 ${dragLeft === null ? "transition-all duration-300" : ""}`}
+            style={{ borderColor: "rgb(128, 128, 128)", backgroundColor: "rgba(128, 128, 128, 0.25)", top: 0, left: viewLeft * miniScale, width: seg.width * miniScale, height: 11.55 * 16 * miniScale }}
           />
         </div>
 
@@ -886,8 +898,8 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
             }}
           >
             <div ref={labelsRef} className="octave-labels relative shrink-0" style={{ height: nativeH * octScale * 0.9 + 2 }}>
-              <Button variant="ghost" type="button" aria-label={en ? "Previous octave" : "Octave précédente"} disabled={octave === 0} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.max(0, o - 1)); }} style={{ top: Math.max(0, 1.05 * 16 * octScale * 0.9 - 30) }} className={`${arrowBtn} absolute right-0 ${pressedArrow === "prev" ? "scale-75 opacity-60" : ""}`}>◀</Button>
-              <div className="octave-label-content grid w-max text-right font-bold text-muted-foreground">
+              <Button variant="ghost" type="button" aria-label={en ? "Previous octave" : "Octave précédente"} disabled={octave === 0} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.max(0, o - 1)); }} style={{ top: 1.05 * 16 * octScale * 0.9 + 4 }} className={`${arrowBtn} absolute right-0 ${pressedArrow === "prev" ? "scale-75 opacity-60" : ""}`}>◀</Button>
+              <div className="octave-label-content grid w-max text-right font-bold text-muted-foreground" style={{ fontSize: Math.min(15, Math.max(9, 14 * octScale * 0.9)) }}>
                 <span className="invisible">{label("wd")}</span>
                 <div className="absolute right-0 -translate-y-1/2" style={{ top: 5.81 * 16 * octScale * 0.9 }}>{label("wd")}</div>
                 <div className="absolute right-0 -translate-y-1/2" style={{ top: 6.96 * 16 * octScale * 0.9 }}>{label("wa")}</div>
@@ -905,7 +917,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
                 </div>
               </div>
             </div>
-            <Button variant="ghost" type="button" aria-label={en ? "Next octave" : "Octave suivante"} disabled={octave === OCTAVES.length - 1} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.min(OCTAVES.length - 1, o + 1)); }} style={{ marginTop: Math.max(0, 1.05 * 16 * octScale * 0.9 - 30) }} className={`${arrowBtn} ml-2 ${pressedArrow === "next" ? "scale-75 opacity-60" : ""}`}>▶</Button>
+            <Button variant="ghost" type="button" aria-label={en ? "Next octave" : "Octave suivante"} disabled={octave === OCTAVES.length - 1} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.min(OCTAVES.length - 1, o + 1)); }} style={{ marginTop: 1.05 * 16 * octScale * 0.9 + 4 }} className={`${arrowBtn} ml-2 ${pressedArrow === "next" ? "scale-75 opacity-60" : ""}`}>▶</Button>
           </div>
           {showKeypad && <Keypad height={Math.max(180, 0.8 * (nativeH * octScale * 0.9 + 2))} onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />}
         </div>
