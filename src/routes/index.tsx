@@ -52,7 +52,7 @@ function Accueil() {
               maskPosition: "left center",
             }}
           />
-          <h1 className="text-2xl font-semibold italic leading-snug !text-[#7149ab]">
+          <h1 className="text-2xl font-semibold leading-snug !text-[#7149ab]">
             {en ? "Piano touch measurement and diagnostic tool" : "Outil de mesure et de diagnostic du toucher de piano"}
           </h1>
         </header>
@@ -67,15 +67,15 @@ function Accueil() {
                   ["ANALYSIS", ["Comparison: before/after regulation, Standard targets and Cloud (collaborative database).", "Diagnosis: Zoom mode with out-of-tolerance alerts and direct editing."]],
                 ]
               : [
-                  ["PESÉE", ["Saisie assistée| : pavé tactile, avance automatique, contrôles de cohérence.", "Ergonomie| : mode rapide Do/Do#, filtres d’affichage sélectif N/B - PD/PR.", "Vue par Octave| ou clavier complet.", "Fini les tableurs| indigestes et feuilles volantes."]],
-                  ["BILAN", ["Tableau de bord interactif| : valeurs moyennes & graphiques (PD-PR-Friction et PB).", "Import/export| fiches d’instrument.", "Rapports PDF détaillés| pour devis et certification."]],
-                  ["ANALYSE", ["Comparaisons| : avant/après régulation, cibles standards et données Cloud.", "Delta Δ| : par rapport à Cible standard ou Point d’historique.", "Diagnostic| : alertes tolérance, mode Zoom, retouche interactive sur courbe.", "Sauvegarde en local| mesures et points d’historique."]],
+                  ["PESÉE", ["Saisie assistée| : pavé tactile, avance auto, contrôles cohérence.", "Ergonomie| : mode rapide Do/Do#, filtres d’affichage N/B - PD/PR.", "Vue \"Octave\"| ou clavier complet.", "Fini tableurs| et feuilles volantes."]],
+                  ["BILAN", ["Tableau de bord interactif| : moyennes & courbes (PD-PR-F-PB).", "Imports et sauvegardes| en local.", "Rapports PDF détaillés| pour devis et certification."]],
+                  ["ANALYSE", ["Comparaisons| : avant/après régulation, cibles standards, Cloud.", "Delta Δ| : par rapport à Cible standard ou Points d’historique.", "Diagnostic| : mode Zoom, alertes, retouche interactive sur courbe.", "Sauvegarde| en local."]],
                 ]
             ).map(([title, items]) => (
-              <fieldset key={title as string} className="min-w-0 rounded-lg border border-black bg-white/60 backdrop-blur-sm px-4 pb-4 pt-1">
+              <fieldset key={title as string} className="min-w-0 rounded-lg border border-black bg-white/20 px-4 pb-4 pt-1">
                 <legend className="px-2 text-lg font-extrabold !text-[#7149ab]">{title as string}</legend>
                 <ul className="list-disc space-y-1 pl-5 marker:font-normal">
-                  {(items as string[]).map((t) => <li key={t}><span className="font-medium !text-black">{t.includes("|") ? <><strong className="font-bold">{t.split("|")[0]}</strong>{t.split("|")[1]}</> : t}</span></li>)}
+                  {(items as string[]).map((t) => <li key={t}><span className="font-medium !text-black">{t.includes("|") ? <><strong className="font-black !text-black">{t.split("|")[0]}</strong>{t.split("|")[1]}</> : t}</span></li>)}
                 </ul>
               </fieldset>
             ))}
