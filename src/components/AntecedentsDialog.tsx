@@ -218,7 +218,7 @@ export function AntecedentsDialog({ open, onOpenChange, en, ids, datesRaw, custo
         {editing && (<>
         <div className="space-y-1.5 border-b-2 border-foreground/50 pb-2">
           {sel.length === 0 && customs.length === 0 && (
-            <div className="text-xs italic text-muted-foreground">{en ? "No prior history entered" : "Aucun antécédent renseigné"}</div>
+            <div className="text-xs italic text-muted-foreground">{en ? "Describe the instrument history before KeyWeight" : "Décrivez l'historique de l'instrument avant KeyWeight"}</div>
           )}
           {sel.map((id) => {
             const it = items.find((i) => i.id === id);

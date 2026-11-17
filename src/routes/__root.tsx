@@ -334,7 +334,7 @@ function RootComponent() {
   };
 
   const linkClass = "whitespace-nowrap rounded-md px-2 py-1.5 text-sm font-semibold !text-black transition-colors hover:bg-background xl:px-3 xl:text-base";
-  const activeLinkClass = "rounded-md bg-background px-3 py-2 text-base font-semibold !text-black shadow-sm sm:px-4 sm:text-lg";
+  const activeLinkClass = "whitespace-nowrap rounded-md bg-background px-2 py-1.5 text-sm font-semibold !text-black shadow-sm xl:px-3 xl:text-base";
   const lockedLinkClass = "whitespace-nowrap cursor-default rounded-md px-2 py-1.5 text-sm font-semibold !text-gray-300 xl:px-3 xl:text-base";
 
   // Le bouton « Fichiers » reste actif hors Comparer dès qu'une saisie
@@ -494,7 +494,7 @@ function RootComponent() {
               <button
                 type="button"
                 onClick={(e) => e.preventDefault()}
-                className={`inline-flex h-8 items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-0 text-lg font-bold transition-colors ${
+                className={`inline-flex h-8 items-center gap-1 rounded-md border border-gray-300 bg-white px-2 py-0 text-sm font-semibold transition-colors xl:px-3 xl:text-base ${
                   menuEnabled ? "!text-black hover:bg-gray-50" : "!text-gray-400 cursor-default"
                 }`}
               >
