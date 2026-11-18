@@ -17,7 +17,6 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
-    esbuild: { target: LEGACY_TARGET },
     optimizeDeps: { esbuildOptions: { target: LEGACY_TARGET } },
     build: { target: LEGACY_TARGET, cssTarget: ["safari15"] },
   },
