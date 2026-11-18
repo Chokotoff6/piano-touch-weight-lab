@@ -766,3 +766,7 @@ body {
   .average-block > div { column-gap: 0.25rem; }
 }
 
+
+/* iOS WebKit : le conteneur vide des notifications ne doit pas intercepter les taps */
+[data-sonner-toaster] { pointer-events: none; }
+[data-sonner-toaster] [data-sonner-toast] { pointer-events: auto; }

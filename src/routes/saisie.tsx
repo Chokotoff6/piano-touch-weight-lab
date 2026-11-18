@@ -3698,7 +3698,7 @@ function Index() {
     const escape = (e: KeyboardEvent) => { if (e.key === "Escape") { e.preventDefault(); clearWeighingSelection(); } };
     const outside = (e: PointerEvent) => {
       const target = e.target instanceof Element ? e.target : null;
-      if (target?.closest(".weight-input, .weighing-view-toggle, [role=dialog], [role=alertdialog]")) return;
+      if (target?.closest(".weight-input, .weighing-view-toggle, button, a, nav, header, [role=button], [role=dialog], [role=alertdialog]")) return;
       clearWeighingSelection();
     };
     document.addEventListener("keydown", escape, true);
