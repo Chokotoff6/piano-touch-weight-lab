@@ -142,6 +142,7 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="fr">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: "(function(){function show(m){try{var d=document.getElementById('kw-err');if(!d){d=document.createElement('div');d.id='kw-err';d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#c00;color:#fff;font:14px monospace;padding:10px;white-space:pre-wrap;word-break:break-all;max-height:50vh;overflow:auto';(document.body||document.documentElement).appendChild(d);}d.textContent+=m+'\n';}catch(e){alert(m);}}window.addEventListener('error',function(e){var t=e.target;if(t&&t!==window&&(t.src||t.href)){show('CHARGEMENT ECHOUE: '+(t.src||t.href));return;}show('ERREUR: '+e.message+' @ '+e.filename+':'+e.lineno+':'+e.colno);},true);window.addEventListener('unhandledrejection',function(e){var r=e.reason;show('PROMESSE: '+(r&&(r.stack||r.message)||r));});})();" }} />
         <HeadContent />
       </head>
       <body>
