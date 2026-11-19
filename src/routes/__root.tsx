@@ -35,7 +35,7 @@ import likedLogoFrAsset from "@/assets/image_soutien_v5.png.asset.json";
 import likedLogoEnAsset from "@/assets/image_sustain_v5.png.asset.json";
 import { ensureDemoDefault, toggleDemoMode, DEMO_BANNER_V2_KEY, isDemoActive, DEMO_LOADED_EVENT, DEMO_MODE_CHANGED_EVENT } from "@/lib/demo-mode";
 import { PreferencesGear } from "@/components/PreferencesGear";
-import { usePreferences, setPdfRedKeys } from "@/lib/preferences";
+import { usePreferences, setPdfRedKeys, applyAnimationsClass } from "@/lib/preferences";
 import { AppFooter } from "@/components/AppFooter";
 import keyweightLogo from "@/assets/keyweight-logo.png.asset.json";
 import animatedKeyweightLogo from "@/assets/logo-kw-animated.svg?raw";
@@ -346,6 +346,19 @@ function RootComponent() {
   // Sur Pesée, le menu reste ouvrable (Importer / formulaire vierge) même sans pesée.
   const menuEnabled = true;
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  // Menu Fichiers : ouverture au toucher (tablettes sans survol), survol conservé sur ordinateur.
+  const [filesOpen, setFilesOpen] = useState(false);
+  const filesMenuRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!filesOpen) return;
+    const onDown = (e: PointerEvent) => {
+      if (filesMenuRef.current && !filesMenuRef.current.contains(e.target as Node)) setFilesOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, [filesOpen]);
+  const animationsOn = usePreferences().animations;
+  useEffect(() => { applyAnimationsClass(); }, [animationsOn]);
   const [pdfWide, setPdfWide] = useState(false);
 
   const dispatchAction = (type: string, detail?: unknown) => {
@@ -396,12 +409,12 @@ function RootComponent() {
                 }}
               >
                 <span
-                  key={isHome ? "kw-anim" : "kw-static"}
+                  key={isHome && animationsOn ? "kw-anim" : "kw-static"}
                   role="img"
                   aria-label="KeyWeight"
-                  className={`${isHome ? "" : "kw-static "}block h-[70px] w-auto [&>svg]:block [&>svg]:h-[70px] [&>svg]:w-auto`}
+                  className={`${isHome && animationsOn ? "" : "kw-static "}block h-[70px] w-auto [&>svg]:block [&>svg]:h-[70px] [&>svg]:w-auto`}
                   dangerouslySetInnerHTML={{
-                    __html: isHome ? animatedKeyweightLogo : staticKeyweightLogo,
+                    __html: isHome && animationsOn ? animatedKeyweightLogo : staticKeyweightLogo,
                   }}
                 />
               </Link>
@@ -491,10 +504,11 @@ function RootComponent() {
             {/* Conteneur parent 100 % CSS : le survol du groupe ouvre/ferme le menu.
                 Aucun état JS, aucun timer, aucun gestionnaire onMouseEnter/onMouseLeave. */}
             {!isHome && (
-            <div className="group relative flex shrink-0 items-center">
+            <div ref={filesMenuRef} className="group relative flex shrink-0 items-center">
               <button
                 type="button"
-                onClick={(e) => e.preventDefault()}
+                aria-expanded={filesOpen}
+                onClick={(e) => { e.preventDefault(); setFilesOpen((o) => !o); }}
                 className={`inline-flex h-8 items-center gap-1 rounded-md border border-gray-300 bg-white px-2 py-0 text-sm font-semibold transition-colors xl:px-3 xl:text-base ${
                   menuEnabled ? "!text-black hover:bg-gray-50" : "!text-gray-400 cursor-default"
                 }`}
@@ -523,7 +537,7 @@ function RootComponent() {
                 </div>
               )}
 
-              <div className={`absolute right-0 top-full -mt-[2px] z-[99999] w-max min-w-[300px] max-w-[calc(100vw-2rem)] [&>button]:whitespace-nowrap [&>div>button]:whitespace-nowrap rounded-md border border-gray-200 bg-white py-1 shadow-lg opacity-0 pointer-events-none transition-opacity duration-100 ${menuEnabled ? "group-hover:opacity-100 group-hover:pointer-events-auto" : ""}`}>
+              <div className={`absolute right-0 top-full -mt-[2px] z-[99999] w-max min-w-[300px] max-w-[calc(100vw-2rem)] [&>button]:whitespace-nowrap [&>div>button]:whitespace-nowrap rounded-md border border-gray-200 bg-white py-1 shadow-lg opacity-0 pointer-events-none transition-opacity duration-100 ${menuEnabled ? "group-hover:opacity-100 group-hover:pointer-events-auto" : ""} ${filesOpen ? "!opacity-100 !pointer-events-auto" : ""}`} onClick={() => setFilesOpen(false)}>
                 {/* 1. Enregistrer : fichier local souverain .kw, sur les 3 pages. */}
                 <button
                   type="button"

@@ -7,7 +7,7 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/comp
 import { useLang } from "@/data/translations";
 import { isDemoActive, toggleDemoMode } from "@/lib/demo-mode";
 import {
-  usePreferences, setCorridorG, setSmoothDefault, setSmoothAnalyse, setAutoAdvance, setKeySound, setOctaveSound, setBilanRedKeys, type SmoothPref,
+  usePreferences, setCorridorG, setSmoothDefault, setSmoothAnalyse, setAutoAdvance, setKeySound, setOctaveSound, setBilanRedKeys, setAnimations, type SmoothPref,
   setTargetMode, setCustomTarget, DEFAULT_TARGETS, type TargetKind, type TargetRamp,
 } from "@/lib/preferences";
 
@@ -99,6 +99,11 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
               <div className="flex gap-2">
                 <Choice value={false} current={demo} label={"OFF" + def} tip={demo ? (en ? "Turns demo mode off: the sample piano, its 88 weighings and the sample Cloud data are erased." : "Désactive le mode démo : le piano fictif, ses 88 pesées et les données Cloud d'essai sont effacés.") : undefined} onPick={(v) => { if (v !== demo) { toggleDemoMode(); setOpen(false); onDemoToggled?.(); } }} />
                 <Choice value={true} current={demo} label="ON" tip={en ? "Loads a full sample: fictitious piano, 88 weighings and sample Cloud data, to explore the app freely." : "Charge un profil de piano et des données Cloud fictives pour découvrir l'application. Le profil actuel sera effacé."} onPick={(v) => { if (v !== demo) { toggleDemoMode(); setOpen(false); onDemoToggled?.(); } }} />
+              </div>
+              <span className="mt-1 font-semibold">{en ? "Animations" : "Animations"}</span>
+              <div className="flex gap-2">
+                <Choice value={true} current={prefs.animations} label="ON" tip={en ? "Animated logo, demo typing and visual effects." : "Logo animé, saisie démo animée et effets visuels."} onPick={setAnimations} />
+                <Choice value={false} current={prefs.animations} label="OFF" tip={en ? "Faster on older tablets: instant demo filling, no visual effects." : "Plus rapide sur tablettes anciennes : démo remplie instantanément, sans effets visuels."} onPick={setAnimations} />
               </div>
             </div>
             <div className={row}>

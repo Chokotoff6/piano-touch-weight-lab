@@ -6,7 +6,7 @@ import {
 } from "@/lib/chart-data";
 export type { KeyFilter, RefProfile, ChartPoint } from "@/lib/chart-data";
 import { forceCollide, forceSimulation, forceX, forceY, type SimulationNodeDatum } from "d3-force";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, type SetStateAction, type RefObject } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type Dispatch, type SetStateAction, type RefObject } from "react";
 import { flushSync } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { FloatingPanel } from "@/components/FloatingPanel";
@@ -1119,7 +1119,8 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   );
 }
 
-export function ComparisonChart({ chartData: rawChartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible standard", onCycleKeyFilter, smoothDefault = true, showSourceControls = false, allowRealMode = true, simple = false, tall = false, forceSmooth, onSmoothModeChange }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void; smoothDefault?: boolean; showSourceControls?: boolean; allowRealMode?: boolean; simple?: boolean; tall?: boolean; forceSmooth?: "real" | "smooth" | "smoothPlus"; onSmoothModeChange?: (mode: "real" | "smooth" | "smoothPlus") => void }) {
+export const ComparisonChart = memo(ComparisonChartBase);
+function ComparisonChartBase({ chartData: rawChartData, keyFilter, comparisonLabel, comparisonShort, currentBaseName = "Piano actuel", autoDomain = false, sideMargin = 140, csvActive = false, targetLabel = "Cible standard", onCycleKeyFilter, smoothDefault = true, showSourceControls = false, allowRealMode = true, simple = false, tall = false, forceSmooth, onSmoothModeChange }: { chartData: ChartPoint[]; keyFilter: KeyFilter; comparisonLabel: string; comparisonShort: string; currentBaseName?: string; autoDomain?: boolean; sideMargin?: number; csvActive?: boolean; targetLabel?: string; onCycleKeyFilter?: () => void; smoothDefault?: boolean; showSourceControls?: boolean; allowRealMode?: boolean; simple?: boolean; tall?: boolean; forceSmooth?: "real" | "smooth" | "smoothPlus"; onSmoothModeChange?: (mode: "real" | "smooth" | "smoothPlus") => void }) {
   const lang = useLang();
   // Lissage global : brut, trois notes, ou cinq notes. Purement local.
   // `smoothDefault` permet au Mode Rapide d'imposer le rendu « Réel ».

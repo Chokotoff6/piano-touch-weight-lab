@@ -31,6 +31,8 @@ type Preferences = {
   /** Cible standard : défaut (selon type) ou personnalisée. */
   targetMode: "default" | "custom";
   customTargets: Record<TargetKind, TargetRamp>;
+  /** Animations et effets visuels (OFF par défaut sur écran tactile). */
+  animations: boolean;
 };
 
 const CORRIDOR_KEY = "ptw_pref_corridor_g";
@@ -43,6 +45,15 @@ const KEY_SOUND_KEY = "ptw_pref_key_sound";
 const OCTAVE_SOUND_KEY = "ptw_pref_octave_sound";
 const TARGET_MODE_KEY = "ptw_pref_target_mode";
 const TARGET_CUSTOM_KEY = "ptw_pref_target_custom";
+const ANIMATIONS_KEY = "ptw_pref_animations";
+
+function defaultAnimations(): boolean {
+  try {
+    return !window.matchMedia("(pointer: coarse)").matches;
+  } catch {
+    return true;
+  }
+}
 
 function loadCustom(): Record<TargetKind, TargetRamp> {
   try {
@@ -72,7 +83,7 @@ const write = (key: string, value: string) => {
 };
 
 function load(): Preferences {
-  if (typeof window === "undefined") return { corridorG: 3, smoothDefault: "smooth", smoothAnalyse: "real", pdfRedKeys: true, bilanRedKeys: false, autoAdvance: true, keySound: true, octaveSound: true, targetMode: "default", customTargets: { ...DEFAULT_TARGETS } };
+  if (typeof window === "undefined") return { corridorG: 3, smoothDefault: "smooth", smoothAnalyse: "real", pdfRedKeys: true, bilanRedKeys: false, autoAdvance: true, keySound: true, octaveSound: true, targetMode: "default", customTargets: { ...DEFAULT_TARGETS }, animations: true };
   const rawCorridor = read(CORRIDOR_KEY);
   const corridor = rawCorridor === null || rawCorridor === "" ? NaN : Number(rawCorridor);
   const smooth = read(SMOOTH_KEY);
@@ -89,6 +100,7 @@ function load(): Preferences {
     octaveSound: read(OCTAVE_SOUND_KEY) !== "0",
     targetMode: read(TARGET_MODE_KEY) === "custom" ? "custom" : "default",
     customTargets: loadCustom(),
+    animations: read(ANIMATIONS_KEY) === null ? defaultAnimations() : read(ANIMATIONS_KEY) === "1",
   };
 }
 
@@ -157,6 +169,16 @@ export function setCustomTarget(kind: TargetKind, ramp: TargetRamp) {
   prefs = { ...prefs, customTargets: { ...prefs.customTargets, [kind]: ramp } };
   write(TARGET_CUSTOM_KEY, JSON.stringify(prefs.customTargets));
   emit();
+}
+
+export function setAnimations(value: boolean) {
+  prefs = { ...prefs, animations: value }; write(ANIMATIONS_KEY, value ? "1" : "0"); applyAnimationsClass(); emit();
+}
+
+/** Classe « no-anim » sur <html> : coupe transitions, animations et flous. */
+export function applyAnimationsClass() {
+  if (typeof document === "undefined") return;
+  document.documentElement.classList.toggle("no-anim", !prefs.animations);
 }
 
 /** Rampe effective pour un type donné selon le mode choisi. */

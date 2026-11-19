@@ -37,3 +37,4 @@ Les étiquettes de fin des graphiques Recharts sont placées à partir des éche
 - Analysis comparison buttons stay inline under Averages while Cloud filters open in a draggable non-modal FloatingPanel, with a permanently painted off-screen full settings mirror for PDF capture — keeps charts visible and exported settings complete.
 - Octave labels use intrinsic text width outside the scaled keyboard, and Do-number size is compensated for the keyboard scale — keeps real visible margins balanced and the two marker lines equally readable.
 - Client JS/CSS compile to Safari 15 / es2020 via vite.config.ts, because the target iPad Air 2 runs iOS 15.8 and rejects newer syntax such as class static blocks.
+- Animations preference toggles an html 'no-anim' class plus JS checks (demo typing/cascade, home logo) via getPreferences().animations; default OFF on coarse-pointer devices so old tablets stay responsive.

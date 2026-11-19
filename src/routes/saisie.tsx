@@ -524,6 +524,8 @@ function Index() {
   const [rows, setRows] = useState<Row[]>(EMPTY);
   const [info, setInfo] = useState<Record<string, string>>({});
   const [isDirty, setIsDirty] = useState(false);
+  const isDirtyRef = useRef(false);
+  useEffect(() => { isDirtyRef.current = isDirty; }, [isDirty]);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [blockMessage, setBlockMessage] = useState<string | null>(null);
   const [blockAnchor, setBlockAnchor] = useState<{ x: number; y: number; text?: string } | null>(null);
@@ -775,6 +777,13 @@ function Index() {
     if (!isDemoActive() || hasSeenDemoCascade()) return false;
     if (!Array.isArray(fullRows) || fullRows.length !== 88) return false;
     if (!fullRows.some((r) => r.wd || r.wa)) return false;
+    // Animations OFF : remplissage des 88 touches en une seule mise à jour.
+    if (!getPreferences().animations) {
+      cascadeStarted.current = true;
+      setRows(fullRows.map((r) => ({ ...r })));
+      markDemoCascadeSeen();
+      return true;
+    }
     cascadeStarted.current = true;
     cascadeTarget.current = fullRows;
     cascadeIndex.current = 0;
@@ -1050,7 +1059,7 @@ function Index() {
     }
     demoTargetRef.current = target;
     setDemoTyped(true);
-    if (steps.length === 0) {
+    if (steps.length === 0 || !getPreferences().animations) {
       setInfo(target);
       return;
     }
@@ -2133,7 +2142,10 @@ function Index() {
 
   // --- Saisie des informations générales ---------------------------------------
 
+  // Une seule mise à jour au premier changement : la frappe suivante ne re-rend plus toute la page.
   const markDirty = () => {
+    if (isDirtyRef.current) return;
+    isDirtyRef.current = true;
     setIsDirty(true);
     setSavedAt(new Date().toISOString());
   };

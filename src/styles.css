@@ -770,3 +770,12 @@ body {
 /* iOS WebKit : le conteneur vide des notifications ne doit pas intercepter les taps */
 [data-sonner-toaster] { pointer-events: none; }
 [data-sonner-toaster] [data-sonner-toast] { pointer-events: auto; }
+
+/* Préférence Animations OFF : coupe transitions, animations et flous (tablettes anciennes). */
+html.no-anim *, html.no-anim *::before, html.no-anim *::after {
+  transition: none !important;
+  animation: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  scroll-behavior: auto !important;
+}
