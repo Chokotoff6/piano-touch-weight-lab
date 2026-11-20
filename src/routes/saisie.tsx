@@ -708,6 +708,8 @@ function Index() {
   const pdfFramesRef = useRef<HTMLDivElement | null>(null);
 
   const moyennesRef = useRef<HTMLElement | null>(null);
+  // Bloc PDF monté uniquement pendant l'export : évite le recalcul des graphiques cachés à chaque frappe (iPad Air 2).
+  const [pdfMounted, setPdfMounted] = useState(false);
   const mesuresRef = useRef<HTMLElement | null>(null);
   const pdfMesuresRef = useRef<HTMLElement | null>(null);
 
@@ -3018,7 +3020,11 @@ function Index() {
   const exportPdfFile = async () => {
     // Une seule frame d'attente : « Export en cours... » (10 px sous Sauver)
     // est peint avant le premier calcul, sans ajouter de délai artificiel.
-    await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+    setPdfMounted(true);
+    try {
+    // Deux frames : le bloc PDF est monté puis réellement peint avant la capture.
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve(null))));
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve(null))));
     const pages = collectPdfPages();
     if (pages.every((page) => page.length === 0)) return;
 
@@ -3033,6 +3039,9 @@ function Index() {
     console.info(
       `[pdf] captures ${Math.round(assembly - started)} ms + assemblage ${Math.round(performance.now() - assembly)} ms`,
     );
+    } finally {
+      setPdfMounted(false);
+    }
   };
 
 
@@ -4684,6 +4693,7 @@ function Index() {
         className="w-[1024px] max-w-[1024px] h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none bg-white print:h-auto print:max-h-none print:opacity-100"
       >
         <div className="p-4">
+        {pdfMounted && (<>
         <div ref={pdfInfoRef} className="bg-white">
           <PdfInfoTable info={pdfInfoData} />
 
@@ -4772,7 +4782,7 @@ Moyennes{" "}
             smoothDefault={!rapidMode}
           />
         </div>
-
+        </>)}
 
         </div>
       </div>
