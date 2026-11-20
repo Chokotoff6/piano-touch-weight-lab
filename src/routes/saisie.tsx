@@ -6,7 +6,7 @@ import { getPreferences } from "@/lib/preferences";
 import { weighingReadiness, weighingLockMessage } from "@/lib/weighing-readiness";
 import { rememberWeighingCell, readWeighingCell, hasWeighingHandoff, unlockWeighingAudio, playWeighingSound, playReadyChime } from "@/lib/weighing-feedback";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { startTransition, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Redo2, RefreshCw, Undo2 } from "lucide-react";
 import {
   hasAnyMeasurement,
@@ -1392,9 +1392,12 @@ function Index() {
       try {
         const draft = JSON.parse(window.localStorage.getItem(DRAFT_ROWS_KEY) ?? "null") as Row[] | null;
         const identity = JSON.parse(window.localStorage.getItem(DRAFT_INFO_KEY) ?? "null") as Record<string, string> | null;
-        if (Array.isArray(draft) && draft.length === 88) { rowsRef.current = draft; setRows(draft); }
-        if (identity) setInfo(identity);
-        setRapidMode(window.localStorage.getItem("ptw_rapid_mode") === "1");
+        // Basse priorité : la vue bureau se resynchronise sans bloquer la frappe en vue Octave.
+        startTransition(() => {
+          if (Array.isArray(draft) && draft.length === 88) { rowsRef.current = draft; setRows(draft); }
+          if (identity) setInfo(identity);
+          setRapidMode(window.localStorage.getItem("ptw_rapid_mode") === "1");
+        });
       } catch { /* local storage unavailable */ }
     };
     window.addEventListener(DRAFT_EDITED_EVENT, reload);
@@ -4561,7 +4564,7 @@ function Index() {
               type="button"
               variant="outline"
               data-pdf-hide
-              onClick={() => chooseOctave(true)}
+              onClick={() => startTransition(() => chooseOctave(true))}
               className="weighing-view-toggle h-auto min-h-8 gap-1 px-3 py-1.5 text-xs font-bold text-foreground"
             >
               <CycleLabel title={en ? "View" : "Vue"} value="Octave" />
@@ -4874,7 +4877,7 @@ Moyennes{" "}
         </div>
       )}
     </main>
-    {weighingMode && octaveView && <TabletWeighingPage onFullView={() => chooseOctave(false)} onPianoInfo={() => setWeighingMode(false)} />}
+    {weighingMode && octaveView && <TabletWeighingPage onFullView={() => startTransition(() => chooseOctave(false))} onPianoInfo={() => setWeighingMode(false)} />}
     </>
   );
 }

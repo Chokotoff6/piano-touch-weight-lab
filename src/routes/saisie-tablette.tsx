@@ -515,6 +515,13 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
     return true;
   };
   const hasData = rows.some((r) => r.wd.trim() || r.wa.trim());
+  // Mini-carte : redessinée seulement quand une case passe vide/remplie ou qu'un filtre change.
+  const fillSignature = rows.map((r) => (r.wd.trim() ? "1" : "0") + (r.wa.trim() ? "1" : "0")).join("");
+  const miniGrid = useMemo(
+    () => <KeyGrid from={1} to={88} rows={rowsRef.current} editable={false} mini isVisible={isVisible} weightFilter={weightFilter} />,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [fillSignature, viewFilter, rapidMode, weightFilter],
+  );
   const doReset = () => {
     undoStack.current.push(rowsRef.current.map((r) => ({ ...r })));
     redoStack.current = [];
@@ -874,7 +881,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
         >
           <div className="pointer-events-none absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${miniScale})`, width: full.width }}>
             <div style={{ marginLeft: -full.left }}>
-              <KeyGrid from={1} to={88} rows={rows} editable={false} mini isVisible={isVisible} weightFilter={weightFilter} />
+              {miniGrid}
             </div>
           </div>
           <div
