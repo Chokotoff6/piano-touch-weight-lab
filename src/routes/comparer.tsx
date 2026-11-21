@@ -381,7 +381,7 @@ function EndLabels({ lines, data, domainX, colors, offset, xAxisMap, yAxisMap, l
       .force("anchorY", forceY<EndLabelNode>((node) => Math.max(top, Math.min(bottom, node.anchorY))).strength(0.18))
       .force("avoidOverlap", forceCollide<EndLabelNode>(9).strength(1).iterations(3))
       .stop();
-    for (let tick = 0; tick < 160; tick += 1) {
+    for (let tick = 0; tick < 30; tick += 1) {
       simulation.tick();
       for (const node of nodes) {
         node.y = Math.max(top, Math.min(bottom, node.y));
@@ -955,6 +955,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
         <div data-pdf-hide className="absolute bottom-2 right-3 z-20 flex items-end gap-2">
           {showZoomHelp && (
             <div className="pointer-events-none flex flex-col items-center gap-1 rounded-lg bg-white/90 p-1">
+              <span className="whitespace-nowrap text-xs font-semibold !text-black">{lang === "en" ? "Click a curve point = quick edit" : "Clic point de courbe = retouche rapide"}</span>
               <WheelHintIcon />
               <ArrowHintIcon />
             </div>
@@ -1438,7 +1439,7 @@ const AVG_KEYS: Record<MetricKey, { cur: [SeriesKey, SeriesKey, SeriesKey]; ref:
   balance: { cur: ["balCur", "balCurW", "balCurB"], ref: ["sameBal", "sameBalW", "sameBalB"] },
 };
 
-export type DeltaRef = "none" | "std" | "hist";
+export type DeltaRef = "none" | "std" | "hist" | "cloud";
 
 export function AverageRow({ chartData, source, hasData, csv = false, deltaRef = "none" }: { chartData: ChartPoint[]; source: "cur" | "ref"; hasData: boolean; csv?: boolean; deltaRef?: DeltaRef }) {
   const lang = useLang();
@@ -1529,19 +1530,20 @@ function StandardRow({ chartData }: { chartData: ChartPoint[] }) {
 }
 
 /** Pilule Δ incrustée sur la bordure haute : menu Aucun / vs Cible / vs Historique. */
-function DeltaPill({ value, onChange, stdAvailable, histAvailable }: { value: DeltaRef; onChange: (v: DeltaRef) => void; stdAvailable: boolean; histAvailable: boolean }) {
+function DeltaPill({ value, onChange, stdAvailable, histAvailable, cloudAvailable }: { value: DeltaRef; onChange: (v: DeltaRef) => void; stdAvailable: boolean; histAvailable: boolean; cloudAvailable: boolean }) {
   const [open, setOpen] = useState(false);
   const en = useLang() === "en";
   const items: { v: DeltaRef; label: string }[] = [
     { v: "none", label: en ? "None" : "Aucun" },
     ...(stdAvailable ? [{ v: "std" as DeltaRef, label: en ? "vs Target" : "vs Cible" }] : []),
     ...(histAvailable ? [{ v: "hist" as DeltaRef, label: en ? "vs History" : "vs Historique" }] : []),
+    ...(cloudAvailable ? [{ v: "cloud" as DeltaRef, label: "vs Cloud" }] : []),
   ];
   const active = value !== "none";
   return (
     <div data-pdf-hide className="absolute -top-[9px] right-4 z-[60]" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
       <button type="button" onClick={() => setOpen((o) => !o)} className={`inline-flex h-[18px] min-h-0 items-center justify-center rounded-full border px-2.5 py-0 text-xs font-medium leading-none ${active ? "border-slate-900 bg-slate-900 !text-white" : "border-neutral-400 bg-white !text-black"}`}>
-        <span className="-mt-px">{value === "std" ? (en ? "Δ target" : "Δ cible") : value === "hist" ? (en ? "Δ hist." : "Δ histo.") : "Δ"}</span>
+        <span className="-mt-px">{value === "std" ? (en ? "Δ target" : "Δ cible") : value === "hist" ? (en ? "Δ hist." : "Δ histo.") : value === "cloud" ? "Δ cloud" : "Δ"}</span>
       </button>
       {open && (
         <div className="absolute right-0 top-full pt-1">
@@ -2273,8 +2275,8 @@ function Comparer() {
 
   // Étiquette de la cible constructeur, traduite à l'affichage (marque conservée).
   useEffect(() => {
-    if ((deltaRef === "std" && !standardEnabled) || (deltaRef === "hist" && comparedPiano === null)) setDeltaRef("none");
-  }, [deltaRef, standardEnabled, comparedPiano]);
+    if ((deltaRef === "std" && !standardEnabled) || (deltaRef === "hist" && comparedPiano === null) || (deltaRef === "cloud" && !(comparedPiano === null && sourceMode === "cloud" && cloudSampleCount > 0))) setDeltaRef("none");
+  }, [deltaRef, standardEnabled, comparedPiano, sourceMode, cloudSampleCount]);
   const displayStandardLabel = !en
     ? standardLabel
     : standardLabel.startsWith("CIBLE : GÉNÉRIQUE ")
@@ -2336,7 +2338,7 @@ function Comparer() {
               
               <div ref={averagesRef} data-pdf-expand data-pdf-lock-w="980" className="sticky top-[127px] z-50 mb-[50px] w-full bg-card pb-2 relative">
                 <Frame titleClassName="absolute -top-3.5 left-4 max-w-[calc(100%-2rem)] whitespace-nowrap bg-card px-2 text-sm xl:text-lg font-bold text-foreground" title={en ? "Averages" : "Moyennes"} className="h-fit">
-                  <DeltaPill value={deltaRef} onChange={setDeltaRef} stdAvailable={standardEnabled} histAvailable={comparedPiano !== null} />
+                  <DeltaPill value={deltaRef} onChange={setDeltaRef} stdAvailable={standardEnabled} histAvailable={comparedPiano !== null} cloudAvailable={comparedPiano === null && sourceMode === "cloud" && cloudSampleCount > 0} />
                   <div className="relative">
                     {(standardEnabled || comparedPiano !== null || sourceMode === "cloud") && <AverageGuideLines />}
                     <AverageHeaderRow />

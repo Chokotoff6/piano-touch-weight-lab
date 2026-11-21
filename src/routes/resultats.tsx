@@ -499,7 +499,7 @@ function Resultats() {
           </div>
 
           <div className="relative mx-auto w-full">
-            <div className={unlocked ? "" : "pointer-events-none select-none blur-md"}>
+            <div className={unlocked ? "" : "pointer-events-none select-none opacity-25"}>
               <ComparisonChart
                 chartData={chartData}
                 keyFilter={keyFilter}

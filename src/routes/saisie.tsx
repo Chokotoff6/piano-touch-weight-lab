@@ -3717,8 +3717,11 @@ function Index() {
     if (document.activeElement instanceof HTMLInputElement && document.activeElement.classList.contains("weight-input")) document.activeElement.blur();
     hideRangeMessage(true); setCoherenceIndex(null); setCoherenceAnchor(null);
   };
+  const clearWeighingRef = useRef(clearWeighingSelection);
+  clearWeighingRef.current = clearWeighingSelection;
   useEffect(() => {
     if (!weighingMode || octaveView) return;
+    const clearWeighingSelection = () => clearWeighingRef.current();
     const escape = (e: KeyboardEvent) => { if (e.key === "Escape") { e.preventDefault(); clearWeighingSelection(); } };
     const outside = (e: PointerEvent) => {
       const target = e.target instanceof Element ? e.target : null;
@@ -3728,7 +3731,7 @@ function Index() {
     document.addEventListener("keydown", escape, true);
     document.addEventListener("pointerdown", outside, true);
     return () => { document.removeEventListener("keydown", escape, true); document.removeEventListener("pointerdown", outside, true); };
-  });
+  }, [weighingMode, octaveView]);
 
   // --- Rendu : champ de saisie d'un poids (Wd ou Wa) ------------------------------
 

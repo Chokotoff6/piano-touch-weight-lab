@@ -154,10 +154,14 @@ function geometry(from: number, to: number, v: number) {
 /** Mesure la largeur disponible d'un conteneur. */
 function useWidth() {
   const [w, setW] = useState(0);
+  const roRef = useRef<ResizeObserver | null>(null);
   const ref = useCallback((node: HTMLDivElement | null) => {
+    roRef.current?.disconnect();
+    roRef.current = null;
     if (!node) return;
-    const ro = new ResizeObserver(() => setW(node.getBoundingClientRect().width));
+    const ro = new ResizeObserver((entries) => { const e = entries[0]; if (e) setW(e.contentRect.width); });
     ro.observe(node);
+    roRef.current = ro;
     setW(node.getBoundingClientRect().width);
   }, []);
   return [ref, w] as const;
@@ -833,7 +837,10 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
     setActive(null); setFocusRequest(null); pendingCaret.current = null;
     rememberWeighingCell(null); setAlert(null); onCommit();
   };
+  const clearSelectionRef = useRef(clearSelection);
+  clearSelectionRef.current = clearSelection;
   useEffect(() => {
+    const clearSelection = () => clearSelectionRef.current();
     const escape = (e: KeyboardEvent) => { if (e.key === "Escape") { e.preventDefault(); clearSelection(); } };
     const outside = (e: PointerEvent) => {
       const target = e.target instanceof Element ? e.target : null;
@@ -843,7 +850,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
     document.addEventListener("keydown", escape, true);
     document.addEventListener("pointerdown", outside, true);
     return () => { document.removeEventListener("keydown", escape, true); document.removeEventListener("pointerdown", outside, true); };
-  });
+  }, []);
   const cmdBtn = "tablet-command shrink-0 font-bold text-foreground";
   const arrowBtn = "h-auto w-7 min-w-7 shrink-0 cursor-pointer px-1 text-2xl leading-none !text-black transition-transform duration-100 hover:opacity-70 active:scale-75 disabled:cursor-default disabled:opacity-20";
 
