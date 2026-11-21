@@ -4508,15 +4508,15 @@ function Index() {
         {/* Undo / Redo déplacés dans la barre d'outils centrale du bas. */}
 
         <div className="mx-auto flex w-full flex-col items-center justify-center">
-          {renderSection(1, 44, gridRef1)}
-          {renderSection(45, 88, gridRef2)}
+          {weighingMode && !octaveView && renderSection(1, 44, gridRef1)}
+          {weighingMode && !octaveView && renderSection(45, 88, gridRef2)}
         </div>
       </Frame>
 
       {/* Miroir non responsive exclusivement réservé à la Page 1 et au PNG de
           diagnostic. Il reste peint hors écran et expose toujours les quatre
           lignes d'expertise sous chacun des deux demi-claviers. */}
-      <div className="absolute -left-[9999px] top-0 pointer-events-none">
+      {pdfMounted && <div className="absolute -left-[9999px] top-0 pointer-events-none">
         <div className="!w-[1250px] !min-w-[1250px] !max-w-[1250px] overflow-visible bg-white">
           <Frame
             title={en ? "Static touch weight measurements" : "Mesures poids statiques"}
@@ -4532,7 +4532,7 @@ function Index() {
             </div>
           </Frame>
         </div>
-      </div>
+      </div>}
 
       {/* Bouton de navigation officiel : placé sous le cadre « Mesures poids
           statiques » (et non plus à l'intérieur), donc jamais capturé au PDF. */}

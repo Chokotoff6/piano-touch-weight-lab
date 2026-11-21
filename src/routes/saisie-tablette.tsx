@@ -639,7 +639,8 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   // Octave : un seul facteur pour toutes les octaves (basé sur la plus large).
   const [octRef, octW] = useWidth();
   const widest = useMemo(() => Math.max(...OCTAVES.map(([a, b]) => geometry(a, b, NATIVE_WHITE).width)), []);
-  const [labelsRef, labelsW] = useWidth();
+  // Largeur fixe des libellés : aucune mesure en boucle (le texte dépend de l'échelle).
+  const labelsW = 110;
   const octScale = octW > 0 ? Math.min(Math.max(0.55, (octW - labelsW - 48) / widest), 3) : 1;
 
   // Swipe horizontal sur l'octave.
@@ -911,7 +912,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
               setOctave((o) => (end < start ? Math.min(OCTAVES.length - 1, o + 1) : Math.max(0, o - 1)));
             }}
           >
-            <div ref={labelsRef} className="octave-labels relative shrink-0" style={{ height: nativeH * octScale * 0.9 + 2 }}>
+            <div className="octave-labels relative shrink-0" style={{ width: labelsW, height: nativeH * octScale * 0.9 + 2 }}>
               <Button variant="ghost" type="button" aria-label={en ? "Previous octave" : "Octave précédente"} disabled={octave === 0} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.max(0, o - 1)); }} style={{ top: 1.05 * 16 * octScale * 0.9 + 4 }} className={`${arrowBtn} absolute right-0 ${pressedArrow === "prev" ? "scale-75 opacity-60" : ""}`}>◀</Button>
               <div className="octave-label-content grid w-max text-right font-bold text-muted-foreground" style={{ fontSize: Math.min(13, Math.max(9, 13 * octScale * 0.9)) }}>
                 <span className="invisible">{label("wd")}</span>
