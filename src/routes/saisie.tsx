@@ -1117,7 +1117,7 @@ function Index() {
         /* stockage indisponible */
       }
       if (isDemoActive() && !weighingModeRef.current) runDemoSequence(target, 0);
-    }, 800);
+    }, getPreferences().animations ? 800 : 0);
     return true;
   };
 

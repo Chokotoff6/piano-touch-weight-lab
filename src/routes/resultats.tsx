@@ -240,6 +240,8 @@ function Resultats() {
   const mirrorAveragesRef = useRef<HTMLElement | null>(null);
   const mirrorSheetRef = useRef<HTMLElement | null>(null);
   const mirrorChartsRef = useRef<HTMLDivElement>(null);
+  // Miroirs PDF montés uniquement pendant l'export (allège l'iPad).
+  const [pdfMounted, setPdfMounted] = useState(false);
   const pdfSummaryLine = useMemo(() => {
     const info = draft.info;
     const now = new Date();
@@ -265,9 +267,11 @@ function Resultats() {
     const onPdf = () => {
       window.dispatchEvent(new CustomEvent("piano-pdf-force-split"));
       setTopbarState({ isExporting: true, exportProgress: 0 });
+      setPdfMounted(true);
       window.setTimeout(() => {
         void (async () => {
           try {
+            await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(null))));
             const mirror = (id: string) =>
               mirrorChartsRef.current?.querySelector<HTMLElement>(`[data-frame="${id}"]`) ?? null;
             const keep = (list: Array<HTMLElement | null>) =>
@@ -288,6 +292,7 @@ function Resultats() {
             console.warn("[pdf] export bilan", error);
           } finally {
             setTopbarState({ isExporting: false, exportProgress: 0 });
+            setPdfMounted(false);
           }
         })();
       }, 150);
@@ -438,6 +443,7 @@ function Resultats() {
   return (
     <main className="mx-auto w-full max-w-[1120px] px-6 pb-10 pt-20">
       {/* Miroir hors écran (jamais visible) : pages 1 à 3 du Rapport d'atelier. */}
+      {pdfMounted && (<>
       <PianoSheetMirror
         wd={mine.wd}
         wa={mine.wa}
@@ -462,6 +468,7 @@ function Resultats() {
           />
         </div>
       </div>
+      </>)}
       <input
         ref={importInputRef}
         type="file"
