@@ -607,7 +607,7 @@ function Index() {
   /** Retour depuis Résultats / Comparer : on rouvre directement l'écran clavier.
       Exception : arrivée depuis l'accueil avec ?demo=true → atterrissage
       impératif sur le formulaire (jamais sur le clavier). */
-  useEffect(() => {
+  useLayoutEffect(() => {
     try {
       const fromHomeDemo =
         demoParam === "true" || new URLSearchParams(window.location.search).get("demo") === "true";

@@ -176,7 +176,18 @@ export function resetDemoCascadeSeen() {
  */
 export async function enableDemoModeAsync() {
   if (!isBrowser()) return;
-  const profile = await loadPianoProfileById(DEMO_PIANO_BUFFER_UUID, false);
+  // Copie locale de la fiche démo : ouverture immédiate dès le 2e lancement,
+  // la base rafraîchit la copie en arrière-plan.
+  const CACHE_KEY = "ptw_demo_profile_cache";
+  let cached: Awaited<ReturnType<typeof loadPianoProfileById>> = null;
+  try { const raw = window.localStorage.getItem(CACHE_KEY); if (raw) cached = JSON.parse(raw); } catch { /* indisponible */ }
+  const fetchAndStore = async () => {
+    const fresh = await loadPianoProfileById(DEMO_PIANO_BUFFER_UUID, false);
+    if (fresh) { try { window.localStorage.setItem(CACHE_KEY, JSON.stringify(fresh)); } catch { /* plein */ } }
+    return fresh;
+  };
+  const profile = cached ?? (await fetchAndStore());
+  if (cached) void fetchAndStore().catch(() => { /* hors ligne : copie locale conservée */ });
   if (!profile) throw new Error("Fiche de démonstration introuvable en base.");
   try {
     window.sessionStorage.setItem(DEMO_SYNCED_KEY, "1");

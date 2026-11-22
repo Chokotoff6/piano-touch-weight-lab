@@ -682,7 +682,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
       const value = parseW(row[field]);
       if (value !== null && outOfRange(field, value) && (leaving || cleanWeight(row[field]).length === 2)) return { field, text: rangeMessage(field, en), kind: "range" };
     }
-    if (leaving && (row.wd || row.wa) && (cleanWeight(row.wd).length !== 2 || cleanWeight(row.wa).length !== 2)) return {
+    if (leaving && weightFilter === "all" && (row.wd || row.wa) && (cleanWeight(row.wd).length !== 2 || cleanWeight(row.wa).length !== 2)) return {
       field: cleanWeight(row.wd).length !== 2 ? "wd" : "wa",
       text: en ? "⚠️ Incomplete entry: Down weight and Up weight must both be entered for this key." : "⚠️ Saisie incomplète : Le Poids Descendant et le Poids Remontant doivent être tous les deux renseignés pour cette touche.",
       kind: "incomplete",
@@ -800,7 +800,10 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
     if (value !== null && outOfRange(field, value)) { showFeedback({ index, field }, rangeMessage(field, en), "range"); return; }
     // Vérifier la sortie après le changement réel de focus, sans temporisation.
     queueMicrotask(() => {
-      const samePair = (["wd", "wa"] as const).some((f) => inputs.current.get(`${index}-${f}`) === document.activeElement);
+      // Le pavé tactile prend le focus : seule une AUTRE case de pesée signifie une sortie de touche.
+      const focused = document.activeElement;
+      const onOtherCell = focused instanceof HTMLInputElement && focused.classList.contains("weight-input");
+      const samePair = !onOtherCell || (["wd", "wa"] as const).some((f) => inputs.current.get(`${index}-${f}`) === focused);
       const problem = pairProblem(index, !samePair);
       if (problem && !samePair) { const cell = { index, field: problem.field }; showFeedback(cell, problem.text, problem.kind); goTo(cell); }
     });

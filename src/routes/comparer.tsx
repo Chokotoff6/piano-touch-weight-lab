@@ -1830,6 +1830,8 @@ function Comparer() {
   const tallLiveRef = useRef<HTMLDivElement>(null);
   const tallMirrorRef = useRef<HTMLDivElement>(null);
   const [tallExport, setTallExport] = useState(false);
+  // Miroirs PDF montés uniquement pendant l'export (allège l'iPad).
+  const [pdfMounted, setPdfMounted] = useState(false);
   const [liveSmooth, setLiveSmooth] = useState<"real" | "smooth" | "smoothPlus">("smooth");
 
   // Export PDF autonome de la page Comparer : 3 pages A4 portrait en PNG.
@@ -1843,6 +1845,8 @@ function Comparer() {
       window.setTimeout(() => {
         void (async () => {
           try {
+            flushSync(() => setPdfMounted(true));
+            await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
             // Grand angle : miroirs hors écran à pleine hauteur (720 px),
             // montés uniquement le temps de la capture (invisibles à l'écran).
             if (wide) {
@@ -1911,6 +1915,7 @@ function Comparer() {
 
           } finally {
             setTallExport(false);
+            setPdfMounted(false);
             setTopbarState({ isExporting: false, exportProgress: 0 });
           }
         })();
@@ -2297,7 +2302,7 @@ function Comparer() {
       />
       {/* Miroir hors écran (jamais visible) : cadre Mesures + graphiques
           d'atelier, source des pages 1 à 3 du rapport PDF unique. */}
-      <PianoSheetMirror
+      {pdfMounted && <PianoSheetMirror
         wd={mine?.wd ?? []}
         wa={mine?.wa ?? []}
         summary={summary}
@@ -2307,10 +2312,10 @@ function Comparer() {
         sheetRef={(node) => {
           mirrorSheetRef.current = node;
         }}
-      />
+      />}
       <div aria-hidden="true" className="absolute -left-[9999px] top-0 pointer-events-none">
         <div ref={mirrorChartsRef} className="!w-[1250px] !min-w-[1250px] !max-w-[1250px] bg-white">
-          <ComparisonChart
+          {pdfMounted && <ComparisonChart
             chartData={mirrorChartData}
             keyFilter="split"
             comparisonLabel=""
@@ -2318,7 +2323,7 @@ function Comparer() {
             currentBaseName=""
             autoDomain
             sideMargin={60}
-          />
+          />}
         </div>
         {tallExport && (
           <>
