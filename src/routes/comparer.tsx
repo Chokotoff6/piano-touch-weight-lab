@@ -1807,7 +1807,7 @@ function Comparer() {
 
   const [cloudProfile, setCloudProfile] = useState<RefProfile | null>(null);
   const [cloudSampleCount, setCloudSampleCount] = useState(0);
-  const [cloudTotalCount, setCloudTotalCount] = useState(0);
+  const [cloudTotalCount, setCloudTotalCount] = useState<number | null>(null);
   const [cloudLoading, setCloudLoading] = useState(false);
   // Périmètre de lecture Cloud : fiches de démonstration incluses ou non.
   // État indépendant : le CSV importé alimente UNIQUEMENT la courbe orange.
@@ -2068,6 +2068,8 @@ function Comparer() {
 
   // Compteur global de fiches pianos publiées sur le Cloud (hors ligne tampon).
   useEffect(() => {
+    // Cloud interrogé uniquement après clic sur CLOUD : arrivée instantanée sur l'Atelier.
+    if (sourceMode !== "cloud" || cloudTotalCount !== null) return;
     let cancelled = false;
     void (async () => {
       const { count } = await scopeDemo(
@@ -2081,7 +2083,7 @@ function Comparer() {
       if (!cancelled && typeof count === "number") setCloudTotalCount(count);
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [sourceMode, cloudTotalCount]);
 
   useEffect(() => {
     let cancelled = false;
@@ -2342,9 +2344,9 @@ function Comparer() {
             <div className="min-w-0">
               
                 <div data-pdf-hide className="sticky top-[127px] z-[51] mb-3 flex bg-card py-1">
-                  <div data-floating-keep className="w-full"><SidebarPanel variant="bar" filtersOpen={settingsOpen} onOpenFilters={() => setSettingsOpen((v) => !v)} cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); setSettingsOpen(true); setSourceMode("cloud"); } else if (sourceMode === "cloud" && !settingsOpen) { setSettingsOpen(true); } else { setSourceMode((value) => { const next = value === "cloud" ? "none" : "cloud"; setSettingsOpen(next === "cloud"); return next; }); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onOpenHistory={openHistory} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} modelScope={modelScope} setModelScope={setModelScope} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div>
+                  <div data-floating-keep className="w-full"><SidebarPanel variant="bar" filtersOpen={settingsOpen} onOpenFilters={() => setSettingsOpen((v) => !v)} cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount ?? 0} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); setSettingsOpen(true); setSourceMode("cloud"); } else if (sourceMode === "cloud" && !settingsOpen) { setSettingsOpen(true); } else { setSourceMode((value) => { const next = value === "cloud" ? "none" : "cloud"; setSettingsOpen(next === "cloud"); return next; }); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onOpenHistory={openHistory} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} modelScope={modelScope} setModelScope={setModelScope} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div>
                   <FloatingPanel open={settingsOpen && sourceMode === "cloud" && !comparedPiano} onClose={() => setSettingsOpen(false)} title={en ? "CLOUD filters" : "Filtres CLOUD"}>
-                    <SidebarPanel variant="filters" cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); setSettingsOpen(true); setSourceMode("cloud"); } else { setSourceMode((value) => { const next = value === "cloud" ? "none" : "cloud"; setSettingsOpen(next === "cloud"); return next; }); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onOpenHistory={openHistory} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} modelScope={modelScope} setModelScope={setModelScope} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} />
+                    <SidebarPanel variant="filters" cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount ?? 0} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); setSettingsOpen(true); setSourceMode("cloud"); } else { setSourceMode((value) => { const next = value === "cloud" ? "none" : "cloud"; setSettingsOpen(next === "cloud"); return next; }); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onOpenHistory={openHistory} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} modelScope={modelScope} setModelScope={setModelScope} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} />
                   </FloatingPanel>
                 </div>
               <div ref={averagesRef} data-pdf-expand data-pdf-lock-w="980" className={`sticky top-[175px] z-50 mb-[40px] w-full bg-card pb-2 ${(standardEnabled || comparedPiano !== null || sourceMode === "cloud") ? "averages-unstick-tablet" : ""}`}>
@@ -2379,7 +2381,7 @@ function Comparer() {
           </div>
         </>
       )}
-      <div aria-hidden="true" className="absolute -left-[9999px] top-0 w-[300px] pointer-events-none"><div ref={settingsRef} data-pdf-expand><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onOpenHistory={openHistory} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} modelScope={modelScope} setModelScope={setModelScope} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></div>
+      <div aria-hidden="true" className="absolute -left-[9999px] top-0 w-[300px] pointer-events-none"><div ref={settingsRef} data-pdf-expand><SidebarPanel cloudEnabled={sourceMode === "cloud" && !comparedPiano} standardEnabled={standardEnabled} csvActive={comparedPiano !== null} cloudSampleCount={cloudSampleCount} cloudTotalCount={cloudTotalCount ?? 0} brandModel={brandModel} cloudLoading={cloudLoading} onToggleCloud={() => { if (comparedPiano) { resetComparison(); } else { setSourceMode((value) => value === "cloud" ? "none" : "cloud"); } }} onToggleStandard={() => setStandardEnabled((value) => !value)} onImport={(file) => void handleImport(file)} onOpenHistory={openHistory} onClearCsv={resetComparison} filtersDisabled={sourceMode !== "cloud" || comparedPiano !== null} sameClimate={sameClimate} sameYear={sameYear} importantChanges={importantChanges} modelScope={modelScope} setModelScope={setModelScope} youngOnly={youngOnly} usageLevel={usageLevel} setSameClimate={setSameClimate} setSameYear={setSameYear} setImportantChanges={setImportantChanges} setYoungOnly={setYoungOnly} cycleUsage={cycleUsage} /></div></div>
       <input ref={historyInputRef} type="file" accept=".kw,application/json" className="sr-only" onChange={(e) => { const file = e.target.files?.[0]; if (file) void handleImport(file); e.target.value = ""; }} />
       <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
         <DialogContent className="max-w-md">

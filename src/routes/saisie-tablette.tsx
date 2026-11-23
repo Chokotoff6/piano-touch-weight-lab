@@ -269,7 +269,7 @@ function Keypad({ onKey, en, canUndo, canRedo, height }: { onKey: (k: string) =>
   const keys = ["7", "8", "9", "4", "5", "6", "1", "2", "3"];
   const btn = "tablet-keypad-button h-full min-h-0 self-stretch py-0 flex items-center justify-center rounded-md font-bold !text-black select-none disabled:!opacity-100 hover:!bg-white";
   return (
-    <div className="tablet-keypad tablet-keypad-frame grid shrink-0 grid-cols-3 grid-rows-4" style={{ height }}>
+    <div className="tablet-keypad tablet-keypad-frame grid shrink-0 grid-cols-3 grid-rows-4" style={{ height, width: Math.round(height * 0.75) }}>
       {keys.map((k) => (
         <Button variant="outline" key={k} type="button" className={btn} onPointerDown={(e) => { e.preventDefault(); onKey(k); }}>
           {k}
@@ -307,6 +307,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   const [rows, setRows] = useState<Row[]>(() => Array.from({ length: 88 }, () => ({ wd: "", wa: "" })));
   const [info, setInfo] = useState<Record<string, string>>({});
   const [octave, setOctave] = useState(0);
+  const [resetTick, setResetTick] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [pressedArrow, setPressedArrow] = useState<"prev" | "next" | null>(null);
   const [active, setActive] = useState<{ index: number; field: "wd" | "wa" } | null>(null);
@@ -379,7 +380,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   }, [alert]);
 
   useEffect(() => {
-    setRows(readRows());
+    setRows(readRows()); setResetTick((t) => t + 1);
     setInfo(readInfo());
     const cell = readWeighingCell();
     if (cell) {
@@ -389,7 +390,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
       focusCell(cell);
     }
     setLoaded(true);
-    const reload = () => { if (!dirty.current) setRows(readRows()); setInfo(readInfo()); };
+    const reload = () => { if (!dirty.current) setRows(readRows()); setResetTick((t) => t + 1); setInfo(readInfo()); };
     window.addEventListener(DRAFT_EDITED_EVENT, reload);
     window.addEventListener("storage", reload);
     return () => {
@@ -449,7 +450,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
       rememberKwDocument(doc);
       dirty.current = false;
       rowsRef.current = loaded;
-      setRows(loaded);
+      setRows(loaded); setResetTick((t) => t + 1);
       setInfo({ ...doc.info });
       undoStack.current = [];
       redoStack.current = [];
@@ -475,7 +476,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   };
   const applySnapshot = (snap: Row[]) => {
     rowsRef.current = snap;
-    setRows(snap);
+    setRows(snap); setResetTick((t) => t + 1);
     writeRows(snap);
     dirty.current = false;
     setHistTick((t) => t + 1);
@@ -511,20 +512,21 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   const [confirmReset, setConfirmReset] = useState(false);
   // ON à chaque ouverture, indépendamment du type d'écran et des anciens choix.
   const [showKeypad, setShowKeypad] = useState(true);
-  const toggleKeypad = () => setShowKeypad((v) => !v);
+  void setShowKeypad;
   const isVisible = (index: number) => {
     if (rapidMode && !RAPID_INDEX_SET.has(index)) return false;
     if (viewFilter === "white") return !BLACK_KEYS.has(index + 1);
     if (viewFilter === "black") return BLACK_KEYS.has(index + 1);
     return true;
   };
+  // Mini-carte : redessinée uniquement au changement d'octave (ou filtre / import / reset).
+  const histTickForMini = resetTick;
   const hasData = rows.some((r) => r.wd.trim() || r.wa.trim());
   // Mini-carte : redessinée seulement quand une case passe vide/remplie ou qu'un filtre change.
-  const fillSignature = rows.map((r) => (r.wd.trim() ? "1" : "0") + (r.wa.trim() ? "1" : "0")).join("");
   const miniGrid = useMemo(
     () => <KeyGrid from={1} to={88} rows={rowsRef.current} editable={false} mini isVisible={isVisible} weightFilter={weightFilter} />,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [fillSignature, viewFilter, rapidMode, weightFilter],
+    [octave, viewFilter, rapidMode, weightFilter, histTickForMini],
   );
   const doReset = () => {
     undoStack.current.push(rowsRef.current.map((r) => ({ ...r })));
@@ -1000,9 +1002,6 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
             </Button>
             <Button type="button" variant="outline" onClick={() => setWeightFilter((c) => (c === "all" ? "wd" : c === "wd" ? "wa" : "all"))} className={cmdBtn}>
               <CycleLabel title={en ? "DW/UW" : "PD/PR"} value={weightFilter === "all" ? (en ? "All" : "Tous") : weightFilter === "wd" ? (en ? "Down" : "Descendants") : (en ? "Up" : "Remontants")} />
-            </Button>
-            <Button type="button" variant="outline" onClick={toggleKeypad} className={cmdBtn}>
-              <CycleLabel title={en ? "Keypad" : "Pavé"} value={showKeypad ? (en ? "Shown" : "Affiché") : (en ? "Hidden" : "Masqué")} />
             </Button>
             <div className="relative flex items-center">
               <TooltipProvider delayDuration={50}>

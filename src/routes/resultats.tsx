@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useLang } from "@/data/translations";
+import { computeHealthScore, ALERT_LABELS, BADGE_LABELS } from "@/lib/score-sante";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -111,6 +112,7 @@ function Resultats() {
   const topbar = useTopbarState();
   // Lecture synchrone dès le premier rendu : aucun état vide transitoire.
   const [draft, setDraft] = useState<{ rows: Row[]; info: Info }>(() => readDraft());
+  const health = useMemo(() => computeHealthScore(draft.rows), [draft.rows]);
   const [consent, setConsent] = useState(false);
   // État initial imposé : touches blanches et noires affichées séparément.
   const [keyFilter, setKeyFilter] = useState<KeyFilter>("split");
@@ -501,6 +503,15 @@ function Resultats() {
                   <AverageFrame strong className="mt-2.5" name={en ? "Current piano" : "Piano actuel"} detail={<span title={summary.line}>{summary.line}</span>}>
                     <AverageRow chartData={chartData} source="cur" hasData={hasData} />
                   </AverageFrame>
+                  {health && (
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border pt-2 text-sm !text-black">
+                      <span className="font-bold">{en ? "Touch Health Score" : "Score de Santé"} : <span className="text-lg font-black">{health.score}/100</span></span>
+                      <span className="rounded-md border border-black px-2 py-0.5 text-xs font-bold">{health.badge} · {en ? BADGE_LABELS[health.badge].en : BADGE_LABELS[health.badge].fr}</span>
+                      {health.alerts.map((a) => (
+                        <span key={a} className="text-xs font-semibold text-destructive">{en ? ALERT_LABELS[a].en : ALERT_LABELS[a].fr}{a === "hardSpot" ? ` (${health.hardSpots.join(", ")})` : ""}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </Frame>
           </div>
