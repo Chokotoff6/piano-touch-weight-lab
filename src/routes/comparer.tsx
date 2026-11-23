@@ -831,6 +831,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
   // Chaque courbe est ancrée sur SON propre premier / dernier point défini
   // (indispensable en vue éclatée où blanches et noires ne partagent pas les mêmes index).
   const start = zoomed ? zoomStart : 1;
+  const swipeX = useRef<number | null>(null);
   // Même géométrie sur Résultats et Comparer : hors zoom, le domaine démarre
   // avant la touche 1 afin de préserver l'espace entre l'axe et les courbes.
   const domainX: [number, number] = zoomed ? [start, start + ZOOM_WINDOW - 1] : [-3, 88];
@@ -846,8 +847,13 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
     ...comparisonLinesFor(family.id, "all", comparisonLabel, comparisonShort, csvActive),
     ...otherLines,
   ];
+  // Zoom : échelle verticale calée sur les seules notes visibles dans la fenêtre.
+  const zoomFirst = zoomed ? zoomStart : 1;
+  const domainPoints = zoomed
+    ? chartData.filter((point) => Number(point.key) >= zoomFirst && Number(point.key) <= zoomFirst + ZOOM_WINDOW - 1)
+    : chartData;
   const measuredDomain = paddedDomain(
-    chartData.flatMap((point) =>
+    (domainPoints.length ? domainPoints : chartData).flatMap((point) =>
       groupedLines.filter((line) => !line.hidden).map((line) => point[line.dataKey] as number | null),
     ),
   );
@@ -887,7 +893,15 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
       title={title}
       onClick={zoomed && showZoomHelp ? () => setShowZoomHelp(false) : undefined}
       onWheelCapture={zoomed && showZoomHelp ? () => setShowZoomHelp(false) : undefined}
-      className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2" : ctx.tall ? "h-[720px] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}
+      onTouchStart={zoomed ? (e) => { swipeX.current = e.touches[0]?.clientX ?? null; } : undefined}
+      onTouchEnd={zoomed ? (e) => {
+        const x0 = swipeX.current; swipeX.current = null;
+        const x1 = e.changedTouches[0]?.clientX;
+        if (x0 == null || x1 == null || Math.abs(x1 - x0) < 40) return;
+        const steps = Math.max(1, Math.round(Math.abs(x1 - x0) / 25));
+        setZoomStart((v) => Math.min(88 - ZOOM_WINDOW + 1, Math.max(1, Math.round(v) + (x1 < x0 ? steps : -steps))));
+      } : undefined}
+      className={`${zoomed ? "h-[calc(100vh-140px)] !pt-2 [@media(pointer:fine)]:xl:mx-auto [@media(pointer:fine)]:xl:w-3/4" : ctx.tall ? "h-[720px] !pt-2" : "h-[300px] !pt-2"} ${!zoomed && hoveredFamily === family.id ? "z-20" : "z-0"}`}
     >
       {zoomed && (
         <button type="button" data-pdf-hide aria-label="Quitter le zoom" onClick={() => setZoomId(null)} className="absolute right-3 top-2 z-20 rounded-full border border-gray-300 bg-white p-1 !text-black hover:bg-gray-100"><CloseIcon /></button>
@@ -1012,7 +1026,7 @@ function SubChart({ family, zoomed = false, ctx }: { family: (typeof FAMILIES)[n
             margin={{ top: zoomed ? 36 : 22, right: Math.max(sideMargin, 110) + groupedShift, bottom: 15, left: chartLeftMargin }}
           >
             <XAxis xAxisId="main" dataKey="key" type="number" domain={domainX} allowDataOverflow hide allowDuplicatedCategory={false} />
-            <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
+            <XAxis xAxisId="topAxis" dataKey="key" type="number" domain={domainX} allowDataOverflow orientation="top" height={15} axisLine={false} tickLine={false} ticks={zoomed ? DO_POSITIONS.filter((k) => k >= domainX[0] && k <= domainX[1]) : DO_POSITIONS} tick={<CustomTickTop dy={-6} />} allowDuplicatedCategory={false} />
             {/* Axe commun aux deux pages : même domaine, mêmes graduations et
                 même translation que les lignes horizontales. */}
             <YAxis
@@ -1363,8 +1377,8 @@ export const Route = createFileRoute("/comparer")({
 
 const FRAME_CLASS = "relative rounded-md border-2 border-foreground bg-card p-4 pt-5";
 const FRAME_TITLE_CLASS = "absolute -top-3.5 left-4 max-w-[calc(100%-2rem)] bg-card px-2 text-sm xl:text-lg font-bold text-foreground";
-export function Frame({ title, className = "", titleClassName, dataFrame, onClick, onWheelCapture, children }: { title: ReactNode; className?: string; titleClassName?: string; dataFrame?: string | undefined; onClick?: (() => void) | undefined; onWheelCapture?: (() => void) | undefined; children: ReactNode }) {
-  return <section data-frame={dataFrame} onClick={onClick} onWheelCapture={onWheelCapture} className={`${FRAME_CLASS} ${className}`}><h2 className={titleClassName ?? FRAME_TITLE_CLASS}>{title}</h2>{children}</section>;
+export function Frame({ title, className = "", titleClassName, dataFrame, onClick, onWheelCapture, onTouchStart, onTouchEnd, children }: { title: ReactNode; className?: string; titleClassName?: string; dataFrame?: string | undefined; onClick?: (() => void) | undefined; onWheelCapture?: (() => void) | undefined; onTouchStart?: ((e: React.TouchEvent<HTMLElement>) => void) | undefined; onTouchEnd?: ((e: React.TouchEvent<HTMLElement>) => void) | undefined; children: ReactNode }) {
+  return <section data-frame={dataFrame} onClick={onClick} onWheelCapture={onWheelCapture} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} className={`${FRAME_CLASS} ${className}`}><h2 className={titleClassName ?? FRAME_TITLE_CLASS}>{title}</h2>{children}</section>;
 }
 
 const COLUMNS = [
@@ -2387,6 +2401,16 @@ function Comparer() {
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>{historyLabel}</DialogTitle><DialogDescription>{historyDocument ? [historyDocument.info["marque"], historyDocument.info["modele"], kwSerial(historyDocument.info)].filter(Boolean).join(" · ") : (en ? "Local .kw file" : "Fichier local .kw")}</DialogDescription></DialogHeader>
           {historyError && <p className="text-destructive">{historyError}</p>}
+          {historyDocument && historyDocument.history_points.length > 0 && (() => {
+            const first = historyDocument.history_points[0]!;
+            return (
+              <Button variant="default" className="h-auto justify-between gap-3 py-2 font-bold" onClick={() => selectHistory({ info: historyDocument.info, rows: first.rows, date: first.created_at })}>
+                <span>{en ? "1. Before regulation" : "1. Avant régulation"}</span>
+                <span className="text-xs font-normal">{Number.isFinite(Date.parse(first.created_at)) ? new Intl.DateTimeFormat(en ? "en-GB" : "fr-BE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(first.created_at)) : first.created_at}</span>
+              </Button>
+            );
+          })()}
+          {historyDocument && <p className="text-sm font-bold">{en ? "2. Other history point…" : "2. Autre point d'historique…"}</p>}
           <div className="flex max-h-80 flex-col gap-2 overflow-y-auto">
             {historyDocument && (historyDocument.history_points.length ? historyDocument.history_points : [{ id: "current", name: "", created_at: historyDocument.updated_at, updated_at: historyDocument.updated_at, rows: historyDocument.rows }]).slice().reverse().map((point) => (
               <Button key={point.id} variant="outline" className="h-auto justify-between gap-3 whitespace-normal py-2 text-left" onClick={() => selectHistory({ info: historyDocument.info, rows: point.rows, date: point.created_at })}>

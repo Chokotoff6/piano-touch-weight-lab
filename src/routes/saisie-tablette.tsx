@@ -168,10 +168,11 @@ function useWidth() {
 }
 
 function KeyGrid({
-  from, to, rows, editable, mini = false, active, onChange, onCommit, onFocusField, onBlurField, onNavigate, isVisible, weightFilter = "all", numberFontPx, registerInput,
+  from, to, rows, editable, mini = false, active, alertKeys, onChange, onCommit, onFocusField, onBlurField, onNavigate, isVisible, weightFilter = "all", numberFontPx, registerInput,
 }: {
   from: number; to: number; rows: Row[]; editable: boolean; mini?: boolean;
   active?: { index: number; field: "wd" | "wa" } | null;
+  alertKeys?: Set<number>;
   onChange?: (index: number, field: "wd" | "wa", value: string) => void;
   onCommit?: () => void;
   onFocusField?: (index: number, field: "wd" | "wa") => void;
@@ -206,7 +207,7 @@ function KeyGrid({
             className={`piano-measure-column ${black ? "is-black" : "is-white"} ${shift} ${NATURAL_KEY_BREAKS.has(k) ? "natural-key-break" : ""} ${k === to ? "is-last-key" : ""}`}
           >
             <div
-              className={`key-number ${C_KEYS.has(k) ? "is-c-key" : ""} ${numberFontPx ? "!font-sans" : ""}`}
+              className={`key-number ${C_KEYS.has(k) ? "is-c-key" : ""} ${numberFontPx ? "!font-sans" : ""} ${alertKeys?.has(index) ? "!text-destructive !font-black" : ""}`}
               style={numberFontPx ? { fontSize: numberFontPx, lineHeight: 1, fontWeight: 500, WebkitTextStroke: 0, whiteSpace: "nowrap" } : undefined}
             >
               {showNumber ? k : "\u00A0"}
@@ -241,7 +242,7 @@ function KeyGrid({
                         onChange={(e) => onChange?.(index, field, e.target.value.replace(/[^0-9]/g, "").slice(0, 2))}
                         onBlur={() => { onBlurField?.(index, field); onCommit?.(); }}
                         onKeyDown={(e) => onNavigate?.(e, index, field)}
-                        className={`weight-input !font-sans font-semibold !text-black focus:!border-2 focus:!border-[#7149ab] focus:!ring-0 focus:!outline-none ${isActive ? "!border-2 !border-[#7149ab]" : ""} ${black ? "" : "![background-color:#cbd5e1]"}`}
+                        className={`weight-input !font-sans font-semibold !text-black ${alertKeys?.has(index) && field === "wd" ? "!border-2 !border-destructive" : ""} focus:!border-2 focus:!border-[#7149ab] focus:!ring-0 focus:!outline-none ${isActive ? "!border-2 !border-[#7149ab]" : ""} ${black ? "" : "![background-color:#cbd5e1]"}`}
                         style={black ? { backgroundColor: "#cbd5e1" } : undefined}
                       />
                     ) : (
@@ -388,6 +389,21 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
       setActive(cell);
       setOctave(Math.max(0, OCTAVES.findIndex(([a, b]) => cell.index + 1 >= a && cell.index + 1 <= b)));
       focusCell(cell);
+    } else {
+      let stored: string | null = null;
+      try { stored = window.sessionStorage.getItem("ptw_active_weighing_cell"); } catch { /* indisponible */ }
+      if (stored === null) {
+        const initial = readRows();
+        const rapid = (() => { try { return window.localStorage.getItem("ptw_rapid_mode") === "1"; } catch { return false; } })();
+        let first = initial.findIndex((r, i) => (!rapid || RAPID_INDEX_SET.has(i)) && (!r.wd.trim() || !r.wa.trim()));
+        if (first < 0) first = rapid ? 3 : 0;
+        const field: "wd" | "wa" = initial[first]?.wd.trim() ? "wa" : "wd";
+        const c = { index: first, field };
+        soundingOctave.current = Math.max(0, OCTAVES.findIndex(([a, b]) => first + 1 >= a && first + 1 <= b));
+        setActive(c);
+        setOctave(soundingOctave.current);
+        focusCell(c);
+      }
     }
     setLoaded(true);
     const reload = () => { if (!dirty.current) setRows(readRows()); setResetTick((t) => t + 1); setInfo(readInfo()); };
@@ -510,6 +526,21 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
   const [weightFilter, setWeightFilter] = useState<"all" | "wd" | "wa">("all");
   const [confirmReset, setConfirmReset] = useState(false);
+  const [alertsOn, setAlertsOn] = useState(false);
+  // Alertes de régulation : PD s'écartant de la moyenne de ses voisines de plus que la tolérance.
+  const alertKeys = useMemo(() => {
+    const out = new Set<number>();
+    if (!alertsOn) return out;
+    const tol = getPreferences().corridorG;
+    if (!(tol > 0)) return out;
+    const v = rows.map((r) => (r.wd.trim() ? Number(r.wd) : NaN));
+    v.forEach((x, i) => {
+      if (!Number.isFinite(x)) return;
+      const nb = [v[i - 2], v[i - 1], v[i + 1], v[i + 2]].filter((y): y is number => y !== undefined && Number.isFinite(y));
+      if (nb.length >= 2 && Math.abs(x - nb.reduce((p, q) => p + q, 0) / nb.length) > tol) out.add(i);
+    });
+    return out;
+  }, [alertsOn, rows]);
   // ON à chaque ouverture, indépendamment du type d'écran et des anciens choix.
   const [showKeypad, setShowKeypad] = useState(true);
   void setShowKeypad;
@@ -528,6 +559,14 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [octave, viewFilter, rapidMode, weightFilter, histTickForMini],
   );
+  const doResetOctave = () => {
+    undoStack.current.push(rowsRef.current.map((r) => ({ ...r })));
+    redoStack.current = [];
+    const [a, b] = OCTAVES[octave]!;
+    applySnapshot(rowsRef.current.map((r, i) => (i + 1 >= a && i + 1 <= b ? { wd: "", wa: "" } : r)));
+    setConfirmReset(false);
+    goTo({ index: a - 1, field: "wd" });
+  };
   const doReset = () => {
     undoStack.current.push(rowsRef.current.map((r) => ({ ...r })));
     redoStack.current = [];
@@ -933,7 +972,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
                 <div className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2" style={{ top: "calc(1.05rem + 3px)" }}><span className="whitespace-nowrap rounded-md border border-foreground/60 bg-muted px-2 py-0.5 text-[13px] font-bold leading-none text-foreground">Octave {octave + 1}</span></div>
                 <div className="technical-sheet" style={{ width: seg.width, gridTemplateColumns: `${seg.width}px` }}>
                 <div style={{ marginLeft: -seg.left }}>
-                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onTyped} onCommit={onCommit} onFocusField={onFocusField} onBlurField={onBlurField} onNavigate={onNavigate} isVisible={isVisible} weightFilter={weightFilter} registerInput={registerInput} numberFontPx={Math.min(12, Math.max(8.8, (typeof window !== "undefined" ? window.innerWidth : 1000) * 0.011)) / (octScale)} />
+                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} alertKeys={alertKeys} onChange={onTyped} onCommit={onCommit} onFocusField={onFocusField} onBlurField={onBlurField} onNavigate={onNavigate} isVisible={isVisible} weightFilter={weightFilter} registerInput={registerInput} numberFontPx={Math.min(12, Math.max(8.8, (typeof window !== "undefined" ? window.innerWidth : 1000) * 0.011)) / (octScale)} />
                 </div>
                 </div>
               </div>
@@ -962,9 +1001,10 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
         {confirmReset && (
           <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-foreground/15 p-4" onClick={() => setConfirmReset(false)}>
             <div role="alertdialog" aria-modal="true" aria-label={en ? "Reset weighings" : "Effacer les pesées"} className="flex max-w-full flex-wrap items-center justify-center gap-3 rounded-md border border-border bg-background p-4 text-sm text-foreground shadow-lg" onClick={(e) => e.stopPropagation()}>
-              <span>{en ? "Do you want to erase all weighing data?" : "Voulez-vous effacer toutes les données de pesées ?"}</span>
-              <Button variant="outline" onClick={doReset}>{en ? "Yes" : "Oui"}</Button>
-              <Button variant="outline" onClick={() => setConfirmReset(false)}>{en ? "No" : "Non"}</Button>
+              <span>{en ? "What do you want to erase?" : "Que voulez-vous effacer ?"}</span>
+              <Button variant="outline" onClick={doResetOctave}>{en ? `Octave ${octave + 1}` : `L'octave ${octave + 1}`}</Button>
+              <Button variant="outline" onClick={doReset}>{en ? "Whole keyboard" : "Tout le clavier"}</Button>
+              <Button variant="outline" onClick={() => setConfirmReset(false)}>{en ? "Cancel" : "Annuler"}</Button>
             </div>
           </div>
         )}
@@ -1003,6 +1043,11 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
             <Button type="button" variant="outline" onClick={() => setWeightFilter((c) => (c === "all" ? "wd" : c === "wd" ? "wa" : "all"))} className={cmdBtn}>
               <CycleLabel title={en ? "DW/UW" : "PD/PR"} value={weightFilter === "all" ? (en ? "All" : "Tous") : weightFilter === "wd" ? (en ? "Down" : "Descendants") : (en ? "Up" : "Remontants")} />
             </Button>
+            {hasData && (
+              <Button type="button" variant="outline" onClick={() => setAlertsOn((v) => !v)} className={cmdBtn}>
+                <CycleLabel title={en ? "Alerts" : "Alertes"} value={alertsOn ? (en ? "Yes" : "Oui") : (en ? "No" : "Non")} />
+              </Button>
+            )}
             <div className="relative flex items-center">
               <TooltipProvider delayDuration={50}>
                 <Tooltip>

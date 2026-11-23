@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useLang } from "@/data/translations";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { computeHealthScore, ALERT_LABELS, BADGE_LABELS } from "@/lib/score-sante";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -265,6 +267,17 @@ function Resultats() {
     return `${main} / ${time} ${count}`;
   }, [draft.info, rows, en]);
 
+  // Export PDF 2 pages : choix des pages par cases à cocher, sans aperçu.
+  const [pdfDialog, setPdfDialog] = useState(false);
+  const [pdfClient, setPdfClient] = useState(true);
+  const [pdfWorkshop, setPdfWorkshop] = useState(true);
+  const pdfChoice = useRef({ client: true, workshop: true });
+  const mirrorScoreRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const ask = () => setPdfDialog(true);
+    window.addEventListener("piano-export-pdf", ask);
+    return () => window.removeEventListener("piano-export-pdf", ask);
+  }, []);
   useEffect(() => {
     const onPdf = () => {
       window.dispatchEvent(new CustomEvent("piano-pdf-force-split"));
@@ -279,14 +292,18 @@ function Resultats() {
             const keep = (list: Array<HTMLElement | null>) =>
               list.filter((el): el is HTMLElement => el !== null);
             const pages: LandscapePage[] = [
-              {
-                blocks: keep([mirrorAveragesRef.current, mirrorSheetRef.current]),
+              ...(pdfChoice.current.client ? [{
+                blocks: keep([mirrorScoreRef.current, mirrorAveragesRef.current, mirrorSheetRef.current]),
                 layout: "column" as const,
-                title: en ? "WORKSHOP REPORT" : "RAPPORT D'ATELIER",
+                title: en ? "CLIENT REPORT" : "RAPPORT CLIENT",
                 underline: false,
-              },
-              { blocks: keep([mirror("wd"), mirror("wa")]), layout: "column" as const },
-              { blocks: keep([mirror("bal"), mirror("fric")]), layout: "column" as const },
+              }] : []),
+              ...(pdfChoice.current.workshop ? [{
+                blocks: keep([mirror("wd"), mirror("wa"), mirror("bal"), mirror("fric")]),
+                layout: "column" as const,
+                title: en ? "WORKSHOP SHEET" : "FICHE ATELIER",
+                underline: false,
+              }] : []),
             ].filter((page) => page.blocks.length > 0);
             if (pages.length === 0) return;
             await generateComparisonReport(pages, pianoPdfName("BILAN", draft.info), 1, pages.length);
@@ -299,8 +316,8 @@ function Resultats() {
         })();
       }, 150);
     };
-    window.addEventListener("piano-export-pdf", onPdf);
-    return () => window.removeEventListener("piano-export-pdf", onPdf);
+    window.addEventListener("piano-export-pdf-run", onPdf);
+    return () => window.removeEventListener("piano-export-pdf-run", onPdf);
   }, [draft.info, en]);
 
   const summary = useMemo(() => {
@@ -445,7 +462,26 @@ function Resultats() {
   return (
     <main className="mx-auto w-full max-w-[1120px] px-6 pb-10 pt-20">
       {/* Miroir hors écran (jamais visible) : pages 1 à 3 du Rapport d'atelier. */}
+      <Dialog open={pdfDialog} onOpenChange={setPdfDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>{en ? "PDF export" : "Export PDF"}</DialogTitle><DialogDescription>{en ? "Choose the pages to include." : "Choisissez les pages à inclure."}</DialogDescription></DialogHeader>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={pdfClient} onChange={(e) => setPdfClient(e.target.checked)} />{en ? "Page 1 — Client report (score, averages)" : "Page 1 — Rapport client (score, moyennes)"}</label>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={pdfWorkshop} onChange={(e) => setPdfWorkshop(e.target.checked)} />{en ? "Page 2 — Workshop sheet (4 curves)" : "Page 2 — Fiche atelier (4 courbes)"}</label>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setPdfDialog(false)}>{en ? "Cancel" : "Annuler"}</Button>
+            <Button disabled={!pdfClient && !pdfWorkshop} onClick={() => { pdfChoice.current = { client: pdfClient, workshop: pdfWorkshop }; setPdfDialog(false); window.dispatchEvent(new CustomEvent("piano-export-pdf-run")); }}>{en ? "Export" : "Exporter"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       {pdfMounted && (<>
+      {health && (
+        <div aria-hidden="true" className="absolute -left-[9999px] top-0 pointer-events-none">
+          <div ref={mirrorScoreRef} className="w-[1250px] bg-white px-6 py-4 text-black">
+            <div className="text-2xl font-black">{en ? "Touch Health Score" : "Score de Santé"} : {health.score}/100 — {health.badge} · {en ? BADGE_LABELS[health.badge].en : BADGE_LABELS[health.badge].fr}</div>
+            {health.alerts.length > 0 && <div className="mt-1 text-lg font-semibold text-red-600">{health.alerts.map((a) => (en ? ALERT_LABELS[a].en : ALERT_LABELS[a].fr) + (a === "hardSpot" ? ` (${health.hardSpots.join(", ")})` : "")).join(" · ")}</div>}
+          </div>
+        </div>
+      )}
       <PianoSheetMirror
         wd={mine.wd}
         wa={mine.wa}

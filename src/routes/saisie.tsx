@@ -1999,6 +1999,17 @@ function Index() {
     }, 5000);
   };
 
+  // Tablette : un choix dans une liste referme aussitôt le clavier virtuel.
+  useEffect(() => {
+    if (!window.matchMedia?.("(pointer: coarse)").matches) return;
+    const onPick = (e: Event) => {
+      const t = e.target;
+      if (t instanceof HTMLSelectElement || (t instanceof HTMLInputElement && t.type !== "text" && t.type !== "number" && t.inputMode !== "numeric")) t.blur();
+    };
+    document.addEventListener("change", onPick, true);
+    return () => document.removeEventListener("change", onPick, true);
+  }, []);
+
   useEffect(() => {
     const dismissCoherencePopover = () => {
       setCoherenceIndex((prev) => {
