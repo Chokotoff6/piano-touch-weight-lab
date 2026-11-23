@@ -1435,7 +1435,17 @@ function AverageBlock({ label, global, white, black, tone, delta, tolerance = 0 
     <div aria-label={label} className="average-block flex min-w-0 justify-center">
       <div className="inline-flex flex-col items-center rounded-md bg-slate-100 px-2 pt-0.5 pb-0.5 text-center">
         <div className="whitespace-nowrap"><BigValue value={global} toneClass={toneClass} />{delta !== undefined && <DeltaValue delta={delta} tolerance={tolerance} />}</div>
-        <div className={`-mt-1 flex items-baseline justify-center gap-1 tabular-nums ${toneClass}`}>
+        <div
+          className={`-mt-1 flex items-baseline justify-center gap-1 tabular-nums ${toneClass}`}
+          title={(() => {
+            const w = Number(white);
+            const b = Number(black);
+            if (white === "—" || black === "—" || !Number.isFinite(w) || !Number.isFinite(b)) return undefined;
+            const d = b - w;
+            const txt = `${d > 0 ? "+" : d < 0 ? "−" : "±"}${Math.abs(d).toFixed(1)} gr.`;
+            return lang === "en" ? `W/B balance: Blacks − Whites = ${txt}` : `Équilibre B/N : Noires − Blanches = ${txt}`;
+          })()}
+        >
           <span aria-label={lang === "en" ? "White" : "Blanches"}><KeyBadge value={white} /></span>
           <span className={`!text-xs ${toneClass}`}>/</span>
           <span aria-label={lang === "en" ? "Black" : "Noires"}><KeyBadge value={black} black /></span>

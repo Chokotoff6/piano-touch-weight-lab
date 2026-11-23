@@ -6,7 +6,7 @@ import { getPreferences } from "@/lib/preferences";
 import { weighingReadiness, weighingLockMessage } from "@/lib/weighing-readiness";
 import { rememberWeighingCell, readWeighingCell, hasWeighingHandoff, unlockWeighingAudio, playWeighingSound, playReadyChime } from "@/lib/weighing-feedback";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { startTransition, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { startTransition, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type InputHTMLAttributes, type ReactNode } from "react";
 import { Redo2, RefreshCw, Undo2 } from "lucide-react";
 import {
   hasAnyMeasurement,
@@ -182,6 +182,56 @@ const UNDO_LIMIT = 20;
 type Row = { wd: string; wa: string };
 
 const EMPTY: Row[] = Array.from({ length: 88 }, () => ({ wd: "", wa: "" }));
+
+/**
+ * Case de pesée de la Vue Complète : le 1er chiffre reste local à la case
+ * (aucun re-rendu des 88 touches), la validation globale a lieu au 2e chiffre
+ * ou à la sortie de la case. Évite que le second chiffre soit avalé sur iPad.
+ */
+type DeferredWeightInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange"> & {
+  value: string;
+  inputRef?: ((el: HTMLInputElement | null) => void) | undefined;
+  shouldDefer?: ((cleaned: string) => boolean) | undefined;
+  onFirstDigit?: (() => void) | undefined;
+  onCommitValue?: ((value: string) => void) | undefined;
+  onCommitDraft?: ((value: string) => void) | undefined;
+};
+function DeferredWeightInput({ value, inputRef, shouldDefer, onFirstDigit, onCommitValue, onCommitDraft, onBlur, ...rest }: DeferredWeightInputProps) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const draftRef = useRef<string | null>(null);
+  useEffect(() => {
+    draftRef.current = null;
+    setDraft(null);
+  }, [value]);
+  return (
+    <input
+      {...rest}
+      ref={inputRef}
+      value={draft ?? value}
+      onChange={onCommitValue ? (e) => {
+        const cleaned = e.target.value.replace(/[^0-9]/g, "").slice(0, 2);
+        if (shouldDefer?.(cleaned)) {
+          draftRef.current = cleaned;
+          setDraft(cleaned);
+          onFirstDigit?.();
+          return;
+        }
+        draftRef.current = null;
+        setDraft(null);
+        onCommitValue(e.target.value);
+      } : undefined}
+      onBlur={(e) => {
+        onBlur?.(e);
+        const pending = draftRef.current;
+        if (pending !== null) {
+          draftRef.current = null;
+          setDraft(null);
+          onCommitDraft?.(pending);
+        }
+      }}
+    />
+  );
+}
 
 const DRAFT_ROWS_KEY = "ptw_draft_rows";
 const DRAFT_INFO_KEY = "ptw_draft_info";
@@ -555,6 +605,22 @@ function Index() {
   const reloadDraftRef = useRef<(() => void) | null>(null);
   /** Filtrage visuel cyclique des touches affichées à l'écran. */
   const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
+  const [alertsOn, setAlertsOn] = useState(false);
+  // Alertes de régulation (identiques à la Vue Octave) : PD s'écartant de la
+  // moyenne de ses voisines de plus que la tolérance des Préférences.
+  const alertKeys = useMemo(() => {
+    const out = new Set<number>();
+    if (!alertsOn) return out;
+    const tol = getPreferences().corridorG;
+    if (!(tol > 0)) return out;
+    const v = rows.map((r) => (r.wd.trim() ? Number(r.wd) : NaN));
+    v.forEach((x, i) => {
+      if (!Number.isFinite(x)) return;
+      const nb = [v[i - 2], v[i - 1], v[i + 1], v[i + 2]].filter((y): y is number => y !== undefined && Number.isFinite(y));
+      if (nb.length >= 2 && Math.abs(x - nb.reduce((p, q) => p + q, 0) / nb.length) > tol) out.add(i);
+    });
+    return out;
+  }, [alertsOn, rows]);
   // Filtre « Poids » : Descendants (wd seul), Remontants (wa seul) ou Tous.
   const [weightFilter, setWeightFilter] = useState<"all" | "wd" | "wa">("all");
   // Le Mode Rapide survit aux navigations : il est relu depuis le stockage
@@ -1443,6 +1509,8 @@ function Index() {
   useEffect(() => {
     if (!draftLoaded.current) return;
     if (!rows.some((r) => r.wd || r.wa) && !Object.values(info).some((v) => String(v ?? "").trim())) return;
+    // Écriture en tâche de fond : hors du fil synchrone de la frappe.
+    window.setTimeout(() => {
     try {
       const prev = JSON.parse(window.localStorage.getItem(SECURITY_BACKUP_KEY) ?? "null") as
         | { info: Record<string, string>; rows: Row[]; savedToFile?: boolean }
@@ -1455,6 +1523,7 @@ function Index() {
     } catch {
       /* stockage indisponible */
     }
+    }, 0);
   }, [rows, info]);
 
   // --- États dérivés ---------------------------------------------------------
@@ -3800,9 +3869,8 @@ function Index() {
           {rows[index]![field]}
         </span>
       ) : (
-      <input
-
-        ref={pdfMirror ? undefined : (el) => {
+      <DeferredWeightInput
+        inputRef={pdfMirror ? undefined : (el) => {
           inputs.current[`${index}-${field}`] = el;
         }}
         value={rows[index]![field]}
@@ -3810,7 +3878,20 @@ function Index() {
         tabIndex={!pdfMirror && (rapidMode && !RAPID_INDEX_SET.has(index) || hidden) ? -1 : undefined}
         maxLength={2}
         placeholder=""
-        onChange={pdfMirror ? undefined : (e) => canEnterWeights && setValue(index, field, e.target.value)}
+        shouldDefer={(cleaned) =>
+          canEnterWeights &&
+          cleaned.length === 1 &&
+          !errorsRef.current[`${index}-wd`] &&
+          !errorsRef.current[`${index}-wa`] &&
+          coherenceIndex !== index
+        }
+        onFirstDigit={() => {
+          unlockWeighingAudio();
+          finishCascadeEarly();
+          markDirty();
+        }}
+        onCommitValue={pdfMirror ? undefined : (v) => { if (canEnterWeights) setValue(index, field, v); }}
+        onCommitDraft={(v) => { if (canEnterWeights && cleanWeight(rows[index]![field]) !== v) setRowField(index, field, v); }}
         onBlur={(e) => {
           if (selectionCleared.current) return;
           if (!canEnterWeights) return;
@@ -3885,7 +3966,7 @@ function Index() {
         // Aucune coloration rouge : les cases restent d'apparence normale même
         // en anomalie. Seuls les messages FF et le blocage du focus subsistent.
         data-demo-measure-value={demoInk ? "" : undefined}
-        className={`weight-input !font-sans ${demoInk ? "!font-bold !text-[#4c1d95]" : importBaseline && rows[index]![field] !== "" && importBaseline[index]?.[field] === rows[index]![field] ? "font-semibold !text-gray-500" : "font-semibold !text-black"} focus:!border-2 focus:!border-[#7149ab] focus:!ring-0 focus:!outline-none ${isBlack ? "" : "![background-color:#cbd5e1]"}`}
+        className={`weight-input !font-sans ${demoInk ? "!font-bold !text-[#4c1d95]" : importBaseline && rows[index]![field] !== "" && importBaseline[index]?.[field] === rows[index]![field] ? "font-semibold !text-gray-500" : "font-semibold !text-black"} focus:!border-2 focus:!border-[#7149ab] focus:!ring-0 focus:!outline-none ${field === "wd" && alertKeys.has(index) ? "!border-2 !border-destructive" : ""} ${isBlack ? "" : "![background-color:#cbd5e1]"}`}
 
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
       />
@@ -3967,7 +4048,7 @@ function Index() {
                 className={`piano-measure-column ${black ? "is-black" : "is-white"} ${shift} ${NATURAL_KEY_BREAKS.has(index + 1) ? "natural-key-break" : ""} ${index + 1 === to ? "is-last-key" : ""}`}
               >
                 <div
-                  className={`key-number ${C_KEYS.has(index + 1) ? "is-c-key" : ""}`}
+                  className={`key-number ${C_KEYS.has(index + 1) ? "is-c-key" : ""} ${!pdfMirror && alertKeys.has(index) ? "!text-destructive !font-black" : ""}`}
                   ref={anchorSection && index + 1 === 45 ? key45Ref : undefined}
                 >
                   {index + 1}
@@ -4649,6 +4730,18 @@ function Index() {
             >
               <CycleLabel title={en ? "DW/UW" : "PD/PR"} value={weightFilter === "all" ? (en ? "All" : "Tous") : weightFilter === "wd" ? (en ? "Down" : "Descendants") : (en ? "Up" : "Remontants")} />
             </Button>
+
+            {rows.some((r) => r.wd.trim() || r.wa.trim()) && (
+              <Button
+                type="button"
+                variant="outline"
+                data-pdf-hide
+                onClick={() => setAlertsOn((v) => !v)}
+                className="h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground"
+              >
+                <CycleLabel title={en ? "Alerts" : "Alertes"} value={alertsOn ? (en ? "Yes" : "Oui") : (en ? "No" : "Non")} />
+              </Button>
+            )}
 
             <div className="relative flex items-center">
               {confirmReset === "rows" && (
