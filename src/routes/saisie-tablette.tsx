@@ -106,9 +106,12 @@ function writeRows(rows: Row[]) {
       info = JSON.parse(window.localStorage.getItem("ptw_draft_info") ?? "null") ?? backup?.info ?? {};
     } catch { /* garde */ }
     window.localStorage.setItem(SECURITY_BACKUP_KEY, JSON.stringify({ info, rows: merged, savedToFile: false, at: Date.now() }));
-    window.dispatchEvent(new CustomEvent(DRAFT_EDITED_EVENT));
+    selfDraftWrite = true;
+    try { window.dispatchEvent(new CustomEvent(DRAFT_EDITED_EVENT)); } finally { selfDraftWrite = false; }
   } catch { /* stockage indisponible */ }
 }
+/** Vrai pendant la notification de notre propre écriture : la page ne se recharge pas elle-même. */
+let selfDraftWrite = false;
 
 const num = (s: string) => {
   const v = Number(String(s).replace(",", "."));
@@ -406,7 +409,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
       }
     }
     setLoaded(true);
-    const reload = () => { if (!dirty.current) setRows(readRows()); setResetTick((t) => t + 1); setInfo(readInfo()); };
+    const reload = () => { if (selfDraftWrite) return; if (!dirty.current) setRows(readRows()); setResetTick((t) => t + 1); setInfo(readInfo()); };
     window.addEventListener(DRAFT_EDITED_EVENT, reload);
     window.addEventListener("storage", reload);
     return () => {
