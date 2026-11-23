@@ -174,6 +174,19 @@ export function resetDemoCascadeSeen() {
  * `00000000-0000-0000-0000-000000000001`). Aucune donnée locale de secours :
  * si la base est injoignable, l'erreur réseau est propagée.
  */
+
+/** Fiche démo embarquée (copie de la ligne tampon Cloud) : ouverture immédiate, hors ligne. */
+const EMBEDDED_DEMO_PROFILE = {
+  brand: "YAMAHA", model: "U3", serial_number: "6524444", type_piano: "Upright",
+  measurement_date: "2026-09-17", manufacture_year: 2021, climate_zone: "1",
+  maintenance_type: "Standard maintenance only", usage_level: "Medium",
+  city: "Paris", country: "France", remarks: "", who: "",
+  wa_values: [54,62,58,54,62,62,62,62,62,61,57,62,57,62,57,55,62,57,61,62,57,62,57,55,59,62,57,61,57,55,59,62,57,61,57,55,59,62,57,55,59,62,57,61,57,55,59,62,57,61,57,55,59,62,57,61,57,55,59,62,57,61,57,55,59,62,57,61,57,55,59,62,57,61,57,55,59,62,57,61,57,55,59,62,57,61,57,55],
+  wd_values: [25,25,23,22,22,24,24,26,28,24,22,22,22,22,22,22,24,22,22,24,22,22,22,22,24,24,22,22,22,22,24,24,22,22,22,22,24,24,22,22,24,24,22,22,22,22,24,24,22,22,22,22,24,24,22,22,22,22,24,24,22,22,22,22,24,24,22,22,22,22,24,24,22,22,22,22,24,24,22,22,22,22,24,24,22,22,22,22],
+  friction_values: [15,19,18,16,20,19,19,18,17,18,17,20,18,20,18,17,19,18,20,19,18,20,18,17,18,19,18,20,18,17,18,19,18,20,18,17,18,19,18,17,18,19,18,20,18,17,18,19,18,20,18,17,18,19,18,20,18,17,18,19,18,20,18,17,18,19,18,20,18,17,18,19,18,20,18,17,18,19,18,20,18,17,18,19,18,20,18,17],
+  balance_values: [39,43,41,38,42,43,43,44,45,42,40,42,39,42,39,39,43,39,41,43,39,42,39,39,42,43,39,41,39,39,42,43,39,41,39,39,42,43,39,39,42,43,39,41,39,39,42,43,39,41,39,39,42,43,39,41,39,39,42,43,39,41,39,39,42,43,39,41,39,39,42,43,39,41,39,39,42,43,39,41,39,39,42,43,39,41,39,39],
+} as unknown as NonNullable<Awaited<ReturnType<typeof loadPianoProfileById>>>;
+
 export async function enableDemoModeAsync() {
   if (!isBrowser()) return;
   // Copie locale de la fiche démo : ouverture immédiate dès le 2e lancement,
@@ -186,8 +199,8 @@ export async function enableDemoModeAsync() {
     if (fresh) { try { window.localStorage.setItem(CACHE_KEY, JSON.stringify(fresh)); } catch { /* plein */ } }
     return fresh;
   };
-  const profile = cached ?? (await fetchAndStore());
-  if (cached) void fetchAndStore().catch(() => { /* hors ligne : copie locale conservée */ });
+  const profile = cached ?? EMBEDDED_DEMO_PROFILE;
+  void fetchAndStore().catch(() => { /* hors ligne : copie embarquée conservée */ });
   if (!profile) throw new Error("Fiche de démonstration introuvable en base.");
   try {
     window.sessionStorage.setItem(DEMO_SYNCED_KEY, "1");

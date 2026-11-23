@@ -454,15 +454,15 @@ button, a[data-slot="button"], .app-command {
     container-type: inline-size;
   }
   .tablet-keypad {
-    width: clamp(144px, 21vw, 288px);
-    width: clamp(144px, 21cqw, 288px);
+    width: clamp(176px, 25vw, 340px);
+    width: clamp(176px, 25cqw, 340px);
     gap: clamp(6px, 0.7vw, 8px);
     gap: clamp(6px, 0.7cqw, 8px);
   }
   .tablet-keypad-button {
     height: 100%;
-    min-height: 40px;
-    font-size: clamp(1.4rem, 2.6vw, 2rem);
+    min-height: 52px;
+    font-size: clamp(1.6rem, 2.6vw, 2rem);
     font-size: clamp(1.4rem, 2.6cqw, 2rem);
     background: var(--keypad-surface);
     border: 1px solid var(--keypad-edge);
@@ -502,7 +502,7 @@ button, a[data-slot="button"], .app-command {
     gap: clamp(4px, 0.65cqw, 12px);
   }
   .tablet-command {
-    height: clamp(30px, 2.6vw, 36px) !important;
+    height: clamp(36px, 3.1vw, 43px) !important;
     padding-inline: clamp(5px, 0.6vw, 10px) !important;
     gap: clamp(3px, 0.35vw, 6px);
     font-size: clamp(0.6rem, 0.75vw, 0.72rem) !important;
@@ -778,4 +778,9 @@ html.no-anim *, html.no-anim *::before, html.no-anim *::after {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
   scroll-behavior: auto !important;
+}
+
+/* Tablette : Moyennes non collant quand une comparaison est affichée (syntaxe classique iOS 15). */
+@media (max-width: 1199px) {
+  .averages-unstick-tablet { position: static !important; }
 }

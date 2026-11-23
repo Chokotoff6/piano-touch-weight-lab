@@ -640,13 +640,13 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   const [octRef, octW] = useWidth();
   const widest = useMemo(() => Math.max(...OCTAVES.map(([a, b]) => geometry(a, b, NATIVE_WHITE).width)), []);
   // Largeur fixe des libellés : aucune mesure en boucle (le texte dépend de l'échelle).
-  const labelsW = 110;
+  const labelsW = 40;
   const octScale = octW > 0 ? Math.min(Math.max(0.55, (octW - labelsW - 48) / widest), 3) : 1;
 
   // Swipe horizontal sur l'octave.
   const touchX = useRef<number | null>(null);
 
-  const label = (k: "wd" | "wa") => (k === "wd" ? (en ? "Downweight" : "Poids descendant") : (en ? "Upweight" : "Poids remontant"));
+  const label = (k: "wd" | "wa") => (k === "wd" ? (en ? "DW" : "PD") : (en ? "UW" : "PR"));
 
   const canEnterWeights = ["marque", "modele", "sn_num", "type_piano", "fabrication", "usage_level"].every((k) => info[k]?.trim());
   const cleanWeight = (v: string) => v.replace(/[^0-9]/g, "").slice(0, 2);
@@ -859,7 +859,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   const arrowBtn = "h-auto w-7 min-w-7 shrink-0 cursor-pointer px-1 text-2xl leading-none !text-black transition-transform duration-100 hover:opacity-70 active:scale-75 disabled:cursor-default disabled:opacity-20";
 
   return (
-    <main className="tablet-weighing mx-auto w-full max-w-[1400px] px-6 pb-3 pt-[112px]">
+    <main className="tablet-weighing mx-auto w-full max-w-[1400px] px-6 pb-3 pt-[28px]">
       <input ref={importInput} type="file" accept=".kw,application/json" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ""; void importFile(file); }} />
       <div className="relative rounded-md border-2 border-foreground bg-card p-4 pt-5">
         <div className="absolute -top-3.5 left-4 flex max-w-[calc(100%-2rem)] items-baseline gap-2 whitespace-nowrap bg-card px-2 text-lg font-bold text-black">
@@ -906,7 +906,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
           <div
             ref={octRef}
             className="flex min-w-0 flex-1 items-start justify-center gap-1 overflow-hidden px-8"
-            style={{ height: nativeH * octScale * 0.9 + 2 }}
+            style={{ height: nativeH * octScale + 2 }}
             onTouchStart={(e) => { touchX.current = e.touches[0]?.clientX ?? null; }}
             onTouchEnd={(e) => {
               const start = touchX.current; touchX.current = null;
@@ -915,29 +915,29 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
               setOctave((o) => (end < start ? Math.min(OCTAVES.length - 1, o + 1) : Math.max(0, o - 1)));
             }}
           >
-            <div className="octave-labels relative shrink-0" style={{ width: labelsW, height: nativeH * octScale * 0.9 + 2 }}>
-              <Button variant="ghost" type="button" aria-label={en ? "Previous octave" : "Octave précédente"} disabled={octave === 0} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.max(0, o - 1)); }} style={{ top: 1.05 * 16 * octScale * 0.9 + 4 }} className={`${arrowBtn} absolute right-0 ${pressedArrow === "prev" ? "scale-75 opacity-60" : ""}`}>◀</Button>
-              <div className="octave-label-content grid w-max text-right font-bold text-muted-foreground" style={{ fontSize: Math.min(13, Math.max(9, 13 * octScale * 0.9)) }}>
+            <div className="octave-labels relative shrink-0" style={{ width: labelsW, height: nativeH * octScale + 2 }}>
+              <Button variant="ghost" type="button" aria-label={en ? "Previous octave" : "Octave précédente"} disabled={octave === 0} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.max(0, o - 1)); }} style={{ top: 1.05 * 16 * octScale + 4 }} className={`${arrowBtn} absolute right-0 ${pressedArrow === "prev" ? "scale-75 opacity-60" : ""}`}>◀</Button>
+              <div className="octave-label-content grid w-max text-right font-bold text-muted-foreground" style={{ fontSize: Math.min(13, Math.max(9, 13 * octScale)) }}>
                 <span className="invisible">{label("wd")}</span>
-                <div className="absolute right-0 -translate-y-1/2" style={{ top: 5.81 * 16 * octScale * 0.9 }}>{label("wd")}</div>
-                <div className="absolute right-0 -translate-y-1/2" style={{ top: 6.96 * 16 * octScale * 0.9 }}>{label("wa")}</div>
-                <div className="absolute right-0 -translate-y-1/2" style={{ top: 9.99 * 16 * octScale * 0.9 }}>{label("wd")}</div>
-                <div className="absolute right-0 -translate-y-1/2" style={{ top: 11.04 * 16 * octScale * 0.9 }}>{label("wa")}</div>
+                <div className="absolute right-0 -translate-y-1/2" style={{ top: 5.81 * 16 * octScale }}>{label("wd")}</div>
+                <div className="absolute right-0 -translate-y-1/2" style={{ top: 6.96 * 16 * octScale }}>{label("wa")}</div>
+                <div className="absolute right-0 -translate-y-1/2" style={{ top: 9.99 * 16 * octScale }}>{label("wd")}</div>
+                <div className="absolute right-0 -translate-y-1/2" style={{ top: 11.04 * 16 * octScale }}>{label("wa")}</div>
               </div>
             </div>
-            <div className="relative shrink-0 overflow-hidden" style={{ width: seg.width * octScale * 0.9, height: nativeH * octScale * 0.9 + 2 }}>
-              <div className="tablet-keyboard absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${octScale * 0.9})` }}>
+            <div className="relative shrink-0 overflow-hidden" style={{ width: seg.width * octScale, height: nativeH * octScale + 2 }}>
+              <div className="tablet-keyboard absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${octScale})` }}>
                 <div className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2" style={{ top: "calc(1.05rem + 3px)" }}><span className="whitespace-nowrap rounded-md border border-foreground/60 bg-muted px-2 py-0.5 text-[13px] font-bold leading-none text-foreground">Octave {octave + 1}</span></div>
                 <div className="technical-sheet" style={{ width: seg.width, gridTemplateColumns: `${seg.width}px` }}>
                 <div style={{ marginLeft: -seg.left }}>
-                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onTyped} onCommit={onCommit} onFocusField={onFocusField} onBlurField={onBlurField} onNavigate={onNavigate} isVisible={isVisible} weightFilter={weightFilter} registerInput={registerInput} numberFontPx={Math.min(12, Math.max(8.8, (typeof window !== "undefined" ? window.innerWidth : 1000) * 0.011)) / (octScale * 0.9)} />
+                  <KeyGrid key={octave} from={from} to={to} rows={rows} editable active={active} onChange={onTyped} onCommit={onCommit} onFocusField={onFocusField} onBlurField={onBlurField} onNavigate={onNavigate} isVisible={isVisible} weightFilter={weightFilter} registerInput={registerInput} numberFontPx={Math.min(12, Math.max(8.8, (typeof window !== "undefined" ? window.innerWidth : 1000) * 0.011)) / (octScale)} />
                 </div>
                 </div>
               </div>
             </div>
-            <Button variant="ghost" type="button" aria-label={en ? "Next octave" : "Octave suivante"} disabled={octave === OCTAVES.length - 1} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.min(OCTAVES.length - 1, o + 1)); }} style={{ marginTop: 1.05 * 16 * octScale * 0.9 + 4 }} className={`${arrowBtn} ml-2 ${pressedArrow === "next" ? "scale-75 opacity-60" : ""}`}>▶</Button>
+            <Button variant="ghost" type="button" aria-label={en ? "Next octave" : "Octave suivante"} disabled={octave === OCTAVES.length - 1} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.min(OCTAVES.length - 1, o + 1)); }} style={{ marginTop: 1.05 * 16 * octScale + 4 }} className={`${arrowBtn} ml-2 ${pressedArrow === "next" ? "scale-75 opacity-60" : ""}`}>▶</Button>
           </div>
-          {showKeypad && <Keypad height={Math.max(180, 0.8 * (nativeH * octScale * 0.9 + 2))} onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />}
+          {showKeypad && <Keypad height={Math.max(220, 1.0 * (nativeH * octScale + 2))} onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />}
         </div>
         {alert && alertAnchor && (
           <div className="fixed z-[99999] w-[min(22rem,calc(100vw-1rem))]" style={{ left: alertAnchor.x, top: alertAnchor.y }}>

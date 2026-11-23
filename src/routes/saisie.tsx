@@ -3891,10 +3891,10 @@ function Index() {
       >
         <div className={`technical-labels ${SIDE_LABEL_CLASS}`} aria-hidden="true">
           <div className="label-key" />
-          <div className="label-wd" ref={anchorSection ? wdLabel2Ref : undefined}>{en ? "Downweight" : "Poids descendant"}</div>
-          <div className="label-wa">{en ? "Upweight" : "Poids remontant"}</div>
-          <div className="label-wd-white">{en ? "Downweight" : "Poids descendant"}</div>
-          <div className="label-wa-white">{en ? "Upweight" : "Poids remontant"}</div>
+          <div className="label-wd" ref={anchorSection ? wdLabel2Ref : undefined}>{en ? "DW" : "PD"}</div>
+          <div className="label-wa">{en ? "UW" : "PR"}</div>
+          <div className="label-wd-white">{en ? "DW" : "PD"}</div>
+          <div className="label-wa-white">{en ? "UW" : "PR"}</div>
         </div>
         {anchorSection && (
           <div
@@ -4497,7 +4497,7 @@ function Index() {
         // puisse toujours le rendre et le capturer, quelle que soit la page.
         className={
           weighingMode
-            ? "!mt-[100px] pb-4"
+            ? "!mt-[25px] pb-4"
             : "mt-8 pb-10 !absolute !-left-[9999px] !top-0 !w-[1100px] !opacity-0 pointer-events-none"
         }
 
