@@ -551,6 +551,8 @@ function Index() {
   const [weighingMode, setWeighingMode] = useState(false);
   const { octaveView, chooseOctave } = useWeighingView();
   const selectionCleared = useRef(false);
+  const octaveViewRef = useRef(octaveView);
+  const reloadDraftRef = useRef<(() => void) | null>(null);
   /** Filtrage visuel cyclique des touches affichées à l'écran. */
   const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
   // Filtre « Poids » : Descendants (wd seul), Remontants (wa seul) ou Tous.
@@ -1389,6 +1391,8 @@ function Index() {
   // Garde anti-écrasement : jamais de brouillon vide par-dessus un brouillon valide.
   useEffect(() => {
     const reload = () => {
+      // Vue Octave active : la page bureau dort ; resynchronisation unique au retour.
+      if (octaveViewRef.current && weighingModeRef.current) return;
       try {
         const draft = JSON.parse(window.localStorage.getItem(DRAFT_ROWS_KEY) ?? "null") as Row[] | null;
         const identity = JSON.parse(window.localStorage.getItem(DRAFT_INFO_KEY) ?? "null") as Record<string, string> | null;
@@ -1400,9 +1404,14 @@ function Index() {
         });
       } catch { /* local storage unavailable */ }
     };
+    reloadDraftRef.current = reload;
     window.addEventListener(DRAFT_EDITED_EVENT, reload);
     return () => window.removeEventListener(DRAFT_EDITED_EVENT, reload);
   }, []);
+  useEffect(() => {
+    octaveViewRef.current = octaveView;
+    if (!octaveView) reloadDraftRef.current?.();
+  }, [octaveView]);
   useEffect(() => {
     if (!draftLoaded.current) return;
     try {

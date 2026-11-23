@@ -100,6 +100,14 @@ function writeRows(rows: Row[]) {
     const prev = JSON.parse(window.localStorage.getItem(DRAFT_ROWS_KEY) ?? "null") as Array<Record<string, unknown>> | null;
     const merged = rows.map((r, i) => ({ ...(Array.isArray(prev) ? prev[i] ?? {} : {}), wd: r.wd, wa: r.wa }));
     window.localStorage.setItem(DRAFT_ROWS_KEY, JSON.stringify(merged));
+    // Copie de secours et notification différées : la frappe n'attend rien.
+    if (backupTimer) clearTimeout(backupTimer);
+    backupTimer = setTimeout(() => { backupTimer = null; writeBackup(merged); }, 0);
+  } catch { /* stockage indisponible */ }
+}
+let backupTimer: ReturnType<typeof setTimeout> | null = null;
+function writeBackup(merged: unknown) {
+  try {
     let info: unknown = {};
     try {
       const backup = JSON.parse(window.localStorage.getItem(SECURITY_BACKUP_KEY) ?? "null") as { info?: unknown } | null;
@@ -947,7 +955,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
         </div>
 
         {/* Octave zoomée + pavé numérique : [étiquettes] ◀ [octave] ▶ centrés à gauche du pavé */}
-        <div className="mt-4 flex items-center gap-0 pr-10">
+        <div className="mt-1 flex items-center gap-0 pr-10">
           <div
             ref={octRef}
             className="flex min-w-0 flex-1 items-start justify-center gap-1 overflow-hidden px-8"
