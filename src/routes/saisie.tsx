@@ -6,7 +6,7 @@ import { getPreferences } from "@/lib/preferences";
 import { weighingReadiness, weighingLockMessage } from "@/lib/weighing-readiness";
 import { rememberWeighingCell, readWeighingCell, hasWeighingHandoff, unlockWeighingAudio, playWeighingSound, playReadyChime } from "@/lib/weighing-feedback";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { startTransition, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type InputHTMLAttributes, type ReactNode } from "react";
+import { startTransition, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, type InputHTMLAttributes, type ReactNode } from "react";
 import { Redo2, RefreshCw, Undo2 } from "lucide-react";
 import {
   hasAnyMeasurement,
@@ -197,35 +197,48 @@ type DeferredWeightInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "val
   onCommitDraft?: ((value: string) => void) | undefined;
 };
 function DeferredWeightInput({ value, inputRef, shouldDefer, onFirstDigit, onCommitValue, onCommitDraft, onBlur, ...rest }: DeferredWeightInputProps) {
-  const [draft, setDraft] = useState<string | null>(null);
+  // Champ NON contrôlé : la frappe vit dans le tampon natif du navigateur.
+  // Aucun état React n'est modifié au 1er chiffre (zéro re-rendu, même local).
+  const elRef = useRef<HTMLInputElement | null>(null);
   const draftRef = useRef<string | null>(null);
-  useEffect(() => {
+  const valueRef = useRef(value);
+  useLayoutEffect(() => {
+    valueRef.current = value;
     draftRef.current = null;
-    setDraft(null);
+    const el = elRef.current;
+    if (el && el.value !== value) el.value = value;
   }, [value]);
   return (
     <input
       {...rest}
-      ref={inputRef}
-      value={draft ?? value}
+      ref={(el) => {
+        elRef.current = el;
+        inputRef?.(el);
+      }}
+      defaultValue={value}
       onChange={onCommitValue ? (e) => {
-        const cleaned = e.target.value.replace(/[^0-9]/g, "").slice(0, 2);
+        const el = e.currentTarget;
+        const cleaned = el.value.replace(/[^0-9]/g, "").slice(0, 2);
+        if (el.value !== cleaned) el.value = cleaned;
         if (shouldDefer?.(cleaned)) {
           draftRef.current = cleaned;
-          setDraft(cleaned);
           onFirstDigit?.();
           return;
         }
         draftRef.current = null;
-        setDraft(null);
-        onCommitValue(e.target.value);
+        onCommitValue(cleaned);
+        // Valeur refusée par la page (saisie verrouillée) : le champ reprend la valeur validée.
+        requestAnimationFrame(() => {
+          if (draftRef.current === null && elRef.current && elRef.current.value !== valueRef.current) {
+            elRef.current.value = valueRef.current;
+          }
+        });
       } : undefined}
       onBlur={(e) => {
         onBlur?.(e);
         const pending = draftRef.current;
         if (pending !== null) {
           draftRef.current = null;
-          setDraft(null);
           onCommitDraft?.(pending);
         }
       }}
@@ -572,6 +585,9 @@ export const Route = createFileRoute("/saisie")({
 
 function Index() {
   const [rows, setRows] = useState<Row[]>(EMPTY);
+  // Calculs d'affichage (moyennes, alertes, résumé, graphiques) en basse priorité :
+  // jamais dans le fil synchrone de la frappe.
+  const deferredRows = useDeferredValue(rows);
   const [info, setInfo] = useState<Record<string, string>>({});
   const [isDirty, setIsDirty] = useState(false);
   const isDirtyRef = useRef(false);
@@ -613,14 +629,14 @@ function Index() {
     if (!alertsOn) return out;
     const tol = getPreferences().corridorG;
     if (!(tol > 0)) return out;
-    const v = rows.map((r) => (r.wd.trim() ? Number(r.wd) : NaN));
+    const v = deferredRows.map((r) => (r.wd.trim() ? Number(r.wd) : NaN));
     v.forEach((x, i) => {
       if (!Number.isFinite(x)) return;
       const nb = [v[i - 2], v[i - 1], v[i + 1], v[i + 2]].filter((y): y is number => y !== undefined && Number.isFinite(y));
       if (nb.length >= 2 && Math.abs(x - nb.reduce((p, q) => p + q, 0) / nb.length) > tol) out.add(i);
     });
     return out;
-  }, [alertsOn, rows]);
+  }, [alertsOn, deferredRows]);
   // Filtre « Poids » : Descendants (wd seul), Remontants (wa seul) ou Tous.
   const [weightFilter, setWeightFilter] = useState<"all" | "wd" | "wa">("all");
   // Le Mode Rapide survit aux navigations : il est relu depuis le stockage
@@ -2327,11 +2343,11 @@ function Index() {
     const blackModulos = new Set([2, 5, 7, 10, 0]);
     const isBlack = (index: number) => blackModulos.has((index + 1) % 12);
     return {
-      global: calc(rows),
-      first: calc(rows.filter((_, index) => !isBlack(index))),
-      second: calc(rows.filter((_, index) => isBlack(index))),
+      global: calc(deferredRows),
+      first: calc(deferredRows.filter((_, index) => !isBlack(index))),
+      second: calc(deferredRows.filter((_, index) => isBlack(index))),
     };
-  }, [rows]);
+  }, [deferredRows]);
 
   const focusCell = (index: number, requested: "wd" | "wa") => {
     let field = requested;
@@ -3015,7 +3031,7 @@ function Index() {
 
   const chartData = useMemo<ChartPoint[]>(
     () =>
-      rows.map((r, i) => {
+      deferredRows.map((r, i) => {
         const wd = parseWeight(r.wd);
         const wa = parseWeight(r.wa);
         const valid = wd !== null && wa !== null && wd > wa;
@@ -3027,14 +3043,14 @@ function Index() {
           balance: valid ? Number(((wd + wa) / 2).toFixed(1)) : null,
         };
       }),
-    [rows],
+    [deferredRows],
   );
 
   // Données au format de la page Résultats : les pages 2 et 3 du PDF capturent
   // les cadres web eux-mêmes (mode Noir & Blanc, courbes blanches/noires séparées).
   const webChartData = useMemo(() => {
     const profile: RefProfile = { wd: [], wa: [], friction: [], balance: [] };
-    rows.forEach((row) => {
+    deferredRows.forEach((row) => {
       const a = parseWeight(row.wd);
       const d = parseWeight(row.wa);
       const valid = a !== null && d !== null && a > d;
@@ -3045,7 +3061,7 @@ function Index() {
     });
     const hasData = profile.wd.some((value) => Number.isFinite(value));
     return buildChartData(hasData ? profile : null, null, null);
-  }, [rows]);
+  }, [deferredRows]);
 
 
   /** Identification du piano reprise en en-tête des pages 2 et 3 du PDF. */
@@ -3056,7 +3072,7 @@ function Index() {
     const BLACK_MOD = new Set([2, 5, 7, 10, 0]);
     let white = 0;
     let black = 0;
-    rows.forEach((row, index) => {
+    deferredRows.forEach((row, index) => {
       const filled = String(row.wd ?? "").trim() !== "" || String(row.wa ?? "").trim() !== "";
       if (!filled) return;
       if (BLACK_MOD.has((index + 1) % 12)) black += 1;
@@ -3067,7 +3083,7 @@ function Index() {
       time: `Mesure ${p(now.getDate())}-${p(now.getMonth() + 1)}-${now.getFullYear()} - ${p(now.getHours())}:${p(now.getMinutes())}`,
       count: `- ${white} Blanches / ${black} Noires`,
     };
-  }, [info, rows, serialFull]);
+  }, [info, deferredRows, serialFull]);
 
   /** Ligne de résumé unifiée (style .summary-text), affichée en permanence. */
   const summaryLine = useMemo(() => {
@@ -3077,7 +3093,7 @@ function Index() {
     const BLACK_MOD = new Set([2, 5, 7, 10, 0]);
     let white = 0;
     let black = 0;
-    rows.forEach((row, index) => {
+    deferredRows.forEach((row, index) => {
       const filled = String(row.wd ?? "").trim() !== "" || String(row.wa ?? "").trim() !== "";
       if (!filled) return;
       if (BLACK_MOD.has((index + 1) % 12)) black += 1;
@@ -3085,7 +3101,7 @@ function Index() {
     });
     const v = (s: string | undefined) => (s ?? "").trim() || "—";
     return `${v(info["marque"])}\u00A0\u00A0${v(info["modele"])} - ${year} - SN ${serialFull || "—"} - ${en ? "Measurement" : "Mesure"} ${p(now.getDate())}-${p(now.getMonth() + 1)}-${now.getFullYear()} - ${p(now.getHours())}:${p(now.getMinutes())} - ${white} ${en ? "Whites" : "Blanches"} / ${black} ${en ? "Blacks" : "Noires"}`;
-  }, [info, rows, serialFull, en]);
+  }, [info, deferredRows, serialFull, en]);
   /** Résumé complet : libellé d'intervention en fin de ligne (tronqué en premier). */
   const summaryFull = activePointName ? `${summaryLine} - ${activePointName}` : summaryLine;
 
@@ -3887,11 +3903,10 @@ function Index() {
         }
         onFirstDigit={() => {
           unlockWeighingAudio();
-          finishCascadeEarly();
-          markDirty();
+          if (cascadeTarget.current) finishCascadeEarly();
         }}
         onCommitValue={pdfMirror ? undefined : (v) => { if (canEnterWeights) setValue(index, field, v); }}
-        onCommitDraft={(v) => { if (canEnterWeights && cleanWeight(rows[index]![field]) !== v) setRowField(index, field, v); }}
+        onCommitDraft={(v) => { if (canEnterWeights && cleanWeight(rows[index]![field]) !== v) { markDirty(); setRowField(index, field, v); } }}
         onBlur={(e) => {
           if (selectionCleared.current) return;
           if (!canEnterWeights) return;
