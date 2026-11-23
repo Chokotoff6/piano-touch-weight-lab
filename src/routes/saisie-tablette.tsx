@@ -5,7 +5,7 @@
 // bureau, rendu à taille native puis agrandi par homothétie stricte (scale).
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import type React from "react";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, useDeferredValue } from "react";
 import { useLang } from "@/data/translations";
 import { DRAFT_EDITED_EVENT } from "@/lib/zoom-edit";
 import { SECURITY_BACKUP_KEY, parseKwDocument, rememberKwDocument, kwSerial, differentSerial } from "@/lib/kw-file";
@@ -538,20 +538,22 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   const [weightFilter, setWeightFilter] = useState<"all" | "wd" | "wa">("all");
   const [confirmReset, setConfirmReset] = useState(false);
   const [alertsOn, setAlertsOn] = useState(false);
+  // Alertes et résumé en basse priorité : jamais dans le fil synchrone de la frappe.
+  const deferredRows = useDeferredValue(rows);
   // Alertes de régulation : PD s'écartant de la moyenne de ses voisines de plus que la tolérance.
   const alertKeys = useMemo(() => {
     const out = new Set<number>();
     if (!alertsOn) return out;
     const tol = getPreferences().corridorG;
     if (!(tol > 0)) return out;
-    const v = rows.map((r) => (r.wd.trim() ? Number(r.wd) : NaN));
+    const v = deferredRows.map((r) => (r.wd.trim() ? Number(r.wd) : NaN));
     v.forEach((x, i) => {
       if (!Number.isFinite(x)) return;
       const nb = [v[i - 2], v[i - 1], v[i + 1], v[i + 2]].filter((y): y is number => y !== undefined && Number.isFinite(y));
       if (nb.length >= 2 && Math.abs(x - nb.reduce((p, q) => p + q, 0) / nb.length) > tol) out.add(i);
     });
     return out;
-  }, [alertsOn, rows]);
+  }, [alertsOn, deferredRows]);
   // ON à chaque ouverture, indépendamment du type d'écran et des anciens choix.
   const [showKeypad, setShowKeypad] = useState(true);
   void setShowKeypad;
@@ -622,13 +624,13 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
     const year = info["fabrication"]?.trim() || "—";
     const serial = `${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`;
     let white = 0; let black = 0;
-    rows.forEach((r, i) => {
+    deferredRows.forEach((r, i) => {
       if (r.wd.trim() === "" && r.wa.trim() === "") return;
       if (BLACK_KEYS.has(i + 1)) black++; else white++;
     });
     const v = (s: string | undefined) => (s ?? "").trim() || "—";
     return `${v(info["marque"])}\u00A0\u00A0${v(info["modele"])} - ${year} - SN ${serial || "—"} - ${en ? "Measurement" : "Mesure"} ${p(now.getDate())}-${p(now.getMonth() + 1)}-${now.getFullYear()} - ${p(now.getHours())}:${p(now.getMinutes())} - ${white} ${en ? "Whites" : "Blanches"} / ${black} ${en ? "Blacks" : "Noires"}`;
-  }, [info, rows, en]);
+  }, [info, deferredRows, en]);
 
   const [from, to] = OCTAVES[octave] ?? [1, 15];
   const full = useMemo(() => geometry(1, 88, NATIVE_WHITE), []);
