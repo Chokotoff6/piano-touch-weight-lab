@@ -177,7 +177,7 @@ button, a[data-slot="button"], .app-command {
     text-transform: none;
     letter-spacing: normal;
     white-space: nowrap;
-    color: #a3a3a3;
+    color: #000000;
   }
   /* Style commun clair des listes (interventions, modèles, sélections). */
   .list-panel {

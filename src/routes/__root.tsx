@@ -465,17 +465,17 @@ function RootComponent() {
                     className={linkClass}
                     activeProps={{ className: activeLinkClass }}
                   >
-                    {lang === "en" ? "Analysis" : "Analyse"}
+                    {lang === "en" ? "Workbench" : "Atelier"}
                   </Link>
                 ) : (
                   <span
                     className={lockedLinkClass}
                     aria-disabled="true"
                     onClick={() => showTopbarAlert("compare", lang === "en"
-                      ? "Visit the Dashboard page first to unlock the Analysis page."
-                      : "Consultez d'abord la page Bilan pour débloquer l'Analyse.")}
+                      ? "Visit the Dashboard page first to unlock the Workbench page."
+                      : "Consultez d'abord la page Bilan pour débloquer l'Atelier.")}
                   >
-                    {lang === "en" ? "Analysis" : "Analyse"}
+                    {lang === "en" ? "Workbench" : "Atelier"}
                   </span>
                 )}
 

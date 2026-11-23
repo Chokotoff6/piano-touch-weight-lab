@@ -36,7 +36,7 @@ export function FloatingPanel({ open, onClose, title, children }: { open: boolea
       ref={ref}
       role="dialog"
       aria-label={title}
-      className="fixed right-0 top-[140px] z-[100001] w-[min(22rem,90vw)] rounded-l-lg border border-r-0 border-foreground/40 bg-white/25 shadow-xl transition-transform duration-[250ms] ease-out"
+      className="fixed right-0 top-[140px] z-[100001] w-[min(22rem,90vw)] rounded-l-lg border border-r-0 border-foreground/40 bg-white shadow-2xl transition-transform duration-[450ms] ease-out"
       style={{ transform: shown ? "translateX(0)" : "translateX(105%)" }}
     >
       <div className="flex select-none items-center justify-between border-b border-foreground/20 px-3 py-2 text-sm font-bold" style={{ color: "#f97316" }}>

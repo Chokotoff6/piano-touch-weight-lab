@@ -62,14 +62,14 @@ function Accueil() {
           <div className="grid gap-4 sm:grid-cols-3">
             {(en
               ? [
-                  ["WEIGHING", ["Assisted entry: touch keypad, automatic advance, consistency checks.", "Express C/C# mode, selective entry filters W/B - DW/UW.", "Full / Octave view. Farewell Excel spreadsheets and loose sheets!"]],
-                  ["DASHBOARD", ["Interactive dashboard: curves and averages by key colour.", "Regulation history saved in a local .kw file (100% offline).", "Detailed PDF reports for quotes and certification."]],
-                  ["ANALYSIS", ["Comparison: before/after regulation, Standard targets and Cloud (collaborative database).", "Diagnosis: Zoom mode with out-of-tolerance alerts and direct editing."]],
+                  ["WEIGHING", ["Assisted entry| • touch keypad, auto-advance, consistency checks.", "Custom layout| • Octave or Full keyboard view, W/B and DW/UW filters.", "Express mode| • quick diagnosis on 15 notes (C & C#).", "100% Offline| • works anywhere, even without network."]],
+                  ["DASHBOARD", ["Overview & Balance| • averages by register, friction and W/B balance.", "Touch Health Score /100| • objective index of the keyboard's mechanical condition.", "Custom PDF report| • clear, quantified document for quotes or certification.", "Local history| • full instrument follow-up kept in your .kw file."]],
+                  ["WORKBENCH", ["Comparative view| • Before/After, regulation targets and collaborative Cloud.", "Zoom & Direct editing| • note-by-note inspection and correction on the curve.", "Delta Δ & Alerts| • immediate detection of out-of-tolerance keys.", ".kw File manager| • imports, exports and transfers of your .kw files."]],
                 ]
               : [
-                  ["PESÉE", ["Saisie assistée| : pavé tactile, avance auto, contrôles cohérence.", "Ergonomie| : mode rapide Do/Do#, filtres d’affichage N/B - PD/PR.", "Vue \"Octave\"| ou clavier complet.", "Fini tableurs| et feuilles volantes."]],
-                  ["BILAN", ["Tableau de bord interactif| : moyennes & courbes (PD-PR-F-PB).", "Imports et sauvegardes| en local.", "Rapports PDF détaillés| pour devis et certification."]],
-                  ["ANALYSE", ["Comparaisons| : avant/après régulation, cibles standards, Cloud.", "Delta Δ| : par rapport à Cible standard ou Points d’historique.", "Diagnostic| : mode Zoom, alertes, retouche interactive sur courbe.", "Sauvegarde| en local."]],
+                  ["PESÉE", ["Saisie assistée| : pavé tactile, avance automatique, contrôles de cohérence.", "Ergonomie| : vue Octave ou Clavier complet, filtres N/B et PD/PR.", "Mode Rapide| : diagnostic express 15 touches (Do & Do#).", "100% Hors-ligne| : opérationnel partout, même sans réseau."]],
+                  ["BILAN", ["Synthèse globale| : moyennes par registres, frottements et équilibre B/N.", "Score de Santé /100| : indice objectif de l’état mécanique du clavier.", "Rapport PDF à la carte| : document clair et chiffré pour devis ou certification.", "Historique local| : suivi complet de l’instrument conservé dans votre fichier .kw."]],
+                  ["ATELIER", ["Comparaisons croisées| : Avant/Après, cibles régulation et Cloud collaboratif.", "Mode Zoom & Retouche| : inspection note à note et correction directe sur courbe.", "Écarts & Alertes (Δ)| : détection immédiate des touches hors tolérance.", "Gestion archives| : imports, exports et transferts de vos fichiers .kw."]],
                 ]
             ).map(([title, items]) => (
               <fieldset key={title as string} className="min-w-0 rounded-lg border border-black bg-white/20 px-4 pb-4 pt-1">

@@ -773,8 +773,9 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
     if (!active || !/^\d$/.test(k)) return;
     const el = inputs.current.get(`${active.index}-${active.field}`);
     const cur = rowsRef.current[active.index]?.[active.field] ?? "";
-    const start = replaceNext.current ? 0 : el?.selectionStart ?? cur.length;
-    const end = replaceNext.current ? cur.length : el?.selectionEnd ?? cur.length;
+    void el;
+    const start = replaceNext.current ? 0 : cur.length;
+    const end = cur.length;
     const v = cleanWeight(cur.slice(0, start) + k + cur.slice(end));
     onTyped(active.index, active.field, v);
   };
