@@ -746,6 +746,8 @@ function Index() {
   /** Anti-rebond : vrai tant qu'un déplacement de focus n'est pas stabilisé. */
   const navLock = useRef(false);
   const skipBlurCommit = useRef<string | null>(null);
+  /** Son de saut joué à l'arrivée réelle du focus sur la case visée. */
+  const pendingKeySound = useRef<string | null>(null);
   /** Miroir du mode pesée, lisible depuis les setTimeout. */
   const weighingModeRef = useRef(false);
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
@@ -2095,7 +2097,10 @@ function Index() {
     const el = inputs.current[`${index}-wa`];
     if (el) {
       const r = el.getBoundingClientRect();
-      setCoherenceAnchor({ x: r.right + 8, y: r.top });
+      // Toujours collée à la case PR : à droite, ou à gauche au bord de l'écran.
+      const w = 42 * 6.4 + 20;
+      const x = r.right + 8 + w > window.innerWidth - 8 ? r.left - 8 - w : r.right + 8;
+      setCoherenceAnchor({ x, y: r.top });
     }
     setCoherenceIndex(index);
     coherenceTimeout.current = setTimeout(() => {
@@ -2590,6 +2595,10 @@ function Index() {
       const errKey = verdict === "mechanical" ? `${index}-wa` : `${index}-${field}`;
       errorsRef.current = { ...errorsRef.current, [errKey]: verdict === "mechanical" ? COHERENCE_MESSAGE : rangeMessage(field, en) };
       lockedPairRef.current = index;
+      if (verdict === "mechanical") {
+        coherenceDismissed.current.delete(index);
+        showCoherencePopover(index);
+      }
     }
     if (verdict !== "ok") return false;
     // Valeur corrigée saine : l'ancienne alerte est levée AVANT le saut,
@@ -2616,8 +2625,8 @@ function Index() {
     const next = nextVisibleKey(index, 1);
     if (next === null) return false;
     skipBlurCommit.current = `${index}-${field}`;
+    pendingKeySound.current = `${next}-wd`;
     focusCell(next, "wd");
-    playWeighingSound("key");
     return true;
   };
 
@@ -2683,7 +2692,7 @@ function Index() {
       if (field === "wd") focusCell(index, "wa");
       else {
         const next = nextVisibleKey(index, 1);
-        if (next !== null) { focusCell(next, "wd"); playWeighingSound("key"); }
+        if (next !== null) { pendingKeySound.current = `${next}-wd`; focusCell(next, "wd"); }
       }
     }, 0);
   };
@@ -2730,7 +2739,18 @@ function Index() {
   useEffect(() => {
     if (!weighingMode || octaveView) return;
     const cell = readWeighingCell();
-    if (cell) inputs.current[`${cell.index}-${cell.field}`]?.focus({ preventScroll: true });
+    const el = cell ? inputs.current[`${cell.index}-${cell.field}`] : null;
+    if (!el) return;
+    // Tablette : aucun focus natif (le clavier iOS resterait ouvert), repère violet seulement.
+    if (window.matchMedia?.("(pointer: coarse)").matches) {
+      el.style.outline = "3px solid #7149ab";
+      el.style.outlineOffset = "1px";
+      el.scrollIntoView({ block: "nearest", inline: "center" });
+      const clear = () => { el.style.outline = ""; document.removeEventListener("pointerdown", clear, true); };
+      document.addEventListener("pointerdown", clear, true);
+      return;
+    }
+    el.focus({ preventScroll: true });
   }, [weighingMode, octaveView]);
 
   /** Alerte sustain : PD uniquement, strictement 70-90 g, ancrée sous la case, 5 s. */
@@ -2792,7 +2812,7 @@ function Index() {
       if (origin.field === "wd") focusCell(origin.index, "wa");
       else {
         const next = nextVisibleKey(origin.index, 1);
-        if (next !== null) { focusCell(next, "wd"); playWeighingSound("key"); }
+        if (next !== null) { pendingKeySound.current = `${next}-wd`; focusCell(next, "wd"); }
       }
     }, 0);
   };
@@ -4035,6 +4055,8 @@ function Index() {
           // Sécurité clavier / focus programmatique : rejet synchrone également.
           if (L.blockPairExit(index, e.currentTarget)) return;
           selectionCleared.current = false;
+          e.currentTarget.style.outline = "";
+          if (pendingKeySound.current === `${index}-${field}`) { pendingKeySound.current = null; playWeighingSound("key"); }
           rememberWeighingCell({ index, field });
           unlockWeighingAudio();
           lockedPairRef.current = index;
