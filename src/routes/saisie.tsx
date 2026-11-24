@@ -184,11 +184,12 @@ type Row = { wd: string; wa: string };
 const EMPTY: Row[] = Array.from({ length: 88 }, () => ({ wd: "", wa: "" }));
 
 /**
- * Case de pesée de la Vue Complète : le 1er chiffre reste local à la case
- * (aucun re-rendu des 88 touches), la validation globale a lieu au 2e chiffre
- * ou à la sortie de la case. Évite que le second chiffre soit avalé sur iPad.
+ * Case de pesée de la Vue Complète : même méthode que la Vue Octave.
+ * Chaque chiffre est écrit directement dans la case (aucune dépendance à la
+ * sélection native, peu fiable sur iPad) : le 1er chiffre après l'entrée dans
+ * la case remplace l'ancienne valeur, le 2e complète, puis validation et saut.
  */
-type DeferredWeightInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange"> & {
+type WeightInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange"> & {
   value: string;
   inputRef?: ((el: HTMLInputElement | null) => void) | undefined;
   shouldDefer?: ((cleaned: string) => boolean) | undefined;
@@ -196,18 +197,27 @@ type DeferredWeightInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "val
   onCommitValue?: ((value: string) => void) | undefined;
   onCommitDraft?: ((value: string) => void) | undefined;
 };
-function DeferredWeightInput({ value, inputRef, shouldDefer, onFirstDigit, onCommitValue, onCommitDraft, onBlur, ...rest }: DeferredWeightInputProps) {
-  // Champ NON contrôlé : la frappe vit dans le tampon natif du navigateur.
-  // Aucun état React n'est modifié au 1er chiffre (zéro re-rendu, même local).
+function WeightInput({ value, inputRef, shouldDefer, onFirstDigit, onCommitValue, onCommitDraft, onBlur, onFocus, onKeyDown, ...rest }: WeightInputProps) {
   const elRef = useRef<HTMLInputElement | null>(null);
   const draftRef = useRef<string | null>(null);
-  const valueRef = useRef(value);
+  // Comme la Vue Octave : le 1er chiffre tapé après l'entrée dans la case remplace.
+  const replaceNext = useRef(true);
   useLayoutEffect(() => {
-    valueRef.current = value;
     draftRef.current = null;
     const el = elRef.current;
     if (el && el.value !== value) el.value = value;
   }, [value]);
+  const typed = (el: HTMLInputElement, next: string) => {
+    replaceNext.current = false;
+    el.value = next;
+    if (shouldDefer?.(next)) {
+      draftRef.current = next;
+      onFirstDigit?.();
+      return;
+    }
+    draftRef.current = null;
+    onCommitValue?.(next);
+  };
   return (
     <input
       {...rest}
@@ -216,23 +226,26 @@ function DeferredWeightInput({ value, inputRef, shouldDefer, onFirstDigit, onCom
         inputRef?.(el);
       }}
       defaultValue={value}
-      onChange={onCommitValue ? (e) => {
+      onFocus={(e) => {
+        replaceNext.current = true;
+        onFocus?.(e);
+      }}
+      onKeyDown={(e) => {
+        onKeyDown?.(e);
+        if (e.defaultPrevented || !onCommitValue) return;
+        if (!/^[0-9]$/.test(e.key) || e.altKey || e.ctrlKey || e.metaKey) return;
+        e.preventDefault();
         const el = e.currentTarget;
-        const cleaned = el.value.replace(/[^0-9]/g, "").slice(0, 2);
-        if (el.value !== cleaned) el.value = cleaned;
-        if (shouldDefer?.(cleaned)) {
-          draftRef.current = cleaned;
-          onFirstDigit?.();
-          return;
-        }
-        draftRef.current = null;
-        onCommitValue(cleaned);
-        // Valeur refusée par la page (saisie verrouillée) : le champ reprend la valeur validée.
-        requestAnimationFrame(() => {
-          if (draftRef.current === null && elRef.current && elRef.current.value !== valueRef.current) {
-            elRef.current.value = valueRef.current;
-          }
-        });
+        const cur = el.value.replace(/[^0-9]/g, "");
+        const next = replaceNext.current || cur.length >= 2 ? e.key : cur + e.key;
+        typed(el, next);
+      }}
+      onChange={onCommitValue ? (e) => {
+        // Secours si le clavier n'envoie pas le chiffre à l'appui (touche « Unidentified »).
+        const el = e.currentTarget;
+        const digits = el.value.replace(/[^0-9]/g, "");
+        const next = digits.length > 2 ? digits.slice(-1) : digits;
+        typed(el, next);
       } : undefined}
       onBlur={(e) => {
         onBlur?.(e);
@@ -3885,14 +3898,13 @@ function Index() {
           {rows[index]![field]}
         </span>
       ) : (
-      <DeferredWeightInput
+      <WeightInput
         inputRef={pdfMirror ? undefined : (el) => {
           inputs.current[`${index}-${field}`] = el;
         }}
         value={rows[index]![field]}
         readOnly={pdfMirror}
         tabIndex={!pdfMirror && (rapidMode && !RAPID_INDEX_SET.has(index) || hidden) ? -1 : undefined}
-        maxLength={2}
         placeholder=""
         shouldDefer={(cleaned) =>
           canEnterWeights &&
@@ -3919,20 +3931,6 @@ function Index() {
           if (!canEnterWeights) {
             e.preventDefault();
             showBlockMessage(index, field);
-            return;
-          }
-          // Saisie expéditive : si la case est en anomalie (FF mécanique ou
-          // hors fourchette), la première frappe numérique écrase la valeur.
-          if (
-            /^[0-9]$/.test(e.key) &&
-            !e.altKey &&
-            !e.ctrlKey &&
-            !e.metaKey &&
-            errorsRef.current[`${index}-${field}`] &&
-            e.currentTarget.selectionStart === e.currentTarget.selectionEnd
-          ) {
-            e.preventDefault();
-            setValue(index, field, e.key);
             return;
           }
           if (e.key === "Enter") {
