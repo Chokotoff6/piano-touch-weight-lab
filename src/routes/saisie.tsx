@@ -1,3 +1,4 @@
+import { CompactKeypad } from "@/components/weighing/CompactKeypad";
 import { TabletWeighingPage } from "@/routes/saisie-tablette";
 import { useWeighingView } from "@/lib/weighing-view";
 import { CycleLabel } from "@/components/CycleLabel";
@@ -619,6 +620,9 @@ function Index() {
   }
   const [weighingMode, setWeighingMode] = useState(false);
   const { octaveView, chooseOctave } = useWeighingView();
+  const [coarsePointer, setCoarsePointer] = useState(false);
+  useEffect(() => { setCoarsePointer(!!window.matchMedia?.("(pointer: coarse)").matches); }, []);
+  const compactPad = weighingMode && !octaveView && coarsePointer;
   const selectionCleared = useRef(false);
   const octaveViewRef = useRef(octaveView);
   const reloadDraftRef = useRef<(() => void) | null>(null);
@@ -2581,6 +2585,40 @@ function Index() {
       return next;
     });
 
+  /** Pavé bas tablette (Vue Complète) : injecte dans la case active via le même événement de frappe. */
+  const padTarget = (): { el: HTMLInputElement; index: number; field: "wd" | "wa" } | null => {
+    const activeKey = Object.keys(inputs.current).find((k) => inputs.current[k] === document.activeElement);
+    const cell = activeKey ? { index: Number(activeKey.split("-")[0]), field: activeKey.split("-")[1] as "wd" | "wa" } : readWeighingCell();
+    const el = cell ? inputs.current[`${cell.index}-${cell.field}`] : null;
+    if (!cell || !el) return null;
+    if (document.activeElement !== el) el.focus({ preventScroll: false });
+    return { el, index: cell.index, field: cell.field };
+  };
+  const padInput = (el: HTMLInputElement, next: string, data: string | null) => {
+    el.value = next;
+    el.dispatchEvent(new InputEvent("input", { bubbles: true, data, inputType: data === null ? "deleteContentBackward" : "insertText" }));
+  };
+  const padDigit = (d: string) => {
+    const t = padTarget();
+    if (!t) return;
+    const { el } = t;
+    const all = el.selectionStart === 0 && el.selectionEnd === el.value.length && el.value.length > 0;
+    padInput(el, all || el.value.length >= 2 ? d : el.value + d, d);
+  };
+  const padErase = () => {
+    const t = padTarget();
+    if (t) padInput(t.el, t.el.value.slice(0, -1), null);
+  };
+  const padMove = (dir: 1 | -1) => {
+    const t = padTarget();
+    if (!t) return;
+    if (dir === 1) {
+      if (t.field === "wd") focusCell(t.index, "wa");
+      else { const n = nextVisibleKey(t.index, 1); if (n !== null) focusCell(n, "wd"); }
+    } else if (t.field === "wa") focusCell(t.index, "wd");
+    else { const p = nextVisibleKey(t.index, -1); if (p !== null) focusCell(p, "wa"); }
+  };
+
   /** Contrôle pur (aucun état modifié) : la valeur à 2 chiffres autorise-t-elle le saut ?
    *  Si oui, la case suivante prend le focus tout de suite, comme en Vue Octave. */
   const tryImmediateAdvance = (index: number, field: "wd" | "wa", value: string): boolean => {
@@ -3943,8 +3981,8 @@ function Index() {
 
   // Colonnes mémorisées : leurs gestionnaires lisent toujours l'état du dernier rendu.
   const liveCell = { blockPairExit, tryImmediateAdvance, canEnterWeights, showBlockMessage, setValue, markDirty, setRowField, rows, handleBlur, onKeyDown, octaveView, weighingMode, focusCell, pairHasError, pairErrorField, showCoherencePopover, hideRangeMessage, finishCascadeEarly, cleanWeight };
-  const live = useRef(liveCell);
-  live.current = liveCell;
+  const live = useRef({ ...liveCell, compactPad });
+  live.current = { ...liveCell, compactPad };
 
   const renderWeightInput = (
     index: number,
@@ -4036,7 +4074,7 @@ function Index() {
             L.showBlockMessage(index, field);
           }
         }}
-        inputMode="numeric"
+        inputMode={live.current.compactPad ? "none" : "numeric"}
         aria-label={`${field === "wd" ? (en ? "DW" : "PD") : en ? "UW" : "PR"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
         onPointerDown={(e) => {
@@ -4231,6 +4269,11 @@ function Index() {
 
   return (
     <>
+    {compactPad && (
+      <>
+        <CompactKeypad en={en} canUndo={undoStack.length > 0} canRedo={redoStack.length > 0} onDigit={padDigit} onErase={padErase} onPrev={() => padMove(-1)} onNext={() => padMove(1)} onUndo={undoRows} onRedo={redoRows} />
+      </>
+    )}
     {showResumeModal && (
       <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.15)" }}>
         <div role="dialog" aria-modal="true" className="w-full max-w-sm rounded-lg border border-gray-300 bg-[#FFFFFF] p-5 text-sm text-gray-900 shadow-xl">
@@ -4252,7 +4295,7 @@ function Index() {
       onUpdateCurrent={() => { void performKwSave(null).finally(() => finishKwAsk(true)); setKwPointAsk(null); }}
       onCreate={(name) => { void performKwSave(name).finally(() => finishKwAsk(true)); setKwPointAsk(null); }}
     />
-    <main aria-hidden={weighingMode && octaveView ? true : undefined} className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"} ${weighingMode && octaveView ? "absolute -left-[9999px] top-0 w-[1250px] pointer-events-none" : ""}`}>
+    <main aria-hidden={weighingMode && octaveView ? true : undefined} className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"} ${compactPad ? "pb-[150px]" : ""} ${weighingMode && octaveView ? "absolute -left-[9999px] top-0 w-[1250px] pointer-events-none" : ""}`}>
       <input
         ref={importInputRef}
         type="file"
