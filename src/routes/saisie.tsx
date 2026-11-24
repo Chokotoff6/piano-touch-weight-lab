@@ -282,6 +282,12 @@ function SvgTooltip({ x, y, text }: { x: number; y: number; text: string }) {
   const padY = 8;
   const width = Math.min(maxChars, Math.max(...lines.map((l) => l.length))) * charWidth + padX * 2;
   const height = lines.length * lineHeight + padY * 2;
+  // Toujours entièrement visible : recadrage dans la fenêtre (haut, bas, droite).
+  const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
+  const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+  const nav = typeof document !== "undefined" ? (document.querySelector("nav")?.getBoundingClientRect().bottom ?? 0) : 0;
+  x = Math.max(8, Math.min(x, vw - width - 8));
+  y = Math.max(nav + 8, Math.min(y, vh - height - 8));
   return (
     <svg
       role="alert"
@@ -2546,7 +2552,15 @@ function Index() {
     // Valeurs lues à l'écran : la case voisine peut être validée mais pas encore enregistrée.
     const other = field === "wd" ? "wa" : "wd";
     const otherValue = inputs.current[`${index}-${other}`]?.value ?? rows[index]![other];
-    if (entryVerdict(field, value, otherValue) !== "ok") return false;
+    const verdict = entryVerdict(field, value, otherValue);
+    if (verdict === "mechanical" || verdict === "range") {
+      // Verrou posé tout de suite : un clic sur une autre touche est refusé
+      // même si l'enregistrement de la valeur n'est pas encore terminé.
+      const errKey = verdict === "mechanical" ? `${index}-wa` : `${index}-${field}`;
+      errorsRef.current = { ...errorsRef.current, [errKey]: verdict === "mechanical" ? COHERENCE_MESSAGE : rangeMessage(field, en) };
+      lockedPairRef.current = index;
+    }
+    if (verdict !== "ok") return false;
     // Valeur corrigée saine : l'ancienne alerte est levée AVANT le saut,
     // sinon la case suivante croit à une fuite et renvoie le curseur.
     const key = `${index}-${field}`;
@@ -3524,8 +3538,6 @@ function Index() {
       measuresReady: requiredSheetFieldsComplete && keyboardValid,
       serialFilled: Boolean(info["sn_num"]?.trim()),
       isExporting,
-      isDirty,
-      hasSaved: Boolean(currentDbId),
       historyRows: info["sn_num"]?.trim() ? getTopbarState().historyRows : NO_HISTORY_ROWS,
     });
     // Jalon persistant : le seuil minimal de pesée débloque le bouton "Résultats".
@@ -3537,7 +3549,7 @@ function Index() {
     // Menu du haut notifié uniquement quand le déblocage du Bilan bascule.
     const gate = resultsReady && demoCascadeOk;
     if (lastGateRef.current !== gate) { lastGateRef.current = gate; setGateReady(gate); }
-  }, [exportReady, requiredSheetFieldsComplete, keyboardValid, resultsReady, info, isExporting, isDirty, currentDbId, weighingMode]);
+  }, [exportReady, requiredSheetFieldsComplete, keyboardValid, resultsReady, info, isExporting, weighingMode]);
   // Remise à zéro de la barre uniquement en quittant la page (jamais à chaque pesée).
   useEffect(() => () => {
     setTopbarState({
