@@ -200,10 +200,12 @@ type WeightInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "o
   value: string;
   inputRef?: ((el: HTMLInputElement | null) => void) | undefined;
   onFirstDigit?: (() => void) | undefined;
-  onCommitValue?: ((value: string) => void) | undefined;
+  onCommitValue?: ((value: string, advanced?: boolean) => void) | undefined;
   onCommitDraft?: ((value: string) => void) | undefined;
+  /** Saut immédiat (comme la Vue Octave) : renvoie true si la case suivante a pris le focus. */
+  onAdvance?: ((value: string) => boolean) | undefined;
 };
-function WeightInput({ value, inputRef, onFirstDigit, onCommitValue, onCommitDraft, onBlur, ...rest }: WeightInputProps) {
+function WeightInput({ value, inputRef, onFirstDigit, onCommitValue, onCommitDraft, onAdvance, onBlur, ...rest }: WeightInputProps) {
   const elRef = useRef<HTMLInputElement | null>(null);
   const pending = useRef<string | null>(null);
   // Valeur externe modifiée (validation, annulation, import) : affichage aligné.
@@ -234,7 +236,9 @@ function WeightInput({ value, inputRef, onFirstDigit, onCommitValue, onCommitDra
         if (digits.length === 2) {
           pending.current = null;
           // Le « 55 » est peint d'abord ; la validation et le saut suivent juste après.
-          window.requestAnimationFrame(() => window.setTimeout(() => onCommitValue(digits), 0));
+          // Saut de case immédiat dans l'événement de frappe, puis enregistrement après affichage.
+          const advanced = onAdvance?.(digits) ?? false;
+          window.requestAnimationFrame(() => window.setTimeout(() => onCommitValue(digits, advanced), 0));
         } else if (digits.length === 1) {
           pending.current = digits;
           onFirstDigit?.();
@@ -751,6 +755,7 @@ function Index() {
   const rowsRef = useRef<Row[]>(EMPTY);
   /** Anti-rebond : vrai tant qu'un déplacement de focus n'est pas stabilisé. */
   const navLock = useRef(false);
+  const skipBlurCommit = useRef<string | null>(null);
   /** Miroir du mode pesée, lisible depuis les setTimeout. */
   const weighingModeRef = useRef(false);
   const snRef = useRef<Record<string, HTMLInputElement | null>>({});
@@ -2550,7 +2555,35 @@ function Index() {
       return next;
     });
 
-  const setValue = (index: number, field: "wd" | "wa", value: string) => {
+  /** Contrôle pur (aucun état modifié) : la valeur à 2 chiffres autorise-t-elle le saut ?
+   *  Si oui, la case suivante prend le focus tout de suite, comme en Vue Octave. */
+  const tryImmediateAdvance = (index: number, field: "wd" | "wa", value: string): boolean => {
+    const cleaned = cleanWeight(value);
+    if (cleaned.length < 2 || !getPreferences().autoAdvance || pedalAlert) return false;
+    const num = parseWeight(cleaned);
+    if (num === null || isOutOfRange(field, num) || isPedalValue(field, num)) return false;
+    // Valeurs lues à l'écran : la case voisine peut être validée mais pas encore enregistrée.
+    const other = field === "wd" ? "wa" : "wd";
+    const otherValue = inputs.current[`${index}-${other}`]?.value ?? rows[index]![other];
+    const row: Row = { ...rows[index]!, [field]: cleaned, [other]: cleanWeight(otherValue) };
+    const wd = parseWeight(row.wd);
+    const wa = parseWeight(row.wa);
+    if (wd !== null && wa !== null && wd <= wa) return false;
+    if (field === "wd") {
+      if (weightFilter === "wd") return false;
+      skipBlurCommit.current = `${index}-${field}`;
+      focusCell(index, "wa");
+      return true;
+    }
+    const next = nextVisibleKey(index, 1);
+    if (next === null) return false;
+    skipBlurCommit.current = `${index}-${field}`;
+    focusCell(next, "wd");
+    playWeighingSound("key");
+    return true;
+  };
+
+  const setValue = (index: number, field: "wd" | "wa", value: string, advanced = false) => {
     // Frappe pendant la cascade démo : on la termine sans écraser la saisie.
     unlockWeighingAudio();
     finishCascadeEarly();
@@ -2607,7 +2640,7 @@ function Index() {
       return;
     }
     // Avance automatique : uniquement si la valeur a passé TOUS les contrôles.
-    if (mechanicalError || !getPreferences().autoAdvance) return;
+    if (advanced || mechanicalError || !getPreferences().autoAdvance) return;
     setTimeout(() => {
       if (field === "wd") focusCell(index, "wa");
       else {
@@ -3850,7 +3883,7 @@ function Index() {
   // --- Rendu : champ de saisie d'un poids (Wd ou Wa) ------------------------------
 
   // Colonnes mémorisées : leurs gestionnaires lisent toujours l'état du dernier rendu.
-  const liveCell = { canEnterWeights, showBlockMessage, setValue, markDirty, setRowField, rows, handleBlur, onKeyDown, octaveView, weighingMode, focusCell, pairHasError, pairErrorField, showCoherencePopover, hideRangeMessage, finishCascadeEarly, cleanWeight };
+  const liveCell = { tryImmediateAdvance, canEnterWeights, showBlockMessage, setValue, markDirty, setRowField, rows, handleBlur, onKeyDown, octaveView, weighingMode, focusCell, pairHasError, pairErrorField, showCoherencePopover, hideRangeMessage, finishCascadeEarly, cleanWeight };
   const live = useRef(liveCell);
   live.current = liveCell;
 
@@ -3911,13 +3944,16 @@ function Index() {
           unlockWeighingAudio();
           if (cascadeTarget.current) live.current.finishCascadeEarly();
         }}
-        onCommitValue={pdfMirror ? undefined : (v) => { const L = live.current; if (L.canEnterWeights) L.setValue(index, field, v); }}
+        onAdvance={pdfMirror ? undefined : (v) => { const L = live.current; return L.canEnterWeights && !L.octaveView ? L.tryImmediateAdvance(index, field, v) : false; }}
+        onCommitValue={pdfMirror ? undefined : (v, advanced) => { const L = live.current; if (L.canEnterWeights) L.setValue(index, field, v, advanced); }}
         onCommitDraft={(v) => { const L = live.current; if (L.canEnterWeights && L.cleanWeight(L.rows[index]![field]) !== v) { L.markDirty(); L.setRowField(index, field, v); } }}
         onBlur={(e) => {
           const L = live.current;
           if (selectionCleared.current) return;
           if (!L.canEnterWeights) return;
           const key = `${index}-${field}`;
+          // Valeur déjà validée à 2 chiffres avec saut immédiat : aucun second calcul.
+          if (skipBlurCommit.current === key) { skipBlurCommit.current = null; delete prevWeight.current[key]; return; }
           const restored = e.target.value === "" ? (prevWeight.current[key] ?? "") : e.target.value;
           delete prevWeight.current[key];
           L.handleBlur(index, field, restored);
