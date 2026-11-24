@@ -184,40 +184,26 @@ type Row = { wd: string; wa: string };
 const EMPTY: Row[] = Array.from({ length: 88 }, () => ({ wd: "", wa: "" }));
 
 /**
- * Case de pesée de la Vue Complète : même méthode que la Vue Octave.
- * Chaque chiffre est écrit directement dans la case (aucune dépendance à la
- * sélection native, peu fiable sur iPad) : le 1er chiffre après l'entrée dans
- * la case remplace l'ancienne valeur, le 2e complète, puis validation et saut.
+ * Case de pesée de la Vue Complète : champ HTML standard, comme la Vue Octave.
+ * Aucune interception des touches : le navigateur écrit lui-même les chiffres.
+ * 1 chiffre : rien d'autre ne se passe. 2 chiffres : validation, sauvegarde, saut.
  */
-type WeightInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange"> & {
+type WeightInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "onInput"> & {
   value: string;
   inputRef?: ((el: HTMLInputElement | null) => void) | undefined;
-  shouldDefer?: ((cleaned: string) => boolean) | undefined;
   onFirstDigit?: (() => void) | undefined;
   onCommitValue?: ((value: string) => void) | undefined;
   onCommitDraft?: ((value: string) => void) | undefined;
 };
-function WeightInput({ value, inputRef, shouldDefer, onFirstDigit, onCommitValue, onCommitDraft, onBlur, onFocus, onKeyDown, ...rest }: WeightInputProps) {
+function WeightInput({ value, inputRef, onFirstDigit, onCommitValue, onCommitDraft, onBlur, ...rest }: WeightInputProps) {
   const elRef = useRef<HTMLInputElement | null>(null);
-  const draftRef = useRef<string | null>(null);
-  // Comme la Vue Octave : le 1er chiffre tapé après l'entrée dans la case remplace.
-  const replaceNext = useRef(true);
-  useLayoutEffect(() => {
-    draftRef.current = null;
+  const pending = useRef<string | null>(null);
+  // Valeur externe modifiée (validation, annulation, import) : affichage aligné.
+  useEffect(() => {
+    pending.current = null;
     const el = elRef.current;
     if (el && el.value !== value) el.value = value;
   }, [value]);
-  const typed = (el: HTMLInputElement, next: string) => {
-    replaceNext.current = false;
-    el.value = next;
-    if (shouldDefer?.(next)) {
-      draftRef.current = next;
-      onFirstDigit?.();
-      return;
-    }
-    draftRef.current = null;
-    onCommitValue?.(next);
-  };
   return (
     <input
       {...rest}
@@ -225,34 +211,35 @@ function WeightInput({ value, inputRef, shouldDefer, onFirstDigit, onCommitValue
         elRef.current = el;
         inputRef?.(el);
       }}
+      type="text"
+      autoComplete="off"
       defaultValue={value}
-      onFocus={(e) => {
-        replaceNext.current = true;
-        onFocus?.(e);
-      }}
-      onKeyDown={(e) => {
-        onKeyDown?.(e);
-        if (e.defaultPrevented || !onCommitValue) return;
-        if (!/^[0-9]$/.test(e.key) || e.altKey || e.ctrlKey || e.metaKey) return;
-        e.preventDefault();
+      onInput={onCommitValue ? (e) => {
         const el = e.currentTarget;
-        const cur = el.value.replace(/[^0-9]/g, "");
-        const next = replaceNext.current || cur.length >= 2 ? e.key : cur + e.key;
-        typed(el, next);
-      }}
-      onChange={onCommitValue ? (e) => {
-        // Secours si le clavier n'envoie pas le chiffre à l'appui (touche « Unidentified »).
-        const el = e.currentTarget;
-        const digits = el.value.replace(/[^0-9]/g, "");
-        const next = digits.length > 2 ? digits.slice(-1) : digits;
-        typed(el, next);
+        let digits = el.value.replace(/[^0-9]/g, "");
+        // Case déjà pleine sans sélection (iPad) : on garde le chiffre tapé.
+        if (digits.length > 2) {
+          const typed = ((e.nativeEvent as InputEvent).data ?? "").replace(/[^0-9]/g, "");
+          digits = typed ? typed.slice(-1) : digits.slice(-1);
+        }
+        if (el.value !== digits) el.value = digits;
+        if (digits.length === 2) {
+          pending.current = null;
+          onCommitValue(digits);
+        } else if (digits.length === 1) {
+          pending.current = digits;
+          onFirstDigit?.();
+        } else {
+          pending.current = null;
+          onCommitValue("");
+        }
       } : undefined}
       onBlur={(e) => {
         onBlur?.(e);
-        const pending = draftRef.current;
-        if (pending !== null) {
-          draftRef.current = null;
-          onCommitDraft?.(pending);
+        const p = pending.current;
+        if (p !== null) {
+          pending.current = null;
+          onCommitDraft?.(p);
         }
       }}
     />
@@ -3906,13 +3893,6 @@ function Index() {
         readOnly={pdfMirror}
         tabIndex={!pdfMirror && (rapidMode && !RAPID_INDEX_SET.has(index) || hidden) ? -1 : undefined}
         placeholder=""
-        shouldDefer={(cleaned) =>
-          canEnterWeights &&
-          cleaned.length === 1 &&
-          !errorsRef.current[`${index}-wd`] &&
-          !errorsRef.current[`${index}-wa`] &&
-          coherenceIndex !== index
-        }
         onFirstDigit={() => {
           unlockWeighingAudio();
           if (cascadeTarget.current) finishCascadeEarly();

@@ -992,7 +992,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
             </div>
             <Button variant="ghost" type="button" aria-label={en ? "Next octave" : "Octave suivante"} disabled={octave === OCTAVES.length - 1} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.min(OCTAVES.length - 1, o + 1)); }} style={{ marginTop: 1.05 * 16 * octScale + 4 }} className={`${arrowBtn} ml-2 ${pressedArrow === "next" ? "scale-75 opacity-60" : ""}`}>▶</Button>
           </div>
-          {showKeypad && <Keypad height={Math.max(220, 1.0 * (nativeH * octScale + 2))} onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />}
+          {showKeypad && <Keypad height={Math.round(nativeH * octScale + 2)} onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />}
         </div>
         {alert && alertAnchor && (
           <div className="fixed z-[99999] w-[min(22rem,calc(100vw-1rem))]" style={{ left: alertAnchor.x, top: alertAnchor.y }}>
