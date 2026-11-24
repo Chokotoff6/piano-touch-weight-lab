@@ -24,6 +24,11 @@ export const isOutOfRange = (field: WeightField, n: number) =>
 export const isPedalValue = (field: WeightField, n: number | null) =>
   field === "wd" && n !== null && n >= 70 && n <= 90;
 
+/** Moteur du pavé (Vue Octave et Vue Complète) : 1er appui après focus = remplace, sinon ajoute. */
+export const keypadEntry = (current: string, digit: string, replace: boolean) =>
+  cleanWeightEntry((replace || cleanWeightEntry(current).length >= 2 ? "" : current) + digit);
+export const keypadErase = (current: string) => cleanWeightEntry(current).slice(0, -1);
+
 export type EntryVerdict = "partial" | "mechanical" | "range" | "pedal" | "ok";
 
 /**

@@ -22,7 +22,7 @@ import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui
 import { TouchTooltip as Tooltip } from "@/components/TouchTooltip";
 
 // Règles : moteur de pesée partagé avec la Vue Complète ; messages identiques.
-import { cleanWeightEntry, isOutOfRange, isPedalValue, rangeMessage, PEDAL_MESSAGE_FR, PEDAL_MESSAGE_EN, COHERENCE_MESSAGE, COHERENCE_MESSAGE_EN, INCOMPLETE_MESSAGE_FR, INCOMPLETE_MESSAGE_EN } from "@/lib/weighing-engine";
+import { keypadEntry, cleanWeightEntry, isOutOfRange, isPedalValue, rangeMessage, PEDAL_MESSAGE_FR, PEDAL_MESSAGE_EN, COHERENCE_MESSAGE, COHERENCE_MESSAGE_EN, INCOMPLETE_MESSAGE_FR, INCOMPLETE_MESSAGE_EN } from "@/lib/weighing-engine";
 const parseW = (s: string) => {
   const t = s.trim().replace(",", ".");
   if (!t) return null;
@@ -817,12 +817,8 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
     if (k === "UNDO") { setAlert(null); undo(); return; }
     if (k === "REDO") { setAlert(null); redo(); return; }
     if (!active || !/^\d$/.test(k)) return;
-    const el = inputs.current.get(`${active.index}-${active.field}`);
     const cur = rowsRef.current[active.index]?.[active.field] ?? "";
-    void el;
-    const start = replaceNext.current ? 0 : cur.length;
-    const end = cur.length;
-    const v = cleanWeight(cur.slice(0, start) + k + cur.slice(end));
+    const v = keypadEntry(cur, k, replaceNext.current);
     onTyped(active.index, active.field, v);
   };
   const onFocusField = (index: number, field: Cell["field"]) => {

@@ -1,4 +1,4 @@
-import type { PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 
 export type CompactKeypadProps = {
   en: boolean;
@@ -18,11 +18,27 @@ export function CompactKeypad({ en, canUndo, canRedo, onDigit, onErase, onPrev, 
     e.preventDefault();
     if (!disabled) action();
   };
+  // Zoom Safari (pincement) : contre-échelle via visualViewport, le pavé garde sa taille réelle en bas de l'écran visible.
+  const [vv, setVv] = useState<CSSProperties | undefined>(undefined);
+  useEffect(() => {
+    const v = window.visualViewport;
+    if (!v) return;
+    const update = () => {
+      if (Math.abs(v.scale - 1) < 0.01) { setVv(undefined); return; }
+      setVv({ left: v.offsetLeft, top: v.offsetTop + v.height, right: "auto", bottom: "auto", width: v.width * v.scale, transform: `scale(${1 / v.scale}) translateY(-100%)`, transformOrigin: "top left" });
+    };
+    update();
+    v.addEventListener("resize", update);
+    v.addEventListener("scroll", update);
+    return () => { v.removeEventListener("resize", update); v.removeEventListener("scroll", update); };
+  }, []);
   const key = "flex min-h-[48px] flex-1 select-none items-center justify-center rounded-md border border-input bg-background text-lg font-semibold text-foreground active:bg-accent touch-manipulation";
   const digits = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
   return (
     <div
       className="fixed inset-x-0 bottom-0 z-[9000] border-t border-input bg-muted/95 px-2 pb-2 pt-2 shadow-lg"
+      data-compact-keypad=""
+      style={vv}
       onPointerDown={(e) => e.preventDefault()}
       role="group"
       aria-label={en ? "Weighing keypad" : "Pavé de pesée"}
