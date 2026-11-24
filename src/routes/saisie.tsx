@@ -3,6 +3,7 @@ import { useWeighingView } from "@/lib/weighing-view";
 import { CycleLabel } from "@/components/CycleLabel";
 import { DRAFT_EDITED_EVENT } from "@/lib/zoom-edit";
 import { getPreferences } from "@/lib/preferences";
+import { WEIGHT_RANGES, isOutOfRange, isPedalValue as isPedalEntry, cleanWeightEntry, entryVerdict } from "@/lib/weighing-engine";
 import { weighingReadiness, weighingLockMessage } from "@/lib/weighing-readiness";
 import { rememberWeighingCell, readWeighingCell, hasWeighingHandoff, unlockWeighingAudio, playWeighingSound, playReadyChime } from "@/lib/weighing-feedback";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -158,10 +159,6 @@ const C_SHARP_KEYS = new Set([5, 17, 29, 41, 53, 65, 77]);
 const RAPID_INDEXES = [3, 4, 15, 16, 27, 28, 39, 40, 51, 52, 63, 64, 75, 76, 87] as const;
 const RAPID_INDEX_SET = new Set<number>(RAPID_INDEXES);
 
-/** Plages atelier : PD (wd) 30-90 g, PR (wa) 10-40 g. */
-const WEIGHT_RANGES = { wd: [30, 90], wa: [10, 40] } as const;
-const isOutOfRange = (field: "wd" | "wa", n: number) =>
-  n < WEIGHT_RANGES[field][0] || n > WEIGHT_RANGES[field][1];
 const rangeMessage = (field: "wd" | "wa", en: boolean) =>
   field === "wd"
     ? en
@@ -238,7 +235,8 @@ function WeightInput({ value, inputRef, onFirstDigit, onCommitValue, onCommitDra
           // Le « 55 » est peint d'abord ; la validation et le saut suivent juste après.
           // Saut de case immédiat dans l'événement de frappe, puis enregistrement après affichage.
           const advanced = onAdvance?.(digits) ?? false;
-          window.requestAnimationFrame(() => window.setTimeout(() => onCommitValue(digits, advanced), 0));
+          // Enregistrement en tâche interruptible : la frappe suivante n'attend jamais.
+          startTransition(() => onCommitValue(digits, advanced));
         } else if (digits.length === 1) {
           pending.current = digits;
           onFirstDigit?.();
@@ -260,6 +258,7 @@ function WeightInput({ value, inputRef, onFirstDigit, onCommitValue, onCommitDra
 }
 
 const DRAFT_ROWS_KEY = "ptw_draft_rows";
+const NO_HISTORY_ROWS: { id: string; label: string }[] = [];
 const DRAFT_INFO_KEY = "ptw_draft_info";
 
 const FORM_INCOMPLETE_MESSAGE =
@@ -2322,7 +2321,7 @@ function Index() {
 
   /** Conserve les dixièmes présents dans les CSV et dans la saisie clavier. */
   // CONDITION 5 : bridage strict à 2 chiffres, aucune décimale acceptée.
-  const cleanWeight = (value: string) => value.replace(/[^0-9]/g, "").slice(0, 2);
+  const cleanWeight = cleanWeightEntry;
 
   const parseWeight = (value: string): number | null => {
     const cleaned = cleanWeight(value);
@@ -2558,17 +2557,11 @@ function Index() {
   /** Contrôle pur (aucun état modifié) : la valeur à 2 chiffres autorise-t-elle le saut ?
    *  Si oui, la case suivante prend le focus tout de suite, comme en Vue Octave. */
   const tryImmediateAdvance = (index: number, field: "wd" | "wa", value: string): boolean => {
-    const cleaned = cleanWeight(value);
-    if (cleaned.length < 2 || !getPreferences().autoAdvance || pedalAlert) return false;
-    const num = parseWeight(cleaned);
-    if (num === null || isOutOfRange(field, num) || isPedalValue(field, num)) return false;
+    if (!getPreferences().autoAdvance || pedalAlert) return false;
     // Valeurs lues à l'écran : la case voisine peut être validée mais pas encore enregistrée.
     const other = field === "wd" ? "wa" : "wd";
     const otherValue = inputs.current[`${index}-${other}`]?.value ?? rows[index]![other];
-    const row: Row = { ...rows[index]!, [field]: cleaned, [other]: cleanWeight(otherValue) };
-    const wd = parseWeight(row.wd);
-    const wa = parseWeight(row.wa);
-    if (wd !== null && wa !== null && wd <= wa) return false;
+    if (entryVerdict(field, value, otherValue) !== "ok") return false;
     if (field === "wd") {
       if (weightFilter === "wd") return false;
       skipBlurCommit.current = `${index}-${field}`;
@@ -2696,8 +2689,7 @@ function Index() {
   }, [weighingMode, octaveView]);
 
   /** Alerte sustain : PD uniquement, strictement 70-90 g, ancrée sous la case, 5 s. */
-  const isPedalValue = (field: "wd" | "wa", num: number | null) =>
-    field === "wd" && num !== null && num >= 70 && num <= 90;
+  const isPedalValue = isPedalEntry;
   const showPedalAlert = (index: number, field: "wd" | "wa") => {
     if (hidePedalAlert) return;
     hideRangeMessage();
@@ -3533,7 +3525,7 @@ function Index() {
       isExporting,
       isDirty,
       hasSaved: Boolean(currentDbId),
-      historyRows: info["sn_num"]?.trim() ? getTopbarState().historyRows : [],
+      historyRows: info["sn_num"]?.trim() ? getTopbarState().historyRows : NO_HISTORY_ROWS,
     });
     // Jalon persistant : le seuil minimal de pesée débloque le bouton "Résultats".
     // Mode Démo : Résultats reste verrouillé tant que la cascade des 88 touches
@@ -3542,18 +3534,19 @@ function Index() {
       !isDemoActive() ||
       (weighingMode && hasSeenDemoCascade() && !cascadeTarget.current);
     setGateReady(resultsReady && demoCascadeOk);
-    return () => {
-      setTopbarState({
-        exportReady: false,
-        measuresReady: false,
-        serialFilled: false,
-        isExporting: false,
-        isDirty: false,
-        hasSaved: false,
-        historyRows: [],
-      });
-    };
   }, [exportReady, requiredSheetFieldsComplete, keyboardValid, resultsReady, info, isExporting, isDirty, currentDbId, weighingMode, rows]);
+  // Remise à zéro de la barre uniquement en quittant la page (jamais à chaque pesée).
+  useEffect(() => () => {
+    setTopbarState({
+      exportReady: false,
+      measuresReady: false,
+      serialFilled: false,
+      isExporting: false,
+      isDirty: false,
+      hasSaved: false,
+      historyRows: [],
+    });
+  }, []);
   const readyChimeRef = useRef<boolean | null>(null);
   useEffect(() => {
     if (!octaveView && readyChimeRef.current === false && resultsReady) playReadyChime();

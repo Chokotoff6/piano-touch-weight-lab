@@ -61,6 +61,9 @@ function emit() {
 }
 
 export function setTopbarState(next: Partial<TopbarState>) {
+  // Aucune valeur changée : aucun redessin de l'en-tête ni des pages abonnées.
+  const keys = Object.keys(next) as (keyof TopbarState)[];
+  if (keys.every((k) => Object.is(state[k], next[k]))) return;
   state = { ...state, ...next };
   emit();
 }

@@ -21,8 +21,8 @@ import { AutoDismissAlert } from "@/components/AutoDismissAlert";
 import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TouchTooltip as Tooltip } from "@/components/TouchTooltip";
 
-// Règles et messages copiés à l'identique de la Pesée bureau (saisie.tsx).
-const WEIGHT_RANGES = { wd: [30, 90], wa: [10, 40] } as const;
+// Règles : moteur de pesée partagé avec la Vue Complète ; messages identiques.
+import { cleanWeightEntry, isOutOfRange, isPedalValue } from "@/lib/weighing-engine";
 const rangeMessage = (field: "wd" | "wa", en: boolean) =>
   field === "wd"
     ? en
@@ -709,8 +709,8 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   const label = (k: "wd" | "wa") => (k === "wd" ? (en ? "DW" : "PD") : (en ? "UW" : "PR"));
 
   const canEnterWeights = ["marque", "modele", "sn_num", "type_piano", "fabrication", "usage_level"].every((k) => info[k]?.trim());
-  const cleanWeight = (v: string) => v.replace(/[^0-9]/g, "").slice(0, 2);
-  const outOfRange = (field: Cell["field"], v: number) => v < WEIGHT_RANGES[field][0] || v > WEIGHT_RANGES[field][1];
+  const cleanWeight = cleanWeightEntry;
+  const outOfRange = isOutOfRange;
   const nextCell = (index: number, field: Cell["field"], direction: 1 | -1 = 1): Cell | null => {
     const cells: Cell[] = [];
     for (let i = 0; i < 88; i++) {
@@ -793,7 +793,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
     if (value !== null && outOfRange(field, value)) { showFeedback(cell, rangeMessage(field, en), "range"); return; }
     let suppressed = hidePedal.current;
     try { suppressed ||= window.sessionStorage.getItem("ptw_hide_pedal_alert") === "1"; } catch { /* indisponible */ }
-    if (field === "wd" && value !== null && value >= 70 && value <= 90 && !suppressed) {
+    if (isPedalValue(field, value) && !suppressed) {
       showFeedback(cell, en ? PEDAL_MESSAGE_EN : PEDAL_MESSAGE_FR, "pedal");
       onCommit(); return;
     }
