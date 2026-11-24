@@ -22,21 +22,7 @@ import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui
 import { TouchTooltip as Tooltip } from "@/components/TouchTooltip";
 
 // Règles : moteur de pesée partagé avec la Vue Complète ; messages identiques.
-import { cleanWeightEntry, isOutOfRange, isPedalValue } from "@/lib/weighing-engine";
-const rangeMessage = (field: "wd" | "wa", en: boolean) =>
-  field === "wd"
-    ? en
-      ? "⚠️ Out of shop range: Down weight (DW) must be between 30g and 90g."
-      : "⚠️ Valeur hors plage d'atelier : Le Poids Descendant (PD) doit être compris entre 30g et 90g."
-    : en
-      ? "⚠️ Out of shop range: Up weight (UW) must be between 10g and 40g."
-      : "⚠️ Valeur hors plage d'atelier : Le Poids Remontant (PR) doit être compris entre 10g et 40g.";
-const PEDAL_MESSAGE_FR =
-  "⚠️ Attention : Valeur élevée détectée. Assurez-vous que la pédale de sustain (forte) est bien enfoncée à fond durant la mesure pour libérer les étouffoirs.";
-const PEDAL_MESSAGE_EN =
-  "⚠️ Warning: high value detected. Make sure the sustain pedal is fully pressed during the measurement to release the dampers.";
-const COHERENCE_MESSAGE =
-  "⚠️ Erreur mécanique : Le Poids Descendant (PD) doit être strictement supérieur au Poids Remontant (PR) pour calculer la Friction.";
+import { cleanWeightEntry, isOutOfRange, isPedalValue, rangeMessage, PEDAL_MESSAGE_FR, PEDAL_MESSAGE_EN, COHERENCE_MESSAGE, COHERENCE_MESSAGE_EN, INCOMPLETE_MESSAGE_FR, INCOMPLETE_MESSAGE_EN } from "@/lib/weighing-engine";
 const parseW = (s: string) => {
   const t = s.trim().replace(",", ".");
   if (!t) return null;
@@ -737,14 +723,14 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
     const row = rowsRef.current[index];
     if (!row) return null;
     const wd = parseW(row.wd); const wa = parseW(row.wa);
-    if (wd !== null && wa !== null && wd <= wa) return { field: "wa", text: en ? "⚠️ Mechanical error: Down weight (DW) must be strictly greater than Up weight (UW) to calculate Friction." : COHERENCE_MESSAGE, kind: "mechanical" };
+    if (wd !== null && wa !== null && wd <= wa) return { field: "wa", text: en ? COHERENCE_MESSAGE_EN : COHERENCE_MESSAGE, kind: "mechanical" };
     for (const field of ["wd", "wa"] as const) {
       const value = parseW(row[field]);
       if (value !== null && outOfRange(field, value) && (leaving || cleanWeight(row[field]).length === 2)) return { field, text: rangeMessage(field, en), kind: "range" };
     }
     if (leaving && weightFilter === "all" && (row.wd || row.wa) && (cleanWeight(row.wd).length !== 2 || cleanWeight(row.wa).length !== 2)) return {
       field: cleanWeight(row.wd).length !== 2 ? "wd" : "wa",
-      text: en ? "⚠️ Incomplete entry: Down weight and Up weight must both be entered for this key." : "⚠️ Saisie incomplète : Le Poids Descendant et le Poids Remontant doivent être tous les deux renseignés pour cette touche.",
+      text: en ? INCOMPLETE_MESSAGE_EN : INCOMPLETE_MESSAGE_FR,
       kind: "incomplete",
     };
     return null;

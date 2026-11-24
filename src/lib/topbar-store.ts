@@ -157,3 +157,15 @@ export function useTopbarState() {
     () => state,
   );
 }
+
+/** Abonnement à une seule valeur : la page ne se redessine que si cette valeur change. */
+export function useTopbarValue<T>(select: (s: TopbarState) => T): T {
+  return useSyncExternalStore(
+    (callback) => {
+      listeners.add(callback);
+      return () => listeners.delete(callback);
+    },
+    () => select(state),
+    () => select(state),
+  );
+}

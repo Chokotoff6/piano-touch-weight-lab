@@ -3,7 +3,7 @@ import { useWeighingView } from "@/lib/weighing-view";
 import { CycleLabel } from "@/components/CycleLabel";
 import { DRAFT_EDITED_EVENT } from "@/lib/zoom-edit";
 import { getPreferences } from "@/lib/preferences";
-import { WEIGHT_RANGES, isOutOfRange, isPedalValue as isPedalEntry, cleanWeightEntry, entryVerdict } from "@/lib/weighing-engine";
+import { WEIGHT_RANGES, isOutOfRange, isPedalValue as isPedalEntry, cleanWeightEntry, entryVerdict, rangeMessage, PEDAL_MESSAGE_FR, PEDAL_MESSAGE_EN, COHERENCE_MESSAGE, INCOMPLETE_MESSAGE_FR } from "@/lib/weighing-engine";
 import { weighingReadiness, weighingLockMessage } from "@/lib/weighing-readiness";
 import { rememberWeighingCell, readWeighingCell, hasWeighingHandoff, unlockWeighingAudio, playWeighingSound, playReadyChime } from "@/lib/weighing-feedback";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -78,7 +78,7 @@ import {
   type DiagnosticPayload,
   type DiagnosticHistoryRow,
 } from "@/lib/diagnostics";
-import { getTopbarState, setCloudProfileSaved, setCompareUnlocked, setGateReady, setResultsVisited, setTopbarState, showTopbarAlert, useTopbarState } from "@/lib/topbar-store";
+import { getTopbarState, setCloudProfileSaved, setCompareUnlocked, setGateReady, setResultsVisited, setTopbarState, showTopbarAlert, useTopbarValue } from "@/lib/topbar-store";
 import { decideCloudAction, markCloudSync, msSinceLastSync, resetConsent, startSheetTimer } from "@/lib/cloud-gate";
 import {
   DEMO_LOADED_EVENT,
@@ -159,18 +159,6 @@ const C_SHARP_KEYS = new Set([5, 17, 29, 41, 53, 65, 77]);
 const RAPID_INDEXES = [3, 4, 15, 16, 27, 28, 39, 40, 51, 52, 63, 64, 75, 76, 87] as const;
 const RAPID_INDEX_SET = new Set<number>(RAPID_INDEXES);
 
-const rangeMessage = (field: "wd" | "wa", en: boolean) =>
-  field === "wd"
-    ? en
-      ? "⚠️ Out of shop range: Down weight (DW) must be between 30g and 90g."
-      : "⚠️ Valeur hors plage d'atelier : Le Poids Descendant (PD) doit être compris entre 30g et 90g."
-    : en
-      ? "⚠️ Out of shop range: Up weight (UW) must be between 10g and 40g."
-      : "⚠️ Valeur hors plage d'atelier : Le Poids Remontant (PR) doit être compris entre 10g et 40g.";
-const PEDAL_MESSAGE_FR =
-  "⚠️ Attention : Valeur élevée détectée. Assurez-vous que la pédale de sustain (forte) est bien enfoncée à fond durant la mesure pour libérer les étouffoirs.";
-const PEDAL_MESSAGE_EN =
-  "⚠️ Warning: high value detected. Make sure the sustain pedal is fully pressed during the measurement to release the dampers.";
 const PEDAL_HIDE_KEY = "ptw_hide_pedal_alert";
 /** Profondeur de l'historique Undo / Redo (20 manipulations). */
 const UNDO_LIMIT = 20;
@@ -267,10 +255,7 @@ const SAVE_UPDATE_MESSAGE =
   "⚠️ Diagnostic synchronisé avec succès dans la base de données de l'application (Cloud)";
 const SAVE_NEW_MESSAGE =
   "⚠️ Nouvelle session de suivi chronologique créée avec succès. Cette fiche historique est archivée de manière étanche dans la base de données cloud pour vos futures comparaisons.";
-const ORPHAN_MESSAGE =
-  "⚠️ Saisie incomplète : Le Poids Descendant et le Poids Remontant doivent être tous les deux renseignés pour cette touche.";
-const COHERENCE_MESSAGE =
-  "⚠️ Erreur mécanique : Le Poids Descendant (PD) doit être strictement supérieur au Poids Remontant (PR) pour calculer la Friction.";
+const ORPHAN_MESSAGE = INCOMPLETE_MESSAGE_FR;
 
 function wrapTooltipText(text: string, maxChars: number): string[] {
   const words = text.split(/\s+/);
@@ -761,7 +746,7 @@ function Index() {
   const fabricationTouched = useRef(false);
   const [climateZone, setClimateZone] = useState<ClimateZone | null>(null);
   const [honeypot, setHoneypot] = useState("");
-  const topbarState = useTopbarState();
+  const topbarState = { cloudProfileSaved: useTopbarValue((t) => t.cloudProfileSaved) };
   // Protection d'ADN : identité figée uniquement après enregistrement définitif au cloud via « J'accepte ».
   const identityLocked = topbarState.cloudProfileSaved && Boolean(String(info["marque"] ?? "").trim());
   useEffect(() => {
@@ -2562,6 +2547,21 @@ function Index() {
     const other = field === "wd" ? "wa" : "wd";
     const otherValue = inputs.current[`${index}-${other}`]?.value ?? rows[index]![other];
     if (entryVerdict(field, value, otherValue) !== "ok") return false;
+    // Valeur corrigée saine : l'ancienne alerte est levée AVANT le saut,
+    // sinon la case suivante croit à une fuite et renvoie le curseur.
+    const key = `${index}-${field}`;
+    const otherKey = `${index}-${other}`;
+    const stale = key in errorsRef.current || errorsRef.current[otherKey] === COHERENCE_MESSAGE;
+    if (stale) {
+      const next = { ...errorsRef.current };
+      delete next[key];
+      if (next[otherKey] === COHERENCE_MESSAGE) delete next[otherKey];
+      errorsRef.current = next;
+      setErrors(next);
+      hideRangeMessage(true);
+      setCoherenceIndex(null);
+      setCoherenceAnchor(null);
+    }
     if (field === "wd") {
       if (weightFilter === "wd") return false;
       skipBlurCommit.current = `${index}-${field}`;
@@ -3516,6 +3516,7 @@ function Index() {
 
 
   // --- Synchronisation avec la barre supérieure -----------------------------------
+  const lastGateRef = useRef<boolean | null>(null);
 
   useEffect(() => {
     setTopbarState({
@@ -3533,8 +3534,10 @@ function Index() {
     const demoCascadeOk =
       !isDemoActive() ||
       (weighingMode && hasSeenDemoCascade() && !cascadeTarget.current);
-    setGateReady(resultsReady && demoCascadeOk);
-  }, [exportReady, requiredSheetFieldsComplete, keyboardValid, resultsReady, info, isExporting, isDirty, currentDbId, weighingMode, rows]);
+    // Menu du haut notifié uniquement quand le déblocage du Bilan bascule.
+    const gate = resultsReady && demoCascadeOk;
+    if (lastGateRef.current !== gate) { lastGateRef.current = gate; setGateReady(gate); }
+  }, [exportReady, requiredSheetFieldsComplete, keyboardValid, resultsReady, info, isExporting, isDirty, currentDbId, weighingMode]);
   // Remise à zéro de la barre uniquement en quittant la page (jamais à chaque pesée).
   useEffect(() => () => {
     setTopbarState({
@@ -4711,7 +4714,7 @@ function Index() {
               type="button"
               variant="outline"
               data-pdf-hide
-              onClick={() => startTransition(() => chooseOctave(true))}
+              onClick={() => chooseOctave(true)}
               className="weighing-view-toggle h-auto min-h-8 gap-1 px-3 py-1.5 text-xs font-bold text-foreground"
             >
               <CycleLabel title={en ? "View" : "Vue"} value="Octave" />
@@ -5036,7 +5039,7 @@ Moyennes{" "}
         </div>
       )}
     </main>
-    {weighingMode && octaveView && <TabletWeighingPage onFullView={() => startTransition(() => chooseOctave(false))} onPianoInfo={() => setWeighingMode(false)} />}
+    {weighingMode && octaveView && <TabletWeighingPage onFullView={() => chooseOctave(false)} onPianoInfo={() => setWeighingMode(false)} />}
     </>
   );
 }
