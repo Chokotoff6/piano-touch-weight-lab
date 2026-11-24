@@ -6,7 +6,7 @@ import { getPreferences } from "@/lib/preferences";
 import { weighingReadiness, weighingLockMessage } from "@/lib/weighing-readiness";
 import { rememberWeighingCell, readWeighingCell, hasWeighingHandoff, unlockWeighingAudio, playWeighingSound, playReadyChime } from "@/lib/weighing-feedback";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { startTransition, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, type InputHTMLAttributes, type ReactNode } from "react";
+import { memo, startTransition, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, type InputHTMLAttributes, type ReactNode } from "react";
 import { Redo2, RefreshCw, Undo2 } from "lucide-react";
 import {
   hasAnyMeasurement,
@@ -188,6 +188,14 @@ const EMPTY: Row[] = Array.from({ length: 88 }, () => ({ wd: "", wa: "" }));
  * Aucune interception des touches : le navigateur écrit lui-même les chiffres.
  * 1 chiffre : rien d'autre ne se passe. 2 chiffres : validation, sauvegarde, saut.
  */
+/** Rendu mémorisé : redessiné seulement si sa signature change (null = toujours). */
+const MemoCell = memo(
+  function MemoCell({ render }: { render: () => ReactNode; sig: string | null }) {
+    return <>{render()}</>;
+  },
+  (a, b) => a.sig !== null && a.sig === b.sig,
+);
+
 type WeightInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "onInput"> & {
   value: string;
   inputRef?: ((el: HTMLInputElement | null) => void) | undefined;
@@ -225,7 +233,8 @@ function WeightInput({ value, inputRef, onFirstDigit, onCommitValue, onCommitDra
         if (el.value !== digits) el.value = digits;
         if (digits.length === 2) {
           pending.current = null;
-          onCommitValue(digits);
+          // Le « 55 » est peint d'abord ; la validation et le saut suivent juste après.
+          window.requestAnimationFrame(() => window.setTimeout(() => onCommitValue(digits), 0));
         } else if (digits.length === 1) {
           pending.current = digits;
           onFirstDigit?.();
@@ -2529,7 +2538,7 @@ function Index() {
   /** Met à jour une cellule (Wd/Wa) et renvoie la ligne résultante. */
   const setRowField = (index: number, field: "wd" | "wa", value: string): Row => {
     const updated: Row = { ...rows[index]!, [field]: value };
-    setRows((prev) => prev.map((r, i) => (i === index ? updated : r)));
+    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
     return updated;
   };
 
@@ -2559,7 +2568,7 @@ function Index() {
     }
     const cleaned = cleanWeight(value);
     const nextRow: Row = { ...rows[index]!, [field]: cleaned };
-    setRows((prev) => prev.map((r, i) => (i === index ? nextRow : r)));
+    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: cleaned } : r)));
     // AUCUNE erreur mécanique tant que la case ne contient pas 2 chiffres :
     // l'artisan doit pouvoir taper librement son binôme.
     if (cleaned.length < 2) {
@@ -3840,6 +3849,11 @@ function Index() {
 
   // --- Rendu : champ de saisie d'un poids (Wd ou Wa) ------------------------------
 
+  // Colonnes mémorisées : leurs gestionnaires lisent toujours l'état du dernier rendu.
+  const liveCell = { canEnterWeights, showBlockMessage, setValue, markDirty, setRowField, rows, handleBlur, onKeyDown, octaveView, weighingMode, focusCell, pairHasError, pairErrorField, showCoherencePopover, hideRangeMessage, finishCascadeEarly, cleanWeight };
+  const live = useRef(liveCell);
+  live.current = liveCell;
+
   const renderWeightInput = (
     index: number,
     field: "wd" | "wa",
@@ -3851,7 +3865,7 @@ function Index() {
       className={`weight-fields weight-fields-${field} ${!pdfMirror && ((rapidMode && !RAPID_INDEX_SET.has(index)) || (weightFilter !== "all" && weightFilter !== field)) ? "invisible pointer-events-none select-none" : ""}`}
       style={hidden ? { visibility: "hidden" } : undefined}
       onClick={() => {
-        if (!canEnterWeights) showBlockMessage(index, field);
+        if (!live.current.canEnterWeights) live.current.showBlockMessage(index, field);
       }}
     >
       {pdfMirror ? (
@@ -3895,40 +3909,44 @@ function Index() {
         placeholder=""
         onFirstDigit={() => {
           unlockWeighingAudio();
-          if (cascadeTarget.current) finishCascadeEarly();
+          if (cascadeTarget.current) live.current.finishCascadeEarly();
         }}
-        onCommitValue={pdfMirror ? undefined : (v) => { if (canEnterWeights) setValue(index, field, v); }}
-        onCommitDraft={(v) => { if (canEnterWeights && cleanWeight(rows[index]![field]) !== v) { markDirty(); setRowField(index, field, v); } }}
+        onCommitValue={pdfMirror ? undefined : (v) => { const L = live.current; if (L.canEnterWeights) L.setValue(index, field, v); }}
+        onCommitDraft={(v) => { const L = live.current; if (L.canEnterWeights && L.cleanWeight(L.rows[index]![field]) !== v) { L.markDirty(); L.setRowField(index, field, v); } }}
         onBlur={(e) => {
+          const L = live.current;
           if (selectionCleared.current) return;
-          if (!canEnterWeights) return;
+          if (!L.canEnterWeights) return;
           const key = `${index}-${field}`;
           const restored = e.target.value === "" ? (prevWeight.current[key] ?? "") : e.target.value;
           delete prevWeight.current[key];
-          handleBlur(index, field, restored);
+          L.handleBlur(index, field, restored);
         }}
         onKeyDown={(e) => {
-          if (!canEnterWeights) {
+          const L = live.current;
+          if (!L.canEnterWeights) {
             e.preventDefault();
-            showBlockMessage(index, field);
+            L.showBlockMessage(index, field);
             return;
           }
           if (e.key === "Enter") {
-            handleBlur(index, field, e.currentTarget.value);
+            L.handleBlur(index, field, e.currentTarget.value);
           }
-          onKeyDown(e, index, field);
+          L.onKeyDown(e, index, field);
         }}
         onBeforeInput={(e) => {
-          if (!canEnterWeights) {
+          const L = live.current;
+          if (!L.canEnterWeights) {
             e.preventDefault();
-            showBlockMessage(index, field);
+            L.showBlockMessage(index, field);
           }
         }}
         inputMode="numeric"
         aria-label={`${field === "wd" ? (en ? "DW" : "PD") : en ? "UW" : "PR"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
         onFocus={(e) => {
-          if (octaveView && weighingMode) { e.currentTarget.blur(); return; }
+          const L = live.current;
+          if (L.octaveView && L.weighingMode) { e.currentTarget.blur(); return; }
           selectionCleared.current = false;
           rememberWeighingCell({ index, field });
           unlockWeighingAudio();
@@ -3936,15 +3954,15 @@ function Index() {
           // que le binôme précédent est en anomalie (mécanique, fourchette,
           // ou binôme incomplet).
           const locked = lockedPairRef.current;
-          if (locked !== null && locked !== index && pairHasError(locked)) {
-            const target = pairErrorField(locked);
+          if (locked !== null && locked !== index && L.pairHasError(locked)) {
+            const target = L.pairErrorField(locked);
             // Alerte mécanique (PD >= PR) disparue : réaffichage instantané
             // à chaque tentative de fuite hors de la touche bloquée.
             if (errorsRef.current[`${locked}-wa`] === COHERENCE_MESSAGE) {
               coherenceDismissed.current.delete(locked);
-              showCoherencePopover(locked);
+              L.showCoherencePopover(locked);
             }
-            setTimeout(() => focusCell(locked, target), 0);
+            setTimeout(() => live.current.focusCell(locked, target), 0);
             return;
           }
           lockedPairRef.current = index;
@@ -3954,7 +3972,7 @@ function Index() {
           input.select();
           setTimeout(() => input.select(), 0);
           // Le message FF de fourchette s'efface définitivement dès le clic dans la case.
-          hideRangeMessage(true);
+          L.hideRangeMessage(true);
         }}
         // Aucune coloration rouge : les cases restent d'apparence normale même
         // en anomalie. Seuls les messages FF et le blocage du focus subsistent.
@@ -4035,9 +4053,8 @@ function Index() {
             const hiddenByView =
               !pdfMirror &&
               ((viewFilter === "white" && black) || (viewFilter === "black" && !black));
-            return (
+            const column = () => (
               <div
-                key={index}
                 className={`piano-measure-column ${black ? "is-black" : "is-white"} ${shift} ${NATURAL_KEY_BREAKS.has(index + 1) ? "natural-key-break" : ""} ${index + 1 === to ? "is-last-key" : ""}`}
               >
                 <div
@@ -4054,6 +4071,10 @@ function Index() {
                 </div>
               </div>
             );
+            if (pdfMirror) return <MemoCell key={index} sig={null} render={column} />;
+            // Seule la touche dont les données changent est redessinée.
+            const sig = [row.wd, row.wa, hiddenByView, alertKeys.has(index), errors[`${index}-wd`] ?? "", errors[`${index}-wa`] ?? "", demoInk, importBaseline?.[index]?.wd ?? "~", importBaseline?.[index]?.wa ?? "~", rapidMode, weightFilter, en, canEnterWeights].join("|");
+            return <MemoCell key={index} sig={sig} render={column} />;
           })}
 
         </div>
@@ -4069,9 +4090,8 @@ function Index() {
             {rows.slice(from - 1, to).map((row, offset) => {
               const index = from - 1 + offset;
               const black = BLACK_KEYS.has(index + 1);
-              const value = compute(row)[kind];
-              return (
-                <div key={index} className={`result-col ${black ? "is-black" : "is-white"}`}>
+              const cell = () => { const value = compute(row)[kind]; return (
+                <div className={`result-col ${black ? "is-black" : "is-white"}`}>
                   <div className="result-strip">{black ? formatResult(value) : null}</div>
                   <div className={`result-value ${(kind === "balance" || kind === "friction") && !black ? "!overflow-visible" : ""}`}>
                     <span data-demo-measure-value={demoInk && !pdfMirror ? "" : undefined} className={`${demoInk && !pdfMirror ? "!font-bold !text-[#4c1d95] " : ""}rv-text !text-center !whitespace-nowrap !overflow-visible ${(kind === "balance" || kind === "friction") && !black ? "!w-[125%] !max-w-none !px-0" : "!w-full !px-0.5"}`}>
@@ -4079,7 +4099,8 @@ function Index() {
                     </span>
                   </div>
                 </div>
-              );
+              ); };
+              return <MemoCell key={index} sig={pdfMirror ? null : [row.wd, row.wa, demoInk].join("|")} render={cell} />;
             })}
           </div>
         </div>

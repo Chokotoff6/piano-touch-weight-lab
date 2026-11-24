@@ -38,3 +38,5 @@ Les étiquettes de fin des graphiques Recharts sont placées à partir des éche
 - Octave labels use intrinsic text width outside the scaled keyboard, and Do-number size is compensated for the keyboard scale — keeps real visible margins balanced and the two marker lines equally readable.
 - Client JS/CSS compile to Safari 15 / es2020 via vite.config.ts, because the target iPad Air 2 runs iOS 15.8 and rejects newer syntax such as class static blocks.
 - Animations preference toggles an html 'no-anim' class plus JS checks (demo typing/cascade, home logo) via getPreferences().animations; default OFF on coarse-pointer devices so old tablets stay responsive.
+- Full-view weighing columns render through MemoCell with a data signature and handlers read the latest state via a live ref; commits run after paint — keeps 2-digit entry instant on iPad Air 2.
+- Octave view scale is solved from the fixed row width including the keypad width, never from a sibling-dependent measurement — prevents resize feedback loops.

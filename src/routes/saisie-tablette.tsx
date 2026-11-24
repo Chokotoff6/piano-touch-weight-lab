@@ -170,7 +170,7 @@ function useWidth() {
     roRef.current?.disconnect();
     roRef.current = null;
     if (!node) return;
-    const ro = new ResizeObserver((entries) => { const e = entries[0]; if (e) setW(e.contentRect.width); });
+    const ro = new ResizeObserver((entries) => { const e = entries[0]; if (e) { const nw = e.contentRect.width; setW((prev) => (Math.abs(prev - nw) < 1 ? prev : nw)); } });
     ro.observe(node);
     roRef.current = ro;
     setW(node.getBoundingClientRect().width);
@@ -691,11 +691,17 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   const viewLeft = dragLeft ?? segOffset;
 
   // Octave : un seul facteur pour toutes les octaves (basé sur la plus large).
-  const [octRef, octW] = useWidth();
+  // Mesure de la rangée entière (largeur fixe) : le pavé, dont la largeur dépend
+  // de l'échelle, n'est plus mesuré en boucle avec le clavier (fin de l'oscillation).
+  const [rowRef, rowW] = useWidth();
   const widest = useMemo(() => Math.max(...OCTAVES.map(([a, b]) => geometry(a, b, NATIVE_WHITE).width)), []);
   // Largeur fixe des libellés : aucune mesure en boucle (le texte dépend de l'échelle).
   const labelsW = 40;
-  const octScale = octW > 0 ? Math.min(Math.max(0.55, (octW - labelsW - 48) / widest), 3) : 1;
+  const rowAvail = rowW - 40; // marge droite pr-10 de la rangée
+  const rawScale = showKeypad
+    ? (rowAvail - 1.5 - labelsW - 48) / (widest + 0.75 * nativeH)
+    : (rowAvail - labelsW - 48) / widest;
+  const octScale = rowW > 0 ? Math.round(Math.min(Math.max(0.55, rawScale), 3) * 1000) / 1000 : 1;
 
   // Swipe horizontal sur l'octave.
   const touchX = useRef<number | null>(null);
@@ -957,9 +963,8 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
         </div>
 
         {/* Octave zoomée + pavé numérique : [étiquettes] ◀ [octave] ▶ centrés à gauche du pavé */}
-        <div className="mt-1 flex items-center gap-0 pr-10">
+        <div ref={rowRef} className="mt-1 flex items-center gap-0 pr-10">
           <div
-            ref={octRef}
             className="flex min-w-0 flex-1 items-start justify-center gap-1 overflow-hidden px-8"
             style={{ height: nativeH * octScale + 2 }}
             onTouchStart={(e) => { touchX.current = e.touches[0]?.clientX ?? null; }}
