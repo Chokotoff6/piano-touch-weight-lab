@@ -2716,7 +2716,7 @@ function Index() {
     const r = inputs.current[key]?.getBoundingClientRect();
     setPedalAnchor(
       r
-        ? { x: Math.max(8, Math.min(r.left, window.innerWidth - 360)), y: r.bottom + 6 }
+        ? { x: Math.max(8, Math.min(r.left, window.innerWidth - 360)), y: Math.max(8, Math.min(r.bottom + 6, window.innerHeight - 170)) }
         : { x: window.innerWidth / 2 - 170, y: 120 },
     );
     if (pedalTimeout.current) clearTimeout(pedalTimeout.current);

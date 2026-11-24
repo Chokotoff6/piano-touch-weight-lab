@@ -364,7 +364,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
       const width = Math.min(352, window.innerWidth - 16);
       const right = r.right + 10;
       const x = right + width <= window.innerWidth - 8 ? right : Math.max(8, r.left - width - 10);
-      setAlertAnchor({ x, y: Math.max(8, r.top - 4) });
+      setAlertAnchor({ x, y: Math.max(8, Math.min(r.top - 4, window.innerHeight - 170)) });
     };
     place();
     window.addEventListener("resize", place);
