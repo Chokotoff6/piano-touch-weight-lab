@@ -1636,13 +1636,22 @@ function Index() {
 
   /** Une touche est en anomalie : erreur mécanique, hors fourchette ou binôme
    *  déclaré incomplet À LA SORTIE de la touche (jamais pendant la frappe). */
+  const pairHasMechanicalError = (index: number) => {
+    // Les champs affichés sont prioritaires : leur commit React peut être différé.
+    const row = rowsRef.current[index];
+    const wd = parseWeight(inputs.current[`${index}-wd`]?.value ?? row?.wd ?? "");
+    const wa = parseWeight(inputs.current[`${index}-wa`]?.value ?? row?.wa ?? "");
+    return wd !== null && wa !== null && wa >= wd;
+  };
   const pairHasError = (index: number) =>
+    pairHasMechanicalError(index) ||
     !!errorsRef.current[`${index}-wd`] ||
     !!errorsRef.current[`${index}-wa`] ||
     incompleteRef.current.includes(index);
 
   /** Case fautive du binôme sur laquelle le curseur doit rester capturé. */
   const pairErrorField = (index: number): "wd" | "wa" => {
+    if (pairHasMechanicalError(index)) return "wa";
     if (errorsRef.current[`${index}-wd`]) return "wd";
     if (errorsRef.current[`${index}-wa`]) return "wa";
     const row = rowsRef.current?.[index];
@@ -2097,6 +2106,27 @@ function Index() {
     }, 5000);
   };
 
+  /** Refuse la sortie avant le focus natif, sans timer ni remappage par filtre. */
+  const blockPairExit = (index: number, rejectedInput?: HTMLInputElement): boolean => {
+    const locked = lockedPairRef.current;
+    if (locked === null || locked === index || !pairHasError(locked)) return false;
+    const mechanical = pairHasMechanicalError(locked);
+    const field = mechanical ? "wa" : pairErrorField(locked);
+    if (rejectedInput) {
+      // Ce champ n'a pas été édité : son blur de rejet ne doit pas le valider.
+      skipBlurCommit.current = `${index}-${rejectedInput === inputs.current[`${index}-wd`] ? "wd" : "wa"}`;
+      rejectedInput.blur();
+    }
+    const input = inputs.current[`${locked}-${field}`];
+    input?.focus();
+    input?.select();
+    if (mechanical) {
+      coherenceDismissed.current.delete(locked);
+      showCoherencePopover(locked);
+    }
+    return true;
+  };
+
   // Tablette : un choix dans une liste referme aussitôt le clavier virtuel.
   useEffect(() => {
     if (!window.matchMedia?.("(pointer: coarse)").matches) return;
@@ -2109,7 +2139,8 @@ function Index() {
   }, []);
 
   useEffect(() => {
-    const dismissCoherencePopover = () => {
+    const dismissCoherencePopover = (e: PointerEvent) => {
+      if (e.defaultPrevented) return;
       setCoherenceIndex((prev) => {
         if (prev !== null) coherenceDismissed.current.add(prev);
         return null;
@@ -3891,7 +3922,7 @@ function Index() {
   // --- Rendu : champ de saisie d'un poids (Wd ou Wa) ------------------------------
 
   // Colonnes mémorisées : leurs gestionnaires lisent toujours l'état du dernier rendu.
-  const liveCell = { tryImmediateAdvance, canEnterWeights, showBlockMessage, setValue, markDirty, setRowField, rows, handleBlur, onKeyDown, octaveView, weighingMode, focusCell, pairHasError, pairErrorField, showCoherencePopover, hideRangeMessage, finishCascadeEarly, cleanWeight };
+  const liveCell = { blockPairExit, tryImmediateAdvance, canEnterWeights, showBlockMessage, setValue, markDirty, setRowField, rows, handleBlur, onKeyDown, octaveView, weighingMode, focusCell, pairHasError, pairErrorField, showCoherencePopover, hideRangeMessage, finishCascadeEarly, cleanWeight };
   const live = useRef(liveCell);
   live.current = liveCell;
 
@@ -3988,27 +4019,24 @@ function Index() {
         inputMode="numeric"
         aria-label={`${field === "wd" ? (en ? "DW" : "PD") : en ? "UW" : "PR"} touche ${index + 1}`}
         title={errors[`${index}-${field}`] ?? undefined}
+        onPointerDown={(e) => {
+          const L = live.current;
+          if (L.octaveView && L.weighingMode) return;
+          const locked = lockedPairRef.current;
+          if (locked === null || locked === index || !L.pairHasError(locked)) return;
+          // Safari ne peut plus donner le focus natif à la nouvelle touche.
+          e.preventDefault();
+          e.stopPropagation();
+          L.blockPairExit(index);
+        }}
         onFocus={(e) => {
           const L = live.current;
           if (L.octaveView && L.weighingMode) { e.currentTarget.blur(); return; }
+          // Sécurité clavier / focus programmatique : rejet synchrone également.
+          if (L.blockPairExit(index, e.currentTarget)) return;
           selectionCleared.current = false;
           rememberWeighingCell({ index, field });
           unlockWeighingAudio();
-          // Verrou du binôme : impossible de rejoindre une autre touche tant
-          // que le binôme précédent est en anomalie (mécanique, fourchette,
-          // ou binôme incomplet).
-          const locked = lockedPairRef.current;
-          if (locked !== null && locked !== index && L.pairHasError(locked)) {
-            const target = L.pairErrorField(locked);
-            // Alerte mécanique (PD >= PR) disparue : réaffichage instantané
-            // à chaque tentative de fuite hors de la touche bloquée.
-            if (errorsRef.current[`${locked}-wa`] === COHERENCE_MESSAGE) {
-              coherenceDismissed.current.delete(locked);
-              L.showCoherencePopover(locked);
-            }
-            setTimeout(() => live.current.focusCell(locked, target), 0);
-            return;
-          }
           lockedPairRef.current = index;
           // Sélection intégrale des 2 chiffres (fourchette OU erreur mécanique) :
           // l'artisan retape immédiatement sa nouvelle valeur.
