@@ -250,7 +250,7 @@ function KeyGrid({
                         value={rows[index]?.[field] ?? ""}
                         onFocus={(e) => { onFocusField?.(index, field); e.currentTarget.select(); }}
                         onClick={(e) => { onFocusField?.(index, field); e.currentTarget.select(); }}
-                        onChange={(e) => onChange?.(index, field, e.target.value.replace(/[^0-9]/g, "").slice(0, 2))}
+                        onChange={(e) => onChange?.(index, field, cleanWeightEntry(e.target.value))}
                         onBlur={() => { onBlurField?.(index, field); onCommit?.(); }}
                         onKeyDown={(e) => onNavigate?.(e, index, field)}
                         className={`weight-input !font-sans font-semibold !text-black ${alertKeys?.has(index) && field === "wd" ? "!border-2 !border-destructive" : ""} focus:!border-2 focus:!border-[#7149ab] focus:!ring-0 focus:!outline-none ${isActive ? "!border-2 !border-[#7149ab]" : ""} ${black ? "" : "![background-color:#cbd5e1]"}`}

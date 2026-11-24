@@ -2,10 +2,12 @@
 // Écrit dans le brouillon local (ptw_draft_rows) et la boîte noire, puis
 // prévient les pages ouvertes de relire leurs données.
 import { SECURITY_BACKUP_KEY } from "@/lib/kw-file";
+import { WEIGHT_RANGES } from "@/lib/weighing-engine";
 
 export const DRAFT_EDITED_EVENT = "ptw-draft-edited";
-export const PD_RANGE = [30, 90] as const;
-export const PR_RANGE = [10, 40] as const;
+// Plages issues du moteur de pesée partagé.
+export const PD_RANGE = WEIGHT_RANGES.wd;
+export const PR_RANGE = WEIGHT_RANGES.wa;
 
 type DraftRow = { wd: string; wa: string } & Record<string, unknown>;
 

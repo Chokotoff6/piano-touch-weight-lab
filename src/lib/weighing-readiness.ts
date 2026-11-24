@@ -1,4 +1,5 @@
 import { OCTAVE_RANGES } from "@/lib/required-keys";
+import { isOutOfRange } from "@/lib/weighing-engine";
 
 type Measurement = { wd: string; wa: string };
 const RAPID_KEYS = [3, 4, 15, 16, 27, 28, 39, 40, 51, 52, 63, 64, 75, 76, 87];
@@ -13,7 +14,7 @@ export function weighingReadiness(rows: Measurement[], rapid: boolean) {
     if (!d && !a) return;
     if (!d || !a) { issue ??= "incomplete"; return; }
     const wd = Number(d.replace(",", ".")); const wa = Number(a.replace(",", "."));
-    if (!Number.isFinite(wd) || !Number.isFinite(wa) || wd < 30 || wd > 90 || wa < 10 || wa > 40) {
+    if (!Number.isFinite(wd) || !Number.isFinite(wa) || isOutOfRange("wd", wd) || isOutOfRange("wa", wa)) {
       issue ??= "range"; return;
     }
     if (wd <= wa) { issue ??= "mechanical"; return; }
