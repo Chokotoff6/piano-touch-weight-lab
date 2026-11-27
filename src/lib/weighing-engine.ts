@@ -73,3 +73,40 @@ export const INCOMPLETE_MESSAGE_FR =
   "⚠️ Saisie incomplète : Le Poids Descendant et le Poids Remontant doivent être tous les deux renseignés pour cette touche.";
 export const INCOMPLETE_MESSAGE_EN =
   "⚠️ Incomplete entry: Down weight and Up weight must both be entered for this key.";
+
+/** Filtres de navigation communs aux deux vues (Pesée Do-Do#, Touches). */
+export type WeighingNavFilters = { rapid: boolean; viewFilter: "all" | "white" | "black" | string; rapidSet: Set<number>; blackKeys: Set<number> };
+
+/** Une touche (index 0-87) est-elle navigable avec les filtres courants ? Même règle Vue Complète et Vue Octave. */
+export const isWeighingKeyVisible = (index: number, f: WeighingNavFilters) => {
+  if (f.rapid && !f.rapidSet.has(index)) return false;
+  if (f.viewFilter === "white") return !f.blackKeys.has(index + 1);
+  if (f.viewFilter === "black") return f.blackKeys.has(index + 1);
+  return true;
+};
+
+/** Prochaine touche navigable dans la direction demandée (ou null). */
+export const nextWeighingKey = (index: number, direction: 1 | -1, f: WeighingNavFilters): number | null => {
+  for (let i = index + direction; i >= 0 && i <= 87; i += direction) if (isWeighingKeyVisible(i, f)) return i;
+  return null;
+};
+
+/** Case suivante (PD → PR → touche suivante, filtre Poids respecté). Même parcours dans les deux vues. */
+export const nextWeighingCell = (
+  index: number, field: WeightField, direction: 1 | -1, weightFilter: "all" | WeightField, f: WeighingNavFilters,
+): { index: number; field: WeightField } | null => {
+  const fields: WeightField[] = weightFilter === "all" ? ["wd", "wa"] : [weightFilter];
+  const pos = fields.indexOf(field);
+  const nf = pos + direction;
+  if (pos >= 0 && nf >= 0 && nf < fields.length && isWeighingKeyVisible(index, f)) return { index, field: fields[nf]! };
+  const k = nextWeighingKey(index, direction, f);
+  if (k === null) return null;
+  return { index: k, field: direction === 1 ? fields[0]! : fields[fields.length - 1]! };
+};
+
+/** Repère mauve de la case active (Vue Complète) : posé explicitement, sans dépendre du :focus de Safari. */
+export const markActiveWeightInput = (el: Element | null) => {
+  if (typeof document === "undefined") return;
+  document.querySelectorAll(".weight-input[data-active]").forEach((n) => { if (n !== el) n.removeAttribute("data-active"); });
+  if (el) el.setAttribute("data-active", "");
+};

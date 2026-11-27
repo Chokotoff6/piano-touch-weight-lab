@@ -5,7 +5,7 @@ import { useSharedControl } from "@/lib/weighing-controls";
 import { CycleLabel } from "@/components/CycleLabel";
 import { DRAFT_EDITED_EVENT } from "@/lib/zoom-edit";
 import { getPreferences } from "@/lib/preferences";
-import { keypadEntry, keypadErase, WEIGHT_RANGES, isOutOfRange, isPedalValue as isPedalEntry, cleanWeightEntry, entryVerdict, rangeMessage, PEDAL_MESSAGE_FR, PEDAL_MESSAGE_EN, COHERENCE_MESSAGE, INCOMPLETE_MESSAGE_FR } from "@/lib/weighing-engine";
+import { keypadEntry, keypadErase, WEIGHT_RANGES, isOutOfRange, isPedalValue as isPedalEntry, cleanWeightEntry, entryVerdict, rangeMessage, PEDAL_MESSAGE_FR, PEDAL_MESSAGE_EN, COHERENCE_MESSAGE, INCOMPLETE_MESSAGE_FR, isWeighingKeyVisible, nextWeighingKey, markActiveWeightInput } from "@/lib/weighing-engine";
 import { weighingReadiness, weighingLockMessage } from "@/lib/weighing-readiness";
 import { rememberWeighingCell, readWeighingCell, hasWeighingHandoff, unlockWeighingAudio, playWeighingSound, playReadyChime } from "@/lib/weighing-feedback";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -2340,6 +2340,8 @@ function Index() {
     return isSerialFormatValid(info["marque"] ?? "", prefix, num, suffix);
   }, [snDraft, serialFormatValid, info]);
   const [yearListOpen, setYearListOpen] = useState(false);
+  const [yearReadOnly, setYearReadOnly] = useState(false);
+  useEffect(() => { setYearReadOnly(!!window.matchMedia?.("(pointer: coarse)").matches); }, []);
   const yearListRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (!yearListOpen) return;
@@ -2439,6 +2441,7 @@ function Index() {
     // Anti-rebond : tant que le focus n'est pas stabilisé sur la cellule
     // visée, toute nouvelle pression clavier répétée est ignorée.
     navLock.current = true;
+    markActiveWeightInput(inputs.current[`${target}-${field}`] ?? null);
     inputs.current[`${target}-${field}`]?.focus();
     inputs.current[`${target}-${field}`]?.select();
     window.requestAnimationFrame(() => {
@@ -2449,26 +2452,13 @@ function Index() {
   };
 
   /** Une touche est-elle visible avec le filtre courant ? */
-  const isVisibleKey = (index: number) => {
-    // Mode Rapide : seuls les Do / Do# sont navigables, et le filtre
-    // « Touches » (Blanches / Noires) reste combinable par-dessus.
-    if (rapidMode) {
-      if (!RAPID_INDEX_SET.has(index)) return false;
-      if (viewFilter === "white") return !BLACK_KEYS.has(index + 1);
-      if (viewFilter === "black") return BLACK_KEYS.has(index + 1);
-      return true;
-    }
-    if (viewFilter === "white") return !BLACK_KEYS.has(index + 1);
-    if (viewFilter === "black") return BLACK_KEYS.has(index + 1);
-    return true;
-  };
+  // Règle de navigation commune aux deux vues (weighing-engine).
+  const navFilters = { rapid: rapidMode, viewFilter, rapidSet: RAPID_INDEX_SET, blackKeys: BLACK_KEYS };
+  const isVisibleKey = (index: number) => isWeighingKeyVisible(index, navFilters);
 
   /** Prochaine touche visible dans la direction demandée (ou null). */
   const nextVisibleKey = (index: number, direction: 1 | -1): number | null => {
-    for (let i = index + direction; i >= 0 && i <= 87; i += direction) {
-      if (isVisibleKey(i)) return i;
-    }
-    return null;
+    return nextWeighingKey(index, direction, navFilters);
   };
 
   /** Déplacement fluide : Wd → Wa → touche visible suivante (et inverse). */
@@ -2615,6 +2605,7 @@ function Index() {
     const cell = activeKey ? { index: Number(activeKey.split("-")[0]), field: activeKey.split("-")[1] as "wd" | "wa" } : readWeighingCell();
     const el = cell ? inputs.current[`${cell.index}-${cell.field}`] : null;
     if (!cell || !el) return null;
+    markActiveWeightInput(el);
     if (document.activeElement !== el) el.focus({ preventScroll: false });
     return { el, index: cell.index, field: cell.field };
   };
@@ -2662,6 +2653,7 @@ function Index() {
       if (t?.closest?.(".weight-input, [data-compact-keypad]")) return;
       const a = document.activeElement;
       if (a instanceof HTMLInputElement && a.classList.contains("weight-input")) a.blur();
+      markActiveWeightInput(null);
       setPadOpen(false);
     };
     document.addEventListener("pointerdown", onDown, true);
@@ -4008,6 +4000,7 @@ function Index() {
     lockedPairRef.current = null;
     rememberWeighingCell(null);
     if (document.activeElement instanceof HTMLInputElement && document.activeElement.classList.contains("weight-input")) document.activeElement.blur();
+    markActiveWeightInput(null);
     hideRangeMessage(true); setCoherenceIndex(null); setCoherenceAnchor(null);
   };
   const clearWeighingRef = useRef(clearWeighingSelection);
@@ -4160,7 +4153,7 @@ function Index() {
         // Aucune coloration rouge : les cases restent d'apparence normale même
         // en anomalie. Seuls les messages FF et le blocage du focus subsistent.
         data-demo-measure-value={demoInk ? "" : undefined}
-        className={`weight-input !font-sans ${demoInk ? "!font-bold !text-[#4c1d95]" : importBaseline && rows[index]![field] !== "" && importBaseline[index]?.[field] === rows[index]![field] ? "font-semibold !text-gray-500" : "font-semibold !text-black"} focus:!border-2 focus:!border-[#7149ab] focus:!ring-0 focus:!outline-none ${field === "wd" && alertKeys.has(index) ? "!border-2 !border-destructive" : ""} ${isBlack ? "" : "![background-color:#cbd5e1]"}`}
+        className={`weight-input !font-sans ${demoInk ? "!font-bold !text-[#4c1d95]" : importBaseline && rows[index]![field] !== "" && importBaseline[index]?.[field] === rows[index]![field] ? "font-semibold !text-gray-500" : "font-semibold !text-black"} focus:!border-2 focus:!border-[#7149ab] data-[active]:!border-2 data-[active]:!border-[#7149ab] focus:!ring-0 focus:!outline-none ${field === "wd" && alertKeys.has(index) ? "!border-2 !border-destructive" : ""} ${isBlack ? "" : "![background-color:#cbd5e1]"}`}
 
         style={isBlack ? { backgroundColor: "#cbd5e1" } : undefined}
       />
@@ -4433,8 +4426,9 @@ function Index() {
                         if (m && !modelsFor(info["marque"] ?? "", t).includes(m)) {
                           updateInfo("modele", "");
                         }
-                        modelComboRef.current?.open();
                       }}
+                      // Clic, même sur le type déjà coché : la liste complète des modèles se réaffiche (sans clavier iOS).
+                      onClick={() => { if (!identityLocked) requestAnimationFrame(() => modelComboRef.current?.open()); }}
                     />
                     {en ? (t === "Droit" ? "Upright" : "Grand") : t}
                   </label>
@@ -4532,10 +4526,26 @@ function Index() {
                       setYearAuto(false);
                       updateInfo("fabrication", e.target.value);
                     }}
+                    // Tablette : 1er appui = liste des années seule (champ en lecture, pas de clavier iOS) ;
+                    // nouvel appui sur le champ liste ouverte = saisie manuelle au clavier.
+                    readOnly={yearReadOnly}
                     onFocus={() => { if (!identityLocked) setYearListOpen(true); }}
-                    onClick={() => { if (!identityLocked) setYearListOpen(true); }}
+                    onClick={(e) => {
+                      if (identityLocked) return;
+                      if (yearListOpen && yearReadOnly) {
+                        const el = e.currentTarget;
+                        el.readOnly = false;
+                        setYearReadOnly(false);
+                        el.blur(); el.focus();
+                        setYearListOpen(true);
+                        return;
+                      }
+                      setYearListOpen(true);
+                    }}
                     onBlur={(e) => {
+                      if (!e.currentTarget.readOnly && yearReadOnly) return;
                       setYearListOpen(false);
+                      setYearReadOnly(typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches);
                       // Avertissement seul : aucun verrouillage du curseur.
                       const v = e.currentTarget.value.trim();
                       if (v === "") setYearError(false);
@@ -4900,7 +4910,7 @@ function Index() {
               onClick={() => chooseOctave(true)}
               className="weighing-view-toggle h-auto min-h-8 gap-1 px-3 py-1.5 text-xs font-bold text-foreground"
             >
-              <CycleLabel title={en ? "View" : "Vue"} value={en ? "Full" : "Complète"} />
+              <CycleLabel title={en ? "View" : "Vue"} value="Octave" />
             </Button>
 
             <TooltipProvider delayDuration={50}>
@@ -4924,7 +4934,7 @@ function Index() {
                     }}
                     className="h-auto min-h-8 gap-2 px-3 py-1.5 !text-[0.84rem] font-bold text-muted-foreground"
                   >
-                    <CycleLabel title={en ? "Weighing" : "Pesée"} value={rapidMode ? (en ? "C-C#" : "Do-Do#") : (en ? "Free" : "Libre")} />
+                    <CycleLabel title={en ? "Weighing" : "Pesée"} value={rapidMode ? (en ? "Free" : "Libre") : (en ? "C-C#" : "Do-Do#")} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" align="center" className="z-[120] w-[min(29rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] border border-border bg-card p-3 text-left text-foreground shadow-lg">

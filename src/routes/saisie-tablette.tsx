@@ -23,6 +23,7 @@ import { TouchTooltip as Tooltip } from "@/components/TouchTooltip";
 
 // Règles : moteur de pesée partagé avec la Vue Complète ; messages identiques.
 import { useSharedControl } from "@/lib/weighing-controls";
+import { isWeighingKeyVisible, nextWeighingCell } from "@/lib/weighing-engine";
 import { keypadEntry, cleanWeightEntry, isOutOfRange, isPedalValue, rangeMessage, PEDAL_MESSAGE_FR, PEDAL_MESSAGE_EN, COHERENCE_MESSAGE, COHERENCE_MESSAGE_EN, INCOMPLETE_MESSAGE_FR, INCOMPLETE_MESSAGE_EN } from "@/lib/weighing-engine";
 const parseW = (s: string) => {
   const t = s.trim().replace(",", ".");
@@ -545,12 +546,8 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   // ON à chaque ouverture, indépendamment du type d'écran et des anciens choix.
   const [showKeypad, setShowKeypad] = useState(true);
   void setShowKeypad;
-  const isVisible = (index: number) => {
-    if (rapidMode && !RAPID_INDEX_SET.has(index)) return false;
-    if (viewFilter === "white") return !BLACK_KEYS.has(index + 1);
-    if (viewFilter === "black") return BLACK_KEYS.has(index + 1);
-    return true;
-  };
+  // Règle de navigation commune aux deux vues (weighing-engine).
+  const isVisible = (index: number) => isWeighingKeyVisible(index, { rapid: rapidMode, viewFilter, rapidSet: RAPID_INDEX_SET, blackKeys: BLACK_KEYS });
   // Mini-carte : redessinée uniquement au changement d'octave (ou filtre / import / reset).
   const histTickForMini = resetTick;
   const hasData = rows.some((r) => r.wd.trim() || r.wa.trim());
@@ -719,13 +716,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   const cleanWeight = cleanWeightEntry;
   const outOfRange = isOutOfRange;
   const nextCell = (index: number, field: Cell["field"], direction: 1 | -1 = 1): Cell | null => {
-    const cells: Cell[] = [];
-    for (let i = 0; i < 88; i++) {
-      if (!isVisible(i)) continue;
-      for (const f of ["wd", "wa"] as const) if (weightFilter === "all" || weightFilter === f) cells.push({ index: i, field: f });
-    }
-    const pos = cells.findIndex((c) => c.index === index && c.field === field);
-    return cells[pos + direction] ?? null;
+    return nextWeighingCell(index, field, direction, weightFilter, { rapid: rapidMode, viewFilter, rapidSet: RAPID_INDEX_SET, blackKeys: BLACK_KEYS });
   };
   const goTo = (cell: Cell | null) => {
     if (!cell) return;
@@ -1049,13 +1040,13 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
           </Button>
           <div className="tablet-commands flex shrink-0 flex-nowrap items-center justify-center">
             <Button type="button" variant="outline" onClick={() => openDesktop(true)} className={`${cmdBtn} weighing-view-toggle`}>
-              <CycleLabel title={en ? "View" : "Vue"} value="Octave" />
+              <CycleLabel title={en ? "View" : "Vue"} value={en ? "Full" : "Complète"} />
             </Button>
             <TooltipProvider delayDuration={50}>
               <Tooltip>
                 <TooltipTrigger asChild>
             <Button type="button" variant="outline" onClick={toggleRapid} className={cmdBtn}>
-              <CycleLabel title={en ? "Weighing" : "Pesée"} value={rapidMode ? (en ? "C-C#" : "Do-Do#") : (en ? "Free" : "Libre")} />
+              <CycleLabel title={en ? "Weighing" : "Pesée"} value={rapidMode ? (en ? "Free" : "Libre") : (en ? "C-C#" : "Do-Do#")} />
             </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="w-[min(29rem,calc(100vw-2rem))] border border-border bg-card p-3 text-left text-foreground shadow-lg">

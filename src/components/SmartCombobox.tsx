@@ -48,7 +48,7 @@ export const SmartCombobox = forwardRef<SmartComboboxHandle, Props>(
           setOpen(true);
           setTyped(false);
         }
-        input.current?.focus();
+        // Aucun focus : la liste s'affiche sans faire jaillir le clavier iOS par-dessus.
       },
       focus: () => input.current?.focus(),
     }));
@@ -58,7 +58,6 @@ export const SmartCombobox = forwardRef<SmartComboboxHandle, Props>(
         pendingOpen.current = false;
         setOpen(true);
         setTyped(false);
-        window.setTimeout(() => input.current?.focus(), 0);
       }
     }, [disabled]);
 
@@ -67,9 +66,10 @@ export const SmartCombobox = forwardRef<SmartComboboxHandle, Props>(
     const filtered = useMemo(() => {
       const list: Group[] = groups?.length ? groups : [{ label: "", options }];
       return list
-        .map((g) => ({ label: g.label, options: fuzzyFilter(g.options, draft) }))
+        // Liste rouverte sans frappe (radio, clic) : tous les modèles du type, même si un modèle est déjà saisi.
+        .map((g) => ({ label: g.label, options: typed ? fuzzyFilter(g.options, draft) : g.options }))
         .filter((g) => g.options.length > 0);
-    }, [groups, options, draft]);
+    }, [groups, options, draft, typed]);
 
     const commit = (raw: string) => {
       const next = resolveEntry(raw, options);
@@ -96,7 +96,7 @@ export const SmartCombobox = forwardRef<SmartComboboxHandle, Props>(
           keepOpen.current = true;
           window.setTimeout(() => {
             keepOpen.current = false;
-            if (open) input.current?.focus();
+            if (open && document.activeElement === input.current) input.current?.focus();
           }, 0);
           return;
         }

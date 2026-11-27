@@ -47,3 +47,6 @@ Les étiquettes de fin des graphiques Recharts sont placées à partir des éche
 - Weighing filters (Keys, DW/UW, Alerts) are shared between Full and Octave views through useSharedControl (src/lib/weighing-controls.ts, sessionStorage), re-read when the Octave view closes; rapid mode stays in localStorage — keeps both views' command buttons identical.
 - Full-view tablet keypad commits row state inside startTransition after the pure check and focus move, like the input path — keeps the next cell responsive.
 - FloatingPanel renders through a portal to document.body, and the Preferences dialog (and its sub-dialogs) sit at z-[1000]/z-[1001] — avoids being trapped under sticky chart toolbars.
+- Weighing navigation (key visibility under Pesée/Touches filters, next key, next cell) lives only in weighing-engine (isWeighingKeyVisible/nextWeighingKey/nextWeighingCell) and both views call it — one navigation rule for Full and Octave.
+- Full-view active cell is marked with a data-active attribute via markActiveWeightInput, never by :focus alone — iOS Safari drops the :focus style with inputMode none.
+- SmartCombobox.open() never focuses the input and shows the full list until the user types — keeps the iOS keyboard from covering the list.
