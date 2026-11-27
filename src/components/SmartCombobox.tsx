@@ -13,6 +13,8 @@ type Props = {
   className?: string;
   keepOpenSelector?: string;
   onCommit: (value: string) => void;
+  /** Appelé après un choix dans la liste (la liste est déjà refermée). */
+  onPick?: (value: string) => void;
   /** Appelé à chaque frappe (avant commit) — sert à marquer le formulaire « dirty ». */
   onTyping?: () => void;
 };
@@ -23,7 +25,7 @@ export type SmartComboboxHandle = {
 };
 
 export const SmartCombobox = forwardRef<SmartComboboxHandle, Props>(
-  ({ value, options, groups, disabled, placeholder, openOnFocus, className, keepOpenSelector, onCommit, onTyping }, ref) => {
+  ({ value, options, groups, disabled, placeholder, openOnFocus, className, keepOpenSelector, onCommit, onPick, onTyping }, ref) => {
     const [draft, setDraft] = useState(value);
     const [open, setOpen] = useState(false);
     const [typed, setTyped] = useState(false);
@@ -82,6 +84,7 @@ export const SmartCombobox = forwardRef<SmartComboboxHandle, Props>(
       setOpen(false);
       setTyped(false);
       if (option !== value) onCommit(option);
+      onPick?.(option);
     };
 
     useEffect(() => {

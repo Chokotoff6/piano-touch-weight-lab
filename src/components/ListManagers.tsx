@@ -21,7 +21,7 @@ export function InterventionListDialog({ open, onOpenChange, en }: P) {
   const addCat = () => { addCatalogItem(catGroup, catDraft); setCatDraft(""); };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto">
+      <DialogContent overlayClassName="z-[1001]" className="z-[1001] max-h-[90dvh] max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{en ? "Intervention types list" : "Liste types d'intervention"}</DialogTitle>
           <DialogDescription>{en ? "Manage the frequent-intervention shortcuts and the full catalogue used by Instrument history and history points." : "Gérez les raccourcis d'interventions fréquentes et le catalogue complet utilisé par Historique instrument et les points d'historique."}</DialogDescription>
@@ -85,7 +85,7 @@ export function ModelListDialog({ open, onOpenChange, en }: P) {
   const add = () => { addModel(brand, type, draft); setDraft(""); };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90dvh] max-w-md overflow-y-auto">
+      <DialogContent overlayClassName="z-[1001]" className="z-[1001] max-h-[90dvh] max-w-md overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{en ? "Brands & models list" : "Liste marques & modèles"}</DialogTitle>
           <DialogDescription>{en ? "Pick a brand and a type to view and edit its models." : "Choisissez une marque et un type pour afficher et modifier ses modèles."}</DialogDescription>

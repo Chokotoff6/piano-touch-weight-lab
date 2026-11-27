@@ -1,6 +1,7 @@
 import { CompactKeypad } from "@/components/weighing/CompactKeypad";
 import { TabletWeighingPage } from "@/routes/saisie-tablette";
 import { useWeighingView } from "@/lib/weighing-view";
+import { useSharedControl } from "@/lib/weighing-controls";
 import { CycleLabel } from "@/components/CycleLabel";
 import { DRAFT_EDITED_EVENT } from "@/lib/zoom-edit";
 import { getPreferences } from "@/lib/preferences";
@@ -629,8 +630,8 @@ function Index() {
   const octaveViewRef = useRef(octaveView);
   const reloadDraftRef = useRef<(() => void) | null>(null);
   /** Filtrage visuel cyclique des touches affichées à l'écran. */
-  const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
-  const [alertsOn, setAlertsOn] = useState(false);
+  const [viewFilter, setViewFilter] = useSharedControl<"all" | "white" | "black">("ptw_ctrl_view_filter", "all", octaveView);
+  const [alertsOn, setAlertsOn] = useSharedControl("ptw_ctrl_alerts", false, octaveView);
   // Alertes de régulation (identiques à la Vue Octave) : PD s'écartant de la
   // moyenne de ses voisines de plus que la tolérance des Préférences.
   const alertKeys = useMemo(() => {
@@ -647,7 +648,7 @@ function Index() {
     return out;
   }, [alertsOn, deferredRows]);
   // Filtre « Poids » : Descendants (wd seul), Remontants (wa seul) ou Tous.
-  const [weightFilter, setWeightFilter] = useState<"all" | "wd" | "wa">("all");
+  const [weightFilter, setWeightFilter] = useSharedControl<"all" | "wd" | "wa">("ptw_ctrl_weight_filter", "all", octaveView);
   // Le Mode Rapide survit aux navigations : il est relu depuis le stockage
   // local au montage (sinon un retour depuis Résultats le réinitialisait).
   const [rapidMode, setRapidMode] = useState(() => {
@@ -684,6 +685,11 @@ function Index() {
   // Persistance du Mode Rapide : tant qu'il reste actif, les graphiques des
   // pages de diagnostic s'ouvrent par défaut en rendu « Réel » (échelle 88
   // notes, interpolation linéaire entre les points mesurés).
+  // Retour de la Vue Octave : le mode Libre / Do-Do# choisi là-bas est relu.
+  useEffect(() => {
+    if (octaveView) return;
+    try { setRapidMode(window.localStorage.getItem("ptw_rapid_mode") === "1"); } catch { /* indisponible */ }
+  }, [octaveView]);
   useEffect(() => {
     try {
       window.localStorage.setItem("ptw_rapid_mode", rapidMode ? "1" : "0");
@@ -2327,6 +2333,21 @@ function Index() {
 
   /** Champ unique : texte libre en cours de frappe, découpé au onBlur. */
   const [snDraft, setSnDraft] = useState<string | null>(null);
+  // Version en cours de frappe (brouillon) : l'alerte suit la saisie sans attendre la sortie du champ.
+  const liveSerialValid = useMemo(() => {
+    if (snDraft === null) return serialFormatValid;
+    const { prefix, num, suffix } = parseSerialNumber(snDraft);
+    return isSerialFormatValid(info["marque"] ?? "", prefix, num, suffix);
+  }, [snDraft, serialFormatValid, info]);
+  const [yearListOpen, setYearListOpen] = useState(false);
+  const yearListRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!yearListOpen) return;
+    const list = yearListRef.current;
+    const cur = list?.querySelector<HTMLElement>("[data-year-current]") ?? list?.querySelector<HTMLElement>('[data-year="1980"]');
+    if (list && cur) list.scrollTop = cur.offsetTop - list.clientHeight / 2;
+  }, [yearListOpen]);
+
   const commitSerial = (raw: string) => {
     const { prefix, num, suffix } = parseSerialNumber(raw);
     setSnDraft(null);
@@ -2602,11 +2623,13 @@ function Index() {
     if (!canEnterWeights) { showBlockMessage(index, field); return; }
     el.value = v;
     if (v.length === 2) {
+      // Même ordre que la Vue Octave : contrôle pur + saut immédiat, puis enregistrement
+      // en basse priorité (ne bloque jamais l'affichage de la case suivante).
       const advanced = tryImmediateAdvance(index, field, v);
-      setValue(index, field, v, advanced);
+      startTransition(() => setValue(index, field, v, advanced));
     } else {
       if (v.length === 1) { unlockWeighingAudio(); if (cascadeTarget.current) finishCascadeEarly(); }
-      if (cleanWeight(rows[index]![field]) !== v) { markDirty(); setRowField(index, field, v); }
+      if (cleanWeight(rows[index]![field]) !== v) { markDirty(); startTransition(() => { setRowField(index, field, v); }); }
     }
   };
   const padDigit = (d: string) => {
@@ -4435,6 +4458,7 @@ function Index() {
                 className={`font-normal not-italic placeholder:text-sm placeholder:font-normal placeholder:text-muted-foreground placeholder:italic disabled:!cursor-default ${identityLocked ? "!bg-muted/50 opacity-75" : "!bg-white"}`}
                 placeholder={en ? "Type or search a model..." : "Saisissez ou cherchez un modèle..."}
                 onTyping={markDirty}
+                onPick={() => requestAnimationFrame(() => snRef.current["sn_num"]?.focus())}
                 onCommit={(raw) => {
                   const v = raw.trim() ? canonicalizeModel(info["marque"] ?? "", raw) : raw;
                   updateInfo("modele", v);
@@ -4457,13 +4481,12 @@ function Index() {
               <div className="mt-1 flex items-end justify-start gap-4">
                 <div className="flex items-end gap-2">
                   <label className={`relative min-w-[220px] ${SUB_LABEL_CLASS}`}>
-                    <AutoDismissAlert
-                      show={!serialFormatValid && !isDemoActive() && !demoInk}
-                      resetKey={`${info["marque"] ?? ""}|${info["sn_prefix"] ?? ""}${info["sn_num"] ?? ""}${info["sn_suffix"] ?? ""}`}
-                      className={`pointer-events-none absolute bottom-full left-0 mb-2 w-[18rem] ${UNIFIED_TOOLTIP_CLASS}`}
-                    >
-                      {SERIAL_FORMAT_ERROR}
-                    </AutoDismissAlert>
+                    {/* Contrôle en cours de frappe, affiché tant que la valeur reste invalide. */}
+                    {!liveSerialValid && !isDemoActive() && !demoInk && (
+                      <span role="alert" className={`pointer-events-none absolute bottom-full left-0 mb-2 w-[18rem] ${UNIFIED_TOOLTIP_CLASS}`}>
+                        {SERIAL_FORMAT_ERROR}
+                      </span>
+                    )}
                     <span className="block whitespace-nowrap">{en ? "Serial number" : "Numéro de série"}</span>
                     <LockedIdentityTooltip id="serial" locked={identityLocked} active={lockedHintActive} seen={lockedHintSeen} onOpenChange={onLockedHintChange}>
                     <input
@@ -4509,7 +4532,10 @@ function Index() {
                       setYearAuto(false);
                       updateInfo("fabrication", e.target.value);
                     }}
+                    onFocus={() => { if (!identityLocked) setYearListOpen(true); }}
+                    onClick={() => { if (!identityLocked) setYearListOpen(true); }}
                     onBlur={(e) => {
+                      setYearListOpen(false);
                       // Avertissement seul : aucun verrouillage du curseur.
                       const v = e.currentTarget.value.trim();
                       if (v === "") setYearError(false);
@@ -4520,6 +4546,30 @@ function Index() {
                     className={`${INPUT_CLASS} text-black max-w-[120px] disabled:border-muted-foreground/30 ${yearError ? "border-destructive" : ""}`}
                   />
                   </LockedIdentityTooltip>
+                  {yearListOpen && (
+                    <div ref={yearListRef} role="listbox" aria-label={en ? "Years" : "Années"} className="absolute left-0 top-full z-[130] mt-1 max-h-56 w-[120px] overflow-y-auto rounded-md border border-border bg-white py-1 shadow-lg">
+                      {Array.from({ length: new Date().getFullYear() - 1700 + 1 }, (_, i) => String(new Date().getFullYear() - i)).map((y) => (
+                        <div
+                          key={y}
+                          role="option"
+                          aria-selected={info["fabrication"] === y}
+                          data-year={y}
+                          data-year-current={info["fabrication"] === y ? "" : undefined}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            fabricationTouched.current = true;
+                            setYearAuto(false);
+                            updateInfo("fabrication", y);
+                            setYearError(false);
+                            setYearListOpen(false);
+                          }}
+                          className={`cursor-pointer px-3 py-1 text-sm ${info["fabrication"] === y ? "bg-[#7149ab] text-white" : "text-foreground hover:bg-muted"}`}
+                        >
+                          {y}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <AutoDismissAlert
                     show={yearError}
                     resetKey={info["fabrication"] ?? ""}
@@ -4850,7 +4900,7 @@ function Index() {
               onClick={() => chooseOctave(true)}
               className="weighing-view-toggle h-auto min-h-8 gap-1 px-3 py-1.5 text-xs font-bold text-foreground"
             >
-              <CycleLabel title={en ? "View" : "Vue"} value="Octave" />
+              <CycleLabel title={en ? "View" : "Vue"} value={en ? "Full" : "Complète"} />
             </Button>
 
             <TooltipProvider delayDuration={50}>

@@ -412,9 +412,12 @@ function EndLabels({ lines, data, domainX, colors, offset, xAxisMap, yAxisMap, l
 function CustomTickTop(props: { x?: number; y?: number; dy?: number; payload?: { value: number } }) {
   const { x = 0, y = 0, dy = 0, payload } = props;
   const value = payload?.value ?? 0;
+  // Touche 4 = Do0 … touche 88 = Do7 (C0 … C7 en anglais).
+  const octave = Math.round((value - 4) / 12);
+  const label = `${getLang() === "en" ? "C" : "Do"}${octave}`;
   return (
     <g transform={`translate(${x},${y})`}>
-      <text x={0} y={dy} dy={6} textAnchor="middle" fontSize={10} fill="#6b7280">{value}</text>
+      <text x={0} y={dy} dy={6} textAnchor="middle" fontSize={10} fill="#6b7280">{label}</text>
     </g>
   );
 }
@@ -2321,7 +2324,7 @@ function Comparer() {
   const mirrorChartData = useMemo(() => buildChartData(mine, null, null), [mine]);
 
   return (
-    <main className="mx-auto w-full max-w-[1400px] px-6 pb-10 pt-20">
+    <main className="mx-auto w-full max-w-[1400px] px-6 pb-10 pt-3">
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-x-0 top-[77px] z-40 h-[50px] bg-white"

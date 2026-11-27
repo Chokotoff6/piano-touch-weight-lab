@@ -87,7 +87,7 @@ export function PreferencesGear({ onDemoToggled }: { onDemoToggled?: () => void 
         <Settings className="h-5 w-5" />
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90dvh] max-w-2xl overflow-y-auto">
+        <DialogContent overlayClassName="z-[1000]" className="z-[1000] max-h-[90dvh] max-w-2xl overflow-y-auto">
           <DialogHeader className="sr-only">
             <DialogTitle>{en ? "Preferences" : "Préférences"}</DialogTitle>
           </DialogHeader>

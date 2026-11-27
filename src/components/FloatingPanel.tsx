@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 /** Tiroir glissant depuis le bord droit, sans voile : fermeture par ✕, Échap ou clic extérieur. */
@@ -31,7 +32,8 @@ export function FloatingPanel({ open, onClose, title, children }: { open: boolea
   }, [open, onClose]);
 
   if (!mounted) return null;
-  return (
+  // Rendu dans <body> : jamais piégé sous un bloc sticky (ex. triangle Δ des graphiques).
+  return createPortal(
     <div
       ref={ref}
       role="dialog"
@@ -44,6 +46,7 @@ export function FloatingPanel({ open, onClose, title, children }: { open: boolea
         <button type="button" aria-label="Fermer" onClick={onClose} className="rounded p-1 text-foreground hover:bg-muted"><X size={16} /></button>
       </div>
       <div className="max-h-[70vh] overflow-y-auto p-3 [&>div>div:first-child]:hidden">{children}</div>
-    </div>
+    </div>,
+    document.body,
   );
 }

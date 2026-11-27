@@ -22,6 +22,7 @@ import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui
 import { TouchTooltip as Tooltip } from "@/components/TouchTooltip";
 
 // Règles : moteur de pesée partagé avec la Vue Complète ; messages identiques.
+import { useSharedControl } from "@/lib/weighing-controls";
 import { keypadEntry, cleanWeightEntry, isOutOfRange, isPedalValue, rangeMessage, PEDAL_MESSAGE_FR, PEDAL_MESSAGE_EN, COHERENCE_MESSAGE, COHERENCE_MESSAGE_EN, INCOMPLETE_MESSAGE_FR, INCOMPLETE_MESSAGE_EN } from "@/lib/weighing-engine";
 const parseW = (s: string) => {
   const t = s.trim().replace(",", ".");
@@ -263,11 +264,11 @@ function KeyGrid({
 
 /** Pavé numérique tactile 3 × 4 : chiffres, puis Annuler / 0 / Rétablir
     (icônes identiques à la page bureau). Dimensions adaptatives bornées. */
-function Keypad({ onKey, en, canUndo, canRedo, height }: { onKey: (k: string) => void; en: boolean; canUndo: boolean; canRedo: boolean; height: number }) {
+function Keypad({ onKey, en, canUndo, canRedo, height, width }: { onKey: (k: string) => void; en: boolean; canUndo: boolean; canRedo: boolean; height: number; width: number }) {
   const keys = ["7", "8", "9", "4", "5", "6", "1", "2", "3"];
   const btn = "tablet-keypad-button h-full min-h-0 self-stretch py-0 flex items-center justify-center rounded-md font-bold !text-black select-none disabled:!opacity-100 hover:!bg-white";
   return (
-    <div className="tablet-keypad tablet-keypad-frame grid shrink-0 grid-cols-3 grid-rows-4" style={{ height, width: Math.round(height * 0.75) }}>
+    <div className="tablet-keypad tablet-keypad-frame grid shrink-0 grid-cols-3 grid-rows-4" style={{ height, width }}>
       {keys.map((k) => (
         <Button variant="outline" key={k} type="button" className={btn} onPointerDown={(e) => { e.preventDefault(); onKey(k); }}>
           {k}
@@ -520,10 +521,11 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
       return !v;
     });
   };
-  const [viewFilter, setViewFilter] = useState<"all" | "white" | "black">("all");
-  const [weightFilter, setWeightFilter] = useState<"all" | "wd" | "wa">("all");
+  // Touches, PD/PR et Alertes : mêmes états que la Vue Complète (partagés pour la session).
+  const [viewFilter, setViewFilter] = useSharedControl<"all" | "white" | "black">("ptw_ctrl_view_filter", "all");
+  const [weightFilter, setWeightFilter] = useSharedControl<"all" | "wd" | "wa">("ptw_ctrl_weight_filter", "all");
   const [confirmReset, setConfirmReset] = useState(false);
-  const [alertsOn, setAlertsOn] = useState(false);
+  const [alertsOn, setAlertsOn] = useSharedControl("ptw_ctrl_alerts", false);
   // Alertes et résumé en basse priorité : jamais dans le fil synchrone de la frappe.
   const deferredRows = useDeferredValue(rows);
   // Alertes de régulation : PD s'écartant de la moyenne de ses voisines de plus que la tolérance.
@@ -623,7 +625,9 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   const nativeH = NATIVE_HEIGHT_REM * 16;
 
   // Mini-map : homothétie sur toute la largeur.
-  const [miniRef, miniW] = useWidth();
+  const [miniWidthRef, miniW] = useWidth();
+  const miniNode = useRef<HTMLDivElement | null>(null);
+  const miniRef = useCallback((node: HTMLDivElement | null) => { miniNode.current = node; miniWidthRef(node); }, [miniWidthRef]);
   const miniScale = miniW > 0 ? miniW / full.width : 0.4;
   const seg = geometry(from, to, NATIVE_WHITE);
   const segOffset = (full.cols[from - 1]?.start ?? 0) - full.left;
@@ -675,6 +679,23 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
     setDragLeft(null);
   };
   const viewLeft = dragLeft ?? segOffset;
+  // Molette souris sur la mini-carte : le rectangle gris passe d'octave en octave.
+  const wheelAcc = useRef(0);
+  useEffect(() => {
+    const el = miniNode.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      wheelAcc.current += Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+      if (Math.abs(wheelAcc.current) < 40) return;
+      const dir = wheelAcc.current > 0 ? 1 : -1;
+      wheelAcc.current = 0;
+      cancelOctaveDelay();
+      setOctave((o) => Math.max(0, Math.min(OCTAVES.length - 1, o + dir)));
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  });
 
   // Octave : un seul facteur pour toutes les octaves (basé sur la plus large).
   // Mesure de la rangée entière (largeur fixe) : le pavé, dont la largeur dépend
@@ -902,7 +923,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
   const arrowBtn = "h-auto w-7 min-w-7 shrink-0 cursor-pointer px-1 text-2xl leading-none !text-black transition-transform duration-100 hover:opacity-70 active:scale-75 disabled:cursor-default disabled:opacity-20";
 
   return (
-    <main className="tablet-weighing mx-auto w-full max-w-[1400px] px-6 pb-3 pt-[28px]">
+    <main className="tablet-weighing mx-auto w-full max-w-[1400px] px-6 pb-3 pt-3">
       <input ref={importInput} type="file" accept=".kw,application/json" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ""; void importFile(file); }} />
       <div className="relative rounded-md border-2 border-foreground bg-card p-4 pt-5">
         <div className="absolute -top-3.5 left-4 flex max-w-[calc(100%-2rem)] items-baseline gap-2 whitespace-nowrap bg-card px-2 text-lg font-bold text-black">
@@ -979,7 +1000,12 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
             </div>
             <Button variant="ghost" type="button" aria-label={en ? "Next octave" : "Octave suivante"} disabled={octave === OCTAVES.length - 1} onClick={() => { unlockWeighingAudio(); cancelOctaveDelay(); setOctave((o) => Math.min(OCTAVES.length - 1, o + 1)); }} style={{ marginTop: 1.05 * 16 * octScale + 4 }} className={`${arrowBtn} ml-2 ${pressedArrow === "next" ? "scale-75 opacity-60" : ""}`}>▶</Button>
           </div>
-          {showKeypad && <Keypad height={Math.round(nativeH * octScale + 2)} onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />}
+          {showKeypad && (
+            // Pavé calé sur la hauteur des touches blanches (sous la rangée des numéros) ; largeur inchangée.
+            <div className="shrink-0" style={{ height: nativeH * octScale + 2, paddingTop: Math.round(1.05 * 16 * octScale) + 1 }}>
+              <Keypad height={Math.round(11.55 * 16 * octScale)} width={Math.round((nativeH * octScale + 2) * 0.75)} onKey={onKey} en={en} canUndo={undoStack.current.length > 0} canRedo={redoStack.current.length > 0} />
+            </div>
+          )}
         </div>
         {alert && alertAnchor && (
           <div className="fixed z-[99999] w-[min(22rem,calc(100vw-1rem))]" style={{ left: alertAnchor.x, top: alertAnchor.y }}>
@@ -1023,7 +1049,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
           </Button>
           <div className="tablet-commands flex shrink-0 flex-nowrap items-center justify-center">
             <Button type="button" variant="outline" onClick={() => openDesktop(true)} className={`${cmdBtn} weighing-view-toggle`}>
-              <CycleLabel title={en ? "View" : "Vue"} value={en ? "Full" : "Complète"} />
+              <CycleLabel title={en ? "View" : "Vue"} value="Octave" />
             </Button>
             <TooltipProvider delayDuration={50}>
               <Tooltip>

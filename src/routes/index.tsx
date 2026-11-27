@@ -30,7 +30,7 @@ function Accueil() {
   const en = lang === "en";
 
   return (
-    <main className="relative mx-auto flex max-w-[1400px] flex-col px-6 pb-6 pt-2">
+    <main className="relative mx-auto flex max-w-[1400px] flex-col px-6 pb-6 pt-3">
       <div className="mx-auto mt-[66px] w-full max-w-4xl space-y-8 text-left text-sm leading-relaxed !text-black">
         <header className="space-y-1">
           {/* Mot KEYWEIGHT teinté au mauve exact du logo via masque (compatible iOS 15). */}
