@@ -2442,6 +2442,7 @@ function Index() {
     // visée, toute nouvelle pression clavier répétée est ignorée.
     navLock.current = true;
     markActiveWeightInput(inputs.current[`${target}-${field}`] ?? null);
+    rememberWeighingCell({ index: target, field });
     inputs.current[`${target}-${field}`]?.focus();
     if (!live.current.compactPad) inputs.current[`${target}-${field}`]?.select();
     window.requestAnimationFrame(() => {
@@ -2601,7 +2602,10 @@ function Index() {
   /** Pavé bas tablette (Vue Complète) : même moteur que le pavé Vue Octave (keypadEntry),
    *  écriture directe dans la case active, sans événement simulé. */
   const padTarget = (): { el: HTMLInputElement; index: number; field: "wd" | "wa" } | null => {
-    const activeKey = Object.keys(inputs.current).find((k) => inputs.current[k] === document.activeElement);
+    // Source unique : la case marquée data-active (comme `active` en Vue Octave),
+    // jamais le focus Safari ni la mémoire de secours en priorité.
+    const activeKey = Object.keys(inputs.current).find((k) => inputs.current[k]?.hasAttribute("data-active"))
+      ?? Object.keys(inputs.current).find((k) => inputs.current[k] === document.activeElement);
     const cell = activeKey ? { index: Number(activeKey.split("-")[0]), field: activeKey.split("-")[1] as "wd" | "wa" } : readWeighingCell();
     const el = cell ? inputs.current[`${cell.index}-${cell.field}`] : null;
     if (!cell || !el) return null;
@@ -4141,6 +4145,7 @@ function Index() {
           e.currentTarget.style.outline = "";
           if (pendingKeySound.current === `${index}-${field}`) { pendingKeySound.current = null; playWeighingSound("key"); }
           rememberWeighingCell({ index, field });
+          markActiveWeightInput(e.currentTarget);
           unlockWeighingAudio();
           padReplace.current = true;
           if (L.compactPad) setPadOpen(true);
@@ -4458,7 +4463,7 @@ function Index() {
                 className={`font-normal not-italic placeholder:text-sm placeholder:font-normal placeholder:text-muted-foreground placeholder:italic disabled:!cursor-default ${identityLocked ? "!bg-muted/50 opacity-75" : "!bg-white"}`}
                 placeholder={en ? "Type or search a model..." : "Saisissez ou cherchez un modèle..."}
                 onTyping={markDirty}
-                onPick={() => requestAnimationFrame(() => snRef.current["sn_num"]?.focus())}
+                onPick={() => window.setTimeout(() => snRef.current["sn_num"]?.focus(), 500)}
                 onCommit={(raw) => {
                   const v = raw.trim() ? canonicalizeModel(info["marque"] ?? "", raw) : raw;
                   updateInfo("modele", v);
