@@ -2443,7 +2443,7 @@ function Index() {
     navLock.current = true;
     markActiveWeightInput(inputs.current[`${target}-${field}`] ?? null);
     inputs.current[`${target}-${field}`]?.focus();
-    inputs.current[`${target}-${field}`]?.select();
+    if (!live.current.compactPad) inputs.current[`${target}-${field}`]?.select();
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
         navLock.current = false;
@@ -2825,6 +2825,9 @@ function Index() {
       el.style.outline = "3px solid #7149ab";
       el.style.outlineOffset = "1px";
       el.scrollIntoView({ block: "nearest", inline: "center" });
+      markActiveWeightInput(el);
+      padReplace.current = true;
+      setPadOpen(true);
       const clear = () => { el.style.outline = ""; document.removeEventListener("pointerdown", clear, true); };
       document.addEventListener("pointerdown", clear, true);
       return;
@@ -4145,8 +4148,11 @@ function Index() {
           // Sélection intégrale des 2 chiffres (fourchette OU erreur mécanique) :
           // l'artisan retape immédiatement sa nouvelle valeur.
           const input = e.currentTarget;
-          input.select();
-          setTimeout(() => input.select(), 0);
+          // Tablette : pas de sélection native (rectangle bleu + poignées iOS) ; padReplace remplace déjà la valeur.
+          if (!L.compactPad) {
+            input.select();
+            setTimeout(() => input.select(), 0);
+          }
           // Le message FF de fourchette s'efface définitivement dès le clic dans la case.
           L.hideRangeMessage(true);
         }}
@@ -4529,7 +4535,7 @@ function Index() {
                     // Tablette : 1er appui = liste des années seule (champ en lecture, pas de clavier iOS) ;
                     // nouvel appui sur le champ liste ouverte = saisie manuelle au clavier.
                     readOnly={yearReadOnly}
-                    onFocus={() => { if (!identityLocked) setYearListOpen(true); }}
+                    onFocus={() => { if (!identityLocked && !(info["fabrication"] ?? "").trim()) setYearListOpen(true); }}
                     onClick={(e) => {
                       if (identityLocked) return;
                       if (yearListOpen && yearReadOnly) {
@@ -4889,7 +4895,7 @@ function Index() {
             className="rounded-md border border-input bg-background px-4 py-1.5 text-[0.9rem] font-bold !text-black transition-colors hover:bg-accent"
 
           >
-            {en ? "< Edit piano information" : "< Modifier informations piano"}
+            {en ? "< Edit piano info" : "< Modifier infos piano"}
           </button>
 
           {/* Barre d'outils d'atelier centrée : touches, reset.
