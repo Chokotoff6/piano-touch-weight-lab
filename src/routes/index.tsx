@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useLang } from "@/data/translations";
-import logoKwText from "@/assets/logo-kw-text.svg.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,28 +31,6 @@ function Accueil() {
   return (
     <main className="relative mx-auto flex max-w-[1400px] flex-col px-6 pb-6 pt-6">
       <div className="mx-auto mt-4 w-full max-w-4xl space-y-8 text-left text-sm leading-relaxed !text-black">
-        <header className="space-y-1">
-          {/* Mot KEYWEIGHT teinté au mauve exact du logo via masque (compatible iOS 15). */}
-          <img src={logoKwText.url} alt="" aria-hidden="true" className="invisible absolute h-12 w-auto" decoding="async" />
-          <div
-            role="img"
-            aria-label="KeyWeight"
-            className="mb-2 h-12"
-            style={{
-              aspectRatio: "var(--kw-text-ratio, 6.5)",
-              backgroundColor: "#000000",
-              WebkitMaskImage: `url(${logoKwText.url})`,
-              maskImage: `url(${logoKwText.url})`,
-              WebkitMaskRepeat: "no-repeat",
-              maskRepeat: "no-repeat",
-              WebkitMaskSize: "contain",
-              maskSize: "contain",
-              WebkitMaskPosition: "left center",
-              maskPosition: "left center",
-            }}
-          />
-        </header>
-
         <section className="space-y-4">
           <h2 className="text-2xl font-bold uppercase tracking-wide !text-black">3 modules</h2>
           <div className="grid gap-4 sm:grid-cols-3">
