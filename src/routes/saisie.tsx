@@ -620,9 +620,11 @@ function Index() {
     }
   }
   const [weighingMode, setWeighingMode] = useState(false);
-  const { octaveView, chooseOctave } = useWeighingView();
+  const { octaveView: octaveChoice, chooseOctave } = useWeighingView();
   const [coarsePointer, setCoarsePointer] = useState(false);
   useEffect(() => { setCoarsePointer(!!window.matchMedia?.("(pointer: coarse)").matches); }, []);
+  // Écran tactile : Vue Octave ET Vue Complète passent par le moteur tactile autonome (saisie-tablette).
+  const octaveView = octaveChoice || coarsePointer;
   const compactPad = weighingMode && !octaveView && coarsePointer;
   const selectionCleared = useRef(false);
   const [padOpen, setPadOpen] = useState(false);
@@ -5243,7 +5245,7 @@ Moyennes{" "}
         </div>
       )}
     </main>
-    {weighingMode && octaveView && <TabletWeighingPage onFullView={() => chooseOctave(false)} onPianoInfo={() => setWeighingMode(false)} />}
+    {weighingMode && octaveView && <TabletWeighingPage layout={octaveChoice ? "octave" : "full"} onFullView={() => chooseOctave(false)} onOctaveView={() => chooseOctave(true)} onPianoInfo={() => setWeighingMode(false)} />}
     </>
   );
 }

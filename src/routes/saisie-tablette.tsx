@@ -5,7 +5,7 @@
 // bureau, rendu à taille native puis agrandi par homothétie stricte (scale).
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import type React from "react";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, useDeferredValue } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, useDeferredValue } from "react";
 import { useLang } from "@/data/translations";
 import { DRAFT_EDITED_EVENT } from "@/lib/zoom-edit";
 import { SECURITY_BACKUP_KEY, parseKwDocument, rememberKwDocument, kwSerial, differentSerial } from "@/lib/kw-file";
@@ -24,7 +24,7 @@ import { TouchTooltip as Tooltip } from "@/components/TouchTooltip";
 // Règles : moteur de pesée partagé avec la Vue Complète ; messages identiques.
 import { useSharedControl } from "@/lib/weighing-controls";
 import { isWeighingKeyVisible, nextWeighingCell } from "@/lib/weighing-engine";
-import { keypadEntry, cleanWeightEntry, isOutOfRange, isPedalValue, rangeMessage, PEDAL_MESSAGE_FR, PEDAL_MESSAGE_EN, COHERENCE_MESSAGE, COHERENCE_MESSAGE_EN, INCOMPLETE_MESSAGE_FR, INCOMPLETE_MESSAGE_EN } from "@/lib/weighing-engine";
+import { keypadEntry, keypadErase, cleanWeightEntry, isOutOfRange, isPedalValue, rangeMessage, PEDAL_MESSAGE_FR, PEDAL_MESSAGE_EN, COHERENCE_MESSAGE, COHERENCE_MESSAGE_EN, INCOMPLETE_MESSAGE_FR, INCOMPLETE_MESSAGE_EN } from "@/lib/weighing-engine";
 const parseW = (s: string) => {
   const t = s.trim().replace(",", ".");
   if (!t) return null;
@@ -282,6 +282,32 @@ function Keypad({ onKey, en, canUndo, canRedo, height, width }: { onKey: (k: str
   );
 }
 
+/** Vue Complète tablette : pavé 1 ligne (chiffres + Effacer), toujours affiché en haut du cadre. */
+function LinePad({ onKey, en }: { onKey: (k: string) => void; en: boolean }) {
+  const btn = "tablet-keypad-button h-11 min-w-0 flex-1 px-0 py-0 flex items-center justify-center rounded-md text-lg font-bold !text-black select-none hover:!bg-white touch-manipulation";
+  return (
+    <div className="tablet-keypad flex h-[52px] w-full items-center gap-1.5 py-1" role="group" aria-label={en ? "Weighing keypad" : "Pavé de pesée"}>
+      {["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"].map((k) => (
+        <Button variant="outline" key={k} type="button" tabIndex={-1} className={btn} onPointerDown={(e) => { e.preventDefault(); onKey(k); }}>{k}</Button>
+      ))}
+      <Button variant="outline" type="button" tabIndex={-1} className={btn} aria-label={en ? "Erase" : "Effacer"} onPointerDown={(e) => { e.preventDefault(); onKey("ERASE"); }}>⌫</Button>
+    </div>
+  );
+}
+
+type HalfProps = React.ComponentProps<typeof KeyGrid> & { sig: string };
+/** Demi-clavier de la Vue Complète : redessiné seulement si ses touches, sa case active ou ses filtres changent. */
+const FullHalf = memo(
+  function FullHalf({ sig: _sig, ...props }: HalfProps) { return <KeyGrid {...props} />; },
+  (a, b) => {
+    if (a.sig !== b.sig || a.from !== b.from || a.to !== b.to || a.numberFontPx !== b.numberFontPx) return false;
+    const inA = (c: typeof a.active) => (c && c.index + 1 >= a.from && c.index + 1 <= a.to ? `${c.index}-${c.field}` : "");
+    if (inA(a.active) !== inA(b.active)) return false;
+    for (let i = a.from - 1; i < a.to; i++) if (a.rows[i] !== b.rows[i]) return false;
+    return true;
+  },
+);
+
 /** Texte explicatif du bouton Pesée : Libre / Do-Do# (identique bureau). */
 function WeighingModeHelp({ en }: { en: boolean }) {
   return (
@@ -300,7 +326,8 @@ function readInfo(): Record<string, string> {
   return {};
 }
 
-export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: () => void; onPianoInfo?: () => void } = {}) {
+export function TabletWeighingPage({ layout = "octave", onFullView, onOctaveView, onPianoInfo }: { layout?: "octave" | "full"; onFullView?: () => void; onOctaveView?: () => void; onPianoInfo?: () => void } = {}) {
+  const fullLayout = layout === "full";
   const en = useLang() === "en";
   const navigate = useNavigate();
 
@@ -798,7 +825,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
     if (!getPreferences().autoAdvance || problem) return;
     const target = nextCell(index, field);
     const octOf = (i: number) => OCTAVES.findIndex(([a, b]) => i + 1 >= a && i + 1 <= b);
-    if (target && octOf(target.index) !== octOf(index)) {
+    if (!fullLayout && target && octOf(target.index) !== octOf(index)) {
       // Dernière case : 0,5 s de relecture avant le saut automatique.
       onCommit();
       if (octaveDelay.current) clearTimeout(octaveDelay.current);
@@ -828,8 +855,10 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
     cancelOctaveDelay();
     if (k === "UNDO") { setAlert(null); undo(); return; }
     if (k === "REDO") { setAlert(null); redo(); return; }
-    if (!active || !/^\d$/.test(k)) return;
+    if (!active) return;
     const cur = rowsRef.current[active.index]?.[active.field] ?? "";
+    if (k === "ERASE") { onTyped(active.index, active.field, keypadErase(cur)); return; }
+    if (!/^\d$/.test(k)) return;
     const v = keypadEntry(cur, k, replaceNext.current);
     onTyped(active.index, active.field, v);
   };
@@ -910,6 +939,22 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
     document.addEventListener("pointerdown", outside, true);
     return () => { document.removeEventListener("keydown", escape, true); document.removeEventListener("pointerdown", outside, true); };
   }, []);
+  // Vue Complète : gestionnaires stables lisant toujours l'état courant (demi-claviers mémorisés).
+  const liveHandlers = useRef({ onTyped, onCommit, onFocusField, onBlurField, onNavigate, isVisible });
+  liveHandlers.current = { onTyped, onCommit, onFocusField, onBlurField, onNavigate, isVisible };
+  const stable = useMemo(() => ({
+    onTyped: (i: number, f: Cell["field"], v: string) => liveHandlers.current.onTyped(i, f, v),
+    onCommit: () => liveHandlers.current.onCommit(),
+    onFocusField: (i: number, f: Cell["field"]) => liveHandlers.current.onFocusField(i, f),
+    onBlurField: (i: number, f: Cell["field"]) => liveHandlers.current.onBlurField(i, f),
+    onNavigate: (e: React.KeyboardEvent<HTMLInputElement>, i: number, f: Cell["field"]) => liveHandlers.current.onNavigate(e, i, f),
+    isVisible: (i: number) => liveHandlers.current.isVisible(i),
+  }), []);
+  const fullGeo = useMemo(() => [geometry(1, 44, NATIVE_WHITE), geometry(45, 88, NATIVE_WHITE)], []);
+  const [fullRowRef, fullRowW] = useWidth();
+  const fullLabelsW = 30;
+  const fullWidest = Math.max(fullGeo[0]!.width, fullGeo[1]!.width);
+  const fullScale = fullRowW > 0 ? Math.round(Math.max(0.4, (fullRowW - fullLabelsW) / fullWidest) * 1000) / 1000 : 0.8;
   const cmdBtn = "tablet-command shrink-0 font-bold text-foreground";
   const arrowBtn = "h-auto w-7 min-w-7 shrink-0 cursor-pointer px-1 text-2xl leading-none !text-black transition-transform duration-100 hover:opacity-70 active:scale-75 disabled:cursor-default disabled:opacity-20";
 
@@ -923,6 +968,31 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
           <span className="summary-text block min-w-0 flex-1 truncate" title={summaryLine}>{summaryLine}</span>
         </div>
 
+        {fullLayout ? (
+          <>
+            <LinePad onKey={onKey} en={en} />
+            <div ref={fullRowRef} className="mt-1 w-full">
+              {([[1, 44], [45, 88]] as const).map(([a, b]) => (
+                <div key={a} className="flex items-start" style={{ height: nativeH * fullScale + 2 }}>
+                  <div className="relative shrink-0 font-bold text-muted-foreground" style={{ width: fullLabelsW, height: nativeH * fullScale + 2, fontSize: Math.min(13, Math.max(9, 13 * fullScale)) }} aria-hidden="true">
+                    {([[5.81, "wd"], [6.96, "wa"], [9.99, "wd"], [11.04, "wa"]] as const).map(([top, f]) => (
+                      <div key={top} className="absolute right-1 -translate-y-1/2" style={{ top: top * 16 * fullScale }}>{label(f)}</div>
+                    ))}
+                  </div>
+                  <div className="relative shrink-0 overflow-hidden" style={{ width: fullGeo[a === 1 ? 0 : 1]!.width * fullScale, height: nativeH * fullScale + 2 }}>
+                    <div className="tablet-keyboard absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${fullScale})` }}>
+                      <div className="technical-sheet" style={{ width: fullGeo[a === 1 ? 0 : 1]!.width, gridTemplateColumns: `${fullGeo[a === 1 ? 0 : 1]!.width}px` }}>
+                        <div style={{ marginLeft: -fullGeo[a === 1 ? 0 : 1]!.left }}>
+                          <FullHalf from={a} to={b} rows={rows} editable active={active} alertKeys={alertKeys} onChange={stable.onTyped} onCommit={stable.onCommit} onFocusField={stable.onFocusField} onBlurField={stable.onBlurField} onNavigate={stable.onNavigate} isVisible={stable.isVisible} weightFilter={weightFilter} registerInput={registerInput} numberFontPx={Math.min(12, Math.max(8.8, (typeof window !== "undefined" ? window.innerWidth : 1000) * 0.011)) / fullScale} sig={`${viewFilter}|${rapidMode}|${weightFilter}|${[...alertKeys].filter((i) => i + 1 >= a && i + 1 <= b).join(",")}`} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (<>
         {/* Numéros des Do au-dessus de la mini-map (taille réelle, police de l'appli) */}
         <div className="relative mt-1 h-3 w-full font-sans text-[clamp(0.55rem,1.1vw,0.75rem)] font-medium leading-none text-foreground select-none" aria-hidden="true">
           {[...C_KEYS].map((k) => {
@@ -998,6 +1068,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
             </div>
           )}
         </div>
+        </>)}
         {alert && alertAnchor && (
           <div className="fixed z-[99999] w-[min(22rem,calc(100vw-1rem))]" style={{ left: alertAnchor.x, top: alertAnchor.y }}>
             {alert.kind === "pedal" ? (
@@ -1019,7 +1090,7 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
           <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-foreground/15 p-4" onClick={() => setConfirmReset(false)}>
             <div role="alertdialog" aria-modal="true" aria-label={en ? "Reset weighings" : "Effacer les pesées"} className="flex max-w-full flex-wrap items-center justify-center gap-3 rounded-md border border-border bg-background p-4 text-sm text-foreground shadow-lg" onClick={(e) => e.stopPropagation()}>
               <span>{en ? "What do you want to erase?" : "Que voulez-vous effacer ?"}</span>
-              <Button variant="outline" onClick={doResetOctave}>{en ? `Octave ${octave + 1}` : `L'octave ${octave + 1}`}</Button>
+              {!fullLayout && <Button variant="outline" onClick={doResetOctave}>{en ? `Octave ${octave + 1}` : `L'octave ${octave + 1}`}</Button>}
               <Button variant="outline" onClick={doReset}>{en ? "Whole keyboard" : "Tout le clavier"}</Button>
               <Button variant="outline" onClick={() => setConfirmReset(false)}>{en ? "Cancel" : "Annuler"}</Button>
             </div>
@@ -1039,8 +1110,8 @@ export function TabletWeighingPage({ onFullView, onPianoInfo }: { onFullView?: (
             <span className="tablet-label-short">{en ? "← Piano info" : "← Infos piano"}</span>
           </Button>
           <div className="tablet-commands flex shrink-0 flex-nowrap items-center justify-center">
-            <Button type="button" variant="outline" onClick={() => openDesktop(true)} className={`${cmdBtn} weighing-view-toggle`}>
-              <CycleLabel title={en ? "View" : "Vue"} value={en ? "Full" : "Complète"} />
+            <Button type="button" variant="outline" onClick={() => { if (fullLayout) { onCommit(); rememberWeighingCell(active); onOctaveView?.(); } else openDesktop(true); }} className={`${cmdBtn} weighing-view-toggle`}>
+              <CycleLabel title={en ? "View" : "Vue"} value={fullLayout ? "Octave" : (en ? "Full" : "Complète")} />
             </Button>
             <TooltipProvider delayDuration={50}>
               <Tooltip>

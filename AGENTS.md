@@ -50,3 +50,4 @@ Les étiquettes de fin des graphiques Recharts sont placées à partir des éche
 - Weighing navigation (key visibility under Pesée/Touches filters, next key, next cell) lives only in weighing-engine (isWeighingKeyVisible/nextWeighingKey/nextWeighingCell) and both views call it — one navigation rule for Full and Octave.
 - Full-view active cell is marked with a data-active attribute via markActiveWeightInput, never by :focus alone — iOS Safari drops the :focus style with inputMode none.
 - SmartCombobox.open() never focuses the input and shows the full list until the user types — keeps the iOS keyboard from covering the list.
+- On touch screens both weighing layouts (Octave and Full) render through TabletWeighingPage (layout prop) with one active-cell state, one typing/validation pipeline and a permanent one-line keypad in Full; the desktop full grid stays off-screen for PDF only — removes desktop mouse/focus handlers from touch entry.
