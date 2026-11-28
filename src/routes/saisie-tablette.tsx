@@ -959,7 +959,7 @@ export function TabletWeighingPage({ layout = "octave", onFullView, onOctaveView
   const arrowBtn = "h-auto w-7 min-w-7 shrink-0 cursor-pointer px-1 text-2xl leading-none !text-black transition-transform duration-100 hover:opacity-70 active:scale-75 disabled:cursor-default disabled:opacity-20";
 
   return (
-    <main className="tablet-weighing mx-auto w-full max-w-[1400px] px-6 pb-3 pt-3">
+    <main className="tablet-weighing mx-auto w-full max-w-[1400px] px-6 pb-3 pt-6">
       <input ref={importInput} type="file" accept=".kw,application/json" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ""; void importFile(file); }} />
       <div className="relative rounded-md border-2 border-foreground bg-card p-4 pt-5">
         <div className="absolute -top-3.5 left-4 flex max-w-[calc(100%-2rem)] items-baseline gap-2 whitespace-nowrap bg-card px-2 text-lg font-bold text-black">
@@ -970,7 +970,6 @@ export function TabletWeighingPage({ layout = "octave", onFullView, onOctaveView
 
         {fullLayout ? (
           <>
-            <LinePad onKey={onKey} en={en} />
             <div ref={fullRowRef} className="mt-1 w-full">
               {([[1, 44], [45, 88]] as const).map(([a, b]) => (
                 <div key={a} className="flex items-start" style={{ height: nativeH * fullScale + 2 }}>
@@ -991,6 +990,7 @@ export function TabletWeighingPage({ layout = "octave", onFullView, onOctaveView
                 </div>
               ))}
             </div>
+            <LinePad onKey={onKey} en={en} />
           </>
         ) : (<>
         {/* Numéros des Do au-dessus de la mini-map (taille réelle, police de l'appli) */}

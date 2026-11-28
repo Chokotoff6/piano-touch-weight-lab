@@ -4352,7 +4352,7 @@ function Index() {
       onUpdateCurrent={() => { void performKwSave(null).finally(() => finishKwAsk(true)); setKwPointAsk(null); }}
       onCreate={(name) => { void performKwSave(name).finally(() => finishKwAsk(true)); setKwPointAsk(null); }}
     />
-    <main aria-hidden={weighingMode && octaveView ? true : undefined} className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "py-3" : "py-10"} ${compactPad && padOpen ? "pb-[150px]" : ""} ${weighingMode && octaveView ? "absolute -left-[9999px] top-0 w-[1250px] pointer-events-none" : ""}`}>
+    <main aria-hidden={weighingMode && octaveView ? true : undefined} className={`mx-auto max-w-[1400px] px-6 ${weighingMode ? "pb-3 pt-6" : "py-10"} ${compactPad && padOpen ? "pb-[150px]" : ""} ${weighingMode && octaveView ? "absolute -left-[9999px] top-0 w-[1250px] pointer-events-none" : ""}`}>
       <input
         ref={importInputRef}
         type="file"
@@ -4465,7 +4465,6 @@ function Index() {
                 className={`font-normal not-italic placeholder:text-sm placeholder:font-normal placeholder:text-muted-foreground placeholder:italic disabled:!cursor-default ${identityLocked ? "!bg-muted/50 opacity-75" : "!bg-white"}`}
                 placeholder={en ? "Type or search a model..." : "Saisissez ou cherchez un modèle..."}
                 onTyping={markDirty}
-                onPick={() => window.setTimeout(() => snRef.current["sn_num"]?.focus(), 500)}
                 onCommit={(raw) => {
                   const v = raw.trim() ? canonicalizeModel(info["marque"] ?? "", raw) : raw;
                   updateInfo("modele", v);
@@ -4522,6 +4521,8 @@ function Index() {
                       }}
                       disabled={identityLocked}
                       required
+                      inputMode="numeric"
+                      autoComplete="off"
                       placeholder={en ? "e.g. J1234567" : "ex : J1234567"}
                       className={`${INPUT_CLASS} text-black max-w-[220px] disabled:border-muted-foreground/30`}
                     />

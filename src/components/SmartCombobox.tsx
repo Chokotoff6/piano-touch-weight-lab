@@ -84,6 +84,8 @@ export const SmartCombobox = forwardRef<SmartComboboxHandle, Props>(
       setOpen(false);
       setTyped(false);
       if (option !== value) onCommit(option);
+      // Choix dans la liste : le clavier iOS se referme.
+      input.current?.blur();
       onPick?.(option);
     };
 

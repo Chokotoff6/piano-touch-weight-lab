@@ -30,8 +30,8 @@ function Accueil() {
   const en = lang === "en";
 
   return (
-    <main className="relative mx-auto flex max-w-[1400px] flex-col px-6 pb-6 pt-3">
-      <div className="mx-auto mt-[66px] w-full max-w-4xl space-y-8 text-left text-sm leading-relaxed !text-black">
+    <main className="relative mx-auto flex max-w-[1400px] flex-col px-6 pb-6 pt-6">
+      <div className="mx-auto mt-4 w-full max-w-4xl space-y-8 text-left text-sm leading-relaxed !text-black">
         <header className="space-y-1">
           {/* Mot KEYWEIGHT teinté au mauve exact du logo via masque (compatible iOS 15). */}
           <img src={logoKwText.url} alt="" aria-hidden="true" className="invisible absolute h-12 w-auto" decoding="async" />
@@ -52,9 +52,6 @@ function Accueil() {
               maskPosition: "left center",
             }}
           />
-          <h1 className="text-2xl font-semibold leading-snug !text-[#7149ab]">
-            {en ? "Piano touch measurement and diagnostic tool" : "Outil de mesure et de diagnostic du toucher de piano"}
-          </h1>
         </header>
 
         <section className="space-y-4">

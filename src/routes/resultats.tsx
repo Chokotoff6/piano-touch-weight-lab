@@ -460,7 +460,7 @@ function Resultats() {
   }, [demoActive, hasData, unlocked, rows]);
 
   return (
-    <main className="mx-auto w-full max-w-[1120px] px-6 pb-10 pt-3">
+    <main className="mx-auto w-full max-w-[1120px] px-6 pb-10 pt-6">
       {/* Miroir hors écran (jamais visible) : pages 1 à 3 du Rapport d'atelier. */}
       <Dialog open={pdfDialog} onOpenChange={setPdfDialog}>
         <DialogContent className="max-w-sm">

@@ -418,6 +418,11 @@ function RootComponent() {
                 />
               </Link>
             </div>
+            {isHome && (
+              <h1 className="ml-4 min-w-0 truncate text-lg font-semibold leading-snug !text-[#7149ab]">
+                {lang === "en" ? "Piano touch measurement and diagnostic tool" : "Outil de mesure et de diagnostic du toucher de piano"}
+              </h1>
+            )}
             {!isHome && (
             <div className="flex flex-nowrap items-center gap-0.5 rounded-lg bg-muted p-1">
               {topbar.cloudSaving ? (
@@ -960,7 +965,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
 
-      <AppFooter en={lang === "en"} />
+      {isHome && <AppFooter en={lang === "en"} />}
 
       <Toaster />
 
